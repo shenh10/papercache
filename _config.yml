@@ -1,0 +1,70 @@
+title: "PaperCache - Deep Notes"
+description: "深度学习、机器学习和人工智能研究论文的精选缓存"
+baseurl: "/papercache"
+url: "https://shenh10.github.io"
+
+author:
+  name: shenh10
+  email: thushenhan@gmail.com
+  bio: "AI/ML研究者，专注于深度学习和机器学习系统研究"
+
+# Jekyll设置
+markdown: kramdown
+highlighter: rouge
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Kramdown设置
+kramdown:
+  math_engine: mathjax
+  syntax_highlighter: rouge
+  input: GFM
+  auto_ids: true
+  toc_levels: 1..6
+
+# 评论系统 (Giscus)
+giscus:
+  repo: "shenh10/papercache"
+  repo_id: "REPLACE_WITH_ACTUAL_REPO_ID"
+  category: "General"
+  category_id: "REPLACE_WITH_ACTUAL_CATEGORY_ID"
+  mapping: "pathname"
+  reactions_enabled: "1"
+  theme: "light"
+  lang: "zh-CN"
+
+# 统计系统
+google_analytics: "REPLACE_WITH_GA_ID"
+busuanzi_analytics: true
+
+# 默认设置
+defaults:
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "post"
+      comments: true
+      mathjax: true
+      share: true
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "page"
+
+# 分页
+paginate: 10
+paginate_path: "/page:num/"
+
+# 排除文件
+exclude:
+  - .sass-cache/
+  - .jekyll-cache/
+  - Gemfile
+  - Gemfile.lock
+  - node_modules/
+  - .DS_Store

@@ -1,0 +1,154 @@
+---
+layout: default
+---
+
+<article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">{{ page.title | escape }}</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">
+        {{ page.date | date: "%Y年%m月%d日" }}
+      </time>
+      {%- if page.author -%}
+        • <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name">{{ page.author }}</span>
+          </span>
+      {%- endif -%}
+      
+      {%- if page.categories.size > 0 -%}
+        <br>分类: 
+        {%- for category in page.categories -%}
+          <span class="category-tag">{{ category }}</span>
+          {%- unless forloop.last -%}, {%- endunless -%}
+        {%- endfor -%}
+      {%- endif -%}
+      
+      {%- if page.tags.size > 0 -%}
+        <br>标签: 
+        {%- for tag in page.tags -%}
+          <span class="tag">#{{ tag }}</span>
+        {%- endfor -%}
+      {%- endif -%}
+    </p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    {{ content }}
+  </div>
+
+  {%- if page.comments -%}
+    {%- include comments.html -%}
+  {%- endif -%}
+
+  <!-- 文章导航 -->
+  <div class="post-navigation">
+    {%- if page.previous -%}
+      <div class="nav-previous">
+        <a href="{{ page.previous.url | relative_url }}" rel="prev">
+          ← {{ page.previous.title }}
+        </a>
+      </div>
+    {%- endif -%}
+    
+    {%- if page.next -%}
+      <div class="nav-next">
+        <a href="{{ page.next.url | relative_url }}" rel="next">
+          {{ page.next.title }} →
+        </a>
+      </div>
+    {%- endif -%}
+  </div>
+
+</article>
+
+<style>
+.post-meta {
+  color: #666;
+  font-size: 0.9em;
+  margin-bottom: 2em;
+}
+
+.category-tag {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  margin: 0 2px;
+}
+
+.tag {
+  background: #f5f5f5;
+  color: #666;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.75em;
+  margin: 0 3px;
+}
+
+.post-content {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+.post-content h1, .post-content h2, .post-content h3 {
+  color: #2c3e50;
+  margin-top: 2em;
+}
+
+.post-content h1 {
+  border-bottom: 3px solid #3498db;
+  padding-bottom: 0.5em;
+}
+
+.post-content h2 {
+  border-left: 4px solid #3498db;
+  padding-left: 1em;
+}
+
+.post-content code {
+  background: #f8f9fa;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.post-content pre {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 1em;
+  overflow-x: auto;
+}
+
+.post-navigation {
+  display: flex;
+  justify-content: space-between;
+  margin: 3em 0 2em 0;
+  padding: 1em 0;
+  border-top: 1px solid #eee;
+}
+
+.nav-previous, .nav-next {
+  flex: 1;
+}
+
+.nav-next {
+  text-align: right;
+}
+
+.post-navigation a {
+  color: #666;
+  text-decoration: none;
+  padding: 0.5em 1em;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.post-navigation a:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+</style>

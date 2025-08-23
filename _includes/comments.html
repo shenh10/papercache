@@ -1,0 +1,43 @@
+{% if site.giscus and page.comments %}
+<div class="comments-section">
+  <h3>💬 评论讨论</h3>
+  <p class="comments-intro">欢迎在这里分享您的想法和见解！</p>
+  
+  <script src="https://giscus.app/client.js"
+          data-repo="{{ site.giscus.repo }}"
+          data-repo-id="{{ site.giscus.repo_id }}"
+          data-category="{{ site.giscus.category }}"
+          data-category-id="{{ site.giscus.category_id }}"
+          data-mapping="{{ site.giscus.mapping }}"
+          data-strict="0"
+          data-reactions-enabled="{{ site.giscus.reactions_enabled }}"
+          data-emit-metadata="0"
+          data-input-position="bottom"
+          data-theme="{{ site.giscus.theme }}"
+          data-lang="{{ site.giscus.lang }}"
+          crossorigin="anonymous"
+          async>
+  </script>
+</div>
+
+<style>
+.comments-section {
+  margin: 3em 0 2em 0;
+  padding: 2em 0;
+  border-top: 2px solid #f0f0f0;
+}
+
+.comments-section h3 {
+  color: #2c3e50;
+  margin-bottom: 0.5em;
+  font-size: 1.3em;
+}
+
+.comments-intro {
+  color: #666;
+  font-size: 0.9em;
+  margin-bottom: 1.5em;
+  font-style: italic;
+}
+</style>
+{% endif %}
