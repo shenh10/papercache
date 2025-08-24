@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium Specification | PaperCache”</title>
+<meta name="generator" content="Jekyll v4.3.4" />
+<meta property="og:title" content="Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium Specification" />
+<meta name="author" content="shenh10" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium Specification - 研究论文解读与笔记" />
+<meta property="og:description" content="Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium Specification - 研究论文解读与笔记" />
+<link rel="canonical" href="https://shenh10.github.io/papercache/mlsys/networking/2023/07/30/overview-of-and-motivation-for-the-forthcoming-ultra-ethernet-consortium-specification.html" />
+<meta property="og:url" content="https://shenh10.github.io/papercache/mlsys/networking/2023/07/30/overview-of-and-motivation-for-the-forthcoming-ultra-ethernet-consortium-specification.html" />
+<meta property="og:site_name" content="PaperCache”" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2023-07-30T00:00:00+08:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium Specification" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"shenh10"},"dateModified":"2023-07-30T00:00:00+08:00","datePublished":"2023-07-30T00:00:00+08:00","description":"Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium Specification - 研究论文解读与笔记","headline":"Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium Specification","mainEntityOfPage":{"@type":"WebPage","@id":"https://shenh10.github.io/papercache/mlsys/networking/2023/07/30/overview-of-and-motivation-for-the-forthcoming-ultra-ethernet-consortium-specification.html"},"url":"https://shenh10.github.io/papercache/mlsys/networking/2023/07/30/overview-of-and-motivation-for-the-forthcoming-ultra-ethernet-consortium-specification.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/papercache/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://shenh10.github.io/papercache/feed.xml" title="PaperCache&quot;" /><!-- MathJax 数学公式支持 -->
+  
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  
+
+  <!-- 统计代码 -->
+  <!-- Google Analytics 4 -->
+
+<script async src="https://www.googletagmanager.com/gtag/js?id=REPLACE_WITH_GA_ID"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'REPLACE_WITH_GA_ID');
+</script>
+
+
+<!-- Plausible Analytics -->
+
+
+<!-- Umami Analytics -->
+
+
+</head>
+
+<body>
+  <header class="site-header">
+    <div class="wrapper">
+      <a class="site-title" rel="author" href="/papercache/">PaperCache&quot;</a>
+      
+      <nav class="site-nav">
+        <a href="/papercache/">首页</a>
+        <a href="/papercache/about/">关于</a>
+        <a href="https://github.com/shenh10/deepnotes" target="_blank">源代码</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-content" aria-label="Content">
+    <div class="wrapper">
+      <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium Specification</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2023-07-30T00:00:00+08:00" itemprop="datePublished">
+        2023年07月30日
+      </time>• <span itemprop="author" itemscope itemtype="http://schema.org/Person">
+            <span class="p-author h-card" itemprop="name">shenh10</span>
+          </span><br>分类:<span class="category-tag">mlsys</span>,<span class="category-tag">networking</span></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <div class="paper-content">
+<div class="container">
+<h1 id="overview-of-and-motivation-for-the-forthcoming-ultra-ethernet-consortium-specification">Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium Specification</h1>
+<p><strong>文章标题</strong>：即将发布的 Ultra Ethernet 联盟规范概述及动机<br/>
+<strong>作者/机构</strong>：Ultra Ethernet Consortium</p>
+<h2 id="a1">A1 主要贡献</h2>
+<p>本文作为一份白皮书，阐述了为满足现代人工智能（AI）和高性能计算（HPC）工作负载需求而成立的 Ultra Ethernet 联盟（UEC）及其即将推出的技术规范的动机、核心问题和设计目标。</p>
+<p><strong>核心问题</strong>：<br/>
+现代大规模AI模型（如LLM和推荐系统）和HPC作业对网络性能提出了前所未有的要求。当前网络面临的关键挑战是“尾延迟”（tail latency），即通信阶段最后一条消息的到达时间，它直接决定了整个计算集群的效率。现有技术，特别是基于RoCE（RDMA over Converged Ethernet）的以太网方案，尽管在数据中心得到广泛应用，但其底层传输协议（源于InfiniBand）设计于上世纪末，已无法高效应对当前和未来的网络规模、带宽和通信模式。其主要缺陷包括：<br/>
+1.  <strong>低效的丢包恢复</strong>：“Go-Back-N”机制在发生丢包时效率低下，迫使运营商部署复杂的“无损”网络，但这又会引发大规模拥塞和队头阻塞问题。<br/>
+2.  <strong>次优的拥塞控制</strong>：DCQCN等算法需要针对特定网络和工作负载进行复杂的手动调优，缺乏TCP“开箱即用”的普适性。<br/>
+3.  <strong>有限的负载均衡</strong>：传统的ECMP基于流哈希，无法让单个大流量充分利用所有可用路径。<br/>
+4.  <strong>僵化的包序要求</strong>：严格的包序限制了乱序交付的效率，增加了不必要的延迟。<br/>
+5.  <strong>可扩展性瓶颈</strong>：原有的Verbs API和RC传输模式在面对海量节点和超高带宽时，状态管理开销巨大，存在扩展性问题。</p>
+<p><strong>研究目标与主要贡献</strong>：<br/>
+为解决上述问题，Ultra Ethernet 联盟（UEC）旨在从头开始设计一套全新的、开放的、基于以太网/IP生态系统的通信协议栈，即 <strong>Ultra Ethernet Transport (UET)</strong>。其核心目标是为下一代AI和HPC网络提供极致性能、可扩展性和易用性，并最小化尾延迟。UEC规范的主要贡献和创新点包括：<br/>
+1.  <strong>多路径与数据包喷洒（Packet Spraying）</strong>：设计一种能够让单个数据流同时利用所有可用网络路径的传输机制，以实现最优的负载均衡，避免网络热点。<br/>
+2.  <strong>灵活的交付顺序</strong>：支持乱序数据包直接递交至应用缓冲区，仅在应用需要时才强制执行顺序，从而最大化网络并发性和应用效率。<br/>
+3.  <strong>现代化的拥塞控制</strong>：开发专为AI和HPC优化的拥塞控制算法，能快速达到线速，有效管理入口拥塞（incast），且无需手动调优。<br/>
+4.  <strong>端到端遥测（Telemetry）</strong>：利用先进的遥测技术，使网络能够向端点提供精确、快速的拥塞信息，从而实现更灵敏、更准确的拥塞控制。<br/>
+5.  <strong>大规模可扩展性与原生安全性</strong>：协议设计支持百万级端点规模，并内置高效的加密和认证机制，以满足云环境下AI作业的隔离和安全需求。<br/>
+6.  <strong>统一AI与HPC需求</strong>：提供两种优化配置文件（一为AI优化，一为HPC优化），并引入链路层本地错误处理等机制，以同时满足AI对带宽和HPC对延迟的敏感需求。</p>
+<h2 id="a3-observation">A3 背景知识/关键Observation/设计原则</h2>
+<h3 id="aihpc">未来AI和HPC网络的核心需求</h3>
+<p><strong>未来网络的性能要求</strong>。即使考虑到使用以太网的优势，仍然可以也应该进行改进。网络必须不断发展，以便为未来更大规模、更高带宽的网络提供前所未有的性能。最重要的是，网络需要支持将消息尽快传递给所有参与的端点，即使是少数端点也不应有长时间的延迟。“尾延迟”应被最小化。</p>
+<p><strong>实现低尾延迟的关键技术方向</strong>。为了实现低尾延迟，UEC规范通过解决下一代应用的以下关键网络需求来提供显著改进：多路径和数据包喷洒、灵活的交付顺序、现代拥塞控制机制、端到端遥测、以及更大的规模、稳定性和可靠性。最后一点（规模、稳定性和可靠性）给前面所有需求都带来了额外的负担。高性能系统几乎没有容错空间，这在大型网络中会加剧。随着系统规模的增长，确定性和可预测性变得更加困难，因此需要新的方法来实现整体稳定性。</p>
+<p><strong>UEC方案的动机</strong>。在接下来的章节中，作为Ultra Ethernet联盟提出的解决方案的动机，我们将详细阐述这些需求中的每一个，并展示当前可用技术存在的必须解决的缺陷。我们旨在为这些未来的工作负载提供更简单、更高效的远程直接内存访问（RDMA）和互连。</p>
+<h3 id="rdma">RDMA的成功及其局限性——重启的理由</h3>
+<p><strong>RDMA的成功与核心地位</strong>。随着AI模型在规模、通信模式多样性和计算方法种类上的增加，现在是时候重新审视大多数AI网络核心所采用的传输协议和API了。从广义上讲，远程直接内存访问（RDMA）是一项非常成功的技术，它允许CPU、GPU、TPU或其他加速器将数据直接从发送方内存传输到接收方内存。这种零拷贝方法带来了低延迟，并避免了操作系统开销。因此，支持RDMA的网络技术是当今AI训练作业的基础组成部分。</p>
+<p><strong>RoCE的起源与协议老化问题</strong>。RoCE（RDMA over Converged Ethernet）的创建是为了让IBTA（InfiniBand™贸易协会）的RDMA传输协议能够在IP和以太网网络上运行。该底层协议通过Verbs API表达，其构想始于上世纪末，并于多年前由IBTA首次标准化。对于现代高要求的AI网络流量而言，它现在已显陈旧【索引：Data Center Ethernet and Remote Direct Memory Access: Issues at Hyperscale, Hoefler et al., in Computer, July 2023】。问题不在于操作系统绕过和零拷贝的通用RDMA原则，也不在于使用以太网网络，而在于当前RoCE和InfiniBand共有的传输协议服务。</p>
+<p><strong>硬件发展带来的挑战</strong>。在撰写本文时，单个加速器可能集成数太比特（terabits）的网络I/O，而PCIe网卡很快将提供每秒800吉比特（gigabits）及以上的速率——这比RDMA最初构想时快了几个数量级。未来要求更高、速度更快的网络将进一步考验现状，并需要新的解决方案。</p>
+<p><strong>DCQCN拥塞控制的调优难题</strong>。通常，RoCE与DCQCN作为拥塞控制算法一起使用，以避免在试图快速提升速率时超出网络链路的承载能力。然而，DCQCN需要仔细的手动调优才能获得良好性能。DCQCN的调优对其下层网络的延迟、速度和缓冲能力，以及在其上传输的工作负载性质都很敏感。驱动互联网的TCP/IP协议套件的一大成功之处在于，TCP不需要为特定网络进行调优，它“开箱即D用”。未来的AI网络需要一个像TCP一样，对任何数据中心网络都能“开箱即用”的传输协议。</p>
+<p><strong>低效的丢包恢复机制与无损网络的副作用</strong>。众所周知，虽然InfiniBand和RoCE中使用的RDMA传输可以处理丢包，但其效率非常低。一个丢失或乱序的数据包会导致“Go-Back-N”恢复，其中已经接收的数据包会被重新传输，从而导致较低的“有效吞吐量”和差的效率。网络运营商经常在“无损”网络上运行RDMA以避免触发此行为。如果将以太网配置为在发生拥塞时使用优先级流量控制（PFC）从接收方朝发送方产生逐跳反压，那么以太网可以是无损的。因此，数据包不会被丢弃，而是在前一跳被延迟传输。然而，当这种反压在网络中传播时，会产生“拥塞树”和队头阻塞；这两者都可能在大规模部署中导致严重的性能下降。</p>
+<p><strong>高昂的运维成本</strong>。虽然大规模无损RoCE网络可以并且已经成功部署，但它们需要仔细的调优、操作和监控，才能在不触发这些负面效应的情况下良好运行。并非所有网络运营商都具备这种级别的投入和专业知识，这导致了高昂的总拥有成本（TCO）。因此，需要一种不依赖于无损网络的传输协议。</p>
+<p><strong>API和传输模式的可扩展性限制</strong>。此外，RoCE以及InfiniBand使用的API（Verbs）是为远低于现代AI和HPC作业以及未来集成网络的加速器所需的规模——无论是在带宽还是对等节点数量方面——而设计的。其RC（可靠连接）传输模式不适合在高速下进行高效的硬件卸载实现，因为这要求减少快速路径（fast-path）的状态。虽然已有专有尝试来解决RC的局限性，但没有一个被广泛接受，也未能完全解决其固有的进程到进程（P²）可扩展性问题。尽管RC的实现在中等规模下可以工作，但它们增加了端点的成本和复杂性，这对于未来规模的AI作业来说是沉重的负担；需要一种新的解决方案。</p>
+<p><strong>传统负载均衡的瓶颈</strong>。最后，AI应用传输大量数据。传统的RoCE将这些数据作为少数几个大流量进行传输，必须仔细进行负载均衡，以防止任何单个链路过载，如前所述。AI工作负载通常要等到所有流量成功交付后才能继续进行，即使只有一个过载的链路也会扼杀整个计算过程。改进负载均衡技术对于提升AI性能至关重要。</p>
+<h2 id="a2">A2 方法细节</h2>
+<h3 id="multi-pathing-and-packet-spraying">多路径与数据包喷洒（Multi-Pathing and Packet Spraying）</h3>
+<p><strong>从生成树到数据包喷洒的演进</strong>。传统的以太网网络基于生成树协议，确保从A到B只有一条路径，以避免网络环路。随后出现了多路径技术——例如等价多路径（ECMP），网络通过它尝试利用通信伙伴之间的尽可能多的链路。ECMP通常使用“流哈希”将给定四层流的所有流量发送到一条路径上，同时将不同的流映射到不同的路径。然而，这仍然将一个高吞吐量的流限制在一条路径上。此外，当多路径技术将太多流映射到单一网络路径时，网络性能会下降，需要仔细管理负载均衡以获得最佳性能。技术演进的下一个阶段是让每个流同时使用所有到达目的地的路径——这种技术被称为“数据包喷洒”——从而实现对所有网络路径更均衡的利用。</p>
+<h3 id="flexible-ordering">灵活的排序（Flexible Ordering）</h3>
+<p><strong>严格排序的低效性</strong>。旧技术所使用的严格数据包排序（例如，Verbs API所要求的）限制了效率，因为它阻止了乱序的数据包数据直接从网络传递到应用程序缓冲区，即其在主机内存中的最终位置。这一约束，加上Go-Back-N丢包恢复机制（它为一个丢失的数据包强制重传多达N个数据包），导致了可用链路的利用率不足和尾延迟增加——这对于大规模AI应用来说是不可接受的。理想情况下，所有链路都应被使用，并且仅在AI工作负载需要时才强制执行排序。</p>
+<p><strong>AI集体通信对灵活排序的需求</strong>。AI工作负载中的大部分加速器间通信是“集体”通信操作的一部分，其中All-Reduce和All-to-All是主要的集体通信类型。快速完成这些操作的关键在于从A到B的快速批量传输，其中AI应用只关心给定消息的最后一部分何时到达目的地。灵活排序使得这一点能够高效完成。它同样通过消除在将数据包交付给应用程序之前对其进行重排序的需要，从而在带宽密集型的集体操作中发挥了数据包喷洒的优势。支持那些在应用层面适当时放宽逐包排序要求的现代API，对于抑制尾延迟至关重要。</p>
+<h3 id="aihpc_1">为AI和HPC优化的拥塞控制</h3>
+<p><strong>网络拥塞的三个位置</strong>。网络拥塞可能发生在三个地方：从发送方到第一个交换机的出向链路、第一个交换机和最后一个交换机之间的链路、以及最后一个交换机和接收方之间的最终链路。</p>
+<p><strong>针对不同拥塞位置的控制策略</strong>。对于AI和HPC，发送方出向链路的拥塞主要通过发送主机上的调度算法来控制，该主机对所有出向流量都有可见性。上文描述的多路径数据包喷洒通过在所有路径上均匀分散负载，最大限度地减少了第一和最后一个交换机之间的热点和拥塞。最后一种拥塞形式——“入口拥塞（Incast）”——发生在到接收方的最后一条链路上，当多个发送方同时向同一目的地发送流量时会发生；它可能作为上述“All-to-All”通信的一部分出现。</p>
+<p><strong>现有拥塞控制算法的不足</strong>。近几十年来，已经提出了许多解决拥塞的方案（例如，DCQCN, DCTCP, SWIFT, Timely）。然而，目前没有一种算法能满足为AI优化的传输协议的所有需求。</p>
+<p><strong>AI优化拥塞控制的需求列表</strong>。这些需求包括：<br/>
+- 在高速、低往返时间的网络中，当存在无拥塞路径时，能够快速提升至线速，而不降低现有流量的性能。<br/>
+- 管理网络结构中以及到目的地的最后一跳路径上的拥塞。<br/>
+- 通过公平共享最终链路来控制入口拥塞，而不会导致昂贵的丢包、重传或增加尾延迟。<br/>
+- 无需随着流量组合变化、计算节点演进、链路速度增加和网络硬件发展而进行调优和配置。</p>
+<p><strong>与多路径喷洒的协同设计</strong>。为未来AI工作负载设计的拥塞控制算法，必须既能支持这些需求，又能与多路径数据包喷洒协同工作。</p>
+<h3 id="end-to-end-telemetry">端到端遥测（End-to-End Telemetry）</h3>
+<p><strong>遥测对拥塞控制的赋能</strong>。这些优化的拥塞控制算法得益于新兴的端到端遥测方案。源自网络的拥塞信息可以告知参与者拥塞的位置和原因。缩短拥塞信令路径并向端点提供更多信息，可以实现更灵敏的拥塞控制。无论是由发送方还是接收方调度传输，现代交换机都可以通过快速将准确的拥塞信息传递给调度器或定速器（pacer），来促进响应迅速的拥塞控制——从而提高拥塞控制算法的响应速度和准确性。其结果是减少拥塞、更少的丢包和更小的队列——所有这些都是为了改善尾延迟。</p>
+<h3 id="ultra-ethernet-transport-uetaihpc">Ultra Ethernet Transport (UET)：为下一代AI和HPC网络设计的协议</h3>
+<p><strong>替代传统RoCE的必要性</strong>。Ultra Ethernet 联盟的成员认为，是时候重新开始，用Ultra Ethernet Transport（UET）取代传统的RoCE协议。UET是一种现代传输协议，旨在提供AI和HPC应用所需的性能，同时保留以太网/IP生态系统的优势。</p>
+<p><strong>UET的核心设计原则</strong>。从TCP/IP和以太网的成功中得到的两个基本教训是：传输协议应提供丢包恢复，以及无损网络在不触发队头阻塞和拥塞扩散的情况下非常难以操作。UET传输协议秉承这些原则，建立在经过验证的分布式路由算法和基于端点的可靠性与拥塞控制路径之上。</p>
+<p><strong>UET协议的先进特性</strong>。UET传输协议通过提供以下功能，超越了现状：<br/>
+-   一个从一开始就设计为在IP和以太网上运行的开放协议规范。<br/>
+-   多路径、数据包喷洒式交付，充分利用AI网络而不会引起拥塞或队头阻塞，从而消除了对集中式负载均衡算法和路由控制器的需求。<br/>
+-   入口拥塞（Incast）管理机制，以最小的丢包率控制到目标主机的最后一跳链路上的扇入（fan-in）。<br/>
+-   高效的速率控制算法，允许传输协议快速提升至线速，同时不给竞争流造成性能损失。<br/>
+-   提供支持乱序数据包交付的API，并带有可选的消息有序完成功能，从而最大化网络和应用的并发性，并最小化消息延迟。<br/>
+-   为未来的网络提供扩展性，支持1,000,000个端点。<br/>
+-   无需针对特定网络和工作负载进行拥塞算法参数调优，即可实现高性能和最佳网络利用率。<br/>
+-   设计用于在未来800G、1.6T及更快的以太网网络上，在商用硬件上实现线速性能。</p>
+<p><strong>超越传输层的规范定义</strong>。UEC规范将超越传输层，定义标准的语义层、改进的低延迟交付机制，以及标准的AI和HPC API，并为在UEC传输协议之上实现这些API提供标准的多厂商支持。</p>
+<h3 id="aihpc_2">AI与HPC的安全性</h3>
+<p><strong>AI网络的安全需求与UEC方案</strong>。AI训练和推理通常发生在需要作业隔离的托管网络中。此外，AI模型是日益敏感和有价值的商业资产。认识到这一点，UEC传输协议在设计上就融入了网络安全，可以对AI训练或推理作业中计算端点之间发送的所有网络流量进行加密和认证。UEC传输协议借鉴了现代加密方法（如IPSec和PSP）中用于高效会话管理、认证和保密性的成熟核心技术。</p>
+<p><strong>可扩展的安全密钥管理</strong>。随着作业规模的增长，必须支持加密而不会导致主机和网络接口中的会话状态急剧膨胀。为此，UET整合了新的密钥管理机制，允许参与作业的数万个计算节点高效地共享密钥。它的设计旨在能够以AI训练和推理所需的高速度和大规模进行高效实现。</p>
+<p><strong>HPC的安全需求</strong>。托管在大型以太网网络上的HPC作业具有相似的特性，并需要相当的安全机制。</p>
+<h3 id="uec-hpc">UEC的进一步努力 - HPC及未来</h3>
+<p><strong>统一AI与HPC的网络需求</strong>。除了为AI提供改进的网络功能外，UEC还在开发技术以支持未来高性能计算（HPC）的网络需求。展望未来，AI和HPC的工作负载及网络需求预计将日益重叠。因此，我们期望UEC传输协议能同时满足AI和HPC作业的网络需求。认识到两者对带宽和延迟的不同敏感性，UEC规范将提供两种配置文件——一种为AI优化，另一种为HPC优化。</p>
+<p><strong>引入链路层错误处理</strong>。随着速度和规模的增加，仅依赖端到端重试的传统方法对于延迟敏感型工作负载来说日益 burdensome。在横向扩展的HPC网络中，例如用于百亿亿次（exascale）系统的网络中，链路层的本地错误处理已被证明是有价值的。UEC规范为以太网提供了这种能力。</p>
+<h2 id="a4">A4 实验环境</h2>
+<p>该文档是一份概述性和前瞻性的白皮书，旨在阐述Ultra Ethernet Consortium（UEC）的动机和技术方向，并未包含具体的实验环境配置。因此，文中没有提供关于数据集、模型架构、硬件配置（GPU、网卡、CPU等）或软件配置（代码库、操作系统等）的详细信息。</p>
+<h2 id="a4_1">A4 实验结果</h2>
+<p>该文档主要聚焦于阐述当前AI和HPC网络面临的挑战以及UEC规范的设计目标和核心技术理念，不包含任何实验性评估或性能基准测试结果。文中未提供图表来验证其提出的协议或机制的性能。</p>
+<h2 id="a5">A5 结论</h2>
+<p>AI系统通常部署在从发送方到接收方具有多条路径的网络拓扑上。同时且高效地使用这条昂贵“高速公路”的所有车道至关重要。为实现这一点，将需要可扩展且高效的远程内存访问，通过数据包喷洒、灵活排序和优化的拥塞控制算法来实现。此外，新的端到端遥测、可扩展的安全性和为AI优化的API，对于为未来高强度AI计算的独特通信需求而优化的网络来说，将是必不可少的。</p>
+<p>UEC协议也旨在支持现代HPC工作负载，利用上述相同的传输机制，同时保留广泛使用的API，如MPI和PGAS。</p>
+<p>UEC的创始成员包括当今许多最大型AI和HPC网络的供应商和运营商。UEC的工作利用了其成员多年来构建和运营这些网络的经验。即将发布的UEC规范草案将作为AI和HPC网络互操作的基础开放使用。UEC正在开发的技术将产生持久影响，改善未来要求苛刻的AI和HPC应用的性能、易用性和成本。</p>
+<h2 id="a6">A6 附录</h2>
+<h3 id="ultra-ethernet-consortium">关于Ultra Ethernet Consortium</h3>
+<p>Ultra Ethernet Consortium汇集了众多公司，旨在进行行业范围内的互操作性合作，并构建一个完整的基于以太网的通信协议栈架构。该架构旨在最好地匹配快速发展的规模化AI/HPC工作负载，并提供一流的功能、性能、互操作性和总拥有成本（TCO），同时对开发者和最终用户友好。UEC是Linux基金会附属机构Joint Development Foundation Projects, LLC Series的一部分。创始成员包括AMD、Arista、Broadcom、Cisco、Eviden（Atos旗下业务）、HPE、Intel、Meta和Microsoft。</p>
+<h3 id="_1">免责声明</h3>
+<p>这些材料按“原样”提供。各方明确否认与材料相关的任何明示、暗示或其他形式的保证，包括适销性、非侵权性、特定用途适用性或所有权的默示保证。实施或以其他方式使用这些材料的全部风险由实施者和用户承担。在任何情况下，对于因本交付成果或其管辖协议引起的任何类型的任何诉讼原因，无论基于违约、侵权（包括过失）或其他原因，无论另一成员是否已被告知可能发生此类损害，各方均不对任何其他方承担利润损失或任何形式的间接、特殊、附带或后果性损害赔偿责任。</p>
+<h2 id="_2">参考文献引用说明</h2>
+<p><strong>引用文献</strong>：<br/>
+- 【1】 Hoefler, T., et al. "Data Center Ethernet and Remote Direct Memory Access: Issues at Hyperscale." <em>Computer</em>, vol. 56, no. 7, pp. 18-28, July 2023.</p>
+<p><strong>引用位置与描述</strong>：<br/>
+-   <strong>所在章节</strong>：A3 背景知识/关键Observation/设计原则 - RDMA的成功及其局限性——重启的理由<br/>
+-   <strong>引用原文描述</strong>：该文献被引用以支持“RoCE和InfiniBand共有的底层传输协议对于现代高要求的AI网络流量而言已经显示出其老化”这一论点。原文表述为：“It is now showing its age for modern, highly demanding AI network traffic see [Data Center Ethernet and Remote Direct Memory Access: Issues at Hyperscale, Hoefler et al., in Computer, July 2023]”。这表明，当前广泛使用的RDMA传输协议在面对现代AI网络的高要求时，其设计年代久远所带来的局限性已成为业界共识。</p>
+</div>
+</div>
+
+  </div>
+<div class="comments-section">
+  <h3>💬 评论讨论</h3>
+  <p class="comments-intro">欢迎在这里分享您的想法和见解！</p>
+  
+  <script src="https://giscus.app/client.js"
+          data-repo="shenh10/papercache"
+          data-repo-id="REPLACE_WITH_ACTUAL_REPO_ID"
+          data-category="General"
+          data-category-id="REPLACE_WITH_ACTUAL_CATEGORY_ID"
+          data-mapping="pathname"
+          data-strict="0"
+          data-reactions-enabled="1"
+          data-emit-metadata="0"
+          data-input-position="bottom"
+          data-theme="light"
+          data-lang="zh-CN"
+          crossorigin="anonymous"
+          async>
+  </script>
+</div>
+
+<style>
+.comments-section {
+  margin: 3em 0 2em 0;
+  padding: 2em 0;
+  border-top: 2px solid #f0f0f0;
+}
+
+.comments-section h3 {
+  color: #2c3e50;
+  margin-bottom: 0.5em;
+  font-size: 1.3em;
+}
+
+.comments-intro {
+  color: #666;
+  font-size: 0.9em;
+  margin-bottom: 1.5em;
+  font-style: italic;
+}
+</style>
+
+<!-- 文章导航 -->
+  <div class="post-navigation"><div class="nav-previous">
+        <a href="/papercache/llm/engineering/attention/2023/07/30/flashattention-2-faster-attention-with-better-parallelism-and-work-partitioning.html" rel="prev">
+          ← FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning
+        </a>
+      </div><div class="nav-next">
+        <a href="/papercache/llm/engineering/inference/2023/08/30/sarathi-efficient-llm-inference-by-piggybacking-decodes-with-chunked-prefills.html" rel="next">
+          SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills →
+        </a>
+      </div></div>
+
+</article>
+
+<style>
+.post-meta {
+  color: #666;
+  font-size: 0.9em;
+  margin-bottom: 2em;
+}
+
+.category-tag {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  margin: 0 2px;
+}
+
+.tag {
+  background: #f5f5f5;
+  color: #666;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 0.75em;
+  margin: 0 3px;
+}
+
+.post-content {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+  line-height: 1.6;
+  color: #333;
+}
+
+.post-content h1, .post-content h2, .post-content h3 {
+  color: #2c3e50;
+  margin-top: 2em;
+}
+
+.post-content h1 {
+  border-bottom: 3px solid #3498db;
+  padding-bottom: 0.5em;
+}
+
+.post-content h2 {
+  border-left: 4px solid #3498db;
+  padding-left: 1em;
+}
+
+.post-content code {
+  background: #f8f9fa;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.post-content pre {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 1em;
+  overflow-x: auto;
+}
+
+.post-navigation {
+  display: flex;
+  justify-content: space-between;
+  margin: 3em 0 2em 0;
+  padding: 1em 0;
+  border-top: 1px solid #eee;
+}
+
+.nav-previous, .nav-next {
+  flex: 1;
+}
+
+.nav-next {
+  text-align: right;
+}
+
+.post-navigation a {
+  color: #666;
+  text-decoration: none;
+  padding: 0.5em 1em;
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.post-navigation a:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+</style>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrapper">
+      <div class="footer-content">
+        <div class="footer-col-1">
+          <h3>PaperCache"</h3>
+          <p>深度学习、机器学习和人工智能研究论文的精选缓存</p>
+        </div>
+        
+        <div class="footer-col-2">
+          <h3>链接</h3>
+          <ul>
+            <li><a href="https://github.com/shenh10/deepnotes">源代码仓库</a></li>
+            <li><a href="/papercache/feed.xml">RSS订阅</a></li>
+          </ul>
+        </div>
+        
+        <div class="footer-col-3">
+          <!-- 访问统计 -->
+          
+          <div class="site-stats">
+            <span id="busuanzi_container_site_pv" style="display:none">
+              总访问量 <span id="busuanzi_value_site_pv"></span> 次
+            </span>
+            <span id="busuanzi_container_site_uv" style="display:none">
+              访客数 <span id="busuanzi_value_site_uv"></span> 人
+            </span>
+          </div>
+          <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+          
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <p>&copy; 2025 shenh10. 
+           由 <a href="https://github.com/shenh10/deepnotes">Deep Notes</a> 自动生成</p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
