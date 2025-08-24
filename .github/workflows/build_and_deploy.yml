@@ -1,0 +1,41 @@
+name: Build and Deploy Jekyll Site
+
+on:
+  repository_dispatch:
+    types: [trigger-build]
+  workflow_dispatch:
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT }} # Use PAT to allow pushing to gh-pages
+          ref: main
+
+      - name: 🔄 Merge content updates
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git pull origin autoupdate --no-edit
+
+      - name: 💎 Setup Ruby and Bundler
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.1' # Specify your Ruby version
+          bundler-cache: true
+
+      - name: 🔨 Build the site
+        run: bundle exec jekyll build
+        env:
+          JEKYLL_ENV: production
+
+      - name: 🚀 Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./_site
+          # Optional: if you have a custom domain
+          # cname: your.domain.com
