@@ -18,7 +18,7 @@ title: 'GQA: Training Generalized Multi-Query Transformer Models from Multi-Head
 
 <div class="paper-content">
 <div class="container">
-<h1 id="gqa-training-generalized-multi-query-transformer-models-from-multi-head-checkpoints">GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints</h1>
+
 <p><strong>作者/机构</strong>: Joshua Ainslie∗, James Lee-Thorp∗, Michiel de Jong∗ Yury Zemlyanskiy, Federico Lebrón, Sumit Sanghai (Google Research)</p>
 <h3 id="a1">A1 主要贡献</h3>
 <p>自回归解码器的推理过程是Transformer模型的一个严重瓶颈，主要因为在每个解码步骤都需要加载解码器权重以及所有的注意力键（keys）和值（values），这带来了巨大的内存带宽开销【Shazeer, 2019, Fast transformer decoding: One write-head is all you need, arXiv preprint】。多查询注意力（Multi-query attention, MQA）通过使用多个查询头（query heads）但共享单一的键和值头，可以显著减少加载键和值所带来的内存带宽。然而，MQA可能会导致模型质量下降和训练不稳定，并且为追求更快的推理速度而专门训练一个独立的模型在实践中可能并不可行。此外，尽管像PaLM【Chowdhery et al., 2022, Palm: Scaling language modeling with pathways】这样的一些语言模型已经采用了MQA，但许多公开可用的模型，如T5【Raffel et al., 2020, Exploring the limits of transfer learning with a unified text-to-text transformer, JMLR】和LLaMA【Touvron et al., 2023, Llama: Open and efficient foundation language models】，仍然使用多头注意力（Multi-head attention, MHA）。</p>

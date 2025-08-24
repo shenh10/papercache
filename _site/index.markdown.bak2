@@ -1,65 +1,54 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-
-<head>
+<html lang="en"><head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
-<title>PaperCache - 我的Paper收藏自留地 | PaperCache”</title>
+<title>PaperCache - 我的Paper收藏自留地 | PaperCache</title>
 <meta name="generator" content="Jekyll v4.3.4" />
 <meta property="og:title" content="PaperCache - 我的Paper收藏自留地" />
 <meta name="author" content="shenh10" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="LLM 驱动的 Paper 笔记。" />
 <meta property="og:description" content="LLM 驱动的 Paper 笔记。" />
-<link rel="canonical" href="https://shenh10.github.io/papercache/index.markdown.bak2" />
-<meta property="og:url" content="https://shenh10.github.io/papercache/index.markdown.bak2" />
-<meta property="og:site_name" content="PaperCache”" />
+<link rel="canonical" href="http://localhost:4000/papercache/index.markdown.bak2" />
+<meta property="og:url" content="http://localhost:4000/papercache/index.markdown.bak2" />
+<meta property="og:site_name" content="PaperCache" />
 <meta property="og:type" content="website" />
 <meta name="twitter:card" content="summary" />
 <meta property="twitter:title" content="PaperCache - 我的Paper收藏自留地" />
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","author":{"@type":"Person","name":"shenh10"},"description":"LLM 驱动的 Paper 笔记。","headline":"PaperCache - 我的Paper收藏自留地","url":"https://shenh10.github.io/papercache/index.markdown.bak2"}</script>
+{"@context":"https://schema.org","@type":"WebPage","author":{"@type":"Person","name":"shenh10"},"description":"LLM 驱动的 Paper 笔记。","headline":"PaperCache - 我的Paper收藏自留地","url":"http://localhost:4000/papercache/index.markdown.bak2"}</script>
 <!-- End Jekyll SEO tag -->
-<link rel="stylesheet" href="/papercache/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://shenh10.github.io/papercache/feed.xml" title="PaperCache&quot;" /><!-- MathJax 数学公式支持 -->
-  
+<link rel="stylesheet" href="/papercache/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/papercache/feed.xml" title="PaperCache" /><!-- MathJax 3 Configuration -->
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\\[','\\]']]
+      },
+      svg: {
+        fontCache: 'global'
+      }
+    };
+  </script>
+  <script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+  </script>
 
-  <!-- 统计代码 -->
-  <!-- Google Analytics 4 -->
-
-<script async src="https://www.googletagmanager.com/gtag/js?id=REPLACE_WITH_GA_ID"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'REPLACE_WITH_GA_ID');
-</script>
-
-
-<!-- Plausible Analytics -->
-
-
-<!-- Umami Analytics -->
-
-
-</head>
-
-<body>
-  <header class="site-header">
-    <div class="wrapper">
-      <a class="site-title" rel="author" href="/papercache/">PaperCache&quot;</a>
-      
-      <nav class="site-nav">
-        <a href="/papercache/">首页</a>
-        <a href="/papercache/about/">关于</a>
-        <a href="https://github.com/shenh10/deepnotes" target="_blank">源代码</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="page-content" aria-label="Content">
-    <div class="wrapper">
-      <article class="post">
+</head><body><header class="site-header">
+  <div class="wrapper">
+    <a class="site-title" rel="author" href="/papercache/">PaperCache</a>
+    <nav class="site-nav">
+      <div class="trigger">
+        <a class="page-link" href="/papercache/">主页</a>
+        <a class="page-link" href="/papercache/collection.html">论文合集</a>
+        <a class="page-link" href="/papercache/about/">关于</a>
+      </div>
+    </nav>
+  </div>
+</header><main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post">
 
   <header class="post-header">
     <h1 class="post-title">PaperCache - 我的Paper收藏自留地</h1>
@@ -192,47 +181,7 @@
 
 </article>
 
-    </div>
-  </main>
-
-  <footer class="site-footer">
-    <div class="wrapper">
-      <div class="footer-content">
-        <div class="footer-col-1">
-          <h3>PaperCache"</h3>
-          <p>深度学习、机器学习和人工智能研究论文的精选缓存</p>
-        </div>
-        
-        <div class="footer-col-2">
-          <h3>链接</h3>
-          <ul>
-            <li><a href="https://github.com/shenh10/deepnotes">源代码仓库</a></li>
-            <li><a href="/papercache/feed.xml">RSS订阅</a></li>
-          </ul>
-        </div>
-        
-        <div class="footer-col-3">
-          <!-- 访问统计 -->
-          
-          <div class="site-stats">
-            <span id="busuanzi_container_site_pv" style="display:none">
-              总访问量 <span id="busuanzi_value_site_pv"></span> 次
-            </span>
-            <span id="busuanzi_container_site_uv" style="display:none">
-              访客数 <span id="busuanzi_value_site_uv"></span> 人
-            </span>
-          </div>
-          <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-          
-        </div>
       </div>
-      
-      <div class="footer-bottom">
-        <p>&copy; 2025 shenh10. 
-           由 <a href="https://github.com/shenh10/deepnotes">Deep Notes</a> 自动生成</p>
-      </div>
-    </div>
-  </footer>
+    </main></body>
 
-</body>
 </html>

@@ -15,7 +15,7 @@ title: 'Mirage: A Multi-Level Superoptimizer for Tensor Programs'
 
 <div class="paper-content">
 <div class="container">
-<h1 id="mirage-a-multi-level-superoptimizer-for-tensor-programs">Mirage: A Multi-Level Superoptimizer for Tensor Programs</h1>
+
 <p><strong>作者/机构</strong>: Mengdi Wu, Xinhao Cheng, Shengyu Liu†, Chunan Shi†, Jianan Ji, Man Kit Ao, Praveen Velliengiri‡, Xupeng Miao♯, Oded Padon⋄, Zhihao Jia (卡内基梅隆大学, 北京大学†, 宾夕法尼亚州立大学‡, 普渡大学♯, 魏茨曼科学研究所⋄)</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文介绍了一种名为Mirage的多级张量程序超级优化器。当前用于深度神经网络（DNN）的框架，如PyTorch和TensorFlow，通常依赖手动设计的规则将张量程序映射到专家编写的GPU核函数，这不仅需要大量的工程努力，还可能错失优化机会。为解决此问题，自动化方法应运而生，主要分为两类：第一类是基于调度（schedule）的优化器（如Halide, TVM, Ansor），它们在固定算法下搜索最优的执行方案，但无法探索数学上等价的不同算法；第二类是基于代数变换（algebraic transformation）的优化器（如TASO, PET），它们利用数学等价性在算法层面重组或融合算子，但受限于预先提供的核函数实现性能。</p>

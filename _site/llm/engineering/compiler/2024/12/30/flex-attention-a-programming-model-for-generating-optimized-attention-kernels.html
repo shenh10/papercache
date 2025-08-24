@@ -1,92 +1,67 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-
-<head>
+<html lang="en"><head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
-<title>FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS | PaperCache”</title>
+<title>FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS | PaperCache</title>
 <meta name="generator" content="Jekyll v4.3.4" />
 <meta property="og:title" content="FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS" />
 <meta name="author" content="shenh10" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS - 研究论文解读与笔记" />
 <meta property="og:description" content="FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS - 研究论文解读与笔记" />
-<link rel="canonical" href="https://shenh10.github.io/papercache/llm/engineering/compiler/2024/12/30/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html" />
-<meta property="og:url" content="https://shenh10.github.io/papercache/llm/engineering/compiler/2024/12/30/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html" />
-<meta property="og:site_name" content="PaperCache”" />
+<link rel="canonical" href="http://localhost:4000/papercache/llm/engineering/compiler/2024/12/30/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html" />
+<meta property="og:url" content="http://localhost:4000/papercache/llm/engineering/compiler/2024/12/30/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html" />
+<meta property="og:site_name" content="PaperCache" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2024-12-30T00:00:00+08:00" />
 <meta name="twitter:card" content="summary" />
 <meta property="twitter:title" content="FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS" />
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"shenh10"},"dateModified":"2024-12-30T00:00:00+08:00","datePublished":"2024-12-30T00:00:00+08:00","description":"FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS - 研究论文解读与笔记","headline":"FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS","mainEntityOfPage":{"@type":"WebPage","@id":"https://shenh10.github.io/papercache/llm/engineering/compiler/2024/12/30/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html"},"url":"https://shenh10.github.io/papercache/llm/engineering/compiler/2024/12/30/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html"}</script>
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"shenh10"},"dateModified":"2024-12-30T00:00:00+08:00","datePublished":"2024-12-30T00:00:00+08:00","description":"FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS - 研究论文解读与笔记","headline":"FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/papercache/llm/engineering/compiler/2024/12/30/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html"},"url":"http://localhost:4000/papercache/llm/engineering/compiler/2024/12/30/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html"}</script>
 <!-- End Jekyll SEO tag -->
-<link rel="stylesheet" href="/papercache/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://shenh10.github.io/papercache/feed.xml" title="PaperCache&quot;" /><!-- MathJax 数学公式支持 -->
-  
+<link rel="stylesheet" href="/papercache/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/papercache/feed.xml" title="PaperCache" /><!-- MathJax 3 Configuration -->
   <script>
     window.MathJax = {
       tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        processEscapes: true
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\\[','\\]']]
+      },
+      svg: {
+        fontCache: 'global'
       }
     };
   </script>
-  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-  
+  <script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+  </script>
 
-  <!-- 统计代码 -->
-  <!-- Google Analytics 4 -->
-
-<script async src="https://www.googletagmanager.com/gtag/js?id=REPLACE_WITH_GA_ID"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'REPLACE_WITH_GA_ID');
-</script>
-
-
-<!-- Plausible Analytics -->
-
-
-<!-- Umami Analytics -->
-
-
-</head>
-
-<body>
-  <header class="site-header">
-    <div class="wrapper">
-      <a class="site-title" rel="author" href="/papercache/">PaperCache&quot;</a>
-      
-      <nav class="site-nav">
-        <a href="/papercache/">首页</a>
-        <a href="/papercache/about/">关于</a>
-        <a href="https://github.com/shenh10/deepnotes" target="_blank">源代码</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="page-content" aria-label="Content">
-    <div class="wrapper">
-      <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+</head><body><header class="site-header">
+  <div class="wrapper">
+    <a class="site-title" rel="author" href="/papercache/">PaperCache</a>
+    <nav class="site-nav">
+      <div class="trigger">
+        <a class="page-link" href="/papercache/">主页</a>
+        <a class="page-link" href="/papercache/collection.html">论文合集</a>
+        <a class="page-link" href="/papercache/about/">关于</a>
+      </div>
+    </nav>
+  </div>
+</header><main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
 
   <header class="post-header">
     <h1 class="post-title p-name" itemprop="name headline">FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS</h1>
     <p class="post-meta">
-      <time class="dt-published" datetime="2024-12-30T00:00:00+08:00" itemprop="datePublished">
-        2024年12月30日
-      </time>• <span itemprop="author" itemscope itemtype="http://schema.org/Person">
-            <span class="p-author h-card" itemprop="name">shenh10</span>
-          </span><br>分类:<span class="category-tag">llm</span>,<span class="category-tag">engineering</span>,<span class="category-tag">compiler</span></p>
+      <time class="dt-published" datetime="2024-12-30T00:00:00+08:00" itemprop="datePublished">Dec 30, 2024
+      </time>• <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span class="p-author h-card" itemprop="name">shenh10</span></span></p>
   </header>
 
   <div class="post-content e-content" itemprop="articleBody">
     <div class="paper-content">
 <div class="container">
-<h1 id="flex-attention-a-programming-model-for-generating-optimized-attention-kernels">FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS</h1>
+
 <p><strong>文章作者</strong>: Juechu Dong, Boyuan Feng, Driss Guessous, Yanbo Liang, Horace He</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决当前深度学习中注意力机制优化所面临的一个核心问题：高性能的注意力核（如FlashAttention）虽然效率极高，但其单一固化的设计（monolithic nature）导致其灵活性不足，难以支持研究人员提出的各种新型注意力变体。这造成了一种“软件彩票”（software lottery）现象，即如果一个新的注意力变体不被现有核所支持，其进一步的研究和应用将受到缓慢运行时间和内存限制的严重阻碍。此外，传统的编译器方法难以自动生成高效的融合注意力核，因为这涉及到复杂的代数重写和对块稀疏性的处理。</p>
@@ -316,151 +291,10 @@
 }
 </style>
 
-<!-- 文章导航 -->
-  <div class="post-navigation"><div class="nav-previous">
-        <a href="/papercache/llm/algorithm/models/2024/12/30/deepseek-v3-technical-report.html" rel="prev">
-          ← DeepSeek-V3 Technical Report
-        </a>
-      </div><div class="nav-next">
-        <a href="/papercache/llm/algorithm/models/2025/01/30/kimi-k15-scaling-reinforcement-learning-with-llms.html" rel="next">
-          KIMI K1.5: SCALING REINFORCEMENT LEARNING WITH LLMS →
-        </a>
-      </div></div>
 
+<a class="u-url" href="/papercache/llm/engineering/compiler/2024/12/30/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html" hidden></a>
 </article>
-
-<style>
-.post-meta {
-  color: #666;
-  font-size: 0.9em;
-  margin-bottom: 2em;
-}
-
-.category-tag {
-  background: #e3f2fd;
-  color: #1976d2;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.8em;
-  margin: 0 2px;
-}
-
-.tag {
-  background: #f5f5f5;
-  color: #666;
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-size: 0.75em;
-  margin: 0 3px;
-}
-
-.post-content {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
-  line-height: 1.6;
-  color: #333;
-}
-
-.post-content h1, .post-content h2, .post-content h3 {
-  color: #2c3e50;
-  margin-top: 2em;
-}
-
-.post-content h1 {
-  border-bottom: 3px solid #3498db;
-  padding-bottom: 0.5em;
-}
-
-.post-content h2 {
-  border-left: 4px solid #3498db;
-  padding-left: 1em;
-}
-
-.post-content code {
-  background: #f8f9fa;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-size: 0.9em;
-}
-
-.post-content pre {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  padding: 1em;
-  overflow-x: auto;
-}
-
-.post-navigation {
-  display: flex;
-  justify-content: space-between;
-  margin: 3em 0 2em 0;
-  padding: 1em 0;
-  border-top: 1px solid #eee;
-}
-
-.nav-previous, .nav-next {
-  flex: 1;
-}
-
-.nav-next {
-  text-align: right;
-}
-
-.post-navigation a {
-  color: #666;
-  text-decoration: none;
-  padding: 0.5em 1em;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-}
-
-.post-navigation a:hover {
-  background: #f5f5f5;
-  color: #333;
-}
-</style>
-
-    </div>
-  </main>
-
-  <footer class="site-footer">
-    <div class="wrapper">
-      <div class="footer-content">
-        <div class="footer-col-1">
-          <h3>PaperCache"</h3>
-          <p>深度学习、机器学习和人工智能研究论文的精选缓存</p>
-        </div>
-        
-        <div class="footer-col-2">
-          <h3>链接</h3>
-          <ul>
-            <li><a href="https://github.com/shenh10/deepnotes">源代码仓库</a></li>
-            <li><a href="/papercache/feed.xml">RSS订阅</a></li>
-          </ul>
-        </div>
-        
-        <div class="footer-col-3">
-          <!-- 访问统计 -->
-          
-          <div class="site-stats">
-            <span id="busuanzi_container_site_pv" style="display:none">
-              总访问量 <span id="busuanzi_value_site_pv"></span> 次
-            </span>
-            <span id="busuanzi_container_site_uv" style="display:none">
-              访客数 <span id="busuanzi_value_site_uv"></span> 人
-            </span>
-          </div>
-          <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-          
-        </div>
       </div>
-      
-      <div class="footer-bottom">
-        <p>&copy; 2025 shenh10. 
-           由 <a href="https://github.com/shenh10/deepnotes">Deep Notes</a> 自动生成</p>
-      </div>
-    </div>
-  </footer>
+    </main></body>
 
-</body>
 </html>

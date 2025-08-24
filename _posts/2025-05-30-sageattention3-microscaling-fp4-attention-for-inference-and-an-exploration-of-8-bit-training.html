@@ -19,7 +19,7 @@ title: 'SageAttention3: Microscaling FP4 Attention for Inference and An Explorat
 
 <div class="paper-content">
 <div class="container">
-<h1 id="sageattention3-microscaling-fp4-attention-for-inference-and-an-exploration-of-8-bit-training">SageAttention3: Microscaling FP4 Attention for Inference and An Exploration of 8-bit Training</h1>
+
 <p><strong>作者/机构</strong>: Jintao Zhang∗, Jia Wei∗, Pengle Zhang, Xiaoming Xu, Haofeng Huang, Haoxu Wang, Kai Jiang, Jun Zhu, Jianfei Chen, 清华大学 {zhang-jt24@mails., jianfeic@, dcszj@}tsinghua.edu.cn</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p><strong>研究动机</strong>: Attention机制的效率对于生成模型至关重要，特别是其二次时间复杂度在处理长序列时成为瓶颈。量化是利用GPU中低比特张量核心（Tensor Cores）加速推理的有效方法。NVIDIA Blackwell GPU中新的FP4 Tensor Cores相比FP16提供了显著的性能提升。因此，本文旨在提出一种新颖的FP4 Attention实现，为推理加速提供即插即用的兼容性。此外，训练效率同样重要，但以往工作未曾探索过用于训练大型模型的低比特Attention。为填补这一空白，本文设计了一种可训练的8-bit Attention，以探究其在训练任务中的可行性。</p>

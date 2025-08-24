@@ -1,92 +1,67 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-
-<head>
+<html lang="en"><head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
-<title>Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures | PaperCache”</title>
+<title>Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures | PaperCache</title>
 <meta name="generator" content="Jekyll v4.3.4" />
 <meta property="og:title" content="Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures" />
 <meta name="author" content="shenh10" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures - 研究论文解读与笔记" />
 <meta property="og:description" content="Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures - 研究论文解读与笔记" />
-<link rel="canonical" href="https://shenh10.github.io/papercache/llm/engineering/inference/2025/05/30/insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures.html" />
-<meta property="og:url" content="https://shenh10.github.io/papercache/llm/engineering/inference/2025/05/30/insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures.html" />
-<meta property="og:site_name" content="PaperCache”" />
+<link rel="canonical" href="http://localhost:4000/papercache/llm/engineering/inference/2025/05/30/insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures.html" />
+<meta property="og:url" content="http://localhost:4000/papercache/llm/engineering/inference/2025/05/30/insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures.html" />
+<meta property="og:site_name" content="PaperCache" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2025-05-30T00:00:00+08:00" />
 <meta name="twitter:card" content="summary" />
 <meta property="twitter:title" content="Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures" />
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"shenh10"},"dateModified":"2025-05-30T00:00:00+08:00","datePublished":"2025-05-30T00:00:00+08:00","description":"Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures - 研究论文解读与笔记","headline":"Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures","mainEntityOfPage":{"@type":"WebPage","@id":"https://shenh10.github.io/papercache/llm/engineering/inference/2025/05/30/insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures.html"},"url":"https://shenh10.github.io/papercache/llm/engineering/inference/2025/05/30/insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures.html"}</script>
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"shenh10"},"dateModified":"2025-05-30T00:00:00+08:00","datePublished":"2025-05-30T00:00:00+08:00","description":"Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures - 研究论文解读与笔记","headline":"Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/papercache/llm/engineering/inference/2025/05/30/insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures.html"},"url":"http://localhost:4000/papercache/llm/engineering/inference/2025/05/30/insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures.html"}</script>
 <!-- End Jekyll SEO tag -->
-<link rel="stylesheet" href="/papercache/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://shenh10.github.io/papercache/feed.xml" title="PaperCache&quot;" /><!-- MathJax 数学公式支持 -->
-  
+<link rel="stylesheet" href="/papercache/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/papercache/feed.xml" title="PaperCache" /><!-- MathJax 3 Configuration -->
   <script>
     window.MathJax = {
       tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        processEscapes: true
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\\[','\\]']]
+      },
+      svg: {
+        fontCache: 'global'
       }
     };
   </script>
-  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-  
+  <script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+  </script>
 
-  <!-- 统计代码 -->
-  <!-- Google Analytics 4 -->
-
-<script async src="https://www.googletagmanager.com/gtag/js?id=REPLACE_WITH_GA_ID"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'REPLACE_WITH_GA_ID');
-</script>
-
-
-<!-- Plausible Analytics -->
-
-
-<!-- Umami Analytics -->
-
-
-</head>
-
-<body>
-  <header class="site-header">
-    <div class="wrapper">
-      <a class="site-title" rel="author" href="/papercache/">PaperCache&quot;</a>
-      
-      <nav class="site-nav">
-        <a href="/papercache/">首页</a>
-        <a href="/papercache/about/">关于</a>
-        <a href="https://github.com/shenh10/deepnotes" target="_blank">源代码</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="page-content" aria-label="Content">
-    <div class="wrapper">
-      <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+</head><body><header class="site-header">
+  <div class="wrapper">
+    <a class="site-title" rel="author" href="/papercache/">PaperCache</a>
+    <nav class="site-nav">
+      <div class="trigger">
+        <a class="page-link" href="/papercache/">主页</a>
+        <a class="page-link" href="/papercache/collection.html">论文合集</a>
+        <a class="page-link" href="/papercache/about/">关于</a>
+      </div>
+    </nav>
+  </div>
+</header><main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
 
   <header class="post-header">
     <h1 class="post-title p-name" itemprop="name headline">Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures</h1>
     <p class="post-meta">
-      <time class="dt-published" datetime="2025-05-30T00:00:00+08:00" itemprop="datePublished">
-        2025年05月30日
-      </time>• <span itemprop="author" itemscope itemtype="http://schema.org/Person">
-            <span class="p-author h-card" itemprop="name">shenh10</span>
-          </span><br>分类:<span class="category-tag">llm</span>,<span class="category-tag">engineering</span>,<span class="category-tag">inference</span><br>标签:<span class="tag">#model-inference</span><span class="tag">#optimization</span></p>
+      <time class="dt-published" datetime="2025-05-30T00:00:00+08:00" itemprop="datePublished">May 30, 2025
+      </time>• <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span class="p-author h-card" itemprop="name">shenh10</span></span></p>
   </header>
 
   <div class="post-content e-content" itemprop="articleBody">
     <div class="paper-content">
 <div class="container">
-<h1 id="insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures">Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures</h1>
+
 <p>Chenggang Zhao, Chengqi Deng, Chong Ruan, Damai Dai, Huazuo Gao, Jiashi Li, Liyue Zhang, Panpan Huang, Shangyan Zhou, Shirong Ma, Wenfeng Liang, Ying He, Yuqing Wang, Yuxuan Liu, Y.X. Wei DeepSeek-AI Beijing, China</p>
 <h2 id="_1">主要贡献</h2>
 <p>本文探讨了大型语言模型（LLMs）在快速扩展过程中暴露出的当前硬件架构的关键限制，包括内存容量、计算效率和互连带宽的约束。DeepSeek-V3模型在2048个NVIDIA H800 GPU上训练，展示了硬件感知模型协同设计如何有效应对这些挑战，实现大规模的成本高效训练和推理。本文深入分析了DeepSeek-V3/R1模型架构及其AI基础设施，突出了关键创新，如多头潜在注意力（MLA）用于提升内存效率、专家混合（MoE）架构用于优化计算-通信权衡、FP8混合精度训练以释放硬件全部潜力，以及多平面网络拓扑以最小化集群级网络开销。基于DeepSeek-V3开发过程中遇到的硬件瓶颈，本文与学术界和工业界同行展开更广泛讨论，探讨未来硬件方向，包括精确低精度计算单元、向上扩展和向外扩展的融合，以及低延迟通信结构的创新。这些洞见强调了硬件和模型协同设计在满足AI工作负载不断升级需求中的关键作用，为下一代AI系统的创新提供了实用蓝图。</p>
@@ -404,151 +379,10 @@
 }
 </style>
 
-<!-- 文章导航 -->
-  <div class="post-navigation"><div class="nav-previous">
-        <a href="/papercache/llm/algorithm/agent/2025/05/30/a-survey-on-test-time-scaling-in-large-language-models-what-how-where-and-how-well.html" rel="prev">
-          ← A Survey on Test-Time Scaling in Large Language Models: What, How, Where, and How Well
-        </a>
-      </div><div class="nav-next">
-        <a href="/papercache/llm/engineering/inference/2025/05/30/recipes-for-pre-training-llms-with-mxfp8.html" rel="next">
-          Recipes for Pre-training LLMs with MXFP8 →
-        </a>
-      </div></div>
 
+<a class="u-url" href="/papercache/llm/engineering/inference/2025/05/30/insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures.html" hidden></a>
 </article>
-
-<style>
-.post-meta {
-  color: #666;
-  font-size: 0.9em;
-  margin-bottom: 2em;
-}
-
-.category-tag {
-  background: #e3f2fd;
-  color: #1976d2;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.8em;
-  margin: 0 2px;
-}
-
-.tag {
-  background: #f5f5f5;
-  color: #666;
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-size: 0.75em;
-  margin: 0 3px;
-}
-
-.post-content {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
-  line-height: 1.6;
-  color: #333;
-}
-
-.post-content h1, .post-content h2, .post-content h3 {
-  color: #2c3e50;
-  margin-top: 2em;
-}
-
-.post-content h1 {
-  border-bottom: 3px solid #3498db;
-  padding-bottom: 0.5em;
-}
-
-.post-content h2 {
-  border-left: 4px solid #3498db;
-  padding-left: 1em;
-}
-
-.post-content code {
-  background: #f8f9fa;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-size: 0.9em;
-}
-
-.post-content pre {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  padding: 1em;
-  overflow-x: auto;
-}
-
-.post-navigation {
-  display: flex;
-  justify-content: space-between;
-  margin: 3em 0 2em 0;
-  padding: 1em 0;
-  border-top: 1px solid #eee;
-}
-
-.nav-previous, .nav-next {
-  flex: 1;
-}
-
-.nav-next {
-  text-align: right;
-}
-
-.post-navigation a {
-  color: #666;
-  text-decoration: none;
-  padding: 0.5em 1em;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-}
-
-.post-navigation a:hover {
-  background: #f5f5f5;
-  color: #333;
-}
-</style>
-
-    </div>
-  </main>
-
-  <footer class="site-footer">
-    <div class="wrapper">
-      <div class="footer-content">
-        <div class="footer-col-1">
-          <h3>PaperCache"</h3>
-          <p>深度学习、机器学习和人工智能研究论文的精选缓存</p>
-        </div>
-        
-        <div class="footer-col-2">
-          <h3>链接</h3>
-          <ul>
-            <li><a href="https://github.com/shenh10/deepnotes">源代码仓库</a></li>
-            <li><a href="/papercache/feed.xml">RSS订阅</a></li>
-          </ul>
-        </div>
-        
-        <div class="footer-col-3">
-          <!-- 访问统计 -->
-          
-          <div class="site-stats">
-            <span id="busuanzi_container_site_pv" style="display:none">
-              总访问量 <span id="busuanzi_value_site_pv"></span> 次
-            </span>
-            <span id="busuanzi_container_site_uv" style="display:none">
-              访客数 <span id="busuanzi_value_site_uv"></span> 人
-            </span>
-          </div>
-          <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-          
-        </div>
       </div>
-      
-      <div class="footer-bottom">
-        <p>&copy; 2025 shenh10. 
-           由 <a href="https://github.com/shenh10/deepnotes">Deep Notes</a> 自动生成</p>
-      </div>
-    </div>
-  </footer>
+    </main></body>
 
-</body>
 </html>

@@ -1,92 +1,67 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
-
-<head>
+<html lang="en"><head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
-<title>An In-Depth Analysis of the Slingshot Interconnect | PaperCache”</title>
+<title>An In-Depth Analysis of the Slingshot Interconnect | PaperCache</title>
 <meta name="generator" content="Jekyll v4.3.4" />
 <meta property="og:title" content="An In-Depth Analysis of the Slingshot Interconnect" />
 <meta name="author" content="shenh10" />
 <meta property="og:locale" content="en_US" />
 <meta name="description" content="An In-Depth Analysis of the Slingshot Interconnect - 研究论文解读与笔记" />
 <meta property="og:description" content="An In-Depth Analysis of the Slingshot Interconnect - 研究论文解读与笔记" />
-<link rel="canonical" href="https://shenh10.github.io/papercache/mlsys/networking/2020/08/30/an-in-depth-analysis-of-the-slingshot-interconnect.html" />
-<meta property="og:url" content="https://shenh10.github.io/papercache/mlsys/networking/2020/08/30/an-in-depth-analysis-of-the-slingshot-interconnect.html" />
-<meta property="og:site_name" content="PaperCache”" />
+<link rel="canonical" href="http://localhost:4000/papercache/mlsys/networking/2020/08/30/an-in-depth-analysis-of-the-slingshot-interconnect.html" />
+<meta property="og:url" content="http://localhost:4000/papercache/mlsys/networking/2020/08/30/an-in-depth-analysis-of-the-slingshot-interconnect.html" />
+<meta property="og:site_name" content="PaperCache" />
 <meta property="og:type" content="article" />
 <meta property="article:published_time" content="2020-08-30T00:00:00+08:00" />
 <meta name="twitter:card" content="summary" />
 <meta property="twitter:title" content="An In-Depth Analysis of the Slingshot Interconnect" />
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"shenh10"},"dateModified":"2020-08-30T00:00:00+08:00","datePublished":"2020-08-30T00:00:00+08:00","description":"An In-Depth Analysis of the Slingshot Interconnect - 研究论文解读与笔记","headline":"An In-Depth Analysis of the Slingshot Interconnect","mainEntityOfPage":{"@type":"WebPage","@id":"https://shenh10.github.io/papercache/mlsys/networking/2020/08/30/an-in-depth-analysis-of-the-slingshot-interconnect.html"},"url":"https://shenh10.github.io/papercache/mlsys/networking/2020/08/30/an-in-depth-analysis-of-the-slingshot-interconnect.html"}</script>
+{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"shenh10"},"dateModified":"2020-08-30T00:00:00+08:00","datePublished":"2020-08-30T00:00:00+08:00","description":"An In-Depth Analysis of the Slingshot Interconnect - 研究论文解读与笔记","headline":"An In-Depth Analysis of the Slingshot Interconnect","mainEntityOfPage":{"@type":"WebPage","@id":"http://localhost:4000/papercache/mlsys/networking/2020/08/30/an-in-depth-analysis-of-the-slingshot-interconnect.html"},"url":"http://localhost:4000/papercache/mlsys/networking/2020/08/30/an-in-depth-analysis-of-the-slingshot-interconnect.html"}</script>
 <!-- End Jekyll SEO tag -->
-<link rel="stylesheet" href="/papercache/assets/main.css"><link type="application/atom+xml" rel="alternate" href="https://shenh10.github.io/papercache/feed.xml" title="PaperCache&quot;" /><!-- MathJax 数学公式支持 -->
-  
+<link rel="stylesheet" href="/papercache/assets/main.css"><link type="application/atom+xml" rel="alternate" href="http://localhost:4000/papercache/feed.xml" title="PaperCache" /><!-- MathJax 3 Configuration -->
   <script>
     window.MathJax = {
       tex: {
-        inlineMath: [['$', '$'], ['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']],
-        processEscapes: true
+        inlineMath: [['$','$'], ['\\(','\\)']],
+        displayMath: [['$$','$$'], ['\\[','\\]']]
+      },
+      svg: {
+        fontCache: 'global'
       }
     };
   </script>
-  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-  
+  <script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+  </script>
 
-  <!-- 统计代码 -->
-  <!-- Google Analytics 4 -->
-
-<script async src="https://www.googletagmanager.com/gtag/js?id=REPLACE_WITH_GA_ID"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'REPLACE_WITH_GA_ID');
-</script>
-
-
-<!-- Plausible Analytics -->
-
-
-<!-- Umami Analytics -->
-
-
-</head>
-
-<body>
-  <header class="site-header">
-    <div class="wrapper">
-      <a class="site-title" rel="author" href="/papercache/">PaperCache&quot;</a>
-      
-      <nav class="site-nav">
-        <a href="/papercache/">首页</a>
-        <a href="/papercache/about/">关于</a>
-        <a href="https://github.com/shenh10/deepnotes" target="_blank">源代码</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="page-content" aria-label="Content">
-    <div class="wrapper">
-      <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+</head><body><header class="site-header">
+  <div class="wrapper">
+    <a class="site-title" rel="author" href="/papercache/">PaperCache</a>
+    <nav class="site-nav">
+      <div class="trigger">
+        <a class="page-link" href="/papercache/">主页</a>
+        <a class="page-link" href="/papercache/collection.html">论文合集</a>
+        <a class="page-link" href="/papercache/about/">关于</a>
+      </div>
+    </nav>
+  </div>
+</header><main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
 
   <header class="post-header">
     <h1 class="post-title p-name" itemprop="name headline">An In-Depth Analysis of the Slingshot Interconnect</h1>
     <p class="post-meta">
-      <time class="dt-published" datetime="2020-08-30T00:00:00+08:00" itemprop="datePublished">
-        2020年08月30日
-      </time>• <span itemprop="author" itemscope itemtype="http://schema.org/Person">
-            <span class="p-author h-card" itemprop="name">shenh10</span>
-          </span><br>分类:<span class="category-tag">mlsys</span>,<span class="category-tag">networking</span></p>
+      <time class="dt-published" datetime="2020-08-30T00:00:00+08:00" itemprop="datePublished">Aug 30, 2020
+      </time>• <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span class="p-author h-card" itemprop="name">shenh10</span></span></p>
   </header>
 
   <div class="post-content e-content" itemprop="articleBody">
     <div class="paper-content">
 <div class="container">
-<h1 id="an-in-depth-analysis-of-the-slingshot-interconnect">An In-Depth Analysis of the Slingshot Interconnect</h1>
+
 <p><strong>作者/机构</strong>: Daniele De Sensi (ETH Zurich), Kim H. McMahon (Hewlett Packard Enterprise), Salvatore Di Girolamo (ETH Zurich), Duncan Roweth (Hewlett Packard Enterprise), Torsten Hoefler (ETH Zurich)</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文深入分析了为大规模计算系统设计的 Slingshot 互连网络。随着系统规模的扩大，互连网络对应用性能的影响日益关键，特别是在高性能计算（HPC）领域，通信密集型应用的性能远低于计算密集型应用。为了应对 HPC、数据中心和 AI/ML 工作负载融合带来的挑战，Slingshot 旨在解决以下核心问题：<br/>
@@ -435,151 +410,10 @@
 }
 </style>
 
-<!-- 文章导航 -->
-  <div class="post-navigation"><div class="nav-previous">
-        <a href="/papercache/llm/engineering/attention/2020/06/30/transformers-are-rnns-fast-autoregressive-transformers-with-linear-attention.html" rel="prev">
-          ← Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention
-        </a>
-      </div><div class="nav-next">
-        <a href="/papercache/llm/engineering/training/2021/01/30/zero-offload-democratizing-billion-scale-model-training.html" rel="next">
-          ZeRO-Offload: Democratizing Billion-Scale Model Training →
-        </a>
-      </div></div>
 
+<a class="u-url" href="/papercache/mlsys/networking/2020/08/30/an-in-depth-analysis-of-the-slingshot-interconnect.html" hidden></a>
 </article>
-
-<style>
-.post-meta {
-  color: #666;
-  font-size: 0.9em;
-  margin-bottom: 2em;
-}
-
-.category-tag {
-  background: #e3f2fd;
-  color: #1976d2;
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.8em;
-  margin: 0 2px;
-}
-
-.tag {
-  background: #f5f5f5;
-  color: #666;
-  padding: 2px 6px;
-  border-radius: 10px;
-  font-size: 0.75em;
-  margin: 0 3px;
-}
-
-.post-content {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
-  line-height: 1.6;
-  color: #333;
-}
-
-.post-content h1, .post-content h2, .post-content h3 {
-  color: #2c3e50;
-  margin-top: 2em;
-}
-
-.post-content h1 {
-  border-bottom: 3px solid #3498db;
-  padding-bottom: 0.5em;
-}
-
-.post-content h2 {
-  border-left: 4px solid #3498db;
-  padding-left: 1em;
-}
-
-.post-content code {
-  background: #f8f9fa;
-  padding: 2px 4px;
-  border-radius: 3px;
-  font-size: 0.9em;
-}
-
-.post-content pre {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 6px;
-  padding: 1em;
-  overflow-x: auto;
-}
-
-.post-navigation {
-  display: flex;
-  justify-content: space-between;
-  margin: 3em 0 2em 0;
-  padding: 1em 0;
-  border-top: 1px solid #eee;
-}
-
-.nav-previous, .nav-next {
-  flex: 1;
-}
-
-.nav-next {
-  text-align: right;
-}
-
-.post-navigation a {
-  color: #666;
-  text-decoration: none;
-  padding: 0.5em 1em;
-  border-radius: 6px;
-  transition: all 0.3s ease;
-}
-
-.post-navigation a:hover {
-  background: #f5f5f5;
-  color: #333;
-}
-</style>
-
-    </div>
-  </main>
-
-  <footer class="site-footer">
-    <div class="wrapper">
-      <div class="footer-content">
-        <div class="footer-col-1">
-          <h3>PaperCache"</h3>
-          <p>深度学习、机器学习和人工智能研究论文的精选缓存</p>
-        </div>
-        
-        <div class="footer-col-2">
-          <h3>链接</h3>
-          <ul>
-            <li><a href="https://github.com/shenh10/deepnotes">源代码仓库</a></li>
-            <li><a href="/papercache/feed.xml">RSS订阅</a></li>
-          </ul>
-        </div>
-        
-        <div class="footer-col-3">
-          <!-- 访问统计 -->
-          
-          <div class="site-stats">
-            <span id="busuanzi_container_site_pv" style="display:none">
-              总访问量 <span id="busuanzi_value_site_pv"></span> 次
-            </span>
-            <span id="busuanzi_container_site_uv" style="display:none">
-              访客数 <span id="busuanzi_value_site_uv"></span> 人
-            </span>
-          </div>
-          <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-          
-        </div>
       </div>
-      
-      <div class="footer-bottom">
-        <p>&copy; 2025 shenh10. 
-           由 <a href="https://github.com/shenh10/deepnotes">Deep Notes</a> 自动生成</p>
-      </div>
-    </div>
-  </footer>
+    </main></body>
 
-</body>
 </html>

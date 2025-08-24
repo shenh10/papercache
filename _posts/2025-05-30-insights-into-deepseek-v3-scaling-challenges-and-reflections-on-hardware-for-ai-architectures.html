@@ -19,7 +19,7 @@ title: 'Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardwar
 
 <div class="paper-content">
 <div class="container">
-<h1 id="insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures">Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures</h1>
+
 <p>Chenggang Zhao, Chengqi Deng, Chong Ruan, Damai Dai, Huazuo Gao, Jiashi Li, Liyue Zhang, Panpan Huang, Shangyan Zhou, Shirong Ma, Wenfeng Liang, Ying He, Yuqing Wang, Yuxuan Liu, Y.X. Wei DeepSeek-AI Beijing, China</p>
 <h2 id="_1">主要贡献</h2>
 <p>本文探讨了大型语言模型（LLMs）在快速扩展过程中暴露出的当前硬件架构的关键限制，包括内存容量、计算效率和互连带宽的约束。DeepSeek-V3模型在2048个NVIDIA H800 GPU上训练，展示了硬件感知模型协同设计如何有效应对这些挑战，实现大规模的成本高效训练和推理。本文深入分析了DeepSeek-V3/R1模型架构及其AI基础设施，突出了关键创新，如多头潜在注意力（MLA）用于提升内存效率、专家混合（MoE）架构用于优化计算-通信权衡、FP8混合精度训练以释放硬件全部潜力，以及多平面网络拓扑以最小化集群级网络开销。基于DeepSeek-V3开发过程中遇到的硬件瓶颈，本文与学术界和工业界同行展开更广泛讨论，探讨未来硬件方向，包括精确低精度计算单元、向上扩展和向外扩展的融合，以及低延迟通信结构的创新。这些洞见强调了硬件和模型协同设计在满足AI工作负载不断升级需求中的关键作用，为下一代AI系统的创新提供了实用蓝图。</p>

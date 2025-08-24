@@ -19,7 +19,7 @@ title: 'SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Pr
 
 <div class="paper-content">
 <div class="container">
-<h1 id="sarathi-efficient-llm-inference-by-piggybacking-decodes-with-chunked-prefills">SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills</h1>
+
 <p><strong>作者/机构</strong>: Amey Agrawal (佐治亚理工学院), Ashish Panwar, Jayashree Mohan, Nipun Kwatra, Bhargav S. Gulavani, and Ramachandran Ramjee (微软印度研究院)</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决大型语言模型（LLM）推理中的两大效率瓶颈：1）解码（decode）阶段由于每次只生成一个token，导致GPU计算利用率低下；2）在使用流水线并行（pipeline parallelism）时，预填充（prefill）和解码阶段计算时间的差异导致微批次（micro-batch）间不平衡，产生大量流水线气泡（pipeline bubbles），进一步降低效率。</p>

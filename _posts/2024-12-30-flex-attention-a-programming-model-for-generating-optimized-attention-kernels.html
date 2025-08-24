@@ -16,7 +16,7 @@ title: 'FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION K
 
 <div class="paper-content">
 <div class="container">
-<h1 id="flex-attention-a-programming-model-for-generating-optimized-attention-kernels">FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS</h1>
+
 <p><strong>文章作者</strong>: Juechu Dong, Boyuan Feng, Driss Guessous, Yanbo Liang, Horace He</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决当前深度学习中注意力机制优化所面临的一个核心问题：高性能的注意力核（如FlashAttention）虽然效率极高，但其单一固化的设计（monolithic nature）导致其灵活性不足，难以支持研究人员提出的各种新型注意力变体。这造成了一种“软件彩票”（software lottery）现象，即如果一个新的注意力变体不被现有核所支持，其进一步的研究和应用将受到缓慢运行时间和内存限制的严重阻碍。此外，传统的编译器方法难以自动生成高效的融合注意力核，因为这涉及到复杂的代数重写和对块稀疏性的处理。</p>

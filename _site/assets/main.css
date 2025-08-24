@@ -646,4 +646,50 @@ table td {
   color: #099;
 }
 
+/* Widescreen Layout */
+.wrapper {
+  max-width: 1200px;
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+/* Post Content Headers */
+.post-content h2, .post-content h3 {
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 0.3em;
+  margin-top: 2em;
+  margin-bottom: 1em;
+}
+
+.post-content h1 {
+  border-bottom: 3px solid #3498db;
+  padding-bottom: 0.5em;
+}
+
+/* Center Images and Captions */
+.post-content .image-figure, .post-content figure {
+  display: table;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.post-content .figure-image, .post-content figure img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.post-content .figure-caption, .post-content figcaption {
+  color: #888;
+  font-size: 0.9em;
+  margin-top: 0.5em;
+  font-style: italic;
+  text-align: center;
+}
+
 /*# sourceMappingURL=main.css.map */

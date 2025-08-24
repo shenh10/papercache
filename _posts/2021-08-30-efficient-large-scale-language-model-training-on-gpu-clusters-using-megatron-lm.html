@@ -20,7 +20,7 @@ title: Efficient Large-Scale Language Model Training on GPU Clusters Using Megat
 
 <div class="paper-content">
 <div class="container">
-<h1 id="efficient-large-scale-language-model-training-on-gpu-clusters-using-megatron-lm">Efficient Large-Scale Language Model Training on GPU Clusters Using Megatron-LM</h1>
+
 <p><strong>作者/机构</strong>: Deepak Narayanan‡★, Mohammad Shoeybi†, Jared Casper†, Patrick LeGresley†, Mostofa Patwary†, Vijay Korthikanti†, Dmitri Vainbrand†, Prethvi Kashinkunti†, Julie Bernauer†, Bryan Catanzaro†, Amar Phanishayee∗, Matei Zaharia‡ (†NVIDIA ‡Stanford University ∗Microsoft Research)</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决大规模语言模型训练中的两大挑战：单个GPU内存容量有限无法容纳巨大模型，以及巨大的计算量导致训练时间过长。为应对这些挑战，本文研究了如何高效地组合张量并行、流水线并行和数据并行（PTD-P）以扩展至数千个GPU，同时保持严格的优化器语义。</p>

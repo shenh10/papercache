@@ -16,7 +16,7 @@ title: 'Campo: Cost-Aware Performance Optimization for Mixed-Precision Neural Ne
 
 <div class="paper-content">
 <div class="container">
-<h1 id="campo-cost-aware-performance-optimization-for-mixed-precision-neural-network-training">Campo: Cost-Aware Performance Optimization for Mixed-Precision Neural Network Training</h1>
+
 <p><strong>作者/机构</strong>: Xin He (CSEE, Hunan University &amp; Xidian University); Jianhua Sun and Hao Chen (CSEE, Hunan University); Dong Li (University of California, Merced)</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文的核心研究问题是，现有的混合精度训练策略（如TensorFlow和PyTorch中的策略）贪婪地对性能关键型操作应用FP16精度，但没有量化和考虑数据类型转换（casting）带来的成本。作者通过性能分析揭示，转换成本可能占操作执行时间的21%以上，在某些情况下甚至超过使用低精度带来的性能增益，从而导致整体性能下降。</p>

@@ -1,4 +1,4 @@
-title: PaperCache"
+title: PaperCache
 description: "深度学习、机器学习和人工智能研究论文的精选缓存"
 baseurl: "/papercache"
 url: "https://shenh10.github.io"
@@ -16,6 +16,7 @@ plugins:
   - jekyll-feed
   - jekyll-sitemap
   - jekyll-seo-tag
+  - jekyll-paginate
 
 # Kramdown设置
 kramdown:
@@ -56,9 +57,9 @@ defaults:
     values:
       layout: "page"
 
-# 分页
-paginate: 10
-paginate_path: "/page:num/"
+# 分页 (已移除)
+# paginate: 10
+# paginate_path: "/page:num/"
 
 # 排除文件
 exclude:
