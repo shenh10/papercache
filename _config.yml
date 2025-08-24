@@ -29,9 +29,9 @@ kramdown:
 # 评论系统 (Giscus)
 giscus:
   repo: "shenh10/papercache"
-  repo_id: "REPLACE_WITH_ACTUAL_REPO_ID"
-  category: "General"
-  category_id: "REPLACE_WITH_ACTUAL_CATEGORY_ID"
+  repo_id: "R_kgDOPi7gwg"
+  category: "博客评论"
+  category_id: "DIC_kwDOPi7gws4CuiaX"
   mapping: "pathname"
   reactions_enabled: "1"
   theme: "light"
