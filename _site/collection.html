@@ -23,8 +23,8 @@
   <script>
     window.MathJax = {
       tex: {
-        inlineMath: [['$','$'], ['\\(','\\)']],
-        displayMath: [['$$','$$'], ['\\[','\\]']]
+        inlineMath: [['$', '$'], ['\(', '\)']],
+        displayMath: [['$$', '$$'], ['\[', '\]']]
       },
       svg: {
         fontCache: 'global'
@@ -35,357 +35,785 @@
     src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
   </script>
 
-</head><body><header class="site-header">
-  <div class="wrapper">
-    <a class="site-title" rel="author" href="/papercache/">PaperCache</a>
-    <nav class="site-nav">
-      <div class="trigger">
-        <a class="page-link" href="/papercache/">主页</a>
-        <a class="page-link" href="/papercache/collection.html">论文合集</a>
-        <a class="page-link" href="/papercache/about/">关于</a>
+  <!-- Busuanzi Analytics -->
+  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+</head><body class="layout-collection"><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/papercache/">PaperCache</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/papercache/about/">关于</a><a class="page-link" href="/papercache/collection.html">论文合集</a><a class="page-link" href="/papercache/">🤖 欢迎来到 PaperCache！</a></div>
+      </nav></div>
+</header>
+<div class="collection-wrapper">
+      <aside class="sidebar"><nav class="sidebar-nav">
+  <span class="sidebar-nav-item">分类导航</span>
+
+  <div class="collapsible-menu">
+    <button class="collapsible">LLM</button>
+    <div class="content">
+      <div class="collapsible-menu nested">
+        <button class="collapsible">Algorithm</button>
+        <div class="content">
+          <a href="#llm-agent">Agent</a>
+          <a href="#llm-models">Models</a>
+          <a href="#llm-pretrain">Pretrain</a>
+          <a href="#llm-reinforcement-learning">Reinforcement-Learning</a>
+        </div>
       </div>
-    </nav>
+      <div class="collapsible-menu nested">
+        <button class="collapsible">Engineering</button>
+        <div class="content">
+          <a href="#llm-attention">Attention</a>
+          <a href="#llm-compiler">Compiler</a>
+          <a href="#llm-inference">Inference</a>
+          <a href="#llm-kvcache">Kvcache</a>
+          <a href="#llm-low_precision">Low_precision</a>
+          <a href="#llm-speculative_decoding">Speculative_decoding</a>
+          <a href="#llm-train">Train</a>
+        </div>
+      </div>
+    </div>
   </div>
-</header><main class="page-content" aria-label="Content">
-      <div class="wrapper">
-        <article class="post">
 
-  <header class="post-header">
-    <h1 class="post-title">论文合集</h1>
-  </header>
+  <div class="collapsible-menu">
+    <button class="collapsible">MLSYS</button>
+    <div class="content">
+      <a href="#mlsys-compiler">Compiler</a>
+      <a href="#mlsys-framework">Framework</a>
+      <a href="#mlsys-gpu">Gpu</a>
+      <a href="#mlsys-networking">Networking</a>
+    </div>
+  </div>
+</nav></aside>
 
-  <div class="post-content">
-    <h2 id="论文合集">论文合集</h2>
+      <main class="collection-content">
+        <div class="wrapper">
+          <h2 id="论文合集">论文合集</h2>
+
+<div class="paper-count-badge">
+  收录论文总数：<strong>93</strong> 篇
+</div>
 
 <p>在这里，您可以找到所有论文的完整分类列表。</p>
 
 <hr />
 
-<h3 id="-大语言模型-llm">🤖 大语言模型 (LLM)</h3>
+<!-- LLM Section -->
+<h2 class="main-category-title" id="llm">LLM</h2>
 
-<h4 id="算法-algorithm">算法 (Algorithm)</h4>
+<h3 class="subcategory-title" id="llm-algorithm">Algorithm</h3>
 
-<ul>
-  <li>
-    <p><strong>[2025-05-30]</strong> <a href="/papercache/llm/algorithm/agent/2025/05/30/a-survey-on-test-time-scaling-in-large-language-models-what-how-where-and-how-well.html">A Survey on Test-Time Scaling in Large Language Models: What, How, Where, and How Well</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-04-30]</strong> <a href="/papercache/llm/algorithm/models/2025/04/30/seed15-thinking-advancing-superb-reasoning-models-with-reinforcement-learning.html">Seed1.5-Thinking: Advancing Superb Reasoning Models with Reinforcement Learning</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-04-30]</strong> <a href="/papercache/llm/algorithm/agent/2025/04/30/mem0-building-production-ready-ai-agents-with-scalable-long-term-memory.html">Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-03-30]</strong> <a href="/papercache/llm/algorithm/agent/2025/03/30/search-r1-training-llms-to-reason-and-leverage-search-engines-with-reinforcement-learning.html">Search-R1: Training LLMs to Reason and Leverage Search Engines with Reinforcement Learning</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-03-30]</strong> <a href="/papercache/llm/algorithm/agent/2025/03/30/r1-searcher-incentivizing-the-search-capability-in-llms-via-reinforcement-learning.html">R1-Searcher: Incentivizing the Search Capability in LLMs via Reinforcement Learning</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-01-30]</strong> <a href="/papercache/llm/algorithm/models/2025/01/30/kimi-k15-scaling-reinforcement-learning-with-llms.html">KIMI K1.5: SCALING REINFORCEMENT LEARNING WITH LLMS</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-12-30]</strong> <a href="/papercache/llm/algorithm/models/2024/12/30/deepseek-v3-technical-report.html">DeepSeek-V3 Technical Report</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-10-30]</strong> <a href="/papercache/llm/algorithm/reinforcement-learning/2024/10/30/hybridflow-a-flexible-and-efficient-rlhf-framework.html">HybridFlow: A Flexible and Efficient RLHF Framework</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-09-30]</strong> <a href="/papercache/llm/algorithm/agent/2024/09/30/large-language-model-based-agents-for-software-engineering-a-survey.html">Large Language Model-Based Agents for Software Engineering: A Survey</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-05-30]</strong> <a href="/papercache/llm/algorithm/reinforcement-learning/2024/05/30/openrlhf-an-easy-to-use-scalable-and-high-performance-rlhf-framework.html">OpenRLHF: An Easy-to-use, Scalable and High-performance RLHF Framework</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-02-28]</strong> <a href="/papercache/llm/algorithm/reinforcement-learning/2024/02/28/deepseekmath-pushing-the-limits-of-mathematical-reasoning-in-open-language-models.html">DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models</a></p>
-  </li>
-  <li>
-    <p><strong>[2023-10-30]</strong> <a href="/papercache/llm/algorithm/agent/2023/10/30/fireact-toward-language-agent-fine-tuning.html">FIREACT: TOWARD LANGUAGE AGENT FINE-TUNING</a></p>
-  </li>
-  <li>
-    <p><strong>[2023-05-30]</strong> <a href="/papercache/llm/algorithm/reinforcement-learning/2023/05/30/direct-preference-optimization-your-language-model-is-secretly-a-reward-model.html">Direct Preference Optimization: Your Language Model is Secretly a Reward Model</a></p>
-  </li>
-  <li>
-    <p><strong>[2022-03-30]</strong> <a href="/papercache/llm/algorithm/pretrain/2022/03/30/tensor-programs-v-tuning-large-neural-networks-via-zero-shot-hyperparameter-transfer.html">
-    Tensor Programs V: Tuning Large Neural Networks via Zero-Shot
-    Hyperparameter Transfer
-  </a></p>
-  </li>
-  <li>
-    <p><strong>[2021-04-30]</strong> <a href="/papercache/llm/algorithm/pretrain/2021/04/30/roformer-enhanced-transformer-with-rotary-position-embedding.html">ROFORMER: ENHANCED TRANSFORMER WITH ROTARY POSITION EMBEDDING</a></p>
-  </li>
-  <li>
-    <p><strong>[2017-08-30]</strong> <a href="/papercache/llm/algorithm/reinforcement-learning/2017/08/30/proximal-policy-optimization-algorithms.html">Proximal Policy Optimization Algorithms</a></p>
-  </li>
-</ul>
+<h4 class="sub-subcategory-title" id="llm-agent">Agent</h4>
+<ul class="post-list-with-tags">
+    
+      
+        <li>
+          <span class="post-meta">2025-05-30</span>
+          <a class="post-link" href="/papercache/llm/algorithm/agent/2025/05/30/a-survey-on-test-time-scaling-in-large-language-models-what-how-where-and-how-well.html">A Survey on Test-Time Scaling in Large Language Models: What, How, Where, and How Well</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-04-30</span>
+          <a class="post-link" href="/papercache/llm/algorithm/agent/2025/04/30/mem0-building-production-ready-ai-agents-with-scalable-long-term-memory.html">Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-03-30</span>
+          <a class="post-link" href="/papercache/llm/algorithm/agent/2025/03/30/search-r1-training-llms-to-reason-and-leverage-search-engines-with-reinforcement-learning.html">Search-R1: Training LLMs to Reason and Leverage Search Engines with Reinforcement Learning</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-03-30</span>
+          <a class="post-link" href="/papercache/llm/algorithm/agent/2025/03/30/r1-searcher-incentivizing-the-search-capability-in-llms-via-reinforcement-learning.html">R1-Searcher: Incentivizing the Search Capability in LLMs via Reinforcement Learning</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-09-30</span>
+          <a class="post-link" href="/papercache/llm/algorithm/agent/2024/09/30/large-language-model-based-agents-for-software-engineering-a-survey.html">Large Language Model-Based Agents for Software Engineering: A Survey</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2023-10-30</span>
+          <a class="post-link" href="/papercache/llm/algorithm/agent/2023/10/30/fireact-toward-language-agent-fine-tuning.html">FIREACT: TOWARD LANGUAGE AGENT FINE-TUNING</a>
+        </li>
+      
+    
+  </ul>
 
-<h4 id="工程-engineering">工程 (Engineering)</h4>
+<h4 class="sub-subcategory-title" id="llm-models">Models</h4>
+<ul class="post-list-with-tags">
+    
+      
+        <li>
+          <span class="post-meta">2025-04-30</span>
+          <a class="post-link" href="/papercache/llm/algorithm/models/2025/04/30/seed15-thinking-advancing-superb-reasoning-models-with-reinforcement-learning.html">Seed1.5-Thinking: Advancing Superb Reasoning Models with Reinforcement Learning</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-01-30</span>
+          <a class="post-link" href="/papercache/llm/algorithm/models/2025/01/30/kimi-k15-scaling-reinforcement-learning-with-llms.html">KIMI K1.5: SCALING REINFORCEMENT LEARNING WITH LLMS</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-12-30</span>
+          <a class="post-link" href="/papercache/llm/algorithm/models/2024/12/30/deepseek-v3-technical-report.html">DeepSeek-V3 Technical Report</a>
+        </li>
+      
+    
+  </ul>
 
-<ul>
-  <li>
-    <p><strong>[2025-07-30]</strong> <a href="/papercache/llm/engineering/inference/2025/07/30/step-3-is-large-yet-affordable-model-system-co-design-for-cost-effective-decoding.html">Step-3 is Large yet Affordable: Model-system Co-design for Cost-effective Decoding</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-07-30]</strong> <a href="/papercache/llm/engineering/inference/2025/07/30/megascale-infer-serving-mixture-of-experts-at-scale-with-disaggregated-expert-parallelism.html">MegaScale-Infer: Serving Mixture-of-Experts at Scale with Disaggregated Expert Parallelism</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-06-30]</strong> <a href="/papercache/llm/engineering/compiler/2025/06/30/mirage-a-multi-level-superoptimizer-for-tensor-programs.html">Mirage: A Multi-Level Superoptimizer for Tensor Programs</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-05-30]</strong> <a href="/papercache/llm/engineering/attention/2025/05/30/sageattention3-microscaling-fp4-attention-for-inference-and-an-exploration-of-8-bit-training.html">SageAttention3: Microscaling FP4 Attention for Inference and An Exploration of 8-bit Training</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-05-30]</strong> <a href="/papercache/llm/engineering/inference/2025/05/30/recipes-for-pre-training-llms-with-mxfp8.html">Recipes for Pre-training LLMs with MXFP8</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-05-30]</strong> <a href="/papercache/llm/engineering/inference/2025/05/30/insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures.html">Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-04-30]</strong> <a href="/papercache/llm/engineering/inference/2025/04/30/tilus-a-virtual-machine-for-arbitrary-low-precision-gpgpu-computation-in-llm-serving.html">Tilus: A Virtual Machine for Arbitrary Low-Precision GPGPU Computation in LLM Serving</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-04-30]</strong> <a href="/papercache/llm/engineering/compiler/2025/04/30/tilelink-generating-efficient-compute-communication-overlapping-kernels-using-tile-centric-primitives.html">TileLink: Generating Efficient Compute-Communication Overlapping Kernels using Tile-Centric Primitives</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-04-30]</strong> <a href="/papercache/llm/engineering/compiler/2025/04/30/tilelang-a-composable-tiled-programming-model-for-ai-systems.html">TileLang: A Composable Tiled Programming Model for AI Systems</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-03-30]</strong> <a href="/papercache/llm/engineering/inference/2025/03/30/eagle-3-scaling-up-inference-acceleration-of-large-language-models-via-training-time-test.html">EAGLE-3: Scaling up Inference Acceleration of Large Language Models via Training-Time Test</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-02-28]</strong> <a href="/papercache/llm/engineering/attention/2025/02/28/tree-attention-topology-aware-decoding-for-long-context-attention-on-gpu-clusters.html">TREE ATTENTION: TOPOLOGY-AWARE DECODING FOR LONG-CONTEXT ATTENTION ON GPU CLUSTERS</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-02-28]</strong> <a href="/papercache/llm/engineering/attention/2025/02/28/native-sparse-attention-hardware-aligned-and-natively-trainable-sparse-attention.html">Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-02-28]</strong> <a href="/papercache/llm/engineering/attention/2025/02/28/moba-mixture-of-block-attention-for-long-context-llms.html">MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-01-30]</strong> <a href="/papercache/llm/engineering/attention/2025/01/30/minimax-01-scaling-foundation-models-with-lightning-attention.html">MiniMax-01: Scaling Foundation Models with Lightning Attention</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-12-30]</strong> <a href="/papercache/llm/engineering/compiler/2024/12/30/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html">FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-10-30]</strong> <a href="/papercache/llm/engineering/attention/2024/10/30/sageattention-accurate-8-bit-attention-for-plug-and-play-inference-acceleration.html">SAGEATTENTION: ACCURATE 8-BIT ATTENTION FOR PLUG-AND-PLAY INFERENCE ACCELERATION</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-10-30]</strong> <a href="/papercache/llm/engineering/compiler/2024/10/30/flux-fast-software-based-communication-overlap-on-gpus-through-kernel-fusion.html">FLUX: FAST SOFTWARE-BASED COMMUNICATION OVERLAP ON GPUS THROUGH KERNEL FUSION</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-10-30]</strong> <a href="/papercache/llm/engineering/inference/2024/10/30/do-large-language-models-need-a-content-delivery-network.html">Do Large Language Models Need a Content Delivery Network?</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-08-30]</strong> <a href="/papercache/llm/engineering/inference/2024/08/30/nanoflow-towards-optimal-large-language-model-serving-throughput.html">NanoFlow: Towards Optimal Large Language Model Serving Throughput</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-07-30]</strong> <a href="/papercache/llm/engineering/inference/2024/07/30/sglang-efficient-execution-of-structured-language-model-programs.html">SGLang: Efficient Execution of Structured Language Model Programs</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-07-30]</strong> <a href="/papercache/llm/engineering/inference/2024/07/30/mooncake-a-kvcache-centric-disaggregated-architecture-for-llm-serving.html">Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-07-30]</strong> <a href="/papercache/llm/engineering/attention/2024/07/30/flashattention-3-fast-and-accurate-attention-with-asynchrony-and-low-precision.html">FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-07-30]</strong> <a href="/papercache/llm/engineering/training/2024/07/30/efficient-training-of-large-language-models-on-distributed-infrastructures-a-survey.html">Efficient Training of Large Language Models on Distributed Infrastructures: A Survey</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-07-30]</strong> <a href="/papercache/llm/engineering/inference/2024/07/30/cost-efficient-large-language-model-serving-for-multi-turn-conversations-with-cachedattention.html">Cost-Efficient Large Language Model Serving for Multi-turn Conversations with CachedAttention</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-06-30]</strong> <a href="/papercache/llm/engineering/inference/2024/06/30/medusa-simple-llm-inference-acceleration-framework-with-multiple-decoding-heads.html">MEDUSA: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-06-30]</strong> <a href="/papercache/llm/engineering/inference/2024/06/30/eagle-2-faster-inference-of-language-models-with-dynamic-draft-trees.html">EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-05-30]</strong> <a href="/papercache/llm/engineering/inference/2024/05/30/efficient-heterogeneous-large-language-model-decoding-with-model-attention-disaggregation.html">Efficient Heterogeneous Large Language Model Decoding with Model-Attention Disaggregation</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-05-30]</strong> <a href="/papercache/llm/engineering/inference/2024/05/30/cacheblend-fast-large-language-model-serving-for-rag-with-cached-knowledge-fusion.html">CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-04-30]</strong> <a href="/papercache/llm/engineering/inference/2024/04/30/prompt-cache-modular-attention-reuse-for-low-latency-inference.html">PROMPT CACHE: MODULAR ATTENTION REUSE FOR LOW-LATENCY INFERENCE</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-04-30]</strong> <a href="/papercache/llm/engineering/attention/2024/04/30/leave-no-context-behind-efficient-infinite-context-transformers-with-infini-attention.html">Leave No Context Behind: Efficient Infinite Context Transformers with Infini-attention</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-02-28]</strong> <a href="/papercache/llm/engineering/training/2024/02/28/megascale-scaling-large-language-model-training-to-more-than-10000-gpus.html">
-    MegaScale: Scaling Large Language Model Training to More Than 10,000 GPUs
-  </a></p>
-  </li>
-  <li>
-    <p><strong>[2024-01-30]</strong> <a href="/papercache/llm/engineering/inference/2024/01/30/fp6-llm-efficiently-serving-large-language-models-through-fp6-centric-algorithm-system-co-design.html">FP6-LLM: Efficiently Serving Large Language Models Through FP6-Centric Algorithm-System Co-Design</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-01-30]</strong> <a href="/papercache/llm/engineering/inference/2024/01/30/eagle-speculative-sampling-requires-rethinking-feature-uncertainty.html">EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-01-30]</strong> <a href="/papercache/llm/engineering/inference/2024/01/30/distserve-disaggregating-prefill-and-decoding-for-goodput-optimized-large-language-model-serving.html">DistServe: Disaggregating Prefill and Decoding for Goodput-optimized Large Language Model Serving</a></p>
-  </li>
-  <li>
-    <p><strong>[2023-12-30]</strong> <a href="/papercache/llm/engineering/attention/2023/12/30/gqa-training-generalized-multi-query-transformer-models-from-multi-head-checkpoints.html">GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints</a></p>
-  </li>
-  <li>
-    <p><strong>[2023-11-30]</strong> <a href="/papercache/llm/engineering/training/2023/11/30/zero-bubble-pipeline-parallelism.html">ZERO BUBBLE PIPELINE PARALLELISM</a></p>
-  </li>
-  <li>
-    <p><strong>[2023-10-30]</strong> <a href="/papercache/llm/engineering/inference/2023/10/30/cachegen-kv-cache-compression-and-streaming-for-fast-large-language-model-serving.html">CacheGen: KV Cache Compression and Streaming for Fast Large Language Model Serving</a></p>
-  </li>
-  <li>
-    <p><strong>[2023-09-30]</strong> <a href="/papercache/llm/engineering/inference/2023/09/30/efficient-memory-management-for-large-language-model-serving-with-pagedattention.html">Efficient Memory Management for Large Language Model Serving with PagedAttention</a></p>
-  </li>
-  <li>
-    <p><strong>[2023-08-30]</strong> <a href="/papercache/llm/engineering/inference/2023/08/30/sarathi-efficient-llm-inference-by-piggybacking-decodes-with-chunked-prefills.html">SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills</a></p>
-  </li>
-  <li>
-    <p><strong>[2023-07-30]</strong> <a href="/papercache/llm/engineering/attention/2023/07/30/flashattention-2-faster-attention-with-better-parallelism-and-work-partitioning.html">FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning</a></p>
-  </li>
-  <li>
-    <p><strong>[2023-06-30]</strong> <a href="/papercache/llm/engineering/inference/2023/06/30/fp8-versus-int8-for-efficient-deep-learning-inference.html">FP8 versus INT8 for efficient deep learning inference</a></p>
-  </li>
-  <li>
-    <p><strong>[2023-06-30]</strong> <a href="/papercache/llm/engineering/inference/2023/06/30/awq-activation-aware-weight-quantization-for-on-device-llm-compression-and-acceleration.html">AWQ: ACTIVATION-AWARE WEIGHT QUANTIZATION FOR ON-DEVICE LLM COMPRESSION AND ACCELERATION</a></p>
-  </li>
-  <li>
-    <p><strong>[2023-05-30]</strong> <a href="/papercache/llm/engineering/inference/2023/05/30/integer-or-floating-point-new-outlooks-for-low-bit-quantization-on-large-language-models.html">Integer or Floating Point? New Outlooks for Low-Bit Quantization on Large Language Models</a></p>
-  </li>
-  <li>
-    <p><strong>[2023-04-30]</strong> <a href="/papercache/llm/engineering/inference/2023/04/30/with-shared-microexponents-a-little-shifting-goes-a-long-way.html">With Shared Microexponents, A Little Shifting Goes a Long Way</a></p>
-  </li>
-  <li>
-    <p><strong>[2023-04-30]</strong> <a href="/papercache/llm/engineering/training/2023/04/30/pytorch-fsdp-experiences-on-scaling-fully-sharded-data-parallel.html">PyTorch FSDP: Experiences on Scaling Fully Sharded Data Parallel</a></p>
-  </li>
-  <li>
-    <p><strong>[2022-11-30]</strong> <a href="/papercache/llm/engineering/inference/2022/11/30/smoothquant-accurate-and-efficient-post-training-quantization-for-large-language-models.html">SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models</a></p>
-  </li>
-  <li>
-    <p><strong>[2022-07-30]</strong> <a href="/papercache/llm/engineering/inference/2022/07/30/orca-a-distributed-serving-system-for-transformer-based-generative-models.html">Orca: A Distributed Serving System for Transformer-Based Generative Models</a></p>
-  </li>
-  <li>
-    <p><strong>[2022-07-30]</strong> <a href="/papercache/llm/engineering/attention/2022/07/30/flashattention-fast-and-memory-efficient-exact-attention-with-io-awareness.html">FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness</a></p>
-  </li>
-  <li>
-    <p><strong>[2022-04-30]</strong> <a href="/papercache/llm/engineering/training/2022/04/30/palm-scaling-language-modeling-with-pathways.html">PaLM: Scaling Language Modeling with Pathways</a></p>
-  </li>
-  <li>
-    <p><strong>[2021-08-30]</strong> <a href="/papercache/llm/engineering/training/2021/08/30/efficient-large-scale-language-model-training-on-gpu-clusters-using-megatron-lm.html">Efficient Large-Scale Language Model Training on GPU Clusters Using Megatron-LM</a></p>
-  </li>
-  <li>
-    <p><strong>[2021-04-30]</strong> <a href="/papercache/llm/engineering/training/2021/04/30/zero-infinity-breaking-the-gpu-memory-wall-for-extreme-scale-deep-learning.html">ZeRO-Infinity: Breaking the GPU Memory Wall for Extreme Scale Deep Learning</a></p>
-  </li>
-  <li>
-    <p><strong>[2021-01-30]</strong> <a href="/papercache/llm/engineering/training/2021/01/30/zero-offload-democratizing-billion-scale-model-training.html">ZeRO-Offload: Democratizing Billion-Scale Model Training</a></p>
-  </li>
-  <li>
-    <p><strong>[2020-06-30]</strong> <a href="/papercache/llm/engineering/attention/2020/06/30/transformers-are-rnns-fast-autoregressive-transformers-with-linear-attention.html">Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention</a></p>
-  </li>
-  <li>
-    <p><strong>[2020-03-30]</strong> <a href="/papercache/llm/engineering/training/2020/03/30/zero-memory-optimizations-toward-training-trillion-parameter-models.html">ZeRO: Memory Optimizations Toward Training Trillion Parameter Models</a></p>
-  </li>
-  <li>
-    <p><strong>[2020-03-30]</strong> <a href="/papercache/llm/engineering/training/2020/03/30/megatron-lm-training-multi-billion-parameter-language-models-using-model-parallelism.html">Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism</a></p>
-  </li>
-  <li>
-    <p><strong>[2020-02-28]</strong> <a href="/papercache/llm/engineering/attention/2020/02/28/low-rank-bottleneck-in-multi-head-attention-models.html">Low-Rank Bottleneck in Multi-head Attention Models</a></p>
-  </li>
-  <li>
-    <p><strong>[2019-11-30]</strong> <a href="/papercache/llm/engineering/attention/2019/11/30/fast-transformer-decoding-one-write-head-is-all-you-need.html">Fast Transformer Decoding: One Write-Head is All You Need</a></p>
-  </li>
-  <li>
-    <p><strong>[2019-07-30]</strong> <a href="/papercache/llm/engineering/training/2019/07/30/gpipe-easy-scaling-with-micro-batch-pipeline-parallelism.html">GPipe: Easy Scaling with Micro-Batch Pipeline Parallelism</a></p>
-  </li>
-  <li>
-    <p><strong>[2018-06-30]</strong> <a href="/papercache/llm/engineering/training/2018/06/30/pipedream-fast-and-efficient-pipeline-parallel-dnn-training.html">PipeDream: Fast and Efficient Pipeline Parallel DNN Training</a></p>
-  </li>
-</ul>
+<h4 class="sub-subcategory-title" id="llm-pretrain">Pretrain</h4>
+<ul class="post-list-with-tags">
+    
+      
+        <li>
+          <span class="post-meta">2022-03-30</span>
+          <a class="post-link" href="/papercache/llm/algorithm/pretrain/2022/03/30/tensor-programs-v-tuning-large-neural-networks-via-zero-shot-hyperparameter-transfer.html">
+      Tensor Programs V: Tuning Large Neural Networks via Zero-Shot
+      Hyperparameter Transfer
+    </a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2021-04-30</span>
+          <a class="post-link" href="/papercache/llm/algorithm/pretrain/2021/04/30/roformer-enhanced-transformer-with-rotary-position-embedding.html">ROFORMER: ENHANCED TRANSFORMER WITH ROTARY POSITION EMBEDDING</a>
+        </li>
+      
+    
+  </ul>
 
-<hr />
+<h4 class="sub-subcategory-title" id="llm-reinforcement-learning">Reinforcement-learning</h4>
+<ul class="post-list-with-tags">
+    
+      
+        <li>
+          <span class="post-meta">2024-10-30</span>
+          <a class="post-link" href="/papercache/llm/algorithm/reinforcement-learning/2024/10/30/hybridflow-a-flexible-and-efficient-rlhf-framework.html">HybridFlow: A Flexible and Efficient RLHF Framework</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-05-30</span>
+          <a class="post-link" href="/papercache/llm/algorithm/reinforcement-learning/2024/05/30/openrlhf-an-easy-to-use-scalable-and-high-performance-rlhf-framework.html">OpenRLHF: An Easy-to-use, Scalable and High-performance RLHF Framework</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-02-28</span>
+          <a class="post-link" href="/papercache/llm/algorithm/reinforcement-learning/2024/02/28/deepseekmath-pushing-the-limits-of-mathematical-reasoning-in-open-language-models.html">DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2023-05-30</span>
+          <a class="post-link" href="/papercache/llm/algorithm/reinforcement-learning/2023/05/30/direct-preference-optimization-your-language-model-is-secretly-a-reward-model.html">Direct Preference Optimization: Your Language Model is Secretly a Reward Model</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2017-08-30</span>
+          <a class="post-link" href="/papercache/llm/algorithm/reinforcement-learning/2017/08/30/proximal-policy-optimization-algorithms.html">Proximal Policy Optimization Algorithms</a>
+        </li>
+      
+    
+  </ul>
 
-<h3 id="️-机器学习系统-mlsys">⚙️ 机器学习系统 (MLSys)</h3>
+<h3 class="subcategory-title" id="llm-engineering">Engineering</h3>
 
-<h4 id="编译器-compiler">编译器 (Compiler)</h4>
+<h4 class="sub-subcategory-title" id="llm-attention">Attention</h4>
+<ul class="post-list-with-tags">
+    
+      
+        <li>
+          <span class="post-meta">2025-05-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/attention/2025/05/30/sageattention3-microscaling-fp4-attention-for-inference-and-an-exploration-of-8-bit-training.html">SageAttention3: Microscaling FP4 Attention for Inference and An Exploration of 8-bit Training</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-02-28</span>
+          <a class="post-link" href="/papercache/llm/engineering/attention/2025/02/28/tree-attention-topology-aware-decoding-for-long-context-attention-on-gpu-clusters.html">TREE ATTENTION: TOPOLOGY-AWARE DECODING FOR LONG-CONTEXT ATTENTION ON GPU CLUSTERS</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-02-28</span>
+          <a class="post-link" href="/papercache/llm/engineering/attention/2025/02/28/native-sparse-attention-hardware-aligned-and-natively-trainable-sparse-attention.html">Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-02-28</span>
+          <a class="post-link" href="/papercache/llm/engineering/attention/2025/02/28/moba-mixture-of-block-attention-for-long-context-llms.html">MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-01-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/attention/2025/01/30/minimax-01-scaling-foundation-models-with-lightning-attention.html">MiniMax-01: Scaling Foundation Models with Lightning Attention</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-10-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/attention/2024/10/30/sageattention-accurate-8-bit-attention-for-plug-and-play-inference-acceleration.html">SAGEATTENTION: ACCURATE 8-BIT ATTENTION FOR PLUG-AND-PLAY INFERENCE ACCELERATION</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-07-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/attention/2024/07/30/flashattention-3-fast-and-accurate-attention-with-asynchrony-and-low-precision.html">FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-04-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/attention/2024/04/30/leave-no-context-behind-efficient-infinite-context-transformers-with-infini-attention.html">Leave No Context Behind: Efficient Infinite Context Transformers with Infini-attention</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2023-12-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/attention/2023/12/30/gqa-training-generalized-multi-query-transformer-models-from-multi-head-checkpoints.html">GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2023-07-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/attention/2023/07/30/flashattention-2-faster-attention-with-better-parallelism-and-work-partitioning.html">FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2022-07-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/attention/2022/07/30/flashattention-fast-and-memory-efficient-exact-attention-with-io-awareness.html">FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2020-06-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/attention/2020/06/30/transformers-are-rnns-fast-autoregressive-transformers-with-linear-attention.html">Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2020-02-28</span>
+          <a class="post-link" href="/papercache/llm/engineering/attention/2020/02/28/low-rank-bottleneck-in-multi-head-attention-models.html">Low-Rank Bottleneck in Multi-head Attention Models</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2019-11-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/attention/2019/11/30/fast-transformer-decoding-one-write-head-is-all-you-need.html">Fast Transformer Decoding: One Write-Head is All You Need</a>
+        </li>
+      
+    
+  </ul>
 
-<h4 id="框架-framework">框架 (Framework)</h4>
+<h4 class="sub-subcategory-title" id="llm-compiler">Compiler</h4>
+<ul class="post-list-with-tags">
+    
+      
+        <li>
+          <span class="post-meta">2025-06-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/compiler/2025/06/30/mirage-a-multi-level-superoptimizer-for-tensor-programs.html">Mirage: A Multi-Level Superoptimizer for Tensor Programs</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-04-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/compiler/2025/04/30/tilelink-generating-efficient-compute-communication-overlapping-kernels-using-tile-centric-primitives.html">TileLink: Generating Efficient Compute-Communication Overlapping Kernels using Tile-Centric Primitives</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-04-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/compiler/2025/04/30/tilelang-a-composable-tiled-programming-model-for-ai-systems.html">TileLang: A Composable Tiled Programming Model for AI Systems</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-12-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/compiler/2024/12/30/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html">FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-10-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/compiler/2024/10/30/flux-fast-software-based-communication-overlap-on-gpus-through-kernel-fusion.html">FLUX: FAST SOFTWARE-BASED COMMUNICATION OVERLAP ON GPUS THROUGH KERNEL FUSION</a>
+        </li>
+      
+    
+  </ul>
 
-<ul>
-  <li><strong>[2025-08-24]</strong> <a href="/papercache/mlsys/framework/2025/08/24/campo-cost-aware-performance-optimization-for-mixed-precision-neural-network-training.html">Campo: Cost-Aware Performance Optimization for Mixed-Precision Neural Network Training</a></li>
-</ul>
+<h4 class="sub-subcategory-title" id="llm-inference">Inference</h4>
+<ul class="post-list-with-tags">
+    
+      
+        <li>
+          <span class="post-meta">2025-07-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2025/07/30/step-3-is-large-yet-affordable-model-system-co-design-for-cost-effective-decoding.html">Step-3 is Large yet Affordable: Model-system Co-design for Cost-effective Decoding</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-07-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2025/07/30/megascale-infer-serving-mixture-of-experts-at-scale-with-disaggregated-expert-parallelism.html">MegaScale-Infer: Serving Mixture-of-Experts at Scale with Disaggregated Expert Parallelism</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-05-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2025/05/30/recipes-for-pre-training-llms-with-mxfp8.html">Recipes for Pre-training LLMs with MXFP8</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-05-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2025/05/30/insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures.html">Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-04-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2025/04/30/tilus-a-virtual-machine-for-arbitrary-low-precision-gpgpu-computation-in-llm-serving.html">Tilus: A Virtual Machine for Arbitrary Low-Precision GPGPU Computation in LLM Serving</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-03-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2025/03/30/eagle-3-scaling-up-inference-acceleration-of-large-language-models-via-training-time-test.html">EAGLE-3: Scaling up Inference Acceleration of Large Language Models via Training-Time Test</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-10-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2024/10/30/do-large-language-models-need-a-content-delivery-network.html">Do Large Language Models Need a Content Delivery Network?</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-08-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2024/08/30/nanoflow-towards-optimal-large-language-model-serving-throughput.html">NanoFlow: Towards Optimal Large Language Model Serving Throughput</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-07-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2024/07/30/sglang-efficient-execution-of-structured-language-model-programs.html">SGLang: Efficient Execution of Structured Language Model Programs</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-07-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2024/07/30/mooncake-a-kvcache-centric-disaggregated-architecture-for-llm-serving.html">Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-07-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2024/07/30/cost-efficient-large-language-model-serving-for-multi-turn-conversations-with-cachedattention.html">Cost-Efficient Large Language Model Serving for Multi-turn Conversations with CachedAttention</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-06-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2024/06/30/medusa-simple-llm-inference-acceleration-framework-with-multiple-decoding-heads.html">MEDUSA: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-06-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2024/06/30/eagle-2-faster-inference-of-language-models-with-dynamic-draft-trees.html">EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-05-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2024/05/30/efficient-heterogeneous-large-language-model-decoding-with-model-attention-disaggregation.html">Efficient Heterogeneous Large Language Model Decoding with Model-Attention Disaggregation</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-05-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2024/05/30/cacheblend-fast-large-language-model-serving-for-rag-with-cached-knowledge-fusion.html">CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-04-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2024/04/30/prompt-cache-modular-attention-reuse-for-low-latency-inference.html">PROMPT CACHE: MODULAR ATTENTION REUSE FOR LOW-LATENCY INFERENCE</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-01-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2024/01/30/fp6-llm-efficiently-serving-large-language-models-through-fp6-centric-algorithm-system-co-design.html">FP6-LLM: Efficiently Serving Large Language Models Through FP6-Centric Algorithm-System Co-Design</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-01-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2024/01/30/eagle-speculative-sampling-requires-rethinking-feature-uncertainty.html">EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-01-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2024/01/30/distserve-disaggregating-prefill-and-decoding-for-goodput-optimized-large-language-model-serving.html">DistServe: Disaggregating Prefill and Decoding for Goodput-optimized Large Language Model Serving</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2023-10-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2023/10/30/cachegen-kv-cache-compression-and-streaming-for-fast-large-language-model-serving.html">CacheGen: KV Cache Compression and Streaming for Fast Large Language Model Serving</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2023-09-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2023/09/30/efficient-memory-management-for-large-language-model-serving-with-pagedattention.html">Efficient Memory Management for Large Language Model Serving with PagedAttention</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2023-08-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2023/08/30/sarathi-efficient-llm-inference-by-piggybacking-decodes-with-chunked-prefills.html">SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2023-06-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2023/06/30/fp8-versus-int8-for-efficient-deep-learning-inference.html">FP8 versus INT8 for efficient deep learning inference</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2023-06-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2023/06/30/awq-activation-aware-weight-quantization-for-on-device-llm-compression-and-acceleration.html">AWQ: ACTIVATION-AWARE WEIGHT QUANTIZATION FOR ON-DEVICE LLM COMPRESSION AND ACCELERATION</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2023-05-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2023/05/30/integer-or-floating-point-new-outlooks-for-low-bit-quantization-on-large-language-models.html">Integer or Floating Point? New Outlooks for Low-Bit Quantization on Large Language Models</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2023-04-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2023/04/30/with-shared-microexponents-a-little-shifting-goes-a-long-way.html">With Shared Microexponents, A Little Shifting Goes a Long Way</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2022-11-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2022/11/30/smoothquant-accurate-and-efficient-post-training-quantization-for-large-language-models.html">SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2022-07-30</span>
+          <a class="post-link" href="/papercache/llm/engineering/inference/2022/07/30/orca-a-distributed-serving-system-for-transformer-based-generative-models.html">Orca: A Distributed Serving System for Transformer-Based Generative Models</a>
+        </li>
+      
+    
+  </ul>
 
-<h4 id="gpu">GPU</h4>
+<h4 class="sub-subcategory-title" id="llm-kvcache">Kvcache</h4>
+<ul class="post-list-with-tags">
+    
+  </ul>
 
-<ul>
-  <li>
-    <p><strong>[2023-01-30]</strong> <a href="/papercache/mlsys/gpu/2023/01/30/stream-k-work-centric-parallel-decomposition-for-dense-matrix-matrix-multiplication-on-the-gpu.html">Stream-K: Work-centric Parallel Decomposition for Dense Matrix-Matrix Multiplication on the GPU</a></p>
-  </li>
-  <li>
-    <p><strong>[2022-01-30]</strong> <a href="/papercache/mlsys/gpu/2022/01/30/nvidia-h100-tensor-core-gpu-architecture.html">NVIDIA H100 Tensor Core GPU Architecture</a></p>
-  </li>
-  <li>
-    <p><strong>[2020-02-28]</strong> <a href="/papercache/mlsys/gpu/2020/02/28/gpu-initiated-openshmem-correct-and-eicient-intra-kernel-networking-for-dgpus.html">GPU Initiated OpenSHMEM: Correct and Eicient Intra-Kernel Networking for dGPUs</a></p>
-  </li>
-  <li>
-    <p><strong>[2018-03-30]</strong> <a href="/papercache/mlsys/gpu/2018/03/30/improving-real-time-performance-with-cuda-persistent-threads-cuper-on-the-jetson-tx2.html">Improving Real-Time Performance with CUDA Persistent Threads (CuPer) on the Jetson TX2</a></p>
-  </li>
-  <li>
-    <p><strong>[2017-04-30]</strong> <a href="/papercache/mlsys/gpu/2017/04/30/locality-aware-cta-clustering-for-modern-gpus.html">Locality-Aware CTA Clustering for Modern GPUs</a></p>
-  </li>
-  <li>
-    <p><strong>[2016-04-30]</strong> <a href="/papercache/mlsys/gpu/2016/04/30/optimizing-performance-of-recurrent-neural-networks-on-gpus.html">Optimizing Performance of Recurrent Neural Networks on GPUs</a></p>
-  </li>
-  <li>
-    <p><strong>[2010-01-30]</strong> <a href="/papercache/mlsys/gpu/2010/01/30/demystifying-gpu-microarchitecture-through-microbenchmarking.html">Demystifying GPU Microarchitecture through Microbenchmarking</a></p>
-  </li>
-</ul>
+<h4 class="sub-subcategory-title" id="llm-low-precision">Low_precision</h4>
+<ul class="post-list-with-tags">
+    
+  </ul>
 
-<h4 id="网络-networking">网络 (Networking)</h4>
+<h4 class="sub-subcategory-title" id="llm-speculative-decoding">Speculative_decoding</h4>
+<ul class="post-list-with-tags">
+    
+  </ul>
 
-<ul>
-  <li>
-    <p><strong>[2025-07-30]</strong> <a href="/papercache/mlsys/networking/2025/07/30/scale-up-ethernet-framework-scale-up-ethernet-framework-specification.html">Scale-Up Ethernet Framework Scale-Up Ethernet Framework Specification</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-07-30]</strong> <a href="/papercache/mlsys/networking/2025/07/30/demystifying-nccl-an-in-depth-analysis-of-gpu-communication-protocols-and-algorithms.html">
-    Demystifying NCCL: An In-depth Analysis of GPU Communication Protocols and
-    Algorithms
-  </a></p>
-  </li>
-  <li>
-    <p><strong>[2025-04-30]</strong> <a href="/papercache/mlsys/networking/2025/04/30/introducing-ualink-200g-10-specification.html">Introducing UALink 200G 1.0 Specification</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-03-30]</strong> <a href="/papercache/mlsys/networking/2025/03/30/ub-mesh-a-hierarchically-localized-nd-fullmesh-datacenter-network-architecture.html">UB-Mesh: a Hierarchically Localized nD-FullMesh Datacenter Network Architecture</a></p>
-  </li>
-  <li>
-    <p><strong>[2024-04-30]</strong> <a href="/papercache/mlsys/networking/2024/04/30/scaling-up-memory-disaggregated-applications-with-smart.html">Scaling Up Memory Disaggregated Applications with Smart</a></p>
-  </li>
-  <li>
-    <p><strong>[2023-07-30]</strong> <a href="/papercache/mlsys/networking/2023/07/30/overview-of-and-motivation-for-the-forthcoming-ultra-ethernet-consortium-specification.html">Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium Specification</a></p>
-  </li>
-  <li>
-    <p><strong>[2022-11-30]</strong> <a href="/papercache/mlsys/networking/2022/11/30/improving-network-performance-of-hpc-systems-using-nvidia-magnum-io-nvshmem-and-gpudirect-async.html">Improving Network Performance of HPC Systems Using NVIDIA Magnum IO NVSHMEM and GPUDirect Async</a></p>
-  </li>
-  <li>
-    <p><strong>[2022-02-28]</strong> <a href="/papercache/mlsys/networking/2022/02/28/doubling-all2all-performance-with-nvidia-collective-communication-library-212.html">Doubling all2all Performance with NVIDIA Collective Communication Library 2.12</a></p>
-  </li>
-  <li>
-    <p><strong>[2020-08-30]</strong> <a href="/papercache/mlsys/networking/2020/08/30/an-in-depth-analysis-of-the-slingshot-interconnect.html">An In-Depth Analysis of the Slingshot Interconnect</a></p>
-  </li>
-  <li>
-    <p><strong>[2015-07-30]</strong> <a href="/papercache/mlsys/networking/2015/07/30/ucx-an-open-source-framework-for-hpc-network-apis-and-beyond.html">UCX: An Open Source Framework for HPC Network APIs and Beyond</a></p>
-  </li>
-</ul>
+<h4 class="sub-subcategory-title" id="llm-train">Train</h4>
+<ul class="post-list-with-tags">
+    
+  </ul>
 
-<hr />
+<!-- MLSys Section -->
+<h2 class="main-category-title" id="mlsys">MLSYS</h2>
 
-  </div>
+<h3 class="subcategory-title" id="mlsys-compiler">Compiler</h3>
+<ul class="post-list-with-tags">
+    
+      
+    
+      
+    
+      
+    
+      
+    
+      
+    
+  </ul>
 
-</article>
+<h3 class="subcategory-title" id="mlsys-framework">Framework</h3>
+<ul class="post-list-with-tags">
+    
+      
+        <li>
+          <span class="post-meta">2025-08-24</span>
+          <a class="post-link" href="/papercache/mlsys/framework/2025/08/24/campo-cost-aware-performance-optimization-for-mixed-precision-neural-network-training.html">Campo: Cost-Aware Performance Optimization for Mixed-Precision Neural Network Training</a>
+        </li>
+      
+    
+  </ul>
 
-      </div>
-    </main></body>
+<h3 class="subcategory-title" id="mlsys-gpu">Gpu</h3>
+<ul class="post-list-with-tags">
+    
+      
+        <li>
+          <span class="post-meta">2023-01-30</span>
+          <a class="post-link" href="/papercache/mlsys/gpu/2023/01/30/stream-k-work-centric-parallel-decomposition-for-dense-matrix-matrix-multiplication-on-the-gpu.html">Stream-K: Work-centric Parallel Decomposition for Dense Matrix-Matrix Multiplication on the GPU</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2022-01-30</span>
+          <a class="post-link" href="/papercache/mlsys/gpu/2022/01/30/nvidia-h100-tensor-core-gpu-architecture.html">NVIDIA H100 Tensor Core GPU Architecture</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2020-02-28</span>
+          <a class="post-link" href="/papercache/mlsys/gpu/2020/02/28/gpu-initiated-openshmem-correct-and-eicient-intra-kernel-networking-for-dgpus.html">GPU Initiated OpenSHMEM: Correct and Eicient Intra-Kernel Networking for dGPUs</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2018-03-30</span>
+          <a class="post-link" href="/papercache/mlsys/gpu/2018/03/30/improving-real-time-performance-with-cuda-persistent-threads-cuper-on-the-jetson-tx2.html">Improving Real-Time Performance with CUDA Persistent Threads (CuPer) on the Jetson TX2</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2017-04-30</span>
+          <a class="post-link" href="/papercache/mlsys/gpu/2017/04/30/locality-aware-cta-clustering-for-modern-gpus.html">Locality-Aware CTA Clustering for Modern GPUs</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2016-04-30</span>
+          <a class="post-link" href="/papercache/mlsys/gpu/2016/04/30/optimizing-performance-of-recurrent-neural-networks-on-gpus.html">Optimizing Performance of Recurrent Neural Networks on GPUs</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2010-01-30</span>
+          <a class="post-link" href="/papercache/mlsys/gpu/2010/01/30/demystifying-gpu-microarchitecture-through-microbenchmarking.html">Demystifying GPU Microarchitecture through Microbenchmarking</a>
+        </li>
+      
+    
+  </ul>
+
+<h3 class="subcategory-title" id="mlsys-networking">Networking</h3>
+<ul class="post-list-with-tags">
+    
+      
+        <li>
+          <span class="post-meta">2025-07-30</span>
+          <a class="post-link" href="/papercache/mlsys/networking/2025/07/30/scale-up-ethernet-framework-scale-up-ethernet-framework-specification.html">Scale-Up Ethernet Framework Scale-Up Ethernet Framework Specification</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-07-30</span>
+          <a class="post-link" href="/papercache/mlsys/networking/2025/07/30/demystifying-nccl-an-in-depth-analysis-of-gpu-communication-protocols-and-algorithms.html">
+      Demystifying NCCL: An In-depth Analysis of GPU Communication Protocols and
+      Algorithms
+    </a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-04-30</span>
+          <a class="post-link" href="/papercache/mlsys/networking/2025/04/30/introducing-ualink-200g-10-specification.html">Introducing UALink 200G 1.0 Specification</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2025-03-30</span>
+          <a class="post-link" href="/papercache/mlsys/networking/2025/03/30/ub-mesh-a-hierarchically-localized-nd-fullmesh-datacenter-network-architecture.html">UB-Mesh: a Hierarchically Localized nD-FullMesh Datacenter Network Architecture</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2024-04-30</span>
+          <a class="post-link" href="/papercache/mlsys/networking/2024/04/30/scaling-up-memory-disaggregated-applications-with-smart.html">Scaling Up Memory Disaggregated Applications with Smart</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2023-07-30</span>
+          <a class="post-link" href="/papercache/mlsys/networking/2023/07/30/overview-of-and-motivation-for-the-forthcoming-ultra-ethernet-consortium-specification.html">Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium Specification</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2022-11-30</span>
+          <a class="post-link" href="/papercache/mlsys/networking/2022/11/30/improving-network-performance-of-hpc-systems-using-nvidia-magnum-io-nvshmem-and-gpudirect-async.html">Improving Network Performance of HPC Systems Using NVIDIA Magnum IO NVSHMEM and GPUDirect Async</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2022-02-28</span>
+          <a class="post-link" href="/papercache/mlsys/networking/2022/02/28/doubling-all2all-performance-with-nvidia-collective-communication-library-212.html">Doubling all2all Performance with NVIDIA Collective Communication Library 2.12</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2020-08-30</span>
+          <a class="post-link" href="/papercache/mlsys/networking/2020/08/30/an-in-depth-analysis-of-the-slingshot-interconnect.html">An In-Depth Analysis of the Slingshot Interconnect</a>
+        </li>
+      
+    
+      
+        <li>
+          <span class="post-meta">2015-07-30</span>
+          <a class="post-link" href="/papercache/mlsys/networking/2015/07/30/ucx-an-open-source-framework-for-hpc-network-apis-and-beyond.html">UCX: An Open Source Framework for HPC Network APIs and Beyond</a>
+        </li>
+      
+    
+  </ul>
+
+
+        </div>
+      </main>
+    </div><script>
+document.addEventListener("DOMContentLoaded", function() {
+  // Collapsible menu logic for all levels
+  var coll = document.getElementsByClassName("collapsible");
+  for (var i = 0; i < coll.length; i++) {
+    coll[i].addEventListener("click", function() {
+      this.classList.toggle("active");
+      var content = this.nextElementSibling;
+      if (content.style.maxHeight){
+        content.style.maxHeight = null;
+      } else {
+        content.style.maxHeight = content.scrollHeight + "px";
+      } 
+    });
+  }
+
+  // Smooth scroll for sidebar links
+  document.querySelectorAll('.sidebar-nav a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      
+      const targetId = this.getAttribute('href');
+      const targetElement = document.querySelector(targetId);
+
+      if (targetElement) {
+        const headerOffset = 80; // Adjust this value to your header's height
+        const elementPosition = targetElement.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth"
+        });
+      }
+    });
+  });
+});
+</script></body>
 
 </html>

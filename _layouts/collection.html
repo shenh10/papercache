@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: "en" }}">
+
+  {%- include head.html -%}
+
+  <body class="layout-collection">
+
+    {%- include header.html -%}
+
+    <div class="collection-wrapper">
+      <aside class="sidebar">
+        {%- include sidebar.html -%}
+      </aside>
+
+      <main class="collection-content">
+        <div class="wrapper">
+          {{ content }}
+        </div>
+      </main>
+    </div>
+
+    {%- include footer.html -%}
+    {%- include scripts.html -%}
+
+  </body>
+
+</html>

@@ -1,3 +1,4 @@
+@charset "UTF-8";
 /**
  * Reset some basic elements
  */
@@ -690,6 +691,248 @@ table td {
   margin-top: 0.5em;
   font-style: italic;
   text-align: center;
+}
+
+/* Site Stats Counter */
+.site-stats {
+  text-align: center;
+  color: #888;
+  margin: 1em 0;
+  font-size: 0.9em;
+}
+
+.site-stats .separator {
+  margin: 0 1em;
+}
+
+/* Paper Count Badge */
+.paper-count-badge {
+  display: inline-block;
+  background-color: #f0f8ff;
+  color: #4a90e2;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 1em;
+  margin-bottom: 1.5em;
+  border: 1px solid #d1e7fd;
+}
+
+/* Responsive Layout with Sticky Sidebar for Collection Page */
+.collection-wrapper {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  grid-template-areas: "sidebar main";
+  align-items: start;
+}
+
+.sidebar {
+  grid-area: sidebar;
+  position: -webkit-sticky; /* For Safari */
+  position: sticky;
+  top: 20px; /* Adjust this for spacing from the top */
+  height: calc(100vh - 40px); /* Full height minus padding */
+  overflow-y: auto;
+}
+
+.collection-content {
+  grid-area: main;
+}
+
+/* On small screens, hide the sidebar and make content full-width */
+@media (max-width: 960px) {
+  .collection-wrapper {
+    grid-template-columns: 1fr;
+    grid-template-areas: "main";
+  }
+  .sidebar {
+    display: none;
+  }
+}
+/* Sidebar Navigation */
+.sidebar-nav-item {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 5px;
+  color: #555;
+  text-decoration: none;
+  margin-bottom: 5px;
+}
+
+.sidebar-nav-item.active, .sidebar-nav-item:hover {
+  background-color: #e0e0e0;
+  color: #000;
+}
+
+span.sidebar-nav-item {
+  margin-top: 15px;
+  color: #999;
+  font-weight: bold;
+  font-size: 0.9em;
+  text-transform: uppercase;
+}
+
+/* Collapsible Menu in Sidebar */
+.collapsible {
+  background-color: transparent;
+  color: #444;
+  cursor: pointer;
+  padding: 10px;
+  width: 100%;
+  border: none;
+  text-align: left;
+  outline: none;
+  font-size: 1em;
+  font-weight: bold;
+}
+
+.collapsible:after {
+  content: "+"; /* Plus sign */
+  color: #777;
+  font-weight: bold;
+  float: right;
+  margin-left: 5px;
+}
+
+.collapsible.active:after {
+  content: "−"; /* Minus sign */
+}
+
+.collapsible-menu .content {
+  padding: 0 0 0 15px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease-out;
+}
+
+.collapsible-menu.nested .collapsible {
+  font-weight: normal;
+  font-size: 0.9em;
+}
+
+.collapsible-menu.nested .content {
+  padding-left: 30px;
+}
+
+.collapsible-menu .content a {
+  display: block;
+  color: #555;
+  padding: 5px 0;
+  text-decoration: none;
+  font-size: 0.9em;
+}
+
+.collapsible-menu .content a:hover {
+  color: #000;
+}
+
+/* Post List with Tags */
+.post-list-with-tags {
+  list-style: none;
+  padding-left: 0;
+}
+
+.post-list-with-tags li {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.post-list-with-tags .post-meta {
+  width: 100px;
+  flex-shrink: 0;
+  color: #888;
+  font-size: 0.9em;
+}
+
+.post-list-with-tags .subcategory-tag {
+  display: inline-block;
+  padding: 3px 9px;
+  margin-right: 12px;
+  font-size: 0.75em;
+  font-weight: 500;
+  border-radius: 12px;
+  color: white;
+  background-color: #777; /* Default tag color */
+  text-transform: lowercase;
+}
+
+/* Tag colors */
+.tag-agent {
+  background-color: #d9534f;
+}
+
+.tag-attention {
+  background-color: #4a90e2;
+}
+
+.tag-compiler {
+  background-color: #50e3c2;
+}
+
+.tag-framework {
+  background-color: #f0ad4e;
+}
+
+.tag-gpu {
+  background-color: #5cb85c;
+}
+
+.tag-inference {
+  background-color: #f5a623;
+}
+
+.tag-kvcache {
+  background-color: #337ab7;
+}
+
+.tag-low_precision {
+  background-color: #9b59b6;
+}
+
+.tag-models {
+  background-color: #9013fe;
+}
+
+.tag-networking {
+  background-color: #e91e63;
+}
+
+.tag-pretrain {
+  background-color: #2ecc71;
+}
+
+.tag-reinforcement-learning {
+  background-color: #e67e22;
+}
+
+.tag-speculative_decoding {
+  background-color: #1abc9c;
+}
+
+.tag-training {
+  background-color: #bd10e0;
+}
+
+.post-list-with-tags .post-link {
+  font-size: 1.05em;
+  font-weight: 500;
+  color: #333;
+  text-decoration: none;
+}
+
+.post-list-with-tags .post-link:hover {
+  color: #0056b3;
+}
+
+/* Main Category Title */
+.main-category-title {
+  margin-top: 2.5em;
+  font-size: 1.8em;
+  color: #111;
+  padding-bottom: 0.5em;
+  border-bottom: 3px solid #333;
 }
 
 /*# sourceMappingURL=main.css.map */

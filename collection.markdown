@@ -1,60 +1,67 @@
 ---
-layout: page
+layout: collection
 title: 论文合集
 ---
 
 ## 论文合集
 
+<div class="paper-count-badge">
+  收录论文总数：<strong>{{ site.posts.size }}</strong> 篇
+</div>
+
 在这里，您可以找到所有论文的完整分类列表。
 
 ---
 
-### 🤖 大语言模型 (LLM)
+{% assign llm_algorithm_subcategories = "agent,models,pretrain,reinforcement-learning" | split: "," %}
+{% assign llm_engineering_subcategories = "attention,compiler,inference,kvcache,low_precision,speculative_decoding,train" | split: "," %}
+{% assign mlsys_subcategories = "compiler,framework,gpu,networking" | split: "," %}
 
-#### 算法 (Algorithm)
-{% for post in site.categories.algorithm %}
-  {% if post.categories contains 'llm' %}
-- **[{{ post.date | date: "%Y-%m-%d" }}]** [{{ post.title }}]({{ post.url | relative_url }})
-  {% endif %}
+<!-- LLM Section -->
+<h2 class="main-category-title" id="llm">LLM</h2>
+
+<h3 class="subcategory-title" id="llm-algorithm">Algorithm</h3>
+{% for subcat in llm_algorithm_subcategories %}
+  <h4 class="sub-subcategory-title" id="llm-{{ subcat | slugify }}">{{ subcat | capitalize }}</h4>
+  <ul class="post-list-with-tags">
+    {% for post in site.categories[subcat] %}
+      {% if post.categories contains 'llm' %}
+        <li>
+          <span class="post-meta">{{ post.date | date: "%Y-%m-%d" }}</span>
+          <a class="post-link" href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
+        </li>
+      {% endif %}
+    {% endfor %}
+  </ul>
 {% endfor %}
 
-#### 工程 (Engineering)
-{% for post in site.categories.engineering %}
-  {% if post.categories contains 'llm' %}
-- **[{{ post.date | date: "%Y-%m-%d" }}]** [{{ post.title }}]({{ post.url | relative_url }})
-  {% endif %}
+<h3 class="subcategory-title" id="llm-engineering">Engineering</h3>
+{% for subcat in llm_engineering_subcategories %}
+  <h4 class="sub-subcategory-title" id="llm-{{ subcat | slugify }}">{{ subcat | capitalize }}</h4>
+  <ul class="post-list-with-tags">
+    {% for post in site.categories[subcat] %}
+      {% if post.categories contains 'llm' %}
+        <li>
+          <span class="post-meta">{{ post.date | date: "%Y-%m-%d" }}</span>
+          <a class="post-link" href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
+        </li>
+      {% endif %}
+    {% endfor %}
+  </ul>
 {% endfor %}
 
----
-
-### ⚙️ 机器学习系统 (MLSys)
-
-#### 编译器 (Compiler)
-{% for post in site.categories.compiler %}
-  {% if post.categories contains 'mlsys' %}
-- **[{{ post.date | date: "%Y-%m-%d" }}]** [{{ post.title }}]({{ post.url | relative_url }})
-  {% endif %}
+<!-- MLSys Section -->
+<h2 class="main-category-title" id="mlsys">MLSYS</h2>
+{% for subcat in mlsys_subcategories %}
+  <h3 class="subcategory-title" id="mlsys-{{ subcat | slugify }}">{{ subcat | capitalize }}</h3>
+  <ul class="post-list-with-tags">
+    {% for post in site.categories[subcat] %}
+      {% if post.categories contains 'mlsys' %}
+        <li>
+          <span class="post-meta">{{ post.date | date: "%Y-%m-%d" }}</span>
+          <a class="post-link" href="{{ post.url | relative_url }}">{{ post.title | escape }}</a>
+        </li>
+      {% endif %}
+    {% endfor %}
+  </ul>
 {% endfor %}
-
-#### 框架 (Framework)
-{% for post in site.categories.framework %}
-  {% if post.categories contains 'mlsys' %}
-- **[{{ post.date | date: "%Y-%m-%d" }}]** [{{ post.title }}]({{ post.url | relative_url }})
-  {% endif %}
-{% endfor %}
-
-#### GPU
-{% for post in site.categories.gpu %}
-  {% if post.categories contains 'mlsys' %}
-- **[{{ post.date | date: "%Y-%m-%d" }}]** [{{ post.title }}]({{ post.url | relative_url }})
-  {% endif %}
-{% endfor %}
-
-#### 网络 (Networking)
-{% for post in site.categories.networking %}
-  {% if post.categories contains 'mlsys' %}
-- **[{{ post.date | date: "%Y-%m-%d" }}]** [{{ post.title }}]({{ post.url | relative_url }})
-  {% endif %}
-{% endfor %}
-
----
