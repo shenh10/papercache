@@ -322,55 +322,9 @@ llm:
       - engineering
       - inference
       date: '2025-08-25'
-      title: 'AWQ: ACTIVATION-AWARE WEIGHT QUANTIZATION FOR ON-DEVICE LLM COMPRESSION
-        AND ACCELERATION'
-      url: /llm/engineering/inference/2025/08/25/awq-activation-aware-weight-quantization-for-on-device-llm-compression-and-acceleration.html
-    - categories:
-      - llm
-      - engineering
-      - inference
-      date: '2025-08-25'
-      title: 'PROMPT CACHE: MODULAR ATTENTION REUSE FOR LOW-LATENCY INFERENCE'
-      url: /llm/engineering/inference/2025/08/25/prompt-cache-modular-attention-reuse-for-low-latency-inference.html
-    - categories:
-      - llm
-      - engineering
-      - inference
-      date: '2025-08-25'
-      title: 'EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty'
-      url: /llm/engineering/inference/2025/08/25/eagle-speculative-sampling-requires-rethinking-feature-uncertainty.html
-    - categories:
-      - llm
-      - engineering
-      - inference
-      date: '2025-08-25'
-      title: 'SmoothQuant: Accurate and Efficient Post-Training Quantization for Large
-        Language Models'
-      url: /llm/engineering/inference/2025/08/25/smoothquant-accurate-and-efficient-post-training-quantization-for-large-language-models.html
-    - categories:
-      - llm
-      - engineering
-      - inference
-      date: '2025-08-25'
       title: 'MegaScale-Infer: Serving Mixture-of-Experts at Scale with Disaggregated
         Expert Parallelism'
       url: /llm/engineering/inference/2025/08/25/megascale-infer-serving-mixture-of-experts-at-scale-with-disaggregated-expert-parallelism.html
-    - categories:
-      - llm
-      - engineering
-      - inference
-      date: '2025-08-25'
-      title: 'CacheGen: KV Cache Compression and Streaming for Fast Large Language
-        Model Serving'
-      url: /llm/engineering/inference/2025/08/25/cachegen-kv-cache-compression-and-streaming-for-fast-large-language-model-serving.html
-    - categories:
-      - llm
-      - engineering
-      - inference
-      date: '2025-08-25'
-      title: 'FP6-LLM: Efficiently Serving Large Language Models Through FP6-Centric
-        Algorithm-System Co-Design'
-      url: /llm/engineering/inference/2025/08/25/fp6-llm-efficiently-serving-large-language-models-through-fp6-centric-algorithm-system-co-design.html
     - categories:
       - llm
       - engineering
@@ -384,53 +338,9 @@ llm:
       - engineering
       - inference
       date: '2025-08-25'
-      title: 'EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees'
-      url: /llm/engineering/inference/2025/08/25/eagle-2-faster-inference-of-language-models-with-dynamic-draft-trees.html
-    - categories:
-      - llm
-      - engineering
-      - inference
-      date: '2025-08-25'
       title: 'Orca: A Distributed Serving System for Transformer-Based Generative
         Models'
       url: /llm/engineering/inference/2025/08/25/orca-a-distributed-serving-system-for-transformer-based-generative-models.html
-    - categories:
-      - llm
-      - engineering
-      - inference
-      date: '2025-08-25'
-      title: FP8 versus INT8 for efficient deep learning inference
-      url: /llm/engineering/inference/2025/08/25/fp8-versus-int8-for-efficient-deep-learning-inference.html
-    - categories:
-      - llm
-      - engineering
-      - inference
-      date: '2025-08-25'
-      title: Integer or Floating Point? New Outlooks for Low-Bit Quantization on Large
-        Language Models
-      url: /llm/engineering/inference/2025/08/25/integer-or-floating-point-new-outlooks-for-low-bit-quantization-on-large-language-models.html
-    - categories:
-      - llm
-      - engineering
-      - inference
-      date: '2025-08-25'
-      title: With Shared Microexponents, A Little Shifting Goes a Long Way
-      url: /llm/engineering/inference/2025/08/25/with-shared-microexponents-a-little-shifting-goes-a-long-way.html
-    - categories:
-      - llm
-      - engineering
-      - inference
-      date: '2025-08-25'
-      title: 'EAGLE-3: Scaling up Inference Acceleration of Large Language Models
-        via Training-Time Test'
-      url: /llm/engineering/inference/2025/08/25/eagle-3-scaling-up-inference-acceleration-of-large-language-models-via-training-time-test.html
-    - categories:
-      - llm
-      - engineering
-      - inference
-      date: '2025-08-25'
-      title: Recipes for Pre-training LLMs with MXFP8
-      url: /llm/engineering/inference/2025/08/25/recipes-for-pre-training-llms-with-mxfp8.html
     - categories:
       - llm
       - engineering
@@ -445,14 +355,6 @@ llm:
       date: '2025-08-25'
       title: 'SGLang: Efficient Execution of Structured Language Model Programs'
       url: /llm/engineering/inference/2025/08/25/sglang-efficient-execution-of-structured-language-model-programs.html
-    - categories:
-      - llm
-      - engineering
-      - inference
-      date: '2025-08-25'
-      title: Cost-Efficient Large Language Model Serving for Multi-turn Conversations
-        with CachedAttention
-      url: /llm/engineering/inference/2025/08/25/cost-efficient-large-language-model-serving-for-multi-turn-conversations-with-cachedattention.html
     - categories:
       - llm
       - engineering
@@ -484,29 +386,146 @@ llm:
       title: 'Tilus: A Virtual Machine for Arbitrary Low-Precision GPGPU Computation
         in LLM Serving'
       url: /llm/engineering/inference/2025/08/25/tilus-a-virtual-machine-for-arbitrary-low-precision-gpgpu-computation-in-llm-serving.html
+    kvcache:
     - categories:
       - llm
       - engineering
       - inference
+      - kvcache
       date: '2025-08-25'
-      title: 'MEDUSA: Simple LLM Inference Acceleration Framework with Multiple Decoding
-        Heads'
-      url: /llm/engineering/inference/2025/08/25/medusa-simple-llm-inference-acceleration-framework-with-multiple-decoding-heads.html
+      title: 'PROMPT CACHE: MODULAR ATTENTION REUSE FOR LOW-LATENCY INFERENCE'
+      url: /llm/engineering/inference/kvcache/2025/08/25/prompt-cache-modular-attention-reuse-for-low-latency-inference.html
     - categories:
       - llm
       - engineering
       - inference
+      - kvcache
+      date: '2025-08-25'
+      title: 'CacheGen: KV Cache Compression and Streaming for Fast Large Language
+        Model Serving'
+      url: /llm/engineering/inference/kvcache/2025/08/25/cachegen-kv-cache-compression-and-streaming-for-fast-large-language-model-serving.html
+    - categories:
+      - llm
+      - engineering
+      - inference
+      - kvcache
+      date: '2025-08-25'
+      title: Cost-Efficient Large Language Model Serving for Multi-turn Conversations
+        with CachedAttention
+      url: /llm/engineering/inference/kvcache/2025/08/25/cost-efficient-large-language-model-serving-for-multi-turn-conversations-with-cachedattention.html
+    - categories:
+      - llm
+      - engineering
+      - inference
+      - kvcache
       date: '2025-08-25'
       title: Do Large Language Models Need a Content Delivery Network?
-      url: /llm/engineering/inference/2025/08/25/do-large-language-models-need-a-content-delivery-network.html
+      url: /llm/engineering/inference/kvcache/2025/08/25/do-large-language-models-need-a-content-delivery-network.html
     - categories:
       - llm
       - engineering
       - inference
+      - kvcache
       date: '2025-08-25'
       title: 'CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge
         Fusion'
-      url: /llm/engineering/inference/2025/08/25/cacheblend-fast-large-language-model-serving-for-rag-with-cached-knowledge-fusion.html
+      url: /llm/engineering/inference/kvcache/2025/08/25/cacheblend-fast-large-language-model-serving-for-rag-with-cached-knowledge-fusion.html
+    low_precision:
+    - categories:
+      - llm
+      - engineering
+      - inference
+      - low_precision
+      date: '2025-08-25'
+      title: 'AWQ: ACTIVATION-AWARE WEIGHT QUANTIZATION FOR ON-DEVICE LLM COMPRESSION
+        AND ACCELERATION'
+      url: /llm/engineering/inference/low_precision/2025/08/25/awq-activation-aware-weight-quantization-for-on-device-llm-compression-and-acceleration.html
+    - categories:
+      - llm
+      - engineering
+      - inference
+      - low_precision
+      date: '2025-08-25'
+      title: 'SmoothQuant: Accurate and Efficient Post-Training Quantization for Large
+        Language Models'
+      url: /llm/engineering/inference/low_precision/2025/08/25/smoothquant-accurate-and-efficient-post-training-quantization-for-large-language-models.html
+    - categories:
+      - llm
+      - engineering
+      - inference
+      - low_precision
+      date: '2025-08-25'
+      title: 'FP6-LLM: Efficiently Serving Large Language Models Through FP6-Centric
+        Algorithm-System Co-Design'
+      url: /llm/engineering/inference/low_precision/2025/08/25/fp6-llm-efficiently-serving-large-language-models-through-fp6-centric-algorithm-system-co-design.html
+    - categories:
+      - llm
+      - engineering
+      - inference
+      - low_precision
+      date: '2025-08-25'
+      title: FP8 versus INT8 for efficient deep learning inference
+      url: /llm/engineering/inference/low_precision/2025/08/25/fp8-versus-int8-for-efficient-deep-learning-inference.html
+    - categories:
+      - llm
+      - engineering
+      - inference
+      - low_precision
+      date: '2025-08-25'
+      title: Integer or Floating Point? New Outlooks for Low-Bit Quantization on Large
+        Language Models
+      url: /llm/engineering/inference/low_precision/2025/08/25/integer-or-floating-point-new-outlooks-for-low-bit-quantization-on-large-language-models.html
+    - categories:
+      - llm
+      - engineering
+      - inference
+      - low_precision
+      date: '2025-08-25'
+      title: With Shared Microexponents, A Little Shifting Goes a Long Way
+      url: /llm/engineering/inference/low_precision/2025/08/25/with-shared-microexponents-a-little-shifting-goes-a-long-way.html
+    - categories:
+      - llm
+      - engineering
+      - inference
+      - low_precision
+      date: '2025-08-25'
+      title: Recipes for Pre-training LLMs with MXFP8
+      url: /llm/engineering/inference/low_precision/2025/08/25/recipes-for-pre-training-llms-with-mxfp8.html
+    speculative_decoding:
+    - categories:
+      - llm
+      - engineering
+      - inference
+      - speculative_decoding
+      date: '2025-08-25'
+      title: 'EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty'
+      url: /llm/engineering/inference/speculative_decoding/2025/08/25/eagle-speculative-sampling-requires-rethinking-feature-uncertainty.html
+    - categories:
+      - llm
+      - engineering
+      - inference
+      - speculative_decoding
+      date: '2025-08-25'
+      title: 'EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees'
+      url: /llm/engineering/inference/speculative_decoding/2025/08/25/eagle-2-faster-inference-of-language-models-with-dynamic-draft-trees.html
+    - categories:
+      - llm
+      - engineering
+      - inference
+      - speculative_decoding
+      date: '2025-08-25'
+      title: 'EAGLE-3: Scaling up Inference Acceleration of Large Language Models
+        via Training-Time Test'
+      url: /llm/engineering/inference/speculative_decoding/2025/08/25/eagle-3-scaling-up-inference-acceleration-of-large-language-models-via-training-time-test.html
+    - categories:
+      - llm
+      - engineering
+      - inference
+      - speculative_decoding
+      date: '2025-08-25'
+      title: 'MEDUSA: Simple LLM Inference Acceleration Framework with Multiple Decoding
+        Heads'
+      url: /llm/engineering/inference/speculative_decoding/2025/08/25/medusa-simple-llm-inference-acceleration-framework-with-multiple-decoding-heads.html
     train:
     - categories:
       - llm
