@@ -10,11 +10,12 @@
   {%- endif -%}
 
   <!-- MathJax 3 Configuration -->
+  {%- if page.mathjax != false -%}
   <script>
     window.MathJax = {
       tex: {
-        inlineMath: [['$', '$'], ['\(', '\)']],
-        displayMath: [['$$', '$$'], ['\[', '\]']]
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']]
       },
       svg: {
         fontCache: 'global'
@@ -24,6 +25,7 @@
   <script type="text/javascript" id="MathJax-script" async
     src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
   </script>
+  {%- endif -%}
 
   <!-- Busuanzi Analytics -->
   <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>

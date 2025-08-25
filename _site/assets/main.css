@@ -1,3 +1,4 @@
+@charset "UTF-8";
 /**
  * Reset some basic elements
  */
@@ -1001,6 +1002,21 @@ table td {
   padding-bottom: 0.5em;
   border-bottom: 3px solid #007bff;
   text-align: center;
+}
+
+/* Collection Page Title - 美化样式 */
+.collection-page-title {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px 30px;
+  border: none;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  text-align: center;
+  margin: 2em 0 2em 0;
+  font-weight: 600;
+  letter-spacing: 1px;
+  width: 100%;
+  border-radius: 0;
 }
 
 /* Main Category Title */

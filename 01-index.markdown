@@ -3,6 +3,7 @@ layout: page
 title: 🤖 欢迎来到 PaperCache！
 nav_title: 首页
 mathjax: false
+permalink: /
 ---
 
 
