@@ -2,23 +2,29 @@
 document.addEventListener("DOMContentLoaded", function() {
   console.log("PaperCache script loaded and DOM is ready.");
 
-  // Collapsible menu logic for all levels
-  var coll = document.getElementsByClassName("collapsible");
-  console.log("Found " + coll.length + " collapsible elements.");
-
-  for (var i = 0; i < coll.length; i++) {
-    coll[i].addEventListener("click", function() {
-      console.log("Collapsible element clicked:", this.textContent);
-      this.classList.toggle("active");
-      var content = this.nextElementSibling;
-      if (content.style.maxHeight){
-        content.style.maxHeight = null;
-      } else {
-        content.style.maxHeight = content.scrollHeight + "px";
-        console.log("Expanding content with scrollHeight:", content.scrollHeight);
-      } 
+  // Smooth scroll for sidebar links
+  var sidebarLinks = document.querySelectorAll('.sidebar-nav a');
+  console.log("Found " + sidebarLinks.length + " sidebar links.");
+  
+  for (var i = 0; i < sidebarLinks.length; i++) {
+    sidebarLinks[i].addEventListener("click", function(e) {
+      e.preventDefault();
+      var targetId = this.getAttribute('href').substring(1);
+      var targetElement = document.getElementById(targetId);
+      
+      if (targetElement) {
+        targetElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
     });
   }
+  
+  // Initialize sidebar on page load
+  setTimeout(function() {
+    console.log("Sidebar initialized - all categories expanded");
+  }, 100);
 
   // Smooth scroll for sidebar links
   var sidebarLinks = document.querySelectorAll('.sidebar-nav a[href^="#"]');

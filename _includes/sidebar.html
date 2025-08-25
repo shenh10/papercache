@@ -4,23 +4,21 @@
   {% for main_cat_entry in site.data.collection_structure %}
     {% assign main_cat_name = main_cat_entry[0] %}
     {% assign sub_cats = main_cat_entry[1] %}
-    <div class="collapsible-menu">
-      <button class="collapsible">{{ main_cat_name | upcase }}</button>
-      <div class="content">
-        {% for sub_cat_entry in sub_cats %}
-          {% assign sub_cat_name = sub_cat_entry[0] %}
-          {% assign sub_sub_cats = sub_cat_entry[1] %}
-          <div class="collapsible-menu nested">
-            <button class="collapsible">{{ sub_cat_name | capitalize }}</button>
-            <div class="content">
-              {% for sub_sub_cat_entry in sub_sub_cats %}
-                {% assign sub_sub_cat_name = sub_sub_cat_entry[0] %}
-                <a href="#{{ main_cat_name | slugify }}-{{ sub_cat_name | slugify }}-{{ sub_sub_cat_name | slugify }}">{{ sub_sub_cat_name | replace: '_', ' ' | capitalize }}</a>
-              {% endfor %}
+    <div class="category-section">
+      <h3 class="main-category">{{ main_cat_name | upcase }}</h3>
+      {% for sub_cat_entry in sub_cats %}
+        {% assign sub_cat_name = sub_cat_entry[0] %}
+        {% assign sub_sub_cats = sub_cat_entry[1] %}
+        <div class="sub-category">
+          <h4 class="sub-category-title">{{ sub_cat_name | capitalize }}</h4>
+          {% for sub_sub_cat_entry in sub_sub_cats %}
+            {% assign sub_sub_cat_name = sub_sub_cat_entry[0] %}
+            <div class="sub-sub-category">
+              <a href="#{{ main_cat_name | slugify }}-{{ sub_cat_name | slugify }}-{{ sub_sub_cat_name | slugify }}">{{ sub_sub_cat_name | replace: '_', ' ' | capitalize }}</a>
             </div>
-          </div>
-        {% endfor %}
-      </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
     </div>
   {% endfor %}
 </nav>

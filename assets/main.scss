@@ -74,23 +74,32 @@
 
 /* Responsive Layout with Sticky Sidebar for Collection Page */
 .collection-wrapper {
-  display: grid;
-  grid-template-columns: 260px 1fr;
-  grid-template-areas: "sidebar main";
-  align-items: start;
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
 }
 
 .sidebar {
-  grid-area: sidebar;
+  flex: 0 0 280px;
   position: -webkit-sticky; /* For Safari */
   position: sticky;
   top: 20px; /* Adjust this for spacing from the top */
-  height: calc(100vh - 40px); /* Full height minus padding */
+  max-height: calc(100vh - 60px); /* Full height minus padding */
   overflow-y: auto;
+  padding-right: 15px;
+  z-index: 100;
+}
+
+.collection-content {
+  flex: 1;
+  min-height: 100vh;
+  padding-top: 20px;
 }
 
 .collection-content {
   grid-area: main;
+  min-height: 100vh;
+  padding-top: 20px;
 }
 
 /* On small screens, hide the sidebar and make content full-width */
@@ -98,10 +107,57 @@
   .collection-wrapper {
     grid-template-columns: 1fr;
     grid-template-areas: "main";
+    gap: 0;
   }
   .sidebar {
     display: none;
   }
+}
+
+/* Improve sidebar navigation spacing */
+.sidebar-nav {
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  min-height: 200px;
+}
+
+.sidebar-nav-item {
+  margin-bottom: 15px;
+  padding: 12px 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #495057;
+}
+
+/* Better spacing for collapsible menus */
+.collapsible-menu {
+  margin-bottom: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #f8f9fa;
+  position: relative;
+  z-index: 1;
+}
+
+.collapsible-menu:last-child {
+  margin-bottom: 0;
+}
+
+.collapsible-menu.active {
+  z-index: 10;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Ensure content doesn't get hidden behind sidebar */
+.collection-content .wrapper {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 /* Sidebar Navigation */
@@ -125,51 +181,59 @@ span.sidebar-nav-item {
   text-transform: uppercase;
 }
 
-/* Collapsible Menu in Sidebar */
-.collapsible {
-  background-color: transparent;
-  color: #444;
-  cursor: pointer;
-  padding: 10px;
-  width: 100%;
-  border: none;
-  text-align: left;
-  outline: none;
-  font-size: 1em;
-  font-weight: bold;
+/* Category Section Styles */
+.category-section {
+  margin-bottom: 25px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-.collapsible:after {
-  content: '\002B'; /* Plus sign */
-  color: #777;
-  font-weight: bold;
-  float: right;
-  margin-left: 5px;
+
+.main-category {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
-.collapsible.active:after {
-  content: "\2212"; /* Minus sign */
+
+.sub-category {
+  margin-bottom: 15px;
+  padding-left: 10px;
 }
-.collapsible-menu .content {
-  padding: 0 0 0 15px;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.2s ease-out;
-}
-.collapsible-menu.nested .collapsible {
-  font-weight: normal;
-  font-size: 0.9em;
-}
-.collapsible-menu.nested .content {
-  padding-left: 30px;
-}
-.collapsible-menu .content a {
-  display: block;
+
+.sub-category-title {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
   color: #555;
-  padding: 5px 0;
-  text-decoration: none;
-  font-size: 0.9em;
+  text-transform: capitalize;
 }
-.collapsible-menu .content a:hover {
-  color: #000;
+
+.sub-sub-category {
+  margin-bottom: 5px;
+  padding-left: 15px;
+}
+
+.sub-sub-category a {
+  display: block;
+  padding: 6px 10px;
+  color: #666;
+  text-decoration: none;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.sub-sub-category a:hover {
+  color: #007bff;
+  background-color: #e3f2fd;
+  transform: translateX(5px);
+  text-decoration: none;
 }
 
 /* Post List with Tags */
