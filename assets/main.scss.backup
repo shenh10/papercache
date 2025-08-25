@@ -1,0 +1,318 @@
+---
+---
+
+@import "minima";
+
+/* Widescreen Layout */
+.wrapper {
+  max-width: 1200px;
+  padding-right: 15px;
+  padding-left: 15px;
+}
+
+/* Post Content Headers */
+.post-content h2, .post-content h3 {
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: .3em;
+  margin-top: 2em;
+  margin-bottom: 1em;
+}
+
+.post-content h1 {
+  border-bottom: 3px solid #3498db;
+  padding-bottom: 0.5em;
+}
+
+/* Center Images and Captions */
+.post-content .image-figure, .post-content figure {
+  display: table;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.post-content .figure-image, .post-content figure img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
+  height: auto;
+  border-radius: 5px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.post-content .figure-caption, .post-content figcaption {
+  color: #888;
+  font-size: 0.9em;
+  margin-top: 0.5em;
+  font-style: italic;
+  text-align: center;
+}
+
+/* Site Stats Counter */
+.site-stats {
+  text-align: center;
+  color: #888;
+  margin: 1em 0;
+  font-size: 0.9em;
+}
+.site-stats .separator {
+  margin: 0 1em;
+}
+
+/* Paper Count Badge */
+.paper-count-badge {
+  display: inline-block;
+  background-color: #f0f8ff;
+  color: #4a90e2;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 1em;
+  margin-bottom: 1.5em;
+  border: 1px solid #d1e7fd;
+}
+
+/* Responsive Layout with Sticky Sidebar for Collection Page */
+.collection-wrapper {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+}
+
+.sidebar {
+  flex: 0 0 280px;
+  position: -webkit-sticky; /* For Safari */
+  position: sticky;
+  top: 20px; /* Adjust this for spacing from the top */
+  max-height: calc(100vh - 60px); /* Full height minus padding */
+  overflow-y: auto;
+  padding-right: 15px;
+  z-index: 100;
+}
+
+.collection-content {
+  flex: 1;
+  min-height: 100vh;
+  padding-top: 20px;
+}
+
+/* On small screens, hide the sidebar and make content full-width */
+@media (max-width: 960px) {
+  .collection-wrapper {
+    flex-direction: column;
+    gap: 0;
+  }
+  .sidebar {
+    display: none;
+  }
+}
+
+/* Improve sidebar navigation spacing */
+.sidebar-nav {
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  overflow-y: auto;
+  transition: all 0.3s ease;
+  min-height: 200px;
+}
+
+.sidebar-nav-item {
+  margin-bottom: 15px;
+  padding: 12px 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  font-weight: 600;
+  color: #495057;
+}
+
+
+
+/* Ensure content doesn't get hidden behind sidebar */
+.collection-content .wrapper {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Sidebar Navigation */
+.sidebar-nav-item {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 5px;
+  color: #555;
+  text-decoration: none;
+  margin-bottom: 5px;
+}
+.sidebar-nav-item.active, .sidebar-nav-item:hover {
+  background-color: #e0e0e0;
+  color: #000;
+}
+span.sidebar-nav-item {
+  margin-top: 15px;
+  color: #999;
+  font-weight: bold;
+  font-size: 0.9em;
+  text-transform: uppercase;
+}
+
+/* Category Section Styles */
+.category-section {
+  margin-bottom: 25px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.main-category {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #333;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sub-category {
+  margin-bottom: 15px;
+  padding-left: 10px;
+}
+
+.sub-category-title {
+  margin: 0 0 8px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  text-transform: capitalize;
+}
+
+.sub-sub-category {
+  margin-bottom: 5px;
+  padding-left: 15px;
+}
+
+.sub-sub-category a {
+  display: block;
+  padding: 6px 10px;
+  color: #666;
+  text-decoration: none;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.sub-sub-category a:hover {
+  color: #007bff;
+  background-color: #e3f2fd;
+  transform: translateX(5px);
+  text-decoration: none;
+}
+
+.fourth-level-category {
+  margin-bottom: 3px;
+  padding-left: 25px;
+}
+
+.fourth-level-category a {
+  display: block;
+  padding: 4px 8px;
+  color: #777;
+  text-decoration: none;
+  font-size: 12px;
+  transition: all 0.2s ease;
+  border-radius: 3px;
+  background: transparent;
+}
+
+.fourth-level-category a:hover {
+  color: #007bff;
+  background-color: #f0f8ff;
+  transform: translateX(3px);
+  text-decoration: none;
+}
+
+.sub-sub-category-title {
+  display: block;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+
+/* Post List with Tags */
+.post-list-with-tags {
+  list-style: none;
+  padding-left: 0;
+}
+.post-list-with-tags li {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.post-list-with-tags .post-meta {
+  width: 100px;
+  flex-shrink: 0;
+  color: #888;
+  font-size: 0.9em;
+}
+.post-list-with-tags .subcategory-tag {
+  display: inline-block;
+  padding: 3px 9px;
+  margin-right: 12px;
+  font-size: 0.75em;
+  font-weight: 500;
+  border-radius: 12px;
+  color: white;
+  background-color: #777; /* Default tag color */
+  text-transform: lowercase;
+}
+/* Tag colors */
+.tag-agent { background-color: #d9534f; }
+.tag-attention { background-color: #4a90e2; }
+.tag-compiler { background-color: #50e3c2; }
+.tag-framework { background-color: #f0ad4e; }
+.tag-gpu { background-color: #5cb85c; }
+.tag-inference { background-color: #f5a623; }
+.tag-kvcache { background-color: #337ab7; }
+.tag-low_precision { background-color: #9b59b6; }
+.tag-models { background-color: #9013fe; }
+.tag-networking { background-color: #e91e63; }
+.tag-pretrain { background-color: #2ecc71; }
+.tag-reinforcement-learning { background-color: #e67e22; }
+.tag-speculative_decoding { background-color: #1abc9c; }
+.tag-training { background-color: #bd10e0; }
+
+
+.post-list-with-tags .post-link {
+  font-size: 1.05em;
+  font-weight: 500;
+  color: #333;
+  text-decoration: none;
+}
+.post-list-with-tags .post-link:hover {
+  color: #0056b3;
+}
+
+/* Main Category Title */
+.main-category-title {
+  margin-top: 2.5em;
+  font-size: 1.8em;
+  color: #111;
+  padding-bottom: 0.5em;
+  border-bottom: 3px solid #333;
+}
+
+/* Fourth Level Title */
+.fourth-level-title {
+  margin: 15px 0 8px 20px;
+  font-size: 1em;
+  font-weight: 500;
+  color: #555;
+  border-left: 3px solid #28a745;
+  padding-left: 10px;
+}

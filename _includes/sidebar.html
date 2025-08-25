@@ -5,17 +5,42 @@
     {% assign main_cat_name = main_cat_entry[0] %}
     {% assign sub_cats = main_cat_entry[1] %}
     <div class="category-section">
-      <h3 class="main-category">{{ main_cat_name | upcase }}</h3>
+      <h3 class="main-category">
+        <a href="#{{ main_cat_name | slugify }}">{{ main_cat_name | upcase }}</a>
+      </h3>
       {% for sub_cat_entry in sub_cats %}
         {% assign sub_cat_name = sub_cat_entry[0] %}
         {% assign sub_sub_cats = sub_cat_entry[1] %}
         <div class="sub-category">
-          <h4 class="sub-category-title">{{ sub_cat_name | capitalize }}</h4>
+          <h4 class="sub-category-title">
+            <a href="#{{ main_cat_name | slugify }}-{{ sub_cat_name | slugify }}">{{ sub_cat_name | capitalize }}</a>
+          </h4>
           {% for sub_sub_cat_entry in sub_sub_cats %}
             {% assign sub_sub_cat_name = sub_sub_cat_entry[0] %}
-            <div class="sub-sub-category">
-              <a href="#{{ main_cat_name | slugify }}-{{ sub_cat_name | slugify }}-{{ sub_sub_cat_name | slugify }}">{{ sub_sub_cat_name | replace: '_', ' ' | capitalize }}</a>
-            </div>
+            {% assign sub_sub_cat_content = sub_sub_cat_entry[1] %}
+            
+            {% if sub_sub_cat_name == 'posts' %}
+              <!-- 跳过posts，不显示 -->
+            {% elsif sub_sub_cat_content.posts and sub_sub_cat_content.size == 1 %}
+              <!-- 这是纯三级分类，直接显示链接 -->
+              <div class="sub-sub-category">
+                <a href="#{{ main_cat_name | slugify }}-{{ sub_cat_name | slugify }}-{{ sub_sub_cat_name | slugify }}">{{ sub_sub_cat_name | replace: '_', ' ' | capitalize }}</a>
+              </div>
+            {% else %}
+              <!-- 这是四级分类的容器，需要进一步嵌套 -->
+              <div class="sub-sub-category">
+                <a href="#{{ main_cat_name | slugify }}-{{ sub_cat_name | slugify }}-{{ sub_sub_cat_name | slugify }}" class="sub-sub-category-title">{{ sub_sub_cat_name | replace: '_', ' ' | capitalize }}</a>
+                {% for fourth_level_entry in sub_sub_cat_content %}
+                  {% assign fourth_level_name = fourth_level_entry[0] %}
+                  {% assign fourth_level_content = fourth_level_entry[1] %}
+                  {% if fourth_level_name != 'posts' and fourth_level_content.posts %}
+                  <div class="fourth-level-category">
+                    <a href="#{{ main_cat_name | slugify }}-{{ sub_cat_name | slugify }}-{{ sub_sub_cat_name | slugify }}-{{ fourth_level_name | slugify }}">{{ fourth_level_name | replace: '_', ' ' | capitalize }}</a>
+                  </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            {% endif %}
           {% endfor %}
         </div>
       {% endfor %}
