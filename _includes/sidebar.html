@@ -15,7 +15,7 @@
             <div class="content">
               {% for sub_sub_cat_entry in sub_sub_cats %}
                 {% assign sub_sub_cat_name = sub_sub_cat_entry[0] %}
-                <a href="#{{ main_cat_name | slugify }}-{{ sub_sub_cat_name | slugify }}">{{ sub_sub_cat_name | replace: '_', ' ' | capitalize }}</a>
+                <a href="#{{ main_cat_name | slugify }}-{{ sub_cat_name | slugify }}-{{ sub_sub_cat_name | slugify }}">{{ sub_sub_cat_name | replace: '_', ' ' | capitalize }}</a>
               {% endfor %}
             </div>
           </div>

@@ -1,28 +1,39 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+  console.log("PaperCache script loaded and DOM is ready.");
+
   // Collapsible menu logic for all levels
   var coll = document.getElementsByClassName("collapsible");
+  console.log("Found " + coll.length + " collapsible elements.");
+
   for (var i = 0; i < coll.length; i++) {
     coll[i].addEventListener("click", function() {
+      console.log("Collapsible element clicked:", this.textContent);
       this.classList.toggle("active");
       var content = this.nextElementSibling;
       if (content.style.maxHeight){
         content.style.maxHeight = null;
       } else {
         content.style.maxHeight = content.scrollHeight + "px";
+        console.log("Expanding content with scrollHeight:", content.scrollHeight);
       } 
     });
   }
 
   // Smooth scroll for sidebar links
-  document.querySelectorAll('.sidebar-nav a[href^="#"]').forEach(anchor => {
+  var sidebarLinks = document.querySelectorAll('.sidebar-nav a[href^="#"]');
+  console.log("Found " + sidebarLinks.length + " sidebar anchor links.");
+
+  sidebarLinks.forEach(anchor => {
     anchor.addEventListener('click', function (e) {
       e.preventDefault();
-      
       const targetId = this.getAttribute('href');
+      console.log("Sidebar link clicked, target:", targetId);
+      
       const targetElement = document.querySelector(targetId);
 
       if (targetElement) {
+        console.log("Found target element:", targetElement);
         const headerOffset = 80; // Adjust this value to your header's height
         const elementPosition = targetElement.getBoundingClientRect().top;
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
@@ -31,6 +42,8 @@ document.addEventListener("DOMContentLoaded", function() {
           top: offsetPosition,
           behavior: "smooth"
         });
+      } else {
+        console.error("Target element not found for selector:", targetId);
       }
     });
   });

@@ -14,27 +14,26 @@ title: 论文合集
 ---
 
 {% for main_cat_entry in site.data.collection_structure %}
-  {% assign main_cat_name = main_cat_entry[0] %}
-  {% assign sub_cats = main_cat_entry[1] %}
-  <h2 class="main-category-title" id="{{ main_cat_name | slugify }}">{{ main_cat_name | upcase }}</h2>
-  
-  {% for sub_cat_entry in sub_cats %}
-    {% assign sub_cat_name = sub_cat_entry[0] %}
-    {% assign sub_sub_cats = sub_cat_entry[1] %}
-    <h3 class="subcategory-title" id="{{ main_cat_name | slugify }}-{{ sub_cat_name | slugify }}">{{ sub_cat_name | capitalize }}</h3>
-    
-    {% for sub_sub_cat_entry in sub_sub_cats %}
-      {% assign sub_sub_cat_name = sub_sub_cat_entry[0] %}
-      {% assign posts = sub_sub_cat_entry[1] %}
-      <h4 class="sub-subcategory-title" id="{{ main_cat_name | slugify }}-{{ sub_sub_cat_name | slugify }}">{{ sub_sub_cat_name | replace: "_", " " | capitalize }}</h4>
-      <ul class="post-list-with-tags">
-        {% for post in posts %}
-          <li>
-            <span class="post-meta">{{ post.date | date: "%Y-%m-%d" }}</span>
-            <a class="post-link" href="{{ site.baseurl }}{{ post.url }}">{{ post.title | escape }}</a>
-          </li>
-        {% endfor %}
-      </ul>
-    {% endfor %}
-  {% endfor %}
+{% assign main_cat_name = main_cat_entry[0] %}
+{% assign sub_cats = main_cat_entry[1] %}
+<h2 class="main-category-title" id="{{ main_cat_name | slugify }}">{{ main_cat_name | upcase }}</h2>
+{% for sub_cat_entry in sub_cats %}
+{% assign sub_cat_name = sub_cat_entry[0] %}
+{% assign sub_sub_cats = sub_cat_entry[1] %}
+<h3 class="subcategory-title" id="{{ main_cat_name | slugify }}-{{ sub_cat_name | slugify }}">{{ sub_cat_name | capitalize }}</h3>
+{% for sub_sub_cat_entry in sub_sub_cats %}
+{% assign sub_sub_cat_name = sub_sub_cat_entry[0] %}
+{% assign posts = sub_sub_cat_entry[1] %}
+<h4 class="sub-subcategory-title" id="{{ main_cat_name | slugify }}-{{ sub_cat_name | slugify }}-{{ sub_sub_cat_name | slugify }}">{{ sub_sub_cat_name | replace: "_", " " | capitalize }}</h4>
+<ul class="post-list-with-tags">
+{% assign sorted_posts = posts | sort: "date" | reverse %}
+{% for post in sorted_posts %}
+<li>
+<span class="post-meta">{{ post.date | date: "%Y-%m-%d" }}</span>
+<a class="post-link" href="{{ site.baseurl }}{{ post.url }}">{{ post.title | escape }}</a>
+</li>
+{% endfor %}
+</ul>
+{% endfor %}
+{% endfor %}
 {% endfor %}
