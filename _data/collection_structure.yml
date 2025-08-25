@@ -640,13 +640,6 @@ mlsys:
       title: 'Campo: Cost-Aware Performance Optimization for Mixed-Precision Neural
         Network Training'
       url: /mlsys/framework/2022/01/01/campo-cost-aware-performance-optimization-for-mixed-precision-neural-network-training.html
-    - categories:
-      - mlsys
-      - framework
-      date: '2025-08-25'
-      title: 'Campo: Cost-Aware Performance Optimization for Mixed-Precision Neural
-        Network Training'
-      url: /mlsys/framework/2025/08/25/campo-cost-aware-performance-optimization-for-mixed-precision-neural-network-training.html
   gpu:
     posts:
     - categories:

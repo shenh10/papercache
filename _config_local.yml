@@ -1,0 +1,13 @@
+# 本地开发配置
+# 这个文件用于本地构建，避免修改生产环境的链接
+
+# 本地开发 URL
+url: "http://localhost:4000"
+
+# 禁用一些生产环境功能
+google_analytics: false
+giscus:
+  enabled: false
+
+# 本地开发环境
+JEKYLL_ENV: development

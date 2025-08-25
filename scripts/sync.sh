@@ -102,7 +102,8 @@ build_jekyll() {
     cd "$PAPERCACHE_DIR"
     
     if command -v bundle &> /dev/null; then
-        bundle exec jekyll build
+        # 使用本地 URL 构建，避免修改生产环境的链接
+        JEKYLL_ENV=development bundle exec jekyll build --config _config.yml,_config_local.yml
         log_success "Jekyll 站点构建完成"
     else
         log_warning "bundle 未安装，跳过 Jekyll 构建"

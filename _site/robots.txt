@@ -1,1 +1,1 @@
-Sitemap: https://shenh10.github.io/papercache/sitemap.xml
+Sitemap: http://localhost:4000/papercache/sitemap.xml
