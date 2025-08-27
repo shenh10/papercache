@@ -1,0 +1,192 @@
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-content">
+      <!-- 左侧访问统计 -->
+      <div class="footer-section footer-left">
+        <div class="analytics-stats">
+          <div class="stat-item">
+            <span class="stat-label">总访问量</span>
+            <span class="stat-value" id="busuanzi_value_site_pv">
+              <span class="busuanzi-value" id="busuanzi_value_site_pv">0</span>
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 中间版权信息 -->
+      <div class="footer-section footer-center">
+        <p class="copyright">&copy; {{ site.time | date: '%Y' }} {{ site.title | default: site.github.repository_name }}. All rights reserved.</p>
+        <p class="powered-by">Powered by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> | Analytics by <a href="https://busuanzi.ibruce.info/" target="_blank">Busuanzi</a></p>
+      </div>
+      
+      <!-- 右侧访问统计 -->
+      <div class="footer-section footer-right">
+        <div class="analytics-stats">
+          <div class="stat-item">
+            <span class="stat-label">独立访客</span>
+            <span class="stat-value" id="busuanzi_value_site_uv">
+              <span class="busuanzi-value" id="busuanzi_value_site_uv">0</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+.site-footer {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-top: 2px solid #dee2e6;
+  padding: 2.5rem 0;
+  margin-top: 4rem;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.footer-section {
+  flex: 1;
+  text-align: center;
+  min-width: 200px;
+}
+
+.footer-left {
+  text-align: left;
+}
+
+.footer-center {
+  flex: 2;
+  text-align: center;
+}
+
+.footer-right {
+  text-align: right;
+}
+
+.analytics-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  background: rgba(255,255,255,0.9);
+}
+
+.stat-label {
+  color: #495057;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 70px;
+}
+
+.stat-value {
+  color: #007bff;
+  font-weight: 700;
+  font-size: 1.2rem;
+  background: linear-gradient(45deg, #007bff, #0056b3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.copyright {
+  color: #495057;
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.powered-by {
+  color: #6c757d;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.footer-section a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.footer-section a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  
+  .footer-left,
+  .footer-right {
+    text-align: center;
+  }
+  
+  .footer-center {
+    order: -1;
+  }
+  
+  .stat-item {
+    justify-content: center;
+    min-width: 200px;
+  }
+  
+  .container {
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-footer {
+    padding: 2rem 0;
+  }
+  
+  .stat-item {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem;
+  }
+  
+  .stat-label {
+    font-size: 0.8rem;
+  }
+  
+  .stat-value {
+    font-size: 1.1rem;
+  }
+}
+</style>
