@@ -12,6 +12,8 @@ permalink: /collection.html
 
 <p>在这里，您可以找到所有论文的完整分类列表。</p>
 
+{% include tag-filter.html %}
+
 ---
 
 {% for main_cat_entry in site.data.collection_structure %}
@@ -44,6 +46,9 @@ permalink: /collection.html
       {% for post in sorted_posts %}
       <li>
       <span class="post-meta">{{ post.date | date: "%Y-%m-%d" }}</span>
+      {% if post.tag %}
+      <span class="subcategory-tag tag-{{ post.tag | downcase | replace: ' ', '_' | replace: '-', '_' }}">{{ post.tag }}</span>
+      {% endif %}
       <a class="post-link" href="{{ site.baseurl }}{{ post.url }}">{{ post.title | escape }}</a>
       </li>
       {% endfor %}
@@ -66,6 +71,9 @@ permalink: /collection.html
     {% for post in sorted_posts %}
     <li>
     <span class="post-meta">{{ post.date | date: "%Y-%m-%d" }}</span>
+    {% if post.tag %}
+    <span class="subcategory-tag tag-{{ post.tag | downcase | replace: ' ', '_' | replace: '-', '_' }}">{{ post.tag }}</span>
+    {% endif %}
     <a class="post-link" href="{{ site.baseurl }}{{ post.url }}">{{ post.title | escape }}</a>
     </li>
     {% endfor %}
@@ -83,6 +91,9 @@ permalink: /collection.html
       {% for post in sorted_posts %}
       <li>
       <span class="post-meta">{{ post.date | date: "%Y-%m-%d" }}</span>
+      {% if post.tag %}
+      <span class="subcategory-tag tag-{{ post.tag | downcase | replace: ' ', '_' | replace: '-', '_' }}">{{ post.tag }}</span>
+      {% endif %}
       <a class="post-link" href="{{ site.baseurl }}{{ post.url }}">{{ post.title | escape }}</a>
       </li>
       {% endfor %}
@@ -98,6 +109,9 @@ permalink: /collection.html
     {% for post in sorted_posts %}
     <li>
     <span class="post-meta">{{ post.date | date: "%Y-%m-%d" }}</span>
+    {% if post.tag %}
+    <span class="subcategory-tag tag-{{ post.tag | downcase | replace: ' ', '_' | replace: '-', '_' }}">{{ post.tag }}</span>
+    {% endif %}
     <a class="post-link" href="{{ site.baseurl }}{{ post.url }}">{{ post.title | escape }}</a>
     </li>
     {% endfor %}

@@ -38,7 +38,7 @@ giscus:
   lang: "zh-CN"
 
 # 统计系统
-google_analytics: "REPLACE_WITH_GA_ID"
+google_analytics: "G-MWWFKJXJLN"
 busuanzi_analytics: true
 
 # 默认设置
@@ -69,4 +69,5 @@ exclude:
   - Gemfile.lock
   - node_modules/
   - .DS_Store
+
 

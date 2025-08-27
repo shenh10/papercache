@@ -1,0 +1,85 @@
+{% comment %}
+Tag Filter Component
+This component shows tag statistics and provides filtering functionality
+{% endcomment %}
+
+{% assign all_tags = "" | split: "" %}
+{% assign tag_counts = "" | split: "" %}
+
+{% comment %} Collect all unique tags and their counts {% endcomment %}
+{% for main_cat_entry in site.data.collection_structure %}
+  {% assign main_cat_name = main_cat_entry[0] %}
+  {% assign sub_cats = main_cat_entry[1] %}
+  {% for sub_cat_entry in sub_cats %}
+    {% assign sub_cat_name = sub_cat_entry[0] %}
+    {% assign sub_sub_cats = sub_cat_entry[1] %}
+    {% for sub_sub_cat_entry in sub_sub_cats %}
+      {% assign sub_sub_cat_name = sub_sub_cat_entry[0] %}
+      {% assign sub_sub_cat_content = sub_sub_cat_entry[1] %}
+      {% if sub_sub_cat_name == 'posts' and sub_sub_cat_content %}
+        {% for post in sub_sub_cat_content %}
+          {% if post.tag %}
+            {% unless all_tags contains post.tag %}
+              {% assign all_tags = all_tags | push: post.tag %}
+            {% endunless %}
+          {% endif %}
+        {% endfor %}
+      {% elsif sub_sub_cat_content.posts %}
+        {% for post in sub_sub_cat_content.posts %}
+          {% if post.tag %}
+            {% unless all_tags contains post.tag %}
+              {% assign all_tags = all_tags | push: post.tag %}
+            {% endunless %}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endfor %}
+  {% endfor %}
+{% endfor %}
+
+{% if all_tags.size > 0 %}
+<div class="tag-filter-container">
+  <h3 class="tag-filter-title">📊 标签统计</h3>
+  <div class="tag-stats">
+    <p>共找到 <strong>{{ all_tags.size }}</strong> 个不同的标签</p>
+  </div>
+  
+  <div class="tag-filter-buttons">
+    <button class="tag-filter-btn tag-filter-all active" data-tag="all">
+      全部 ({{ site.posts.size }})
+    </button>
+    {% for tag in all_tags %}
+      {% assign tag_count = 0 %}
+      {% for main_cat_entry in site.data.collection_structure %}
+        {% assign main_cat_name = main_cat_entry[0] %}
+        {% assign sub_cats = main_cat_entry[1] %}
+        {% for sub_cat_entry in sub_cats %}
+          {% assign sub_cat_name = sub_cat_entry[0] %}
+          {% assign sub_sub_cats = sub_cat_entry[1] %}
+          {% for sub_sub_cat_entry in sub_sub_cats %}
+            {% assign sub_sub_cat_name = sub_sub_cat_entry[0] %}
+            {% assign sub_sub_cat_content = sub_sub_cat_entry[1] %}
+            {% if sub_sub_cat_name == 'posts' and sub_sub_cat_content %}
+              {% for post in sub_sub_cat_content %}
+                {% if post.tag == tag %}
+                  {% assign tag_count = tag_count | plus: 1 %}
+                {% endif %}
+              {% endfor %}
+            {% elsif sub_sub_cat_content.posts %}
+              {% for post in sub_sub_cat_content.posts %}
+                {% if post.tag == tag %}
+                  {% assign tag_count = tag_count | plus: 1 %}
+                {% endif %}
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+      {% endfor %}
+      <button class="tag-filter-btn" data-tag="{{ tag | downcase | replace: ' ', '_' | replace: '-', '_' }}">
+        <span class="tag-filter-btn-text">{{ tag }}</span>
+        <span class="tag-filter-btn-count">({{ tag_count }})</span>
+      </button>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

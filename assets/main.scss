@@ -268,30 +268,119 @@
 }
 .post-list-with-tags .subcategory-tag {
   display: inline-block;
-  padding: 3px 9px;
+  padding: 4px 10px;
   margin-right: 12px;
   font-size: 0.75em;
-  font-weight: 500;
-  border-radius: 12px;
+  font-weight: 600;
+  border-radius: 15px;
   color: white;
-  background-color: #777; /* Default tag color */
-  text-transform: lowercase;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
-/* Tag colors */
-.tag-agent { background-color: #d9534f; }
-.tag-attention { background-color: #4a90e2; }
-.tag-compiler { background-color: #50e3c2; }
-.tag-framework { background-color: #f0ad4e; }
-.tag-gpu { background-color: #5cb85c; }
-.tag-inference { background-color: #f5a623; }
-.tag-kvcache { background-color: #337ab7; }
-.tag-low_precision { background-color: #9b59b6; }
-.tag-models { background-color: #9013fe; }
-.tag-networking { background-color: #e91e63; }
-.tag-pretrain { background-color: #2ecc71; }
-.tag-reinforcement-learning { background-color: #e67e22; }
-.tag-speculative_decoding { background-color: #1abc9c; }
-.tag-training { background-color: #bd10e0; }
+
+.post-list-with-tags .subcategory-tag::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.post-list-with-tags .subcategory-tag:hover::before {
+  left: 100%;
+}
+
+.post-list-with-tags .subcategory-tag:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+/* Tag colors - Enhanced gradient styles */
+.tag-rlhf { 
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3);
+}
+.tag-attention { 
+  background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+  box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3);
+}
+.tag-compiler { 
+  background: linear-gradient(135deg, #50e3c2 0%, #2ecc71 100%);
+  box-shadow: 0 2px 4px rgba(80, 227, 194, 0.3);
+}
+.tag-framework { 
+  background: linear-gradient(135deg, #f0ad4e 0%, #f39c12 100%);
+  box-shadow: 0 2px 4px rgba(240, 173, 78, 0.3);
+}
+.tag-gpu { 
+  background: linear-gradient(135deg, #5cb85c 0%, #27ae60 100%);
+  box-shadow: 0 2px 4px rgba(92, 184, 92, 0.3);
+}
+.tag-inference { 
+  background: linear-gradient(135deg, #f5a623 0%, #f39c12 100%);
+  box-shadow: 0 2px 4px rgba(245, 166, 35, 0.3);
+}
+.tag-kvcache { 
+  background: linear-gradient(135deg, #337ab7 0%, #2c3e50 100%);
+  box-shadow: 0 2px 4px rgba(51, 122, 183, 0.3);
+}
+.tag-low_precision { 
+  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+  box-shadow: 0 2px 4px rgba(155, 89, 182, 0.3);
+}
+.tag-models { 
+  background: linear-gradient(135deg, #9013fe 0%, #7d3c98 100%);
+  box-shadow: 0 2px 4px rgba(144, 19, 254, 0.3);
+}
+.tag-networking { 
+  background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+  box-shadow: 0 2px 4px rgba(233, 30, 99, 0.3);
+}
+.tag-pretrain { 
+  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  box-shadow: 0 2px 4px rgba(46, 204, 113, 0.3);
+}
+.tag-reinforcement-learning { 
+  background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);
+  box-shadow: 0 2px 4px rgba(230, 126, 34, 0.3);
+}
+.tag-speculative_decoding { 
+  background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);
+  box-shadow: 0 2px 4px rgba(26, 188, 156, 0.3);
+}
+.tag-training { 
+  background: linear-gradient(135deg, #bd10e0 0%, #9b59b6 100%);
+  box-shadow: 0 2px 4px rgba(189, 16, 224, 0.3);
+}
+.tag-agent { 
+  background: linear-gradient(135deg, #d9534f 0%, #c0392b 100%);
+  box-shadow: 0 2px 4px rgba(217, 83, 79, 0.3);
+}
+.tag-optimization { 
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
+}
+.tag-memory { 
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+}
+.tag-parallel { 
+  background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+  box-shadow: 0 2px 4px rgba(243, 156, 18, 0.3);
+}
+.tag-osdi25 { 
+  background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+  box-shadow: 0 2px 4px rgba(155, 89, 182, 0.3);
+}
+
+
 
 .post-list-with-tags .post-link {
   font-size: 1.05em;

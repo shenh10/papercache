@@ -54,4 +54,16 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   });
 });
+
+// Load tag interaction script
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.querySelector('.subcategory-tag')) {
+    console.log('Loading tag interaction script...');
+    const tagScript = document.createElement('script');
+    tagScript.src = '{{ site.baseurl }}/assets/js/tag-interactions.js';
+    document.head.appendChild(tagScript);
+  } else {
+    console.log('No tag elements found, skipping tag interaction script');
+  }
+});
 </script>
