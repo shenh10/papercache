@@ -1,98 +1,5 @@
 llm:
   algorithm:
-    RL:
-      posts:
-      - categories:
-        - llm
-        - algorithm
-        - RL
-        date: '2023-05-01'
-        title: 'Direct Preference Optimization: Your Language Model is Secretly a
-          Reward Model'
-        url: /llm/algorithm/RL/2023/05/01/direct-preference-optimization-your-language-model-is-secretly-a-reward-model.html
-      - categories:
-        - llm
-        - algorithm
-        - RL
-        date: '2016-01-01'
-        title: Mastering the game of Go with deep neural networks and tree search
-        url: /llm/algorithm/RL/2016/01/01/mastering-the-game-of-go-with-deep-neural-networks-and-tree-search.html
-      - categories:
-        - llm
-        - algorithm
-        - RL
-        date: '2025-08-01'
-        title: 'SeamlessFlow: A Trainer–Agent Isolation RL Framework Achieving Bubble-Free
-          Pipelines via Tag Scheduling'
-        url: /llm/algorithm/RL/2025/08/01/seamlessflow-a-traineragent-isolation-rl-framework-achieving-bubble-free-pipelines-via-tag-scheduling.html
-      - categories:
-        - llm
-        - algorithm
-        - RL
-        date: '2025-08-01'
-        title: 'ON-POLICY RL MEETS OFF-POLICY EXPERTS: HARMONIZING SUPERVISED FINE-TUNING
-          AND REINFORCEMENT LEARNING VIA DYNAMIC WEIGHTING'
-        url: /llm/algorithm/RL/2025/08/01/on-policy-rl-meets-off-policy-experts-harmonizing-supervised-fine-tuning-and-reinforcement-learning-via-dynamic-weighting.html
-      - categories:
-        - llm
-        - algorithm
-        - RL
-        date: '2025-05-01'
-        title: 'AREAL: A Large-Scale Asynchronous Reinforcement Learning System for
-          Language Reasoning'
-        url: /llm/algorithm/RL/2025/05/01/areal-a-large-scale-asynchronous-reinforcement-learning-system-for-language-reasoning.html
-      - categories:
-        - llm
-        - algorithm
-        - RL
-        date: '2025-05-01'
-        title: 'DAPO: An Open-Source LLM Reinforcement Learning System at Scale'
-        url: /llm/algorithm/RL/2025/05/01/dapo-an-open-source-llm-reinforcement-learning-system-at-scale.html
-      - categories:
-        - llm
-        - algorithm
-        - RL
-        date: '2023-03-01'
-        title: 'DeepSpeed-Chat: Easy, Fast and Affordable RLHF Training of ChatGPT-like
-          Models at All Scales'
-        url: /llm/algorithm/RL/2023/03/01/deepspeed-chat-easy-fast-and-affordable-rlhf-training-of-chatgpt-like-models-at-all-scales.html
-      - categories:
-        - llm
-        - algorithm
-        - RL
-        date: '2024-05-01'
-        title: 'OpenRLHF: An Easy-to-use, Scalable and High-performance RLHF Framework'
-        url: /llm/algorithm/RL/2024/05/01/openrlhf-an-easy-to-use-scalable-and-high-performance-rlhf-framework.html
-      - categories:
-        - llm
-        - algorithm
-        - RL
-        date: '2025-04-01'
-        title: Exploring Data Scaling Trends and Effects in Reinforcement Learning
-          from Human Feedback
-        url: /llm/algorithm/RL/2025/04/01/exploring-data-scaling-trends-and-effects-in-reinforcement-learning-from-human-feedback.html
-      - categories:
-        - llm
-        - algorithm
-        - RL
-        date: '2017-08-01'
-        title: Proximal Policy Optimization Algorithms
-        url: /llm/algorithm/RL/2017/08/01/proximal-policy-optimization-algorithms.html
-      - categories:
-        - llm
-        - algorithm
-        - RL
-        date: '2024-02-01'
-        title: 'DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open
-          Language Models'
-        url: /llm/algorithm/RL/2024/02/01/deepseekmath-pushing-the-limits-of-mathematical-reasoning-in-open-language-models.html
-      - categories:
-        - llm
-        - algorithm
-        - RL
-        date: '2024-10-01'
-        title: 'HybridFlow: A Flexible and Efficient RLHF Framework'
-        url: /llm/algorithm/RL/2024/10/01/hybridflow-a-flexible-and-efficient-rlhf-framework.html
     agent:
       posts:
       - categories:
@@ -189,6 +96,99 @@ llm:
         title: "Tensor Programs V: Tuning Large Neural Networks via Zero-Shot\n  \
           \    Hyperparameter Transfer"
         url: /llm/algorithm/pretrain/2022/03/01/tensor-programs-v-tuning-large-neural-networks-via-zero-shot-hyperparameter-transfer.html
+    rl:
+      posts:
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2023-05-01'
+        title: 'Direct Preference Optimization: Your Language Model is Secretly a
+          Reward Model'
+        url: /llm/algorithm/rl/2023/05/01/direct-preference-optimization-your-language-model-is-secretly-a-reward-model.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2016-01-01'
+        title: Mastering the game of Go with deep neural networks and tree search
+        url: /llm/algorithm/rl/2016/01/01/mastering-the-game-of-go-with-deep-neural-networks-and-tree-search.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2025-08-01'
+        title: 'SeamlessFlow: A Trainer–Agent Isolation RL Framework Achieving Bubble-Free
+          Pipelines via Tag Scheduling'
+        url: /llm/algorithm/rl/2025/08/01/seamlessflow-a-traineragent-isolation-rl-framework-achieving-bubble-free-pipelines-via-tag-scheduling.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2025-08-01'
+        title: 'ON-POLICY RL MEETS OFF-POLICY EXPERTS: HARMONIZING SUPERVISED FINE-TUNING
+          AND REINFORCEMENT LEARNING VIA DYNAMIC WEIGHTING'
+        url: /llm/algorithm/rl/2025/08/01/on-policy-rl-meets-off-policy-experts-harmonizing-supervised-fine-tuning-and-reinforcement-learning-via-dynamic-weighting.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2025-05-01'
+        title: 'AREAL: A Large-Scale Asynchronous Reinforcement Learning System for
+          Language Reasoning'
+        url: /llm/algorithm/rl/2025/05/01/areal-a-large-scale-asynchronous-reinforcement-learning-system-for-language-reasoning.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2025-05-01'
+        title: 'DAPO: An Open-Source LLM Reinforcement Learning System at Scale'
+        url: /llm/algorithm/rl/2025/05/01/dapo-an-open-source-llm-reinforcement-learning-system-at-scale.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2023-03-01'
+        title: 'DeepSpeed-Chat: Easy, Fast and Affordable RLHF Training of ChatGPT-like
+          Models at All Scales'
+        url: /llm/algorithm/rl/2023/03/01/deepspeed-chat-easy-fast-and-affordable-rlhf-training-of-chatgpt-like-models-at-all-scales.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2024-05-01'
+        title: 'OpenRLHF: An Easy-to-use, Scalable and High-performance RLHF Framework'
+        url: /llm/algorithm/rl/2024/05/01/openrlhf-an-easy-to-use-scalable-and-high-performance-rlhf-framework.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2025-04-01'
+        title: Exploring Data Scaling Trends and Effects in Reinforcement Learning
+          from Human Feedback
+        url: /llm/algorithm/rl/2025/04/01/exploring-data-scaling-trends-and-effects-in-reinforcement-learning-from-human-feedback.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2017-08-01'
+        title: Proximal Policy Optimization Algorithms
+        url: /llm/algorithm/rl/2017/08/01/proximal-policy-optimization-algorithms.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2024-02-01'
+        title: 'DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open
+          Language Models'
+        url: /llm/algorithm/rl/2024/02/01/deepseekmath-pushing-the-limits-of-mathematical-reasoning-in-open-language-models.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2024-10-01'
+        title: 'HybridFlow: A Flexible and Efficient RLHF Framework'
+        url: /llm/algorithm/rl/2024/10/01/hybridflow-a-flexible-and-efficient-rlhf-framework.html
   engineering:
     attention:
       posts:
@@ -899,4 +899,3 @@ mlsys:
       date: '2025-01-01'
       title: Principles and Methodologies for Serial Performance Optimization
       url: /mlsys/system/2025/01/01/principles-and-methodologies-for-serial-performance-optimization.html
-
