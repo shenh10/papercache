@@ -15,12 +15,6 @@ jobs:
           token: ${{ secrets.GH_PAT }} # Use PAT to allow pushing to gh-pages
           ref: main
 
-      - name: 🔄 Merge content updates
-        run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "actions@github.com"
-          git pull origin autoupdate --no-edit
-
       - name: 💎 Setup Ruby and Bundler
         uses: ruby/setup-ruby@v1
         with:
