@@ -11,7 +11,7 @@ PaperCache 是一个为**深度学习**、**机器学习**和**人工智能**爱
 ## 关于我
 <div class="about-section">
 
-<p class="about-intro">我是从事 AI 基础设施与大模型工程的工程师，毕业于清华大学电子系与交叉信息学院（本/硕）。长期聚焦于高性能训练/推理系统的设计与落地，目标始终是：更快、更稳、更省。</p>
+<p class="about-intro">我是从事 AI 基础设施与大模型工程的工程师，毕业于清华大学电子系与交叉信息学院（本/硕）。长期聚焦于高性能训练/推理系统的设计与落地。</p>
 
 <h3>研究与关注方向</h3>
 <ul class="about-highlights">
@@ -23,8 +23,6 @@ PaperCache 是一个为**深度学习**、**机器学习**和**人工智能**爱
 
 <h3>联系我</h3>
 <ul class="contact-list">
-  <li><span class="contact-label">📧 邮箱</span><a href="mailto:thushenhan@gmail.com">thushenhan@gmail.com</a></li>
-  <li><span class="contact-label">🐙 GitHub</span><a href="https://github.com/shenh10" target="_blank">@shenh10</a></li>
   <li><span class="contact-label">🔗 LinkedIn</span><a href="https://www.linkedin.com/in/hanshe/" target="_blank">@hanshe</a></li>
   <li><span class="contact-label">📝 知乎</span><a href="https://www.zhihu.com/people/han-shen-86" target="_blank">@han-shen-86</a></li>
 </ul>

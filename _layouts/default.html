@@ -10,6 +10,9 @@
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
         {{ content }}
+        {%- if page.collection == "posts" and page.comments != false -%}
+          {%- include comments.html -%}
+        {%- endif -%}
       </div>
     </main>
 
