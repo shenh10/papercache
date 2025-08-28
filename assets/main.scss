@@ -454,3 +454,136 @@
   border-left: 3px solid #28a745;
   padding-left: 10px;
 }
+
+/* QR Code Hover Effect */
+.qrcode-hover {
+  position: relative;
+  display: inline-block;
+}
+
+.qrcode-link {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+  padding: 8px 16px;
+  border: 2px solid #007bff;
+  border-radius: 6px;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.qrcode-link:hover {
+  background: #007bff;
+  color: white;
+  text-decoration: none;
+}
+
+.qrcode-image {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: auto;
+  border: 3px solid #007bff;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  margin-top: 10px;
+}
+
+.qrcode-hover:hover .qrcode-image {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* About Page Enhanced Styles */
+.about-section {
+  background: transparent;
+  border-radius: 10px;
+  padding: 0;
+  box-shadow: none;
+  border: none;
+}
+
+.about-intro {
+  font-size: 1.05em;
+  color: #444;
+  line-height: 1.9;
+  margin: 10px 0 18px 0;
+}
+
+.about-highlights {
+  margin: 0 0 18px 0;
+  padding-left: 18px;
+}
+.about-highlights li {
+  margin-bottom: 8px;
+  line-height: 1.8;
+}
+
+.contact-list {
+  list-style: none;
+  padding-left: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px 18px;
+  margin: 6px 0 18px 0;
+}
+.contact-label {
+  display: inline-block;
+  min-width: 72px;
+  font-weight: 600;
+  color: #333;
+  margin-right: 10px;
+}
+.contact-list a {
+  color: #0056b3;
+  text-decoration: none;
+}
+.contact-list a:hover {
+  color: #003c84;
+  text-decoration: underline;
+}
+
+.timeline {
+  list-style: none;
+  padding-left: 0;
+  margin: 10px 0 0 0;
+  position: relative;
+}
+.timeline li {
+  display: grid;
+  grid-template-columns: 110px 16px 1fr;
+  align-items: start;
+  column-gap: 12px;
+  padding: 8px 0;
+}
+.timeline-time {
+  color: #666;
+  font-weight: 600;
+}
+.timeline-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: #007bff;
+  box-shadow: 0 0 0 3px rgba(0,123,255,0.2);
+}
+.timeline-content {
+  color: #333;
+  line-height: 1.8;
+}
+
+@media (max-width: 600px) {
+  .timeline li {
+    grid-template-columns: 96px 14px 1fr;
+  }
+  .contact-list {
+    grid-template-columns: 1fr;
+  }
+}
