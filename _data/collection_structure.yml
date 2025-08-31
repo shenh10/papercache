@@ -22,6 +22,14 @@ llm:
         - llm
         - algorithm
         - agent
+        date: '2022-01-01'
+        tag: nips22
+        title: Chain-of-Thought Prompting Elicits Reasoning in Large Language Models
+        url: /llm/algorithm/agent/2022/01/01/chain-of-thought-prompting-elicits-reasoning-in-large-language-models.html
+      - categories:
+        - llm
+        - algorithm
+        - agent
         date: '2024-09-01'
         title: 'Large Language Model-Based Agents for Software Engineering: A Survey'
         url: /llm/algorithm/agent/2024/09/01/large-language-model-based-agents-for-software-engineering-a-survey.html
@@ -32,6 +40,21 @@ llm:
         date: '2023-10-01'
         title: 'FIREACT: TOWARD LANGUAGE AGENT FINE-TUNING'
         url: /llm/algorithm/agent/2023/10/01/fireact-toward-language-agent-fine-tuning.html
+      - categories:
+        - llm
+        - algorithm
+        - agent
+        date: '2023-12-01'
+        title: 'Retrieval-Augmented Generation for Large Language Models: A Survey'
+        url: /llm/algorithm/agent/2023/12/01/retrieval-augmented-generation-for-large-language-models-a-survey.html
+      - categories:
+        - llm
+        - algorithm
+        - agent
+        date: '2023-02-01'
+        tag: nips23
+        title: 'Toolformer: Language Models Can Teach Themselves to Use Tools'
+        url: /llm/algorithm/agent/2023/02/01/toolformer-language-models-can-teach-themselves-to-use-tools.html
       - categories:
         - llm
         - algorithm
@@ -48,6 +71,22 @@ llm:
         title: 'A Survey on Test-Time Scaling in Large Language Models: What, How,
           Where, and How Well'
         url: /llm/algorithm/agent/2025/05/01/a-survey-on-test-time-scaling-in-large-language-models-what-how-where-and-how-well.html
+      - categories:
+        - llm
+        - algorithm
+        - agent
+        date: '2023-03-01'
+        tag: iclr23
+        title: 'REAC T: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS'
+        url: /llm/algorithm/agent/2023/03/01/reac-t-synergizing-reasoning-and-acting-in-language-models.html
+      - categories:
+        - llm
+        - algorithm
+        - agent
+        date: '2023-12-01'
+        tag: nips23
+        title: 'Tree of Thoughts: Deliberate Problem Solving with Large Language Models'
+        url: /llm/algorithm/agent/2023/12/01/tree-of-thoughts-deliberate-problem-solving-with-large-language-models.html
     models:
       posts:
       - categories:
@@ -57,6 +96,21 @@ llm:
         date: '2025-01-01'
         title: 'KIMI K1.5: SCALING REINFORCEMENT LEARNING WITH LLMS'
         url: /llm/algorithm/models/2025/01/01/kimi-k15-scaling-reinforcement-learning-with-llms.html
+      - categories:
+        - llm
+        - algorithm
+        - models
+        date: '2025-06-01'
+        title: dots.llm1 Technical Report
+        url: /llm/algorithm/models/2025/06/01/dotsllm1-technical-report.html
+      - categories:
+        - llm
+        - algorithm
+        - models
+        date: '2024-03-01'
+        title: 'Gemini 1.5: Unlocking multimodal understanding across millions of
+          tokens of context'
+        url: /llm/algorithm/models/2024/03/01/gemini-15-unlocking-multimodal-understanding-across-millions-of-tokens-of-context.html
       - categories:
         - llm
         - algorithm
@@ -72,6 +126,14 @@ llm:
         title: 'Seed1.5-Thinking: Advancing Superb Reasoning Models with Reinforcement
           Learning'
         url: /llm/algorithm/models/2025/04/01/seed15-thinking-advancing-superb-reasoning-models-with-reinforcement-learning.html
+      - categories:
+        - llm
+        - algorithm
+        - models
+        date: '2024-01-01'
+        title: 'DeepSeek-Coder: When the Large Language Model Meets Programming -
+          The Rise of Code Intelligence'
+        url: /llm/algorithm/models/2024/01/01/deepseek-coder-when-the-large-language-model-meets-programming-the-rise-of-code-intelligence.html
       - categories:
         - llm
         - algorithm
@@ -96,6 +158,23 @@ llm:
         title: "Tensor Programs V: Tuning Large Neural Networks via Zero-Shot\n  \
           \    Hyperparameter Transfer"
         url: /llm/algorithm/pretrain/2022/03/01/tensor-programs-v-tuning-large-neural-networks-via-zero-shot-hyperparameter-transfer.html
+      - categories:
+        - llm
+        - algorithm
+        - pretrain
+        date: '2024-08-01'
+        tag: iclr25
+        title: 'INFERENCE SCALING LAWS: AN EMPIRICAL ANALYSIS OF COMPUTE-OPTIMAL INFERENCE
+          FOR LLM PROBLEM-SOLVING'
+        url: /llm/algorithm/pretrain/2024/08/01/inference-scaling-laws-an-empirical-analysis-of-compute-optimal-inference-for-llm-problem-solving.html
+      - categories:
+        - llm
+        - algorithm
+        - pretrain
+        date: '2013-12-01'
+        title: WHAT MAKES GOOD DATA FOR ALIGNMENT? A COMPREHENSIVE STUDY OF AUTOMATIC
+          DATA SELECTION IN INSTRUCTION TUNING
+        url: /llm/algorithm/pretrain/2013/12/01/what-makes-good-data-for-alignment-a-comprehensive-study-of-automatic-data-selection-in-instruction-tuning.html
     rl:
       posts:
       - categories:
@@ -103,9 +182,26 @@ llm:
         - algorithm
         - rl
         date: '2023-05-01'
+        tag: nips23
         title: 'Direct Preference Optimization: Your Language Model is Secretly a
           Reward Model'
         url: /llm/algorithm/rl/2023/05/01/direct-preference-optimization-your-language-model-is-secretly-a-reward-model.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2025-07-01'
+        title: 'DistFlow: A Fully Distributed RL Framework for Scalable and Efficient
+          LLM Post-Training'
+        url: /llm/algorithm/rl/2025/07/01/distflow-a-fully-distributed-rl-framework-for-scalable-and-efficient-llm-post-training.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2024-09-01'
+        title: 'RLHFuse: Efficient RLHF Training for Large Language Models with Inter-
+          and Intra-Stage Fusion'
+        url: /llm/algorithm/rl/2024/09/01/rlhfuse-efficient-rlhf-training-for-large-language-models-with-inter-and-intra-stage-fusion.html
       - categories:
         - llm
         - algorithm
@@ -117,10 +213,39 @@ llm:
         - llm
         - algorithm
         - rl
+        date: '2024-08-01'
+        title: Scaling LLM Test-Time Compute Optimally can be More Effective than
+          Scaling Model Parameters
+        url: /llm/algorithm/rl/2024/08/01/scaling-llm-test-time-compute-optimally-can-be-more-effective-than-scaling-model-parameters.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2022-03-01'
+        title: Training language models to follow instructions with human feedback
+        url: /llm/algorithm/rl/2022/03/01/training-language-models-to-follow-instructions-with-human-feedback.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2019-10-01'
+        title: 'SEED RL: SCALABLE AND EFFICIENT DEEP-RL WITH ACCELERATED CENTRAL INFERENCE'
+        url: /llm/algorithm/rl/2019/10/01/seed-rl-scalable-and-efficient-deep-rl-with-accelerated-central-inference.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
         date: '2025-08-01'
         title: 'SeamlessFlow: A Trainer–Agent Isolation RL Framework Achieving Bubble-Free
           Pipelines via Tag Scheduling'
         url: /llm/algorithm/rl/2025/08/01/seamlessflow-a-traineragent-isolation-rl-framework-achieving-bubble-free-pipelines-via-tag-scheduling.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2017-12-01'
+        title: 'RLlib: Abstractions for Distributed Reinforcement Learning'
+        url: /llm/algorithm/rl/2017/12/01/rllib-abstractions-for-distributed-reinforcement-learning.html
       - categories:
         - llm
         - algorithm
@@ -148,10 +273,25 @@ llm:
         - llm
         - algorithm
         - rl
+        date: '2025-04-01'
+        title: 'StreamRL: Scalable, Heterogeneous, and Elastic RL for LLMs with Disaggregated
+          Stream Generation'
+        url: /llm/algorithm/rl/2025/04/01/streamrl-scalable-heterogeneous-and-elastic-rl-for-llms-with-disaggregated-stream-generation.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
         date: '2023-03-01'
         title: 'DeepSpeed-Chat: Easy, Fast and Affordable RLHF Training of ChatGPT-like
           Models at All Scales'
         url: /llm/algorithm/rl/2023/03/01/deepspeed-chat-easy-fast-and-affordable-rlhf-training-of-chatgpt-like-models-at-all-scales.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2013-12-01'
+        title: Playing Atari with Deep Reinforcement Learning
+        url: /llm/algorithm/rl/2013/12/01/playing-atari-with-deep-reinforcement-learning.html
       - categories:
         - llm
         - algorithm
@@ -163,10 +303,25 @@ llm:
         - llm
         - algorithm
         - rl
+        date: '2015-07-01'
+        title: Massively Parallel Methods for Deep Reinforcement Learning
+        url: /llm/algorithm/rl/2015/07/01/massively-parallel-methods-for-deep-reinforcement-learning.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
         date: '2025-04-01'
         title: Exploring Data Scaling Trends and Effects in Reinforcement Learning
           from Human Feedback
         url: /llm/algorithm/rl/2025/04/01/exploring-data-scaling-trends-and-effects-in-reinforcement-learning-from-human-feedback.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2025-07-01'
+        title: 'AsyncFlow: An Asynchronous Streaming RL Framework for Efficient LLM
+          Post-Training'
+        url: /llm/algorithm/rl/2025/07/01/asyncflow-an-asynchronous-streaming-rl-framework-for-efficient-llm-post-training.html
       - categories:
         - llm
         - algorithm
@@ -187,8 +342,16 @@ llm:
         - algorithm
         - rl
         date: '2024-10-01'
+        tag: eurosys25
         title: 'HybridFlow: A Flexible and Efficient RLHF Framework'
         url: /llm/algorithm/rl/2024/10/01/hybridflow-a-flexible-and-efficient-rlhf-framework.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2024-05-01'
+        title: 'NeMo-Aligner: Scalable Toolkit for Efficient Model Alignment'
+        url: /llm/algorithm/rl/2024/05/01/nemo-aligner-scalable-toolkit-for-efficient-model-alignment.html
   engineering:
     attention:
       posts:
@@ -227,6 +390,7 @@ llm:
         - engineering
         - attention
         date: '2020-02-01'
+        tag: icml20
         title: Low-Rank Bottleneck in Multi-head Attention Models
         url: /llm/engineering/attention/2020/02/01/low-rank-bottleneck-in-multi-head-attention-models.html
       - categories:
@@ -250,6 +414,7 @@ llm:
         - engineering
         - attention
         date: '2024-07-01'
+        tag: nips24
         title: 'FlashAttention-3: Fast and Accurate Attention with Asynchrony and
           Low-precision'
         url: /llm/engineering/attention/2024/07/01/flashattention-3-fast-and-accurate-attention-with-asynchrony-and-low-precision.html
@@ -289,6 +454,7 @@ llm:
         - engineering
         - attention
         date: '2022-07-01'
+        tag: nips22
         title: 'FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness'
         url: /llm/engineering/attention/2022/07/01/flashattention-fast-and-memory-efficient-exact-attention-with-io-awareness.html
       - categories:
@@ -296,6 +462,7 @@ llm:
         - engineering
         - attention
         date: '2020-06-01'
+        tag: icml20
         title: 'Transformers are RNNs: Fast Autoregressive Transformers with Linear
           Attention'
         url: /llm/engineering/attention/2020/06/01/transformers-are-rnns-fast-autoregressive-transformers-with-linear-attention.html
@@ -337,6 +504,7 @@ llm:
         - engineering
         - compiler
         date: '2025-06-01'
+        tag: osdi25
         title: 'Mirage: A Multi-Level Superoptimizer for Tensor Programs'
         url: /llm/engineering/compiler/2025/06/01/mirage-a-multi-level-superoptimizer-for-tensor-programs.html
     inference:
@@ -356,6 +524,7 @@ llm:
           - inference
           - kvcache
           date: '2023-10-01'
+          tag: sigcomm24
           title: 'CacheGen: KV Cache Compression and Streaming for Fast Large Language
             Model Serving'
           url: /llm/engineering/inference/kvcache/2023/10/01/cachegen-kv-cache-compression-and-streaming-for-fast-large-language-model-serving.html
@@ -365,6 +534,7 @@ llm:
           - inference
           - kvcache
           date: '2024-07-01'
+          tag: atc24
           title: Cost-Efficient Large Language Model Serving for Multi-turn Conversations
             with CachedAttention
           url: /llm/engineering/inference/kvcache/2024/07/01/cost-efficient-large-language-model-serving-for-multi-turn-conversations-with-cachedattention.html
@@ -374,6 +544,7 @@ llm:
           - inference
           - kvcache
           date: '2024-04-01'
+          tag: mlsys24
           title: 'PROMPT CACHE: MODULAR ATTENTION REUSE FOR LOW-LATENCY INFERENCE'
           url: /llm/engineering/inference/kvcache/2024/04/01/prompt-cache-modular-attention-reuse-for-low-latency-inference.html
         - categories:
@@ -382,6 +553,7 @@ llm:
           - inference
           - kvcache
           date: '2024-05-01'
+          tag: eurosys25
           title: 'CacheBlend: Fast Large Language Model Serving for RAG with Cached
             Knowledge Fusion'
           url: /llm/engineering/inference/kvcache/2024/05/01/cacheblend-fast-large-language-model-serving-for-rag-with-cached-knowledge-fusion.html
@@ -401,6 +573,7 @@ llm:
           - inference
           - low_precision
           date: '2023-04-01'
+          tag: isca23
           title: With Shared Microexponents, A Little Shifting Goes a Long Way
           url: /llm/engineering/inference/low_precision/2023/04/01/with-shared-microexponents-a-little-shifting-goes-a-long-way.html
         - categories:
@@ -409,6 +582,7 @@ llm:
           - inference
           - low_precision
           date: '2022-11-01'
+          tag: icml23
           title: 'SmoothQuant: Accurate and Efficient Post-Training Quantization for
             Large Language Models'
           url: /llm/engineering/inference/low_precision/2022/11/01/smoothquant-accurate-and-efficient-post-training-quantization-for-large-language-models.html
@@ -418,6 +592,7 @@ llm:
           - inference
           - low_precision
           date: '2023-06-01'
+          tag: mlsys24
           title: 'AWQ: ACTIVATION-AWARE WEIGHT QUANTIZATION FOR ON-DEVICE LLM COMPRESSION
             AND ACCELERATION'
           url: /llm/engineering/inference/low_precision/2023/06/01/awq-activation-aware-weight-quantization-for-on-device-llm-compression-and-acceleration.html
@@ -444,6 +619,7 @@ llm:
           - inference
           - low_precision
           date: '2023-05-01'
+          tag: icme24
           title: Integer or Floating Point? New Outlooks for Low-Bit Quantization
             on Large Language Models
           url: /llm/engineering/inference/low_precision/2023/05/01/integer-or-floating-point-new-outlooks-for-low-bit-quantization-on-large-language-models.html
@@ -469,6 +645,7 @@ llm:
         - engineering
         - inference
         date: '2024-08-01'
+        tag: osdi25
         title: 'NanoFlow: Towards Optimal Large Language Model Serving Throughput'
         url: /llm/engineering/inference/2024/08/01/nanoflow-towards-optimal-large-language-model-serving-throughput.html
       - categories:
@@ -476,6 +653,7 @@ llm:
         - engineering
         - inference
         date: '2025-05-01'
+        tag: isca25
         title: 'Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware
           for AI Architectures'
         url: /llm/engineering/inference/2025/05/01/insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures.html
@@ -484,6 +662,7 @@ llm:
         - engineering
         - inference
         date: '2024-07-01'
+        tag: nips24
         title: 'SGLang: Efficient Execution of Structured Language Model Programs'
         url: /llm/engineering/inference/2024/07/01/sglang-efficient-execution-of-structured-language-model-programs.html
       - categories:
@@ -491,6 +670,7 @@ llm:
         - engineering
         - inference
         date: '2022-07-01'
+        tag: osdi22
         title: 'Orca: A Distributed Serving System for Transformer-Based Generative
           Models'
         url: /llm/engineering/inference/2022/07/01/orca-a-distributed-serving-system-for-transformer-based-generative-models.html
@@ -523,6 +703,7 @@ llm:
         - engineering
         - inference
         date: '2024-01-01'
+        tag: osdi24
         title: 'DistServe: Disaggregating Prefill and Decoding for Goodput-optimized
           Large Language Model Serving'
         url: /llm/engineering/inference/2024/01/01/distserve-disaggregating-prefill-and-decoding-for-goodput-optimized-large-language-model-serving.html
@@ -538,7 +719,15 @@ llm:
         - llm
         - engineering
         - inference
+        date: '2019-10-01'
+        title: 'Transformers: State-of-the-Art Natural Language Processing'
+        url: /llm/engineering/inference/2019/10/01/transformers-state-of-the-art-natural-language-processing.html
+      - categories:
+        - llm
+        - engineering
+        - inference
         date: '2023-09-01'
+        tag: sosp23
         title: Efficient Memory Management for Large Language Model Serving with PagedAttention
         url: /llm/engineering/inference/2023/09/01/efficient-memory-management-for-large-language-model-serving-with-pagedattention.html
       - categories:
@@ -616,6 +805,21 @@ llm:
         - llm
         - engineering
         - train
+        date: '2025-02-01'
+        title: Training LLMs with MXFP4
+        url: /llm/engineering/train/2025/02/01/training-llms-with-mxfp4.html
+      - categories:
+        - llm
+        - engineering
+        - train
+        date: '2021-06-01'
+        tag: iclr22
+        title: 'LORA: LOW-RANK ADAPTATION OF LARGE LANGUAGE MODELS'
+        url: /llm/engineering/train/2021/06/01/lora-low-rank-adaptation-of-large-language-models.html
+      - categories:
+        - llm
+        - engineering
+        - train
         date: '2025-03-01'
         tag: osdi25
         title: 'WLB-LLM: Workload-Balanced 4D Parallelism for Large Language Model
@@ -633,6 +837,7 @@ llm:
         - engineering
         - train
         date: '2021-04-01'
+        tag: sc21
         title: 'ZeRO-Infinity: Breaking the GPU Memory Wall for Extreme Scale Deep
           Learning'
         url: /llm/engineering/train/2021/04/01/zero-infinity-breaking-the-gpu-memory-wall-for-extreme-scale-deep-learning.html
@@ -641,6 +846,7 @@ llm:
         - engineering
         - train
         date: '2021-08-01'
+        tag: sc23
         title: Efficient Large-Scale Language Model Training on GPU Clusters Using
           Megatron-LM
         url: /llm/engineering/train/2021/08/01/efficient-large-scale-language-model-training-on-gpu-clusters-using-megatron-lm.html
@@ -649,6 +855,7 @@ llm:
         - engineering
         - train
         date: '2022-04-01'
+        tag: jmlr23
         title: 'PaLM: Scaling Language Modeling with Pathways'
         url: /llm/engineering/train/2022/04/01/palm-scaling-language-modeling-with-pathways.html
       - categories:
@@ -656,6 +863,7 @@ llm:
         - engineering
         - train
         date: '2020-03-01'
+        tag: sc20
         title: 'ZeRO: Memory Optimizations Toward Training Trillion Parameter Models'
         url: /llm/engineering/train/2020/03/01/zero-memory-optimizations-toward-training-trillion-parameter-models.html
       - categories:
@@ -710,6 +918,7 @@ llm:
         - engineering
         - train
         date: '2024-02-01'
+        tag: nsdi24
         title: 'MegaScale: Scaling Large Language Model Training to More Than 10,000
           GPUs'
         url: /llm/engineering/train/2024/02/01/megascale-scaling-large-language-model-training-to-more-than-10000-gpus.html
@@ -718,6 +927,7 @@ llm:
         - engineering
         - train
         date: '2021-01-01'
+        tag: atc21
         title: 'ZeRO-Offload: Democratizing Billion-Scale Model Training'
         url: /llm/engineering/train/2021/01/01/zero-offload-democratizing-billion-scale-model-training.html
       - categories:
@@ -725,6 +935,7 @@ llm:
         - engineering
         - train
         date: '2019-07-01'
+        tag: cvpr19
         title: 'GPipe: Easy Scaling with Micro-Batch Pipeline Parallelism'
         url: /llm/engineering/train/2019/07/01/gpipe-easy-scaling-with-micro-batch-pipeline-parallelism.html
 mlsys:
@@ -734,21 +945,38 @@ mlsys:
       - mlsys
       - compiler
       date: '2025-01-01'
+      tag: osdi25
       title: 'PipeThreader: Software-Defined Pipelining for Efficient DNN Execution'
       url: /mlsys/compiler/2025/01/01/pipethreader-software-defined-pipelining-for-efficient-dnn-execution.html
     - categories:
       - mlsys
       - compiler
       date: '2025-05-01'
+      tag: osdi25
       title: 'KPerfIR: Towards an Open and Compiler-centric Ecosystem for GPU Kernel
         Performance Tooling on Modern AI Workloads'
       url: /mlsys/compiler/2025/05/01/kperfir-towards-an-open-and-compiler-centric-ecosystem-for-gpu-kernel-performance-tooling-on-modern-ai-workloads.html
+  cpu:
+    posts:
+    - categories:
+      - mlsys
+      - cpu
+      date: '2022-05-01'
+      title: Everything You Need to Know About the CPU Power Management
+      url: /mlsys/cpu/2022/05/01/everything-you-need-to-know-about-the-cpu-power-management.html
+    - categories:
+      - mlsys
+      - cpu
+      date: '2022-05-01'
+      title: Understanding BIOS Configuration for Performance Tuning
+      url: /mlsys/cpu/2022/05/01/understanding-bios-configuration-for-performance-tuning.html
   framework:
     posts:
     - categories:
       - mlsys
       - framework
       date: '2022-01-01'
+      tag: osdi25
       title: 'Campo: Cost-Aware Performance Optimization for Mixed-Precision Neural
         Network Training'
       url: /mlsys/framework/2022/01/01/campo-cost-aware-performance-optimization-for-mixed-precision-neural-network-training.html
@@ -758,6 +986,7 @@ mlsys:
       - mlsys
       - gpu
       date: '2018-04-01'
+      tag: jpdc18
       title: 'GPUDirect Async: Exploring GPU synchronous communication techniques
         for InfiniBand clusters'
       url: /mlsys/gpu/2018/04/01/gpudirect-async-exploring-gpu-synchronous-communication-techniques-for-infiniband-clusters.html
@@ -771,6 +1000,7 @@ mlsys:
       - mlsys
       - gpu
       date: '2023-01-01'
+      tag: vlsi23
       title: A 135 GBps/Gbit 0.66 pJ/bit Stacked Embedded DRAM with Multilayer Arrays
         by Fine Pitch Hybrid Bonding and Mini-TSV
       url: /mlsys/gpu/2023/01/01/a-135-gbpsgbit-066-pjbit-stacked-embedded-dram-with-multilayer-arrays-by-fine-pitch-hybrid-bonding-and-mini-tsv.html
@@ -784,6 +1014,7 @@ mlsys:
       - mlsys
       - gpu
       date: '2023-01-01'
+      tag: ppopp23
       title: 'Stream-K: Work-centric Parallel Decomposition for Dense Matrix-Matrix
         Multiplication on the GPU'
       url: /mlsys/gpu/2023/01/01/stream-k-work-centric-parallel-decomposition-for-dense-matrix-matrix-multiplication-on-the-gpu.html
@@ -802,7 +1033,15 @@ mlsys:
     - categories:
       - mlsys
       - gpu
+      date: '2025-03-01'
+      tag: osdi25
+      title: 'Neutrino: Fine-grained GPU Kernel Profiling via Programmable Probing'
+      url: /mlsys/gpu/2025/03/01/neutrino-fine-grained-gpu-kernel-profiling-via-programmable-probing.html
+    - categories:
+      - mlsys
+      - gpu
       date: '2017-04-01'
+      tag: sigarch17
       title: Locality-Aware CTA Clustering for Modern GPUs
       url: /mlsys/gpu/2017/04/01/locality-aware-cta-clustering-for-modern-gpus.html
     - categories:
@@ -877,6 +1116,7 @@ mlsys:
       - mlsys
       - networking
       date: '2020-08-01'
+      tag: sc20
       title: An In-Depth Analysis of the Slingshot Interconnect
       url: /mlsys/networking/2020/08/01/an-in-depth-analysis-of-the-slingshot-interconnect.html
     - categories:
@@ -889,6 +1129,7 @@ mlsys:
       - mlsys
       - networking
       date: '2024-04-01'
+      tag: asplos24
       title: Scaling Up Memory Disaggregated Applications with Smart
       url: /mlsys/networking/2024/04/01/scaling-up-memory-disaggregated-applications-with-smart.html
   system:
@@ -897,5 +1138,6 @@ mlsys:
       - mlsys
       - system
       date: '2025-01-01'
+      tag: osdi25
       title: Principles and Methodologies for Serial Performance Optimization
       url: /mlsys/system/2025/01/01/principles-and-methodologies-for-serial-performance-optimization.html
