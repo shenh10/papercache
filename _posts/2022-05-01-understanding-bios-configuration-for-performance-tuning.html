@@ -1,0 +1,138 @@
+---
+author: shenh10
+categories:
+- mlsys
+- cpu
+comments: true
+date: '2022-05-01'
+layout: post
+mathjax: true
+title: Understanding BIOS Configuration for Performance Tuning
+---
+
+<div class="paper-content">
+<body>
+<div class="container">
+
+<h2 id="a1">A1 主要贡献</h2>
+<p>本文档旨在指导用户如何通过调整BIOS（基本输入/输出系统）设置来优化服务器性能。</p>
+<ul>
+<li>
+<p><strong>核心问题</strong>: 服务器的默认BIOS设置通常是为了平衡性能、功耗和稳定性，而非针对极限性能进行优化。对于基准测试和性能敏感的集群等应用场景，需要对BIOS进行专门的调优以释放硬件的全部潜力。</p>
+</li>
+<li>
+<p><strong>研究目标</strong>: 本文的目标是提供一个通用性的BIOS性能调优参数列表，解释每个参数的功能及其对性能的影响，并为用户提供明确的配置建议，以实现最大化的计算性能。</p>
+</li>
+<li>
+<p><strong>创新点/核心内容</strong>:</p>
+<ol>
+<li><strong>系统性参数清单</strong>: 本文系统性地整理并解释了13个与性能密切相关的关键BIOS参数，涵盖了电源管理、CPU特性、内存配置和系统散热等多个方面。</li>
+<li><strong>明确的调优建议</strong>: 针对每个参数，都给出了以性能为导向的推荐设置（例如，禁用P-State和C-State，开启Turbo Mode等）。</li>
+<li><strong>背景与权衡</strong>: 明确指出了追求极致性能的代价，即显著增加的功耗，并提醒用户这种配置并非适用于所有应用。同时强调了不同服务器厂商BIOS实现的差异性，建议用户在操作前参考官方指南。</li>
+</ol>
+</li>
+</ul>
+<h2 id="a3">A3 概述</h2>
+<p>通常情况下，我们希望将BIOS调优至高性能模式。在大多数情况下，BIOS性能调优只需要执行一次。需要注意的是，最大性能配置会消耗大量电力，因此并不适用于所有应用程序。然而，对于基准测试和性能敏感的集群，推荐采用性能配置。每个供应商的BIOS实现方式略有不同。在开始之前，建议查阅服务器制造商提供的BIOS指南，必要时升级BIOS，并根据您的需求进行配置。</p>
+<h2 id="a2">A2 性能调优参数详解</h2>
+<p>以下是进行BIOS性能调优时需要关注的参数列表。</p>
+<ol>
+<li>
+<p><strong>电源 (Power)</strong></p>
+<ul>
+<li>为了获得最大性能，应将电源配置设置为以最大功率运行。</li>
+</ul>
+</li>
+<li>
+<p><strong>P-State</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 如果启用P-State，在没有活动时，CPU（特定NUMA节点上的所有核心）将进入“睡眠”模式。此模式类似于C-State，但作用于整个NUMA节点。在大多数情况下，它能在空闲时节省电力。</li>
+<li><strong>性能调优建议</strong>: 然而，对于以性能为导向的系统，当功耗不是主要考虑因素时，建议禁用P-State。</li>
+</ul>
+</li>
+<li>
+<p><strong>C-State</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 为了节能，可以在CPU空闲时降低其功耗。每个CPU都有几种称为“C-states”或“C-modes”的电源模式。</li>
+<li><strong>性能调优建议</strong>: 这种操作不适合BIOS性能配置，因此应予以禁用。有关C-State的更多信息，请参考【1，Everything You Need to Know About the CPU C-States】。</li>
+</ul>
+</li>
+<li>
+<p><strong>睿频模式 (Turbo Mode)</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 该技术（英特尔称为Turbo Boost Technology）能自动使处理器核心以高于标称频率的速度运行。处理器必须在热设计功耗（TDP）的功率、温度和规格限制内工作。这项技术可以提升单线程和多线程应用程序的性能。</li>
+<li><strong>性能调优建议</strong>: 为追求高性能，应启用此模式。更多信息，请参阅【2，Intel® Turbo Boost Technology Frequently Asked Questions】。</li>
+</ul>
+</li>
+<li>
+<p><strong>超线程 (Hyper Threading)</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 超线程技术允许一个CPU核心同时处理多个数据流，从而提高性能和效率。</li>
+<li><strong>性能调优建议</strong>: 在某些情况下，关闭超线程反而能为单线程任务带来更高的性能。对于常规系统，在大多数情况下应开启。然而，当CPU利用率接近100%时，超线程可能没有帮助，甚至会损害性能。因此，在这种高负载情况下，应禁用超线程。</li>
+</ul>
+</li>
+<li>
+<p><strong>IO Non Posted Prefetching</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 此参数与Haswell/Broadwell及更新架构的处理器相关。</li>
+<li><strong>性能调优建议</strong>: 在这些系统上应禁用该选项。请注意，并非所有BIOS版本都会暴露此参数。</li>
+</ul>
+</li>
+<li>
+<p><strong>CPU频率 (CPU Frequency)</strong></p>
+<ul>
+<li><strong>性能调优建议</strong>: 为了获得最大性能，应将CPU频率设置为最大速度。</li>
+</ul>
+</li>
+<li>
+<p><strong>内存速度 (Memory Speed)</strong></p>
+<ul>
+<li><strong>性能调优建议</strong>: 为了获得最大性能，应将内存速度设置为最大值。</li>
+</ul>
+</li>
+<li>
+<p><strong>内存通道模式 (Memory channel mode)</strong></p>
+<ul>
+<li><strong>性能调优建议</strong>: 为了性能，应使用独立模式（independent mode）。通过使用此模式，每个内存通道都可以拥有自己的内存控制器，从而使内存通道以全速运行。</li>
+</ul>
+</li>
+<li>
+<p><strong>节点交错 (Node Interleaving)</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 当禁用节点交错时，NUMA（非一致性内存访问）模式被启用。相反，启用节点交错意味着内存将在内存节点之间交错，操作系统将看不到NUMA架构。</li>
+<li><strong>性能调优建议</strong>: 出于性能考虑，我们希望禁用节点交错（从而启用NUMA），以确保对于任何给定的逻辑处理器，内存总是分配到其本地NUMA节点上。</li>
+</ul>
+</li>
+<li>
+<p><strong>通道交错 (Channel Interleaving)</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 通道交错将RAM分成多个部分，以支持同时进行多次读/写操作，从而提高内存访问并行度。</li>
+</ul>
+</li>
+<li>
+<p><strong>散热模式 (Thermal Mode)</strong></p>
+<ul>
+<li><strong>性能调优建议</strong>: 应在性能模式（Performance mode）下运行以确保功能正常。这通常也意味着更高的功耗和更高的风扇转速。</li>
+</ul>
+</li>
+<li>
+<p><strong>HPC优化 (HPC Optimizations)</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 此模式与C-state模式类似，仅在AMD处理器中支持。它旨在为高性能计算场景优化系统设置。</li>
+</ul>
+</li>
+</ol>
+<h2 id="a4">A4 实验环境</h2>
+<p>本文档作为一份通用的配置指南，未提供具体的实验环境信息，包括硬件配置（如GPU、CPU、网卡型号）、软件配置（如操作系统、依赖库）以及数据集或模型参数。</p>
+<h2 id="a4_1">A4 实验结果</h2>
+<p>本文档旨在提供BIOS配置建议以优化性能，并未包含任何具体的实验、基准测试数据或结果图表来量化这些配置变更带来的性能提升。</p>
+<h2 id="a5">A5 结论</h2>
+<p>为了在服务器上获得更高的性能，特别是在进行基准测试或部署性能敏感型应用时，对BIOS进行性能调优是推荐的关键步骤。本文提供了一份包含13个核心参数的检查清单，指导用户如何配置电源管理、CPU特性、内存模式等以实现性能最大化。</p>
+<p>核心结论是，性能调优通常涉及禁用节能特性（如P-State、C-State）、启用性能增强功能（如Turbo Mode），并将CPU和内存速度设置为最大值。同时，应启用NUMA模式（通过禁用Node Interleaving）以优化内存局部性。</p>
+<p>然而，需要强调的是，最大性能配置会带来显著的功耗增加，且不同服务器厂商的BIOS实现存在差异。因此，在进行任何修改之前，强烈建议用户首先参考其服务器制造商提供的官方BIOS指南。</p>
+<h2 id="_1">参考文献列表</h2>
+<p>[1] Everything You Need to Know About the CPU C-States. (本文档未提供详细发表信息)<br/>
+[2] Intel® Turbo Boost Technology Frequently Asked Questions. (本文档未提供详细发表信息)</p>
+</div>
+</body>
+</div>
