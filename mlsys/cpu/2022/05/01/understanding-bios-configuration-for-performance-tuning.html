@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- SEO tags removed for compatibility -->
+  <link rel="stylesheet" href="/papercache/assets/main.css">
+  <!-- Feed meta removed for compatibility --><script>
+if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1")) {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'G-MWWFKJXJLN', 'auto');
+  ga('send', 'pageview');
+}
+</script>
+  
+<!-- MathJax 3 Configuration --><script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']]
+      },
+      svg: {
+        fontCache: 'global'
+      }
+    };
+  </script>
+  <script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+  </script><!-- Busuanzi Analytics -->
+  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+</head><body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/papercache/">PaperCache</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/papercache/">首页</a><a class="page-link" href="/papercache/collection.html">论文合集</a><a class="page-link" href="/papercache/about/">关于</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Understanding BIOS Configuration for Performance Tuning</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-01T00:00:00+00:00" itemprop="datePublished">May 1, 2022
+      </time>• <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span class="p-author h-card" itemprop="name">shenh10</span></span></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <div class="paper-content">
+<body>
+<div class="container">
+
+<h2 id="a1">A1 主要贡献</h2>
+<p>本文档旨在指导用户如何通过调整BIOS（基本输入/输出系统）设置来优化服务器性能。</p>
+<ul>
+<li>
+<p><strong>核心问题</strong>: 服务器的默认BIOS设置通常是为了平衡性能、功耗和稳定性，而非针对极限性能进行优化。对于基准测试和性能敏感的集群等应用场景，需要对BIOS进行专门的调优以释放硬件的全部潜力。</p>
+</li>
+<li>
+<p><strong>研究目标</strong>: 本文的目标是提供一个通用性的BIOS性能调优参数列表，解释每个参数的功能及其对性能的影响，并为用户提供明确的配置建议，以实现最大化的计算性能。</p>
+</li>
+<li>
+<p><strong>创新点/核心内容</strong>:</p>
+<ol>
+<li><strong>系统性参数清单</strong>: 本文系统性地整理并解释了13个与性能密切相关的关键BIOS参数，涵盖了电源管理、CPU特性、内存配置和系统散热等多个方面。</li>
+<li><strong>明确的调优建议</strong>: 针对每个参数，都给出了以性能为导向的推荐设置（例如，禁用P-State和C-State，开启Turbo Mode等）。</li>
+<li><strong>背景与权衡</strong>: 明确指出了追求极致性能的代价，即显著增加的功耗，并提醒用户这种配置并非适用于所有应用。同时强调了不同服务器厂商BIOS实现的差异性，建议用户在操作前参考官方指南。</li>
+</ol>
+</li>
+</ul>
+<h2 id="a3">A3 概述</h2>
+<p>通常情况下，我们希望将BIOS调优至高性能模式。在大多数情况下，BIOS性能调优只需要执行一次。需要注意的是，最大性能配置会消耗大量电力，因此并不适用于所有应用程序。然而，对于基准测试和性能敏感的集群，推荐采用性能配置。每个供应商的BIOS实现方式略有不同。在开始之前，建议查阅服务器制造商提供的BIOS指南，必要时升级BIOS，并根据您的需求进行配置。</p>
+<h2 id="a2">A2 性能调优参数详解</h2>
+<p>以下是进行BIOS性能调优时需要关注的参数列表。</p>
+<ol>
+<li>
+<p><strong>电源 (Power)</strong></p>
+<ul>
+<li>为了获得最大性能，应将电源配置设置为以最大功率运行。</li>
+</ul>
+</li>
+<li>
+<p><strong>P-State</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 如果启用P-State，在没有活动时，CPU（特定NUMA节点上的所有核心）将进入“睡眠”模式。此模式类似于C-State，但作用于整个NUMA节点。在大多数情况下，它能在空闲时节省电力。</li>
+<li><strong>性能调优建议</strong>: 然而，对于以性能为导向的系统，当功耗不是主要考虑因素时，建议禁用P-State。</li>
+</ul>
+</li>
+<li>
+<p><strong>C-State</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 为了节能，可以在CPU空闲时降低其功耗。每个CPU都有几种称为“C-states”或“C-modes”的电源模式。</li>
+<li><strong>性能调优建议</strong>: 这种操作不适合BIOS性能配置，因此应予以禁用。有关C-State的更多信息，请参考【1，Everything You Need to Know About the CPU C-States】。</li>
+</ul>
+</li>
+<li>
+<p><strong>睿频模式 (Turbo Mode)</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 该技术（英特尔称为Turbo Boost Technology）能自动使处理器核心以高于标称频率的速度运行。处理器必须在热设计功耗（TDP）的功率、温度和规格限制内工作。这项技术可以提升单线程和多线程应用程序的性能。</li>
+<li><strong>性能调优建议</strong>: 为追求高性能，应启用此模式。更多信息，请参阅【2，Intel® Turbo Boost Technology Frequently Asked Questions】。</li>
+</ul>
+</li>
+<li>
+<p><strong>超线程 (Hyper Threading)</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 超线程技术允许一个CPU核心同时处理多个数据流，从而提高性能和效率。</li>
+<li><strong>性能调优建议</strong>: 在某些情况下，关闭超线程反而能为单线程任务带来更高的性能。对于常规系统，在大多数情况下应开启。然而，当CPU利用率接近100%时，超线程可能没有帮助，甚至会损害性能。因此，在这种高负载情况下，应禁用超线程。</li>
+</ul>
+</li>
+<li>
+<p><strong>IO Non Posted Prefetching</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 此参数与Haswell/Broadwell及更新架构的处理器相关。</li>
+<li><strong>性能调优建议</strong>: 在这些系统上应禁用该选项。请注意，并非所有BIOS版本都会暴露此参数。</li>
+</ul>
+</li>
+<li>
+<p><strong>CPU频率 (CPU Frequency)</strong></p>
+<ul>
+<li><strong>性能调优建议</strong>: 为了获得最大性能，应将CPU频率设置为最大速度。</li>
+</ul>
+</li>
+<li>
+<p><strong>内存速度 (Memory Speed)</strong></p>
+<ul>
+<li><strong>性能调优建议</strong>: 为了获得最大性能，应将内存速度设置为最大值。</li>
+</ul>
+</li>
+<li>
+<p><strong>内存通道模式 (Memory channel mode)</strong></p>
+<ul>
+<li><strong>性能调优建议</strong>: 为了性能，应使用独立模式（independent mode）。通过使用此模式，每个内存通道都可以拥有自己的内存控制器，从而使内存通道以全速运行。</li>
+</ul>
+</li>
+<li>
+<p><strong>节点交错 (Node Interleaving)</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 当禁用节点交错时，NUMA（非一致性内存访问）模式被启用。相反，启用节点交错意味着内存将在内存节点之间交错，操作系统将看不到NUMA架构。</li>
+<li><strong>性能调优建议</strong>: 出于性能考虑，我们希望禁用节点交错（从而启用NUMA），以确保对于任何给定的逻辑处理器，内存总是分配到其本地NUMA节点上。</li>
+</ul>
+</li>
+<li>
+<p><strong>通道交错 (Channel Interleaving)</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 通道交错将RAM分成多个部分，以支持同时进行多次读/写操作，从而提高内存访问并行度。</li>
+</ul>
+</li>
+<li>
+<p><strong>散热模式 (Thermal Mode)</strong></p>
+<ul>
+<li><strong>性能调优建议</strong>: 应在性能模式（Performance mode）下运行以确保功能正常。这通常也意味着更高的功耗和更高的风扇转速。</li>
+</ul>
+</li>
+<li>
+<p><strong>HPC优化 (HPC Optimizations)</strong></p>
+<ul>
+<li><strong>功能与影响</strong>: 此模式与C-state模式类似，仅在AMD处理器中支持。它旨在为高性能计算场景优化系统设置。</li>
+</ul>
+</li>
+</ol>
+<h2 id="a4">A4 实验环境</h2>
+<p>本文档作为一份通用的配置指南，未提供具体的实验环境信息，包括硬件配置（如GPU、CPU、网卡型号）、软件配置（如操作系统、依赖库）以及数据集或模型参数。</p>
+<h2 id="a4_1">A4 实验结果</h2>
+<p>本文档旨在提供BIOS配置建议以优化性能，并未包含任何具体的实验、基准测试数据或结果图表来量化这些配置变更带来的性能提升。</p>
+<h2 id="a5">A5 结论</h2>
+<p>为了在服务器上获得更高的性能，特别是在进行基准测试或部署性能敏感型应用时，对BIOS进行性能调优是推荐的关键步骤。本文提供了一份包含13个核心参数的检查清单，指导用户如何配置电源管理、CPU特性、内存模式等以实现性能最大化。</p>
+<p>核心结论是，性能调优通常涉及禁用节能特性（如P-State、C-State）、启用性能增强功能（如Turbo Mode），并将CPU和内存速度设置为最大值。同时，应启用NUMA模式（通过禁用Node Interleaving）以优化内存局部性。</p>
+<p>然而，需要强调的是，最大性能配置会带来显著的功耗增加，且不同服务器厂商的BIOS实现存在差异。因此，在进行任何修改之前，强烈建议用户首先参考其服务器制造商提供的官方BIOS指南。</p>
+<h2 id="_1">参考文献列表</h2>
+<p>[1] Everything You Need to Know About the CPU C-States. (本文档未提供详细发表信息)<br/>
+[2] Intel® Turbo Boost Technology Frequently Asked Questions. (本文档未提供详细发表信息)</p>
+</div>
+</body>
+</div>
+
+  </div>
+
+
+  <a class="u-url" href="/papercache/mlsys/cpu/2022/05/01/understanding-bios-configuration-for-performance-tuning.html" hidden></a>
+</article>
+
+
+<div class="comments-section">
+  <h3>💬 评论讨论</h3>
+  <p class="comments-intro">欢迎在这里分享您的想法和见解！</p>
+  
+  <script src="https://giscus.app/client.js"
+          data-repo="shenh10/papercache"
+          data-repo-id="R_kgDOPi7gwg"
+          data-category="博客评论"
+          data-category-id="DIC_kwDOPi7gws4CuiaX"
+          data-mapping="pathname"
+          data-strict="0"
+          data-reactions-enabled="1"
+          data-emit-metadata="0"
+          data-input-position="bottom"
+          data-theme="light"
+          data-lang="zh-CN"
+          crossorigin="anonymous"
+          async>
+  </script>
+</div>
+
+<style>
+.comments-section {
+  margin: 3em 0 2em 0;
+  padding: 2em 0;
+  border-top: 2px solid #f0f0f0;
+}
+
+.comments-section h3 {
+  color: #2c3e50;
+  margin-bottom: 0.5em;
+  font-size: 1.3em;
+}
+
+.comments-intro {
+  color: #666;
+  font-size: 0.9em;
+  margin-bottom: 1.5em;
+  font-style: italic;
+}
+</style>
+
+
+
+
+
+</div>
+    </main><footer class="site-footer">
+  <div class="container">
+    <div class="footer-content">
+      <!-- 左侧访问统计 -->
+      <div class="footer-section footer-left">
+        <div class="analytics-stats">
+          <div class="stat-item">
+            <span class="stat-label">总访问量</span>
+            <span class="stat-value" id="busuanzi_value_site_pv">
+              <span class="busuanzi-value" id="busuanzi_value_site_pv">0</span>
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 中间版权信息 -->
+      <div class="footer-section footer-center">
+        <p class="copyright">&copy; 2025 PaperCache. All rights reserved.</p>
+        <p class="powered-by">Powered by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> | Analytics by <a href="https://busuanzi.ibruce.info/" target="_blank">Busuanzi</a></p>
+      </div>
+      
+      <!-- 右侧访问统计 -->
+      <div class="footer-section footer-right">
+        <div class="analytics-stats">
+          <div class="stat-item">
+            <span class="stat-label">独立访客</span>
+            <span class="stat-value" id="busuanzi_value_site_uv">
+              <span class="busuanzi-value" id="busuanzi_value_site_uv">0</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+.site-footer {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-top: 2px solid #dee2e6;
+  padding: 2.5rem 0;
+  margin-top: 4rem;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.footer-section {
+  flex: 1;
+  text-align: center;
+  min-width: 200px;
+}
+
+.footer-left {
+  text-align: left;
+}
+
+.footer-center {
+  flex: 2;
+  text-align: center;
+}
+
+.footer-right {
+  text-align: right;
+}
+
+.analytics-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  background: rgba(255,255,255,0.9);
+}
+
+.stat-label {
+  color: #495057;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 70px;
+}
+
+.stat-value {
+  color: #007bff;
+  font-weight: 700;
+  font-size: 1.2rem;
+  background: linear-gradient(45deg, #007bff, #0056b3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.copyright {
+  color: #495057;
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.powered-by {
+  color: #6c757d;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.footer-section a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.footer-section a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  
+  .footer-left,
+  .footer-right {
+    text-align: center;
+  }
+  
+  .footer-center {
+    order: -1;
+  }
+  
+  .stat-item {
+    justify-content: center;
+    min-width: 200px;
+  }
+  
+  .container {
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-footer {
+    padding: 2rem 0;
+  }
+  
+  .stat-item {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem;
+  }
+  
+  .stat-label {
+    font-size: 0.8rem;
+  }
+  
+  .stat-value {
+    font-size: 1.1rem;
+  }
+}
+</style>
+</body>
+
+</html>

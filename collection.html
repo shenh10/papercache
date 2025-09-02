@@ -1,0 +1,2126 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- SEO tags removed for compatibility -->
+  <link rel="stylesheet" href="/papercache/assets/main.css">
+  <!-- Feed meta removed for compatibility --><script>
+if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNotTrack === "yes" || navigator.msDoNotTrack === "1")) {
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'G-MWWFKJXJLN', 'auto');
+  ga('send', 'pageview');
+}
+</script>
+  
+<!-- MathJax 3 Configuration --><script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']]
+      },
+      svg: {
+        fontCache: 'global'
+      }
+    };
+  </script>
+  <script type="text/javascript" id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+  </script><!-- Busuanzi Analytics -->
+  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+</head><body class="layout-collection"><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/papercache/">PaperCache</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/papercache/">首页</a><a class="page-link" href="/papercache/collection.html">论文合集</a><a class="page-link" href="/papercache/about/">关于</a></div>
+      </nav></div>
+</header>
+<div class="collection-wrapper">
+      <aside class="sidebar"><nav class="sidebar-nav">
+  <span class="sidebar-nav-item">分类导航</span>
+
+  
+    
+    
+    <div class="category-section">
+      <h3 class="main-category">
+        <a href="#llm">LLM</a>
+      </h3>
+      
+        
+        
+        <div class="sub-category">
+          <h4 class="sub-category-title">
+            <a href="#llm-algorithm">Algorithm</a>
+          </h4>
+          
+            
+            
+            
+            
+              <!-- 这是纯三级分类，直接显示链接 -->
+              <div class="sub-sub-category">
+                <a href="#llm-algorithm-agent">Agent</a>
+              </div>
+            
+          
+            
+            
+            
+            
+              <!-- 这是纯三级分类，直接显示链接 -->
+              <div class="sub-sub-category">
+                <a href="#llm-algorithm-models">Models</a>
+              </div>
+            
+          
+            
+            
+            
+            
+              <!-- 这是纯三级分类，直接显示链接 -->
+              <div class="sub-sub-category">
+                <a href="#llm-algorithm-pretrain">Pretrain</a>
+              </div>
+            
+          
+            
+            
+            
+            
+              <!-- 这是纯三级分类，直接显示链接 -->
+              <div class="sub-sub-category">
+                <a href="#llm-algorithm-rl">Rl</a>
+              </div>
+            
+          
+        </div>
+      
+        
+        
+        <div class="sub-category">
+          <h4 class="sub-category-title">
+            <a href="#llm-engineering">Engineering</a>
+          </h4>
+          
+            
+            
+            
+            
+              <!-- 这是纯三级分类，直接显示链接 -->
+              <div class="sub-sub-category">
+                <a href="#llm-engineering-attention">Attention</a>
+              </div>
+            
+          
+            
+            
+            
+            
+              <!-- 这是纯三级分类，直接显示链接 -->
+              <div class="sub-sub-category">
+                <a href="#llm-engineering-compiler">Compiler</a>
+              </div>
+            
+          
+            
+            
+            
+            
+              <!-- 这是四级分类的容器，需要进一步嵌套 -->
+              <div class="sub-sub-category">
+                <a href="#llm-engineering-inference" class="sub-sub-category-title">Inference</a>
+                
+                  
+                  
+                  
+                  <div class="fourth-level-category">
+                    <a href="#llm-engineering-inference-kvcache">Kvcache</a>
+                  </div>
+                  
+                
+                  
+                  
+                  
+                  <div class="fourth-level-category">
+                    <a href="#llm-engineering-inference-low-precision">Low precision</a>
+                  </div>
+                  
+                
+                  
+                  
+                  
+                
+                  
+                  
+                  
+                  <div class="fourth-level-category">
+                    <a href="#llm-engineering-inference-speculative-decoding">Speculative decoding</a>
+                  </div>
+                  
+                
+              </div>
+            
+          
+            
+            
+            
+            
+              <!-- 这是纯三级分类，直接显示链接 -->
+              <div class="sub-sub-category">
+                <a href="#llm-engineering-rl">Rl</a>
+              </div>
+            
+          
+            
+            
+            
+            
+              <!-- 这是纯三级分类，直接显示链接 -->
+              <div class="sub-sub-category">
+                <a href="#llm-engineering-train">Train</a>
+              </div>
+            
+          
+        </div>
+      
+    </div>
+  
+    
+    
+    <div class="category-section">
+      <h3 class="main-category">
+        <a href="#mlsys">MLSYS</a>
+      </h3>
+      
+        
+        
+        <div class="sub-category">
+          <h4 class="sub-category-title">
+            <a href="#mlsys-compiler">Compiler</a>
+          </h4>
+          
+            
+            
+            
+            
+              <!-- 跳过posts，不显示 -->
+            
+          
+        </div>
+      
+        
+        
+        <div class="sub-category">
+          <h4 class="sub-category-title">
+            <a href="#mlsys-cpu">Cpu</a>
+          </h4>
+          
+            
+            
+            
+            
+              <!-- 跳过posts，不显示 -->
+            
+          
+        </div>
+      
+        
+        
+        <div class="sub-category">
+          <h4 class="sub-category-title">
+            <a href="#mlsys-framework">Framework</a>
+          </h4>
+          
+            
+            
+            
+            
+              <!-- 跳过posts，不显示 -->
+            
+          
+        </div>
+      
+        
+        
+        <div class="sub-category">
+          <h4 class="sub-category-title">
+            <a href="#mlsys-gpu">Gpu</a>
+          </h4>
+          
+            
+            
+            
+            
+              <!-- 跳过posts，不显示 -->
+            
+          
+        </div>
+      
+        
+        
+        <div class="sub-category">
+          <h4 class="sub-category-title">
+            <a href="#mlsys-networking">Networking</a>
+          </h4>
+          
+            
+            
+            
+            
+              <!-- 跳过posts，不显示 -->
+            
+          
+        </div>
+      
+        
+        
+        <div class="sub-category">
+          <h4 class="sub-category-title">
+            <a href="#mlsys-system">System</a>
+          </h4>
+          
+            
+            
+            
+            
+              <!-- 跳过posts，不显示 -->
+            
+          
+        </div>
+      
+    </div>
+  
+</nav>
+</aside>
+
+      <main class="collection-content">
+        <div class="wrapper">
+          <h1 class="page-title collection-page-title">论文合集</h1>
+
+<div class="paper-count-badge">
+  收录论文总数：<strong>147</strong> 篇
+</div>
+
+<p>在这里，您可以找到所有论文的完整分类列表。</p>
+
+
+
+
+
+
+
+
+
+
+<div class="tag-filter-container">
+  <h3 class="tag-filter-title">📊 标签统计</h3>
+  <div class="tag-stats">
+    <p>共找到 <strong>25</strong> 个不同的标签</p>
+  </div>
+  
+  <div class="tag-filter-buttons">
+    <button class="tag-filter-btn tag-filter-all active" data-tag="all">
+      全部 (147)
+    </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="nips22">
+        <span class="tag-filter-btn-text">nips22</span>
+        <span class="tag-filter-btn-count">(2)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="nips23">
+        <span class="tag-filter-btn-text">nips23</span>
+        <span class="tag-filter-btn-count">(3)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="iclr23">
+        <span class="tag-filter-btn-text">iclr23</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="iclr25">
+        <span class="tag-filter-btn-text">iclr25</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="icml20">
+        <span class="tag-filter-btn-text">icml20</span>
+        <span class="tag-filter-btn-count">(2)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="nips24">
+        <span class="tag-filter-btn-text">nips24</span>
+        <span class="tag-filter-btn-count">(2)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="osdi25">
+        <span class="tag-filter-btn-text">osdi25</span>
+        <span class="tag-filter-btn-count">(12)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="isca25">
+        <span class="tag-filter-btn-text">isca25</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="osdi22">
+        <span class="tag-filter-btn-text">osdi22</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="osdi24">
+        <span class="tag-filter-btn-text">osdi24</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="sosp23">
+        <span class="tag-filter-btn-text">sosp23</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="eurosys25">
+        <span class="tag-filter-btn-text">eurosys25</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="iclr22">
+        <span class="tag-filter-btn-text">iclr22</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="sc21">
+        <span class="tag-filter-btn-text">sc21</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="sc23">
+        <span class="tag-filter-btn-text">sc23</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="jmlr23">
+        <span class="tag-filter-btn-text">jmlr23</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="sc20">
+        <span class="tag-filter-btn-text">sc20</span>
+        <span class="tag-filter-btn-count">(2)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="nsdi24">
+        <span class="tag-filter-btn-text">nsdi24</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="atc21">
+        <span class="tag-filter-btn-text">atc21</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="cvpr19">
+        <span class="tag-filter-btn-text">cvpr19</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="jpdc18">
+        <span class="tag-filter-btn-text">jpdc18</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="vlsi23">
+        <span class="tag-filter-btn-text">vlsi23</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="ppopp23">
+        <span class="tag-filter-btn-text">ppopp23</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="sigarch17">
+        <span class="tag-filter-btn-text">sigarch17</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+      
+      
+      <button class="tag-filter-btn" data-tag="asplos24">
+        <span class="tag-filter-btn-text">asplos24</span>
+        <span class="tag-filter-btn-count">(1)</span>
+      </button>
+    
+  </div>
+</div>
+
+
+
+---
+
+
+
+
+<h2 class="main-category-title" id="llm">LLM</h2>
+
+
+
+<h3 class="subcategory-title" id="llm-algorithm">Algorithm</h3>
+
+<!-- 检查二级分类是否有直接的文章 -->
+
+
+  
+  
+  
+
+  
+  
+  
+
+  
+  
+  
+
+  
+  
+  
+
+
+
+  <!-- 处理三级和四级分类 -->
+  
+  
+  
+
+  
+    <!-- 这是纯三级分类，直接显示文章 -->
+    <h4 class="sub-subcategory-title" id="llm-algorithm-agent">Agent</h4>
+    <ul class="post-list-with-tags">
+    
+    
+    <li>
+    <span class="post-meta">2025-05-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/agent/2025/05/01/a-survey-on-test-time-scaling-in-large-language-models-what-how-where-and-how-well.html">A Survey on Test-Time Scaling in Large Language Models: What, How, Where, and How Well</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-04-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/agent/2025/04/01/mem0-building-production-ready-ai-agents-with-scalable-long-term-memory.html">Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-03-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/agent/2025/03/01/r1-searcher-incentivizing-the-search-capability-in-llms-via-reinforcement-learning.html">R1-Searcher: Incentivizing the Search Capability in LLMs via Reinforcement Learning</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-03-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/agent/2025/03/01/search-r1-training-llms-to-reason-and-leverage-search-engines-with-reinforcement-learning.html">Search-R1: Training LLMs to Reason and Leverage Search Engines with Reinforcement Learning</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-09-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/agent/2024/09/01/large-language-model-based-agents-for-software-engineering-a-survey.html">Large Language Model-Based Agents for Software Engineering: A Survey</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2023-12-01</span>
+    
+    <span class="subcategory-tag tag-nips23">nips23</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/agent/2023/12/01/tree-of-thoughts-deliberate-problem-solving-with-large-language-models.html">Tree of Thoughts: Deliberate Problem Solving with Large Language Models</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2023-12-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/agent/2023/12/01/retrieval-augmented-generation-for-large-language-models-a-survey.html">Retrieval-Augmented Generation for Large Language Models: A Survey</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2023-10-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/agent/2023/10/01/fireact-toward-language-agent-fine-tuning.html">FIREACT: TOWARD LANGUAGE AGENT FINE-TUNING</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2023-03-01</span>
+    
+    <span class="subcategory-tag tag-iclr23">iclr23</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/agent/2023/03/01/reac-t-synergizing-reasoning-and-acting-in-language-models.html">REAC T: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2023-02-01</span>
+    
+    <span class="subcategory-tag tag-nips23">nips23</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/agent/2023/02/01/toolformer-language-models-can-teach-themselves-to-use-tools.html">Toolformer: Language Models Can Teach Themselves to Use Tools</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2022-01-01</span>
+    
+    <span class="subcategory-tag tag-nips22">nips22</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/agent/2022/01/01/chain-of-thought-prompting-elicits-reasoning-in-large-language-models.html">Chain-of-Thought Prompting Elicits Reasoning in Large Language Models</a>
+    </li>
+    
+    </ul>
+  
+  
+  
+  
+
+  
+    <!-- 这是纯三级分类，直接显示文章 -->
+    <h4 class="sub-subcategory-title" id="llm-algorithm-models">Models</h4>
+    <ul class="post-list-with-tags">
+    
+    
+    <li>
+    <span class="post-meta">2025-08-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/models/2025/08/01/kimi-k2-open-agentic-intelligence.html">KIMI K2: OPEN AGENTIC INTELLIGENCE</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-06-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/models/2025/06/01/dotsllm1-technical-report.html">dots.llm1 Technical Report</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-04-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/models/2025/04/01/seed15-thinking-advancing-superb-reasoning-models-with-reinforcement-learning.html">Seed1.5-Thinking: Advancing Superb Reasoning Models with Reinforcement Learning</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-01-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/models/2025/01/01/kimi-k15-scaling-reinforcement-learning-with-llms.html">KIMI K1.5: SCALING REINFORCEMENT LEARNING WITH LLMS</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-12-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/models/2024/12/01/deepseek-v3-technical-report.html">DeepSeek-V3 Technical Report</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-03-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/models/2024/03/01/gemini-15-unlocking-multimodal-understanding-across-millions-of-tokens-of-context.html">Gemini 1.5: Unlocking multimodal understanding across millions of tokens of context</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-01-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/models/2024/01/01/deepseek-coder-when-the-large-language-model-meets-programming-the-rise-of-code-intelligence.html">DeepSeek-Coder: When the Large Language Model Meets Programming - The Rise of Code Intelligence</a>
+    </li>
+    
+    </ul>
+  
+  
+  
+  
+
+  
+    <!-- 这是纯三级分类，直接显示文章 -->
+    <h4 class="sub-subcategory-title" id="llm-algorithm-pretrain">Pretrain</h4>
+    <ul class="post-list-with-tags">
+    
+    
+    <li>
+    <span class="post-meta">2024-08-01</span>
+    
+    <span class="subcategory-tag tag-iclr25">iclr25</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/pretrain/2024/08/01/inference-scaling-laws-an-empirical-analysis-of-compute-optimal-inference-for-llm-problem-solving.html">INFERENCE SCALING LAWS: AN EMPIRICAL ANALYSIS OF COMPUTE-OPTIMAL INFERENCE FOR LLM PROBLEM-SOLVING</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2022-03-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/pretrain/2022/03/01/tensor-programs-v-tuning-large-neural-networks-via-zero-shot-hyperparameter-transfer.html">Tensor Programs V: Tuning Large Neural Networks via Zero-Shot
+      Hyperparameter Transfer</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2021-04-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/pretrain/2021/04/01/roformer-enhanced-transformer-with-rotary-position-embedding.html">ROFORMER: ENHANCED TRANSFORMER WITH ROTARY POSITION EMBEDDING</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2013-12-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/pretrain/2013/12/01/what-makes-good-data-for-alignment-a-comprehensive-study-of-automatic-data-selection-in-instruction-tuning.html">WHAT MAKES GOOD DATA FOR ALIGNMENT? A COMPREHENSIVE STUDY OF AUTOMATIC DATA SELECTION IN INSTRUCTION TUNING</a>
+    </li>
+    
+    </ul>
+  
+  
+  
+  
+
+  
+    <!-- 这是纯三级分类，直接显示文章 -->
+    <h4 class="sub-subcategory-title" id="llm-algorithm-rl">Rl</h4>
+    <ul class="post-list-with-tags">
+    
+    
+    <li>
+    <span class="post-meta">2025-08-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/rl/2025/08/01/on-policy-rl-meets-off-policy-experts-harmonizing-supervised-fine-tuning-and-reinforcement-learning-via-dynamic-weighting.html">ON-POLICY RL MEETS OFF-POLICY EXPERTS: HARMONIZING SUPERVISED FINE-TUNING AND REINFORCEMENT LEARNING VIA DYNAMIC WEIGHTING</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-05-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/rl/2025/05/01/dapo-an-open-source-llm-reinforcement-learning-system-at-scale.html">DAPO: An Open-Source LLM Reinforcement Learning System at Scale</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-05-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/rl/2025/05/01/the-entropy-mechanism-of-reinforcement-learning-for-reasoning-language-models.html">The Entropy Mechanism of Reinforcement Learning for Reasoning Language Models</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-04-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/rl/2025/04/01/exploring-data-scaling-trends-and-effects-in-reinforcement-learning-from-human-feedback.html">Exploring Data Scaling Trends and Effects in Reinforcement Learning from Human Feedback</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-08-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/rl/2024/08/01/scaling-llm-test-time-compute-optimally-can-be-more-effective-than-scaling-model-parameters.html">Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-05-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/rl/2024/05/01/nemo-aligner-scalable-toolkit-for-efficient-model-alignment.html">NeMo-Aligner: Scalable Toolkit for Efficient Model Alignment</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-02-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/rl/2024/02/01/deepseekmath-pushing-the-limits-of-mathematical-reasoning-in-open-language-models.html">DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2023-05-01</span>
+    
+    <span class="subcategory-tag tag-nips23">nips23</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/rl/2023/05/01/direct-preference-optimization-your-language-model-is-secretly-a-reward-model.html">Direct Preference Optimization: Your Language Model is Secretly a Reward Model</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2022-03-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/rl/2022/03/01/training-language-models-to-follow-instructions-with-human-feedback.html">Training language models to follow instructions with human feedback</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2017-12-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/rl/2017/12/01/rllib-abstractions-for-distributed-reinforcement-learning.html">RLlib: Abstractions for Distributed Reinforcement Learning</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2017-08-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/rl/2017/08/01/proximal-policy-optimization-algorithms.html">Proximal Policy Optimization Algorithms</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2016-01-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/rl/2016/01/01/mastering-the-game-of-go-with-deep-neural-networks-and-tree-search.html">Mastering the game of Go with deep neural networks and tree search</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2015-07-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/rl/2015/07/01/massively-parallel-methods-for-deep-reinforcement-learning.html">Massively Parallel Methods for Deep Reinforcement Learning</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2013-12-01</span>
+    
+    <a class="post-link" href="/papercache/llm/algorithm/rl/2013/12/01/playing-atari-with-deep-reinforcement-learning.html">Playing Atari with Deep Reinforcement Learning</a>
+    </li>
+    
+    </ul>
+  
+  
+
+
+
+
+
+<h3 class="subcategory-title" id="llm-engineering">Engineering</h3>
+
+<!-- 检查二级分类是否有直接的文章 -->
+
+
+  
+  
+  
+
+  
+  
+  
+
+  
+  
+  
+
+  
+  
+  
+
+  
+  
+  
+
+
+
+  <!-- 处理三级和四级分类 -->
+  
+  
+  
+
+  
+    <!-- 这是纯三级分类，直接显示文章 -->
+    <h4 class="sub-subcategory-title" id="llm-engineering-attention">Attention</h4>
+    <ul class="post-list-with-tags">
+    
+    
+    <li>
+    <span class="post-meta">2025-05-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/attention/2025/05/01/sageattention3-microscaling-fp4-attention-for-inference-and-an-exploration-of-8-bit-training.html">SageAttention3: Microscaling FP4 Attention for Inference and An Exploration of 8-bit Training</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-02-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/attention/2025/02/01/native-sparse-attention-hardware-aligned-and-natively-trainable-sparse-attention.html">Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-02-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/attention/2025/02/01/tree-attention-topology-aware-decoding-for-long-context-attention-on-gpu-clusters.html">TREE ATTENTION: TOPOLOGY-AWARE DECODING FOR LONG-CONTEXT ATTENTION ON GPU CLUSTERS</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-02-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/attention/2025/02/01/moba-mixture-of-block-attention-for-long-context-llms.html">MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-01-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/attention/2025/01/01/minimax-01-scaling-foundation-models-with-lightning-attention.html">MiniMax-01: Scaling Foundation Models with Lightning Attention</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-10-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/attention/2024/10/01/sageattention-accurate-8-bit-attention-for-plug-and-play-inference-acceleration.html">SAGEATTENTION: ACCURATE 8-BIT ATTENTION FOR PLUG-AND-PLAY INFERENCE ACCELERATION</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-07-01</span>
+    
+    <span class="subcategory-tag tag-nips24">nips24</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/attention/2024/07/01/flashattention-3-fast-and-accurate-attention-with-asynchrony-and-low-precision.html">FlashAttention-3: Fast and Accurate Attention with Asynchrony and Low-precision</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-04-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/attention/2024/04/01/leave-no-context-behind-efficient-infinite-context-transformers-with-infini-attention.html">Leave No Context Behind: Efficient Infinite Context Transformers with Infini-attention</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2023-12-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/attention/2023/12/01/gqa-training-generalized-multi-query-transformer-models-from-multi-head-checkpoints.html">GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2023-07-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/attention/2023/07/01/flashattention-2-faster-attention-with-better-parallelism-and-work-partitioning.html">FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2022-07-01</span>
+    
+    <span class="subcategory-tag tag-nips22">nips22</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/attention/2022/07/01/flashattention-fast-and-memory-efficient-exact-attention-with-io-awareness.html">FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2020-06-01</span>
+    
+    <span class="subcategory-tag tag-icml20">icml20</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/attention/2020/06/01/transformers-are-rnns-fast-autoregressive-transformers-with-linear-attention.html">Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2020-02-01</span>
+    
+    <span class="subcategory-tag tag-icml20">icml20</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/attention/2020/02/01/low-rank-bottleneck-in-multi-head-attention-models.html">Low-Rank Bottleneck in Multi-head Attention Models</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2019-11-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/attention/2019/11/01/fast-transformer-decoding-one-write-head-is-all-you-need.html">Fast Transformer Decoding: One Write-Head is All You Need</a>
+    </li>
+    
+    </ul>
+  
+  
+  
+  
+
+  
+    <!-- 这是纯三级分类，直接显示文章 -->
+    <h4 class="sub-subcategory-title" id="llm-engineering-compiler">Compiler</h4>
+    <ul class="post-list-with-tags">
+    
+    
+    <li>
+    <span class="post-meta">2025-06-01</span>
+    
+    <span class="subcategory-tag tag-osdi25">osdi25</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/compiler/2025/06/01/mirage-a-multi-level-superoptimizer-for-tensor-programs.html">Mirage: A Multi-Level Superoptimizer for Tensor Programs</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-04-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/compiler/2025/04/01/tilelink-generating-efficient-compute-communication-overlapping-kernels-using-tile-centric-primitives.html">TileLink: Generating Efficient Compute-Communication Overlapping Kernels using Tile-Centric Primitives</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-04-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/compiler/2025/04/01/tilelang-a-composable-tiled-programming-model-for-ai-systems.html">TileLang: A Composable Tiled Programming Model for AI Systems</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-12-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/compiler/2024/12/01/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html">FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-10-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/compiler/2024/10/01/flux-fast-software-based-communication-overlap-on-gpus-through-kernel-fusion.html">FLUX: FAST SOFTWARE-BASED COMMUNICATION OVERLAP ON GPUS THROUGH KERNEL FUSION</a>
+    </li>
+    
+    </ul>
+  
+  
+  
+  
+
+  
+    <!-- 这是四级分类的容器，需要进一步嵌套 -->
+    <h4 class="sub-subcategory-title" id="llm-engineering-inference">Inference</h4>
+    
+      
+      
+      
+      <h5 class="fourth-level-title" id="llm-engineering-inference-kvcache">Kvcache</h5>
+      <ul class="post-list-with-tags">
+      
+      
+      <li>
+      <span class="post-meta">2024-10-01</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/kvcache/2024/10/01/do-large-language-models-need-a-content-delivery-network.html">Do Large Language Models Need a Content Delivery Network?</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2024-07-01</span>
+      
+      <span class="subcategory-tag tag-atc24">atc24</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/kvcache/2024/07/01/cost-efficient-large-language-model-serving-for-multi-turn-conversations-with-cachedattention.html">Cost-Efficient Large Language Model Serving for Multi-turn Conversations with CachedAttention</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2024-05-01</span>
+      
+      <span class="subcategory-tag tag-eurosys25">eurosys25</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/kvcache/2024/05/01/cacheblend-fast-large-language-model-serving-for-rag-with-cached-knowledge-fusion.html">CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2024-04-01</span>
+      
+      <span class="subcategory-tag tag-mlsys24">mlsys24</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/kvcache/2024/04/01/prompt-cache-modular-attention-reuse-for-low-latency-inference.html">PROMPT CACHE: MODULAR ATTENTION REUSE FOR LOW-LATENCY INFERENCE</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2023-10-01</span>
+      
+      <span class="subcategory-tag tag-sigcomm24">sigcomm24</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/kvcache/2023/10/01/cachegen-kv-cache-compression-and-streaming-for-fast-large-language-model-serving.html">CacheGen: KV Cache Compression and Streaming for Fast Large Language Model Serving</a>
+      </li>
+      
+      </ul>
+      
+    
+      
+      
+      
+      <h5 class="fourth-level-title" id="llm-engineering-inference-low-precision">Low precision</h5>
+      <ul class="post-list-with-tags">
+      
+      
+      <li>
+      <span class="post-meta">2025-05-01</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/low_precision/2025/05/01/recipes-for-pre-training-llms-with-mxfp8.html">Recipes for Pre-training LLMs with MXFP8</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2025-01-01</span>
+      
+      <span class="subcategory-tag tag-osdi25">osdi25</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/low_precision/2025/01/01/decdec-a-systems-approach-to-advancing-low-bit-llm-quantization.html">DecDEC: A Systems Approach to Advancing Low-Bit LLM Quantization</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2024-01-01</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/low_precision/2024/01/01/fp6-llm-efficiently-serving-large-language-models-through-fp6-centric-algorithm-system-co-design.html">FP6-LLM: Efficiently Serving Large Language Models Through FP6-Centric Algorithm-System Co-Design</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2023-06-01</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/low_precision/2023/06/01/fp8-versus-int8-for-efficient-deep-learning-inference.html">FP8 versus INT8 for efficient deep learning inference</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2023-06-01</span>
+      
+      <span class="subcategory-tag tag-mlsys24">mlsys24</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/low_precision/2023/06/01/awq-activation-aware-weight-quantization-for-on-device-llm-compression-and-acceleration.html">AWQ: ACTIVATION-AWARE WEIGHT QUANTIZATION FOR ON-DEVICE LLM COMPRESSION AND ACCELERATION</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2023-05-01</span>
+      
+      <span class="subcategory-tag tag-icme24">icme24</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/low_precision/2023/05/01/integer-or-floating-point-new-outlooks-for-low-bit-quantization-on-large-language-models.html">Integer or Floating Point? New Outlooks for Low-Bit Quantization on Large Language Models</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2023-04-01</span>
+      
+      <span class="subcategory-tag tag-isca23">isca23</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/low_precision/2023/04/01/with-shared-microexponents-a-little-shifting-goes-a-long-way.html">With Shared Microexponents, A Little Shifting Goes a Long Way</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2022-11-01</span>
+      
+      <span class="subcategory-tag tag-icml23">icml23</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/low_precision/2022/11/01/smoothquant-accurate-and-efficient-post-training-quantization-for-large-language-models.html">SmoothQuant: Accurate and Efficient Post-Training Quantization for Large Language Models</a>
+      </li>
+      
+      </ul>
+      
+    
+      
+      
+      
+    
+      
+      
+      
+      <h5 class="fourth-level-title" id="llm-engineering-inference-speculative-decoding">Speculative decoding</h5>
+      <ul class="post-list-with-tags">
+      
+      
+      <li>
+      <span class="post-meta">2025-03-01</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/speculative_decoding/2025/03/01/eagle-3-scaling-up-inference-acceleration-of-large-language-models-via-training-time-test.html">EAGLE-3: Scaling up Inference Acceleration of Large Language Models via Training-Time Test</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2024-06-01</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/speculative_decoding/2024/06/01/eagle-2-faster-inference-of-language-models-with-dynamic-draft-trees.html">EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2024-06-01</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/speculative_decoding/2024/06/01/medusa-simple-llm-inference-acceleration-framework-with-multiple-decoding-heads.html">MEDUSA: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2024-01-01</span>
+      
+      <a class="post-link" href="/papercache/llm/engineering/inference/speculative_decoding/2024/01/01/eagle-speculative-sampling-requires-rethinking-feature-uncertainty.html">EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty</a>
+      </li>
+      
+      </ul>
+      
+    
+    
+    <!-- 显示直接的文章（如果有的话） -->
+    
+    <h5 class="fourth-level-title" id="llm-engineering-inference-general">General</h5>
+    <ul class="post-list-with-tags">
+    
+    
+    <li>
+    <span class="post-meta">2025-07-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/inference/2025/07/01/step-3-is-large-yet-affordable-model-system-co-design-for-cost-effective-decoding.html">Step-3 is Large yet Affordable: Model-system Co-design for Cost-effective Decoding</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-07-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/inference/2025/07/01/megascale-infer-serving-mixture-of-experts-at-scale-with-disaggregated-expert-parallelism.html">MegaScale-Infer: Serving Mixture-of-Experts at Scale with Disaggregated Expert Parallelism</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-05-01</span>
+    
+    <span class="subcategory-tag tag-isca25">isca25</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/inference/2025/05/01/insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures.html">Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware for AI Architectures</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-04-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/inference/2025/04/01/tilus-a-virtual-machine-for-arbitrary-low-precision-gpgpu-computation-in-llm-serving.html">Tilus: A Virtual Machine for Arbitrary Low-Precision GPGPU Computation in LLM Serving</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-08-01</span>
+    
+    <span class="subcategory-tag tag-osdi25">osdi25</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/inference/2024/08/01/nanoflow-towards-optimal-large-language-model-serving-throughput.html">NanoFlow: Towards Optimal Large Language Model Serving Throughput</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-07-01</span>
+    
+    <span class="subcategory-tag tag-nips24">nips24</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/inference/2024/07/01/sglang-efficient-execution-of-structured-language-model-programs.html">SGLang: Efficient Execution of Structured Language Model Programs</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-07-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/inference/2024/07/01/mooncake-a-kvcache-centric-disaggregated-architecture-for-llm-serving.html">Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-05-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/inference/2024/05/01/efficient-heterogeneous-large-language-model-decoding-with-model-attention-disaggregation.html">Efficient Heterogeneous Large Language Model Decoding with Model-Attention Disaggregation</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-01-01</span>
+    
+    <span class="subcategory-tag tag-osdi24">osdi24</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/inference/2024/01/01/distserve-disaggregating-prefill-and-decoding-for-goodput-optimized-large-language-model-serving.html">DistServe: Disaggregating Prefill and Decoding for Goodput-optimized Large Language Model Serving</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2023-09-01</span>
+    
+    <span class="subcategory-tag tag-sosp23">sosp23</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/inference/2023/09/01/efficient-memory-management-for-large-language-model-serving-with-pagedattention.html">Efficient Memory Management for Large Language Model Serving with PagedAttention</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2023-08-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/inference/2023/08/01/sarathi-efficient-llm-inference-by-piggybacking-decodes-with-chunked-prefills.html">SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2022-07-01</span>
+    
+    <span class="subcategory-tag tag-osdi22">osdi22</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/inference/2022/07/01/orca-a-distributed-serving-system-for-transformer-based-generative-models.html">Orca: A Distributed Serving System for Transformer-Based Generative Models</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2019-10-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/inference/2019/10/01/transformers-state-of-the-art-natural-language-processing.html">Transformers: State-of-the-Art Natural Language Processing</a>
+    </li>
+    
+    </ul>
+    
+  
+  
+  
+  
+
+  
+    <!-- 这是纯三级分类，直接显示文章 -->
+    <h4 class="sub-subcategory-title" id="llm-engineering-rl">Rl</h4>
+    <ul class="post-list-with-tags">
+    
+    
+    <li>
+    <span class="post-meta">2025-08-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/rl/2025/08/01/seamlessflow-a-traineragent-isolation-rl-framework-achieving-bubble-free-pipelines-via-tag-scheduling.html">SeamlessFlow: A Trainer–Agent Isolation RL Framework Achieving Bubble-Free Pipelines via Tag Scheduling</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-07-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/rl/2025/07/01/asyncflow-an-asynchronous-streaming-rl-framework-for-efficient-llm-post-training.html">AsyncFlow: An Asynchronous Streaming RL Framework for Efficient LLM Post-Training</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-07-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/rl/2025/07/01/distflow-a-fully-distributed-rl-framework-for-scalable-and-efficient-llm-post-training.html">DistFlow: A Fully Distributed RL Framework for Scalable and Efficient LLM Post-Training</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-05-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/rl/2025/05/01/areal-a-large-scale-asynchronous-reinforcement-learning-system-for-language-reasoning.html">AREAL: A Large-Scale Asynchronous Reinforcement Learning System for Language Reasoning</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-04-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/rl/2025/04/01/streamrl-scalable-heterogeneous-and-elastic-rl-for-llms-with-disaggregated-stream-generation.html">StreamRL: Scalable, Heterogeneous, and Elastic RL for LLMs with Disaggregated Stream Generation</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-10-01</span>
+    
+    <span class="subcategory-tag tag-eurosys25">eurosys25</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/rl/2024/10/01/hybridflow-a-flexible-and-efficient-rlhf-framework.html">HybridFlow: A Flexible and Efficient RLHF Framework</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-09-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/rl/2024/09/01/rlhfuse-efficient-rlhf-training-for-large-language-models-with-inter-and-intra-stage-fusion.html">RLHFuse: Efficient RLHF Training for Large Language Models with Inter- and Intra-Stage Fusion</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-05-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/rl/2024/05/01/openrlhf-an-easy-to-use-scalable-and-high-performance-rlhf-framework.html">OpenRLHF: An Easy-to-use, Scalable and High-performance RLHF Framework</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2023-03-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/rl/2023/03/01/deepspeed-chat-easy-fast-and-affordable-rlhf-training-of-chatgpt-like-models-at-all-scales.html">DeepSpeed-Chat: Easy, Fast and Affordable RLHF Training of ChatGPT-like Models at All Scales</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2019-10-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/rl/2019/10/01/seed-rl-scalable-and-efficient-deep-rl-with-accelerated-central-inference.html">SEED RL: SCALABLE AND EFFICIENT DEEP-RL WITH ACCELERATED CENTRAL INFERENCE</a>
+    </li>
+    
+    </ul>
+  
+  
+  
+  
+
+  
+    <!-- 这是纯三级分类，直接显示文章 -->
+    <h4 class="sub-subcategory-title" id="llm-engineering-train">Train</h4>
+    <ul class="post-list-with-tags">
+    
+    
+    <li>
+    <span class="post-meta">2025-04-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2025/04/01/bytecheckpoint-a-unified-checkpointing-system-for-large-foundation-model-development.html">ByteCheckpoint: A Unified Checkpointing System for Large Foundation Model Development</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-03-01</span>
+    
+    <span class="subcategory-tag tag-osdi25">osdi25</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2025/03/01/understanding-stragglers-in-large-model-training-using-what-if-analysis.html">Understanding Stragglers in Large Model Training Using What-if Analysis</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-03-01</span>
+    
+    <span class="subcategory-tag tag-osdi25">osdi25</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2025/03/01/wlb-llm-workload-balanced-4d-parallelism-for-large-language-model-training.html">WLB-LLM: Workload-Balanced 4D Parallelism for Large Language Model Training</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-02-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2025/02/01/training-llms-with-mxfp4.html">Training LLMs with MXFP4</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-01-01</span>
+    
+    <span class="subcategory-tag tag-osdi25">osdi25</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2025/01/01/enabling-efficient-gpu-communication-over-multiple-nics-with-fuselink.html">Enabling Efficient GPU Communication over Multiple NICs with FuseLink</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2025-01-01</span>
+    
+    <span class="subcategory-tag tag-osdi25">osdi25</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2025/01/01/zen-empowering-distributed-training-with-sparsity-driven-data-synchronization.html">Zen: Empowering Distributed Training with Sparsity-driven Data Synchronization</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-09-01</span>
+    
+    <span class="subcategory-tag tag-osdi25">osdi25</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2024/09/01/domino-eliminating-communication-in-llm-training-via-generic-tensor-slicing-and-overlapping.html">Domino: Eliminating Communication in LLM Training via Generic Tensor Slicing and Overlapping</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-07-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2024/07/01/efficient-training-of-large-language-models-on-distributed-infrastructures-a-survey.html">Efficient Training of Large Language Models on Distributed Infrastructures: A Survey</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2024-02-01</span>
+    
+    <span class="subcategory-tag tag-nsdi24">nsdi24</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2024/02/01/megascale-scaling-large-language-model-training-to-more-than-10000-gpus.html">MegaScale: Scaling Large Language Model Training to More Than 10,000 GPUs</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2023-11-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2023/11/01/zero-bubble-pipeline-parallelism.html">ZERO BUBBLE PIPELINE PARALLELISM</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2023-04-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2023/04/01/pytorch-fsdp-experiences-on-scaling-fully-sharded-data-parallel.html">PyTorch FSDP: Experiences on Scaling Fully Sharded Data Parallel</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2022-04-01</span>
+    
+    <span class="subcategory-tag tag-jmlr23">jmlr23</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2022/04/01/palm-scaling-language-modeling-with-pathways.html">PaLM: Scaling Language Modeling with Pathways</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2021-08-01</span>
+    
+    <span class="subcategory-tag tag-sc23">sc23</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2021/08/01/efficient-large-scale-language-model-training-on-gpu-clusters-using-megatron-lm.html">Efficient Large-Scale Language Model Training on GPU Clusters Using Megatron-LM</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2021-06-01</span>
+    
+    <span class="subcategory-tag tag-iclr22">iclr22</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2021/06/01/lora-low-rank-adaptation-of-large-language-models.html">LORA: LOW-RANK ADAPTATION OF LARGE LANGUAGE MODELS</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2021-04-01</span>
+    
+    <span class="subcategory-tag tag-sc21">sc21</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2021/04/01/zero-infinity-breaking-the-gpu-memory-wall-for-extreme-scale-deep-learning.html">ZeRO-Infinity: Breaking the GPU Memory Wall for Extreme Scale Deep Learning</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2021-01-01</span>
+    
+    <span class="subcategory-tag tag-atc21">atc21</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2021/01/01/zero-offload-democratizing-billion-scale-model-training.html">ZeRO-Offload: Democratizing Billion-Scale Model Training</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2020-03-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2020/03/01/megatron-lm-training-multi-billion-parameter-language-models-using-model-parallelism.html">Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2020-03-01</span>
+    
+    <span class="subcategory-tag tag-sc20">sc20</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2020/03/01/zero-memory-optimizations-toward-training-trillion-parameter-models.html">ZeRO: Memory Optimizations Toward Training Trillion Parameter Models</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2019-07-01</span>
+    
+    <span class="subcategory-tag tag-cvpr19">cvpr19</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2019/07/01/gpipe-easy-scaling-with-micro-batch-pipeline-parallelism.html">GPipe: Easy Scaling with Micro-Batch Pipeline Parallelism</a>
+    </li>
+    
+    <li>
+    <span class="post-meta">2018-06-01</span>
+    
+    <a class="post-link" href="/papercache/llm/engineering/train/2018/06/01/pipedream-fast-and-efficient-pipeline-parallel-dnn-training.html">PipeDream: Fast and Efficient Pipeline Parallel DNN Training</a>
+    </li>
+    
+    </ul>
+  
+  
+
+
+
+
+
+
+<h2 class="main-category-title" id="mlsys">MLSYS</h2>
+
+
+
+<h3 class="subcategory-title" id="mlsys-compiler">Compiler</h3>
+
+<!-- 检查二级分类是否有直接的文章 -->
+
+
+  
+  
+  
+    
+    
+
+
+  
+    
+    
+    
+      <ul class="post-list-with-tags">
+      
+      
+      <li>
+      <span class="post-meta">2025-05-01</span>
+      
+      <span class="subcategory-tag tag-osdi25">osdi25</span>
+      
+      <a class="post-link" href="/papercache/mlsys/compiler/2025/05/01/kperfir-towards-an-open-and-compiler-centric-ecosystem-for-gpu-kernel-performance-tooling-on-modern-ai-workloads.html">KPerfIR: Towards an Open and Compiler-centric Ecosystem for GPU Kernel Performance Tooling on Modern AI Workloads</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2025-01-01</span>
+      
+      <span class="subcategory-tag tag-osdi25">osdi25</span>
+      
+      <a class="post-link" href="/papercache/mlsys/compiler/2025/01/01/pipethreader-software-defined-pipelining-for-efficient-dnn-execution.html">PipeThreader: Software-Defined Pipelining for Efficient DNN Execution</a>
+      </li>
+      
+      </ul>
+    
+  
+
+
+
+
+
+<h3 class="subcategory-title" id="mlsys-cpu">Cpu</h3>
+
+<!-- 检查二级分类是否有直接的文章 -->
+
+
+  
+  
+  
+    
+    
+
+
+  
+    
+    
+    
+      <ul class="post-list-with-tags">
+      
+      
+      <li>
+      <span class="post-meta">2022-05-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/cpu/2022/05/01/understanding-bios-configuration-for-performance-tuning.html">Understanding BIOS Configuration for Performance Tuning</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2022-05-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/cpu/2022/05/01/everything-you-need-to-know-about-the-cpu-power-management.html">Everything You Need to Know About the CPU Power Management</a>
+      </li>
+      
+      </ul>
+    
+  
+
+
+
+
+
+<h3 class="subcategory-title" id="mlsys-framework">Framework</h3>
+
+<!-- 检查二级分类是否有直接的文章 -->
+
+
+  
+  
+  
+    
+    
+
+
+  
+    
+    
+    
+      <ul class="post-list-with-tags">
+      
+      
+      <li>
+      <span class="post-meta">2022-01-01</span>
+      
+      <span class="subcategory-tag tag-osdi25">osdi25</span>
+      
+      <a class="post-link" href="/papercache/mlsys/framework/2022/01/01/campo-cost-aware-performance-optimization-for-mixed-precision-neural-network-training.html">Campo: Cost-Aware Performance Optimization for Mixed-Precision Neural Network Training</a>
+      </li>
+      
+      </ul>
+    
+  
+
+
+
+
+
+<h3 class="subcategory-title" id="mlsys-gpu">Gpu</h3>
+
+<!-- 检查二级分类是否有直接的文章 -->
+
+
+  
+  
+  
+    
+    
+
+
+  
+    
+    
+    
+      <ul class="post-list-with-tags">
+      
+      
+      <li>
+      <span class="post-meta">2025-03-01</span>
+      
+      <span class="subcategory-tag tag-osdi25">osdi25</span>
+      
+      <a class="post-link" href="/papercache/mlsys/gpu/2025/03/01/neutrino-fine-grained-gpu-kernel-profiling-via-programmable-probing.html">Neutrino: Fine-grained GPU Kernel Profiling via Programmable Probing</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2023-01-01</span>
+      
+      <span class="subcategory-tag tag-ppopp23">ppopp23</span>
+      
+      <a class="post-link" href="/papercache/mlsys/gpu/2023/01/01/stream-k-work-centric-parallel-decomposition-for-dense-matrix-matrix-multiplication-on-the-gpu.html">Stream-K: Work-centric Parallel Decomposition for Dense Matrix-Matrix Multiplication on the GPU</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2023-01-01</span>
+      
+      <span class="subcategory-tag tag-vlsi23">vlsi23</span>
+      
+      <a class="post-link" href="/papercache/mlsys/gpu/2023/01/01/a-135-gbpsgbit-066-pjbit-stacked-embedded-dram-with-multilayer-arrays-by-fine-pitch-hybrid-bonding-and-mini-tsv.html">A 135 GBps/Gbit 0.66 pJ/bit Stacked Embedded DRAM with Multilayer Arrays by Fine Pitch Hybrid Bonding and Mini-TSV</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2022-01-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/gpu/2022/01/01/nvidia-h100-tensor-core-gpu-architecture.html">NVIDIA H100 Tensor Core GPU Architecture</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2020-02-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/gpu/2020/02/01/gpu-initiated-openshmem-correct-and-eicient-intra-kernel-networking-for-dgpus.html">GPU Initiated OpenSHMEM: Correct and Eicient Intra-Kernel Networking for dGPUs</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2018-04-01</span>
+      
+      <span class="subcategory-tag tag-jpdc18">jpdc18</span>
+      
+      <a class="post-link" href="/papercache/mlsys/gpu/2018/04/01/gpudirect-async-exploring-gpu-synchronous-communication-techniques-for-infiniband-clusters.html">GPUDirect Async: Exploring GPU synchronous communication techniques for InfiniBand clusters</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2018-03-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/gpu/2018/03/01/improving-real-time-performance-with-cuda-persistent-threads-cuper-on-the-jetson-tx2.html">Improving Real-Time Performance with CUDA Persistent Threads (CuPer) on the Jetson TX2</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2017-05-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/gpu/2017/05/01/offloading-communication-control-logic-in-gpu-accelerated-applications.html">Offloading communication control logic in GPU accelerated applications</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2017-04-01</span>
+      
+      <span class="subcategory-tag tag-sigarch17">sigarch17</span>
+      
+      <a class="post-link" href="/papercache/mlsys/gpu/2017/04/01/locality-aware-cta-clustering-for-modern-gpus.html">Locality-Aware CTA Clustering for Modern GPUs</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2016-04-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/gpu/2016/04/01/optimizing-performance-of-recurrent-neural-networks-on-gpus.html">Optimizing Performance of Recurrent Neural Networks on GPUs</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2010-01-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/gpu/2010/01/01/demystifying-gpu-microarchitecture-through-microbenchmarking.html">Demystifying GPU Microarchitecture through Microbenchmarking</a>
+      </li>
+      
+      </ul>
+    
+  
+
+
+
+
+
+<h3 class="subcategory-title" id="mlsys-networking">Networking</h3>
+
+<!-- 检查二级分类是否有直接的文章 -->
+
+
+  
+  
+  
+    
+    
+
+
+  
+    
+    
+    
+      <ul class="post-list-with-tags">
+      
+      
+      <li>
+      <span class="post-meta">2025-07-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/networking/2025/07/01/scale-up-ethernet-framework-scale-up-ethernet-framework-specification.html">Scale-Up Ethernet Framework Scale-Up Ethernet Framework Specification</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2025-07-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/networking/2025/07/01/demystifying-nccl-an-in-depth-analysis-of-gpu-communication-protocols-and-algorithms.html">Demystifying NCCL: An In-depth Analysis of GPU Communication Protocols and
+      Algorithms</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2025-04-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/networking/2025/04/01/introducing-ualink-200g-10-specification.html">Introducing UALink 200G 1.0 Specification</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2025-03-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/networking/2025/03/01/ub-mesh-a-hierarchically-localized-nd-fullmesh-datacenter-network-architecture.html">UB-Mesh: a Hierarchically Localized nD-FullMesh Datacenter Network Architecture</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2024-04-01</span>
+      
+      <span class="subcategory-tag tag-asplos24">asplos24</span>
+      
+      <a class="post-link" href="/papercache/mlsys/networking/2024/04/01/scaling-up-memory-disaggregated-applications-with-smart.html">Scaling Up Memory Disaggregated Applications with Smart</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2023-07-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/networking/2023/07/01/overview-of-and-motivation-for-the-forthcoming-ultra-ethernet-consortium-specification.html">Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium Specification</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2022-11-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/networking/2022/11/01/improving-network-performance-of-hpc-systems-using-nvidia-magnum-io-nvshmem-and-gpudirect-async.html">Improving Network Performance of HPC Systems Using NVIDIA Magnum IO NVSHMEM and GPUDirect Async</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2022-02-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/networking/2022/02/01/doubling-all2all-performance-with-nvidia-collective-communication-library-212.html">Doubling all2all Performance with NVIDIA Collective Communication Library 2.12</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2020-08-01</span>
+      
+      <span class="subcategory-tag tag-sc20">sc20</span>
+      
+      <a class="post-link" href="/papercache/mlsys/networking/2020/08/01/an-in-depth-analysis-of-the-slingshot-interconnect.html">An In-Depth Analysis of the Slingshot Interconnect</a>
+      </li>
+      
+      <li>
+      <span class="post-meta">2015-07-01</span>
+      
+      <a class="post-link" href="/papercache/mlsys/networking/2015/07/01/ucx-an-open-source-framework-for-hpc-network-apis-and-beyond.html">UCX: An Open Source Framework for HPC Network APIs and Beyond</a>
+      </li>
+      
+      </ul>
+    
+  
+
+
+
+
+
+<h3 class="subcategory-title" id="mlsys-system">System</h3>
+
+<!-- 检查二级分类是否有直接的文章 -->
+
+
+  
+  
+  
+    
+    
+
+
+  
+    
+    
+    
+      <ul class="post-list-with-tags">
+      
+      
+      <li>
+      <span class="post-meta">2025-01-01</span>
+      
+      <span class="subcategory-tag tag-osdi25">osdi25</span>
+      
+      <a class="post-link" href="/papercache/mlsys/system/2025/01/01/principles-and-methodologies-for-serial-performance-optimization.html">Principles and Methodologies for Serial Performance Optimization</a>
+      </li>
+      
+      </ul>
+    
+  
+
+
+
+
+        </div>
+      </main>
+    </div><footer class="site-footer">
+  <div class="container">
+    <div class="footer-content">
+      <!-- 左侧访问统计 -->
+      <div class="footer-section footer-left">
+        <div class="analytics-stats">
+          <div class="stat-item">
+            <span class="stat-label">总访问量</span>
+            <span class="stat-value" id="busuanzi_value_site_pv">
+              <span class="busuanzi-value" id="busuanzi_value_site_pv">0</span>
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 中间版权信息 -->
+      <div class="footer-section footer-center">
+        <p class="copyright">&copy; 2025 PaperCache. All rights reserved.</p>
+        <p class="powered-by">Powered by <a href="https://jekyllrb.com/" target="_blank">Jekyll</a> | Analytics by <a href="https://busuanzi.ibruce.info/" target="_blank">Busuanzi</a></p>
+      </div>
+      
+      <!-- 右侧访问统计 -->
+      <div class="footer-section footer-right">
+        <div class="analytics-stats">
+          <div class="stat-item">
+            <span class="stat-label">独立访客</span>
+            <span class="stat-value" id="busuanzi_value_site_uv">
+              <span class="busuanzi-value" id="busuanzi_value_site_uv">0</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+.site-footer {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-top: 2px solid #dee2e6;
+  padding: 2.5rem 0;
+  margin-top: 4rem;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.footer-section {
+  flex: 1;
+  text-align: center;
+  min-width: 200px;
+}
+
+.footer-left {
+  text-align: left;
+}
+
+.footer-center {
+  flex: 2;
+  text-align: center;
+}
+
+.footer-right {
+  text-align: right;
+}
+
+.analytics-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: rgba(255,255,255,0.7);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  background: rgba(255,255,255,0.9);
+}
+
+.stat-label {
+  color: #495057;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 70px;
+}
+
+.stat-value {
+  color: #007bff;
+  font-weight: 700;
+  font-size: 1.2rem;
+  background: linear-gradient(45deg, #007bff, #0056b3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.copyright {
+  color: #495057;
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.powered-by {
+  color: #6c757d;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+}
+
+.footer-section a {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.footer-section a:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  
+  .footer-left,
+  .footer-right {
+    text-align: center;
+  }
+  
+  .footer-center {
+    order: -1;
+  }
+  
+  .stat-item {
+    justify-content: center;
+    min-width: 200px;
+  }
+  
+  .container {
+    padding: 0 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .site-footer {
+    padding: 2rem 0;
+  }
+  
+  .stat-item {
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem;
+  }
+  
+  .stat-label {
+    font-size: 0.8rem;
+  }
+  
+  .stat-value {
+    font-size: 1.1rem;
+  }
+}
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  console.log("PaperCache script loaded and DOM is ready.");
+
+  // Smooth scroll for sidebar links
+  var sidebarLinks = document.querySelectorAll('.sidebar-nav a');
+  console.log("Found " + sidebarLinks.length + " sidebar links.");
+  
+  for (var i = 0; i < sidebarLinks.length; i++) {
+    sidebarLinks[i].addEventListener("click", function(e) {
+      e.preventDefault();
+      var targetId = this.getAttribute('href').substring(1);
+      var targetElement = document.getElementById(targetId);
+      
+      if (targetElement) {
+        targetElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  }
+  
+  // Initialize sidebar on page load
+  setTimeout(function() {
+    console.log("Sidebar initialized - all categories expanded");
+  }, 100);
+
+  // Smooth scroll for sidebar links
+  var sidebarLinks = document.querySelectorAll('.sidebar-nav a[href^="#"]');
+  console.log("Found " + sidebarLinks.length + " sidebar anchor links.");
+
+  sidebarLinks.forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('href');
+      console.log("Sidebar link clicked, target:", targetId);
+      
+      const targetElement = document.querySelector(targetId);
+
+      if (targetElement) {
+        console.log("Found target element:", targetElement);
+        const headerOffset = 80; // Adjust this value to your header's height
+        const elementPosition = targetElement.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: "smooth"
+        });
+      } else {
+        console.error("Target element not found for selector:", targetId);
+      }
+    });
+  });
+});
+
+// Load tag interaction script
+document.addEventListener('DOMContentLoaded', function() {
+  if (document.querySelector('.subcategory-tag')) {
+    console.log('Loading tag interaction script...');
+    const tagScript = document.createElement('script');
+    tagScript.src = '/papercache/assets/js/tag-interactions.js';
+    document.head.appendChild(tagScript);
+  } else {
+    console.log('No tag elements found, skipping tag interaction script');
+  }
+});
+</script></body>
+
+</html>
