@@ -190,25 +190,17 @@ llm:
         - llm
         - algorithm
         - rl
-        date: '2025-07-01'
-        title: 'DistFlow: A Fully Distributed RL Framework for Scalable and Efficient
-          LLM Post-Training'
-        url: /llm/algorithm/rl/2025/07/01/distflow-a-fully-distributed-rl-framework-for-scalable-and-efficient-llm-post-training.html
-      - categories:
-        - llm
-        - algorithm
-        - rl
-        date: '2024-09-01'
-        title: 'RLHFuse: Efficient RLHF Training for Large Language Models with Inter-
-          and Intra-Stage Fusion'
-        url: /llm/algorithm/rl/2024/09/01/rlhfuse-efficient-rlhf-training-for-large-language-models-with-inter-and-intra-stage-fusion.html
-      - categories:
-        - llm
-        - algorithm
-        - rl
         date: '2016-01-01'
         title: Mastering the game of Go with deep neural networks and tree search
         url: /llm/algorithm/rl/2016/01/01/mastering-the-game-of-go-with-deep-neural-networks-and-tree-search.html
+      - categories:
+        - llm
+        - algorithm
+        - rl
+        date: '2025-05-01'
+        title: The Entropy Mechanism of Reinforcement Learning for Reasoning Language
+          Models
+        url: /llm/algorithm/rl/2025/05/01/the-entropy-mechanism-of-reinforcement-learning-for-reasoning-language-models.html
       - categories:
         - llm
         - algorithm
@@ -224,21 +216,6 @@ llm:
         date: '2022-03-01'
         title: Training language models to follow instructions with human feedback
         url: /llm/algorithm/rl/2022/03/01/training-language-models-to-follow-instructions-with-human-feedback.html
-      - categories:
-        - llm
-        - algorithm
-        - rl
-        date: '2019-10-01'
-        title: 'SEED RL: SCALABLE AND EFFICIENT DEEP-RL WITH ACCELERATED CENTRAL INFERENCE'
-        url: /llm/algorithm/rl/2019/10/01/seed-rl-scalable-and-efficient-deep-rl-with-accelerated-central-inference.html
-      - categories:
-        - llm
-        - algorithm
-        - rl
-        date: '2025-08-01'
-        title: 'SeamlessFlow: A Trainer–Agent Isolation RL Framework Achieving Bubble-Free
-          Pipelines via Tag Scheduling'
-        url: /llm/algorithm/rl/2025/08/01/seamlessflow-a-traineragent-isolation-rl-framework-achieving-bubble-free-pipelines-via-tag-scheduling.html
       - categories:
         - llm
         - algorithm
@@ -259,32 +236,8 @@ llm:
         - algorithm
         - rl
         date: '2025-05-01'
-        title: 'AREAL: A Large-Scale Asynchronous Reinforcement Learning System for
-          Language Reasoning'
-        url: /llm/algorithm/rl/2025/05/01/areal-a-large-scale-asynchronous-reinforcement-learning-system-for-language-reasoning.html
-      - categories:
-        - llm
-        - algorithm
-        - rl
-        date: '2025-05-01'
         title: 'DAPO: An Open-Source LLM Reinforcement Learning System at Scale'
         url: /llm/algorithm/rl/2025/05/01/dapo-an-open-source-llm-reinforcement-learning-system-at-scale.html
-      - categories:
-        - llm
-        - algorithm
-        - rl
-        date: '2025-04-01'
-        title: 'StreamRL: Scalable, Heterogeneous, and Elastic RL for LLMs with Disaggregated
-          Stream Generation'
-        url: /llm/algorithm/rl/2025/04/01/streamrl-scalable-heterogeneous-and-elastic-rl-for-llms-with-disaggregated-stream-generation.html
-      - categories:
-        - llm
-        - algorithm
-        - rl
-        date: '2023-03-01'
-        title: 'DeepSpeed-Chat: Easy, Fast and Affordable RLHF Training of ChatGPT-like
-          Models at All Scales'
-        url: /llm/algorithm/rl/2023/03/01/deepspeed-chat-easy-fast-and-affordable-rlhf-training-of-chatgpt-like-models-at-all-scales.html
       - categories:
         - llm
         - algorithm
@@ -292,13 +245,6 @@ llm:
         date: '2013-12-01'
         title: Playing Atari with Deep Reinforcement Learning
         url: /llm/algorithm/rl/2013/12/01/playing-atari-with-deep-reinforcement-learning.html
-      - categories:
-        - llm
-        - algorithm
-        - rl
-        date: '2024-05-01'
-        title: 'OpenRLHF: An Easy-to-use, Scalable and High-performance RLHF Framework'
-        url: /llm/algorithm/rl/2024/05/01/openrlhf-an-easy-to-use-scalable-and-high-performance-rlhf-framework.html
       - categories:
         - llm
         - algorithm
@@ -318,14 +264,6 @@ llm:
         - llm
         - algorithm
         - rl
-        date: '2025-07-01'
-        title: 'AsyncFlow: An Asynchronous Streaming RL Framework for Efficient LLM
-          Post-Training'
-        url: /llm/algorithm/rl/2025/07/01/asyncflow-an-asynchronous-streaming-rl-framework-for-efficient-llm-post-training.html
-      - categories:
-        - llm
-        - algorithm
-        - rl
         date: '2017-08-01'
         title: Proximal Policy Optimization Algorithms
         url: /llm/algorithm/rl/2017/08/01/proximal-policy-optimization-algorithms.html
@@ -337,14 +275,6 @@ llm:
         title: 'DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open
           Language Models'
         url: /llm/algorithm/rl/2024/02/01/deepseekmath-pushing-the-limits-of-mathematical-reasoning-in-open-language-models.html
-      - categories:
-        - llm
-        - algorithm
-        - rl
-        date: '2024-10-01'
-        tag: eurosys25
-        title: 'HybridFlow: A Flexible and Efficient RLHF Framework'
-        url: /llm/algorithm/rl/2024/10/01/hybridflow-a-flexible-and-efficient-rlhf-framework.html
       - categories:
         - llm
         - algorithm
@@ -775,6 +705,86 @@ llm:
           date: '2024-01-01'
           title: 'EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty'
           url: /llm/engineering/inference/speculative_decoding/2024/01/01/eagle-speculative-sampling-requires-rethinking-feature-uncertainty.html
+    rl:
+      posts:
+      - categories:
+        - llm
+        - engineering
+        - rl
+        date: '2025-07-01'
+        title: 'DistFlow: A Fully Distributed RL Framework for Scalable and Efficient
+          LLM Post-Training'
+        url: /llm/engineering/rl/2025/07/01/distflow-a-fully-distributed-rl-framework-for-scalable-and-efficient-llm-post-training.html
+      - categories:
+        - llm
+        - engineering
+        - rl
+        date: '2024-09-01'
+        title: 'RLHFuse: Efficient RLHF Training for Large Language Models with Inter-
+          and Intra-Stage Fusion'
+        url: /llm/engineering/rl/2024/09/01/rlhfuse-efficient-rlhf-training-for-large-language-models-with-inter-and-intra-stage-fusion.html
+      - categories:
+        - llm
+        - engineering
+        - rl
+        date: '2019-10-01'
+        title: 'SEED RL: SCALABLE AND EFFICIENT DEEP-RL WITH ACCELERATED CENTRAL INFERENCE'
+        url: /llm/engineering/rl/2019/10/01/seed-rl-scalable-and-efficient-deep-rl-with-accelerated-central-inference.html
+      - categories:
+        - llm
+        - engineering
+        - rl
+        date: '2025-08-01'
+        title: 'SeamlessFlow: A Trainer–Agent Isolation RL Framework Achieving Bubble-Free
+          Pipelines via Tag Scheduling'
+        url: /llm/engineering/rl/2025/08/01/seamlessflow-a-traineragent-isolation-rl-framework-achieving-bubble-free-pipelines-via-tag-scheduling.html
+      - categories:
+        - llm
+        - engineering
+        - rl
+        date: '2025-05-01'
+        title: 'AREAL: A Large-Scale Asynchronous Reinforcement Learning System for
+          Language Reasoning'
+        url: /llm/engineering/rl/2025/05/01/areal-a-large-scale-asynchronous-reinforcement-learning-system-for-language-reasoning.html
+      - categories:
+        - llm
+        - engineering
+        - rl
+        date: '2025-04-01'
+        title: 'StreamRL: Scalable, Heterogeneous, and Elastic RL for LLMs with Disaggregated
+          Stream Generation'
+        url: /llm/engineering/rl/2025/04/01/streamrl-scalable-heterogeneous-and-elastic-rl-for-llms-with-disaggregated-stream-generation.html
+      - categories:
+        - llm
+        - engineering
+        - rl
+        date: '2023-03-01'
+        title: 'DeepSpeed-Chat: Easy, Fast and Affordable RLHF Training of ChatGPT-like
+          Models at All Scales'
+        url: /llm/engineering/rl/2023/03/01/deepspeed-chat-easy-fast-and-affordable-rlhf-training-of-chatgpt-like-models-at-all-scales.html
+      - categories:
+        - llm
+        - engineering
+        - rl
+        date: '2024-05-01'
+        title: 'OpenRLHF: An Easy-to-use, Scalable and High-performance RLHF Framework'
+        url: /llm/engineering/rl/2024/05/01/openrlhf-an-easy-to-use-scalable-and-high-performance-rlhf-framework.html
+      - categories:
+        - llm
+        - engineering
+        - rl
+        date: '2025-07-01'
+        title: 'AsyncFlow: An Asynchronous Streaming RL Framework for Efficient LLM
+          Post-Training'
+        url: /llm/engineering/rl/2025/07/01/asyncflow-an-asynchronous-streaming-rl-framework-for-efficient-llm-post-training.html
+      - categories:
+        - llm
+        - engineering
+        - rl
+        date: '2024-10-01'
+        tag: eurosys25
+        title: 'HybridFlow: A Flexible and Efficient RLHF Framework'
+        url: /llm/engineering/rl/2024/10/01/hybridflow-a-flexible-and-efficient-rlhf-framework.html
     train:
       posts:
       - categories:
@@ -1058,12 +1068,6 @@ mlsys:
       title: 'GPU Initiated OpenSHMEM: Correct and Eicient Intra-Kernel Networking
         for dGPUs'
       url: /mlsys/gpu/2020/02/01/gpu-initiated-openshmem-correct-and-eicient-intra-kernel-networking-for-dgpus.html
-    - categories:
-      - mlsys
-      - gpu
-      date: '2025-08-27'
-      title: 'Neutrino: Fine-grained GPU Kernel Profiling via Programmable Probing'
-      url: /mlsys/gpu/2025/08/27/neutrino-fine-grained-gpu-kernel-profiling-via-programmable-probing.html
   networking:
     posts:
     - categories:
