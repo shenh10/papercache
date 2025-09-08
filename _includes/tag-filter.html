@@ -1,85 +1,94 @@
 {% comment %}
-Tag Filter Component
+Tag Filter Component - JavaScript Optimized Version
 This component shows tag statistics and provides filtering functionality
+Uses JavaScript to dynamically calculate tag counts for better performance
 {% endcomment %}
 
-{% assign all_tags = "" | split: "" %}
-{% assign tag_counts = "" | split: "" %}
-
-{% comment %} Collect all unique tags and their counts {% endcomment %}
-{% for main_cat_entry in site.data.collection_structure %}
-  {% assign main_cat_name = main_cat_entry[0] %}
-  {% assign sub_cats = main_cat_entry[1] %}
-  {% for sub_cat_entry in sub_cats %}
-    {% assign sub_cat_name = sub_cat_entry[0] %}
-    {% assign sub_sub_cats = sub_cat_entry[1] %}
-    {% for sub_sub_cat_entry in sub_sub_cats %}
-      {% assign sub_sub_cat_name = sub_sub_cat_entry[0] %}
-      {% assign sub_sub_cat_content = sub_sub_cat_entry[1] %}
-      {% if sub_sub_cat_name == 'posts' and sub_sub_cat_content %}
-        {% for post in sub_sub_cat_content %}
-          {% if post.tag %}
-            {% unless all_tags contains post.tag %}
-              {% assign all_tags = all_tags | push: post.tag %}
-            {% endunless %}
-          {% endif %}
-        {% endfor %}
-      {% elsif sub_sub_cat_content.posts %}
-        {% for post in sub_sub_cat_content.posts %}
-          {% if post.tag %}
-            {% unless all_tags contains post.tag %}
-              {% assign all_tags = all_tags | push: post.tag %}
-            {% endunless %}
-          {% endif %}
-        {% endfor %}
-      {% endif %}
-    {% endfor %}
-  {% endfor %}
-{% endfor %}
-
-{% if all_tags.size > 0 %}
 <div class="tag-filter-container">
   <h3 class="tag-filter-title">📊 标签统计</h3>
   <div class="tag-stats">
-    <p>共找到 <strong>{{ all_tags.size }}</strong> 个不同的标签</p>
+    <p>共找到 <strong id="tag-count">计算中...</strong> 个不同的标签</p>
   </div>
   
   <div class="tag-filter-buttons">
     <button class="tag-filter-btn tag-filter-all active" data-tag="all">
-      全部 ({{ site.posts.size }})
+      全部 (<span id="total-posts">{{ site.posts.size }}</span>)
     </button>
-    {% for tag in all_tags %}
-      {% assign tag_count = 0 %}
-      {% for main_cat_entry in site.data.collection_structure %}
-        {% assign main_cat_name = main_cat_entry[0] %}
-        {% assign sub_cats = main_cat_entry[1] %}
-        {% for sub_cat_entry in sub_cats %}
-          {% assign sub_cat_name = sub_cat_entry[0] %}
-          {% assign sub_sub_cats = sub_cat_entry[1] %}
-          {% for sub_sub_cat_entry in sub_sub_cats %}
-            {% assign sub_sub_cat_name = sub_sub_cat_entry[0] %}
-            {% assign sub_sub_cat_content = sub_sub_cat_entry[1] %}
-            {% if sub_sub_cat_name == 'posts' and sub_sub_cat_content %}
-              {% for post in sub_sub_cat_content %}
-                {% if post.tag == tag %}
-                  {% assign tag_count = tag_count | plus: 1 %}
-                {% endif %}
-              {% endfor %}
-            {% elsif sub_sub_cat_content.posts %}
-              {% for post in sub_sub_cat_content.posts %}
-                {% if post.tag == tag %}
-                  {% assign tag_count = tag_count | plus: 1 %}
-                {% endif %}
-              {% endfor %}
-            {% endif %}
-          {% endfor %}
-        {% endfor %}
-      {% endfor %}
-      <button class="tag-filter-btn" data-tag="{{ tag | downcase | replace: ' ', '_' | replace: '-', '_' }}">
-        <span class="tag-filter-btn-text">{{ tag }}</span>
-        <span class="tag-filter-btn-count">({{ tag_count }})</span>
-      </button>
-    {% endfor %}
+    <div id="tag-buttons-container">
+      <!-- 标签按钮将通过JavaScript动态生成 -->
+    </div>
   </div>
 </div>
-{% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // 收集所有文章标签
+  const tagMap = new Map();
+  const postItems = document.querySelectorAll('.post-item[data-post-url]');
+  
+  postItems.forEach(item => {
+    const tagElement = item.querySelector('.subcategory-tag');
+    if (tagElement) {
+      const tag = tagElement.textContent.trim();
+      tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
+    }
+  });
+  
+  // 更新标签数量显示
+  document.getElementById('tag-count').textContent = tagMap.size;
+  
+  // 生成标签按钮
+  const container = document.getElementById('tag-buttons-container');
+  const sortedTags = Array.from(tagMap.entries()).sort((a, b) => b[1] - a[1]); // 按数量排序
+  
+  sortedTags.forEach(([tag, count]) => {
+    const button = document.createElement('button');
+    button.className = 'tag-filter-btn';
+    button.setAttribute('data-tag', tag.toLowerCase().replace(/[ -]/g, '_'));
+    button.innerHTML = `
+      <span class="tag-filter-btn-text">${tag}</span>
+      <span class="tag-filter-btn-count">(${count})</span>
+    `;
+    container.appendChild(button);
+  });
+  
+  // 添加标签过滤功能
+  const tagButtons = document.querySelectorAll('.tag-filter-btn');
+  tagButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const selectedTag = this.getAttribute('data-tag');
+      
+      // 更新按钮状态
+      tagButtons.forEach(btn => btn.classList.remove('active'));
+      this.classList.add('active');
+      
+      // 过滤文章
+      postItems.forEach(item => {
+        const tagElement = item.querySelector('.subcategory-tag');
+        const itemTag = tagElement ? tagElement.textContent.trim().toLowerCase().replace(/[ -]/g, '_') : '';
+        
+        if (selectedTag === 'all' || itemTag === selectedTag) {
+          item.style.display = '';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+      
+      // 更新分类标题显示
+      updateCategoryVisibility();
+    });
+  });
+  
+  function updateCategoryVisibility() {
+    const categories = document.querySelectorAll('.main-category-title, .subcategory-title, .sub-subcategory-title, .fourth-level-title');
+    categories.forEach(category => {
+      const categoryPosts = category.parentElement.querySelectorAll('.post-item:not([style*="display: none"])');
+      if (categoryPosts.length === 0) {
+        category.style.display = 'none';
+      } else {
+        category.style.display = '';
+      }
+    });
+  }
+});
+</script>

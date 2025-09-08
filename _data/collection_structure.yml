@@ -130,10 +130,24 @@ llm:
         - llm
         - algorithm
         - models
+        date: '2025-08-01'
+        title: LongCat-Flash Technical Report
+        url: /llm/algorithm/models/2025/08/01/longcat-flash-technical-report.html
+      - categories:
+        - llm
+        - algorithm
+        - models
         date: '2024-01-01'
         title: 'DeepSeek-Coder: When the Large Language Model Meets Programming -
           The Rise of Code Intelligence'
         url: /llm/algorithm/models/2024/01/01/deepseek-coder-when-the-large-language-model-meets-programming-the-rise-of-code-intelligence.html
+      - categories:
+        - llm
+        - algorithm
+        - models
+        date: '2023-07-01'
+        title: 'Llama 2: Open Foundation and Fine-Tuned Chat Models'
+        url: /llm/algorithm/models/2023/07/01/llama-2-open-foundation-and-fine-tuned-chat-models.html
       - categories:
         - llm
         - algorithm
@@ -705,6 +719,31 @@ llm:
           date: '2024-01-01'
           title: 'EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty'
           url: /llm/engineering/inference/speculative_decoding/2024/01/01/eagle-speculative-sampling-requires-rethinking-feature-uncertainty.html
+    moe:
+      posts:
+      - categories:
+        - llm
+        - engineering
+        - moe
+        date: '2024-04-01'
+        tag: icml25
+        title: Shortcut-connected Expert Parallelism for Accelerating Mixture of Experts
+        url: /llm/engineering/moe/2024/04/01/shortcut-connected-expert-parallelism-for-accelerating-mixture-of-experts.html
+      - categories:
+        - llm
+        - engineering
+        - moe
+        date: '2022-01-01'
+        title: 'DeepSpeed-MoE: Advancing Mixture-of-Experts Inference and Training
+          to Power Next-Generation AI Scale'
+        url: /llm/engineering/moe/2022/01/01/deepspeed-moe-advancing-mixture-of-experts-inference-and-training-to-power-next-generation-ai-scale.html
+      - categories:
+        - llm
+        - engineering
+        - moe
+        date: '2024-08-01'
+        title: AUXILIARY-LOSS-FREE LOAD BALANCING STRATEGY FOR MIXTURE-OF-EXPERTS
+        url: /llm/engineering/moe/2024/08/01/auxiliary-loss-free-load-balancing-strategy-for-mixture-of-experts.html
     rl:
       posts:
       - categories:
@@ -920,6 +959,7 @@ llm:
         - engineering
         - train
         date: '2025-04-01'
+        tag: nsdi25
         title: 'ByteCheckpoint: A Unified Checkpointing System for Large Foundation
           Model Development'
         url: /llm/engineering/train/2025/04/01/bytecheckpoint-a-unified-checkpointing-system-for-large-foundation-model-development.html
