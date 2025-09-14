@@ -18,6 +18,13 @@ plugins:
   - jekyll-seo-tag
   - jekyll-paginate
 
+# Jekyll Feed 配置 - 限制feed大小
+jekyll-feed:
+  limit: 10  # 限制feed中文章数量
+  excerpt_only: true  # 只包含摘要，不包含全文
+  excerpt_separator: "<!--more-->"  # 摘要分隔符
+  excerpt_length: 200  # 限制摘要长度
+
 # Kramdown设置
 kramdown:
   math_engine: mathjax

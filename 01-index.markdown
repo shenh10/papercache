@@ -40,8 +40,8 @@ permalink: /
 ---
 ### 🚀 最新动态
 
-{% for post in site.posts limit:5 %}
-- **[{{ post.date | date: "%Y-%m-%d" }}]** [{{ post.title }}]({{ post.url | relative_url }})
+{% for post in site.posts limit:10 %}
+- **[{{ post.date | date: "%Y-%m" }}]** [{{ post.title }}]({{ post.url | relative_url }})
 {% endfor %}
 
 ---

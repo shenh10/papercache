@@ -2,6 +2,14 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- 性能优化：预加载关键资源 -->
+  <link rel="preload" href="{{ "/assets/main.css" | relative_url }}" as="style">
+  <link rel="preload" href="{{ "/assets/js/post-preview.js" | relative_url }}" as="script">
+  
+  <!-- 缓存控制 -->
+  <meta http-equiv="Cache-Control" content="public, max-age=31536000">
+  
   <!-- SEO tags removed for compatibility -->
   <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}">
   <!-- Feed meta removed for compatibility -->
@@ -9,7 +17,7 @@
     {%- include google-analytics.html -%}
   {%- endif -%}
 
-  <!-- MathJax 3 Configuration -->
+  <!-- MathJax 3 Configuration - 延迟加载 -->
   {%- if page.mathjax != false -%}
   <script>
     window.MathJax = {
@@ -19,6 +27,12 @@
       },
       svg: {
         fontCache: 'global'
+      },
+      startup: {
+        ready: function () {
+          MathJax.startup.defaultReady();
+          console.log('MathJax is loaded, but not yet initialized');
+        }
       }
     };
   </script>
@@ -27,6 +41,14 @@
   </script>
   {%- endif -%}
 
-  <!-- Busuanzi Analytics -->
-  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  <!-- Busuanzi Analytics - 延迟加载 -->
+  <script>
+    // 延迟加载统计脚本
+    setTimeout(function() {
+      var script = document.createElement('script');
+      script.async = true;
+      script.src = '//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js';
+      document.head.appendChild(script);
+    }, 2000);
+  </script>
 </head>

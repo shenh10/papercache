@@ -1,0 +1,30 @@
+---
+layout: null
+---
+
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <generator uri="https://jekyllrb.com/" version="{{ jekyll.version }}">Jekyll</generator>
+  <link href="{{ site.url }}{{ site.baseurl }}/feed.xml" rel="self" type="application/atom+xml" />
+  <link href="{{ site.url }}{{ site.baseurl }}/" rel="alternate" type="text/html" />
+  <updated>{{ site.time | date_to_xmlschema }}</updated>
+  <id>{{ site.url }}{{ site.baseurl }}/feed.xml</id>
+  <title type="html">{{ site.title | escape }}</title>
+  <subtitle>{{ site.description | escape }}</subtitle>
+  <author>
+    <name>{{ site.author.name }}</name>
+    <email>{{ site.author.email }}</email>
+  </author>
+  {% for post in site.posts limit:10 %}
+  <entry>
+    <title type="html">{{ post.title | escape }}</title>
+    <link href="{{ site.url }}{{ site.baseurl }}{{ post.url }}" rel="alternate" type="text/html" title="{{ post.title | escape }}" />
+    <published>{{ post.date | date_to_xmlschema }}</published>
+    <updated>{{ post.date | date_to_xmlschema }}</updated>
+    <id>{{ site.url }}{{ site.baseurl }}{{ post.url }}</id>
+    <content type="html" xml:base="{{ site.url }}{{ site.baseurl }}{{ post.url }}">
+      <![CDATA[{{ post.excerpt | strip_html | truncate: 200 | escape }}]]>
+    </content>
+  </entry>
+  {% endfor %}
+</feed>
