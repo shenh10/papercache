@@ -13,7 +13,7 @@
 <lastmod>2013-12-01T00:00:00+00:00</lastmod>
 </url>
 <url>
-<loc>https://shenh10.github.io/papercache/papers/llm/algorithm/pretrain/2013/12/01/what-makes-good-data-for-alignment-a-comprehensive-study-of-automatic-data-selection-in-instruction-tuning.html</loc>
+<loc>https://shenh10.github.io/papercache/papers/llm/algorithm/pretrain_sft/2013/12/01/what-makes-good-data-for-alignment-a-comprehensive-study-of-automatic-data-selection-in-instruction-tuning.html</loc>
 <lastmod>2013-12-01T00:00:00+00:00</lastmod>
 </url>
 <url>
@@ -117,7 +117,7 @@
 <lastmod>2021-01-01T00:00:00+00:00</lastmod>
 </url>
 <url>
-<loc>https://shenh10.github.io/papercache/papers/llm/algorithm/pretrain/2021/04/01/roformer-enhanced-transformer-with-rotary-position-embedding.html</loc>
+<loc>https://shenh10.github.io/papercache/papers/llm/algorithm/pretrain_sft/2021/04/01/roformer-enhanced-transformer-with-rotary-position-embedding.html</loc>
 <lastmod>2021-04-01T00:00:00+00:00</lastmod>
 </url>
 <url>
@@ -165,7 +165,7 @@
 <lastmod>2022-02-01T00:00:00+00:00</lastmod>
 </url>
 <url>
-<loc>https://shenh10.github.io/papercache/papers/llm/algorithm/pretrain/2022/03/01/tensor-programs-v-tuning-large-neural-networks-via-zero-shot-hyperparameter-transfer.html</loc>
+<loc>https://shenh10.github.io/papercache/papers/llm/algorithm/pretrain_sft/2022/03/01/tensor-programs-v-tuning-large-neural-networks-via-zero-shot-hyperparameter-transfer.html</loc>
 <lastmod>2022-03-01T00:00:00+00:00</lastmod>
 </url>
 <url>
@@ -322,6 +322,10 @@
 </url>
 <url>
 <loc>https://shenh10.github.io/papercache/papers/llm/engineering/inference/low_precision/2023/09/01/ocp-microscaling-formats-mx-specification.html</loc>
+<lastmod>2023-09-01T00:00:00+00:00</lastmod>
+</url>
+<url>
+<loc>https://shenh10.github.io/papercache/papers/llm/algorithm/agent/2023/09/01/tree-of-thoughts-deliberate-problem-solving-with-large-language-models.html</loc>
 <lastmod>2023-09-01T00:00:00+00:00</lastmod>
 </url>
 <url>
@@ -513,7 +517,7 @@
 <lastmod>2024-08-01T00:00:00+00:00</lastmod>
 </url>
 <url>
-<loc>https://shenh10.github.io/papercache/papers/llm/algorithm/pretrain/2024/08/01/inference-scaling-laws-an-empirical-analysis-of-compute-optimal-inference-for-llm-problem-solving.html</loc>
+<loc>https://shenh10.github.io/papercache/papers/llm/algorithm/pretrain_sft/2024/08/01/inference-scaling-laws-an-empirical-analysis-of-compute-optimal-inference-for-llm-problem-solving.html</loc>
 <lastmod>2024-08-01T00:00:00+00:00</lastmod>
 </url>
 <url>
@@ -721,7 +725,7 @@
 <lastmod>2025-04-01T00:00:00+00:00</lastmod>
 </url>
 <url>
-<loc>https://shenh10.github.io/papercache/papers/llm/engineering/rl/2025/04/01/deepcoder-a-fully-open-source-14b-coder-at-o3-mini-level.html</loc>
+<loc>https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/04/01/deepcoder-a-fully-open-source-14b-coder-at-o3-mini-level.html</loc>
 <lastmod>2025-04-01T00:00:00+00:00</lastmod>
 </url>
 <url>
@@ -869,7 +873,7 @@
 <lastmod>2025-07-01T00:00:00+00:00</lastmod>
 </url>
 <url>
-<loc>https://shenh10.github.io/papercache/papers/llm/engineering/inference/2025/07/01/step-3-is-large-yet-affordable-model-system-co-design-for-cost-effective-decoding.html</loc>
+<loc>https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/07/01/step-3-is-large-yet-affordable-model-system-co-design-for-cost-effective-decoding.html</loc>
 <lastmod>2025-07-01T00:00:00+00:00</lastmod>
 </url>
 <url>
