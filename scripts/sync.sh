@@ -58,6 +58,12 @@ run_converter() {
         exit 1
     fi
     
+    # 预清理 deepnotes 输出中的 slides 与对应数据文件，避免残留
+    if [ -d "$DEEPNOTES_DIR/$JEKYLL_OUTPUT_DIR/_slides" ]; then
+        rm -f "$DEEPNOTES_DIR/$JEKYLL_OUTPUT_DIR/_slides"/*.html || true
+    fi
+    rm -f "$DEEPNOTES_DIR/$JEKYLL_OUTPUT_DIR/_data/slides_collection_structure.yml" || true
+
     cd "$DEEPNOTES_DIR"
     python3 "$converter_script" . "$JEKYLL_OUTPUT_DIR"
     cd - > /dev/null
@@ -70,20 +76,31 @@ sync_files() {
     log_info "同步文件到 PaperCache..."
     
     local jekyll_posts="$DEEPNOTES_DIR/$JEKYLL_OUTPUT_DIR/_posts"
+    local jekyll_slides="$DEEPNOTES_DIR/$JEKYLL_OUTPUT_DIR/_slides"
     local papercache_posts="$PAPERCACHE_DIR/_posts"
+    local papercache_slides="$PAPERCACHE_DIR/_slides"
     
-    if [ ! -d "$jekyll_posts" ]; then
-        log_error "转换后的文件目录不存在: $jekyll_posts"
-        exit 1
+    # 预清理 papercache 目标 slides 目录，避免残留
+    if [ -d "$papercache_slides" ]; then
+        rm -f "$papercache_slides"/*.html || true
     fi
-    
-    # 创建目标目录
-    mkdir -p "$papercache_posts"
-    
-    # 复制所有文章文件
+
+    # 同步文章文件
     if [ -d "$jekyll_posts" ]; then
+        mkdir -p "$papercache_posts"
         cp -r "$jekyll_posts"/* "$papercache_posts/"
         log_success "文章文件同步完成"
+    else
+        log_warning "文章目录不存在: $jekyll_posts"
+    fi
+    
+    # 同步演示文稿文件（仅在本地开发时）
+    if [ -d "$jekyll_slides" ]; then
+        mkdir -p "$papercache_slides"
+        cp -r "$jekyll_slides"/* "$papercache_slides/"
+        log_success "演示文稿文件同步完成"
+    else
+        log_info "演示文稿目录不存在，跳过同步"
     fi
     
     # 复制 collection_structure.yml
@@ -92,6 +109,14 @@ sync_files() {
         mkdir -p "$PAPERCACHE_DIR/_data"
         cp "$structure_file" "$PAPERCACHE_DIR/_data/"
         log_success "collection_structure.yml 同步完成"
+    fi
+
+    # 复制 slides_collection_structure.yml
+    local slides_structure_file="$DEEPNOTES_DIR/$JEKYLL_OUTPUT_DIR/_data/slides_collection_structure.yml"
+    if [ -f "$slides_structure_file" ]; then
+        mkdir -p "$PAPERCACHE_DIR/_data"
+        cp "$slides_structure_file" "$PAPERCACHE_DIR/_data/"
+        log_success "slides_collection_structure.yml 同步完成"
     fi
 }
 
@@ -103,7 +128,7 @@ build_jekyll() {
     
     if command -v bundle &> /dev/null; then
         # 使用本地 URL 构建，避免修改生产环境的链接
-        JEKYLL_ENV=development bundle exec jekyll build --config _config.yml,_config_local.yml
+        JEKYLL_ENV=development bundle exec jekyll build --config _config_local.yml
         log_success "Jekyll 站点构建完成"
     else
         log_warning "bundle 未安装，跳过 Jekyll 构建"

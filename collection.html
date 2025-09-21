@@ -3,6 +3,14 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- 性能优化：预加载关键资源 -->
+  <link rel="preload" href="/papercache/assets/main.css" as="style">
+  <link rel="preload" href="/papercache/assets/js/post-preview.js" as="script">
+  
+  <!-- 缓存控制 -->
+  <meta http-equiv="Cache-Control" content="public, max-age=31536000">
+  
   <!-- SEO tags removed for compatibility -->
   <link rel="stylesheet" href="/papercache/assets/main.css">
   <!-- Feed meta removed for compatibility --><script>
@@ -17,7 +25,7 @@ if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNo
 }
 </script>
   
-<!-- MathJax 3 Configuration --><script>
+<!-- MathJax 3 Configuration - 延迟加载 --><script>
     window.MathJax = {
       tex: {
         inlineMath: [['$', '$']],
@@ -25,13 +33,27 @@ if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNo
       },
       svg: {
         fontCache: 'global'
+      },
+      startup: {
+        ready: function () {
+          MathJax.startup.defaultReady();
+          console.log('MathJax is loaded, but not yet initialized');
+        }
       }
     };
   </script>
   <script type="text/javascript" id="MathJax-script" async
     src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
-  </script><!-- Busuanzi Analytics -->
-  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </script><!-- Busuanzi Analytics - 延迟加载 -->
+  <script>
+    // 延迟加载统计脚本
+    setTimeout(function() {
+      var script = document.createElement('script');
+      script.async = true;
+      script.src = '//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js';
+      document.head.appendChild(script);
+    }, 2000);
+  </script>
 </head><body class="layout-collection"><header class="site-header" role="banner">
 
   <div class="wrapper"><a class="site-title" rel="author" href="/papercache/">PaperCache</a><nav class="site-nav">
@@ -322,7 +344,7 @@ if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNo
   <h1 class="page-title collection-page-title">论文合集</h1>
 
   <div class="paper-count-badge">
-    收录论文总数：<strong>164</strong> 篇
+    收录论文总数：<strong>226</strong> 篇
   </div>
 
   <p>在这里，您可以找到所有论文的完整分类列表。</p>
@@ -337,7 +359,7 @@ if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNo
   
   <div class="tag-filter-buttons">
     <button class="tag-filter-btn tag-filter-all active" data-tag="all">
-      全部 (<span id="total-posts">164</span>)
+      全部 (<span id="total-posts">226</span>)
     </button>
     <div id="tag-buttons-container">
       <!-- 标签按钮将通过JavaScript动态生成 -->
@@ -462,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/agent/2025/05/01/a-survey-on-test-time-scaling-in-large-language-models-what-how-where-and-how-well.html">
-          <span class="post-meta">2025-05-01</span>
+          <span class="post-meta">2025-05</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/agent/2025/05/01/a-survey-on-test-time-scaling-in-large-language-models-what-how-where-and-how-well.html" data-post-title="A Survey on Test-Time Scaling in Large Language Models: What, How, Where, and How Well">
             A Survey on Test-Time Scaling in Large Language Models: What, How, Where, and How Well
@@ -470,7 +492,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/agent/2025/04/01/mem0-building-production-ready-ai-agents-with-scalable-long-term-memory.html">
-          <span class="post-meta">2025-04-01</span>
+          <span class="post-meta">2025-04</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/agent/2025/04/01/mem0-building-production-ready-ai-agents-with-scalable-long-term-memory.html" data-post-title="Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory">
             Mem0: Building Production-Ready AI Agents with Scalable Long-Term Memory
@@ -478,7 +500,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/agent/2025/03/01/r1-searcher-incentivizing-the-search-capability-in-llms-via-reinforcement-learning.html">
-          <span class="post-meta">2025-03-01</span>
+          <span class="post-meta">2025-03</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/agent/2025/03/01/r1-searcher-incentivizing-the-search-capability-in-llms-via-reinforcement-learning.html" data-post-title="R1-Searcher: Incentivizing the Search Capability in LLMs via Reinforcement Learning">
             R1-Searcher: Incentivizing the Search Capability in LLMs via Reinforcement Learning
@@ -486,7 +508,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/agent/2025/03/01/search-r1-training-llms-to-reason-and-leverage-search-engines-with-reinforcement-learning.html">
-          <span class="post-meta">2025-03-01</span>
+          <span class="post-meta">2025-03</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/agent/2025/03/01/search-r1-training-llms-to-reason-and-leverage-search-engines-with-reinforcement-learning.html" data-post-title="Search-R1: Training LLMs to Reason and Leverage Search Engines with Reinforcement Learning">
             Search-R1: Training LLMs to Reason and Leverage Search Engines with Reinforcement Learning
@@ -494,7 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/agent/2024/09/01/large-language-model-based-agents-for-software-engineering-a-survey.html">
-          <span class="post-meta">2024-09-01</span>
+          <span class="post-meta">2024-09</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/agent/2024/09/01/large-language-model-based-agents-for-software-engineering-a-survey.html" data-post-title="Large Language Model-Based Agents for Software Engineering: A Survey">
             Large Language Model-Based Agents for Software Engineering: A Survey
@@ -502,7 +524,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/agent/2023/12/01/tree-of-thoughts-deliberate-problem-solving-with-large-language-models.html">
-          <span class="post-meta">2023-12-01</span>
+          <span class="post-meta">2023-12</span>
           
           <span class="subcategory-tag tag-nips23">nips23</span>
           
@@ -512,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/agent/2023/12/01/retrieval-augmented-generation-for-large-language-models-a-survey.html">
-          <span class="post-meta">2023-12-01</span>
+          <span class="post-meta">2023-12</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/agent/2023/12/01/retrieval-augmented-generation-for-large-language-models-a-survey.html" data-post-title="Retrieval-Augmented Generation for Large Language Models: A Survey">
             Retrieval-Augmented Generation for Large Language Models: A Survey
@@ -520,7 +542,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/agent/2023/10/01/fireact-toward-language-agent-fine-tuning.html">
-          <span class="post-meta">2023-10-01</span>
+          <span class="post-meta">2023-10</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/agent/2023/10/01/fireact-toward-language-agent-fine-tuning.html" data-post-title="FIREACT: TOWARD LANGUAGE AGENT FINE-TUNING">
             FIREACT: TOWARD LANGUAGE AGENT FINE-TUNING
@@ -528,7 +550,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/agent/2023/03/01/reac-t-synergizing-reasoning-and-acting-in-language-models.html">
-          <span class="post-meta">2023-03-01</span>
+          <span class="post-meta">2023-03</span>
           
           <span class="subcategory-tag tag-iclr23">iclr23</span>
           
@@ -538,7 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/agent/2023/02/01/toolformer-language-models-can-teach-themselves-to-use-tools.html">
-          <span class="post-meta">2023-02-01</span>
+          <span class="post-meta">2023-02</span>
           
           <span class="subcategory-tag tag-nips23">nips23</span>
           
@@ -548,7 +570,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/agent/2022/01/01/chain-of-thought-prompting-elicits-reasoning-in-large-language-models.html">
-          <span class="post-meta">2022-01-01</span>
+          <span class="post-meta">2022-01</span>
           
           <span class="subcategory-tag tag-nips22">nips22</span>
           
@@ -570,7 +592,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/models/2025/08/01/longcat-flash-technical-report.html">
-          <span class="post-meta">2025-08-01</span>
+          <span class="post-meta">2025-08</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/models/2025/08/01/longcat-flash-technical-report.html" data-post-title="LongCat-Flash Technical Report">
             LongCat-Flash Technical Report
@@ -578,7 +600,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/models/2025/08/01/kimi-k2-open-agentic-intelligence.html">
-          <span class="post-meta">2025-08-01</span>
+          <span class="post-meta">2025-08</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/models/2025/08/01/kimi-k2-open-agentic-intelligence.html" data-post-title="KIMI K2: OPEN AGENTIC INTELLIGENCE">
             KIMI K2: OPEN AGENTIC INTELLIGENCE
@@ -586,7 +608,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/models/2025/06/01/dotsllm1-technical-report.html">
-          <span class="post-meta">2025-06-01</span>
+          <span class="post-meta">2025-06</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/models/2025/06/01/dotsllm1-technical-report.html" data-post-title="dots.llm1 Technical Report">
             dots.llm1 Technical Report
@@ -594,7 +616,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/models/2025/04/01/seed15-thinking-advancing-superb-reasoning-models-with-reinforcement-learning.html">
-          <span class="post-meta">2025-04-01</span>
+          <span class="post-meta">2025-04</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/models/2025/04/01/seed15-thinking-advancing-superb-reasoning-models-with-reinforcement-learning.html" data-post-title="Seed1.5-Thinking: Advancing Superb Reasoning Models with Reinforcement Learning">
             Seed1.5-Thinking: Advancing Superb Reasoning Models with Reinforcement Learning
@@ -602,7 +624,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/models/2025/01/01/kimi-k15-scaling-reinforcement-learning-with-llms.html">
-          <span class="post-meta">2025-01-01</span>
+          <span class="post-meta">2025-01</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/models/2025/01/01/kimi-k15-scaling-reinforcement-learning-with-llms.html" data-post-title="KIMI K1.5: SCALING REINFORCEMENT LEARNING WITH LLMS">
             KIMI K1.5: SCALING REINFORCEMENT LEARNING WITH LLMS
@@ -610,7 +632,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/models/2024/12/01/deepseek-v3-technical-report.html">
-          <span class="post-meta">2024-12-01</span>
+          <span class="post-meta">2024-12</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/models/2024/12/01/deepseek-v3-technical-report.html" data-post-title="DeepSeek-V3 Technical Report">
             DeepSeek-V3 Technical Report
@@ -618,7 +640,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/models/2024/03/01/gemini-15-unlocking-multimodal-understanding-across-millions-of-tokens-of-context.html">
-          <span class="post-meta">2024-03-01</span>
+          <span class="post-meta">2024-03</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/models/2024/03/01/gemini-15-unlocking-multimodal-understanding-across-millions-of-tokens-of-context.html" data-post-title="Gemini 1.5: Unlocking multimodal understanding across millions of tokens of context">
             Gemini 1.5: Unlocking multimodal understanding across millions of tokens of context
@@ -626,7 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/models/2024/01/01/deepseek-coder-when-the-large-language-model-meets-programming-the-rise-of-code-intelligence.html">
-          <span class="post-meta">2024-01-01</span>
+          <span class="post-meta">2024-01</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/models/2024/01/01/deepseek-coder-when-the-large-language-model-meets-programming-the-rise-of-code-intelligence.html" data-post-title="DeepSeek-Coder: When the Large Language Model Meets Programming - The Rise of Code Intelligence">
             DeepSeek-Coder: When the Large Language Model Meets Programming - The Rise of Code Intelligence
@@ -634,7 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/models/2023/07/01/llama-2-open-foundation-and-fine-tuned-chat-models.html">
-          <span class="post-meta">2023-07-01</span>
+          <span class="post-meta">2023-07</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/models/2023/07/01/llama-2-open-foundation-and-fine-tuned-chat-models.html" data-post-title="Llama 2: Open Foundation and Fine-Tuned Chat Models">
             Llama 2: Open Foundation and Fine-Tuned Chat Models
@@ -654,7 +676,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/pretrain/2024/08/01/inference-scaling-laws-an-empirical-analysis-of-compute-optimal-inference-for-llm-problem-solving.html">
-          <span class="post-meta">2024-08-01</span>
+          <span class="post-meta">2024-08</span>
           
           <span class="subcategory-tag tag-iclr25">iclr25</span>
           
@@ -664,7 +686,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/pretrain/2022/03/01/tensor-programs-v-tuning-large-neural-networks-via-zero-shot-hyperparameter-transfer.html">
-          <span class="post-meta">2022-03-01</span>
+          <span class="post-meta">2022-03</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/pretrain/2022/03/01/tensor-programs-v-tuning-large-neural-networks-via-zero-shot-hyperparameter-transfer.html" data-post-title="Tensor Programs V: Tuning Large Neural Networks via Zero-Shot
       Hyperparameter Transfer">
@@ -674,7 +696,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/pretrain/2021/04/01/roformer-enhanced-transformer-with-rotary-position-embedding.html">
-          <span class="post-meta">2021-04-01</span>
+          <span class="post-meta">2021-04</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/pretrain/2021/04/01/roformer-enhanced-transformer-with-rotary-position-embedding.html" data-post-title="ROFORMER: ENHANCED TRANSFORMER WITH ROTARY POSITION EMBEDDING">
             ROFORMER: ENHANCED TRANSFORMER WITH ROTARY POSITION EMBEDDING
@@ -682,7 +704,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/pretrain/2013/12/01/what-makes-good-data-for-alignment-a-comprehensive-study-of-automatic-data-selection-in-instruction-tuning.html">
-          <span class="post-meta">2013-12-01</span>
+          <span class="post-meta">2013-12</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/pretrain/2013/12/01/what-makes-good-data-for-alignment-a-comprehensive-study-of-automatic-data-selection-in-instruction-tuning.html" data-post-title="WHAT MAKES GOOD DATA FOR ALIGNMENT? A COMPREHENSIVE STUDY OF AUTOMATIC DATA SELECTION IN INSTRUCTION TUNING">
             WHAT MAKES GOOD DATA FOR ALIGNMENT? A COMPREHENSIVE STUDY OF AUTOMATIC DATA SELECTION IN INSTRUCTION TUNING
@@ -702,7 +724,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/rl/2025/08/01/on-policy-rl-meets-off-policy-experts-harmonizing-supervised-fine-tuning-and-reinforcement-learning-via-dynamic-weighting.html">
-          <span class="post-meta">2025-08-01</span>
+          <span class="post-meta">2025-08</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/rl/2025/08/01/on-policy-rl-meets-off-policy-experts-harmonizing-supervised-fine-tuning-and-reinforcement-learning-via-dynamic-weighting.html" data-post-title="ON-POLICY RL MEETS OFF-POLICY EXPERTS: HARMONIZING SUPERVISED FINE-TUNING AND REINFORCEMENT LEARNING VIA DYNAMIC WEIGHTING">
             ON-POLICY RL MEETS OFF-POLICY EXPERTS: HARMONIZING SUPERVISED FINE-TUNING AND REINFORCEMENT LEARNING VIA DYNAMIC WEIGHTING
@@ -710,7 +732,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/rl/2025/05/01/dapo-an-open-source-llm-reinforcement-learning-system-at-scale.html">
-          <span class="post-meta">2025-05-01</span>
+          <span class="post-meta">2025-05</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/rl/2025/05/01/dapo-an-open-source-llm-reinforcement-learning-system-at-scale.html" data-post-title="DAPO: An Open-Source LLM Reinforcement Learning System at Scale">
             DAPO: An Open-Source LLM Reinforcement Learning System at Scale
@@ -718,7 +740,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/rl/2025/05/01/the-entropy-mechanism-of-reinforcement-learning-for-reasoning-language-models.html">
-          <span class="post-meta">2025-05-01</span>
+          <span class="post-meta">2025-05</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/rl/2025/05/01/the-entropy-mechanism-of-reinforcement-learning-for-reasoning-language-models.html" data-post-title="The Entropy Mechanism of Reinforcement Learning for Reasoning Language Models">
             The Entropy Mechanism of Reinforcement Learning for Reasoning Language Models
@@ -726,7 +748,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/rl/2025/04/01/exploring-data-scaling-trends-and-effects-in-reinforcement-learning-from-human-feedback.html">
-          <span class="post-meta">2025-04-01</span>
+          <span class="post-meta">2025-04</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/rl/2025/04/01/exploring-data-scaling-trends-and-effects-in-reinforcement-learning-from-human-feedback.html" data-post-title="Exploring Data Scaling Trends and Effects in Reinforcement Learning from Human Feedback">
             Exploring Data Scaling Trends and Effects in Reinforcement Learning from Human Feedback
@@ -734,7 +756,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/rl/2024/08/01/scaling-llm-test-time-compute-optimally-can-be-more-effective-than-scaling-model-parameters.html">
-          <span class="post-meta">2024-08-01</span>
+          <span class="post-meta">2024-08</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/rl/2024/08/01/scaling-llm-test-time-compute-optimally-can-be-more-effective-than-scaling-model-parameters.html" data-post-title="Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters">
             Scaling LLM Test-Time Compute Optimally can be More Effective than Scaling Model Parameters
@@ -742,7 +764,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/rl/2024/05/01/nemo-aligner-scalable-toolkit-for-efficient-model-alignment.html">
-          <span class="post-meta">2024-05-01</span>
+          <span class="post-meta">2024-05</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/rl/2024/05/01/nemo-aligner-scalable-toolkit-for-efficient-model-alignment.html" data-post-title="NeMo-Aligner: Scalable Toolkit for Efficient Model Alignment">
             NeMo-Aligner: Scalable Toolkit for Efficient Model Alignment
@@ -750,7 +772,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/rl/2024/02/01/deepseekmath-pushing-the-limits-of-mathematical-reasoning-in-open-language-models.html">
-          <span class="post-meta">2024-02-01</span>
+          <span class="post-meta">2024-02</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/rl/2024/02/01/deepseekmath-pushing-the-limits-of-mathematical-reasoning-in-open-language-models.html" data-post-title="DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models">
             DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models
@@ -758,7 +780,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/rl/2023/05/01/direct-preference-optimization-your-language-model-is-secretly-a-reward-model.html">
-          <span class="post-meta">2023-05-01</span>
+          <span class="post-meta">2023-05</span>
           
           <span class="subcategory-tag tag-nips23">nips23</span>
           
@@ -768,7 +790,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/rl/2022/03/01/training-language-models-to-follow-instructions-with-human-feedback.html">
-          <span class="post-meta">2022-03-01</span>
+          <span class="post-meta">2022-03</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/rl/2022/03/01/training-language-models-to-follow-instructions-with-human-feedback.html" data-post-title="Training language models to follow instructions with human feedback">
             Training language models to follow instructions with human feedback
@@ -776,7 +798,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/rl/2017/12/01/rllib-abstractions-for-distributed-reinforcement-learning.html">
-          <span class="post-meta">2017-12-01</span>
+          <span class="post-meta">2017-12</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/rl/2017/12/01/rllib-abstractions-for-distributed-reinforcement-learning.html" data-post-title="RLlib: Abstractions for Distributed Reinforcement Learning">
             RLlib: Abstractions for Distributed Reinforcement Learning
@@ -784,7 +806,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/rl/2017/08/01/proximal-policy-optimization-algorithms.html">
-          <span class="post-meta">2017-08-01</span>
+          <span class="post-meta">2017-08</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/rl/2017/08/01/proximal-policy-optimization-algorithms.html" data-post-title="Proximal Policy Optimization Algorithms">
             Proximal Policy Optimization Algorithms
@@ -792,7 +814,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/rl/2016/01/01/mastering-the-game-of-go-with-deep-neural-networks-and-tree-search.html">
-          <span class="post-meta">2016-01-01</span>
+          <span class="post-meta">2016-01</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/rl/2016/01/01/mastering-the-game-of-go-with-deep-neural-networks-and-tree-search.html" data-post-title="Mastering the game of Go with deep neural networks and tree search">
             Mastering the game of Go with deep neural networks and tree search
@@ -800,7 +822,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/rl/2015/07/01/massively-parallel-methods-for-deep-reinforcement-learning.html">
-          <span class="post-meta">2015-07-01</span>
+          <span class="post-meta">2015-07</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/rl/2015/07/01/massively-parallel-methods-for-deep-reinforcement-learning.html" data-post-title="Massively Parallel Methods for Deep Reinforcement Learning">
             Massively Parallel Methods for Deep Reinforcement Learning
@@ -808,7 +830,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/algorithm/rl/2013/12/01/playing-atari-with-deep-reinforcement-learning.html">
-          <span class="post-meta">2013-12-01</span>
+          <span class="post-meta">2013-12</span>
           
           <a class="post-link" href="/papercache/llm/algorithm/rl/2013/12/01/playing-atari-with-deep-reinforcement-learning.html" data-post-title="Playing Atari with Deep Reinforcement Learning">
             Playing Atari with Deep Reinforcement Learning
@@ -866,7 +888,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/attention/2025/05/01/sageattention3-microscaling-fp4-attention-for-inference-and-an-exploration-of-8-bit-training.html">
-          <span class="post-meta">2025-05-01</span>
+          <span class="post-meta">2025-05</span>
           
           <a class="post-link" href="/papercache/llm/engineering/attention/2025/05/01/sageattention3-microscaling-fp4-attention-for-inference-and-an-exploration-of-8-bit-training.html" data-post-title="SageAttention3: Microscaling FP4 Attention for Inference and An Exploration of 8-bit Training">
             SageAttention3: Microscaling FP4 Attention for Inference and An Exploration of 8-bit Training
@@ -874,7 +896,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/attention/2025/02/01/native-sparse-attention-hardware-aligned-and-natively-trainable-sparse-attention.html">
-          <span class="post-meta">2025-02-01</span>
+          <span class="post-meta">2025-02</span>
           
           <a class="post-link" href="/papercache/llm/engineering/attention/2025/02/01/native-sparse-attention-hardware-aligned-and-natively-trainable-sparse-attention.html" data-post-title="Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention">
             Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention
@@ -882,7 +904,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/attention/2025/02/01/tree-attention-topology-aware-decoding-for-long-context-attention-on-gpu-clusters.html">
-          <span class="post-meta">2025-02-01</span>
+          <span class="post-meta">2025-02</span>
           
           <a class="post-link" href="/papercache/llm/engineering/attention/2025/02/01/tree-attention-topology-aware-decoding-for-long-context-attention-on-gpu-clusters.html" data-post-title="TREE ATTENTION: TOPOLOGY-AWARE DECODING FOR LONG-CONTEXT ATTENTION ON GPU CLUSTERS">
             TREE ATTENTION: TOPOLOGY-AWARE DECODING FOR LONG-CONTEXT ATTENTION ON GPU CLUSTERS
@@ -890,7 +912,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/attention/2025/02/01/moba-mixture-of-block-attention-for-long-context-llms.html">
-          <span class="post-meta">2025-02-01</span>
+          <span class="post-meta">2025-02</span>
           
           <a class="post-link" href="/papercache/llm/engineering/attention/2025/02/01/moba-mixture-of-block-attention-for-long-context-llms.html" data-post-title="MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS">
             MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS
@@ -898,7 +920,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/attention/2025/01/01/minimax-01-scaling-foundation-models-with-lightning-attention.html">
-          <span class="post-meta">2025-01-01</span>
+          <span class="post-meta">2025-01</span>
           
           <a class="post-link" href="/papercache/llm/engineering/attention/2025/01/01/minimax-01-scaling-foundation-models-with-lightning-attention.html" data-post-title="MiniMax-01: Scaling Foundation Models with Lightning Attention">
             MiniMax-01: Scaling Foundation Models with Lightning Attention
@@ -906,7 +928,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/attention/2024/10/01/sageattention-accurate-8-bit-attention-for-plug-and-play-inference-acceleration.html">
-          <span class="post-meta">2024-10-01</span>
+          <span class="post-meta">2024-10</span>
           
           <a class="post-link" href="/papercache/llm/engineering/attention/2024/10/01/sageattention-accurate-8-bit-attention-for-plug-and-play-inference-acceleration.html" data-post-title="SAGEATTENTION: ACCURATE 8-BIT ATTENTION FOR PLUG-AND-PLAY INFERENCE ACCELERATION">
             SAGEATTENTION: ACCURATE 8-BIT ATTENTION FOR PLUG-AND-PLAY INFERENCE ACCELERATION
@@ -914,7 +936,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/attention/2024/07/01/flashattention-3-fast-and-accurate-attention-with-asynchrony-and-low-precision.html">
-          <span class="post-meta">2024-07-01</span>
+          <span class="post-meta">2024-07</span>
           
           <span class="subcategory-tag tag-nips24">nips24</span>
           
@@ -924,7 +946,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/attention/2024/04/01/leave-no-context-behind-efficient-infinite-context-transformers-with-infini-attention.html">
-          <span class="post-meta">2024-04-01</span>
+          <span class="post-meta">2024-04</span>
           
           <a class="post-link" href="/papercache/llm/engineering/attention/2024/04/01/leave-no-context-behind-efficient-infinite-context-transformers-with-infini-attention.html" data-post-title="Leave No Context Behind: Efficient Infinite Context Transformers with Infini-attention">
             Leave No Context Behind: Efficient Infinite Context Transformers with Infini-attention
@@ -932,7 +954,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/attention/2023/12/01/gqa-training-generalized-multi-query-transformer-models-from-multi-head-checkpoints.html">
-          <span class="post-meta">2023-12-01</span>
+          <span class="post-meta">2023-12</span>
           
           <a class="post-link" href="/papercache/llm/engineering/attention/2023/12/01/gqa-training-generalized-multi-query-transformer-models-from-multi-head-checkpoints.html" data-post-title="GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints">
             GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints
@@ -940,7 +962,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/attention/2023/07/01/flashattention-2-faster-attention-with-better-parallelism-and-work-partitioning.html">
-          <span class="post-meta">2023-07-01</span>
+          <span class="post-meta">2023-07</span>
           
           <a class="post-link" href="/papercache/llm/engineering/attention/2023/07/01/flashattention-2-faster-attention-with-better-parallelism-and-work-partitioning.html" data-post-title="FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning">
             FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning
@@ -948,7 +970,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/attention/2022/07/01/flashattention-fast-and-memory-efficient-exact-attention-with-io-awareness.html">
-          <span class="post-meta">2022-07-01</span>
+          <span class="post-meta">2022-07</span>
           
           <span class="subcategory-tag tag-nips22">nips22</span>
           
@@ -958,7 +980,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/attention/2020/06/01/transformers-are-rnns-fast-autoregressive-transformers-with-linear-attention.html">
-          <span class="post-meta">2020-06-01</span>
+          <span class="post-meta">2020-06</span>
           
           <span class="subcategory-tag tag-icml20">icml20</span>
           
@@ -968,7 +990,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/attention/2020/02/01/low-rank-bottleneck-in-multi-head-attention-models.html">
-          <span class="post-meta">2020-02-01</span>
+          <span class="post-meta">2020-02</span>
           
           <span class="subcategory-tag tag-icml20">icml20</span>
           
@@ -978,7 +1000,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/attention/2019/11/01/fast-transformer-decoding-one-write-head-is-all-you-need.html">
-          <span class="post-meta">2019-11-01</span>
+          <span class="post-meta">2019-11</span>
           
           <a class="post-link" href="/papercache/llm/engineering/attention/2019/11/01/fast-transformer-decoding-one-write-head-is-all-you-need.html" data-post-title="Fast Transformer Decoding: One Write-Head is All You Need">
             Fast Transformer Decoding: One Write-Head is All You Need
@@ -998,7 +1020,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/compiler/2025/06/01/mirage-a-multi-level-superoptimizer-for-tensor-programs.html">
-          <span class="post-meta">2025-06-01</span>
+          <span class="post-meta">2025-06</span>
           
           <span class="subcategory-tag tag-osdi25">osdi25</span>
           
@@ -1008,7 +1030,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/compiler/2025/04/01/tilelink-generating-efficient-compute-communication-overlapping-kernels-using-tile-centric-primitives.html">
-          <span class="post-meta">2025-04-01</span>
+          <span class="post-meta">2025-04</span>
           
           <a class="post-link" href="/papercache/llm/engineering/compiler/2025/04/01/tilelink-generating-efficient-compute-communication-overlapping-kernels-using-tile-centric-primitives.html" data-post-title="TileLink: Generating Efficient Compute-Communication Overlapping Kernels using Tile-Centric Primitives">
             TileLink: Generating Efficient Compute-Communication Overlapping Kernels using Tile-Centric Primitives
@@ -1016,7 +1038,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/compiler/2025/04/01/tilelang-a-composable-tiled-programming-model-for-ai-systems.html">
-          <span class="post-meta">2025-04-01</span>
+          <span class="post-meta">2025-04</span>
           
           <a class="post-link" href="/papercache/llm/engineering/compiler/2025/04/01/tilelang-a-composable-tiled-programming-model-for-ai-systems.html" data-post-title="TileLang: A Composable Tiled Programming Model for AI Systems">
             TileLang: A Composable Tiled Programming Model for AI Systems
@@ -1024,7 +1046,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/compiler/2024/12/01/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html">
-          <span class="post-meta">2024-12-01</span>
+          <span class="post-meta">2024-12</span>
           
           <a class="post-link" href="/papercache/llm/engineering/compiler/2024/12/01/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html" data-post-title="FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS">
             FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION KERNELS
@@ -1032,7 +1054,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/compiler/2024/10/01/flux-fast-software-based-communication-overlap-on-gpus-through-kernel-fusion.html">
-          <span class="post-meta">2024-10-01</span>
+          <span class="post-meta">2024-10</span>
           
           <a class="post-link" href="/papercache/llm/engineering/compiler/2024/10/01/flux-fast-software-based-communication-overlap-on-gpus-through-kernel-fusion.html" data-post-title="FLUX: FAST SOFTWARE-BASED COMMUNICATION OVERLAP ON GPUS THROUGH KERNEL FUSION">
             FLUX: FAST SOFTWARE-BASED COMMUNICATION OVERLAP ON GPUS THROUGH KERNEL FUSION
@@ -1057,7 +1079,7 @@ document.addEventListener('DOMContentLoaded', function() {
           
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/kvcache/2024/10/01/do-large-language-models-need-a-content-delivery-network.html">
-            <span class="post-meta">2024-10-01</span>
+            <span class="post-meta">2024-10</span>
             
             <a class="post-link" href="/papercache/llm/engineering/inference/kvcache/2024/10/01/do-large-language-models-need-a-content-delivery-network.html" data-post-title="Do Large Language Models Need a Content Delivery Network?">
               Do Large Language Models Need a Content Delivery Network?
@@ -1065,7 +1087,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </li>
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/kvcache/2024/07/01/cost-efficient-large-language-model-serving-for-multi-turn-conversations-with-cachedattention.html">
-            <span class="post-meta">2024-07-01</span>
+            <span class="post-meta">2024-07</span>
             
             <span class="subcategory-tag tag-atc24">atc24</span>
             
@@ -1075,7 +1097,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </li>
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/kvcache/2024/05/01/cacheblend-fast-large-language-model-serving-for-rag-with-cached-knowledge-fusion.html">
-            <span class="post-meta">2024-05-01</span>
+            <span class="post-meta">2024-05</span>
             
             <span class="subcategory-tag tag-eurosys25">eurosys25</span>
             
@@ -1085,7 +1107,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </li>
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/kvcache/2024/04/01/prompt-cache-modular-attention-reuse-for-low-latency-inference.html">
-            <span class="post-meta">2024-04-01</span>
+            <span class="post-meta">2024-04</span>
             
             <span class="subcategory-tag tag-mlsys24">mlsys24</span>
             
@@ -1095,7 +1117,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </li>
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/kvcache/2023/10/01/cachegen-kv-cache-compression-and-streaming-for-fast-large-language-model-serving.html">
-            <span class="post-meta">2023-10-01</span>
+            <span class="post-meta">2023-10</span>
             
             <span class="subcategory-tag tag-sigcomm24">sigcomm24</span>
             
@@ -1115,7 +1137,7 @@ document.addEventListener('DOMContentLoaded', function() {
           
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/low_precision/2025/05/01/recipes-for-pre-training-llms-with-mxfp8.html">
-            <span class="post-meta">2025-05-01</span>
+            <span class="post-meta">2025-05</span>
             
             <a class="post-link" href="/papercache/llm/engineering/inference/low_precision/2025/05/01/recipes-for-pre-training-llms-with-mxfp8.html" data-post-title="Recipes for Pre-training LLMs with MXFP8">
               Recipes for Pre-training LLMs with MXFP8
@@ -1123,7 +1145,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </li>
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/low_precision/2025/01/01/decdec-a-systems-approach-to-advancing-low-bit-llm-quantization.html">
-            <span class="post-meta">2025-01-01</span>
+            <span class="post-meta">2025-01</span>
             
             <span class="subcategory-tag tag-osdi25">osdi25</span>
             
@@ -1133,7 +1155,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </li>
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/low_precision/2024/01/01/fp6-llm-efficiently-serving-large-language-models-through-fp6-centric-algorithm-system-co-design.html">
-            <span class="post-meta">2024-01-01</span>
+            <span class="post-meta">2024-01</span>
             
             <a class="post-link" href="/papercache/llm/engineering/inference/low_precision/2024/01/01/fp6-llm-efficiently-serving-large-language-models-through-fp6-centric-algorithm-system-co-design.html" data-post-title="FP6-LLM: Efficiently Serving Large Language Models Through FP6-Centric Algorithm-System Co-Design">
               FP6-LLM: Efficiently Serving Large Language Models Through FP6-Centric Algorithm-System Co-Design
@@ -1141,7 +1163,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </li>
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/low_precision/2023/06/01/fp8-versus-int8-for-efficient-deep-learning-inference.html">
-            <span class="post-meta">2023-06-01</span>
+            <span class="post-meta">2023-06</span>
             
             <a class="post-link" href="/papercache/llm/engineering/inference/low_precision/2023/06/01/fp8-versus-int8-for-efficient-deep-learning-inference.html" data-post-title="FP8 versus INT8 for efficient deep learning inference">
               FP8 versus INT8 for efficient deep learning inference
@@ -1149,7 +1171,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </li>
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/low_precision/2023/06/01/awq-activation-aware-weight-quantization-for-on-device-llm-compression-and-acceleration.html">
-            <span class="post-meta">2023-06-01</span>
+            <span class="post-meta">2023-06</span>
             
             <span class="subcategory-tag tag-mlsys24">mlsys24</span>
             
@@ -1159,7 +1181,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </li>
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/low_precision/2023/05/01/integer-or-floating-point-new-outlooks-for-low-bit-quantization-on-large-language-models.html">
-            <span class="post-meta">2023-05-01</span>
+            <span class="post-meta">2023-05</span>
             
             <span class="subcategory-tag tag-icme24">icme24</span>
             
@@ -1169,7 +1191,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </li>
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/low_precision/2023/04/01/with-shared-microexponents-a-little-shifting-goes-a-long-way.html">
-            <span class="post-meta">2023-04-01</span>
+            <span class="post-meta">2023-04</span>
             
             <span class="subcategory-tag tag-isca23">isca23</span>
             
@@ -1179,7 +1201,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </li>
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/low_precision/2022/11/01/smoothquant-accurate-and-efficient-post-training-quantization-for-large-language-models.html">
-            <span class="post-meta">2022-11-01</span>
+            <span class="post-meta">2022-11</span>
             
             <span class="subcategory-tag tag-icml23">icml23</span>
             
@@ -1203,7 +1225,7 @@ document.addEventListener('DOMContentLoaded', function() {
           
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/speculative_decoding/2025/03/01/eagle-3-scaling-up-inference-acceleration-of-large-language-models-via-training-time-test.html">
-            <span class="post-meta">2025-03-01</span>
+            <span class="post-meta">2025-03</span>
             
             <a class="post-link" href="/papercache/llm/engineering/inference/speculative_decoding/2025/03/01/eagle-3-scaling-up-inference-acceleration-of-large-language-models-via-training-time-test.html" data-post-title="EAGLE-3: Scaling up Inference Acceleration of Large Language Models via Training-Time Test">
               EAGLE-3: Scaling up Inference Acceleration of Large Language Models via Training-Time Test
@@ -1211,7 +1233,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </li>
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/speculative_decoding/2024/06/01/eagle-2-faster-inference-of-language-models-with-dynamic-draft-trees.html">
-            <span class="post-meta">2024-06-01</span>
+            <span class="post-meta">2024-06</span>
             
             <a class="post-link" href="/papercache/llm/engineering/inference/speculative_decoding/2024/06/01/eagle-2-faster-inference-of-language-models-with-dynamic-draft-trees.html" data-post-title="EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees">
               EAGLE-2: Faster Inference of Language Models with Dynamic Draft Trees
@@ -1219,7 +1241,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </li>
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/speculative_decoding/2024/06/01/medusa-simple-llm-inference-acceleration-framework-with-multiple-decoding-heads.html">
-            <span class="post-meta">2024-06-01</span>
+            <span class="post-meta">2024-06</span>
             
             <a class="post-link" href="/papercache/llm/engineering/inference/speculative_decoding/2024/06/01/medusa-simple-llm-inference-acceleration-framework-with-multiple-decoding-heads.html" data-post-title="MEDUSA: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads">
               MEDUSA: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads
@@ -1227,7 +1249,7 @@ document.addEventListener('DOMContentLoaded', function() {
           </li>
           
           <li class="post-item" data-post-url="/papercache/llm/engineering/inference/speculative_decoding/2024/01/01/eagle-speculative-sampling-requires-rethinking-feature-uncertainty.html">
-            <span class="post-meta">2024-01-01</span>
+            <span class="post-meta">2024-01</span>
             
             <a class="post-link" href="/papercache/llm/engineering/inference/speculative_decoding/2024/01/01/eagle-speculative-sampling-requires-rethinking-feature-uncertainty.html" data-post-title="EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty">
               EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty
@@ -1245,7 +1267,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/inference/2025/07/01/step-3-is-large-yet-affordable-model-system-co-design-for-cost-effective-decoding.html">
-          <span class="post-meta">2025-07-01</span>
+          <span class="post-meta">2025-07</span>
           
           <a class="post-link" href="/papercache/llm/engineering/inference/2025/07/01/step-3-is-large-yet-affordable-model-system-co-design-for-cost-effective-decoding.html" data-post-title="Step-3 is Large yet Affordable: Model-system Co-design for Cost-effective Decoding">
             Step-3 is Large yet Affordable: Model-system Co-design for Cost-effective Decoding
@@ -1253,7 +1275,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/inference/2025/07/01/megascale-infer-serving-mixture-of-experts-at-scale-with-disaggregated-expert-parallelism.html">
-          <span class="post-meta">2025-07-01</span>
+          <span class="post-meta">2025-07</span>
           
           <a class="post-link" href="/papercache/llm/engineering/inference/2025/07/01/megascale-infer-serving-mixture-of-experts-at-scale-with-disaggregated-expert-parallelism.html" data-post-title="MegaScale-Infer: Serving Mixture-of-Experts at Scale with Disaggregated Expert Parallelism">
             MegaScale-Infer: Serving Mixture-of-Experts at Scale with Disaggregated Expert Parallelism
@@ -1261,7 +1283,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/inference/2025/05/01/insights-into-deepseek-v3-scaling-challenges-and-reflections-on-hardware-for-ai-architectures.html">
-          <span class="post-meta">2025-05-01</span>
+          <span class="post-meta">2025-05</span>
           
           <span class="subcategory-tag tag-isca25">isca25</span>
           
@@ -1271,7 +1293,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/inference/2025/04/01/tilus-a-virtual-machine-for-arbitrary-low-precision-gpgpu-computation-in-llm-serving.html">
-          <span class="post-meta">2025-04-01</span>
+          <span class="post-meta">2025-04</span>
           
           <a class="post-link" href="/papercache/llm/engineering/inference/2025/04/01/tilus-a-virtual-machine-for-arbitrary-low-precision-gpgpu-computation-in-llm-serving.html" data-post-title="Tilus: A Virtual Machine for Arbitrary Low-Precision GPGPU Computation in LLM Serving">
             Tilus: A Virtual Machine for Arbitrary Low-Precision GPGPU Computation in LLM Serving
@@ -1279,7 +1301,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/inference/2024/08/01/nanoflow-towards-optimal-large-language-model-serving-throughput.html">
-          <span class="post-meta">2024-08-01</span>
+          <span class="post-meta">2024-08</span>
           
           <span class="subcategory-tag tag-osdi25">osdi25</span>
           
@@ -1289,7 +1311,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/inference/2024/07/01/sglang-efficient-execution-of-structured-language-model-programs.html">
-          <span class="post-meta">2024-07-01</span>
+          <span class="post-meta">2024-07</span>
           
           <span class="subcategory-tag tag-nips24">nips24</span>
           
@@ -1299,7 +1321,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/inference/2024/07/01/mooncake-a-kvcache-centric-disaggregated-architecture-for-llm-serving.html">
-          <span class="post-meta">2024-07-01</span>
+          <span class="post-meta">2024-07</span>
           
           <a class="post-link" href="/papercache/llm/engineering/inference/2024/07/01/mooncake-a-kvcache-centric-disaggregated-architecture-for-llm-serving.html" data-post-title="Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving">
             Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving
@@ -1307,7 +1329,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/inference/2024/05/01/efficient-heterogeneous-large-language-model-decoding-with-model-attention-disaggregation.html">
-          <span class="post-meta">2024-05-01</span>
+          <span class="post-meta">2024-05</span>
           
           <a class="post-link" href="/papercache/llm/engineering/inference/2024/05/01/efficient-heterogeneous-large-language-model-decoding-with-model-attention-disaggregation.html" data-post-title="Efficient Heterogeneous Large Language Model Decoding with Model-Attention Disaggregation">
             Efficient Heterogeneous Large Language Model Decoding with Model-Attention Disaggregation
@@ -1315,7 +1337,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/inference/2024/01/01/distserve-disaggregating-prefill-and-decoding-for-goodput-optimized-large-language-model-serving.html">
-          <span class="post-meta">2024-01-01</span>
+          <span class="post-meta">2024-01</span>
           
           <span class="subcategory-tag tag-osdi24">osdi24</span>
           
@@ -1325,7 +1347,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/inference/2023/09/01/efficient-memory-management-for-large-language-model-serving-with-pagedattention.html">
-          <span class="post-meta">2023-09-01</span>
+          <span class="post-meta">2023-09</span>
           
           <span class="subcategory-tag tag-sosp23">sosp23</span>
           
@@ -1335,7 +1357,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/inference/2023/08/01/sarathi-efficient-llm-inference-by-piggybacking-decodes-with-chunked-prefills.html">
-          <span class="post-meta">2023-08-01</span>
+          <span class="post-meta">2023-08</span>
           
           <a class="post-link" href="/papercache/llm/engineering/inference/2023/08/01/sarathi-efficient-llm-inference-by-piggybacking-decodes-with-chunked-prefills.html" data-post-title="SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills">
             SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills
@@ -1343,7 +1365,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/inference/2022/07/01/orca-a-distributed-serving-system-for-transformer-based-generative-models.html">
-          <span class="post-meta">2022-07-01</span>
+          <span class="post-meta">2022-07</span>
           
           <span class="subcategory-tag tag-osdi22">osdi22</span>
           
@@ -1353,7 +1375,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/inference/2019/10/01/transformers-state-of-the-art-natural-language-processing.html">
-          <span class="post-meta">2019-10-01</span>
+          <span class="post-meta">2019-10</span>
           
           <a class="post-link" href="/papercache/llm/engineering/inference/2019/10/01/transformers-state-of-the-art-natural-language-processing.html" data-post-title="Transformers: State-of-the-Art Natural Language Processing">
             Transformers: State-of-the-Art Natural Language Processing
@@ -1374,7 +1396,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/moe/2024/08/01/auxiliary-loss-free-load-balancing-strategy-for-mixture-of-experts.html">
-          <span class="post-meta">2024-08-01</span>
+          <span class="post-meta">2024-08</span>
           
           <a class="post-link" href="/papercache/llm/engineering/moe/2024/08/01/auxiliary-loss-free-load-balancing-strategy-for-mixture-of-experts.html" data-post-title="AUXILIARY-LOSS-FREE LOAD BALANCING STRATEGY FOR MIXTURE-OF-EXPERTS">
             AUXILIARY-LOSS-FREE LOAD BALANCING STRATEGY FOR MIXTURE-OF-EXPERTS
@@ -1382,7 +1404,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/moe/2024/04/01/shortcut-connected-expert-parallelism-for-accelerating-mixture-of-experts.html">
-          <span class="post-meta">2024-04-01</span>
+          <span class="post-meta">2024-04</span>
           
           <span class="subcategory-tag tag-icml25">icml25</span>
           
@@ -1392,7 +1414,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/moe/2022/01/01/deepspeed-moe-advancing-mixture-of-experts-inference-and-training-to-power-next-generation-ai-scale.html">
-          <span class="post-meta">2022-01-01</span>
+          <span class="post-meta">2022-01</span>
           
           <a class="post-link" href="/papercache/llm/engineering/moe/2022/01/01/deepspeed-moe-advancing-mixture-of-experts-inference-and-training-to-power-next-generation-ai-scale.html" data-post-title="DeepSpeed-MoE: Advancing Mixture-of-Experts Inference and Training to Power Next-Generation AI Scale">
             DeepSpeed-MoE: Advancing Mixture-of-Experts Inference and Training to Power Next-Generation AI Scale
@@ -1412,7 +1434,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/rl/2025/08/01/seamlessflow-a-traineragent-isolation-rl-framework-achieving-bubble-free-pipelines-via-tag-scheduling.html">
-          <span class="post-meta">2025-08-01</span>
+          <span class="post-meta">2025-08</span>
           
           <a class="post-link" href="/papercache/llm/engineering/rl/2025/08/01/seamlessflow-a-traineragent-isolation-rl-framework-achieving-bubble-free-pipelines-via-tag-scheduling.html" data-post-title="SeamlessFlow: A Trainer–Agent Isolation RL Framework Achieving Bubble-Free Pipelines via Tag Scheduling">
             SeamlessFlow: A Trainer–Agent Isolation RL Framework Achieving Bubble-Free Pipelines via Tag Scheduling
@@ -1420,7 +1442,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/rl/2025/07/01/asyncflow-an-asynchronous-streaming-rl-framework-for-efficient-llm-post-training.html">
-          <span class="post-meta">2025-07-01</span>
+          <span class="post-meta">2025-07</span>
           
           <a class="post-link" href="/papercache/llm/engineering/rl/2025/07/01/asyncflow-an-asynchronous-streaming-rl-framework-for-efficient-llm-post-training.html" data-post-title="AsyncFlow: An Asynchronous Streaming RL Framework for Efficient LLM Post-Training">
             AsyncFlow: An Asynchronous Streaming RL Framework for Efficient LLM Post-Training
@@ -1428,7 +1450,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/rl/2025/07/01/distflow-a-fully-distributed-rl-framework-for-scalable-and-efficient-llm-post-training.html">
-          <span class="post-meta">2025-07-01</span>
+          <span class="post-meta">2025-07</span>
           
           <a class="post-link" href="/papercache/llm/engineering/rl/2025/07/01/distflow-a-fully-distributed-rl-framework-for-scalable-and-efficient-llm-post-training.html" data-post-title="DistFlow: A Fully Distributed RL Framework for Scalable and Efficient LLM Post-Training">
             DistFlow: A Fully Distributed RL Framework for Scalable and Efficient LLM Post-Training
@@ -1436,7 +1458,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/rl/2025/05/01/areal-a-large-scale-asynchronous-reinforcement-learning-system-for-language-reasoning.html">
-          <span class="post-meta">2025-05-01</span>
+          <span class="post-meta">2025-05</span>
           
           <a class="post-link" href="/papercache/llm/engineering/rl/2025/05/01/areal-a-large-scale-asynchronous-reinforcement-learning-system-for-language-reasoning.html" data-post-title="AREAL: A Large-Scale Asynchronous Reinforcement Learning System for Language Reasoning">
             AREAL: A Large-Scale Asynchronous Reinforcement Learning System for Language Reasoning
@@ -1444,7 +1466,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/rl/2025/04/01/streamrl-scalable-heterogeneous-and-elastic-rl-for-llms-with-disaggregated-stream-generation.html">
-          <span class="post-meta">2025-04-01</span>
+          <span class="post-meta">2025-04</span>
           
           <a class="post-link" href="/papercache/llm/engineering/rl/2025/04/01/streamrl-scalable-heterogeneous-and-elastic-rl-for-llms-with-disaggregated-stream-generation.html" data-post-title="StreamRL: Scalable, Heterogeneous, and Elastic RL for LLMs with Disaggregated Stream Generation">
             StreamRL: Scalable, Heterogeneous, and Elastic RL for LLMs with Disaggregated Stream Generation
@@ -1452,7 +1474,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/rl/2024/10/01/hybridflow-a-flexible-and-efficient-rlhf-framework.html">
-          <span class="post-meta">2024-10-01</span>
+          <span class="post-meta">2024-10</span>
           
           <span class="subcategory-tag tag-eurosys25">eurosys25</span>
           
@@ -1462,7 +1484,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/rl/2024/09/01/rlhfuse-efficient-rlhf-training-for-large-language-models-with-inter-and-intra-stage-fusion.html">
-          <span class="post-meta">2024-09-01</span>
+          <span class="post-meta">2024-09</span>
           
           <a class="post-link" href="/papercache/llm/engineering/rl/2024/09/01/rlhfuse-efficient-rlhf-training-for-large-language-models-with-inter-and-intra-stage-fusion.html" data-post-title="RLHFuse: Efficient RLHF Training for Large Language Models with Inter- and Intra-Stage Fusion">
             RLHFuse: Efficient RLHF Training for Large Language Models with Inter- and Intra-Stage Fusion
@@ -1470,7 +1492,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/rl/2024/05/01/openrlhf-an-easy-to-use-scalable-and-high-performance-rlhf-framework.html">
-          <span class="post-meta">2024-05-01</span>
+          <span class="post-meta">2024-05</span>
           
           <a class="post-link" href="/papercache/llm/engineering/rl/2024/05/01/openrlhf-an-easy-to-use-scalable-and-high-performance-rlhf-framework.html" data-post-title="OpenRLHF: An Easy-to-use, Scalable and High-performance RLHF Framework">
             OpenRLHF: An Easy-to-use, Scalable and High-performance RLHF Framework
@@ -1478,7 +1500,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/rl/2023/03/01/deepspeed-chat-easy-fast-and-affordable-rlhf-training-of-chatgpt-like-models-at-all-scales.html">
-          <span class="post-meta">2023-03-01</span>
+          <span class="post-meta">2023-03</span>
           
           <a class="post-link" href="/papercache/llm/engineering/rl/2023/03/01/deepspeed-chat-easy-fast-and-affordable-rlhf-training-of-chatgpt-like-models-at-all-scales.html" data-post-title="DeepSpeed-Chat: Easy, Fast and Affordable RLHF Training of ChatGPT-like Models at All Scales">
             DeepSpeed-Chat: Easy, Fast and Affordable RLHF Training of ChatGPT-like Models at All Scales
@@ -1486,7 +1508,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/rl/2019/10/01/seed-rl-scalable-and-efficient-deep-rl-with-accelerated-central-inference.html">
-          <span class="post-meta">2019-10-01</span>
+          <span class="post-meta">2019-10</span>
           
           <a class="post-link" href="/papercache/llm/engineering/rl/2019/10/01/seed-rl-scalable-and-efficient-deep-rl-with-accelerated-central-inference.html" data-post-title="SEED RL: SCALABLE AND EFFICIENT DEEP-RL WITH ACCELERATED CENTRAL INFERENCE">
             SEED RL: SCALABLE AND EFFICIENT DEEP-RL WITH ACCELERATED CENTRAL INFERENCE
@@ -1506,7 +1528,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2025/04/01/bytecheckpoint-a-unified-checkpointing-system-for-large-foundation-model-development.html">
-          <span class="post-meta">2025-04-01</span>
+          <span class="post-meta">2025-04</span>
           
           <span class="subcategory-tag tag-nsdi25">nsdi25</span>
           
@@ -1516,7 +1538,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2025/03/01/understanding-stragglers-in-large-model-training-using-what-if-analysis.html">
-          <span class="post-meta">2025-03-01</span>
+          <span class="post-meta">2025-03</span>
           
           <span class="subcategory-tag tag-osdi25">osdi25</span>
           
@@ -1526,7 +1548,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2025/03/01/wlb-llm-workload-balanced-4d-parallelism-for-large-language-model-training.html">
-          <span class="post-meta">2025-03-01</span>
+          <span class="post-meta">2025-03</span>
           
           <span class="subcategory-tag tag-osdi25">osdi25</span>
           
@@ -1536,7 +1558,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2025/02/01/training-llms-with-mxfp4.html">
-          <span class="post-meta">2025-02-01</span>
+          <span class="post-meta">2025-02</span>
           
           <a class="post-link" href="/papercache/llm/engineering/train/2025/02/01/training-llms-with-mxfp4.html" data-post-title="Training LLMs with MXFP4">
             Training LLMs with MXFP4
@@ -1544,7 +1566,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2025/01/01/enabling-efficient-gpu-communication-over-multiple-nics-with-fuselink.html">
-          <span class="post-meta">2025-01-01</span>
+          <span class="post-meta">2025-01</span>
           
           <span class="subcategory-tag tag-osdi25">osdi25</span>
           
@@ -1554,7 +1576,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2025/01/01/zen-empowering-distributed-training-with-sparsity-driven-data-synchronization.html">
-          <span class="post-meta">2025-01-01</span>
+          <span class="post-meta">2025-01</span>
           
           <span class="subcategory-tag tag-osdi25">osdi25</span>
           
@@ -1564,7 +1586,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2024/09/01/domino-eliminating-communication-in-llm-training-via-generic-tensor-slicing-and-overlapping.html">
-          <span class="post-meta">2024-09-01</span>
+          <span class="post-meta">2024-09</span>
           
           <span class="subcategory-tag tag-osdi25">osdi25</span>
           
@@ -1574,7 +1596,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2024/07/01/efficient-training-of-large-language-models-on-distributed-infrastructures-a-survey.html">
-          <span class="post-meta">2024-07-01</span>
+          <span class="post-meta">2024-07</span>
           
           <a class="post-link" href="/papercache/llm/engineering/train/2024/07/01/efficient-training-of-large-language-models-on-distributed-infrastructures-a-survey.html" data-post-title="Efficient Training of Large Language Models on Distributed Infrastructures: A Survey">
             Efficient Training of Large Language Models on Distributed Infrastructures: A Survey
@@ -1582,7 +1604,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2024/02/01/megascale-scaling-large-language-model-training-to-more-than-10000-gpus.html">
-          <span class="post-meta">2024-02-01</span>
+          <span class="post-meta">2024-02</span>
           
           <span class="subcategory-tag tag-nsdi24">nsdi24</span>
           
@@ -1592,7 +1614,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2023/11/01/zero-bubble-pipeline-parallelism.html">
-          <span class="post-meta">2023-11-01</span>
+          <span class="post-meta">2023-11</span>
           
           <a class="post-link" href="/papercache/llm/engineering/train/2023/11/01/zero-bubble-pipeline-parallelism.html" data-post-title="ZERO BUBBLE PIPELINE PARALLELISM">
             ZERO BUBBLE PIPELINE PARALLELISM
@@ -1600,7 +1622,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2023/04/01/pytorch-fsdp-experiences-on-scaling-fully-sharded-data-parallel.html">
-          <span class="post-meta">2023-04-01</span>
+          <span class="post-meta">2023-04</span>
           
           <a class="post-link" href="/papercache/llm/engineering/train/2023/04/01/pytorch-fsdp-experiences-on-scaling-fully-sharded-data-parallel.html" data-post-title="PyTorch FSDP: Experiences on Scaling Fully Sharded Data Parallel">
             PyTorch FSDP: Experiences on Scaling Fully Sharded Data Parallel
@@ -1608,7 +1630,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2022/04/01/palm-scaling-language-modeling-with-pathways.html">
-          <span class="post-meta">2022-04-01</span>
+          <span class="post-meta">2022-04</span>
           
           <span class="subcategory-tag tag-jmlr23">jmlr23</span>
           
@@ -1618,7 +1640,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2021/08/01/efficient-large-scale-language-model-training-on-gpu-clusters-using-megatron-lm.html">
-          <span class="post-meta">2021-08-01</span>
+          <span class="post-meta">2021-08</span>
           
           <span class="subcategory-tag tag-sc23">sc23</span>
           
@@ -1628,7 +1650,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2021/06/01/lora-low-rank-adaptation-of-large-language-models.html">
-          <span class="post-meta">2021-06-01</span>
+          <span class="post-meta">2021-06</span>
           
           <span class="subcategory-tag tag-iclr22">iclr22</span>
           
@@ -1638,7 +1660,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2021/04/01/zero-infinity-breaking-the-gpu-memory-wall-for-extreme-scale-deep-learning.html">
-          <span class="post-meta">2021-04-01</span>
+          <span class="post-meta">2021-04</span>
           
           <span class="subcategory-tag tag-sc21">sc21</span>
           
@@ -1648,7 +1670,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2021/01/01/zero-offload-democratizing-billion-scale-model-training.html">
-          <span class="post-meta">2021-01-01</span>
+          <span class="post-meta">2021-01</span>
           
           <span class="subcategory-tag tag-atc21">atc21</span>
           
@@ -1658,7 +1680,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2020/03/01/megatron-lm-training-multi-billion-parameter-language-models-using-model-parallelism.html">
-          <span class="post-meta">2020-03-01</span>
+          <span class="post-meta">2020-03</span>
           
           <a class="post-link" href="/papercache/llm/engineering/train/2020/03/01/megatron-lm-training-multi-billion-parameter-language-models-using-model-parallelism.html" data-post-title="Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism">
             Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism
@@ -1666,7 +1688,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2020/03/01/zero-memory-optimizations-toward-training-trillion-parameter-models.html">
-          <span class="post-meta">2020-03-01</span>
+          <span class="post-meta">2020-03</span>
           
           <span class="subcategory-tag tag-sc20">sc20</span>
           
@@ -1676,7 +1698,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2019/07/01/gpipe-easy-scaling-with-micro-batch-pipeline-parallelism.html">
-          <span class="post-meta">2019-07-01</span>
+          <span class="post-meta">2019-07</span>
           
           <span class="subcategory-tag tag-cvpr19">cvpr19</span>
           
@@ -1686,7 +1708,7 @@ document.addEventListener('DOMContentLoaded', function() {
         </li>
         
         <li class="post-item" data-post-url="/papercache/llm/engineering/train/2018/06/01/pipedream-fast-and-efficient-pipeline-parallel-dnn-training.html">
-          <span class="post-meta">2018-06-01</span>
+          <span class="post-meta">2018-06</span>
           
           <a class="post-link" href="/papercache/llm/engineering/train/2018/06/01/pipedream-fast-and-efficient-pipeline-parallel-dnn-training.html" data-post-title="PipeDream: Fast and Efficient Pipeline Parallel DNN Training">
             PipeDream: Fast and Efficient Pipeline Parallel DNN Training
@@ -1723,7 +1745,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       
       <li class="post-item" data-post-url="/papercache/mlsys/compiler/2025/05/01/kperfir-towards-an-open-and-compiler-centric-ecosystem-for-gpu-kernel-performance-tooling-on-modern-ai-workloads.html">
-        <span class="post-meta">2025-05-01</span>
+        <span class="post-meta">2025-05</span>
         
         <span class="subcategory-tag tag-osdi25">osdi25</span>
         
@@ -1733,7 +1755,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/compiler/2025/01/01/pipethreader-software-defined-pipelining-for-efficient-dnn-execution.html">
-        <span class="post-meta">2025-01-01</span>
+        <span class="post-meta">2025-01</span>
         
         <span class="subcategory-tag tag-osdi25">osdi25</span>
         
@@ -1765,7 +1787,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       
       <li class="post-item" data-post-url="/papercache/mlsys/cpu/2022/05/01/understanding-bios-configuration-for-performance-tuning.html">
-        <span class="post-meta">2022-05-01</span>
+        <span class="post-meta">2022-05</span>
         
         <a class="post-link" href="/papercache/mlsys/cpu/2022/05/01/understanding-bios-configuration-for-performance-tuning.html" data-post-title="Understanding BIOS Configuration for Performance Tuning">
           Understanding BIOS Configuration for Performance Tuning
@@ -1773,7 +1795,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/cpu/2022/05/01/everything-you-need-to-know-about-the-cpu-power-management.html">
-        <span class="post-meta">2022-05-01</span>
+        <span class="post-meta">2022-05</span>
         
         <a class="post-link" href="/papercache/mlsys/cpu/2022/05/01/everything-you-need-to-know-about-the-cpu-power-management.html" data-post-title="Everything You Need to Know About the CPU Power Management">
           Everything You Need to Know About the CPU Power Management
@@ -1803,7 +1825,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       
       <li class="post-item" data-post-url="/papercache/mlsys/framework/2022/01/01/campo-cost-aware-performance-optimization-for-mixed-precision-neural-network-training.html">
-        <span class="post-meta">2022-01-01</span>
+        <span class="post-meta">2022-01</span>
         
         <span class="subcategory-tag tag-osdi25">osdi25</span>
         
@@ -1835,7 +1857,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       
       <li class="post-item" data-post-url="/papercache/mlsys/gpu/2025/03/01/neutrino-fine-grained-gpu-kernel-profiling-via-programmable-probing.html">
-        <span class="post-meta">2025-03-01</span>
+        <span class="post-meta">2025-03</span>
         
         <span class="subcategory-tag tag-osdi25">osdi25</span>
         
@@ -1845,7 +1867,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/gpu/2023/01/01/stream-k-work-centric-parallel-decomposition-for-dense-matrix-matrix-multiplication-on-the-gpu.html">
-        <span class="post-meta">2023-01-01</span>
+        <span class="post-meta">2023-01</span>
         
         <span class="subcategory-tag tag-ppopp23">ppopp23</span>
         
@@ -1855,7 +1877,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/gpu/2023/01/01/a-135-gbpsgbit-066-pjbit-stacked-embedded-dram-with-multilayer-arrays-by-fine-pitch-hybrid-bonding-and-mini-tsv.html">
-        <span class="post-meta">2023-01-01</span>
+        <span class="post-meta">2023-01</span>
         
         <span class="subcategory-tag tag-vlsi23">vlsi23</span>
         
@@ -1865,7 +1887,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/gpu/2022/01/01/nvidia-h100-tensor-core-gpu-architecture.html">
-        <span class="post-meta">2022-01-01</span>
+        <span class="post-meta">2022-01</span>
         
         <a class="post-link" href="/papercache/mlsys/gpu/2022/01/01/nvidia-h100-tensor-core-gpu-architecture.html" data-post-title="NVIDIA H100 Tensor Core GPU Architecture">
           NVIDIA H100 Tensor Core GPU Architecture
@@ -1873,7 +1895,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/gpu/2020/02/01/gpu-initiated-openshmem-correct-and-eicient-intra-kernel-networking-for-dgpus.html">
-        <span class="post-meta">2020-02-01</span>
+        <span class="post-meta">2020-02</span>
         
         <a class="post-link" href="/papercache/mlsys/gpu/2020/02/01/gpu-initiated-openshmem-correct-and-eicient-intra-kernel-networking-for-dgpus.html" data-post-title="GPU Initiated OpenSHMEM: Correct and Eicient Intra-Kernel Networking for dGPUs">
           GPU Initiated OpenSHMEM: Correct and Eicient Intra-Kernel Networking for dGPUs
@@ -1881,7 +1903,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/gpu/2018/04/01/gpudirect-async-exploring-gpu-synchronous-communication-techniques-for-infiniband-clusters.html">
-        <span class="post-meta">2018-04-01</span>
+        <span class="post-meta">2018-04</span>
         
         <span class="subcategory-tag tag-jpdc18">jpdc18</span>
         
@@ -1891,7 +1913,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/gpu/2018/03/01/improving-real-time-performance-with-cuda-persistent-threads-cuper-on-the-jetson-tx2.html">
-        <span class="post-meta">2018-03-01</span>
+        <span class="post-meta">2018-03</span>
         
         <a class="post-link" href="/papercache/mlsys/gpu/2018/03/01/improving-real-time-performance-with-cuda-persistent-threads-cuper-on-the-jetson-tx2.html" data-post-title="Improving Real-Time Performance with CUDA Persistent Threads (CuPer) on the Jetson TX2">
           Improving Real-Time Performance with CUDA Persistent Threads (CuPer) on the Jetson TX2
@@ -1899,7 +1921,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/gpu/2017/05/01/offloading-communication-control-logic-in-gpu-accelerated-applications.html">
-        <span class="post-meta">2017-05-01</span>
+        <span class="post-meta">2017-05</span>
         
         <a class="post-link" href="/papercache/mlsys/gpu/2017/05/01/offloading-communication-control-logic-in-gpu-accelerated-applications.html" data-post-title="Offloading communication control logic in GPU accelerated applications">
           Offloading communication control logic in GPU accelerated applications
@@ -1907,7 +1929,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/gpu/2017/04/01/locality-aware-cta-clustering-for-modern-gpus.html">
-        <span class="post-meta">2017-04-01</span>
+        <span class="post-meta">2017-04</span>
         
         <span class="subcategory-tag tag-sigarch17">sigarch17</span>
         
@@ -1917,7 +1939,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/gpu/2016/04/01/optimizing-performance-of-recurrent-neural-networks-on-gpus.html">
-        <span class="post-meta">2016-04-01</span>
+        <span class="post-meta">2016-04</span>
         
         <a class="post-link" href="/papercache/mlsys/gpu/2016/04/01/optimizing-performance-of-recurrent-neural-networks-on-gpus.html" data-post-title="Optimizing Performance of Recurrent Neural Networks on GPUs">
           Optimizing Performance of Recurrent Neural Networks on GPUs
@@ -1925,7 +1947,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/gpu/2010/01/01/demystifying-gpu-microarchitecture-through-microbenchmarking.html">
-        <span class="post-meta">2010-01-01</span>
+        <span class="post-meta">2010-01</span>
         
         <a class="post-link" href="/papercache/mlsys/gpu/2010/01/01/demystifying-gpu-microarchitecture-through-microbenchmarking.html" data-post-title="Demystifying GPU Microarchitecture through Microbenchmarking">
           Demystifying GPU Microarchitecture through Microbenchmarking
@@ -1955,7 +1977,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       
       <li class="post-item" data-post-url="/papercache/mlsys/networking/2025/07/01/scale-up-ethernet-framework-scale-up-ethernet-framework-specification.html">
-        <span class="post-meta">2025-07-01</span>
+        <span class="post-meta">2025-07</span>
         
         <a class="post-link" href="/papercache/mlsys/networking/2025/07/01/scale-up-ethernet-framework-scale-up-ethernet-framework-specification.html" data-post-title="Scale-Up Ethernet Framework Scale-Up Ethernet Framework Specification">
           Scale-Up Ethernet Framework Scale-Up Ethernet Framework Specification
@@ -1963,7 +1985,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/networking/2025/07/01/demystifying-nccl-an-in-depth-analysis-of-gpu-communication-protocols-and-algorithms.html">
-        <span class="post-meta">2025-07-01</span>
+        <span class="post-meta">2025-07</span>
         
         <a class="post-link" href="/papercache/mlsys/networking/2025/07/01/demystifying-nccl-an-in-depth-analysis-of-gpu-communication-protocols-and-algorithms.html" data-post-title="Demystifying NCCL: An In-depth Analysis of GPU Communication Protocols and
       Algorithms">
@@ -1973,7 +1995,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/networking/2025/04/01/introducing-ualink-200g-10-specification.html">
-        <span class="post-meta">2025-04-01</span>
+        <span class="post-meta">2025-04</span>
         
         <a class="post-link" href="/papercache/mlsys/networking/2025/04/01/introducing-ualink-200g-10-specification.html" data-post-title="Introducing UALink 200G 1.0 Specification">
           Introducing UALink 200G 1.0 Specification
@@ -1981,7 +2003,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/networking/2025/03/01/ub-mesh-a-hierarchically-localized-nd-fullmesh-datacenter-network-architecture.html">
-        <span class="post-meta">2025-03-01</span>
+        <span class="post-meta">2025-03</span>
         
         <a class="post-link" href="/papercache/mlsys/networking/2025/03/01/ub-mesh-a-hierarchically-localized-nd-fullmesh-datacenter-network-architecture.html" data-post-title="UB-Mesh: a Hierarchically Localized nD-FullMesh Datacenter Network Architecture">
           UB-Mesh: a Hierarchically Localized nD-FullMesh Datacenter Network Architecture
@@ -1989,7 +2011,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/networking/2024/04/01/scaling-up-memory-disaggregated-applications-with-smart.html">
-        <span class="post-meta">2024-04-01</span>
+        <span class="post-meta">2024-04</span>
         
         <span class="subcategory-tag tag-asplos24">asplos24</span>
         
@@ -1999,7 +2021,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/networking/2023/07/01/overview-of-and-motivation-for-the-forthcoming-ultra-ethernet-consortium-specification.html">
-        <span class="post-meta">2023-07-01</span>
+        <span class="post-meta">2023-07</span>
         
         <a class="post-link" href="/papercache/mlsys/networking/2023/07/01/overview-of-and-motivation-for-the-forthcoming-ultra-ethernet-consortium-specification.html" data-post-title="Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium Specification">
           Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium Specification
@@ -2007,7 +2029,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/networking/2022/11/01/improving-network-performance-of-hpc-systems-using-nvidia-magnum-io-nvshmem-and-gpudirect-async.html">
-        <span class="post-meta">2022-11-01</span>
+        <span class="post-meta">2022-11</span>
         
         <a class="post-link" href="/papercache/mlsys/networking/2022/11/01/improving-network-performance-of-hpc-systems-using-nvidia-magnum-io-nvshmem-and-gpudirect-async.html" data-post-title="Improving Network Performance of HPC Systems Using NVIDIA Magnum IO NVSHMEM and GPUDirect Async">
           Improving Network Performance of HPC Systems Using NVIDIA Magnum IO NVSHMEM and GPUDirect Async
@@ -2015,7 +2037,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/networking/2022/02/01/doubling-all2all-performance-with-nvidia-collective-communication-library-212.html">
-        <span class="post-meta">2022-02-01</span>
+        <span class="post-meta">2022-02</span>
         
         <a class="post-link" href="/papercache/mlsys/networking/2022/02/01/doubling-all2all-performance-with-nvidia-collective-communication-library-212.html" data-post-title="Doubling all2all Performance with NVIDIA Collective Communication Library 2.12">
           Doubling all2all Performance with NVIDIA Collective Communication Library 2.12
@@ -2023,7 +2045,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/networking/2020/08/01/an-in-depth-analysis-of-the-slingshot-interconnect.html">
-        <span class="post-meta">2020-08-01</span>
+        <span class="post-meta">2020-08</span>
         
         <span class="subcategory-tag tag-sc20">sc20</span>
         
@@ -2033,7 +2055,7 @@ document.addEventListener('DOMContentLoaded', function() {
       </li>
       
       <li class="post-item" data-post-url="/papercache/mlsys/networking/2015/07/01/ucx-an-open-source-framework-for-hpc-network-apis-and-beyond.html">
-        <span class="post-meta">2015-07-01</span>
+        <span class="post-meta">2015-07</span>
         
         <a class="post-link" href="/papercache/mlsys/networking/2015/07/01/ucx-an-open-source-framework-for-hpc-network-apis-and-beyond.html" data-post-title="UCX: An Open Source Framework for HPC Network APIs and Beyond">
           UCX: An Open Source Framework for HPC Network APIs and Beyond
@@ -2063,7 +2085,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       
       <li class="post-item" data-post-url="/papercache/mlsys/system/2025/01/01/principles-and-methodologies-for-serial-performance-optimization.html">
-        <span class="post-meta">2025-01-01</span>
+        <span class="post-meta">2025-01</span>
         
         <span class="subcategory-tag tag-osdi25">osdi25</span>
         
@@ -2081,450 +2103,9 @@ document.addEventListener('DOMContentLoaded', function() {
 </div>
 
 <!-- 文章预览和按需加载脚本 -->
-<script>
-class PostPreviewLoader {
-  constructor() {
-    this.loadedPosts = new Map();
-    this.hoverTimeout = null;
-    this.hideTimeout = null;
-    this.currentHoveredItem = null;
-    this.activeFetchController = null;
-    this.init();
-  }
+<link rel="stylesheet" href="/papercache/assets/css/post-preview.css">
+<script src="/papercache/assets/js/post-preview.js" defer></script>
 
-  init() {
-    // 为所有文章项添加hover事件（改为 mouseover，便于使用 relatedTarget 判断）
-    document.addEventListener('mouseover', (e) => {
-      const postItem = e.target.closest('.post-item');
-      if (postItem) {
-        // 设置当前hover的项目
-        this.currentHoveredItem = postItem;
-        
-        // 清除之前的延迟
-        if (this.hoverTimeout) {
-          clearTimeout(this.hoverTimeout);
-        }
-        if (this.hideTimeout) {
-          clearTimeout(this.hideTimeout);
-        }
-        
-        // 延迟300ms显示预览
-        this.hoverTimeout = setTimeout(() => {
-          this.handlePostHover(postItem);
-        }, 300);
-      }
-    }, true);
-
-    // 鼠标离开文章项时延迟隐藏预览（改为 mouseout，配合 relatedTarget 判断是否进入了预览面板）
-    document.addEventListener('mouseout', (e) => {
-      const postItem = e.target.closest('.post-item');
-      if (postItem) {
-        // 如果鼠标实际移动到了同一 postItem 内部的预览面板，则不处理隐藏
-        const related = /** @type {HTMLElement|null} */ (e.relatedTarget);
-        if (related && postItem.contains(related)) {
-          return;
-        }
-
-        // 清除显示延迟
-        if (this.hoverTimeout) {
-          clearTimeout(this.hoverTimeout);
-        }
-        
-        // 延迟200ms隐藏预览，给用户时间移动到预览窗口
-        this.hideTimeout = setTimeout(() => {
-          this.hidePreview(postItem);
-        }, 200);
-      }
-    }, true);
-
-    // 鼠标进入预览窗口时取消隐藏（mouseover 更灵敏）
-    document.addEventListener('mouseover', (e) => {
-      const previewContainer = e.target.closest('.post-preview');
-      if (previewContainer) {
-        console.log('鼠标进入预览窗口');
-        // 取消隐藏延迟
-        if (this.hideTimeout) {
-          clearTimeout(this.hideTimeout);
-        }
-        // 设置当前hover的项目为预览窗口对应的文章项
-        const postItem = previewContainer.closest('.post-item');
-        if (postItem) {
-          this.currentHoveredItem = postItem;
-        }
-      }
-    }, true);
-
-    // 鼠标离开预览窗口时延迟隐藏（mouseout 配合 relatedTarget 判断是否回到同一 postItem）
-    document.addEventListener('mouseout', (e) => {
-      const previewContainer = e.target.closest('.post-preview');
-      if (previewContainer) {
-        const postItem = previewContainer.closest('.post-item');
-        if (postItem) {
-          const related = /** @type {HTMLElement|null} */ (e.relatedTarget);
-          // 如果鼠标回到 postItem 区域（包括标题等），则不隐藏
-          if (related && postItem.contains(related)) {
-            return;
-          }
-          // 延迟200ms隐藏，给用户时间移回文章项
-          this.hideTimeout = setTimeout(() => {
-            // 只有在不是当前hover的项目时才隐藏
-            if (this.currentHoveredItem !== postItem) {
-              this.hidePreview(postItem);
-            }
-          }, 200);
-        }
-      }
-    }, true);
-  }
-
-  async handlePostHover(postItem) {
-    const postUrl = postItem.dataset.postUrl;
-    const postLink = postItem.querySelector('.post-link');
-    const postTitle = postLink.dataset.postTitle;
-    
-    // 创建预览容器（如果不存在）
-    let previewContainer = postItem.querySelector('.post-preview');
-    if (!previewContainer) {
-      previewContainer = document.createElement('div');
-      previewContainer.className = 'post-preview';
-      previewContainer.style.display = 'none';
-      postItem.appendChild(previewContainer);
-    }
-    
-    // 如果已经加载过，直接显示
-    if (this.loadedPosts.has(postUrl)) {
-      this.showPreview(previewContainer, this.loadedPosts.get(postUrl));
-      return;
-    }
-
-    // 显示加载状态
-    this.showLoadingState(previewContainer);
-
-    try {
-      // 取消上一次未完成的请求（如果存在）
-      if (this.activeFetchController && typeof this.activeFetchController.abort === 'function') {
-        this.activeFetchController.abort();
-      }
-
-      // 创建新的请求控制器
-      this.activeFetchController = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-      const signal = this.activeFetchController ? this.activeFetchController.signal : undefined;
-
-      // 获取文章内容
-      const response = await fetch(postUrl, { signal });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const html = await response.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(html, 'text/html');
-      
-      // 提取文章内容
-      const postContent = doc.querySelector('.post-content');
-      if (postContent) {
-        // 提取"A1 主要贡献"章节内容
-        const contributionSection = this.extractContributionSection(postContent);
-        
-        // 缓存内容
-        this.loadedPosts.set(postUrl, {
-          title: postTitle,
-          contribution: contributionSection,
-          fullContent: postContent.innerHTML,
-          url: postUrl
-        });
-
-        // 显示预览
-        this.showPreview(previewContainer, this.loadedPosts.get(postUrl));
-      } else {
-        throw new Error('Content not found');
-      }
-
-    } catch (error) {
-      // 忽略主动取消导致的异常
-      if (error && (error.name === 'AbortError' || error.message === 'The operation was aborted.')) {
-        return;
-      }
-      console.error('Failed to load post:', error);
-      this.showErrorState(previewContainer);
-    }
-  }
-
-  hidePreview(postItem) {
-    const previewContainer = postItem.querySelector('.post-preview');
-    if (previewContainer) {
-      previewContainer.style.display = 'none';
-    }
-    // 清理当前hover状态
-    if (this.currentHoveredItem === postItem) {
-      this.currentHoveredItem = null;
-    }
-  }
-
-  extractContributionSection(postContent) {
-    // 查找"A1 主要贡献"章节
-    const headings = postContent.querySelectorAll('h1, h2, h3, h4, h5, h6');
-    let contributionSection = null;
-    
-    for (let heading of headings) {
-      const headingText = heading.textContent.trim();
-      if (headingText.includes('A1') && headingText.includes('主要贡献')) {
-        // 找到章节标题，提取后续内容
-        let content = '';
-        let nextElement = heading.nextElementSibling;
-        
-        // 提取直到下一个同级或更高级标题的内容
-        while (nextElement && nextElement.tagName && !nextElement.tagName.match(/^H[1-6]$/)) {
-          content += nextElement.textContent + ' ';
-          nextElement = nextElement.nextElementSibling;
-        }
-        
-        // 如果内容太长，截取前500个字符
-        if (content.length > 500) {
-          content = content.substring(0, 500) + '...';
-        }
-        
-        contributionSection = content.trim();
-        break;
-      }
-    }
-    
-    // 如果没有找到"A1 主要贡献"，尝试查找其他可能的贡献章节
-    if (!contributionSection) {
-      for (let heading of headings) {
-        const headingText = heading.textContent.trim();
-        if (headingText.includes('贡献') || headingText.includes('主要') || headingText.includes('创新')) {
-          let content = '';
-          let nextElement = heading.nextElementSibling;
-          
-          while (nextElement && nextElement.tagName && !nextElement.tagName.match(/^H[1-6]$/)) {
-            content += nextElement.textContent + ' ';
-            nextElement = nextElement.nextElementSibling;
-          }
-          
-          if (content.length > 500) {
-            content = content.substring(0, 500) + '...';
-          }
-          
-          contributionSection = content.trim();
-          break;
-        }
-      }
-    }
-    
-    // 如果还是没找到，返回文章开头的内容
-    if (!contributionSection) {
-      const allText = postContent.textContent;
-      contributionSection = allText.substring(0, 300) + '...';
-    }
-    
-    return contributionSection;
-  }
-
-  showLoadingState(previewContainer) {
-    previewContainer.style.display = 'block';
-    previewContainer.innerHTML = `
-      <div class="preview-content">
-        <div class="preview-loading">⏳ 加载中...</div>
-      </div>
-    `;
-  }
-
-  showPreview(previewContainer, postData) {
-    previewContainer.innerHTML = `
-      <div class="preview-content">
-        <div class="preview-header">
-          <h4 class="preview-title">${postData.title}</h4>
-        </div>
-        <div class="preview-section">
-          <h5 class="section-title">📋 主要贡献</h5>
-          <div class="preview-contribution">
-            ${postData.contribution}
-          </div>
-        </div>
-        <div class="preview-footer">
-          <a href="${postData.url}" class="read-full-btn">📖 阅读完整内容</a>
-        </div>
-      </div>
-    `;
-    previewContainer.style.display = 'block';
-  }
-
-  showErrorState(previewContainer) {
-    previewContainer.innerHTML = `
-      <div class="preview-content">
-        <div class="preview-error">
-          <p>❌ 加载失败</p>
-          <button onclick="location.reload()" class="retry-btn">重试</button>
-        </div>
-      </div>
-    `;
-  }
-}
-
-// 初始化预览加载器
-document.addEventListener('DOMContentLoaded', function() {
-  window.postPreviewLoader = new PostPreviewLoader();
-});
-</script>
-
-<style>
-.post-item {
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.post-item:hover {
-  background-color: #f8f9ff;
-  border-radius: 4px;
-}
-
-/* 移除CSS hover控制，改用JavaScript精确控制 */
-
-.post-preview {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: white;
-  border: 1px solid #e1e5e9;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
-  margin-top: 5px;
-  max-width: 600px;
-}
-
-.preview-content {
-  padding: 20px;
-}
-
-.preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  border-bottom: 1px solid #e1e5e9;
-  padding-bottom: 10px;
-}
-
-.preview-title {
-  margin: 0;
-  font-size: 18px;
-  color: #333;
-  flex: 1;
-}
-
-.preview-close {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: #666;
-  padding: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  transition: background-color 0.2s;
-}
-
-.preview-close:hover {
-  background-color: #f0f0f0;
-}
-
-.preview-excerpt {
-  color: #666;
-  line-height: 1.6;
-  margin-bottom: 15px;
-}
-
-.preview-footer {
-  text-align: center;
-}
-
-.read-full-btn {
-  display: inline-block;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  text-decoration: none;
-  padding: 10px 20px;
-  border-radius: 20px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-}
-
-.read-full-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.section-title {
-  margin: 0 0 10px 0;
-  font-size: 14px;
-  color: #667eea;
-  font-weight: 600;
-  border-bottom: 1px solid #e1e5e9;
-  padding-bottom: 5px;
-}
-
-.preview-contribution {
-  color: #555;
-  line-height: 1.6;
-  font-size: 14px;
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.preview-loading {
-  text-align: center;
-  color: #666;
-  font-style: italic;
-}
-
-.preview-error {
-  text-align: center;
-  color: #e53e3e;
-}
-
-.retry-btn {
-  background: #e53e3e;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  margin-top: 10px;
-}
-
-.retry-btn:hover {
-  background: #c53030;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .post-preview {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%;
-    max-width: none;
-    max-height: 80vh;
-    overflow-y: auto;
-  }
-  
-  .preview-content {
-    padding: 15px;
-  }
-  
-  .preview-title {
-    font-size: 16px;
-  }
-}
-</style>
 
         </div>
       </main>

@@ -3,6 +3,14 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- 性能优化：预加载关键资源 -->
+  <link rel="preload" href="/papercache/assets/main.css" as="style">
+  <link rel="preload" href="/papercache/assets/js/post-preview.js" as="script">
+  
+  <!-- 缓存控制 -->
+  <meta http-equiv="Cache-Control" content="public, max-age=31536000">
+  
   <!-- SEO tags removed for compatibility -->
   <link rel="stylesheet" href="/papercache/assets/main.css">
   <!-- Feed meta removed for compatibility --><script>
@@ -17,7 +25,7 @@ if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNo
 }
 </script>
   
-<!-- MathJax 3 Configuration --><script>
+<!-- MathJax 3 Configuration - 延迟加载 --><script>
     window.MathJax = {
       tex: {
         inlineMath: [['$', '$']],
@@ -25,13 +33,27 @@ if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNo
       },
       svg: {
         fontCache: 'global'
+      },
+      startup: {
+        ready: function () {
+          MathJax.startup.defaultReady();
+          console.log('MathJax is loaded, but not yet initialized');
+        }
       }
     };
   </script>
   <script type="text/javascript" id="MathJax-script" async
     src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
-  </script><!-- Busuanzi Analytics -->
-  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  </script><!-- Busuanzi Analytics - 延迟加载 -->
+  <script>
+    // 延迟加载统计脚本
+    setTimeout(function() {
+      var script = document.createElement('script');
+      script.async = true;
+      script.src = '//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js';
+      document.head.appendChild(script);
+    }, 2000);
+  </script>
 </head><body><header class="site-header" role="banner">
 
   <div class="wrapper"><a class="site-title" rel="author" href="/papercache/">PaperCache</a><nav class="site-nav">
