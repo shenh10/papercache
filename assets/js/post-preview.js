@@ -282,3 +282,4 @@ class PostPreviewLoader {
 document.addEventListener('DOMContentLoaded', function() {
   window.postPreviewLoader = new PostPreviewLoader();
 });
+

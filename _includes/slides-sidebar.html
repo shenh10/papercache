@@ -1,0 +1,29 @@
+<nav class="sidebar-nav">
+  {% assign slides_structure = site.data.slides_collection_structure %}
+  {% if slides_structure %}
+    {% for main_cat_entry in slides_structure %}
+      {% assign main_cat_name = main_cat_entry[0] %}
+      {% assign main_cat_content = main_cat_entry[1] %}
+      <div class="category-section">
+        <h3 class="main-category">
+          <a href="#{{ main_cat_name | slugify }}">{{ main_cat_name | upcase }}</a>
+        </h3>
+        {% for sub_cat_entry in main_cat_content %}
+          {% assign sub_cat_name = sub_cat_entry[0] %}
+          {% assign sub_cat_value = sub_cat_entry[1] %}
+          {% if sub_cat_name != 'posts' %}
+          <div class="sub-category">
+            <h4 class="sub-category-title">
+              <a href="#{{ main_cat_name | slugify }}-{{ sub_cat_name | slugify }}">{{ sub_cat_name | capitalize }}</a>
+            </h4>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="sidebar-nav-item">暂无导航</div>
+  {% endif %}
+</nav>
+
+

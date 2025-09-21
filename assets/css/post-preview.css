@@ -132,6 +132,26 @@
   background: #c53030;
 }
 
+/* Slides链接样式 */
+.slides-link {
+  display: block;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+  color: white !important;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin: 8px 0;
+  text-align: center;
+}
+
+.slides-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+  background: linear-gradient(135deg, #ff5252 0%, #d63031 100%);
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .post-preview {
@@ -153,3 +173,4 @@
     font-size: 16px;
   }
 }
+

@@ -23,7 +23,7 @@ jobs:
           bundler-cache: true
 
       - name: 🔨 Build the site
-        run: bundle exec jekyll build
+        run: bundle exec jekyll build  --config _config.yml
         env:
           JEKYLL_ENV: production
 

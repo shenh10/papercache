@@ -3,6 +3,8 @@
 
 # 本地开发 URL
 url: "http://localhost:4000"
+baseurl: ""
+theme: minima
 
 # 禁用一些生产环境功能
 google_analytics: false
@@ -11,6 +13,54 @@ giscus:
 
 # 本地开发环境
 JEKYLL_ENV: development
+# Jekyll设置
+markdown: kramdown
+highlighter: rouge
+theme: minima
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+  - jekyll-paginate
+
+# 定义collections
+collections:
+  slides:
+    output: true
+    permalink: /slides/:categories/:year/:month/:day/:title.html
+
+# 本地开发时包含slides合集页面（目录由 collections 控制，无需 include _slides）
+include:
+  - 04-slides.html
+
+# 顶部导航仅显示指定页面
+header_pages:
+  - 01-index.markdown
+  - 02-collection.html
+  - 03-about.markdown
+  - 04-slides.html
+
+# 本地开发时的默认设置
+defaults:
+  - scope:
+      path: "_slides"
+      type: "slides"
+    values:
+      layout: "post"
+      comments: false
+      mathjax: true
+      share: false
+      permalink: /slides/:categories/:year/:month/:day/:title.html
+  - scope:
+      path: "_posts"
+      type: "posts"
+    values:
+      layout: "post"
+      comments: true
+      mathjax: true
+      share: true
+      permalink: /papers/:categories/:year/:month/:day/:title.html
+
 
 
 
