@@ -18,7 +18,7 @@ title: 'Obscura: Concealing Recomputation Overhead in Training of Large Language
 <div class="container">
 
 <p><strong>作者/机构</strong>: Yuzhou Huang and Yapeng Jiang, Sun Yat-sen University; Zicong Hong, Hong Kong University of Science and Technology; Wuhui Chen, Sun Yat-sen University; Bin Wang and Weixi Zhu, Huawei Technologies; Yue Yu, Peng Cheng Laboratory; Zibin Zheng, Sun Yat-sen University</p>
-<h2 id="a1">A1 主要贡献（总结）</h2>
+<h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决流水线并行训练大语言模型（LLM）时，早期阶段面临的内存瓶颈问题。虽然重计算（recomputation）可以缓解此问题，但会引入额外的计算开销。</p>
 <p><strong>核心问题</strong>: 传统方法在流水线并行训练中为解决内存瓶颈而引入重计算，但这会带来显著的计算开销，延长训练时间。现有方法或者对所有阶段进行重计算（All-Stage Recomputation），效率低下；或者选择性重计算（selective recomputation），但在严格内存限制下仍有较高开销。</p>
 <p><strong>研究目标</strong>: 提出一个名为 Obscura 的计算高效的流水线训练系统，旨在给定内存约束下，优化并隐藏重计算带来的开销，从而提升训练吞吐量。</p>
@@ -45,7 +45,7 @@ title: 'Obscura: Concealing Recomputation Overhead in Training of Large Language
 *   发现并提出利用流水线气泡来隐藏重计算开销的新机会，并设计了一个“稻草人流水线”来实现这一目标。<br/>
 *   提出了 Obscura 系统，通过依赖松弛、感知交换的重计算和分区调整三个关键组件，显著提升了流水线训练性能。<br/>
 *   在 DeepSpeed 上实现了 Obscura，并通过对 Llama-2 和 GPT-3 等多种模型的评估，证明与广泛使用的重计算基线相比，吞吐量提升最高可达 1.32 倍。</p>
-<h2 id="a3-observation">A3 背景知识/关键Observation/设计原则（缩写）</h2>
+<h2 id="a3-observation">A3 背景知识/关键Observation/设计原则</h2>
 <h3 id="21">2.1 流水线并行</h3>
 <p><strong>模型分区的并行策略</strong>。流水线并行【索引5，Dapple: A pipelined data parallel approach for training large models，2021，PPoPP】、【索引8，Gpipe: Efficient training of giant neural networks using pipeline parallelism，2019，NeurIPS】、【索引15，Pipedream: Generalized pipeline parallelism for dnn training，2019，SOSP】将模型层划分为不同的阶段，分布在多个GPU上。输入批次被分割成更小的微批次（micro-batches），这些微批次以流水线方式顺序处理。在每个前向或反向传播前后，阶段之间需要通信来传输激活值和梯度。</p>
 <p><figure class="image-figure">
@@ -117,7 +117,7 @@ Figure 6: 流水线转换过程（上）和生成的稻草人流水线（下）�
 <p><strong>挑战3：如何解决计算不平衡</strong>。按需重计算在调整阶段和非调整阶段之间引入了工作负载不平衡。虽然前向和后向气泡可以部分隐藏重计算，但它们有限的可用性以及随着微批次增大而增加的开销，使得一些重计算无法被隐藏。这导致在非调整阶段形成额外的后向气泡，如Figure 6(b)所示。具体来说，如Figures 5(b)和5(c)所示，由计算不平衡引起的后向气泡在非调整阶段是显而易见的。</p>
 </li>
 </ol>
-<h2 id="a2">A2 方法细节（缩写）</h2>
+<h2 id="a2">A2 方法细节</h2>
 <h3 id="4-obscura">4. Obscura 概览</h3>
 <p><strong>Obscura系统架构</strong>。为了应对上述挑战，我们提出了Obscura，一个训练系统，其架构如Figure 7所示。Obscura由两个主要模块组成：Obscura规划器（Obscura Planner）和Obscura运行时（Obscura Runtime）。Obscura规划器将原始的1F1B流水线转换为Obscura流水线，并生成一个部署配置供Obscura运行时使用。Obscura运行时在执行期间管理分布式部署和模型训练。</p>
 <p><figure class="image-figure">
@@ -217,7 +217,7 @@ Figure 11: 重计算与交换之间的权衡。</p>
 </figure></p>
 <p><strong>机会</strong>。最近的研究【索引27，Accelerating the training of large language models using efficient activation rematerialization and optimal hybrid parallelism，2024，USENIX ATC】表明，transformer模型中成本效益高的算子，如Llama-2模型中的RMSNorm、SiLU和Mul，表现出高空间复杂度和低计算复杂度。将这些算子纳入重计算集（称为CMB重计算策略）可以减少约40%的内存占用，而开销仅增加2-3%。</p>
 <p><strong>优化</strong>。为了增强原始的识别步骤，我们引入了一种名为CMB-Identifying的替代方法。当遇到OOM问题时，我们首先应用CMB重计算策略，而不是立即将一个阶段指定为调整阶段。这种方法减少了调整阶段的数量，从而提高了Obscura流水线隐藏重计算开销的能力。</p>
-<h2 id="a4">A4 实验环境（总结）</h2>
+<h2 id="a4">A4 实验环境</h2>
 <ul>
 <li>
 <p><strong>数据集与模型</strong>:</p>
@@ -254,7 +254,7 @@ Figure 11: 重计算与交换之间的权衡。</p>
 </ul>
 </li>
 </ul>
-<h2 id="a4_1">A4 实验结果（总结）</h2>
+<h2 id="a4_1">A4 实验结果</h2>
 <h3 id="_1">训练性能</h3>
 <ul>
 <li><strong>实验内容</strong>: 在8x A100平台上，评估了Obscura和多个基线在训练不同尺寸（13B, 18B, 23B, 28B）的Llama-2和GPT-3模型时的吞吐量，并改变全局批量大小进行测试。</li>
@@ -341,7 +341,7 @@ Figure 15: 4阶段流水线中的端到端性能。</p>
 <figcaption class="figure-caption"></figcaption>
 </figure><br/>
 Figure 16: Llama-2 23B模型中的敏感性分析。</p>
-<h2 id="a5">A5 结论（总结）</h2>
+<h2 id="a5">A5 结论</h2>
 <p>本文提出了Obscura，一个计算高效的流水线训练系统。Obscura的核心创新在于引入了一种新颖的流水线转换，它能够利用现有的流水线气泡来有效隐藏重计算的成本。此外，系统还集成了依赖松弛、感知交换的重计算以及计算平衡等先进技术，这些技术协同工作，显著提升了训练的整体性能和资源利用率。实验证明，Obscura在训练各种规模的大语言模型时，相比现有方法具有明显的吞吐量优势。</p>
 </div>
 </body>
