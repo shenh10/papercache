@@ -3,7 +3,7 @@
   <generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator>
   <link href="https://shenh10.github.io/papercache/feed.xml" rel="self" type="application/atom+xml" />
   <link href="https://shenh10.github.io/papercache/" rel="alternate" type="text/html" />
-  <updated>2025-09-21T04:52:40+00:00</updated>
+  <updated>2025-10-03T13:08:36+00:00</updated>
   <id>https://shenh10.github.io/papercache/feed.xml</id>
   <title type="html">PaperCache</title>
   <subtitle>深度学习、机器学习和人工智能研究论文的精选缓存</subtitle>
@@ -19,6 +19,71 @@
     <updated>2025-09-01T00:00:00+00:00</updated>
     <id>https://shenh10.github.io/papercache/papers/llm/algorithm/agent/2025/09/01/the-landscape-of-agentic-reinforcement-learning-for-llms-a-survey.html</id>
     <content type="html" xml:base="https://shenh10.github.io/papercache/papers/llm/algorithm/agent/2025/09/01/the-landscape-of-agentic-reinforcement-learning-for-llms-a-survey.html">
+      <![CDATA[
+
+]]>
+    </content>
+  </entry>
+  
+  <entry>
+    <title type="html">Robust LLM Training Infrastructure at ByteDance</title>
+    <link href="https://shenh10.github.io/papercache/papers/llm/engineering/train/2025/09/01/robust-llm-training-infrastructure-at-bytedance.html" rel="alternate" type="text/html" title="Robust LLM Training Infrastructure at ByteDance" />
+    <published>2025-09-01T00:00:00+00:00</published>
+    <updated>2025-09-01T00:00:00+00:00</updated>
+    <id>https://shenh10.github.io/papercache/papers/llm/engineering/train/2025/09/01/robust-llm-training-infrastructure-at-bytedance.html</id>
+    <content type="html" xml:base="https://shenh10.github.io/papercache/papers/llm/engineering/train/2025/09/01/robust-llm-training-infrastructure-at-bytedance.html">
+      <![CDATA[
+
+]]>
+    </content>
+  </entry>
+  
+  <entry>
+    <title type="html">LongCat-Flash-Thinking Technical Report</title>
+    <link href="https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/09/01/longcat-flash-thinking-technical-report.html" rel="alternate" type="text/html" title="LongCat-Flash-Thinking Technical Report" />
+    <published>2025-09-01T00:00:00+00:00</published>
+    <updated>2025-09-01T00:00:00+00:00</updated>
+    <id>https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/09/01/longcat-flash-thinking-technical-report.html</id>
+    <content type="html" xml:base="https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/09/01/longcat-flash-thinking-technical-report.html">
+      <![CDATA[
+
+]]>
+    </content>
+  </entry>
+  
+  <entry>
+    <title type="html">Defeating Nondeterminism in LLM Inference</title>
+    <link href="https://shenh10.github.io/papercache/papers/llm/engineering/inference/2025/09/01/defeating-nondeterminism-in-llm-inference.html" rel="alternate" type="text/html" title="Defeating Nondeterminism in LLM Inference" />
+    <published>2025-09-01T00:00:00+00:00</published>
+    <updated>2025-09-01T00:00:00+00:00</updated>
+    <id>https://shenh10.github.io/papercache/papers/llm/engineering/inference/2025/09/01/defeating-nondeterminism-in-llm-inference.html</id>
+    <content type="html" xml:base="https://shenh10.github.io/papercache/papers/llm/engineering/inference/2025/09/01/defeating-nondeterminism-in-llm-inference.html">
+      <![CDATA[
+
+]]>
+    </content>
+  </entry>
+  
+  <entry>
+    <title type="html">DeepSeek-V3.2-Exp: Boosting Long-Context Efficiency with DeepSeek Sparse Attention</title>
+    <link href="https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/09/01/deepseek-v32-exp-boosting-long-context-efficiency-with-deepseek-sparse-attention.html" rel="alternate" type="text/html" title="DeepSeek-V3.2-Exp: Boosting Long-Context Efficiency with DeepSeek Sparse Attention" />
+    <published>2025-09-01T00:00:00+00:00</published>
+    <updated>2025-09-01T00:00:00+00:00</updated>
+    <id>https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/09/01/deepseek-v32-exp-boosting-long-context-efficiency-with-deepseek-sparse-attention.html</id>
+    <content type="html" xml:base="https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/09/01/deepseek-v32-exp-boosting-long-context-efficiency-with-deepseek-sparse-attention.html">
+      <![CDATA[
+
+]]>
+    </content>
+  </entry>
+  
+  <entry>
+    <title type="html">Categorical Foundations for CuTe Layouts</title>
+    <link href="https://shenh10.github.io/papercache/papers/mlsys/gpu/2025/09/01/categorical-foundations-for-cute-layouts.html" rel="alternate" type="text/html" title="Categorical Foundations for CuTe Layouts" />
+    <published>2025-09-01T00:00:00+00:00</published>
+    <updated>2025-09-01T00:00:00+00:00</updated>
+    <id>https://shenh10.github.io/papercache/papers/mlsys/gpu/2025/09/01/categorical-foundations-for-cute-layouts.html</id>
+    <content type="html" xml:base="https://shenh10.github.io/papercache/papers/mlsys/gpu/2025/09/01/categorical-foundations-for-cute-layouts.html">
       <![CDATA[
 
 ]]>
@@ -71,71 +136,6 @@
     <updated>2025-08-01T00:00:00+00:00</updated>
     <id>https://shenh10.github.io/papercache/papers/llm/algorithm/rl/2025/08/01/on-policy-rl-meets-off-policy-experts-harmonizing-supervised-fine-tuning-and-reinforcement-learning-via-dynamic-weighting.html</id>
     <content type="html" xml:base="https://shenh10.github.io/papercache/papers/llm/algorithm/rl/2025/08/01/on-policy-rl-meets-off-policy-experts-harmonizing-supervised-fine-tuning-and-reinforcement-learning-via-dynamic-weighting.html">
-      <![CDATA[
-
-]]>
-    </content>
-  </entry>
-  
-  <entry>
-    <title type="html">Mixture of Contexts for Long Video Generation</title>
-    <link href="https://shenh10.github.io/papercache/papers/llm/engineering/attention/2025/08/01/mixture-of-contexts-for-long-video-generation.html" rel="alternate" type="text/html" title="Mixture of Contexts for Long Video Generation" />
-    <published>2025-08-01T00:00:00+00:00</published>
-    <updated>2025-08-01T00:00:00+00:00</updated>
-    <id>https://shenh10.github.io/papercache/papers/llm/engineering/attention/2025/08/01/mixture-of-contexts-for-long-video-generation.html</id>
-    <content type="html" xml:base="https://shenh10.github.io/papercache/papers/llm/engineering/attention/2025/08/01/mixture-of-contexts-for-long-video-generation.html">
-      <![CDATA[
-
-]]>
-    </content>
-  </entry>
-  
-  <entry>
-    <title type="html">LongCat-Flash Technical Report</title>
-    <link href="https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/08/01/longcat-flash-technical-report.html" rel="alternate" type="text/html" title="LongCat-Flash Technical Report" />
-    <published>2025-08-01T00:00:00+00:00</published>
-    <updated>2025-08-01T00:00:00+00:00</updated>
-    <id>https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/08/01/longcat-flash-technical-report.html</id>
-    <content type="html" xml:base="https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/08/01/longcat-flash-technical-report.html">
-      <![CDATA[
-
-]]>
-    </content>
-  </entry>
-  
-  <entry>
-    <title type="html">KIMI K2: OPEN AGENTIC INTELLIGENCE</title>
-    <link href="https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/08/01/kimi-k2-open-agentic-intelligence.html" rel="alternate" type="text/html" title="KIMI K2: OPEN AGENTIC INTELLIGENCE" />
-    <published>2025-08-01T00:00:00+00:00</published>
-    <updated>2025-08-01T00:00:00+00:00</updated>
-    <id>https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/08/01/kimi-k2-open-agentic-intelligence.html</id>
-    <content type="html" xml:base="https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/08/01/kimi-k2-open-agentic-intelligence.html">
-      <![CDATA[
-
-]]>
-    </content>
-  </entry>
-  
-  <entry>
-    <title type="html">Step-3 is Large yet Affordable: Model-system Co-design for Cost-effective Decoding</title>
-    <link href="https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/07/01/step-3-is-large-yet-affordable-model-system-co-design-for-cost-effective-decoding.html" rel="alternate" type="text/html" title="Step-3 is Large yet Affordable: Model-system Co-design for Cost-effective Decoding" />
-    <published>2025-07-01T00:00:00+00:00</published>
-    <updated>2025-07-01T00:00:00+00:00</updated>
-    <id>https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/07/01/step-3-is-large-yet-affordable-model-system-co-design-for-cost-effective-decoding.html</id>
-    <content type="html" xml:base="https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/07/01/step-3-is-large-yet-affordable-model-system-co-design-for-cost-effective-decoding.html">
-      <![CDATA[
-
-]]>
-    </content>
-  </entry>
-  
-  <entry>
-    <title type="html">Scale-Up Ethernet Framework Scale-Up Ethernet Framework Specification</title>
-    <link href="https://shenh10.github.io/papercache/papers/mlsys/networking/2025/07/01/scale-up-ethernet-framework-scale-up-ethernet-framework-specification.html" rel="alternate" type="text/html" title="Scale-Up Ethernet Framework Scale-Up Ethernet Framework Specification" />
-    <published>2025-07-01T00:00:00+00:00</published>
-    <updated>2025-07-01T00:00:00+00:00</updated>
-    <id>https://shenh10.github.io/papercache/papers/mlsys/networking/2025/07/01/scale-up-ethernet-framework-scale-up-ethernet-framework-specification.html</id>
-    <content type="html" xml:base="https://shenh10.github.io/papercache/papers/mlsys/networking/2025/07/01/scale-up-ethernet-framework-scale-up-ethernet-framework-specification.html">
       <![CDATA[
 
 ]]>
