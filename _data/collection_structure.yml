@@ -119,6 +119,167 @@ llm:
         title: 'Search-R1: Training LLMs to Reason and Leverage Search Engines with
           Reinforcement Learning'
         url: /papers/llm/algorithm/agent/2025/03/01/search-r1-training-llms-to-reason-and-leverage-search-engines-with-reinforcement-learning.html
+    architecture:
+      attention:
+        linear:
+          posts:
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+            date: '2023-07-01'
+            title: Scaling TransNormer to 175 Billion Parameters
+            url: /papers/llm/algorithm/architecture/attention/linear/2023/07/01/scaling-transnormer-to-175-billion-parameters.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+            date: '2025-01-01'
+            title: 'MiniMax-01: Scaling Foundation Models with Lightning Attention'
+            url: /papers/llm/algorithm/architecture/attention/linear/2025/01/01/minimax-01-scaling-foundation-models-with-lightning-attention.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+            date: '2024-05-01'
+            title: 'Various Lengths, Constant Speed: Efficient Language Modeling with
+              Lightning Attention'
+            url: /papers/llm/algorithm/architecture/attention/linear/2024/05/01/various-lengths-constant-speed-efficient-language-modeling-with-lightning-attention.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+            date: '2022-10-01'
+            title: The Devil in Linear Transformer
+            url: /papers/llm/algorithm/architecture/attention/linear/2022/10/01/the-devil-in-linear-transformer.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+            date: '2024-04-01'
+            title: Linear Attention Sequence Parallelism
+            url: /papers/llm/algorithm/architecture/attention/linear/2024/04/01/linear-attention-sequence-parallelism.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+            date: '2021-06-01'
+            tag: icml21
+            title: Linear Transformers Are Secretly Fast Weight Programmers
+            url: /papers/llm/algorithm/architecture/attention/linear/2021/06/01/linear-transformers-are-secretly-fast-weight-programmers.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+            date: '2021-02-01'
+            tag: iclr21
+            title: LEARNING ASSOCIATIVE INFERENCE USING FAST WEIGHT MEMORY
+            url: /papers/llm/algorithm/architecture/attention/linear/2021/02/01/learning-associative-inference-using-fast-weight-memory.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+            date: '2022-01-01'
+            tag: pmlr22
+            title: Transformer Quality in Linear Time
+            url: /papers/llm/algorithm/architecture/attention/linear/2022/01/01/transformer-quality-in-linear-time.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+            date: '2024-01-01'
+            title: 'Lightning Attention-2: A Free Lunch for Handling Unlimited Sequence
+              Lengths in Large Language Models'
+            url: /papers/llm/algorithm/architecture/attention/linear/2024/01/01/lightning-attention-2-a-free-lunch-for-handling-unlimited-sequence-lengths-in-large-language-models.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+            date: '2023-12-01'
+            title: Gated Linear Attention Transformers with Hardware-Efficient Training
+            url: /papers/llm/algorithm/architecture/attention/linear/2023/12/01/gated-linear-attention-transformers-with-hardware-efficient-training.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+            date: '2020-06-01'
+            tag: icml20
+            title: 'Transformers are RNNs: Fast Autoregressive Transformers with Linear
+              Attention'
+            url: /papers/llm/algorithm/architecture/attention/linear/2020/06/01/transformers-are-rnns-fast-autoregressive-transformers-with-linear-attention.html
+        sparsity:
+          posts:
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            date: '2025-02-01'
+            title: 'MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/moba-mixture-of-block-attention-for-long-context-llms.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            date: '2025-02-01'
+            title: 'Native Sparse Attention: Hardware-Aligned and Natively Trainable
+              Sparse Attention'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/native-sparse-attention-hardware-aligned-and-natively-trainable-sparse-attention.html
+        ssm:
+          posts:
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+            date: '2024-03-01'
+            title: 'Jamba: A Hybrid Transformer-Mamba Language Model'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2024/03/01/jamba-a-hybrid-transformer-mamba-language-model.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+            date: '2023-12-01'
+            title: 'Mamba: Linear-Time Sequence Modeling with Selective State Spaces'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2023/12/01/mamba-linear-time-sequence-modeling-with-selective-state-spaces.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+            date: '2024-05-01'
+            title: 'Transformers are SSMs: Generalized Models and Efficient Algorithms
+              Through Structured State Space Duality'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2024/05/01/transformers-are-ssms-generalized-models-and-efficient-algorithms-through-structured-state-space-duality.html
     models:
       posts:
       - categories:
@@ -195,6 +356,20 @@ llm:
         title: 'Gemini 1.5: Unlocking multimodal understanding across millions of
           tokens of context'
         url: /papers/llm/algorithm/models/2024/03/01/gemini-15-unlocking-multimodal-understanding-across-millions-of-tokens-of-context.html
+      - categories:
+        - llm
+        - algorithm
+        - models
+        date: '2024-07-01'
+        title: The Llama 3 Herd of Models
+        url: /papers/llm/algorithm/models/2024/07/01/the-llama-3-herd-of-models.html
+      - categories:
+        - llm
+        - algorithm
+        - models
+        date: '2023-02-01'
+        title: 'LLaMA: Open and Efficient Foundation Language Models'
+        url: /papers/llm/algorithm/models/2023/02/01/llama-open-and-efficient-foundation-language-models.html
       - categories:
         - llm
         - algorithm
@@ -454,6 +629,15 @@ llm:
         - llm
         - engineering
         - attention
+        date: '2023-09-01'
+        tag: podc23
+        title: 'DEEPSPEED ULYSSES: SYSTEM OPTIMIZATIONS FOR ENABLING TRAINING OF EXTREME
+          LONG SEQUENCE TRANSFORMER MODELS'
+        url: /papers/llm/engineering/attention/2023/09/01/deepspeed-ulysses-system-optimizations-for-enabling-training-of-extreme-long-sequence-transformer-models.html
+      - categories:
+        - llm
+        - engineering
+        - attention
         date: '2025-05-01'
         title: 'SageAttention3: Microscaling FP4 Attention for Inference and An Exploration
           of 8-bit Training'
@@ -471,13 +655,6 @@ llm:
         - llm
         - engineering
         - attention
-        date: '2025-01-01'
-        title: 'MiniMax-01: Scaling Foundation Models with Lightning Attention'
-        url: /papers/llm/engineering/attention/2025/01/01/minimax-01-scaling-foundation-models-with-lightning-attention.html
-      - categories:
-        - llm
-        - engineering
-        - attention
         date: '2025-05-01'
         title: 'FlashMLA-ETAP: Efficient Transpose Attention Pipeline for Accelerating
           MLA Inference on NVIDIA H20 GPUs'
@@ -486,9 +663,10 @@ llm:
         - llm
         - engineering
         - attention
-        date: '2022-10-01'
-        title: The Devil in Linear Transformer
-        url: /papers/llm/engineering/attention/2022/10/01/the-devil-in-linear-transformer.html
+        date: '2024-12-01'
+        tag: iclr25
+        title: 'GATED DELTA NETWORKS: IMPROVING MAMBA2 WITH DELTA RULE'
+        url: /papers/llm/engineering/attention/2024/12/01/gated-delta-networks-improving-mamba2-with-delta-rule.html
       - categories:
         - llm
         - engineering
@@ -509,9 +687,17 @@ llm:
         - llm
         - engineering
         - attention
-        date: '2025-02-01'
-        title: 'MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS'
-        url: /papers/llm/engineering/attention/2025/02/01/moba-mixture-of-block-attention-for-long-context-llms.html
+        date: '2023-10-01'
+        title: Ring Attention with Blockwise Transformers for Near-Infinite Context
+        url: /papers/llm/engineering/attention/2023/10/01/ring-attention-with-blockwise-transformers-for-near-infinite-context.html
+      - categories:
+        - llm
+        - engineering
+        - attention
+        date: '2024-07-01'
+        title: 'USP: A Unified Sequence Parallelism Approach for Long Context Generative
+          AI'
+        url: /papers/llm/engineering/attention/2024/07/01/usp-a-unified-sequence-parallelism-approach-for-long-context-generative-ai.html
       - categories:
         - llm
         - engineering
@@ -562,33 +748,10 @@ llm:
         - llm
         - engineering
         - attention
-        date: '2024-03-01'
-        title: 'Jamba: A Hybrid Transformer-Mamba Language Model'
-        url: /papers/llm/engineering/attention/2024/03/01/jamba-a-hybrid-transformer-mamba-language-model.html
-      - categories:
-        - llm
-        - engineering
-        - attention
-        date: '2020-06-01'
-        tag: icml20
-        title: 'Transformers are RNNs: Fast Autoregressive Transformers with Linear
-          Attention'
-        url: /papers/llm/engineering/attention/2020/06/01/transformers-are-rnns-fast-autoregressive-transformers-with-linear-attention.html
-      - categories:
-        - llm
-        - engineering
-        - attention
-        date: '2023-12-01'
-        title: 'Mamba: Linear-Time Sequence Modeling with Selective State Spaces'
-        url: /papers/llm/engineering/attention/2023/12/01/mamba-linear-time-sequence-modeling-with-selective-state-spaces.html
-      - categories:
-        - llm
-        - engineering
-        - attention
-        date: '2025-02-01'
-        title: 'Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse
-          Attention'
-        url: /papers/llm/engineering/attention/2025/02/01/native-sparse-attention-hardware-aligned-and-natively-trainable-sparse-attention.html
+        date: '2025-06-01'
+        title: 'Gated Attention for Large Language Models: Non-linearity, Sparsity,
+          and Attention-Sink-Free'
+        url: /papers/llm/engineering/attention/2025/06/01/gated-attention-for-large-language-models-non-linearity-sparsity-and-attention-sink-free.html
     compiler:
       posts:
       - categories:
@@ -881,6 +1044,14 @@ llm:
         date: '2023-11-01'
         title: 'STRIPED ATTENTION: FASTER RING ATTENTION FOR CAUSAL TRANSFORMERS'
         url: /papers/llm/engineering/inference/2023/11/01/striped-attention-faster-ring-attention-for-causal-transformers.html
+      - categories:
+        - llm
+        - engineering
+        - inference
+        date: '2024-09-01'
+        title: 'Mnemosyne: Parallelization Strategies for Efficiently Serving Multi-Million
+          Context Length LLM Inference Requests Without Approximations'
+        url: /papers/llm/engineering/inference/2024/09/01/mnemosyne-parallelization-strategies-for-efficiently-serving-multi-million-context-length-llm-inference-requests-without-approximations.html
       - categories:
         - llm
         - engineering
