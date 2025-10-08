@@ -102,6 +102,21 @@ if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNo
             
             
             
+              <!-- 这是四级分类的容器，需要进一步嵌套 -->
+              <div class="sub-sub-category">
+                <a href="#llm-algorithm-architecture" class="sub-sub-category-title">Architecture</a>
+                
+                  
+                  
+                  
+                
+              </div>
+            
+          
+            
+            
+            
+            
               <!-- 这是纯三级分类，直接显示链接 -->
               <div class="sub-sub-category">
                 <a href="#llm-algorithm-models">Models</a>
@@ -344,7 +359,7 @@ if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNo
   <h1 class="page-title collection-page-title">论文合集</h1>
 
   <div class="paper-count-badge">
-    收录论文总数：<strong>250</strong> 篇
+    收录论文总数：<strong>267</strong> 篇
   </div>
 
   <p>在这里，您可以找到所有论文的完整分类列表。</p>
@@ -359,7 +374,7 @@ if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNo
   
   <div class="tag-filter-buttons">
     <button class="tag-filter-btn tag-filter-all active" data-tag="all">
-      全部 (<span id="total-posts">250</span>)
+      全部 (<span id="total-posts">267</span>)
     </button>
     <div id="tag-buttons-container">
       <!-- 标签按钮将通过JavaScript动态生成 -->
@@ -453,6 +468,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <!-- 检查二级分类是否有直接的文章 -->
     
+    
+      
+      
+      
     
       
       
@@ -624,6 +643,22 @@ document.addEventListener('DOMContentLoaded', function() {
       
 
       
+        <!-- 这是四级分类的容器，需要进一步嵌套 -->
+        <h4 class="sub-subcategory-title" id="llm-algorithm-architecture">Architecture</h4>
+        
+          
+          
+          
+        
+        
+        <!-- 显示直接的文章（如果有的话） -->
+        
+      
+      
+      
+      
+
+      
         <!-- 这是纯三级分类，直接显示文章 -->
         <h4 class="sub-subcategory-title" id="llm-algorithm-models">Models</h4>
         <ul class="post-list-with-tags">
@@ -701,6 +736,14 @@ document.addEventListener('DOMContentLoaded', function() {
           </a>
         </li>
         
+        <li class="post-item" data-post-url="/papercache/papers/llm/algorithm/models/2024/07/01/the-llama-3-herd-of-models.html">
+          <span class="post-meta">2024-07</span>
+          
+          <a class="post-link" href="/papercache/papers/llm/algorithm/models/2024/07/01/the-llama-3-herd-of-models.html" data-post-title="The Llama 3 Herd of Models">
+            The Llama 3 Herd of Models
+          </a>
+        </li>
+        
         <li class="post-item" data-post-url="/papercache/papers/llm/algorithm/models/2024/03/01/gemini-15-unlocking-multimodal-understanding-across-millions-of-tokens-of-context.html">
           <span class="post-meta">2024-03</span>
           
@@ -722,6 +765,14 @@ document.addEventListener('DOMContentLoaded', function() {
           
           <a class="post-link" href="/papercache/papers/llm/algorithm/models/2023/07/01/llama-2-open-foundation-and-fine-tuned-chat-models.html" data-post-title="Llama 2: Open Foundation and Fine-Tuned Chat Models">
             Llama 2: Open Foundation and Fine-Tuned Chat Models
+          </a>
+        </li>
+        
+        <li class="post-item" data-post-url="/papercache/papers/llm/algorithm/models/2023/02/01/llama-open-and-efficient-foundation-language-models.html">
+          <span class="post-meta">2023-02</span>
+          
+          <a class="post-link" href="/papercache/papers/llm/algorithm/models/2023/02/01/llama-open-and-efficient-foundation-language-models.html" data-post-title="LLaMA: Open and Efficient Foundation Language Models">
+            LLaMA: Open and Efficient Foundation Language Models
           </a>
         </li>
         
@@ -1053,6 +1104,14 @@ document.addEventListener('DOMContentLoaded', function() {
           </a>
         </li>
         
+        <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2025/06/01/gated-attention-for-large-language-models-non-linearity-sparsity-and-attention-sink-free.html">
+          <span class="post-meta">2025-06</span>
+          
+          <a class="post-link" href="/papercache/papers/llm/engineering/attention/2025/06/01/gated-attention-for-large-language-models-non-linearity-sparsity-and-attention-sink-free.html" data-post-title="Gated Attention for Large Language Models: Non-linearity, Sparsity, and Attention-Sink-Free">
+            Gated Attention for Large Language Models: Non-linearity, Sparsity, and Attention-Sink-Free
+          </a>
+        </li>
+        
         <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2025/05/01/flashmla-etap-efficient-transpose-attention-pipeline-for-accelerating-mla-inference-on-nvidia-h20-gpus.html">
           <span class="post-meta">2025-05</span>
           
@@ -1069,22 +1128,6 @@ document.addEventListener('DOMContentLoaded', function() {
           </a>
         </li>
         
-        <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2025/02/01/native-sparse-attention-hardware-aligned-and-natively-trainable-sparse-attention.html">
-          <span class="post-meta">2025-02</span>
-          
-          <a class="post-link" href="/papercache/papers/llm/engineering/attention/2025/02/01/native-sparse-attention-hardware-aligned-and-natively-trainable-sparse-attention.html" data-post-title="Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention">
-            Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention
-          </a>
-        </li>
-        
-        <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2025/02/01/moba-mixture-of-block-attention-for-long-context-llms.html">
-          <span class="post-meta">2025-02</span>
-          
-          <a class="post-link" href="/papercache/papers/llm/engineering/attention/2025/02/01/moba-mixture-of-block-attention-for-long-context-llms.html" data-post-title="MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS">
-            MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS
-          </a>
-        </li>
-        
         <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2025/02/01/tree-attention-topology-aware-decoding-for-long-context-attention-on-gpu-clusters.html">
           <span class="post-meta">2025-02</span>
           
@@ -1093,11 +1136,13 @@ document.addEventListener('DOMContentLoaded', function() {
           </a>
         </li>
         
-        <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2025/01/01/minimax-01-scaling-foundation-models-with-lightning-attention.html">
-          <span class="post-meta">2025-01</span>
+        <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2024/12/01/gated-delta-networks-improving-mamba2-with-delta-rule.html">
+          <span class="post-meta">2024-12</span>
           
-          <a class="post-link" href="/papercache/papers/llm/engineering/attention/2025/01/01/minimax-01-scaling-foundation-models-with-lightning-attention.html" data-post-title="MiniMax-01: Scaling Foundation Models with Lightning Attention">
-            MiniMax-01: Scaling Foundation Models with Lightning Attention
+          <span class="subcategory-tag tag-iclr25">iclr25</span>
+          
+          <a class="post-link" href="/papercache/papers/llm/engineering/attention/2024/12/01/gated-delta-networks-improving-mamba2-with-delta-rule.html" data-post-title="GATED DELTA NETWORKS: IMPROVING MAMBA2 WITH DELTA RULE">
+            GATED DELTA NETWORKS: IMPROVING MAMBA2 WITH DELTA RULE
           </a>
         </li>
         
@@ -1106,6 +1151,14 @@ document.addEventListener('DOMContentLoaded', function() {
           
           <a class="post-link" href="/papercache/papers/llm/engineering/attention/2024/10/01/sageattention-accurate-8-bit-attention-for-plug-and-play-inference-acceleration.html" data-post-title="SAGEATTENTION: ACCURATE 8-BIT ATTENTION FOR PLUG-AND-PLAY INFERENCE ACCELERATION">
             SAGEATTENTION: ACCURATE 8-BIT ATTENTION FOR PLUG-AND-PLAY INFERENCE ACCELERATION
+          </a>
+        </li>
+        
+        <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2024/07/01/usp-a-unified-sequence-parallelism-approach-for-long-context-generative-ai.html">
+          <span class="post-meta">2024-07</span>
+          
+          <a class="post-link" href="/papercache/papers/llm/engineering/attention/2024/07/01/usp-a-unified-sequence-parallelism-approach-for-long-context-generative-ai.html" data-post-title="USP: A Unified Sequence Parallelism Approach for Long Context Generative AI">
+            USP: A Unified Sequence Parallelism Approach for Long Context Generative AI
           </a>
         </li>
         
@@ -1127,27 +1180,29 @@ document.addEventListener('DOMContentLoaded', function() {
           </a>
         </li>
         
-        <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2024/03/01/jamba-a-hybrid-transformer-mamba-language-model.html">
-          <span class="post-meta">2024-03</span>
-          
-          <a class="post-link" href="/papercache/papers/llm/engineering/attention/2024/03/01/jamba-a-hybrid-transformer-mamba-language-model.html" data-post-title="Jamba: A Hybrid Transformer-Mamba Language Model">
-            Jamba: A Hybrid Transformer-Mamba Language Model
-          </a>
-        </li>
-        
-        <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2023/12/01/mamba-linear-time-sequence-modeling-with-selective-state-spaces.html">
-          <span class="post-meta">2023-12</span>
-          
-          <a class="post-link" href="/papercache/papers/llm/engineering/attention/2023/12/01/mamba-linear-time-sequence-modeling-with-selective-state-spaces.html" data-post-title="Mamba: Linear-Time Sequence Modeling with Selective State Spaces">
-            Mamba: Linear-Time Sequence Modeling with Selective State Spaces
-          </a>
-        </li>
-        
         <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2023/12/01/gqa-training-generalized-multi-query-transformer-models-from-multi-head-checkpoints.html">
           <span class="post-meta">2023-12</span>
           
           <a class="post-link" href="/papercache/papers/llm/engineering/attention/2023/12/01/gqa-training-generalized-multi-query-transformer-models-from-multi-head-checkpoints.html" data-post-title="GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints">
             GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints
+          </a>
+        </li>
+        
+        <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2023/10/01/ring-attention-with-blockwise-transformers-for-near-infinite-context.html">
+          <span class="post-meta">2023-10</span>
+          
+          <a class="post-link" href="/papercache/papers/llm/engineering/attention/2023/10/01/ring-attention-with-blockwise-transformers-for-near-infinite-context.html" data-post-title="Ring Attention with Blockwise Transformers for Near-Infinite Context">
+            Ring Attention with Blockwise Transformers for Near-Infinite Context
+          </a>
+        </li>
+        
+        <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2023/09/01/deepspeed-ulysses-system-optimizations-for-enabling-training-of-extreme-long-sequence-transformer-models.html">
+          <span class="post-meta">2023-09</span>
+          
+          <span class="subcategory-tag tag-podc23">podc23</span>
+          
+          <a class="post-link" href="/papercache/papers/llm/engineering/attention/2023/09/01/deepspeed-ulysses-system-optimizations-for-enabling-training-of-extreme-long-sequence-transformer-models.html" data-post-title="DEEPSPEED ULYSSES: SYSTEM OPTIMIZATIONS FOR ENABLING TRAINING OF EXTREME LONG SEQUENCE TRANSFORMER MODELS">
+            DEEPSPEED ULYSSES: SYSTEM OPTIMIZATIONS FOR ENABLING TRAINING OF EXTREME LONG SEQUENCE TRANSFORMER MODELS
           </a>
         </li>
         
@@ -1159,14 +1214,6 @@ document.addEventListener('DOMContentLoaded', function() {
           </a>
         </li>
         
-        <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2022/10/01/the-devil-in-linear-transformer.html">
-          <span class="post-meta">2022-10</span>
-          
-          <a class="post-link" href="/papercache/papers/llm/engineering/attention/2022/10/01/the-devil-in-linear-transformer.html" data-post-title="The Devil in Linear Transformer">
-            The Devil in Linear Transformer
-          </a>
-        </li>
-        
         <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2022/07/01/flashattention-fast-and-memory-efficient-exact-attention-with-io-awareness.html">
           <span class="post-meta">2022-07</span>
           
@@ -1174,16 +1221,6 @@ document.addEventListener('DOMContentLoaded', function() {
           
           <a class="post-link" href="/papercache/papers/llm/engineering/attention/2022/07/01/flashattention-fast-and-memory-efficient-exact-attention-with-io-awareness.html" data-post-title="FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness">
             FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness
-          </a>
-        </li>
-        
-        <li class="post-item" data-post-url="/papercache/papers/llm/engineering/attention/2020/06/01/transformers-are-rnns-fast-autoregressive-transformers-with-linear-attention.html">
-          <span class="post-meta">2020-06</span>
-          
-          <span class="subcategory-tag tag-icml20">icml20</span>
-          
-          <a class="post-link" href="/papercache/papers/llm/engineering/attention/2020/06/01/transformers-are-rnns-fast-autoregressive-transformers-with-linear-attention.html" data-post-title="Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention">
-            Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention
           </a>
         </li>
         
@@ -1703,6 +1740,14 @@ document.addEventListener('DOMContentLoaded', function() {
           
           <a class="post-link" href="/papercache/papers/llm/engineering/inference/2025/01/01/weaver-efficient-multi-llm-serving-with-attention-offloading.html" data-post-title="Weaver: Efficient Multi-LLM Serving with Attention Offloading">
             Weaver: Efficient Multi-LLM Serving with Attention Offloading
+          </a>
+        </li>
+        
+        <li class="post-item" data-post-url="/papercache/papers/llm/engineering/inference/2024/09/01/mnemosyne-parallelization-strategies-for-efficiently-serving-multi-million-context-length-llm-inference-requests-without-approximations.html">
+          <span class="post-meta">2024-09</span>
+          
+          <a class="post-link" href="/papercache/papers/llm/engineering/inference/2024/09/01/mnemosyne-parallelization-strategies-for-efficiently-serving-multi-million-context-length-llm-inference-requests-without-approximations.html" data-post-title="Mnemosyne: Parallelization Strategies for Efficiently Serving Multi-Million Context Length LLM Inference Requests Without Approximations">
+            Mnemosyne: Parallelization Strategies for Efficiently Serving Multi-Million Context Length LLM Inference Requests Without Approximations
           </a>
         </li>
         
