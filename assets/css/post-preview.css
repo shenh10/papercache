@@ -174,3 +174,48 @@
   }
 }
 
+/* ===================== */
+/* 分类页层次可视化样式  */
+/* ===================== */
+
+.collection-page .main-category-title {
+  margin-top: 2rem;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: .25rem;
+}
+
+.collection-page .subcategory-title {
+  margin-top: 1rem;
+  color: #374151;
+  padding-left: .25rem;
+  border-left: 3px solid #e5e7eb;
+}
+
+.collection-page .sub-subcategory-title {
+  margin-top: .75rem;
+  color: #4b5563;
+  padding-left: .5rem;
+  border-left: 3px dashed #e5e7eb;
+}
+
+.collection-page .fourth-level-title {
+  margin-top: .5rem;
+  color: #6b7280;
+  padding-left: .75rem;
+  border-left: 2px dotted #e5e7eb;
+}
+
+.collection-page .category-section { margin-bottom: 1.5rem; }
+.collection-page .sub-category { margin-left: 8px; padding-left: 8px; border-left: 2px solid #f3f4f6; }
+.collection-page .sub-sub-category { margin-left: 16px; padding-left: 8px; border-left: 1px dashed #e5e7eb; }
+.collection-page .fourth-level-category { margin-left: 24px; }
+
+.post-list-with-tags { list-style: none; padding-left: 0; }
+.post-list-with-tags .post-item { padding: 4px 6px; }
+
+/* 侧边栏层次样式 */
+.sidebar-nav .main-category { margin-top: 1rem; font-weight: 700; }
+.sidebar-nav .sub-category-title { margin-top: .5rem; font-weight: 600; padding-left: .25rem; border-left: 3px solid #e5e7eb; }
+.sidebar-nav .sub-sub-category-title { margin-top: .25rem; font-weight: 500; padding-left: .5rem; border-left: 3px dashed #e5e7eb; }
+.sidebar-nav .fourth-level-category { margin-top: .125rem; padding-left: .75rem; }
+
