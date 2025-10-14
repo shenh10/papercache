@@ -133,14 +133,155 @@
   padding-right: 0;
 }
 
-/* Category Section Styles */
-.category-section {
-  margin-bottom: 25px;
-  padding: 15px;
-  background: #f8f9fa;
+/* 主分类折叠区域 */
+.main-category-section {
+  margin-bottom: 48px;
+  border: none;
+  background: transparent;
+}
+
+.main-category-summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 16px 0;
+  border-bottom: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.main-category-summary::-webkit-details-marker {
+  display: none;
+}
+
+.main-category-summary::after {
+  content: '›';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  font-size: 24px;
+  color: #a0aec0;
+  transition: all 0.3s ease;
+  font-weight: bold;
+}
+
+.main-category-section[open] > .main-category-summary::after {
+  transform: translateY(-50%) rotate(270deg);
+  color: #667eea;
+}
+
+.main-category-summary:hover {
+  border-bottom-color: rgba(102, 126, 234, 0.3);
+}
+
+.main-category-content {
+  padding-top: 24px;
+}
+
+/* 面包屑路径样式 */
+.breadcrumb-path {
+  font-size: 14px;
+  color: #718096;
+  margin-bottom: 16px;
+  padding: 8px 0;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.breadcrumb-path::before {
+  content: '📁';
+  margin-right: 8px;
+}
+
+/* 分类锚点 - 为侧边栏导航提供跳转目标 */
+.category-anchor {
+  position: relative;
+  top: -80px;  /* 偏移以避免被header遮挡 */
+  visibility: hidden;
+}
+
+/* Post Section */
+.post-section {
+  margin-bottom: 40px;
+}
+
+/* Details 元素层级样式 - 极简设计，用颜色深浅表达层级 */
+details.cat-node {
+  margin: 8px 0;
+  transition: all 0.2s ease;
+  position: relative;
+  background: transparent;
+}
+
+details.cat-node > summary {
+  cursor: pointer;
+  padding: 10px 16px;
   border-radius: 8px;
-  border-left: 4px solid #007bff;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: all 0.2s ease;
+  list-style: none;
+  user-select: none;
+  position: relative;
+  background: transparent;
+}
+
+details.cat-node > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* 展开/折叠指示器 - 简洁的箭头 */
+details.cat-node > summary::after {
+  content: '›';
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%) rotate(90deg);
+  font-size: 18px;
+  color: #a0aec0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: bold;
+}
+
+details.cat-node[open] > summary::after {
+  transform: translateY(-50%) rotate(270deg);
+  color: #667eea;
+}
+
+details.cat-node > summary:hover {
+  background-color: rgba(102, 126, 234, 0.06);
+}
+
+details.cat-node > summary:hover::after {
+  color: #667eea;
+}
+
+/* 层级区分 - 使用缩进和左边框 */
+details.depth-1 {
+  margin-left: 0;
+  margin-bottom: 28px;
+}
+
+details.depth-2 {
+  margin-left: 0;
+  margin-bottom: 20px;
+  border-left: 3px solid rgba(102, 126, 234, 0.15);
+  padding-left: 12px;
+}
+
+details.depth-3 {
+  margin-left: 16px;
+  margin-bottom: 16px;
+  border-left: 2px solid rgba(102, 126, 234, 0.1);
+  padding-left: 12px;
+}
+
+details.depth-4 {
+  margin-left: 24px;
+  margin-bottom: 12px;
+}
+
+details.depth-5 {
+  margin-left: 32px;
+  margin-bottom: 8px;
 }
 
 .main-category {
@@ -163,88 +304,102 @@
   text-decoration: none;
 }
 
+/* 侧边栏层级样式 - 现代简洁设计，用颜色深浅表达层级 */
 .sub-category {
-  margin-bottom: 15px;
-  padding-left: 10px;
+  margin-bottom: 16px;
+  padding-left: 8px;
+  border-left: 2px solid transparent;
+  transition: border-color 0.3s ease;
+}
+
+.sub-category:hover {
+  border-left-color: rgba(102, 126, 234, 0.3);
 }
 
 .sub-category-title {
-  margin: 0 0 8px 0;
+  margin: 0 0 10px 0;
   font-size: 14px;
   font-weight: 600;
-  color: #555;
+  color: #2d3748;
   text-transform: capitalize;
 }
 
 .sub-category-title a {
-  color: #555;
+  color: #2d3748;
   text-decoration: none;
   transition: all 0.2s ease;
+  display: block;
+  padding: 4px 8px;
+  border-radius: 6px;
 }
 
 .sub-category-title a:hover {
-  color: #007bff;
+  color: #667eea;
+  background-color: rgba(102, 126, 234, 0.08);
   text-decoration: none;
 }
 
 .sub-sub-category {
-  margin-bottom: 5px;
-  padding-left: 15px;
+  margin-bottom: 6px;
+  padding-left: 16px;
 }
 
 .sub-sub-category a {
   display: block;
-  padding: 6px 10px;
-  color: #666;
+  padding: 5px 10px;
+  color: #4a5568;
   text-decoration: none;
   font-size: 13px;
   transition: all 0.2s ease;
-  border-radius: 4px;
+  border-radius: 5px;
   background: transparent;
 }
 
 .sub-sub-category a:hover {
-  color: #007bff;
-  background-color: #e3f2fd;
-  transform: translateX(5px);
+  color: #667eea;
+  background-color: rgba(102, 126, 234, 0.08);
   text-decoration: none;
+  padding-left: 14px;
 }
 
 .fourth-level-category {
-  margin-bottom: 3px;
-  padding-left: 25px;
+  margin-bottom: 4px;
+  padding-left: 28px;
 }
 
 .fourth-level-category a {
   display: block;
   padding: 4px 8px;
-  color: #777;
+  color: #718096;
   text-decoration: none;
   font-size: 12px;
   transition: all 0.2s ease;
-  border-radius: 3px;
+  border-radius: 4px;
   background: transparent;
 }
 
 .fourth-level-category a:hover {
-  color: #007bff;
-  background-color: #f0f8ff;
-  transform: translateX(3px);
+  color: #667eea;
+  background-color: rgba(102, 126, 234, 0.08);
   text-decoration: none;
+  padding-left: 12px;
 }
 
 .sub-sub-category-title {
   display: block;
   font-weight: 600;
-  color: #555;
-  margin-bottom: 5px;
+  color: #4a5568;
+  margin-bottom: 6px;
   font-size: 13px;
+  padding: 5px 10px;
   text-decoration: none;
   transition: all 0.2s ease;
+  border-radius: 5px;
 }
 
 .sub-sub-category-title:hover {
-  color: #007bff;
+  color: #667eea;
+  background-color: rgba(102, 126, 234, 0.08);
   text-decoration: none;
 }
 
@@ -260,6 +415,29 @@
   padding-bottom: 12px;
   border-bottom: 1px solid #f0f0f0;
 }
+
+/* 卡片样式优化 - tag和日期同行 */
+.post-card-meta {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.post-card-tag {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  margin-left: auto !important;
+}
+
+/* Arxiv标签特殊样式 - 绿色渐变 */
+.tag-arxiv { 
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3) !important;
+  color: white !important;
+}
+
 .post-list-with-tags .post-meta {
   width: 100px;
   flex-shrink: 0;
@@ -418,41 +596,38 @@
   border-radius: 0;
 }
 
-/* Main Category Title */
+/* 现代化标题样式 - 去掉生硬的线条 */
 .main-category-title {
-  margin-top: 2.5em;
+  margin: 1.5em 0 1em 0;
   font-size: 1.8em;
-  color: #111;
-  padding-bottom: 0.5em;
-  border-bottom: 3px solid #333;
+  color: #1a202c;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
-/* Subcategory Title */
+/* Subcategory Title - 简洁优雅 */
 .subcategory-title {
-  margin: 2em 0 1em 0;
+  margin: 1.5em 0 1em 0;
   font-size: 1.4em;
-  color: #333;
-  padding-bottom: 0.3em;
-  border-bottom: 2px solid #007bff;
+  color: #2d3748;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
-/* Sub-subcategory Title */
+/* Sub-subcategory Title - 层级用缩进和字体大小表达 */
 .sub-subcategory-title {
-  margin: 1.5em 0 0.8em 0;
-  font-size: 1.2em;
-  color: #555;
-  padding-bottom: 0.2em;
-  border-bottom: 1px solid #ddd;
+  margin: 1em 0 0.8em 0;
+  font-size: 1.1em;
+  color: #4a5568;
+  font-weight: 600;
 }
 
-/* Fourth Level Title */
+/* Fourth Level Title - 更柔和的层级表达 */
 .fourth-level-title {
-  margin: 15px 0 8px 20px;
+  margin: 0.8em 0 0.6em 0;
   font-size: 1em;
   font-weight: 500;
-  color: #555;
-  border-left: 3px solid #28a745;
-  padding-left: 10px;
+  color: #718096;
 }
 
 /* QR Code Hover Effect */
@@ -586,4 +761,80 @@
   .contact-list {
     grid-template-columns: 1fr;
   }
+}
+
+/* 现代化Tag Filter样式 */
+.tag-filter-container {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 16px;
+  padding: 24px;
+  margin: 2em 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e9ecef;
+}
+
+.tag-filter-title {
+  margin: 0 0 16px 0;
+  font-size: 1.3em;
+  font-weight: 600;
+  color: #2d3748;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tag-stats {
+  margin-bottom: 20px;
+  color: #718096;
+  font-size: 0.95em;
+}
+
+.tag-stats strong {
+  color: #667eea;
+  font-size: 1.2em;
+}
+
+.tag-filter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tag-filter-btn {
+  background: white;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 24px;
+  padding: 8px 18px;
+  font-size: 0.9em;
+  font-weight: 500;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tag-filter-btn:hover {
+  background: #f7fafc;
+  border-color: #667eea;
+  color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.tag-filter-btn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.tag-filter-btn-count {
+  opacity: 0.7;
+  font-size: 0.9em;
+}
+
+.tag-filter-btn.active .tag-filter-btn-count {
+  opacity: 0.9;
 }

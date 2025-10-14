@@ -1,0 +1,92 @@
+{%- comment -%}
+优化的递归渲染逻辑：
+- 正确处理多层级嵌套
+- 同级目录在同一层级渲染
+- 避免不必要的递归调用
+- 直接使用include.depth避免变量污染
+{%- endcomment -%}
+
+{%- for pair in include.node -%}
+  {%- assign key = pair[0] -%}
+  {%- assign val = pair[1] -%}
+  
+  {%- comment -%} 跳过posts键，它不是分类节点 {%- endcomment -%}
+  {%- if key != 'posts' -%}
+    {%- comment -%} 生成节点ID {%- endcomment -%}
+    {%- if include.path_id == '' or include.path_id == blank -%}
+      {%- assign current_node_id = key | slugify -%}
+    {%- else -%}
+      {%- assign current_node_id = include.path_id | append: '-' | append: key | slugify -%}
+    {%- endif -%}
+    
+    {%- comment -%} 根据层级创建对应的details元素 - 直接使用include.depth {%- endcomment -%}
+    {%- if include.depth == 1 -%}
+    <details class="category-section cat-node depth-1" open>
+    {%- elsif include.depth == 2 -%}
+    <details class="sub-category cat-node depth-2" open>
+    {%- elsif include.depth == 3 -%}
+    <details class="sub-sub-category cat-node depth-3" open>
+    {%- else -%}
+    <details class="fourth-level-category cat-node depth-{{ include.depth }}" open>
+    {%- endif -%}
+      <summary>
+        {%- if include.depth == 1 -%}
+        <h2 class="main-category-title" id="{{ current_node_id }}">{{ key | upcase }}</h2>
+        {%- elsif include.depth == 2 -%}
+        <h3 class="subcategory-title" id="{{ current_node_id }}">{{ key | capitalize }}</h3>
+        {%- elsif include.depth == 3 -%}
+        <h4 class="sub-subcategory-title" id="{{ current_node_id }}">{{ key | replace: '_', ' ' | capitalize }}</h4>
+        {%- else -%}
+        <h5 class="fourth-level-title" id="{{ current_node_id }}">{{ key | replace: '_', ' ' | capitalize }}</h5>
+        {%- endif -%}
+      </summary>
+      
+      {%- comment -%} 渲染当前节点的posts列表 {%- endcomment -%}
+      {%- if val.posts -%}
+      <ul class="post-list-with-tags post-grid">
+        {%- assign sorted = val.posts | sort: 'date' -%}
+        {%- for p in sorted reversed -%}
+        <li class="post-item post-card" data-post-url="{{ site.baseurl }}{{ p.url }}">
+          {%- if p.tag -%}
+          <span class="post-card-tag subcategory-tag tag-{{ p.tag | downcase | replace: ' ', '_' | replace: '-', '_' }}">{{ p.tag }}</span>
+          {%- endif -%}
+          <a class="post-card-link" href="{{ site.baseurl }}{{ p.url }}" data-post-title="{{ p.title | escape }}">
+            {%- assign thumb = p.thumbnail | default: p.image | default: p.cover -%}
+            {%- if thumb -%}
+            <div class="post-card-thumb">
+              <img loading="lazy" src="{{ thumb | relative_url }}" alt="thumbnail of {{ p.title | escape }}">
+            </div>
+            {%- endif -%}
+            <div class="post-card-body">
+              <div class="post-card-meta">
+                <span class="post-meta">{{ p.date | date: "%Y-%m" }}</span>
+              </div>
+              <div class="post-card-title">{{ p.title | escape }}</div>
+              {%- assign exc = p.excerpt | default: p.description | default: p.summary -%}
+              {%- if exc -%}
+              <p class="post-card-excerpt">{{ exc | strip_html | truncate: 160 }}</p>
+              {%- endif -%}
+            </div>
+          </a>
+        </li>
+        {%- endfor -%}
+      </ul>
+      {%- endif -%}
+      
+      {%- comment -%} 检查是否有子分类节点（除了posts），如果有则递归渲染 {%- endcomment -%}
+      {%- assign has_subcategories = false -%}
+      {%- for subpair in val -%}
+        {%- assign subkey = subpair[0] -%}
+        {%- if subkey != 'posts' -%}
+          {%- assign has_subcategories = true -%}
+          {%- break -%}
+        {%- endif -%}
+      {%- endfor -%}
+      
+      {%- if has_subcategories -%}
+        {%- assign next_depth = include.depth | plus: 1 -%}
+        {%- include render-category.html node=val depth=next_depth path_id=current_node_id -%}
+      {%- endif -%}
+    </details>
+  {%- endif -%}
+{%- endfor -%}

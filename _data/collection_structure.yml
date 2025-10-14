@@ -256,6 +256,15 @@ llm:
             - architecture
             - attention
             - sparsity
+            date: '2020-04-01'
+            title: 'Longformer: The Long-Document Transformer'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2020/04/01/longformer-the-long-document-transformer.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
             date: '2025-02-01'
             title: 'MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS'
             url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/moba-mixture-of-block-attention-for-long-context-llms.html
@@ -271,6 +280,26 @@ llm:
             url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/native-sparse-attention-hardware-aligned-and-natively-trainable-sparse-attention.html
         ssm:
           posts:
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+            date: '2021-10-01'
+            title: Combining Recurrent, Convolutional, and Continuous-time Models
+              with Linear State-Space Layers
+            url: /papers/llm/algorithm/architecture/attention/ssm/2021/10/01/combining-recurrent-convolutional-and-continuous-time-models-with-linear-state-space-layers.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+            date: '2019-01-01'
+            title: 'Transformer-XL: Attentive Language Models Beyond a Fixed-Length
+              Context'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2019/01/01/transformer-xl-attentive-language-models-beyond-a-fixed-length-context.html
           - categories:
             - llm
             - algorithm
@@ -337,6 +366,16 @@ llm:
             date: '2023-03-01'
             title: SIMPLIFIED STATE SPACE LAYERS FOR SEQUENCE MODELING
             url: /papers/llm/algorithm/architecture/attention/ssm/2023/03/01/simplified-state-space-layers-for-sequence-modeling.html
+          - categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+            date: '2024-02-01'
+            title: 'MoE-Mamba: Efficient Selective State Space Models with Mixture
+              of Experts'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2024/02/01/moe-mamba-efficient-selective-state-space-models-with-mixture-of-experts.html
     models:
       posts:
       - categories:
@@ -391,6 +430,13 @@ llm:
         title: 'MiMo: Unlocking the Reasoning Potential of Language Model – From Pretraining
           to Posttraining'
         url: /papers/llm/algorithm/models/2025/05/01/mimo-unlocking-the-reasoning-potential-of-language-model-from-pretraining-to-posttraining.html
+      - categories:
+        - llm
+        - algorithm
+        - models
+        date: '2025-05-01'
+        title: Qwen3 Technical Report
+        url: /papers/llm/algorithm/models/2025/05/01/qwen3-technical-report.html
       - categories:
         - llm
         - algorithm
@@ -1623,6 +1669,13 @@ llm:
         - llm
         - engineering
         - train
+        date: '2025-03-01'
+        title: Numerical Error Analysis of Large Language Models
+        url: /papers/llm/engineering/train/2025/03/01/numerical-error-analysis-of-large-language-models.html
+      - categories:
+        - llm
+        - engineering
+        - train
         date: '2025-04-01'
         tag: nsdi25
         title: 'SimAI: Unifying Architecture Design and Performance Tuning for Large-Scale
@@ -1836,6 +1889,14 @@ llm:
         - llm
         - engineering
         - train
+        date: '2024-08-01'
+        title: 'Optimus: Accelerating Large-Scale Multi-Modal LLM Training by Bubble
+          Exploitation'
+        url: /papers/llm/engineering/train/2024/08/01/optimus-accelerating-large-scale-multi-modal-llm-training-by-bubble-exploitation.html
+      - categories:
+        - llm
+        - engineering
+        - train
         date: '2022-05-01'
         tag: ppopp22
         title: 'FasterMoE: Modeling and Optimizing Training of Large-Scale Dynamic
@@ -1901,6 +1962,14 @@ llm:
         tag: atc21
         title: 'ZeRO-Offload: Democratizing Billion-Scale Model Training'
         url: /papers/llm/engineering/train/2021/01/01/zero-offload-democratizing-billion-scale-model-training.html
+      - categories:
+        - llm
+        - engineering
+        - train
+        date: '2025-02-01'
+        title: 'ByteScale: Efficient Scaling of LLM Training with a 2048K Context
+          Length on More Than 12,000 GPUs'
+        url: /papers/llm/engineering/train/2025/02/01/bytescale-efficient-scaling-of-llm-training-with-a-2048k-context-length-on-more-than-12000-gpus.html
       - categories:
         - llm
         - engineering

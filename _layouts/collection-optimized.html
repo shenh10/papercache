@@ -14,15 +14,19 @@ layout: collection
   {% include tag-filter.html %}
 
   <div class="collection-content">
-    {%- comment -%} 顶层分类单独遍历，保持锚点与层次稳定 {%- endcomment -%}
+    {%- comment -%} 顶层分类可折叠，内部使用扁平化面包屑展示 {%- endcomment -%}
     {%- for main_cat_entry in site.data.collection_structure -%}
       {%- assign main_cat_name = main_cat_entry[0] -%}
       {%- assign sub_tree = main_cat_entry[1] -%}
       {%- assign main_id = main_cat_name | slugify -%}
-      <div class="category-section">
-        <h2 class="main-category-title" id="{{ main_id }}">{{ main_cat_name | upcase }}</h2>
-        {%- include render-category.html node=sub_tree depth=2 path_id=main_id -%}
-      </div>
+      <details class="main-category-section" id="{{ main_id }}" open>
+        <summary class="main-category-summary">
+          <h2 class="main-category-title">{{ main_cat_name | upcase }}</h2>
+        </summary>
+        <div class="main-category-content">
+          {%- include render-category-flat.html node=sub_tree path_id=main_id breadcrumb=main_cat_name -%}
+        </div>
+      </details>
     {%- endfor -%}
   </div>
 </div>
@@ -30,4 +34,5 @@ layout: collection
 <!-- 文章预览和按需加载脚本 -->
 <link rel="stylesheet" href="{{ '/assets/css/post-preview.css' | relative_url }}">
 <script src="{{ '/assets/js/post-preview.js' | relative_url }}" defer></script>
+  <script src="{{ '/assets/js/card-enhancements.js' | relative_url }}?v=3" defer></script>
 

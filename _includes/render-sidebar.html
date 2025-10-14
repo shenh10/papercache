@@ -1,0 +1,54 @@
+{%- comment -%}
+优化的侧边栏递归渲染逻辑：
+- 正确处理多层级嵌套
+- 同级目录在同一层级渲染
+- 避免不必要的递归调用
+- 直接使用include.depth避免变量污染
+{%- endcomment -%}
+
+{%- for pair in include.node -%}
+  {%- assign key = pair[0] -%}
+  {%- assign val = pair[1] -%}
+
+  {%- comment -%} 跳过posts键，它不是分类节点 {%- endcomment -%}
+  {%- if key != 'posts' -%}
+    {%- comment -%} 生成节点ID {%- endcomment -%}
+    {%- if include.path_id == '' or include.path_id == blank -%}
+      {%- assign current_node_id = key | slugify -%}
+    {%- else -%}
+      {%- assign current_node_id = include.path_id | append: '-' | append: key | slugify -%}
+    {%- endif -%}
+
+    {%- comment -%} 根据层级创建对应的div元素 - 直接使用include.depth {%- endcomment -%}
+    {%- if include.depth == 1 -%}
+      <div class="category-section">
+        <h3 class="main-category"><a href="#{{ current_node_id }}">{{ key | upcase }}</a></h3>
+    {%- elsif include.depth == 2 -%}
+      <div class="sub-category">
+        <h4 class="sub-category-title"><a href="#{{ current_node_id }}">{{ key | capitalize }}</a></h4>
+    {%- elsif include.depth == 3 -%}
+      <div class="sub-sub-category">
+        <div class="sub-sub-category-title"><a href="#{{ current_node_id }}">{{ key | replace: '_', ' ' | capitalize }}</a></div>
+    {%- else -%}
+      <div class="fourth-level-category">
+        <a href="#{{ current_node_id }}">{{ key | replace: '_', ' ' | capitalize }}</a>
+    {%- endif -%}
+
+    {%- comment -%} 检查是否有子分类节点（除了posts），如果有则递归渲染 {%- endcomment -%}
+    {%- assign has_subcategories = false -%}
+    {%- for subpair in val -%}
+      {%- assign subkey = subpair[0] -%}
+      {%- if subkey != 'posts' -%}
+        {%- assign has_subcategories = true -%}
+        {%- break -%}
+      {%- endif -%}
+    {%- endfor -%}
+
+    {%- if has_subcategories -%}
+      {%- assign next_depth = include.depth | plus: 1 -%}
+      {%- include render-sidebar.html node=val depth=next_depth path_id=current_node_id -%}
+    {%- endif -%}
+
+    </div>
+  {%- endif -%}
+{%- endfor -%}

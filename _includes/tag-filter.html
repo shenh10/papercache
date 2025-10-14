@@ -22,7 +22,7 @@ Uses JavaScript to dynamically calculate tag counts for better performance
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // 收集所有文章标签
+  // 收集所有文章标签（兼容 cards）
   const tagMap = new Map();
   const postItems = document.querySelectorAll('.post-item[data-post-url]');
   
@@ -80,13 +80,15 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   function updateCategoryVisibility() {
-    const categories = document.querySelectorAll('.main-category-title, .subcategory-title, .sub-subcategory-title, .fourth-level-title');
-    categories.forEach(category => {
-      const categoryPosts = category.parentElement.querySelectorAll('.post-item:not([style*="display: none"])');
-      if (categoryPosts.length === 0) {
-        category.style.display = 'none';
+    // 在 details/summary 结构下，隐藏内容但保留 summary 可见
+    const nodes = document.querySelectorAll('details.cat-node');
+    nodes.forEach(node => {
+      const visiblePosts = node.querySelectorAll('.post-item:not([style*="display: none"])');
+      if (visiblePosts.length === 0) {
+        // 折叠节点并隐藏内部列表
+        node.open = false;
       } else {
-        category.style.display = '';
+        node.open = true;
       }
     });
   }
