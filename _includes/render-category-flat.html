@@ -38,7 +38,8 @@
           {%- for p in sorted reversed -%}
           <li class="post-item post-card" data-post-url="{{ site.baseurl }}{{ p.url }}">
             <a class="post-card-link" href="{{ site.baseurl }}{{ p.url }}" data-post-title="{{ p.title | escape }}">
-              {%- assign thumb = p.thumbnail | default: p.image | default: p.cover -%}
+              {%- assign thumb_data = site.data.thumbnails_by_path[p.url] -%}
+              {%- assign thumb = thumb_data | default: p.thumbnail | default: p.image | default: p.cover -%}
               {%- if thumb -%}
               <div class="post-card-thumb">
                 <img loading="lazy" src="{{ thumb | relative_url }}" alt="thumbnail of {{ p.title | escape }}">

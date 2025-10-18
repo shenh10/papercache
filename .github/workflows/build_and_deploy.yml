@@ -19,8 +19,25 @@ jobs:
       - name: 💎 Setup Ruby and Bundler
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2' # Updated to support bundler 2.7.1
+          ruby-version: "3.2" # Updated to support bundler 2.7.1
           bundler-cache: true
+
+      - name: 🐍 Setup Python for thumbnail generation
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: 📦 Install Python dependencies for thumbnails
+        run: |
+          pip install Pillow PyYAML beautifulsoup4 requests
+
+      - name: 🧪 Test thumbnail generation environment
+        run: |
+          python scripts/test_thumbnails.py
+
+      - name: 🖼️ Generate thumbnails
+        run: |
+          python scripts/gen_thumbs.py --root . --out assets/images/thumbs --size 320x200 --placeholder
 
       - name: 🔨 Build the site
         run: bundle exec jekyll build  --config _config.yml
@@ -37,6 +54,8 @@ jobs:
           find _site -name "*.js" -exec gzip -k {} \;
           # 压缩XML文件
           find _site -name "*.xml" -exec gzip -k {} \;
+          # 压缩缩略图文件
+          find _site -name "*.jpg" -path "*/thumbs/*" -exec gzip -k {} \;
 
       - name: 🚀 Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
