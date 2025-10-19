@@ -63,7 +63,7 @@ jobs:
             - name: 🖼️ Generate thumbnails
               run: |
                   echo "开始生成缩略图..."
-                  python3 scripts/gen_thumbs.py --placeholder
+                  python3 scripts/gen_thumbs.py
                   echo "缩略图生成完成！"
 
             - name: 📊 Check thumbnails

@@ -42,7 +42,7 @@ jobs:
 
       - name: 🖼️ Generate thumbnails
         run: |
-          python scripts/gen_thumbs.py --root . --out assets/images/thumbs --size 320x200 --placeholder
+          python scripts/gen_thumbs.py --root . --out assets/images/thumbs --size 320x200
 
       - name: 📊 Check thumbnails
         run: |
