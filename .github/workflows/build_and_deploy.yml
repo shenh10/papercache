@@ -44,8 +44,21 @@ jobs:
         run: |
           python scripts/gen_thumbs.py --root . --out assets/images/thumbs --size 320x200 --placeholder
 
+      - name: 📊 Check thumbnails
+        run: |
+          echo "检查生成的缩略图..."
+          echo "thumbnails_by_path.yml 行数: $(wc -l < _data/thumbnails_by_path.yml)"
+          echo "缩略图文件数量: $(ls -1 assets/images/thumbs/ | wc -l)"
+          echo "=== 缩略图 mapping 前10行预览 ==="
+          head -n 10 _data/thumbnails_by_path.yml
+
+      - name: 🧹 Clean Jekyll cache before rebuild
+        run: |
+          echo "清理 Jekyll 缓存..."
+          rm -rf .jekyll-cache .jekyll-metadata _site
+
       - name: 🔨 Rebuild the site (second build to include thumbnails)
-        run: bundle exec jekyll build  --config _config.yml
+        run: bundle exec jekyll build --no-incremental --config _config.yml
         env:
           JEKYLL_ENV: production
 

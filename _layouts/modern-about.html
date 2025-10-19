@@ -187,17 +187,18 @@ layout: default
 }
 
 .timeline-list li {
-  display: flex;
-  align-items: center;
-  padding: 20px 0;
   position: relative;
-  padding-left: 150px; /* 增加左边距，避免与时间线重叠 */
+  padding: 20px 0 20px 180px; /* 增加左侧留空，避免与时间轴重叠 */
+  color: #4a5568;
+  font-size: 1.05em;
+  line-height: 1.6;
 }
 
 .timeline-list li::before {
   content: '';
   position: absolute;
   left: 91px;
+  top: 20px;
   width: 18px;
   height: 18px;
   background: linear-gradient(135deg, #667eea, #764ba2);
@@ -213,13 +214,8 @@ layout: default
   font-weight: 600;
   color: #667eea;
   font-size: 0.95em;
-  min-width: 80px;
-}
-
-.timeline-list li {
-  color: #4a5568;
-  font-size: 1.05em;
-  line-height: 1.6;
+  min-width: 120px; /* 增加时间标签宽度，避免与时间轴重叠 */
+  text-align: left;
 }
 
 /* 交流群部分 */
