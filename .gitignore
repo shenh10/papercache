@@ -6,8 +6,8 @@ _site/
 # Sass
 .sass-cache/
 
-# Thumbnails (generated during build)
-assets/images/thumbs/
+# Temporary thumbnail cache (local development only)
+.thumb_tmp/
 
 # Slides (local development only)
 _slides/

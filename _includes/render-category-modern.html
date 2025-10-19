@@ -39,11 +39,24 @@
             <a class="post-card-link-modern" href="{{ site.baseurl }}{{ p.url }}" data-post-title="{{ p.title | escape }}">
               {%- assign thumb_data = site.data.thumbnails_by_path[p.url] -%}
               {%- assign thumb = thumb_data | default: p.thumbnail | default: p.image | default: p.cover -%}
-              {%- if thumb -%}
               <div class="post-card-thumb-modern">
-                <img loading="lazy" src="{{ thumb | relative_url }}" alt="thumbnail of {{ p.title | escape }}">
+                {%- if thumb -%}
+                  {%- assign thumb_file_exists = false -%}
+                  {%- for file in site.static_files -%}
+                    {%- if file.path == thumb -%}
+                      {%- assign thumb_file_exists = true -%}
+                      {%- break -%}
+                    {%- endif -%}
+                  {%- endfor -%}
+                  {%- if thumb_file_exists -%}
+                    <img loading="lazy" src="{{ thumb | relative_url }}" alt="thumbnail of {{ p.title | escape }}">
+                  {%- else -%}
+                    <img loading="lazy" src="{{ '/assets/images/fallback-paper.svg' | relative_url }}" alt="PaperCache - AI Research Papers">
+                  {%- endif -%}
+                {%- else -%}
+                  <img loading="lazy" src="{{ '/assets/images/fallback-paper.svg' | relative_url }}" alt="PaperCache - AI Research Papers">
+                {%- endif -%}
               </div>
-              {%- endif -%}
               <div class="post-card-body-modern">
                 <div class="post-card-meta-modern">
                   <span class="post-meta-modern">{{ p.date | date: "%Y-%m" }}</span>

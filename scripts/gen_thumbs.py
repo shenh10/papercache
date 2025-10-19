@@ -23,9 +23,9 @@ except Exception as e:
 
 HTML_IMG_RE = re.compile(r"<img[^>]+src=\"([^\"]+)\"", re.IGNORECASE)
 FIGURE_RE = re.compile(r"<figure[\s\S]*?</figure>", re.IGNORECASE)
-TABLE_OR_FORMULA_RE = re.compile(r"(表|table|公式|katex|latex|formula|equation|算法)", re.IGNORECASE)
+TABLE_OR_FORMULA_RE = re.compile(r"(\b表\b|\btable\b|\b公式\b|\bkatex\b|\blatex\b|\bformula\b|\bequation\b|\b算法\b)", re.IGNORECASE)
 
-ALLOWED_SCHEMES = {"http", "https", "file", ""}
+ALLOWED_SCHEMES = {"http", "https", "file"}
 
 
 def parse_size(s: str):
@@ -117,8 +117,8 @@ def pick_first_valid_img(html: str, is_slides: bool = False) -> str | None:
     # For papers, use complex logic
     # Regex patterns (same as JavaScript)
     pattern_figure = re.compile(r'(图\s*\d+|figure\s*\d+|fig\.?\s*\d+)', re.IGNORECASE)
-    pattern_table = re.compile(r'(表|table|tab\.?)', re.IGNORECASE)
-    pattern_formula = re.compile(r'(公式|formula|eq\.?|equation)', re.IGNORECASE)
+    pattern_table = re.compile(r'(\btable\b|\btab\.?\b|表\d+|表\s|^表|表$)', re.IGNORECASE)
+    pattern_formula = re.compile(r'(\bformula\b|\beq\.?\b|\bequation\b|公式\d+|公式\s|^公式|公式$)', re.IGNORECASE)
     
     def contains_table_or_formula(text):
         """Check if text contains table or formula keywords"""
@@ -147,49 +147,201 @@ def pick_first_valid_img(html: str, is_slides: bool = False) -> str | None:
         
         return ''
     
-    def get_neighbor_text(fig):
-        """Get neighbor text from adjacent elements"""
-        # Check next sibling
-        next_elem = fig.next_sibling
-        while next_elem:
-            if hasattr(next_elem, 'name'):
-                if next_elem.name == 'br':
-                    next_elem = next_elem.next_sibling
-                    continue
-                if next_elem.name == 'figure':
-                    break
-                text = next_elem.get_text(strip=True)
-                if text and pattern_figure.search(text):
-                    return text
-            else:
-                # Text node
-                text = str(next_elem).strip()
-                if text and pattern_figure.search(text):
-                    return text
-            next_elem = next_elem.next_sibling
-        
-        # Check previous sibling
-        prev_elem = fig.previous_sibling
-        while prev_elem:
-            if hasattr(prev_elem, 'name'):
-                if prev_elem.name == 'br':
-                    prev_elem = prev_elem.previous_sibling
-                    continue
-                if prev_elem.name == 'figure':
-                    break
-                text = prev_elem.get_text(strip=True)
-                if text and pattern_figure.search(text):
-                    return text
-            else:
-                # Text node
-                text = str(prev_elem).strip()
-                if text and pattern_figure.search(text):
-                    return text
-            prev_elem = prev_elem.previous_sibling
-        
-        return ''
+def get_nearest_neighbor_text(fig, pattern_figure):
+    """Get nearest neighbor text from adjacent elements (only when annotation is empty)"""
+    # Pattern to match figure titles that START with "图/Figure/Fig"
+    pattern_figure_start = re.compile(r'^(图\s*\d+|figure\s*\d+|fig\.?\s*\d+)', re.IGNORECASE)
     
-    # 1. 从前到后遍历所有可行图，找到第一个满足条件的图返回
+    # Check next sibling (skip whitespace and <br>, stop at other <figure> start tags)
+    next_elem = fig.next_sibling
+    skipped_br = False
+    while next_elem:
+        if hasattr(next_elem, 'name'):
+            # Stop at other <figure> start tags - 遇到下一个figure就停止
+            if next_elem.name == 'figure':
+                break
+            if next_elem.name == 'br':
+                skipped_br = True
+                next_elem = next_elem.next_sibling
+                continue
+            # 遇到有内容的元素，检查是否以"图"开头
+            text = next_elem.get_text(strip=True)
+            if text:
+                if pattern_figure_start.match(text):
+                    return text
+                # 遇到有内容但不匹配的元素，停止搜索
+                break
+        else:
+            # Text node
+            text = str(next_elem).strip()
+            if text:
+                if pattern_figure_start.match(text):
+                    return text
+                # 遇到有内容但不匹配的文本，停止搜索
+                break
+        next_elem = next_elem.next_sibling
+    
+    # Check previous sibling (skip whitespace and <br>, stop at other <figure> start tags or <p> tags)
+    prev_elem = fig.previous_sibling
+    while prev_elem:
+        if hasattr(prev_elem, 'name'):
+            # Stop at other <figure> or <p> tags
+            if prev_elem.name in ['figure', 'p']:
+                break
+            if prev_elem.name == 'br':
+                prev_elem = prev_elem.previous_sibling
+                continue
+            # 遇到有内容的元素，检查是否以"图"开头
+            text = prev_elem.get_text(strip=True)
+            if text:
+                if pattern_figure_start.match(text):
+                    return text
+                # 遇到有内容但不匹配的元素，停止搜索
+                break
+        else:
+            # Text node - check if parent is <p>
+            if hasattr(prev_elem, 'parent') and prev_elem.parent.name == 'p':
+                # 如果文本节点的父元素是<p>，停止搜索
+                break
+            text = str(prev_elem).strip()
+            if text:
+                if pattern_figure_start.match(text):
+                    return text
+                # 遇到有内容但不匹配的文本，停止搜索
+                break
+        prev_elem = prev_elem.previous_sibling
+    
+    return ''
+
+def calculate_figure_distance(fig, neighbor_text):
+    """计算figure和其邻居文本之间的距离"""
+    # 简单的距离计算：基于HTML中的字符距离
+    # 这里可以根据需要实现更复杂的距离算法
+    
+    # 获取figure在HTML中的位置
+    fig_html = str(fig)
+    fig_start = fig_html.find('<figure')
+    if fig_start == -1:
+        return 999  # 如果找不到figure标签，返回大距离
+    
+    # 计算到邻居文本的距离
+    # 这里使用简单的启发式：检查figure前后的文本节点数量
+    distance = 0
+    
+    # 检查前面的兄弟节点
+    prev_elem = fig.previous_sibling
+    while prev_elem:
+        if hasattr(prev_elem, 'name'):
+            if prev_elem.name in ['p', 'figure']:
+                break
+            distance += 1
+        else:
+            text = str(prev_elem).strip()
+            if text and neighbor_text in text:
+                # 如果找到包含邻居文本的节点，距离较小
+                return distance
+        prev_elem = prev_elem.previous_sibling
+        distance += 1
+    
+    # 检查后面的兄弟节点
+    next_elem = fig.next_sibling
+    distance = 0
+    while next_elem:
+        if hasattr(next_elem, 'name'):
+            if next_elem.name in ['p', 'figure']:
+                break
+            distance += 1
+        else:
+            text = str(next_elem).strip()
+            if text and neighbor_text in text:
+                # 如果找到包含邻居文本的节点，返回距离
+                return distance
+        next_elem = next_elem.next_sibling
+        distance += 1
+    
+    return distance
+
+def is_figure_matching_title(fig, neighbor_text):
+    """判断figure是否真正匹配图标题"""
+    # 检查figure之后的文本是否包含图标题
+    # 如果figure之后紧跟着图标题文本，说明这个figure匹配该标题
+    
+    # 检查figure之后的兄弟节点
+    next_elem = fig.next_sibling
+    while next_elem:
+        if hasattr(next_elem, 'name'):
+            if next_elem.name in ['p', 'figure']:
+                break
+            # 检查元素内的文本
+            text = next_elem.get_text(strip=True)
+            if text and neighbor_text in text:
+                return True
+        else:
+            # 文本节点
+            text = str(next_elem).strip()
+            if text and neighbor_text in text:
+                return True
+        next_elem = next_elem.next_sibling
+    
+    # 如果figure之后没有找到匹配的文本，检查figure之前
+    prev_elem = fig.previous_sibling
+    while prev_elem:
+        if hasattr(prev_elem, 'name'):
+            if prev_elem.name in ['p', 'figure']:
+                break
+            # 检查元素内的文本
+            text = prev_elem.get_text(strip=True)
+            if text and neighbor_text in text:
+                return True
+        else:
+            # 文本节点
+            text = str(prev_elem).strip()
+            if text and neighbor_text in text:
+                return True
+        prev_elem = prev_elem.previous_sibling
+    
+    return False
+
+def pick_first_valid_img(html, is_slides=False):
+    """Find the first valid image using the same logic as JavaScript card-enhancements.js"""
+    from bs4 import BeautifulSoup
+    
+    # Parse HTML
+    soup = BeautifulSoup(html, 'html.parser')
+    
+    # For slides, use simple first figure logic
+    if is_slides:
+        figures = soup.find_all('figure')
+        for fig in figures:
+            img = fig.find('img', src=True)
+            if img and is_usable_src(img.get('src')):
+                src = img.get('src')
+                print(f"    Slides: Found first figure image: {src[:50]}...")
+                return src
+        return None
+    
+    # For papers, use complex logic
+    # Regex patterns (same as JavaScript)
+    pattern_figure = re.compile(r'(图\s*\d+|figure\s*\d+|fig\.?\s*\d+)', re.IGNORECASE)
+    pattern_table = re.compile(r'(\btable\b|\btab\.?\b|表\d+|表\s|^表|表$)', re.IGNORECASE)
+    pattern_formula = re.compile(r'(\bformula\b|\beq\.?\b|\bequation\b|公式\d+|公式\s|^公式|公式$)', re.IGNORECASE)
+    
+    def contains_table_or_formula(text):
+        if not text:
+            return False
+        return bool(pattern_table.search(text) or pattern_formula.search(text))
+    
+    def get_figure_annotation(fig):
+        cap = fig.find('figcaption')
+        img = fig.find('img', src=True)
+        if not img:
+            return ''
+        capText = (cap.text if cap else '').strip()
+        alt = (img.get('alt') or '').strip()
+        title = (img.get('title') or '').strip()
+        return (capText + ' ' + alt + ' ' + title).strip()
+    
+    # 1. 从前到后遍历所有可行图，找到第一个真正匹配图标题的figure
     figures = soup.find_all('figure')
     
     for i, fig in enumerate(figures):
@@ -218,33 +370,87 @@ def pick_first_valid_img(html: str, is_slides: bool = False) -> str | None:
                     # For data URLs, we can return them directly
                     return src
         
-        # 如果figure的annotation不匹配"图x"模式，则检查紧邻的邻居<p>节点或者文本节点
-        if not annotation or not pattern_figure.search(annotation):
-            neighbor_text = get_neighbor_text(fig)
+        # 如果figure的annotation为空，则检查最近的邻居节点
+        if not annotation or annotation.strip() == '':
+            neighbor_text = get_nearest_neighbor_text(fig, pattern_figure)
             if i < 3:
-                print(f"    Neighbor text: '{neighbor_text[:100]}...'")
+                print(f"    Nearest neighbor text: '{neighbor_text[:100]}...'")
             if neighbor_text and pattern_figure.search(neighbor_text):
                 # 3. 排除一些非法图片：如果邻居文本包含表/公式字段的图片不选择
                 if not contains_table_or_formula(neighbor_text):
                     src = img.get('src')
                     if src and is_usable_src(src):  # Now we support data URLs too
                         if i < 3:
-                            print(f"    Found via neighbor: {src[:50]}...")
+                            print(f"    Found via nearest neighbor: {src[:50]}...")
+                        # 直接返回第一个匹配的figure
                         return src
     
-    # 4. 如果最终没找到合适的图，重新过滤一遍全部图，返回不包含表/公式字段的第一张图
+    # 4. 段首"图1/Figure 1/Fig. 1" → 回溯至上一个 <img> 或 <figure>
+    # 或者段落本身包含图片且文本中包含"图X/Figure X"
+    paragraphs = soup.find_all('p')
+    head_pattern = re.compile(r'^(图\s*\d+|figure\s*\d+|fig\.?\s*\d+)', re.IGNORECASE)
+    contain_pattern = re.compile(r'(图\s*\d+|figure\s*\d+|fig\.?\s*\d+)', re.IGNORECASE)
+    
+    for p in paragraphs:
+        text = p.get_text(strip=True)
+        
+        # 首先检查段落本身是否包含图片
+        p_img = p.find('img', src=True)
+        if p_img and contain_pattern.search(text) and not contains_table_or_formula(text):
+            # 段落包含图片且文本中有"图X/Figure X"
+            src = p_img.get('src')
+            alt = p_img.get('alt', '')
+            title = p_img.get('title', '')
+            hint = (alt + ' ' + title).strip()
+            if not contains_table_or_formula(hint) and is_usable_src(src):
+                print(f"    通过段落本身找到图片: {src[:50]}...")
+                return src
+        
+        # 如果段落以"图X/Figure X"开头，但不包含图片，则向前回溯
+        if head_pattern.match(text) and not contains_table_or_formula(text) and not p_img:
+            
+            # 向上找最近的图片（优先找figure中的img，然后找单独的img）
+            prev = p.previous_sibling
+            while prev:
+                if hasattr(prev, 'name'):
+                    if prev.name == 'figure':
+                        fig_img = prev.find('img', src=True)
+                        if fig_img:
+                            src = fig_img.get('src')
+                            alt = fig_img.get('alt', '')
+                            title = fig_img.get('title', '')
+                            hint = (alt + ' ' + title).strip()
+                            if not contains_table_or_formula(hint) and is_usable_src(src):
+                                print(f"    通过段落回溯找到figure中的图片: {src[:50]}...")
+                                return src
+                    else:
+                        # 检查其他元素中的img
+                        cand_img = prev.find('img', src=True)
+                        if cand_img:
+                            src = cand_img.get('src')
+                            alt = cand_img.get('alt', '')
+                            title = cand_img.get('title', '')
+                            hint = (alt + ' ' + title).strip()
+                            if not contains_table_or_formula(hint) and is_usable_src(src):
+                                print(f"    通过段落回溯找到图片: {src[:50]}...")
+                                return src
+                prev = prev.previous_sibling
+    
+    # 5. 如果最终没找到合适的图，重新过滤一遍全部图，返回不包含表/公式字段的第一张图
     for fig in figures:
         img = fig.find('img', src=True)
         if not img:
             continue
         
         annotation = get_figure_annotation(fig)
-        if not contains_table_or_formula(annotation):
+        neighbor_text = get_nearest_neighbor_text(fig, pattern_figure)
+        all_text = (annotation + ' ' + neighbor_text).strip()
+        if not contains_table_or_formula(all_text):
             src = img.get('src')
             if is_usable_src(src):
                 return src
     
-    # 5. 如果还是不能，返回None（会在后面生成占位符）
+    # 6. 如果还是不能，返回None（会在后面生成占位符）
     return None
 
 
@@ -338,15 +544,44 @@ def main():
         sys.exit(1)
 
     mapping: Dict[str, str] = {}
+    
+    # Load existing mapping if it exists (for incremental updates)
+    existing_mapping: Dict[str, str] = {}
+    if mapping_path.exists():
+        try:
+            with open(mapping_path, "r", encoding="utf-8") as f:
+                existing_mapping = yaml.safe_load(f) or {}
+            print(f"Loaded existing mapping with {len(existing_mapping)} entries")
+        except Exception as e:
+            print(f"Warning: Could not load existing mapping: {e}")
+    
+    # Create output directory if it doesn't exist
+    out_dir.mkdir(parents=True, exist_ok=True)
 
     # Iterate posts from collection data, use p.url as key (since p.path is not present)
     processed = 0
+    skipped = 0
+    generated = 0
     for post in iter_posts_from_collection(site_dir):
         try:
             p_url = (post.get("url") or "").strip()
             if not p_url:
                 continue
             processed += 1
+            
+            # Check if thumbnail already exists
+            digest = abs(hash(p_url))
+            dest_rel = f"/{args.out.strip('/')}/{digest}.jpg"
+            dest_abs = out_dir / f"{digest}.jpg"
+            
+            if p_url in existing_mapping and dest_abs.exists():
+                # Thumbnail already exists, reuse it
+                mapping[p_url] = existing_mapping[p_url]
+                skipped += 1
+                if processed <= 5:
+                    print(f"Skipping (exists): {p_url}")
+                continue
+            
             if processed <= 5:  # debug first 5
                 print(f"Processing: {p_url}")
             
@@ -379,12 +614,10 @@ def main():
                     print(f"  Download failed: {e}")
                 continue
             
-            digest = abs(hash(p_url))
-            dest_rel = f"/{args.out.strip('/')}/{digest}.jpg"
-            dest_abs = out_dir / f"{digest}.jpg"
             try:
                 ensure_thumb(img_path, args.size, dest_abs)
                 mapping[p_url] = dest_rel
+                generated += 1
                 if processed <= 5:
                     print(f"  Generated: {dest_rel}")
             except Exception as e:
@@ -396,7 +629,7 @@ def main():
                 print(f"  Error processing post: {e}")
             continue
     
-    print(f"Processed {processed} posts total")
+    print(f"Processed {processed} posts total: {generated} generated, {skipped} skipped (already exist)")
     
     # Generate placeholder thumbnails if requested
     if args.placeholder:
@@ -434,6 +667,19 @@ def main():
                     print(f"  Error creating placeholder: {e}")
                 continue
         print(f"Generated {placeholder_count} placeholder thumbnails")
+
+    # Clean up orphaned thumbnails (thumbnails that are no longer in the mapping)
+    if out_dir.exists():
+        current_thumbs = {dest_abs.name for dest_abs in out_dir.glob("*.jpg")}
+        valid_thumbs = {pathlib.Path(thumb_path).name for thumb_path in mapping.values()}
+        orphaned = current_thumbs - valid_thumbs
+        if orphaned:
+            print(f"Cleaning up {len(orphaned)} orphaned thumbnails...")
+            for thumb_name in orphaned:
+                try:
+                    (out_dir / thumb_name).unlink()
+                except Exception as e:
+                    print(f"  Warning: Could not delete {thumb_name}: {e}")
 
     mapping_path.parent.mkdir(parents=True, exist_ok=True)
     with open(mapping_path, "w", encoding="utf-8") as f:

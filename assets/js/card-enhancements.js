@@ -161,34 +161,27 @@ document.addEventListener('DOMContentLoaded', () => {
     return s.length <= n ? s : s.slice(0, n - 1) + '…';
   }
   function findFirstFigureImage(doc) {
-    const patternFigure = /^(图\s*\d+|figure\s*\d+|fig\.?\s*\d+)/i; // 匹配以"图1"、"Figure 1"等开头的文本
-    const patternTable = /(表|table|Table)/i; // 匹配表相关字段
-    const patternFormula = /(公式|katex|latex|formula|equation|算法)/i; // 匹配公式相关字段，移除math避免误判
+    const patternFigureStart = /^(图\s*\d+|figure\s*\d+|fig\.?\s*\d+)/i; // 匹配以"图1"、"Figure 1"等开头的文本
+    const patternFigureContain = /(图\s*\d+|figure\s*\d+|fig\.?\s*\d+)/i; // 匹配包含"图1"等的文本
+    const patternTable = /(\btable\b|\btab\.?\b|表\d+|表\s|^表|表$)/i; // 匹配表相关字段
+    const patternFormula = /(\bformula\b|\beq\.?\b|\bequation\b|公式\d+|公式\s|^公式|公式$)/i; // 匹配公式相关字段
+    const patternAlgorithm = /(\b算法\b|\balgorithm\b)/i; // 匹配算法字段
     const content = doc.querySelector('.post-content') || doc;
 
-    // 辅助函数：检查是否为公式文本
-    const isFormulaText = (text) => {
-      return text && patternFormula.test(text);
-    };
-
-    // 辅助函数：检查是否为表格文本
-    const isTableText = (text) => {
-      return text && patternTable.test(text);
-    };
-
-    // 辅助函数：检查是否为图片文本
-    const isFigureText = (text) => {
-      return text && patternFigure.test(text);
-    };
-
-    // 辅助函数：检查图片src是否像表格
-    const isTableLikeSrc = (src) => {
-      return src && (src.includes('table') || src.includes('Table'));
-    };
-
-    // 辅助函数：检查文本是否包含表/公式字段
+    // 辅助函数：检查文本是否包含表/公式/算法字段
     const containsTableOrFormula = (text) => {
-      return text && (patternTable.test(text) || patternFormula.test(text));
+      return text && (patternTable.test(text) || patternFormula.test(text) || patternAlgorithm.test(text));
+    };
+    
+    // 辅助函数：检查src是否可用（不支持相对路径）
+    const isUsableSrc = (src) => {
+      if (!src) return false;
+      // 支持 data URI, http/https, file 协议
+      if (src.startsWith('data:')) return true;
+      if (src.startsWith('http://') || src.startsWith('https://')) return true;
+      if (src.startsWith('file://')) return true;
+      // 不支持相对路径
+      return false;
     };
 
     // 辅助函数：获取figure的annotation文本（包括figcaption、alt、title）
@@ -204,76 +197,72 @@ document.addEventListener('DOMContentLoaded', () => {
       return (capText + ' ' + alt + ' ' + title).trim();
     };
 
-    // 辅助函数：获取figure紧邻的邻居节点文本
-    const getNeighborText = (fig) => {
-      // 检查父节点<p>
-      const parent = fig.parentElement;
-      if (parent && parent.tagName === 'P') {
-        const pText = parent.textContent.trim();
-        if (pText && patternFigure.test(pText)) return pText;
-      }
-      
-      // 检查下一个节点（跳过<br>等无意义标签，但遇到<figure>就停止）
+    // 辅助函数：获取figure最近的邻居节点文本（仅在annotation为空时使用）
+    // 完整实现 gen_thumbs.py 的逻辑
+    const getNearestNeighborText = (fig) => {
+      // 向后搜索（跳过<br>，遇到下一个<figure>或有内容的元素则停止）
       let next = fig.nextSibling;
       while (next) {
-        // 如果遇到空白文本节点或<br>标签，跳过
-        if (next.nodeType === Node.TEXT_NODE && !next.textContent.trim()) {
-          next = next.nextSibling;
-          continue;
-        }
-        if (next.nodeType === Node.ELEMENT_NODE && next.tagName === 'BR') {
-          next = next.nextSibling;
-          continue;
-        }
-        // 遇到其他节点，停止循环
-        break;
-      }
-      
-      console.log('检查下一个节点:', next ? next.tagName || 'TEXT' : 'null');
-
-      // 检查找到的节点（不能是<figure>）
-      if (next) {
-        // 如果是<figure>标签，不处理，直接返回空
-        if (next.nodeType === Node.ELEMENT_NODE && next.tagName === 'FIGURE') {
-          return '';
+        if (next.nodeType === Node.ELEMENT_NODE) {
+          // 遇到下一个figure就停止
+          if (next.tagName === 'FIGURE') break;
+          
+          // 跳过<br>标签
+          if (next.tagName === 'BR') {
+            next = next.nextSibling;
+            continue;
+          }
+          
+          // 遇到有内容的元素，检查是否以"图"开头
+          const text = next.textContent.trim();
+          if (text) {
+            if (patternFigureStart.test(text)) return text;
+            // 遇到有内容但不匹配的元素，停止搜索
+            break;
+          }
         } else if (next.nodeType === Node.TEXT_NODE) {
           const text = next.textContent.trim();
-          if (text && patternFigure.test(text)) return text;
-        } else if (next.nodeType === Node.ELEMENT_NODE) {
-          // 检查所有元素节点，包括P、STRONG、BLOCKQUOTE等
-          const text = next.textContent.trim();
-          if (text && patternFigure.test(text)) return text;
+          if (text) {
+            if (patternFigureStart.test(text)) return text;
+            // 遇到有内容但不匹配的文本，停止搜索
+            break;
+          }
         }
+        next = next.nextSibling;
       }
       
-      // 检查前一个节点
+      // 向前搜索（跳过<br>，遇到<figure>或<p>标签则停止）
       let prev = fig.previousSibling;
       while (prev) {
-        // 如果遇到空白文本节点或<br>标签，跳过
-        if (prev.nodeType === Node.TEXT_NODE && !prev.textContent.trim()) {
-          prev = prev.previousSibling;
-          continue;
-        }
-        if (prev.nodeType === Node.ELEMENT_NODE && prev.tagName === 'BR') {
-          prev = prev.previousSibling;
-          continue;
-        }
-        // 遇到其他节点，停止循环
-        break;
-      }
-      
-      if (prev) {
-        // 如果是<figure>标签，不处理，直接返回空
-        if (prev.nodeType === Node.ELEMENT_NODE && prev.tagName === 'FIGURE') {
-          return '';
+        if (prev.nodeType === Node.ELEMENT_NODE) {
+          // 遇到<figure>或<p>标签就停止
+          if (prev.tagName === 'FIGURE' || prev.tagName === 'P') break;
+          
+          // 跳过<br>标签
+          if (prev.tagName === 'BR') {
+            prev = prev.previousSibling;
+            continue;
+          }
+          
+          // 遇到有内容的元素，检查是否以"图"开头
+          const text = prev.textContent.trim();
+          if (text) {
+            if (patternFigureStart.test(text)) return text;
+            // 遇到有内容但不匹配的元素，停止搜索
+            break;
+          }
         } else if (prev.nodeType === Node.TEXT_NODE) {
+          // 检查文本节点的父元素是否是<p>
+          if (prev.parentElement && prev.parentElement.tagName === 'P') break;
+          
           const text = prev.textContent.trim();
-          if (text && patternFigure.test(text)) return text;
-        } else if (prev.nodeType === Node.ELEMENT_NODE) {
-          // 检查所有元素节点，包括P、STRONG、BLOCKQUOTE等
-          const text = prev.textContent.trim();
-          if (text && patternFigure.test(text)) return text;
+          if (text) {
+            if (patternFigureStart.test(text)) return text;
+            // 遇到有内容但不匹配的文本，停止搜索
+            break;
+          }
         }
+        prev = prev.previousSibling;
       }
       
       return '';
@@ -292,79 +281,69 @@ document.addEventListener('DOMContentLoaded', () => {
       // 2. 首先必须是个html Figure
       if (fig.tagName !== 'FIGURE') continue;
       
+      const src = img.getAttribute('src');
+      
+      // 检查src是否可用（不支持相对路径）
+      if (!isUsableSrc(src)) {
+        console.log(`跳过第${i+1}个figure: src不可用（相对路径）`);
+        continue;
+      }
+      
       console.log(`检查第${i+1}个figure:`, {
-        imgSrc: img.getAttribute('src').substring(0, 50) + '...',
+        imgSrc: src.substring(0, 50) + '...',
         annotation: annotation
       });
       
-      
-      // 如果figure包含alt/annotation：annotation如果包含"图/figure/fig/Figure/Fig"，可行，选中返回
-      if (annotation && patternFigure.test(annotation)) {
+      // 如果figure包含alt/annotation：annotation如果以"图/figure/fig"开头，可行，选中返回
+      if (annotation && patternFigureStart.test(annotation)) {
         // 3. 排除一些非法图片：如果figure annotation包含表/公式字段的图片不选择
         if (!containsTableOrFormula(annotation)) {
-          console.log('匹配成功！通过annotation');
-          return img.getAttribute('src');
+          console.log('✓ 匹配成功！通过annotation');
+          return src;
         }
       }
       
-      // 如果figure的annotation不匹配"图x"模式，则检查紧邻的邻居<p>节点或者文本节点
-      if (!annotation || !patternFigure.test(annotation)) {
-        const neighborText = getNeighborText(fig);
-        console.log(`第${i+1}个figure的邻居文本:`, neighborText);
-        if (neighborText && patternFigure.test(neighborText)) {
+      // 如果figure的annotation为空，则检查最近的邻居节点
+      if (!annotation || annotation.trim() === '') {
+        const neighborText = getNearestNeighborText(fig);
+        if (neighborText) {
+          console.log(`第${i+1}个figure的最近邻居文本:`, neighborText.substring(0, 50));
+        }
+        if (neighborText && patternFigureStart.test(neighborText)) {
           // 3. 排除一些非法图片：如果邻居文本包含表/公式字段的图片不选择
           if (!containsTableOrFormula(neighborText)) {
-            console.log('匹配成功！通过邻居文本:', neighborText.substring(0, 50));
-            console.log('返回的图片src:', img.getAttribute('src').substring(0, 50) + '...');
-            return img.getAttribute('src');
+            console.log('✓ 匹配成功！通过最近邻居文本');
+            return src;
           } else {
-            console.log('被表/公式字段过滤掉了:', neighborText.substring(0, 50));
+            console.log('✗ 被表/公式/算法字段过滤掉');
           }
         }
       }
     }
 
-    // 4. 如果最终没找到合适的图，重新过滤一遍全部图，返回不包含表/公式字段的第一张图
-    for (const fig of figures) {
-      const img = fig.querySelector('img[src]');
-      if (!img) continue;
-      
-      const annotation = getFigureAnnotation(fig);
-      const neighborText = getNeighborText(fig);
-      const allText = (annotation + ' ' + neighborText).trim();
-      
-      // 排除包含表/公式字段的图片
-      if (!containsTableOrFormula(allText)) {
-        return img.getAttribute('src');
-      }
-    }
-
-    // 2) img 邻近文本或 alt/title（按文档顺序）
-    const imgs = Array.from(content.querySelectorAll('img[src]'));
-    for (const img of imgs) {
-      const alt = (img.getAttribute('alt') || '').trim();
-      const title = (img.getAttribute('title') || '').trim();
-      const src = (img.getAttribute('src') || '').trim();
-      const baseHint = (alt + ' ' + title);
-      if (isFormulaText(baseHint) || isTableLikeSrc(src)) continue;
-
-      const neighbors = collectNeighbors(img, 3)
-        .concat(collectNeighbors(img.parentElement, 3))
-        .concat(collectNeighbors(img.parentElement ? img.parentElement.parentElement : null, 3));
-      const contextTexts = [alt, title].concat(neighbors.map(n => (n.textContent||'').trim()));
-      const anyTable = contextTexts.some(isTableText);
-      const anyFigure = contextTexts.some(isFigureText);
-      if (!anyTable && anyFigure) {
-        return img.getAttribute('src');
-      }
-    }
-
-    // 3) 段首"图1/Figure 1/Fig. 1" → 回溯至上一个 <img> 或 <figure>
+    // 4. 段首"图1/Figure 1/Fig. 1" → 回溯至上一个 <img> 或 <figure>
+    // 或者段落本身包含图片且文本中包含"图X/Figure X"
     const paras = Array.from(content.querySelectorAll('p'));
-    const headPattern = /^(图\s*\d+|figure\s*\d+|fig\.?\s*\d+)/i;
+    
     for (const p of paras) {
-      const t = (p.textContent || '').trim();
-      if (headPattern.test(t) && !containsTableOrFormula(t)) {
+      const text = (p.textContent || '').trim();
+      
+      // 首先检查段落本身是否包含图片
+      const pImg = p.querySelector('img[src]');
+      if (pImg && patternFigureContain.test(text) && !containsTableOrFormula(text)) {
+        // 段落包含图片且文本中有"图X/Figure X"
+        const src = pImg.getAttribute('src');
+        const alt = pImg.getAttribute('alt') || '';
+        const title = pImg.getAttribute('title') || '';
+        const hint = (alt + ' ' + title).trim();
+        if (!containsTableOrFormula(hint) && isUsableSrc(src)) {
+          console.log('✓ 通过段落本身找到图片:', src.substring(0, 50) + '...');
+          return src;
+        }
+      }
+      
+      // 如果段落以"图X/Figure X"开头，但不包含图片，则向前回溯
+      if (patternFigureStart.test(text) && !containsTableOrFormula(text) && !pImg) {
         // 向上找最近的图片（优先找figure中的img，然后找单独的img）
         let prev = p.previousElementSibling;
         while (prev) {
@@ -376,8 +355,8 @@ document.addEventListener('DOMContentLoaded', () => {
               const alt = figImg.getAttribute('alt') || '';
               const title = figImg.getAttribute('title') || '';
               const hint = (alt + ' ' + title);
-              if (!containsTableOrFormula(hint)) {
-                console.log('通过段落回溯找到figure中的图片:', src.substring(0, 50) + '...');
+              if (!containsTableOrFormula(hint) && isUsableSrc(src)) {
+                console.log('✓ 通过段落回溯找到figure中的图片:', src.substring(0, 50) + '...');
                 return src;
               }
             }
@@ -389,8 +368,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const alt = cand.getAttribute('alt') || '';
             const title = cand.getAttribute('title') || '';
             const hint = (alt + ' ' + title);
-            if (!containsTableOrFormula(hint)) {
-              console.log('通过段落回溯找到图片:', src.substring(0, 50) + '...');
+            if (!containsTableOrFormula(hint) && isUsableSrc(src)) {
+              console.log('✓ 通过段落回溯找到图片:', src.substring(0, 50) + '...');
               return src;
             }
           }
@@ -399,7 +378,27 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     
-    // 5. 如果还是不能，返回一个打印ASCII PaperCache的图片
+    // 5. 如果最终没找到合适的图，重新过滤一遍全部图，返回不包含表/公式字段的第一张图
+    for (const fig of figures) {
+      const img = fig.querySelector('img[src]');
+      if (!img) continue;
+      
+      const src = img.getAttribute('src');
+      if (!isUsableSrc(src)) continue;
+      
+      const annotation = getFigureAnnotation(fig);
+      const neighborText = getNearestNeighborText(fig);
+      const allText = (annotation + ' ' + neighborText).trim();
+      
+      // 排除包含表/公式字段的图片
+      if (!containsTableOrFormula(allText)) {
+        console.log('✓ 兜底：返回第一个不含表/公式的图片');
+        return src;
+      }
+    }
+    
+    // 6. 如果还是不能，返回一个打印ASCII PaperCache的图片
+    console.log('⚠️ 所有规则都未匹配，使用ASCII兜底图片');
     return createASCIIPaperCacheImage();
   }
 
@@ -413,25 +412,21 @@ document.addEventListener('DOMContentLoaded', () => {
       <rect width="100%" height="100%" fill="#f8fafc"/>
       <rect x="10" y="10" width="380" height="180" fill="none" stroke="#667eea" stroke-width="1"/>
       
-      <!-- PaperCache ASCII Art -->
-      <text x="200" y="35" font-family="monospace" font-size="8" text-anchor="middle" fill="#667eea">██████╗  █████╗ ██████╗ ███████╗██████╗  ██████╗ ██████╗ █████╗ ███████╗███████╗</text>
-      <text x="200" y="45" font-family="monospace" font-size="8" text-anchor="middle" fill="#667eea">██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔════╝██╔═══██╗██╔══██╗██╔════╝██╔════╝</text>
-      <text x="200" y="55" font-family="monospace" font-size="8" text-anchor="middle" fill="#667eea">██████╔╝███████║██████╔╝█████╗  ██████╔╝██║     ██║   ██║███████║█████╗  █████╗  </text>
-      <text x="200" y="65" font-family="monospace" font-size="8" text-anchor="middle" fill="#667eea">██╔═══╝ ██╔══██║██╔═══╝ ██╔══╝  ██╔══██╗██║     ██║   ██║██╔══██║██╔══╝  ██╔══╝  </text>
-      <text x="200" y="75" font-family="monospace" font-size="8" text-anchor="middle" fill="#667eea">██║     ██║  ██║██║     ███████╗██║  ██║╚██████╗╚██████╔╝██║  ██║███████╗███████╗</text>
-      <text x="200" y="85" font-family="monospace" font-size="8" text-anchor="middle" fill="#667eea">╚═╝     ╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝</text>
+      <!-- 简单的ASCII艺术字 -->
+      <text x="200" y="40" font-family="monospace" font-size="12" text-anchor="middle" fill="#667eea">+--------------------------------------+</text>
+      <text x="200" y="60" font-family="monospace" font-size="16" font-weight="bold" text-anchor="middle" fill="#667eea">PaperCache</text>
+      <text x="200" y="80" font-family="monospace" font-size="10" text-anchor="middle" fill="#667eea">AI Research Papers</text>
+      <text x="200" y="100" font-family="monospace" font-size="12" text-anchor="middle" fill="#667eea">+--------------------------------------+</text>
       
       <!-- 分隔线 -->
-      <text x="200" y="100" font-family="monospace" font-size="8" text-anchor="middle" fill="#4a5568">────────────────────────────────────────────────────────────────────────────</text>
+      <text x="200" y="120" font-family="monospace" font-size="8" text-anchor="middle" fill="#4a5568">────────────────────────────────────────────────────────────────────────────</text>
       
       <!-- 副标题 -->
-      <text x="200" y="115" font-family="monospace" font-size="10" text-anchor="middle" fill="#4a5568">AI Research Papers Collection</text>
-      <text x="200" y="130" font-family="monospace" font-size="8" text-anchor="middle" fill="#718096">No Image Available</text>
+      <text x="200" y="140" font-family="monospace" font-size="10" text-anchor="middle" fill="#4a5568">AI Research Papers Collection</text>
+      <text x="200" y="155" font-family="monospace" font-size="8" text-anchor="middle" fill="#718096">No Image Available</text>
       
       <!-- 底部装饰 -->
-      <text x="200" y="150" font-family="monospace" font-size="8" text-anchor="middle" fill="#4a5568">┌────────────────────────────────────────────────────────────────────────────┐</text>
-      <text x="200" y="160" font-family="monospace" font-size="8" text-anchor="middle" fill="#4a5568">│  🤖 AI-Powered Paper Analysis & Caching System  │</text>
-      <text x="200" y="170" font-family="monospace" font-size="8" text-anchor="middle" fill="#4a5568">└────────────────────────────────────────────────────────────────────────────┘</text>
+      <text x="200" y="175" font-family="monospace" font-size="8" text-anchor="middle" fill="#4a5568">AI-Powered Paper Analysis & Caching System</text>
     </svg>
     `;
     
@@ -441,22 +436,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     console.log('✅ ASCII艺术字生成完成，长度:', dataUrl.length);
     return dataUrl;
-  }
-
-  function collectNeighbors(el, range) {
-    const out = [];
-    if (!el) return out;
-    let cur = el;
-    for (let i = 0; i < range; i++) {
-      cur = cur && cur.previousElementSibling;
-      if (cur) out.push(cur);
-    }
-    cur = el;
-    for (let i = 0; i < range; i++) {
-      cur = cur && cur.nextElementSibling;
-      if (cur) out.push(cur);
-    }
-    return out;
   }
 
   function setupLightbox() {

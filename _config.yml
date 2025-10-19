@@ -18,6 +18,23 @@ plugins:
   - jekyll-seo-tag
   - jekyll-paginate
 
+# 内存优化设置
+exclude:
+  - "*.log"
+  - "*.tmp"
+  - "node_modules"
+  - "vendor"
+  - ".git"
+  - ".DS_Store"
+
+# 限制处理的内容
+paginate: 20  # 每页显示的文章数量
+paginate_path: "/page:num/"  # 分页路径
+
+# 限制feed中的文章数量
+jekyll-feed:
+  limit: 20  # 限制feed中文章数量
+
 # 顶部导航仅展示指定页面
 header_pages:
   - 01-index.markdown
