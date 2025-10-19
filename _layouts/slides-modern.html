@@ -5,6 +5,188 @@
 
   <body class="layout-collection">
 
+    <!-- 关键CSS内联，防止FOUC -->
+    <style>
+    /* 防止FOUC的关键样式 */
+    .collection-stats .stat-number,
+    #slides-category-count,
+    #slides-tag-count,
+    #tag-count-modern,
+    #tag-buttons-container-modern {
+      opacity: 0;
+      transition: opacity 0.3s ease-in;
+    }
+
+    .collection-stats .stat-number.loaded,
+    #slides-category-count.loaded,
+    #slides-tag-count.loaded,
+    #tag-count-modern.loaded,
+    #tag-buttons-container-modern.loaded {
+      opacity: 1;
+    }
+
+    /* 基础布局样式 */
+    .collection-page {
+      min-height: 100vh;
+    }
+
+    .collection-hero {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      color: white;
+      padding: 60px 0;
+      margin: -2em -15px 3em -15px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .collection-hero-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .collection-hero h1 {
+      font-size: 3.5em;
+      font-weight: 700;
+      margin-bottom: 0.5em;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .collection-hero-subtitle {
+      font-size: 1.2em;
+      opacity: 0.9;
+      margin-bottom: 2em;
+    }
+
+    .collection-stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-number {
+      display: block;
+      font-size: 2.5em;
+      font-weight: 700;
+      margin-bottom: 0.2em;
+    }
+
+    .stat-label {
+      font-size: 0.9em;
+      opacity: 0.8;
+    }
+
+    .modern-tag-filter {
+      background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+      border-radius: 16px;
+      padding: 24px;
+      margin: 2em 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      border: 1px solid #e9ecef;
+    }
+
+    .tag-filter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .tag-filter-title {
+      margin: 0;
+      font-size: 1.3em;
+      font-weight: 600;
+      color: #2d3748;
+    }
+
+    .tag-stats-modern {
+      color: #718096;
+      font-size: 0.95em;
+    }
+
+    .tag-buttons-modern {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .tag-btn-modern {
+      background: white;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 24px;
+      padding: 8px 18px;
+      font-size: 0.9em;
+      font-weight: 500;
+      color: #4a5568;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tag-btn-modern:hover {
+      background: #f7fafc;
+      border-color: #667eea;
+      color: #667eea;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+    }
+
+    .tag-btn-modern.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .tag-btn-count {
+      opacity: 0.7;
+      font-size: 0.9em;
+    }
+
+    .tag-btn-modern.active .tag-btn-count {
+      opacity: 0.9;
+    }
+
+    .modern-navigation {
+      margin-top: 2em;
+    }
+
+    .collection-content {
+      max-width: 100%;
+    }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      .collection-hero h1 {
+        font-size: 2.5em;
+      }
+      
+      .collection-stats {
+        gap: 20px;
+      }
+      
+      .stat-number {
+        font-size: 2em;
+      }
+      
+      .tag-filter-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+    }
+    </style>
+
     {%- include header.html -%}
 
     <div class="collection-wrapper">
@@ -102,87 +284,135 @@
   </div>
 </div>
 
-<!-- 文章预览和按需加载脚本 -->
-<link rel="stylesheet" href="{{ '/assets/css/post-preview.css' | relative_url }}">
-<link rel="stylesheet" href="{{ '/assets/css/modern-collection.css' | relative_url }}">
+<!-- 文章预览和按需加载脚本（延迟加载，因为关键样式已内联） -->
+<link rel="preload" href="{{ '/assets/css/post-preview.css' | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" href="{{ '/assets/css/modern-collection.css' | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet" href="{{ '/assets/css/post-preview.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/assets/css/modern-collection.css' | relative_url }}">
+</noscript>
 <script src="{{ '/assets/js/post-preview.js' | relative_url }}" defer></script>
 <script src="{{ '/assets/js/card-enhancements.js' | relative_url }}?v=3" defer></script>
 
 <script>
+// 立即执行函数，减少FOUC
+(function() {
+  // 立即显示基础内容，避免"计算中..."的闪烁
+  const categoryCountEl = document.getElementById('slides-category-count');
+  const tagCountEl = document.getElementById('slides-tag-count');
+  const tagCountModernEl = document.getElementById('slides-tag-count-modern');
+  
+  if (categoryCountEl) {
+    categoryCountEl.textContent = '0';
+    categoryCountEl.classList.add('loaded');
+  }
+  
+  if (tagCountEl) {
+    tagCountEl.textContent = '0';
+    tagCountEl.classList.add('loaded');
+  }
+  
+  if (tagCountModernEl) {
+    tagCountModernEl.textContent = '0';
+    tagCountModernEl.classList.add('loaded');
+  }
+})();
+
 document.addEventListener('DOMContentLoaded', function() {
-  // 计算分类数量
-  const categoryCount = document.querySelectorAll('.main-category-modern').length;
-  document.getElementById('slides-category-count').textContent = categoryCount;
-  
-  // 收集所有演示文稿标签
-  const tagMap = new Map();
-  const postItems = document.querySelectorAll('.post-item[data-post-url]');
-  
-  postItems.forEach(item => {
-    const tagElement = item.querySelector('.subcategory-tag');
-    if (tagElement) {
-      const tag = tagElement.textContent.trim();
-      tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
+  // 使用 requestAnimationFrame 确保DOM完全渲染后再执行
+  requestAnimationFrame(function() {
+    // 计算分类数量
+    const categoryCount = document.querySelectorAll('.main-category-modern').length;
+    const categoryCountEl = document.getElementById('slides-category-count');
+    if (categoryCountEl) {
+      categoryCountEl.textContent = categoryCount;
     }
-  });
-  
-  // 更新标签数量显示
-  document.getElementById('slides-tag-count').textContent = tagMap.size;
-  document.getElementById('slides-tag-count-modern').textContent = tagMap.size;
-  
-  // 生成现代化标签按钮
-  const container = document.getElementById('slides-tag-buttons-container-modern');
-  const sortedTags = Array.from(tagMap.entries()).sort((a, b) => b[1] - a[1]);
-  
-  sortedTags.forEach(([tag, count]) => {
-    const button = document.createElement('button');
-    button.className = 'tag-btn-modern';
-    button.setAttribute('data-tag', tag.toLowerCase().replace(/[ -]/g, '_'));
-    button.innerHTML = `
-      <span>${tag}</span>
-      <span class="tag-btn-count">(${count})</span>
-    `;
-    container.appendChild(button);
-  });
-  
-  // 添加现代化标签过滤功能
-  const tagButtons = document.querySelectorAll('.tag-btn-modern');
-  tagButtons.forEach(button => {
-    button.addEventListener('click', function() {
-      const selectedTag = this.getAttribute('data-tag');
-      
-      // 更新按钮状态
-      tagButtons.forEach(btn => btn.classList.remove('active'));
-      this.classList.add('active');
-      
-      // 过滤演示文稿
-      postItems.forEach(item => {
-        const tagElement = item.querySelector('.subcategory-tag');
-        const itemTag = tagElement ? tagElement.textContent.trim().toLowerCase().replace(/[ -]/g, '_') : '';
-        
-        if (selectedTag === 'all' || itemTag === selectedTag) {
-          item.style.display = '';
-        } else {
-          item.style.display = 'none';
-        }
-      });
-      
-      // 更新分类标题显示
-      updateCategoryVisibility();
-    });
-  });
-  
-  function updateCategoryVisibility() {
-    const nodes = document.querySelectorAll('details.main-category-modern');
-    nodes.forEach(node => {
-      const visiblePosts = node.querySelectorAll('.post-item:not([style*="display: none"])');
-      if (visiblePosts.length === 0) {
-        node.open = false;
-      } else {
-        node.open = true;
+    
+    // 收集所有演示文稿标签
+    const tagMap = new Map();
+    const postItems = document.querySelectorAll('.post-item[data-post-url]');
+    
+    postItems.forEach(item => {
+      const tagElement = item.querySelector('.subcategory-tag');
+      if (tagElement) {
+        const tag = tagElement.textContent.trim();
+        tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
       }
     });
-  }
+    
+    // 更新标签数量显示
+    const tagCountEl = document.getElementById('slides-tag-count');
+    const tagCountModernEl = document.getElementById('slides-tag-count-modern');
+    
+    if (tagCountEl) {
+      tagCountEl.textContent = tagMap.size;
+    }
+    if (tagCountModernEl) {
+      tagCountModernEl.textContent = tagMap.size;
+    }
+    
+    // 生成现代化标签按钮
+    const container = document.getElementById('slides-tag-buttons-container-modern');
+    if (container) {
+      const sortedTags = Array.from(tagMap.entries()).sort((a, b) => b[1] - a[1]);
+      
+      // 使用 DocumentFragment 提高性能
+      const fragment = document.createDocumentFragment();
+      
+      sortedTags.forEach(([tag, count]) => {
+        const button = document.createElement('button');
+        button.className = 'tag-btn-modern';
+        button.setAttribute('data-tag', tag.toLowerCase().replace(/[ -]/g, '_'));
+        button.innerHTML = `
+          <span>${tag}</span>
+          <span class="tag-btn-count">(${count})</span>
+        `;
+        fragment.appendChild(button);
+      });
+      
+      container.appendChild(fragment);
+      container.classList.add('loaded');
+      
+      // 添加现代化标签过滤功能
+      const tagButtons = container.querySelectorAll('.tag-btn-modern');
+      tagButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const selectedTag = this.getAttribute('data-tag');
+          
+          // 更新按钮状态
+          tagButtons.forEach(btn => btn.classList.remove('active'));
+          this.classList.add('active');
+          
+          // 过滤演示文稿
+          postItems.forEach(item => {
+            const tagElement = item.querySelector('.subcategory-tag');
+            const itemTag = tagElement ? tagElement.textContent.trim().toLowerCase().replace(/[ -]/g, '_') : '';
+            
+            if (selectedTag === 'all' || itemTag === selectedTag) {
+              item.style.display = '';
+            } else {
+              item.style.display = 'none';
+            }
+          });
+          
+          // 更新分类标题显示
+          updateCategoryVisibility();
+        });
+      });
+    }
+    
+    function updateCategoryVisibility() {
+      const nodes = document.querySelectorAll('details.main-category-modern');
+      nodes.forEach(node => {
+        const visiblePosts = node.querySelectorAll('.post-item:not([style*="display: none"])');
+        if (visiblePosts.length === 0) {
+          node.open = false;
+        } else {
+          node.open = true;
+        }
+      });
+    }
+  });
 });
 </script>
 
