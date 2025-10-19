@@ -29,6 +29,12 @@ exclude:
   - ".thumb_tmp"
   - "_site_bkp"
   - "test_ci_env"
+  - ".sass-cache/"
+  - ".jekyll-cache/"
+  - "Gemfile"
+  - "Gemfile.lock"
+  - "04-slides.html"
+  - "_slides/"
 
 # 启用增量构建以减少内存使用
 incremental: true
@@ -94,16 +100,16 @@ defaults:
 # paginate: 10
 # paginate_path: "/page:num/"
 
-# 排除文件
-exclude:
-  - .sass-cache/
-  - .jekyll-cache/
-  - Gemfile
-  - Gemfile.lock
-  - node_modules/
-  - .DS_Store
-  - 04-slides.html
-  - _slides/
+# 排除文件（合并到上面的exclude中）
+# exclude:
+#   - .sass-cache/
+#   - .jekyll-cache/
+#   - Gemfile
+#   - Gemfile.lock
+#   - node_modules/
+#   - .DS_Store
+#   - 04-slides.html
+#   - _slides/
 
 
 

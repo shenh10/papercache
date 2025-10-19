@@ -35,11 +35,16 @@ jobs:
         run: |
           python scripts/test_thumbnails.py
 
+      - name: 🔨 Build the site (first build for thumbnail extraction)
+        run: bundle exec jekyll build  --config _config.yml
+        env:
+          JEKYLL_ENV: production
+
       - name: 🖼️ Generate thumbnails
         run: |
           python scripts/gen_thumbs.py --root . --out assets/images/thumbs --size 320x200 --placeholder
 
-      - name: 🔨 Build the site
+      - name: 🔨 Rebuild the site (second build to include thumbnails)
         run: bundle exec jekyll build  --config _config.yml
         env:
           JEKYLL_ENV: production

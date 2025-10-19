@@ -44,18 +44,6 @@ jobs:
               run: |
                   pip install beautifulsoup4 PyYAML lxml Pillow requests
 
-            - name: 🖼️ Generate thumbnails
-              run: |
-                  echo "开始生成缩略图..."
-                  python3 scripts/gen_thumbs.py
-                  echo "缩略图生成完成！"
-
-            - name: 📊 Check thumbnails
-              run: |
-                  echo "检查生成的缩略图..."
-                  echo "thumbnails_by_path.yml 行数: $(wc -l < _data/thumbnails_by_path.yml)"
-                  echo "缩略图文件数量: $(ls -1 assets/images/thumbs/ | wc -l)"
-
             - name: 💎 Setup Ruby
               uses: ruby/setup-ruby@v1
               with:
@@ -67,7 +55,24 @@ jobs:
               id: pages
               uses: actions/configure-pages@v4
 
-            - name: 🏗️ Build with Jekyll
+            - name: 🏗️ Build with Jekyll (first build for thumbnail extraction)
+              run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
+              env:
+                  JEKYLL_ENV: production
+
+            - name: 🖼️ Generate thumbnails
+              run: |
+                  echo "开始生成缩略图..."
+                  python3 scripts/gen_thumbs.py --placeholder
+                  echo "缩略图生成完成！"
+
+            - name: 📊 Check thumbnails
+              run: |
+                  echo "检查生成的缩略图..."
+                  echo "thumbnails_by_path.yml 行数: $(wc -l < _data/thumbnails_by_path.yml)"
+                  echo "缩略图文件数量: $(ls -1 assets/images/thumbs/ | wc -l)"
+
+            - name: 🏗️ Rebuild with Jekyll (second build to include thumbnails)
               run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
               env:
                   JEKYLL_ENV: production
