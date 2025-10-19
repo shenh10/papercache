@@ -1,13 +1,3 @@
-diffusions:
-  dllm:
-    posts:
-    - categories:
-      - diffusions
-      - dllm
-      date: '2025-07-01'
-      title: 'Fast-dLLM: Training-free Acceleration of Diffusion LLM by Enabling KV
-        Cache and Parallel Decoding'
-      url: /papers/diffusions/dllm/2025/07/01/fast-dllm-training-free-acceleration-of-diffusion-llm-by-enabling-kv-cache-and-parallel-decoding.html
 llm:
   algorithm:
     agent:
@@ -2311,3 +2301,13 @@ mlsys:
       tag: osdi25
       title: Principles and Methodologies for Serial Performance Optimization
       url: /papers/mlsys/system/2025/01/01/principles-and-methodologies-for-serial-performance-optimization.html
+diffusions:
+  dllm:
+    posts:
+    - categories:
+      - diffusions
+      - dllm
+      date: '2025-07-01'
+      title: 'Fast-dLLM: Training-free Acceleration of Diffusion LLM by Enabling KV
+        Cache and Parallel Decoding'
+      url: /papers/diffusions/dllm/2025/07/01/fast-dllm-training-free-acceleration-of-diffusion-llm-by-enabling-kv-cache-and-parallel-decoding.html
