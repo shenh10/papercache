@@ -5,7 +5,10 @@
   
   <!-- 性能优化：预加载关键资源 -->
   <link rel="preload" href="{{ "/assets/main.css" | relative_url }}" as="style">
+  <link rel="preload" href="{{ "/assets/css/modern-collection.css" | relative_url }}" as="style">
+  <link rel="preload" href="{{ "/assets/css/modern-header.css" | relative_url }}" as="style">
   <link rel="preload" href="{{ "/assets/js/post-preview.js" | relative_url }}" as="script">
+  <link rel="preload" href="{{ "/assets/js/card-enhancements.js" | relative_url }}" as="script">
   
   <!-- 缓存控制 -->
   <meta http-equiv="Cache-Control" content="public, max-age=31536000">
@@ -13,6 +16,32 @@
   <!-- SEO tags removed for compatibility -->
   <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}">
   <!-- Feed meta removed for compatibility -->
+  
+  <!-- 防止FOUC的基础样式 -->
+  <style>
+    /* 确保页面在CSS加载前有基础样式 */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      background-color: #fff;
+    }
+    
+    /* 隐藏可能闪烁的元素直到JavaScript加载完成 */
+    .collection-stats .stat-number:not(.loaded),
+    #tag-count-modern:not(.loaded),
+    #tag-buttons-container-modern:not(.loaded) {
+      opacity: 0;
+      transition: opacity 0.3s ease-in;
+    }
+    
+    /* 确保关键布局元素立即显示 */
+    .collection-hero,
+    .modern-tag-filter,
+    .modern-navigation {
+      visibility: visible;
+    }
+  </style>
   {%- if jekyll.environment == 'production' and site.google_analytics -%}
     {%- include google-analytics.html -%}
   {%- endif -%}

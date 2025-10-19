@@ -2,6 +2,20 @@
 /* 现代化 Collection 页面设计 */
 /* ======================================== */
 
+/* 0. 防止 FOUC (Flash of Unstyled Content) */
+.collection-stats .stat-number,
+#tag-count-modern,
+#tag-buttons-container-modern {
+  opacity: 0;
+  transition: opacity 0.3s ease-in;
+}
+
+.collection-stats .stat-number.loaded,
+#tag-count-modern.loaded,
+#tag-buttons-container-modern.loaded {
+  opacity: 1;
+}
+
 /* 1. 页面头部区域 - 英雄式设计 */
 .collection-hero {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
