@@ -381,18 +381,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 创建ASCII PaperCache图片的函数
   function createASCIIPaperCacheImage() {
-    // 纯ASCII风格，占位图：边框 + 文本，确保在卡片中清晰可读
+    // 纯ASCII风格，包含完整的PaperCache ASCII艺术字
     const svg = `
     <svg width="400" height="200" xmlns="http://www.w3.org/2000/svg">
       <rect width="100%" height="100%" fill="#f8fafc"/>
-      <rect x="10" y="10" width="380" height="180" fill="none" stroke="#667eea" stroke-width="2"/>
-      <text x="200" y="50" font-family="monospace" font-size="12" text-anchor="middle" fill="#4a5568">┌────────────────────────────────────┐</text>
-      <text x="200" y="70" font-family="monospace" font-size="12" text-anchor="middle" fill="#4a5568">│</text>
-      <text x="200" y="90" font-family="monospace" font-size="12" text-anchor="middle" fill="#4a5568">│</text>
-      <text x="200" y="110" font-family="monospace" font-size="18" font-weight="bold" text-anchor="middle" fill="#667eea">PaperCache</text>
-      <text x="200" y="130" font-family="monospace" font-size="12" text-anchor="middle" fill="#4a5568">│</text>
-      <text x="200" y="150" font-family="monospace" font-size="12" text-anchor="middle" fill="#4a5568">│</text>
-      <text x="200" y="170" font-family="monospace" font-size="12" text-anchor="middle" fill="#4a5568">└────────────────────────────────────┘</text>
+      <rect x="10" y="10" width="380" height="180" fill="none" stroke="#667eea" stroke-width="1"/>
+      
+      <!-- PaperCache ASCII Art -->
+      <text x="200" y="35" font-family="monospace" font-size="8" text-anchor="middle" fill="#667eea">██████╗  █████╗ ██████╗ ███████╗██████╗  ██████╗ ██████╗ █████╗ ███████╗███████╗</text>
+      <text x="200" y="45" font-family="monospace" font-size="8" text-anchor="middle" fill="#667eea">██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔════╝██╔═══██╗██╔══██╗██╔════╝██╔════╝</text>
+      <text x="200" y="55" font-family="monospace" font-size="8" text-anchor="middle" fill="#667eea">██████╔╝███████║██████╔╝█████╗  ██████╔╝██║     ██║   ██║███████║█████╗  █████╗  </text>
+      <text x="200" y="65" font-family="monospace" font-size="8" text-anchor="middle" fill="#667eea">██╔═══╝ ██╔══██║██╔═══╝ ██╔══╝  ██╔══██╗██║     ██║   ██║██╔══██║██╔══╝  ██╔══╝  </text>
+      <text x="200" y="75" font-family="monospace" font-size="8" text-anchor="middle" fill="#667eea">██║     ██║  ██║██║     ███████╗██║  ██║╚██████╗╚██████╔╝██║  ██║███████╗███████╗</text>
+      <text x="200" y="85" font-family="monospace" font-size="8" text-anchor="middle" fill="#667eea">╚═╝     ╚═╝  ╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝</text>
+      
+      <!-- 分隔线 -->
+      <text x="200" y="100" font-family="monospace" font-size="8" text-anchor="middle" fill="#4a5568">────────────────────────────────────────────────────────────────────────────</text>
+      
+      <!-- 副标题 -->
+      <text x="200" y="115" font-family="monospace" font-size="10" text-anchor="middle" fill="#4a5568">AI Research Papers Collection</text>
+      <text x="200" y="130" font-family="monospace" font-size="8" text-anchor="middle" fill="#718096">No Image Available</text>
+      
+      <!-- 底部装饰 -->
+      <text x="200" y="150" font-family="monospace" font-size="8" text-anchor="middle" fill="#4a5568">┌────────────────────────────────────────────────────────────────────────────┐</text>
+      <text x="200" y="160" font-family="monospace" font-size="8" text-anchor="middle" fill="#4a5568">│  🤖 AI-Powered Paper Analysis & Caching System  │</text>
+      <text x="200" y="170" font-family="monospace" font-size="8" text-anchor="middle" fill="#4a5568">└────────────────────────────────────────────────────────────────────────────┘</text>
     </svg>
     `;
     
