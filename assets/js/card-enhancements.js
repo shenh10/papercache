@@ -436,8 +436,8 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
     
     // 将SVG转换为base64 data URL
-    const base64 = btoa(unescape(encodeURIComponent(svg)));
-    const dataUrl = `data:image/svg+xml;base64,${base64}`;
+    const base64 = btoa(unescape(encodeURIComponent(svg.trim())));
+    const dataUrl = `data:image/svg+xml;charset=utf-8;base64,${base64}`;
     
     console.log('✅ ASCII艺术字生成完成，长度:', dataUrl.length);
     return dataUrl;
