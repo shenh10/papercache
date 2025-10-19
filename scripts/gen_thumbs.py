@@ -454,6 +454,21 @@ def pick_first_valid_img(html, is_slides=False):
     return None
 
 
+def generate_deterministic_filename(post_url: str) -> str:
+    """
+    基于文章URL生成确定性的缩略图文件名
+    使用URL路径的哈希值，确保相同URL总是生成相同的文件名
+    """
+    import hashlib
+    # 使用URL路径部分生成哈希，避免协议和域名变化影响
+    url_path = urllib.parse.urlparse(post_url).path
+    # 移除文件扩展名，只保留路径部分
+    url_path = url_path.replace('.html', '').strip('/')
+    # 生成MD5哈希的前8位作为文件名
+    hash_obj = hashlib.md5(url_path.encode('utf-8'))
+    return hash_obj.hexdigest()[:8] + '.jpg'
+
+
 def ensure_thumb(image_path: pathlib.Path, size: tuple[int, int], dest_path: pathlib.Path):
     dest_path.parent.mkdir(parents=True, exist_ok=True)
     with Image.open(image_path) as im:
@@ -589,9 +604,9 @@ def main():
             processed += 1
             
             # Check if thumbnail already exists
-            digest = abs(hash(p_url))
-            dest_rel = f"/{args.out.strip('/')}/{digest}.jpg"
-            dest_abs = out_dir / f"{digest}.jpg"
+            thumb_filename = generate_deterministic_filename(p_url)
+            dest_rel = f"/{args.out.strip('/')}/{thumb_filename}"
+            dest_abs = out_dir / thumb_filename
             
             if p_url in existing_mapping and dest_abs.exists():
                 # Thumbnail already exists, reuse it
@@ -668,9 +683,9 @@ def main():
                     print(f"  Creating placeholder for: {p_url}")
                 
                 # Generate placeholder
-                digest = abs(hash(p_url))
-                dest_rel = f"/{args.out.strip('/')}/{digest}.jpg"
-                dest_abs = out_dir / f"{digest}.jpg"
+                thumb_filename = generate_deterministic_filename(p_url)
+                dest_rel = f"/{args.out.strip('/')}/{thumb_filename}"
+                dest_abs = out_dir / thumb_filename
                 
                 # Ensure output directory exists
                 dest_abs.parent.mkdir(parents=True, exist_ok=True)
