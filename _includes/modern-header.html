@@ -1,0 +1,33 @@
+<!-- 现代化头部导航 -->
+<header class="modern-header">
+  <div class="header-container">
+    <!-- Logo和品牌 -->
+    <a href="{{ '/' | relative_url }}" class="logo-section">
+      <img src="{{ '/assets/images/logo.svg' | relative_url }}" alt="PaperCache Logo" class="logo">
+      <div class="brand-text">
+        <h1 class="brand-name">PaperCache</h1>
+        <p class="brand-tagline">AI Research Papers</p>
+      </div>
+    </a>
+    
+    <!-- 导航菜单 -->
+    <nav>
+      <ul class="nav-menu">
+        {% for page_path in site.header_pages %}
+          {% assign page_obj = site.pages | where: "path", page_path | first %}
+          {% if page_obj %}
+            <li class="nav-item">
+              <a href="{{ page_obj.url | relative_url }}" 
+                 class="nav-link {% if page.url == page_obj.url %}active{% endif %}">
+                {{ page_obj.title }}
+              </a>
+            </li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<!-- 样式文件 -->
+<link rel="stylesheet" href="{{ '/assets/css/modern-header.css' | relative_url }}">

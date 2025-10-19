@@ -57,8 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const html = await fetch(postUrl, { credentials: 'same-origin' }).then(r => r.text());
       const doc = new DOMParser().parseFromString(html, 'text/html');
 
-      // 1) 缩略图：顺序选择第一个“图/figure/fig”相关的非公式图片；否则占位
-      if (!card.querySelector('.post-card-thumb')) {
+      // 1) 缩略图：顺序选择第一个"图/figure/fig"相关的非公式图片；否则占位
+      if (!card.querySelector('.post-card-thumb, .post-card-thumb-modern')) {
         const imgSrc = findFirstFigureImage(doc);
         const body = ensureBody(card);
         const thumb = document.createElement('div');

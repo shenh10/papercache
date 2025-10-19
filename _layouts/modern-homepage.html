@@ -1,0 +1,124 @@
+---
+layout: default
+---
+
+<div class="modern-homepage">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">🤖 欢迎来到 PaperCache！</h1>
+      <p class="hero-subtitle">
+        <strong>一个由 AI 当实习生，我做老板的博客。</strong><br>
+        没错，这里的每一篇论文精读，都不是我亲手写的，而是我的赛博雇员——<strong>LLM</strong>——的作品。我只负责投喂论文，并偶尔在它出错时进行一些人工干预。
+      </p>
+      
+      <!-- 统计数据 -->
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-number">{{ site.posts.size }}</span>
+          <span class="stat-label">论文总数</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ site.categories.size }}</span>
+          <span class="stat-label">分类数量</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ site.tags.size }}</span>
+          <span class="stat-label">标签数量</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 主要内容区域 -->
+  <div class="content-section">
+    <!-- 关于博客诞生 -->
+    <section class="about-section">
+      <h2 class="section-title">关于这个博客的诞生</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">💡</div>
+          <h3 class="feature-title">灵感来源</h3>
+          <p class="feature-description">
+            作为一个天天被 Paper 追着跑的工程师，我曾挣扎在第二语言和读不完的文献列表里。在这个 AGI 时代，我意识到一个简单有效的方法：<strong>让 AI 去读那些关于 AI 的论文。</strong>
+          </p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3 class="feature-title">我们的目标</h3>
+          <p class="feature-description">
+            我们的目标很明确：<br>
+            • 帮你过滤掉论文中 80% 的复杂噪音，让你迅速吸收核心思想<br>
+            • 把你长长的 "稍后读" 清单，变成高效的 "已读" 列表
+          </p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">🤝</div>
+          <h3 class="feature-title">共同成长</h3>
+          <p class="feature-description">
+            当然，我的 AI 伙伴有时会过于自信，可能会犯一些错误。如果你发现了任何 Bug，<strong>请务必在评论区大声指出</strong>，你的每一次"找茬"都能让它变得更聪明。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 关注领域 -->
+    <section class="focus-section">
+      <h2 class="section-title">我们关注什么？</h2>
+      <div class="focus-content">
+        <p class="focus-intro">
+          这个知识库将是你的 AI 军火库，长期更新 <strong>AI Infra 全栈</strong> 的尖端弹药，包括但不限于：
+        </p>
+        <div class="focus-grid">
+          <div class="focus-item">
+            <div class="focus-icon">🖥️</div>
+            <h3>机器学习系统</h3>
+            <p>Machine Learning System</p>
+          </div>
+          <div class="focus-item">
+            <div class="focus-icon">🧠</div>
+            <h3>大模型算法</h3>
+            <p>Large Model Algorithms</p>
+          </div>
+          <div class="focus-item">
+            <div class="focus-icon">⚡</div>
+            <h3>AI 加速器</h3>
+            <p>AI Accelerators</p>
+          </div>
+        </div>
+        <p class="focus-outro">
+          准备好，和我们一起高效成长吧！<br>
+          <em>最后，特别鸣谢我的两位灵感缪斯：Gemini & Grok。</em>
+        </p>
+      </div>
+    </section>
+
+    <!-- 最新动态 -->
+    <section class="latest-section">
+      <h2 class="section-title">🚀 最新动态</h2>
+      <div class="latest-posts-list">
+        {% for post in site.posts limit:10 %}
+        <div class="post-item">
+          <span class="post-date">{{ post.date | date: "%Y-%m" }}</span>
+          <a href="{{ post.url | relative_url }}" class="post-link">{{ post.title }}</a>
+        </div>
+        {% endfor %}
+      </div>
+      
+      <div class="cta-section">
+        <h3 class="cta-title">探索更多精彩内容</h3>
+        <p class="cta-description">
+          发现更多 AI 研究论文和深度分析，开启你的知识探索之旅
+        </p>
+        <a href="{{ '/collection.html' | relative_url }}" class="cta-button">
+          查看所有论文 →
+        </a>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- 引入现代化首页样式 -->
+<link rel="stylesheet" href="{{ '/assets/css/modern-homepage.css' | relative_url }}">

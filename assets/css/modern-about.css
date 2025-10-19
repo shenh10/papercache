@@ -1,0 +1,347 @@
+/* 现代化关于页面样式 */
+.modern-about-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+/* Hero Section */
+.about-hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 60px 0;
+  margin: -2em -15px 3em -15px;
+  position: relative;
+  overflow: hidden;
+}
+
+.about-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+  opacity: 0.3;
+}
+
+.about-hero-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.about-hero-title {
+  font-size: 3.5em;
+  font-weight: 700;
+  margin: 0 0 20px 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.about-hero-subtitle {
+  font-size: 1.3em;
+  opacity: 0.9;
+  margin-bottom: 30px;
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+/* 内容区域 */
+.about-content-section {
+  padding: 0 15px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 关于卡片 */
+.about-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2em;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.about-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+}
+
+.about-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.15);
+}
+
+.about-card-header {
+  padding: 30px 30px 0 30px;
+}
+
+.about-card-title {
+  font-size: 1.8em;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.about-card-body {
+  padding: 20px 30px 30px 30px;
+}
+
+/* 关于我部分 */
+.about-intro {
+  font-size: 1.1em;
+  line-height: 1.7;
+  color: #4a5568;
+  margin: 0;
+}
+
+/* 研究方向列表 */
+.research-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.research-list li {
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #4a5568;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.research-list li:last-child {
+  border-bottom: none;
+}
+
+.research-list li::before {
+  content: '•';
+  color: #667eea;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+  top: 1rem;
+}
+
+/* 联系我部分 */
+.contact-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.contact-list li {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.contact-list li:last-child {
+  border-bottom: none;
+}
+
+.contact-label {
+  font-weight: 600;
+  color: #2d3748;
+  min-width: 100px;
+}
+
+.contact-list a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.contact-list a:hover {
+  color: #764ba2;
+  text-decoration: none;
+}
+
+/* 时间线列表 */
+.timeline-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.timeline-list li {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #4a5568;
+}
+
+.timeline-list li:last-child {
+  border-bottom: none;
+}
+
+.timeline-time {
+  font-weight: 600;
+  color: #667eea;
+  min-width: 100px;
+  font-size: 0.9rem;
+}
+
+/* 交流群部分 */
+.community-content {
+  text-align: center;
+}
+
+.qrcode-container {
+  margin-bottom: 2rem;
+}
+
+.qrcode-hover {
+  position: relative;
+  display: inline-block;
+  z-index: 1001;
+}
+
+.qrcode-hover::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1001;
+}
+
+.qrcode-hover:hover::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.qrcode-link {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.qrcode-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+  text-decoration: none;
+  color: white;
+}
+
+.qrcode-image {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 200px;
+  height: 200px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 1002;
+  background: white;
+  padding: 10px;
+  object-fit: contain;
+}
+
+.qrcode-hover:hover .qrcode-image {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, -50%);
+}
+
+.community-description {
+  font-size: 1.1rem;
+  color: #4a5568;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .about-hero-title {
+    font-size: 2.5em;
+  }
+  
+  .about-hero-subtitle {
+    font-size: 1.1em;
+  }
+  
+  .about-hero {
+    padding: 40px 0;
+    margin: -2em -10px 2em -10px;
+  }
+  
+  .about-content-section {
+    padding: 0 10px;
+  }
+  
+  .about-card-header,
+  .about-card-body {
+    padding: 20px;
+  }
+  
+}
+
+@media (max-width: 480px) {
+  .about-hero-title {
+    font-size: 2em;
+  }
+  
+  .about-hero {
+    padding: 40px 0;
+    margin: -2em -10px 2em -10px;
+  }
+  
+  .about-card-header,
+  .about-card-body {
+    padding: 15px;
+  }
+  
+  
+  .qrcode-link {
+    padding: 0.8rem 1.5rem;
+    font-size: 1rem;
+  }
+  
+  .qrcode-image {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+  }
+}

@@ -1,0 +1,83 @@
+{%- comment -%}
+现代化扁平化渲染逻辑：
+- 使用现代化的面包屑和卡片设计
+- 重点突出内容而非层级结构
+- 为所有节点创建锚点以支持侧边栏导航
+- 使用include.breadcrumb避免变量污染
+{%- endcomment -%}
+
+{%- for pair in include.node -%}
+  {%- assign key = pair[0] -%}
+  {%- assign val = pair[1] -%}
+  
+  {%- if key != 'posts' -%}
+    {%- comment -%} 生成节点ID {%- endcomment -%}
+    {%- if include.path_id == '' or include.path_id == blank -%}
+      {%- assign current_node_id = key | slugify -%}
+    {%- else -%}
+      {%- assign current_node_id = include.path_id | append: '-' | append: key | slugify -%}
+    {%- endif -%}
+    
+    {%- comment -%} 为当前节点创建锚点 {%- endcomment -%}
+    <div id="{{ current_node_id }}" class="category-anchor"></div>
+    
+    {%- comment -%} 构建面包屑路径 - 每次都从include.breadcrumb重新计算 {%- endcomment -%}
+    {%- if include.breadcrumb == '' or include.breadcrumb == blank -%}
+      {%- assign this_breadcrumb = key | capitalize -%}
+    {%- else -%}
+      {%- assign this_breadcrumb = include.breadcrumb | append: ' › ' | append: key | replace: '_', ' ' | capitalize -%}
+    {%- endif -%}
+    
+    {%- comment -%} 如果当前节点有posts，显示面包屑和卡片 {%- endcomment -%}
+    {%- if val.posts -%}
+      <div class="post-section">
+        <div class="breadcrumb-modern">{{ this_breadcrumb }}</div>
+        <ul class="post-list-with-tags post-grid-modern">
+          {%- assign sorted = val.posts | sort: 'date' -%}
+          {%- for p in sorted reversed -%}
+          <li class="post-item post-card-modern" data-post-url="{{ site.baseurl }}{{ p.url }}">
+            <a class="post-card-link-modern" href="{{ site.baseurl }}{{ p.url }}" data-post-title="{{ p.title | escape }}">
+              {%- assign thumb_data = site.data.thumbnails_by_path[p.url] -%}
+              {%- assign thumb = thumb_data | default: p.thumbnail | default: p.image | default: p.cover -%}
+              {%- if thumb -%}
+              <div class="post-card-thumb-modern">
+                <img loading="lazy" src="{{ thumb | relative_url }}" alt="thumbnail of {{ p.title | escape }}">
+              </div>
+              {%- endif -%}
+              <div class="post-card-body-modern">
+                <div class="post-card-meta-modern">
+                  <span class="post-meta-modern">{{ p.date | date: "%Y-%m" }}</span>
+                  {%- if p.tag -%}
+                  <span class="post-card-tag-modern subcategory-tag tag-{{ p.tag | downcase | replace: ' ', '_' | replace: '-', '_' }}">{{ p.tag }}</span>
+                  {%- else -%}
+                  <span class="post-card-tag-modern subcategory-tag tag-arxiv">Arxiv</span>
+                  {%- endif -%}
+                </div>
+                <div class="post-card-title-modern">{{ p.title | escape }}</div>
+                {%- assign exc = p.excerpt | default: p.description | default: p.summary -%}
+                {%- if exc -%}
+                <p class="post-card-excerpt-modern">{{ exc | strip_html | truncate: 160 }}</p>
+                {%- endif -%}
+              </div>
+            </a>
+          </li>
+          {%- endfor -%}
+        </ul>
+      </div>
+    {%- endif -%}
+    
+    {%- comment -%} 递归处理子节点 {%- endcomment -%}
+    {%- assign has_subcategories = false -%}
+    {%- for subpair in val -%}
+      {%- assign subkey = subpair[0] -%}
+      {%- if subkey != 'posts' -%}
+        {%- assign has_subcategories = true -%}
+        {%- break -%}
+      {%- endif -%}
+    {%- endfor -%}
+    
+    {%- if has_subcategories -%}
+      {%- include render-category-modern.html node=val path_id=current_node_id breadcrumb=this_breadcrumb -%}
+    {%- endif -%}
+  {%- endif -%}
+{%- endfor -%}

@@ -9,5 +9,9 @@ _site/
 # Thumbnails (generated during build)
 assets/images/thumbs/
 
+# Slides (local development only)
+_slides/
+04-slides.html
+
 # Others
 .DS_Store

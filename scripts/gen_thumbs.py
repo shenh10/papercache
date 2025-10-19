@@ -96,13 +96,25 @@ def download_to_tmp(src: str, site_dir: pathlib.Path, html_dir: pathlib.Path) ->
     raise FileNotFoundError(f"Cannot resolve image src: {src}")
 
 
-def pick_first_valid_img(html: str) -> str | None:
+def pick_first_valid_img(html: str, is_slides: bool = False) -> str | None:
     """Find the first valid image using the same logic as JavaScript card-enhancements.js"""
     from bs4 import BeautifulSoup
     
     # Parse HTML
     soup = BeautifulSoup(html, 'html.parser')
     
+    # For slides, use simple first figure logic
+    if is_slides:
+        figures = soup.find_all('figure')
+        for fig in figures:
+            img = fig.find('img', src=True)
+            if img and is_usable_src(img.get('src')):
+                src = img.get('src')
+                print(f"    Slides: Found first figure image: {src[:50]}...")
+                return src
+        return None
+    
+    # For papers, use complex logic
     # Regex patterns (same as JavaScript)
     pattern_figure = re.compile(r'(图\s*\d+|figure\s*\d+|fig\.?\s*\d+)', re.IGNORECASE)
     pattern_table = re.compile(r'(表|table|tab\.?)', re.IGNORECASE)
@@ -268,23 +280,39 @@ def auto_detect_site_dir(start: pathlib.Path) -> pathlib.Path:
 
 
 def iter_posts_from_collection(site_dir: pathlib.Path) -> Iterable[Dict[str, Any]]:
-    data_path = site_dir / "_data" / "collection_structure.yml"
-    if not data_path.exists():
-        raise FileNotFoundError(f"collection_structure.yml not found at {data_path}")
-    data = yaml.safe_load(data_path.read_text(encoding="utf-8"))
-
-    def walk(node):
-        if isinstance(node, dict):
-            if "posts" in node and isinstance(node["posts"], list):
-                for p in node["posts"]:
-                    yield p
-            for v in node.values():
-                yield from walk(v)
-        elif isinstance(node, list):
-            for x in node:
-                yield from walk(x)
-
-    return walk(data)
+    """Iterate through all posts from both collection and slides"""
+    
+    # Process papers from collection_structure.yml
+    papers_path = site_dir / "_data" / "collection_structure.yml"
+    if papers_path.exists():
+        data = yaml.safe_load(papers_path.read_text(encoding="utf-8"))
+        def walk(node):
+            if isinstance(node, dict):
+                if "posts" in node and isinstance(node["posts"], list):
+                    for p in node["posts"]:
+                        yield p
+                for v in node.values():
+                    yield from walk(v)
+            elif isinstance(node, list):
+                for x in node:
+                    yield from walk(x)
+        yield from walk(data)
+    
+    # Process slides from slides_collection_structure.yml
+    slides_path = site_dir / "_data" / "slides_collection_structure.yml"
+    if slides_path.exists():
+        data = yaml.safe_load(slides_path.read_text(encoding="utf-8"))
+        def walk(node):
+            if isinstance(node, dict):
+                if "posts" in node and isinstance(node["posts"], list):
+                    for p in node["posts"]:
+                        yield p
+                for v in node.values():
+                    yield from walk(v)
+            elif isinstance(node, list):
+                for x in node:
+                    yield from walk(x)
+        yield from walk(data)
 
 
 def main():
@@ -333,7 +361,9 @@ def main():
                 continue
             
             html = html_file.read_text(encoding="utf-8", errors="ignore")
-            src = pick_first_valid_img(html)
+            # Check if this is a slides post
+            is_slides = "/slides/" in p_url
+            src = pick_first_valid_img(html, is_slides)
             if not src:
                 if processed <= 5:
                     print(f"  No valid image found")

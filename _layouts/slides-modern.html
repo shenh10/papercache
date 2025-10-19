@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="{{ page.lang | default: site.lang | default: "en" }}">
+
+  {%- include head.html -%}
+
+  <body class="layout-collection">
+
+    {%- include header.html -%}
+
+    <div class="collection-wrapper">
+      <aside class="sidebar">
+        {%- include slides-sidebar.html -%}
+      </aside>
+
+      <main class="collection-content">
+        <div class="wrapper">
+
+<div class="collection-page">
+  <!-- 现代化英雄式头部 -->
+  <div class="collection-hero">
+    <div class="collection-hero-content">
+      <h1>{{ page.title }}</h1>
+      <p class="collection-hero-subtitle">探索最新的演示文稿和技术分享</p>
+      
+      <div class="collection-stats">
+        <div class="stat-item">
+          {% assign slides_posts = site.slides | default: empty %}
+          {% if slides_posts %}
+          <span class="stat-number">{{ slides_posts | size }}</span>
+          {% else %}
+          <span class="stat-number">0</span>
+          {% endif %}
+          <span class="stat-label">演示文稿总数</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="slides-category-count">计算中...</span>
+          <span class="stat-label">分类数量</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number" id="slides-tag-count">计算中...</span>
+          <span class="stat-label">标签数量</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 现代化标签过滤器 -->
+  <div class="modern-tag-filter">
+    <div class="tag-filter-header">
+      <h3 class="tag-filter-title">智能筛选</h3>
+      <div class="tag-stats-modern">
+        共找到 <strong id="slides-tag-count-modern">计算中...</strong> 个标签
+      </div>
+    </div>
+    
+    <div class="tag-buttons-modern">
+      {% assign slides_posts = site.slides | default: empty %}
+      {% if slides_posts %}
+      <button class="tag-btn-modern active" data-tag="all">
+        <span>全部</span>
+        <span class="tag-btn-count">({{ slides_posts | size }})</span>
+      </button>
+      {% else %}
+      <button class="tag-btn-modern active" data-tag="all">
+        <span>全部</span>
+        <span class="tag-btn-count">(0)</span>
+      </button>
+      {% endif %}
+      <div id="slides-tag-buttons-container-modern">
+        <!-- 标签按钮将通过JavaScript动态生成 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 现代化导航和内容 -->
+  <div class="modern-navigation">
+    <div class="collection-content">
+      {% assign slides_structure = site.data.slides_collection_structure %}
+      {% if slides_structure %}
+        {%- for main_cat_entry in slides_structure -%}
+          {%- assign main_cat_name = main_cat_entry[0] -%}
+          {%- assign sub_tree = main_cat_entry[1] -%}
+          {%- assign main_id = main_cat_name | slugify -%}
+          <details class="main-category-modern" id="{{ main_id }}" open>
+            <summary class="main-category-summary-modern">
+              <h2 class="main-category-title-modern">{{ main_cat_name | upcase }}</h2>
+            </summary>
+            <div class="main-category-content-modern">
+              {%- include render-slides-modern.html node=sub_tree path_id=main_id breadcrumb=main_cat_name -%}
+            </div>
+          </details>
+        {%- endfor -%}
+      {% else %}
+        <div class="no-slides-modern">
+          <div class="no-slides-card">
+            <h3>📚 暂无演示文稿内容</h3>
+            <p>在 <code>deepnotes/slides/</code> 目录下创建HTML文件，然后运行转换脚本即可添加演示文稿。</p>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- 文章预览和按需加载脚本 -->
+<link rel="stylesheet" href="{{ '/assets/css/post-preview.css' | relative_url }}">
+<link rel="stylesheet" href="{{ '/assets/css/modern-collection.css' | relative_url }}">
+<script src="{{ '/assets/js/post-preview.js' | relative_url }}" defer></script>
+<script src="{{ '/assets/js/card-enhancements.js' | relative_url }}?v=3" defer></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // 计算分类数量
+  const categoryCount = document.querySelectorAll('.main-category-modern').length;
+  document.getElementById('slides-category-count').textContent = categoryCount;
+  
+  // 收集所有演示文稿标签
+  const tagMap = new Map();
+  const postItems = document.querySelectorAll('.post-item[data-post-url]');
+  
+  postItems.forEach(item => {
+    const tagElement = item.querySelector('.subcategory-tag');
+    if (tagElement) {
+      const tag = tagElement.textContent.trim();
+      tagMap.set(tag, (tagMap.get(tag) || 0) + 1);
+    }
+  });
+  
+  // 更新标签数量显示
+  document.getElementById('slides-tag-count').textContent = tagMap.size;
+  document.getElementById('slides-tag-count-modern').textContent = tagMap.size;
+  
+  // 生成现代化标签按钮
+  const container = document.getElementById('slides-tag-buttons-container-modern');
+  const sortedTags = Array.from(tagMap.entries()).sort((a, b) => b[1] - a[1]);
+  
+  sortedTags.forEach(([tag, count]) => {
+    const button = document.createElement('button');
+    button.className = 'tag-btn-modern';
+    button.setAttribute('data-tag', tag.toLowerCase().replace(/[ -]/g, '_'));
+    button.innerHTML = `
+      <span>${tag}</span>
+      <span class="tag-btn-count">(${count})</span>
+    `;
+    container.appendChild(button);
+  });
+  
+  // 添加现代化标签过滤功能
+  const tagButtons = document.querySelectorAll('.tag-btn-modern');
+  tagButtons.forEach(button => {
+    button.addEventListener('click', function() {
+      const selectedTag = this.getAttribute('data-tag');
+      
+      // 更新按钮状态
+      tagButtons.forEach(btn => btn.classList.remove('active'));
+      this.classList.add('active');
+      
+      // 过滤演示文稿
+      postItems.forEach(item => {
+        const tagElement = item.querySelector('.subcategory-tag');
+        const itemTag = tagElement ? tagElement.textContent.trim().toLowerCase().replace(/[ -]/g, '_') : '';
+        
+        if (selectedTag === 'all' || itemTag === selectedTag) {
+          item.style.display = '';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+      
+      // 更新分类标题显示
+      updateCategoryVisibility();
+    });
+  });
+  
+  function updateCategoryVisibility() {
+    const nodes = document.querySelectorAll('details.main-category-modern');
+    nodes.forEach(node => {
+      const visiblePosts = node.querySelectorAll('.post-item:not([style*="display: none"])');
+      if (visiblePosts.length === 0) {
+        node.open = false;
+      } else {
+        node.open = true;
+      }
+    });
+  }
+});
+</script>
+
+        </div>
+      </main>
+    </div>
+
+    {%- include footer.html -%}
+    {%- include scripts.html -%}
+
+  </body>
+
+</html>

@@ -18,11 +18,12 @@ plugins:
   - jekyll-seo-tag
   - jekyll-paginate
 
-# 顶部导航仅展示指定页面（生产环境隐藏 slides）
+# 顶部导航仅展示指定页面
 header_pages:
   - 01-index.markdown
   - 02-collection.html
   - 03-about.markdown
+  - 04-slides.html
 
 # Jekyll Feed 配置 - 限制feed大小
 jekyll-feed:
@@ -83,8 +84,8 @@ exclude:
   - Gemfile.lock
   - node_modules/
   - .DS_Store
-  - _slides/
   - 04-slides.html
+  - _slides/
 
 
 
