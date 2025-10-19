@@ -33,19 +33,9 @@ exclude:
 # 启用增量构建以减少内存使用
 incremental: true
 
-# 限制同时处理的文件数量
-limit_posts: 50
-
 # 限制处理的内容
 paginate: 20  # 每页显示的文章数量
 paginate_path: "/page:num/"  # 分页路径
-
-# 内存优化：限制同时处理的文章数量
-limit_posts: 50
-
-# 限制feed中的文章数量
-jekyll-feed:
-  limit: 20  # 限制feed中文章数量
 
 # 顶部导航仅展示指定页面
 header_pages:
@@ -54,9 +44,8 @@ header_pages:
   - 03-about.markdown
   - 04-slides.html
 
-# Jekyll Feed 配置 - 限制feed大小
+# Jekyll Feed 配置 - 包含所有文章
 jekyll-feed:
-  limit: 10  # 限制feed中文章数量
   excerpt_only: true  # 只包含摘要，不包含全文
   excerpt_separator: "<!--more-->"  # 摘要分隔符
   excerpt_length: 200  # 限制摘要长度
