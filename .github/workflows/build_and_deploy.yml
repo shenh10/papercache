@@ -58,7 +58,7 @@ jobs:
           rm -rf .jekyll-cache .jekyll-metadata _site
 
       - name: 🔨 Rebuild the site (second build to include thumbnails)
-        run: bundle exec jekyll build --no-incremental --config _config.yml
+        run: bundle exec jekyll build --config _config.yml
         env:
           JEKYLL_ENV: production
 

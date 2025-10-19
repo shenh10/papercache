@@ -36,8 +36,8 @@ exclude:
   - "04-slides.html"
   - "_slides/"
 
-# 启用增量构建以减少内存使用
-incremental: true
+# 增量构建配置（仅用于本地开发，生产环境通过清除缓存强制完全构建）
+incremental: false
 
 # 限制处理的内容
 paginate: 20  # 每页显示的文章数量
