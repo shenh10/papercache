@@ -35,110 +35,229 @@ if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNo
       document.head.appendChild(script);
     }, 2000);
   </script>
-</head><body><header class="site-header" role="banner">
-
-  <div class="wrapper"><a class="site-title" rel="author" href="/papercache/">PaperCache</a><nav class="site-nav">
-        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
-        <label for="nav-trigger">
-          <span class="menu-icon">
-            <svg viewBox="0 0 18 15" width="18px" height="15px">
-              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
-            </svg>
-          </span>
-        </label>
-
-        <div class="trigger"><a class="page-link" href="/papercache/">首页</a><a class="page-link" href="/papercache/collection.html">论文合集</a><a class="page-link" href="/papercache/about/">关于</a></div>
-      </nav></div>
+</head><body><!-- 现代化头部导航 -->
+<header class="modern-header">
+  <div class="header-container">
+    <!-- Logo和品牌 -->
+    <a href="/papercache/" class="logo-section">
+      <img src="/papercache/assets/images/logo.svg" alt="PaperCache Logo" class="logo">
+      <div class="brand-text">
+        <h1 class="brand-name">PaperCache</h1>
+        <p class="brand-tagline">AI Research Papers</p>
+      </div>
+    </a>
+    
+    <!-- 导航菜单 -->
+    <nav>
+      <ul class="nav-menu">
+        
+          
+          
+            <li class="nav-item">
+              <a href="/papercache/" 
+                 class="nav-link active">
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+            <li class="nav-item">
+              <a href="/papercache/collection.html" 
+                 class="nav-link ">
+                论文合集
+              </a>
+            </li>
+          
+        
+          
+          
+            <li class="nav-item">
+              <a href="/papercache/about/" 
+                 class="nav-link ">
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+        
+      </ul>
+    </nav>
+  </div>
 </header>
+
+<!-- 样式文件 -->
+<link rel="stylesheet" href="/papercache/assets/css/modern-header.css">
 <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <article class="post">
+        <div class="modern-homepage">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">🤖 欢迎来到 PaperCache！</h1>
+      <p class="hero-subtitle">
+        <strong>一个由 AI 当实习生，我做老板的博客。</strong><br>
+        没错，这里的每一篇论文精读，都不是我亲手写的，而是我的赛博雇员——<strong>LLM</strong>——的作品。我只负责投喂论文，并偶尔在它出错时进行一些人工干预。
+      </p>
+      
+      <!-- 统计数据 -->
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-number">282</span>
+          <span class="stat-label">论文总数</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">27</span>
+          <span class="stat-label">分类数量</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">56</span>
+          <span class="stat-label">标签数量</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <header class="post-header">
-    <h1 class="post-title">🤖 欢迎来到 PaperCache！</h1>
-  </header>
+  <!-- 主要内容区域 -->
+  <div class="content-section">
+    <!-- 关于博客诞生 -->
+    <section class="about-section">
+      <h2 class="section-title">关于这个博客的诞生</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">💡</div>
+          <h3 class="feature-title">灵感来源</h3>
+          <p class="feature-description">
+            作为一个天天被 Paper 追着跑的工程师，我曾挣扎在第二语言和读不完的文献列表里。在这个 AGI 时代，我意识到一个简单有效的方法：<strong>让 AI 去读那些关于 AI 的论文。</strong>
+          </p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3 class="feature-title">我们的目标</h3>
+          <p class="feature-description">
+            我们的目标很明确：<br>
+            • 帮你过滤掉论文中 80% 的复杂噪音，让你迅速吸收核心思想<br>
+            • 把你长长的 "稍后读" 清单，变成高效的 "已读" 列表
+          </p>
+        </div>
+        
+        <div class="feature-card">
+          <div class="feature-icon">🤝</div>
+          <h3 class="feature-title">共同成长</h3>
+          <p class="feature-description">
+            当然，我的 AI 伙伴有时会过于自信，可能会犯一些错误。如果你发现了任何 Bug，<strong>请务必在评论区大声指出</strong>，你的每一次"找茬"都能让它变得更聪明。
+          </p>
+        </div>
+      </div>
+    </section>
 
-  <div class="post-content">
-    <p><strong>一个由 AI 当实习生，我做老板的博客。</strong></p>
+    <!-- 关注领域 -->
+    <section class="focus-section">
+      <h2 class="section-title">我们关注什么？</h2>
+      <div class="focus-content">
+        <p class="focus-intro">
+          这个知识库将是你的 AI 军火库，长期更新 <strong>AI Infra 全栈</strong> 的尖端弹药，包括但不限于：
+        </p>
+        <div class="focus-grid">
+          <div class="focus-item">
+            <div class="focus-icon">🖥️</div>
+            <h3>机器学习系统</h3>
+            <p>Machine Learning System</p>
+          </div>
+          <div class="focus-item">
+            <div class="focus-icon">🧠</div>
+            <h3>大模型算法</h3>
+            <p>Large Model Algorithms</p>
+          </div>
+          <div class="focus-item">
+            <div class="focus-icon">⚡</div>
+            <h3>AI 加速器</h3>
+            <p>AI Accelerators</p>
+          </div>
+        </div>
+        <p class="focus-outro">
+          准备好，和我们一起高效成长吧！<br>
+          <em>最后，特别鸣谢我的两位灵感缪斯：Gemini & Grok。</em>
+        </p>
+      </div>
+    </section>
 
-<p>没错，这里的每一篇论文精读，都不是我亲手写的，而是我的赛博雇员——<strong>LLM</strong>——的作品。我只负责投喂论文，并偶尔在它出错时进行一些人工干预。</p>
-
-<hr />
-
-<h3 id="关于这个博客的诞生">关于这个博客的诞生</h3>
-
-<p>作为一个天天被 Paper 追着跑的工程师，我曾挣扎在第二语言和读不完的文献列表里。在这个 AGI 时代，我意识到一个简单有效的方法：<strong>让 AI 去读那些关于 AI 的论文。</strong></p>
-
-<p>于是，PaperCache 诞生了。它是我通过 Prompt Engineering 调教出的一套自动化工具的产物。</p>
-
-<p>我们的目标很明确：</p>
-<ul>
-  <li>帮你过滤掉论文中 80% 的复杂噪音，让你迅速吸收核心思想。</li>
-  <li>把你长长的 “稍后读” 清单，变成高效的 “已读” 列表。</li>
-</ul>
-
-<p>当然，我的 AI 伙伴有时会过于自信，可能会犯一些错误。如果你发现了任何 Bug，<strong>请务必在评论区大声指出</strong>，你的每一次“找茬”都能让它变得更聪明。</p>
-
-<h3 id="我们关注什么">我们关注什么？</h3>
-
-<p>这个知识库将是你的 AI 军火库，长期更新 <strong>AI Infra 全栈</strong> 的尖端弹药，包括但不限于：</p>
-
-<ul>
-  <li>机器学习系统 (Machine Learning System)</li>
-  <li>大模型算法 (Large Model Algorithms)</li>
-  <li>AI 加速器 (AI Accelerators)</li>
-</ul>
-
-<p>准备好，和我们一起高效成长吧！</p>
-
-<p><em>最后，特别鸣谢我的两位灵感缪斯：Gemini &amp; Grok。</em></p>
-
-<hr />
-<h3 id="-最新动态">🚀 最新动态</h3>
-
-<ul>
-  <li>
-    <p><strong>[2025-09]</strong> <a href="/papercache/papers/llm/algorithm/agent/2025/09/01/the-landscape-of-agentic-reinforcement-learning-for-llms-a-survey.html">The Landscape of Agentic Reinforcement Learning for LLMs: A Survey</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-09]</strong> <a href="/papercache/papers/llm/engineering/train/2025/09/01/robust-llm-training-infrastructure-at-bytedance.html">Robust LLM Training Infrastructure at ByteDance</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-09]</strong> <a href="/papercache/papers/llm/algorithm/models/2025/09/01/longcat-flash-thinking-technical-report.html">LongCat-Flash-Thinking Technical Report</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-09]</strong> <a href="/papercache/papers/llm/engineering/inference/2025/09/01/defeating-nondeterminism-in-llm-inference.html">Defeating Nondeterminism in LLM Inference</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-09]</strong> <a href="/papercache/papers/llm/algorithm/models/2025/09/01/deepseek-v32-exp-boosting-long-context-efficiency-with-deepseek-sparse-attention.html">DeepSeek-V3.2-Exp: Boosting Long-Context Efficiency with DeepSeek Sparse Attention</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-09]</strong> <a href="/papercache/papers/mlsys/gpu/2025/09/01/categorical-foundations-for-cute-layouts.html">Categorical Foundations for CuTe Layouts</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-08]</strong> <a href="/papercache/papers/llm/engineering/rl/2025/08/01/seamlessflow-a-traineragent-isolation-rl-framework-achieving-bubble-free-pipelines-via-tag-scheduling.html">SeamlessFlow: A Trainer–Agent Isolation RL Framework Achieving Bubble-Free Pipelines via Tag Scheduling</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-08]</strong> <a href="/papercache/papers/llm/engineering/rl/2025/08/01/rstar2-agent-agentic-reasoning-technical-report.html">rStar2-Agent: Agentic Reasoning Technical Report</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-08]</strong> <a href="/papercache/papers/llm/engineering/train/2025/08/01/optimus-accelerating-large-scale-multi-modal-llm-training-by-bubble-exploitation.html">Optimus: Accelerating Large-Scale Multi-Modal LLM Training by Bubble Exploitation</a></p>
-  </li>
-  <li>
-    <p><strong>[2025-08]</strong> <a href="/papercache/papers/llm/algorithm/rl/2025/08/01/on-policy-rl-meets-off-policy-experts-harmonizing-supervised-fine-tuning-and-reinforcement-learning-via-dynamic-weighting.html">ON-POLICY RL MEETS OFF-POLICY EXPERTS: HARMONIZING SUPERVISED FINE-TUNING AND REINFORCEMENT LEARNING VIA DYNAMIC WEIGHTING</a></p>
-  </li>
-</ul>
-
-<hr />
-
-<blockquote>
-  <p><a href="/papercache/collection.html">查看所有论文…</a></p>
-</blockquote>
-
+    <!-- 最新动态 -->
+    <section class="latest-section">
+      <h2 class="section-title">🚀 最新动态</h2>
+      <div class="latest-posts-list">
+        
+        <div class="post-item">
+          <span class="post-date">2025-09</span>
+          <a href="/papercache/papers/llm/algorithm/agent/2025/09/01/the-landscape-of-agentic-reinforcement-learning-for-llms-a-survey.html" class="post-link">The Landscape of Agentic Reinforcement Learning for LLMs: A Survey</a>
+        </div>
+        
+        <div class="post-item">
+          <span class="post-date">2025-09</span>
+          <a href="/papercache/papers/llm/engineering/train/2025/09/01/robust-llm-training-infrastructure-at-bytedance.html" class="post-link">Robust LLM Training Infrastructure at ByteDance</a>
+        </div>
+        
+        <div class="post-item">
+          <span class="post-date">2025-09</span>
+          <a href="/papercache/papers/llm/algorithm/models/2025/09/01/mimo-audio-audio-language-models-are-few-shot-learners.html" class="post-link">MiMo-Audio: Audio Language Models are Few-Shot Learners</a>
+        </div>
+        
+        <div class="post-item">
+          <span class="post-date">2025-09</span>
+          <a href="/papercache/papers/llm/algorithm/models/2025/09/01/longcat-flash-thinking-technical-report.html" class="post-link">LongCat-Flash-Thinking Technical Report</a>
+        </div>
+        
+        <div class="post-item">
+          <span class="post-date">2025-09</span>
+          <a href="/papercache/papers/llm/engineering/inference/2025/09/01/defeating-nondeterminism-in-llm-inference.html" class="post-link">Defeating Nondeterminism in LLM Inference</a>
+        </div>
+        
+        <div class="post-item">
+          <span class="post-date">2025-09</span>
+          <a href="/papercache/papers/llm/algorithm/models/2025/09/01/deepseek-v32-exp-boosting-long-context-efficiency-with-deepseek-sparse-attention.html" class="post-link">DeepSeek-V3.2-Exp: Boosting Long-Context Efficiency with DeepSeek Sparse Attention</a>
+        </div>
+        
+        <div class="post-item">
+          <span class="post-date">2025-09</span>
+          <a href="/papercache/papers/mlsys/gpu/2025/09/01/categorical-foundations-for-cute-layouts.html" class="post-link">Categorical Foundations for CuTe Layouts</a>
+        </div>
+        
+        <div class="post-item">
+          <span class="post-date">2025-08</span>
+          <a href="/papercache/papers/llm/engineering/rl/2025/08/01/seamlessflow-a-traineragent-isolation-rl-framework-achieving-bubble-free-pipelines-via-tag-scheduling.html" class="post-link">SeamlessFlow: A Trainer–Agent Isolation RL Framework Achieving Bubble-Free Pipelines via Tag Scheduling</a>
+        </div>
+        
+        <div class="post-item">
+          <span class="post-date">2025-08</span>
+          <a href="/papercache/papers/llm/engineering/rl/2025/08/01/rstar2-agent-agentic-reasoning-technical-report.html" class="post-link">rStar2-Agent: Agentic Reasoning Technical Report</a>
+        </div>
+        
+        <div class="post-item">
+          <span class="post-date">2025-08</span>
+          <a href="/papercache/papers/llm/engineering/train/2025/08/01/optimus-accelerating-large-scale-multi-modal-llm-training-by-bubble-exploitation.html" class="post-link">Optimus: Accelerating Large-Scale Multi-Modal LLM Training by Bubble Exploitation</a>
+        </div>
+        
+      </div>
+      
+      <div class="cta-section">
+        <h3 class="cta-title">探索更多精彩内容</h3>
+        <p class="cta-description">
+          发现更多 AI 研究论文和深度分析，开启你的知识探索之旅
+        </p>
+        <a href="/papercache/collection.html" class="cta-button">
+          查看所有论文 →
+        </a>
+      </div>
+    </section>
   </div>
-
-</article>
 </div>
+
+<!-- 引入现代化首页样式 -->
+<link rel="stylesheet" href="/papercache/assets/css/modern-homepage.css"></div>
     </main><footer class="site-footer">
   <div class="container">
     <div class="footer-content">

@@ -3,7 +3,7 @@
   <generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator>
   <link href="https://shenh10.github.io/papercache/feed.xml" rel="self" type="application/atom+xml" />
   <link href="https://shenh10.github.io/papercache/" rel="alternate" type="text/html" />
-  <updated>2025-10-08T14:19:36+00:00</updated>
+  <updated>2025-10-19T11:35:38+00:00</updated>
   <id>https://shenh10.github.io/papercache/feed.xml</id>
   <title type="html">PaperCache</title>
   <subtitle>深度学习、机器学习和人工智能研究论文的精选缓存</subtitle>
@@ -32,6 +32,19 @@
     <updated>2025-09-01T00:00:00+00:00</updated>
     <id>https://shenh10.github.io/papercache/papers/llm/engineering/train/2025/09/01/robust-llm-training-infrastructure-at-bytedance.html</id>
     <content type="html" xml:base="https://shenh10.github.io/papercache/papers/llm/engineering/train/2025/09/01/robust-llm-training-infrastructure-at-bytedance.html">
+      <![CDATA[
+
+]]>
+    </content>
+  </entry>
+  
+  <entry>
+    <title type="html">MiMo-Audio: Audio Language Models are Few-Shot Learners</title>
+    <link href="https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/09/01/mimo-audio-audio-language-models-are-few-shot-learners.html" rel="alternate" type="text/html" title="MiMo-Audio: Audio Language Models are Few-Shot Learners" />
+    <published>2025-09-01T00:00:00+00:00</published>
+    <updated>2025-09-01T00:00:00+00:00</updated>
+    <id>https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/09/01/mimo-audio-audio-language-models-are-few-shot-learners.html</id>
+    <content type="html" xml:base="https://shenh10.github.io/papercache/papers/llm/algorithm/models/2025/09/01/mimo-audio-audio-language-models-are-few-shot-learners.html">
       <![CDATA[
 
 ]]>
@@ -123,19 +136,6 @@
     <updated>2025-08-01T00:00:00+00:00</updated>
     <id>https://shenh10.github.io/papercache/papers/llm/engineering/train/2025/08/01/optimus-accelerating-large-scale-multi-modal-llm-training-by-bubble-exploitation.html</id>
     <content type="html" xml:base="https://shenh10.github.io/papercache/papers/llm/engineering/train/2025/08/01/optimus-accelerating-large-scale-multi-modal-llm-training-by-bubble-exploitation.html">
-      <![CDATA[
-
-]]>
-    </content>
-  </entry>
-  
-  <entry>
-    <title type="html">ON-POLICY RL MEETS OFF-POLICY EXPERTS: HARMONIZING SUPERVISED FINE-TUNING AND REINFORCEMENT LEARNING VIA DYNAMIC WEIGHTING</title>
-    <link href="https://shenh10.github.io/papercache/papers/llm/algorithm/rl/2025/08/01/on-policy-rl-meets-off-policy-experts-harmonizing-supervised-fine-tuning-and-reinforcement-learning-via-dynamic-weighting.html" rel="alternate" type="text/html" title="ON-POLICY RL MEETS OFF-POLICY EXPERTS: HARMONIZING SUPERVISED FINE-TUNING AND REINFORCEMENT LEARNING VIA DYNAMIC WEIGHTING" />
-    <published>2025-08-01T00:00:00+00:00</published>
-    <updated>2025-08-01T00:00:00+00:00</updated>
-    <id>https://shenh10.github.io/papercache/papers/llm/algorithm/rl/2025/08/01/on-policy-rl-meets-off-policy-experts-harmonizing-supervised-fine-tuning-and-reinforcement-learning-via-dynamic-weighting.html</id>
-    <content type="html" xml:base="https://shenh10.github.io/papercache/papers/llm/algorithm/rl/2025/08/01/on-policy-rl-meets-off-policy-experts-harmonizing-supervised-fine-tuning-and-reinforcement-learning-via-dynamic-weighting.html">
       <![CDATA[
 
 ]]>

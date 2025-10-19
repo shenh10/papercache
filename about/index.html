@@ -54,101 +54,168 @@ if(!(window.doNotTrack === "1" || navigator.doNotTrack === "1" || navigator.doNo
       document.head.appendChild(script);
     }, 2000);
   </script>
-</head><body><header class="site-header" role="banner">
-
-  <div class="wrapper"><a class="site-title" rel="author" href="/papercache/">PaperCache</a><nav class="site-nav">
-        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
-        <label for="nav-trigger">
-          <span class="menu-icon">
-            <svg viewBox="0 0 18 15" width="18px" height="15px">
-              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
-            </svg>
-          </span>
-        </label>
-
-        <div class="trigger"><a class="page-link" href="/papercache/">首页</a><a class="page-link" href="/papercache/collection.html">论文合集</a><a class="page-link" href="/papercache/about/">关于</a></div>
-      </nav></div>
+</head><body><!-- 现代化头部导航 -->
+<header class="modern-header">
+  <div class="header-container">
+    <!-- Logo和品牌 -->
+    <a href="/papercache/" class="logo-section">
+      <img src="/papercache/assets/images/logo.svg" alt="PaperCache Logo" class="logo">
+      <div class="brand-text">
+        <h1 class="brand-name">PaperCache</h1>
+        <p class="brand-tagline">AI Research Papers</p>
+      </div>
+    </a>
+    
+    <!-- 导航菜单 -->
+    <nav>
+      <ul class="nav-menu">
+        
+          
+          
+            <li class="nav-item">
+              <a href="/papercache/" 
+                 class="nav-link ">
+                首页
+              </a>
+            </li>
+          
+        
+          
+          
+            <li class="nav-item">
+              <a href="/papercache/collection.html" 
+                 class="nav-link ">
+                论文合集
+              </a>
+            </li>
+          
+        
+          
+          
+            <li class="nav-item">
+              <a href="/papercache/about/" 
+                 class="nav-link active">
+                关于
+              </a>
+            </li>
+          
+        
+          
+          
+        
+      </ul>
+    </nav>
+  </div>
 </header>
+
+<!-- 样式文件 -->
+<link rel="stylesheet" href="/papercache/assets/css/modern-header.css">
 <main class="page-content" aria-label="Content">
       <div class="wrapper">
-        <article class="post">
+        <div class="modern-about-page">
+  <!-- Hero Section -->
+  <section class="about-hero">
+    <div class="about-hero-content">
+      <h1 class="about-hero-title">关于 PaperCache</h1>
+      <p class="about-hero-subtitle">
+        PaperCache 是一个为<strong>深度学习</strong>、<strong>机器学习</strong>和<strong>人工智能</strong>爱好者、研究人员和实践者提供的综合资源中心。
+      </p>
+    </div>
+  </section>
 
-  <header class="post-header">
-    <h1 class="post-title">关于</h1>
-  </header>
+  <!-- 主要内容区域 -->
+  <div class="about-content-section">
+    <!-- 关于我 -->
+    <section class="about-me-section">
+      <div class="about-card">
+        <div class="about-card-header">
+          <h2 class="about-card-title">关于我</h2>
+        </div>
+        <div class="about-card-body">
+          <p class="about-intro">
+            我是从事 AI 基础设施与大模型工程的工程师，毕业于清华大学电子系与交叉信息学院（本/硕）。长期聚焦于高性能训练/推理系统的设计与落地。
+          </p>
+        </div>
+      </div>
+    </section>
 
-  <div class="post-content">
-    <h1 id="关于-papercache">关于 PaperCache</h1>
+    <!-- 研究方向 -->
+    <section class="research-section">
+      <div class="about-card">
+        <div class="about-card-header">
+          <h2 class="about-card-title">研究与关注方向</h2>
+        </div>
+        <div class="about-card-body">
+          <ul class="research-list">
+            <li>大模型训练与后训练（pretrain/post-train）的系统优化与工程实践</li>
+            <li>GPU 资源高效利用与性能调优（内存/带宽/并行度/算子融合）</li>
+            <li>分布式训练与推理架构（并行策略、通信优化、调度与容错）</li>
+            <li>工程化与可复用性（可维护的基建、工具链与最佳实践沉淀）</li>
+          </ul>
+        </div>
+      </div>
+    </section>
 
-<p>PaperCache 是一个为<strong>深度学习</strong>、<strong>机器学习</strong>和<strong>人工智能</strong>爱好者、研究人员和实践者提供的综合资源中心。</p>
+    <!-- 联系我 -->
+    <section class="contact-section">
+      <div class="about-card">
+        <div class="about-card-header">
+          <h2 class="about-card-title">联系我</h2>
+        </div>
+        <div class="about-card-body">
+          <ul class="contact-list">
+            <li><span class="contact-label">🔗 LinkedIn</span><a href="https://www.linkedin.com/in/hanshe/" target="_blank">@hanshe</a></li>
+            <li><span class="contact-label">📝 知乎</span><a href="https://www.zhihu.com/people/han-shen-86" target="_blank">@han-shen-86</a></li>
+          </ul>
+        </div>
+      </div>
+    </section>
 
-<h2 id="关于我">关于我</h2>
-<div class="about-section">
+    <!-- 经历概览 -->
+    <section class="timeline-section">
+      <div class="about-card">
+        <div class="about-card-header">
+          <h2 class="about-card-title">经历概览</h2>
+        </div>
+        <div class="about-card-body">
+          <ul class="timeline-list">
+            <li><span class="timeline-time">2010–2015</span> 清华大学电子工程系（本科）</li>
+            <li><span class="timeline-time">2013–2015</span> Cisco Systems, San Jose（实习/合作）</li>
+            <li><span class="timeline-time">2015–2018</span> 清华大学交叉信息研究院（硕士）</li>
+            <li><span class="timeline-time">2017–2020</span> 地平线机器人（CV 算法工程师）</li>
+            <li><span class="timeline-time">2020–2021</span> GPU 早期创业公司（AI Infra）</li>
+            <li><span class="timeline-time">2021–2025</span> 快手（AI Infra）</li>
+          </ul>
+        </div>
+      </div>
+    </section>
 
-<p class="about-intro">我是从事 AI 基础设施与大模型工程的工程师，毕业于清华大学电子系与交叉信息学院（本/硕）。长期聚焦于高性能训练/推理系统的设计与落地。</p>
-
-<h3>研究与关注方向</h3>
-<ul class="about-highlights">
-  <li>大模型训练与后训练（pretrain/post-train）的系统优化与工程实践</li>
-  <li>GPU 资源高效利用与性能调优（内存/带宽/并行度/算子融合）</li>
-  <li>分布式训练与推理架构（并行策略、通信优化、调度与容错）</li>
-  <li>工程化与可复用性（可维护的基建、工具链与最佳实践沉淀）</li>
-</ul>
-
-<h3>联系我</h3>
-<ul class="contact-list">
-  <li><span class="contact-label">🔗 LinkedIn</span><a href="https://www.linkedin.com/in/hanshe/" target="_blank">@hanshe</a></li>
-  <li><span class="contact-label">📝 知乎</span><a href="https://www.zhihu.com/people/han-shen-86" target="_blank">@han-shen-86</a></li>
-</ul>
-
-<h3>经历概览</h3>
-<ul class="timeline">
-  <li>
-    <span class="timeline-time">2010–2015</span>
-    <span class="timeline-dot"></span>
-    <div class="timeline-content">清华大学电子工程系（本科）</div>
-  </li>
-  <li>
-    <span class="timeline-time">2013–2015</span>
-    <span class="timeline-dot"></span>
-    <div class="timeline-content">Cisco Systems, San Jose（实习/合作）</div>
-  </li>
-  <li>
-    <span class="timeline-time">2015–2018</span>
-    <span class="timeline-dot"></span>
-    <div class="timeline-content">清华大学交叉信息研究院（硕士）</div>
-  </li>
-  <li>
-    <span class="timeline-time">2017–2020</span>
-    <span class="timeline-dot"></span>
-    <div class="timeline-content">地平线机器人（CV 算法工程师）</div>
-  </li>
-  <li>
-    <span class="timeline-time">2020–2021</span>
-    <span class="timeline-dot"></span>
-    <div class="timeline-content">GPU 早期创业公司（AI Infra）</div>
-  </li>
-  <li>
-    <span class="timeline-time">2021–2025</span>
-    <span class="timeline-dot"></span>
-    <div class="timeline-content">快手（AI Infra）</div>
-  </li>
-</ul>
-
+    <!-- 交流群 -->
+    <section class="community-section">
+      <div class="about-card">
+        <div class="about-card-header">
+          <h2 class="about-card-title">PaperCache 用户交流群</h2>
+        </div>
+        <div class="about-card-body">
+          <div class="community-content">
+            <div class="qrcode-container">
+              <div class="qrcode-hover">
+                <a href="#" class="qrcode-link">📱 点击查看交流群二维码</a>
+                <img src="/papercache/assets/images/qrcode.png" alt="PaperCache 用户交流群二维码" class="qrcode-image">
+              </div>
+            </div>
+            <p class="community-description">
+              <strong>扫描二维码加入我们的交流群，与其他 AI/ML 研究者一起讨论！</strong>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
 </div>
 
-<h2 id="papercache-用户交流群">PaperCache 用户交流群</h2>
-
-<p><span class="qrcode-hover">
-  <a href="#" class="qrcode-link">📱 点击查看交流群二维码</a>
-  <img src="/papercache/assets/images/qrcode.png" alt="PaperCache 用户交流群二维码" class="qrcode-image" />
-</span></p>
-
-<h2 id="扫描二维码加入我们的交流群与其他-aiml-研究者一起讨论"><strong>扫描二维码加入我们的交流群，与其他 AI/ML 研究者一起讨论！</strong></h2>
-
-  </div>
-
-</article>
+<!-- 引入现代化关于页面样式 -->
+<link rel="stylesheet" href="/papercache/assets/css/modern-about.css">
 </div>
     </main><footer class="site-footer">
   <div class="container">

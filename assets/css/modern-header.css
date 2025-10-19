@@ -1,0 +1,214 @@
+/* 现代化头部样式 */
+.modern-header {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-bottom: 1px solid #cbd5e1;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+  margin-top: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.header-container {
+  max-width: 100%;
+  margin: 0;
+  padding: 0 1.5rem 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Logo样式 */
+.logo-section {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: #1e293b;
+  transition: opacity 0.2s ease;
+}
+
+/* 导航菜单样式 */
+.nav-menu {
+  flex-shrink: 0;
+}
+
+.logo-section:hover {
+  text-decoration: none;
+  color: #1e293b;
+  opacity: 0.8;
+}
+
+.logo {
+  width: 32px;
+  height: 32px;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.brand-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  color: #1e293b;
+  letter-spacing: -0.025em;
+}
+
+.brand-tagline {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 400;
+}
+
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-item {
+  position: relative;
+}
+
+.nav-link {
+  color: #475569;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.6);
+  text-decoration: none;
+  color: #1e293b;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.nav-link.active {
+  background: rgba(255, 255, 255, 0.8);
+  color: #1e293b;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* 移动端响应式 */
+@media (max-width: 768px) {
+  .header-container {
+    padding: 0 1rem 0 1.5rem;
+    height: 56px;
+  }
+  
+  .brand-name {
+    font-size: 1.1rem;
+  }
+  
+  .brand-tagline {
+    display: none;
+  }
+  
+  .nav-menu {
+    gap: 0.25rem;
+  }
+  
+  .nav-link {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-container {
+    flex-direction: column;
+    height: auto;
+    padding: 1rem 1rem 1rem 1.5rem;
+    gap: 1rem;
+  }
+  
+  .nav-menu {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+  
+  .nav-link {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.6rem;
+  }
+}
+
+/* 页面内容间距调整 */
+.page-content {
+  margin-top: 0;
+}
+
+/* 确保页面没有顶部边距 */
+body {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* 确保现代化头部页面没有顶部边距 */
+.layout-page-with-modern-header {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+.layout-page-with-modern-header .page-content {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* 与现有样式的兼容性 */
+.site-header {
+  border: none;
+  background: transparent;
+}
+
+/* 确保所有页面都使用相同的头部样式 */
+.site-header .wrapper {
+  max-width: 100%;
+  margin: 0;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+/* 隐藏原始头部，使用现代化头部 */
+.site-header .site-title,
+.site-header .site-nav {
+  display: none;
+}
+
+.site-header .wrapper {
+  max-width: none;
+  padding: 0;
+}
+
+.site-header .site-title {
+  display: none;
+}
+
+.site-header .site-nav {
+  display: none;
+}
