@@ -179,7 +179,7 @@ layout: default
 .timeline-list::before {
   content: '';
   position: absolute;
-  left: 100px;
+  left: 120px; /* 调整时间轴位置，为时间标签留出更多空间 */
   top: 0;
   bottom: 0;
   width: 2px;
@@ -188,7 +188,9 @@ layout: default
 
 .timeline-list li {
   position: relative;
-  padding: 20px 0 20px 180px; /* 增加左侧留空，避免与时间轴重叠 */
+  display: flex; /* 使用flexbox布局 */
+  align-items: center;
+  padding: 20px 0;
   color: #4a5568;
   font-size: 1.05em;
   line-height: 1.6;
@@ -197,25 +199,30 @@ layout: default
 .timeline-list li::before {
   content: '';
   position: absolute;
-  left: 91px;
-  top: 20px;
+  left: 111px; /* 调整时间点位置，与时间轴对齐 */
+  top: 50%;
+  transform: translateY(-50%);
   width: 18px;
   height: 18px;
   background: linear-gradient(135deg, #667eea, #764ba2);
   border-radius: 50%;
   border: 4px solid white;
   box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+  z-index: 2;
 }
 
 .timeline-time {
-  position: absolute;
-  left: 0;
-  top: 20px;
+  flex: 0 0 110px; /* 固定时间标签宽度 */
   font-weight: 600;
   color: #667eea;
   font-size: 0.95em;
-  min-width: 120px; /* 增加时间标签宽度，避免与时间轴重叠 */
-  text-align: left;
+  text-align: right;
+  padding-right: 20px; /* 与时间轴保持间距 */
+}
+
+.timeline-content {
+  flex: 1; /* 经历描述占据剩余空间 */
+  padding-left: 20px; /* 与时间轴保持间距 */
 }
 
 /* 交流群部分 */
@@ -301,20 +308,21 @@ layout: default
   }
   
   .timeline-list::before {
-    left: 80px;
-  }
-  
-  .timeline-list li {
-    padding-left: 130px; /* 增加移动端左边距，避免重叠 */
+    left: 100px; /* 移动端时间轴位置 */
   }
   
   .timeline-list li::before {
-    left: 71px;
+    left: 91px; /* 移动端时间点位置 */
   }
   
   .timeline-time {
-    min-width: 60px;
+    flex: 0 0 90px; /* 移动端时间标签宽度 */
     font-size: 0.9em;
+    padding-right: 15px;
+  }
+  
+  .timeline-content {
+    padding-left: 15px; /* 移动端经历描述左边距 */
   }
 }
 </style>
@@ -386,12 +394,30 @@ layout: default
         </div>
         <div class="about-card-body">
           <ul class="timeline-list">
-            <li><span class="timeline-time">2010–2015</span> 清华大学电子工程系（本科）</li>
-            <li><span class="timeline-time">2013–2015</span> Cisco Systems, San Jose（实习/合作）</li>
-            <li><span class="timeline-time">2015–2018</span> 清华大学交叉信息研究院（硕士）</li>
-            <li><span class="timeline-time">2017–2020</span> 地平线机器人（CV 算法工程师）</li>
-            <li><span class="timeline-time">2020–2021</span> GPU 早期创业公司（AI Infra）</li>
-            <li><span class="timeline-time">2021–2025</span> 快手（AI Infra）</li>
+            <li>
+              <span class="timeline-time">2010–2015</span>
+              <span class="timeline-content">清华大学电子工程系（本科）</span>
+            </li>
+            <li>
+              <span class="timeline-time">2013–2015</span>
+              <span class="timeline-content">Cisco Systems, San Jose（实习/合作）</span>
+            </li>
+            <li>
+              <span class="timeline-time">2015–2018</span>
+              <span class="timeline-content">清华大学交叉信息研究院（硕士）</span>
+            </li>
+            <li>
+              <span class="timeline-time">2017–2020</span>
+              <span class="timeline-content">地平线机器人（CV 算法工程师）</span>
+            </li>
+            <li>
+              <span class="timeline-time">2020–2021</span>
+              <span class="timeline-content">GPU 早期创业公司（AI Infra）</span>
+            </li>
+            <li>
+              <span class="timeline-time">2021–2025</span>
+              <span class="timeline-content">快手（AI Infra）</span>
+            </li>
           </ul>
         </div>
       </div>
