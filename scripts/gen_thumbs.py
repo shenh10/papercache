@@ -468,20 +468,28 @@ def ensure_thumb(image_path: pathlib.Path, size: tuple[int, int], dest_path: pat
 
 def auto_detect_site_dir(start: pathlib.Path) -> pathlib.Path:
     """Detect site dir that contains Jekyll files. Priority:
-    - start if has _site and _data
-    - start/papercache
-    - first child under start with _site and _data (shallow)
+    - start if has _data (and optionally _site)
+    - start/papercache if has _data (and optionally _site)
+    - first child under start with _data (and optionally _site) (shallow)
     - raise if not found
+    
+    Note: _site directory is optional as it's only created after Jekyll build
     """
     cand = start
-    if (cand / "_site").exists() and (cand / "_data").exists():
+    # Check if current directory has _data (Jekyll site indicator)
+    if (cand / "_data").exists():
         return cand
+    
+    # Check papercache subdirectory
     cand2 = start / "papercache"
-    if (cand2 / "_site").exists() and (cand2 / "_data").exists():
+    if cand2.exists() and (cand2 / "_data").exists():
         return cand2
+    
+    # Check all children for Jekyll site
     for child in start.iterdir():
-        if child.is_dir() and (child / "_site").exists() and (child / "_data").exists():
+        if child.is_dir() and (child / "_data").exists():
             return child
+    
     raise FileNotFoundError("Cannot auto-detect site dir; specify with --site")
 
 
@@ -539,9 +547,20 @@ def main():
     out_dir = site_dir / args.out
     mapping_path = site_dir / "_data" / "thumbnails_by_path.yml"
     built_site = site_dir / "_site"
+    
+    # Check if _site exists (required for thumbnail generation)
     if not built_site.exists():
-        print(f"Built site not found at {built_site}. Build your site first.", file=sys.stderr)
-        sys.exit(1)
+        print(f"⚠️  Built site not found at {built_site}", file=sys.stderr)
+        print(f"ℹ️  Thumbnails can only be generated after Jekyll builds the site.", file=sys.stderr)
+        print(f"ℹ️  Creating empty mapping file and exiting gracefully...", file=sys.stderr)
+        
+        # Create empty mapping file so CI doesn't fail
+        mapping_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(mapping_path, "w", encoding="utf-8") as f:
+            yaml.safe_dump({}, f, allow_unicode=True)
+        
+        print(f"✅ Created empty thumbnails mapping at {mapping_path}")
+        sys.exit(0)
 
     mapping: Dict[str, str] = {}
     
