@@ -384,12 +384,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // 纯ASCII风格，占位图：边框 + 文本，确保在卡片中清晰可读
     const svg = `
     <svg width="400" height="200" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100%" height="100%" fill="#0b0f14"/>
-      <rect x="10" y="10" width="380" height="180" fill="none" stroke="#2ee36b" stroke-width="1"/>
-      <text x="200" y="80" font-family="monospace" font-size="14" text-anchor="middle" fill="#2ee36b">+--------------------------------------+</text>
-      <text x="200" y="105" font-family="monospace" font-size="20" font-weight="bold" text-anchor="middle" fill="#2ee36b">PaperCache</text>
-      <text x="200" y="128" font-family="monospace" font-size="12" text-anchor="middle" fill="#2ee36b">No Image Available</text>
-      <text x="200" y="152" font-family="monospace" font-size="14" text-anchor="middle" fill="#2ee36b">+--------------------------------------+</text>
+      <rect width="100%" height="100%" fill="#f8fafc"/>
+      <rect x="10" y="10" width="380" height="180" fill="none" stroke="#667eea" stroke-width="2"/>
+      <text x="200" y="50" font-family="monospace" font-size="12" text-anchor="middle" fill="#4a5568">┌────────────────────────────────────┐</text>
+      <text x="200" y="70" font-family="monospace" font-size="12" text-anchor="middle" fill="#4a5568">│</text>
+      <text x="200" y="90" font-family="monospace" font-size="12" text-anchor="middle" fill="#4a5568">│</text>
+      <text x="200" y="110" font-family="monospace" font-size="18" font-weight="bold" text-anchor="middle" fill="#667eea">PaperCache</text>
+      <text x="200" y="130" font-family="monospace" font-size="12" text-anchor="middle" fill="#4a5568">│</text>
+      <text x="200" y="150" font-family="monospace" font-size="12" text-anchor="middle" fill="#4a5568">│</text>
+      <text x="200" y="170" font-family="monospace" font-size="12" text-anchor="middle" fill="#4a5568">└────────────────────────────────────┘</text>
     </svg>
     `;
     
