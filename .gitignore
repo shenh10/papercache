@@ -9,6 +9,10 @@ _site/
 # Temporary thumbnail cache (local development only)
 .thumb_tmp/
 
+# Generated thumbnails (should be generated in CI, not committed)
+assets/images/thumbs/
+_data/thumbnails_by_path.yml
+
 # Slides (local development only)
 _slides/
 04-slides.html
