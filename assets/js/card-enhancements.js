@@ -10,8 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 简易并发限制队列，避免一次性抓取过多页面
-  const MAX_CONCURRENCY = 3;
+  const MAX_CONCURRENCY = 2; // 降低并发数
+  const MAX_CARDS_TO_PROCESS = 50; // 限制处理的卡片数量
   let running = 0;
+  let processedCount = 0;
   const queue = [];
 
   function schedule(task) {
@@ -34,7 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
     entries.forEach(e => {
       if (e.isIntersecting) {
         const card = e.target;
-        if (needsEnhance(card)) {
+        if (needsEnhance(card) && processedCount < MAX_CARDS_TO_PROCESS) {
+          processedCount++;
           schedule(() => enhanceCard(card));
         }
         io.unobserve(card);
@@ -49,6 +52,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function enhanceCard(card) {
     if (card.dataset.enhanced === '1') return;
+    
+    // 立即标记为正在处理，避免重复处理
+    card.dataset.enhanced = '1';
+    
     const linkEl = card.querySelector('.post-card-link');
     if (!linkEl) return;
 
@@ -64,9 +71,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const thumb = document.createElement('div');
         thumb.className = 'post-card-thumb' + (imgSrc ? '' : ' placeholder');
         if (imgSrc) {
-          const resolvedImg = new URL(imgSrc, new URL(postUrl, location.origin)).href;
-          // 6. 所有的图片resize到卡片要求的合适大小
-          thumb.innerHTML = `<img loading="lazy" src="${resolvedImg}" alt="thumbnail" style="width: 100%; height: 160px; object-fit: cover;">`;
+          // 检查是否是兜底图片（data URL）
+          if (imgSrc.startsWith('data:')) {
+            console.log('🖼️ 使用ASCII艺术字兜底图片');
+            // 直接使用兜底图片
+            thumb.innerHTML = `<img loading="lazy" src="${imgSrc}" alt="PaperCache ASCII Art" style="width: 100%; height: 160px; object-fit: contain;">`;
+          } else {
+            console.log('🖼️ 使用真实图片:', imgSrc.substring(0, 50) + '...');
+            // 使用真实图片
+            const resolvedImg = new URL(imgSrc, new URL(postUrl, location.origin)).href;
+            thumb.innerHTML = `<img loading="lazy" src="${resolvedImg}" alt="thumbnail" style="width: 100%; height: 160px; object-fit: cover;">`;
+          }
+        } else {
+          console.log('❌ 没有找到任何图片');
         }
         body.parentNode.insertBefore(thumb, body);
       }
@@ -118,7 +135,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       card.dataset.enhanced = '1';
     } catch (e) {
-      // ignore
+      console.error('Failed to enhance card:', e);
+      // 清理DOM解析器，释放内存
+      if (doc) {
+        doc = null;
+      }
+    } finally {
+      // 确保标记为已处理
+      card.dataset.enhanced = '1';
     }
   }
 
@@ -381,6 +405,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 创建ASCII PaperCache图片的函数
   function createASCIIPaperCacheImage() {
+    console.log('🎨 生成PaperCache ASCII艺术字兜底图片');
+    
     // 纯ASCII风格，包含完整的PaperCache ASCII艺术字
     const svg = `
     <svg width="400" height="200" xmlns="http://www.w3.org/2000/svg">
@@ -411,7 +437,10 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 将SVG转换为base64 data URL
     const base64 = btoa(unescape(encodeURIComponent(svg)));
-    return `data:image/svg+xml;base64,${base64}`;
+    const dataUrl = `data:image/svg+xml;base64,${base64}`;
+    
+    console.log('✅ ASCII艺术字生成完成，长度:', dataUrl.length);
+    return dataUrl;
   }
 
   function collectNeighbors(el, range) {
