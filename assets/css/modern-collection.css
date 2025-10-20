@@ -3,14 +3,12 @@
 /* ======================================== */
 
 /* 0. 防止 FOUC (Flash of Unstyled Content) */
-.collection-stats .stat-number,
 #tag-count-modern,
 #tag-buttons-container-modern {
   opacity: 0;
   transition: opacity 0.3s ease-in;
 }
 
-.collection-stats .stat-number.loaded,
 #tag-count-modern.loaded,
 #tag-buttons-container-modern.loaded {
   opacity: 1;

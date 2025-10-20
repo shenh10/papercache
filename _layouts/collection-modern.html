@@ -5,18 +5,12 @@ layout: collection
 <!-- 关键CSS内联，防止FOUC -->
 <style>
 /* 防止FOUC的关键样式 */
-.collection-stats .stat-number,
-#category-count,
-#tag-count,
 #tag-count-modern,
 #tag-buttons-container-modern {
   opacity: 0;
   transition: opacity 0.3s ease-in;
 }
 
-.collection-stats .stat-number.loaded,
-#category-count.loaded,
-#tag-count.loaded,
 #tag-count-modern.loaded,
 #tag-buttons-container-modern.loaded {
   opacity: 1;
@@ -193,15 +187,15 @@ layout: collection
       
       <div class="collection-stats">
         <div class="stat-item">
-          <span class="stat-number" id="total-posts">计算中...</span>
+          <span class="stat-number">{{ site.posts.size }}</span>
           <span class="stat-label">论文总数</span>
         </div>
         <div class="stat-item">
-          <span class="stat-number" id="category-count">计算中...</span>
+          <span class="stat-number">{{ site.categories.size }}</span>
           <span class="stat-label">分类数量</span>
         </div>
         <div class="stat-item">
-          <span class="stat-number" id="tag-count">计算中...</span>
+          <span class="stat-number">{{ site.tags.size }}</span>
           <span class="stat-label">标签数量</span>
         </div>
       </div>
@@ -252,14 +246,12 @@ layout: collection
 <!-- 关键CSS内联到head中，防止FOUC -->
 <style>
 /* 防止FOUC的关键样式 */
-.collection-stats .stat-number,
 #tag-count-modern,
 #tag-buttons-container-modern {
   opacity: 0;
   transition: opacity 0.3s ease-in;
 }
 
-.collection-stats .stat-number.loaded,
 #tag-count-modern.loaded,
 #tag-buttons-container-modern.loaded {
   opacity: 1;
@@ -438,52 +430,9 @@ layout: collection
 <script src="{{ '/assets/js/card-enhancements.js' | relative_url }}?v=3" defer></script>
 
 <script>
-// 立即执行函数，减少FOUC
-(function() {
-  // 立即显示基础内容，避免"计算中..."的闪烁
-  const totalPostsEl = document.getElementById('total-posts');
-  const categoryCountEl = document.getElementById('category-count');
-  const tagCountEl = document.getElementById('tag-count');
-  const tagCountModernEl = document.getElementById('tag-count-modern');
-  
-  if (totalPostsEl) {
-    totalPostsEl.textContent = '0';
-    totalPostsEl.classList.add('loaded');
-  }
-  
-  if (categoryCountEl) {
-    categoryCountEl.textContent = '0';
-    categoryCountEl.classList.add('loaded');
-  }
-  
-  if (tagCountEl) {
-    tagCountEl.textContent = '0';
-    tagCountEl.classList.add('loaded');
-  }
-  
-  if (tagCountModernEl) {
-    tagCountModernEl.textContent = '0';
-    tagCountModernEl.classList.add('loaded');
-  }
-})();
-
 document.addEventListener('DOMContentLoaded', function() {
   // 使用 requestAnimationFrame 确保DOM完全渲染后再执行
   requestAnimationFrame(function() {
-    // 计算论文总数
-    const totalPosts = document.querySelectorAll('.post-item[data-post-url]').length;
-    const totalPostsEl = document.getElementById('total-posts');
-    if (totalPostsEl) {
-      totalPostsEl.textContent = totalPosts;
-    }
-    
-    // 计算分类数量
-    const categoryCount = document.querySelectorAll('.main-category-modern').length;
-    const categoryCountEl = document.getElementById('category-count');
-    if (categoryCountEl) {
-      categoryCountEl.textContent = categoryCount;
-    }
-    
     // 收集所有文章标签（兼容现代化卡片）
     const tagMap = new Map();
     const postItems = document.querySelectorAll('.post-item[data-post-url]');
@@ -497,14 +446,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     // 更新标签数量显示
-    const tagCountEl = document.getElementById('tag-count');
     const tagCountModernEl = document.getElementById('tag-count-modern');
-    
-    if (tagCountEl) {
-      tagCountEl.textContent = tagMap.size;
-    }
     if (tagCountModernEl) {
       tagCountModernEl.textContent = tagMap.size;
+      tagCountModernEl.classList.add('loaded');
     }
     
     // 生成现代化标签按钮
@@ -571,3 +516,12 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 </script>
+
+<style>
+/* 确保统计数字始终可见 - 调试用 */
+.collection-stats .stat-number {
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: block !important;
+}
+</style>
