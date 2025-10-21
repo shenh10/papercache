@@ -1,4 +1,4 @@
-# 本地开发脚本
+q# 本地开发脚本
 
 ## 快速开始
 
@@ -29,3 +29,4 @@
 1. 确保在 `papercache` 根目录运行脚本
 2. 检查 Python 依赖：`pip install beautifulsoup4 PyYAML lxml Pillow requests`
 3. 检查 Ruby 环境：`bundle install`
+

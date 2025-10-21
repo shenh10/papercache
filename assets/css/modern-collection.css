@@ -39,9 +39,9 @@
   position: relative;
   z-index: 2;
   text-align: center;
-  max-width: 800px;
+  max-width: min(1200px, 85vw);
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 max(20px, 3vw);
 }
 
 .collection-hero h1 {
@@ -363,8 +363,8 @@
 /* 5. 现代化卡片网格 */
 .post-grid-modern {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 25px;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: max(25px, 3vw);
   margin-top: 20px;
 }
 
@@ -493,6 +493,48 @@
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* 超大屏幕优化 */
+@media (min-width: 1600px) {
+  .post-grid-modern {
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 3.5rem;
+  }
+  
+  .collection-hero h1 {
+    font-size: 4.5em;
+  }
+  
+  .collection-hero-subtitle {
+    font-size: 1.5em;
+  }
+  
+  .modern-tag-filter,
+  .modern-navigation {
+    padding: 45px;
+  }
+}
+
+/* 超宽屏优化 (2560px+) */
+@media (min-width: 2560px) {
+  .post-grid-modern {
+    grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+    gap: 4rem;
+  }
+  
+  .collection-hero h1 {
+    font-size: 5em;
+  }
+  
+  .collection-hero-subtitle {
+    font-size: 1.6em;
+  }
+  
+  .modern-tag-filter,
+  .modern-navigation {
+    padding: 50px;
+  }
 }
 
 /* 6. 响应式设计 */

@@ -6,9 +6,9 @@
 }
 
 .footer-container {
-  max-width: 1200px;
+  max-width: min(2400px, 95vw);
   margin: 0 auto;
-  padding: 3rem 2rem 1rem;
+  padding: 3rem max(2rem, 3vw) 1rem;
 }
 
 .footer-content {

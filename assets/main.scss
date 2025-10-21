@@ -3,12 +3,49 @@
 
 @import "minima";
 
-/* Widescreen Layout */
+/* Widescreen Layout - 响应式最大宽度 */
 .wrapper {
-  max-width: 1200px;
-  padding-right: 15px;
-  padding-left: 15px;
+  max-width: 100% !important;
+  padding-right: max(20px, 2vw) !important;
+  padding-left: max(20px, 2vw) !important;
+  margin: 0 auto !important;
 }
+
+/* 强制覆盖Jekyll默认主题的所有wrapper限制 */
+@media screen and (max-width: 800px) {
+  .wrapper {
+    max-width: 100% !important;
+    padding-right: max(20px, 2vw) !important;
+    padding-left: max(20px, 2vw) !important;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .wrapper {
+    max-width: 100% !important;
+    padding-right: max(20px, 2vw) !important;
+    padding-left: max(20px, 2vw) !important;
+  }
+}
+
+/* 超宽屏优化 - 限制文本行长度以提升可读性 */
+// @media (min-width: 2560px) {
+//   .wrapper {
+//     // max-width: 100% !important;
+//     // max-width: min(2200px, 85vw);
+//   }
+  
+//   .collection-wrapper {
+//     max-width: 100% !important;
+//   }
+  
+//   /* 确保文本内容不会过宽 */
+//   .post-content,
+//   .page-content {
+//     max-width: 100ch; /* 限制字符数，提升阅读体验 */
+//     margin: 0 auto;
+//   }
+// }
 
 /* Post Content Headers */
 .post-content h2, .post-content h3 {
@@ -77,6 +114,9 @@
   display: flex;
   gap: 30px;
   align-items: flex-start;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 0 max(20px, 2vw);
 }
 
 .sidebar {
@@ -924,4 +964,4 @@ details.depth-5 {
 
 .tag-filter-btn.active .tag-filter-btn-count {
   opacity: 0.9;
-}
+}/* Version: 1761017085 */

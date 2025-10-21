@@ -1,17 +1,34 @@
+/* 强制覆盖所有宽度限制 - 最高优先级 */
+* {
+  max-width: none !important;
+}
+
 /* 现代化关于页面样式 */
 .modern-about-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  max-width: 100% !important;
+  width: 100% !important;
 }
 
-/* Hero Section */
+/* 关键宽度控制规则 - 与首页对齐 */
+.wrapper {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding: 0 max(20px, 2vw) !important;
+  box-sizing: border-box;
+}
+
+/* Hero Section - 与首页对齐 */
 .about-hero {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   padding: 60px 0;
   margin: -2em -15px 3em -15px;
-  position: relative;
+  text-align: center;
+  position: static;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .about-hero::before {
@@ -28,10 +45,9 @@
 .about-hero-content {
   position: relative;
   z-index: 2;
-  text-align: center;
-  max-width: 800px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 max(20px, 3vw);
 }
 
 .about-hero-title {
@@ -51,20 +67,20 @@
   line-height: 1.6;
 }
 
-/* 内容区域 */
+/* 内容区域 - 与首页对齐 */
 .about-content-section {
-  padding: 0 15px;
-  max-width: 1200px;
+  padding: 0 max(20px, 3vw);
+  /* max-width: 100%; */
   margin: 0 auto;
 }
 
 /* 关于卡片 */
 .about-card {
   background: white;
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   margin-bottom: 2em;
-  border: 1px solid rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -77,12 +93,12 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .about-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.15);
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 
 .about-card-header {
@@ -292,7 +308,24 @@
   margin: 0;
 }
 
-/* 响应式设计 */
+
+/* 超宽屏优化 (2560px+) - 与首页对齐 */
+@media (min-width: 2560px) {
+  .about-hero-title {
+    font-size: 5em;
+  }
+  
+  .about-hero-subtitle {
+    font-size: 1.6em;
+  }
+  
+  /* .about-content-section {
+    max-width: 100% !important;
+  } */
+
+}
+
+/* 响应式设计 - 与首页对齐 */
 @media (max-width: 768px) {
   .about-hero-title {
     font-size: 2.5em;
@@ -304,7 +337,7 @@
   
   .about-hero {
     padding: 40px 0;
-    margin: -2em -10px 2em -10px;
+    margin: -2em -10px -2em -10px;
   }
   
   .about-content-section {
@@ -315,7 +348,6 @@
   .about-card-body {
     padding: 20px;
   }
-  
 }
 
 @media (max-width: 480px) {
@@ -325,14 +357,13 @@
   
   .about-hero {
     padding: 40px 0;
-    margin: -2em -10px 2em -10px;
+    margin: -2em -10px -2em -10px;
   }
   
   .about-card-header,
   .about-card-body {
     padding: 15px;
   }
-  
   
   .qrcode-link {
     padding: 0.8rem 1.5rem;

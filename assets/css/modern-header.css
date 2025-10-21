@@ -13,9 +13,9 @@
 }
 
 .header-container {
-  max-width: 100%;
-  margin: 0;
-  padding: 0 1.5rem 0 2rem;
+  max-width: min(2400px, 95vw);
+  margin: 0 auto;
+  padding: 0 max(1.5rem, 3vw);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -108,6 +108,13 @@
   color: #1e293b;
   font-weight: 600;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* 超宽屏优化 */
+@media (min-width: 2560px) {
+  .header-container {
+    max-width: min(2800px, 95vw);
+  }
 }
 
 /* 移动端响应式 */

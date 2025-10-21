@@ -25,3 +25,4 @@ else
     echo "❌ 错误：找不到 scripts/gen_thumbs.py"
     exit 1
 fi
+

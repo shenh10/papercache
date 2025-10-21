@@ -4,326 +4,68 @@ layout: default
 
 <!-- 关键CSS内联，防止FOUC -->
 <style>
+/* 强制覆盖所有宽度限制 - 最高优先级 */
+* {
+  max-width: none !important;
+}
+
+.wrapper {
+  max-width: 100% !important;
+  width: 100% !important;
+  padding: 0 max(20px, 2vw) !important;
+  box-sizing: border-box;
+}
+
+/* .content-section, .hero-content, .about-hero-content, .about-content-section {
+  max-width: 100% !important;
+  width: 100% !important;
+} */
+
+.about-content-section {
+  padding: 0 max(20px, 3vw);
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+/* 确保卡片不会超出容器 */
+.modern-about-page .feature-card,
+.modern-about-page .stats-card,
+.modern-about-page .focus-card,
+.modern-about-page .post-item,
+.modern-about-page .cta-section,
+.modern-about-page .about-card {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
 /* 现代化关于页面关键样式 */
 .modern-about-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  max-width: 100% !important;
+  width: 100% !important;
 }
 
-/* Hero Section */
+/* Hero Section - 与首页对齐 */
 .about-hero {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   padding: 60px 0;
   margin: -2em -15px 3em -15px;
-  position: relative;
+  text-align: center;
+  position: static;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .about-hero-content {
   position: relative;
   z-index: 2;
-  text-align: center;
-  max-width: 800px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: 0 20px;
-}
-
-.about-hero-title {
-  font-size: 3.5em;
-  font-weight: 700;
-  margin: 0 0 20px 0;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-
-.about-hero-subtitle {
-  font-size: 1.3em;
-  opacity: 0.9;
-  margin-bottom: 30px;
-  font-weight: 300;
-  line-height: 1.6;
-}
-
-/* 内容区域 */
-.about-content-section {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 0 20px 40px;
-}
-
-/* 卡片样式 */
-.about-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  margin-bottom: 30px;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.about-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-.about-card-header {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-  padding: 25px 30px;
-  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
-}
-
-.about-card-title {
-  margin: 0;
-  font-size: 1.8em;
-  font-weight: 700;
-  color: #2d3748;
-  letter-spacing: -0.01em;
-}
-
-.about-card-body {
-  padding: 30px;
-}
-
-/* 关于我部分 */
-.about-intro {
-  font-size: 1.1em;
-  color: #4a5568;
-  line-height: 1.8;
-  margin: 0;
-}
-
-/* 研究方向列表 */
-.research-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.research-list li {
-  padding: 15px 0;
-  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
-  font-size: 1.05em;
-  color: #4a5568;
-  line-height: 1.7;
-  position: relative;
-  padding-left: 30px;
-}
-
-.research-list li:last-child {
-  border-bottom: none;
-}
-
-.research-list li::before {
-  content: '🎯';
-  position: absolute;
-  left: 0;
-  top: 15px;
-  font-size: 1.2em;
-}
-
-/* 联系列表 */
-.contact-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 15px;
-}
-
-.contact-list li {
-  display: flex;
-  align-items: center;
-  padding: 15px 20px;
-  background: rgba(102, 126, 234, 0.05);
-  border-radius: 12px;
-  transition: all 0.3s ease;
-}
-
-.contact-list li:hover {
-  background: rgba(102, 126, 234, 0.1);
-  transform: translateX(5px);
-}
-
-.contact-label {
-  font-weight: 600;
-  color: #2d3748;
-  margin-right: 15px;
-  min-width: 80px;
-}
-
-.contact-list a {
-  color: #667eea;
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.3s ease;
-}
-
-.contact-list a:hover {
-  color: #5a67d8;
-  text-decoration: underline;
-}
-
-/* 时间线 */
-.timeline-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  position: relative;
-}
-
-.timeline-list::before {
-  content: '';
-  position: absolute;
-  left: 120px; /* 调整时间轴位置，为时间标签留出更多空间 */
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-}
-
-.timeline-list li {
-  position: relative;
-  display: flex; /* 使用flexbox布局 */
-  align-items: center;
-  padding: 20px 0;
-  color: #4a5568;
-  font-size: 1.05em;
-  line-height: 1.6;
-}
-
-.timeline-list li::before {
-  content: '';
-  position: absolute;
-  left: 111px; /* 调整时间点位置，与时间轴对齐 */
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 50%;
-  border: 4px solid white;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
-  z-index: 2;
-}
-
-.timeline-time {
-  flex: 0 0 110px; /* 固定时间标签宽度 */
-  font-weight: 600;
-  color: #667eea;
-  font-size: 0.95em;
-  text-align: right;
-  padding-right: 20px; /* 与时间轴保持间距 */
-}
-
-.timeline-content {
-  flex: 1; /* 经历描述占据剩余空间 */
-  padding-left: 20px; /* 与时间轴保持间距 */
-}
-
-/* 交流群部分 */
-.community-content {
-  text-align: center;
-}
-
-.qrcode-container {
-  margin-bottom: 20px;
-}
-
-.qrcode-hover {
-  position: relative;
-  display: inline-block;
-}
-
-.qrcode-link {
-  color: #667eea;
-  text-decoration: none;
-  font-weight: 600;
-  padding: 15px 25px;
-  border: 2px solid #667eea;
-  border-radius: 12px;
-  background: rgba(102, 126, 234, 0.05);
-  transition: all 0.3s ease;
-  display: inline-block;
-}
-
-.qrcode-link:hover {
-  background: #667eea;
-  color: white;
-  text-decoration: none;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-}
-
-.qrcode-image {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 200px;
-  height: auto;
-  border: 3px solid #667eea;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  z-index: 1000;
-  margin-top: 15px;
-}
-
-.qrcode-hover:hover .qrcode-image {
-  opacity: 1;
-  visibility: visible;
-}
-
-.community-description {
-  color: #4a5568;
-  font-size: 1.05em;
-  line-height: 1.6;
-  margin: 0;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .about-hero-title {
-    font-size: 2.5em;
-  }
-  
-  .about-hero-subtitle {
-    font-size: 1.1em;
-  }
-  
-  .about-card-header,
-  .about-card-body {
-    padding: 20px;
-  }
-  
-  .contact-list {
-    grid-template-columns: 1fr;
-  }
-  
-  .timeline-list::before {
-    left: 100px; /* 移动端时间轴位置 */
-  }
-  
-  .timeline-list li::before {
-    left: 91px; /* 移动端时间点位置 */
-  }
-  
-  .timeline-time {
-    flex: 0 0 90px; /* 移动端时间标签宽度 */
-    font-size: 0.9em;
-    padding-right: 15px;
-  }
-  
-  .timeline-content {
-    padding-left: 15px; /* 移动端经历描述左边距 */
-  }
+  padding: 0 max(20px, 3vw);
+  box-sizing: border-box;
 }
 </style>
 
@@ -339,7 +81,8 @@ layout: default
   </section>
 
   <!-- 主要内容区域 -->
-  <div class="about-content-section">
+  <div class="wrapper">
+    <div class="about-content-section">
     <!-- 关于我 -->
     <section class="about-me-section">
       <div class="about-card">
@@ -394,30 +137,12 @@ layout: default
         </div>
         <div class="about-card-body">
           <ul class="timeline-list">
-            <li>
-              <span class="timeline-time">2010–2015</span>
-              <span class="timeline-content">清华大学电子工程系（本科）</span>
-            </li>
-            <li>
-              <span class="timeline-time">2013–2015</span>
-              <span class="timeline-content">Cisco Systems, San Jose（实习/合作）</span>
-            </li>
-            <li>
-              <span class="timeline-time">2015–2018</span>
-              <span class="timeline-content">清华大学交叉信息研究院（硕士）</span>
-            </li>
-            <li>
-              <span class="timeline-time">2017–2020</span>
-              <span class="timeline-content">地平线机器人（CV 算法工程师）</span>
-            </li>
-            <li>
-              <span class="timeline-time">2020–2021</span>
-              <span class="timeline-content">GPU 早期创业公司（AI Infra）</span>
-            </li>
-            <li>
-              <span class="timeline-time">2021–2025</span>
-              <span class="timeline-content">快手（AI Infra）</span>
-            </li>
+            <li><span class="timeline-time">2010–2015</span> 清华大学电子工程系（本科）</li>
+            <li><span class="timeline-time">2013–2015</span> Cisco Systems, San Jose（实习/合作）</li>
+            <li><span class="timeline-time">2015–2018</span> 清华大学交叉信息研究院（硕士）</li>
+            <li><span class="timeline-time">2017–2020</span> 地平线机器人（CV 算法工程师）</li>
+            <li><span class="timeline-time">2020–2021</span> GPU 早期创业公司（AI Infra）</li>
+            <li><span class="timeline-time">2021–2025</span> 快手（AI Infra）</li>
           </ul>
         </div>
       </div>
@@ -444,9 +169,9 @@ layout: default
         </div>
       </div>
     </section>
+    </div>
   </div>
 </div>
 
-<!-- 引入现代化关于页面样式（延迟加载，因为关键样式已内联） -->
-<link rel="preload" href="{{ '/assets/css/modern-about.css' | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="{{ '/assets/css/modern-about.css' | relative_url }}"></noscript>
+<!-- 引入现代化关于页面样式 -->
+<link rel="stylesheet" href="{{ '/assets/css/modern-about.css' | relative_url }}">
