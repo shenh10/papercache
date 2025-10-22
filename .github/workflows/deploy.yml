@@ -1,37 +1,45 @@
 name: Deploy
 
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+    push:
+        branches: [main]
+    workflow_dispatch:
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Download excerpts mapping
-      uses: actions/download-artifact@v3
-      with:
-        name: excerpts-mapping
-        path: assets/data/
-      continue-on-error: true
-      
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.0'
-        bundler-cache: true
-        
-    - name: Build site
-      run: |
-        bundle exec jekyll build
-        
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./_site
+    deploy:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Download excerpts mapping
+              uses: actions/download-artifact@v3
+              with:
+                  name: excerpts-mapping
+                  path: assets/data/
+              continue-on-error: true
+
+            - name: Generate excerpts mapping (fallback)
+              if: failure()
+              run: |
+                  # 如果下载失败，则生成摘要映射
+                  echo "📝 生成摘要映射..."
+                  pip3 install beautifulsoup4
+                  python3 scripts/generate_excerpts.py
+
+            - name: Set up Ruby
+              uses: ruby/setup-ruby@v1
+              with:
+                  ruby-version: "3.0"
+                  bundler-cache: true
+
+            - name: Build site
+              run: |
+                  bundle exec jekyll build
+
+            - name: Deploy to GitHub Pages
+              uses: peaceiris/actions-gh-pages@v3
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  publish_dir: ./_site

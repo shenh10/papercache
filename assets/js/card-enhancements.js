@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       excerptsMapping = {};
     }
   } catch (error) {
-    console.log('⚠️ 预生成摘要映射加载失败，将使用动态生成:', error);
+    console.log('⚠️ 预生成摘要映射加载失败，将使用动态生成');
     excerptsMapping = {};
   }
   

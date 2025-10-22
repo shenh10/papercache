@@ -1,37 +1,37 @@
 name: Generate Excerpts
 
 on:
-  push:
-    branches: [ main ]
-    paths:
-      - '_posts/**'
-      - 'scripts/generate_excerpts.py'
-  workflow_dispatch:
+    push:
+        branches: [main]
+        paths:
+            - "_posts/**"
+            - "scripts/generate_excerpts.py"
+    workflow_dispatch:
 
 jobs:
-  generate-excerpts:
-    runs-on: ubuntu-latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-        
-    - name: Install dependencies
-      run: |
-        pip install beautifulsoup4
-        
-    - name: Generate excerpts mapping
-      run: |
-        python3 scripts/generate_excerpts.py
-        
-    - name: Upload excerpts mapping
-      uses: actions/upload-artifact@v3
-      with:
-        name: excerpts-mapping
-        path: assets/data/excerpts.json
-        retention-days: 30
+    generate-excerpts:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.9"
+
+            - name: Install dependencies
+              run: |
+                  pip install beautifulsoup4
+
+            - name: Generate excerpts mapping
+              run: |
+                  python3 scripts/generate_excerpts.py
+
+            - name: Upload excerpts mapping
+              uses: actions/upload-artifact@v3
+              with:
+                  name: excerpts-mapping
+                  path: assets/data/excerpts.json
+                  retention-days: 30

@@ -18,7 +18,7 @@ title: 'SageAttention2: Efficient Attention with Thorough Outlier Smoothing and 
 
 <p><strong>文章标题</strong>：SageAttention2: 通过彻底的异常值平滑和每线程INT4量化实现高效注意力机制<br/>
 <strong>作者/机构</strong>：Jintao Zhang, Haofeng Huang, Pengle Zhang, Jia Wei, Jun Zhu, Jianfei Chen</p>
-<h2>A1 主要贡献（总结）</h2>
+<h2>A1 主要贡献</h2>
 <p>本文针对现有注意力计算加速方法的不足，提出了 SageAttention2，旨在通过使用速度更快的4位矩阵乘法（INT4 Matmul）并结合多种精度增强技术，进一步提升注意力计算的效率和精度。</p>
 <p><strong>核心问题与动机</strong>:<br/>
 先前的工作 SageAttention 通过将 <code>QK⊤</code> 量化为 INT8、对 K 进行平滑处理以及在特定 GPU 上使用 FP16 累加器来加速 <code>PV</code> 计算，实现了相较于 FlashAttention2 约2倍的加速。然而，SageAttention 存在两个主要弱点：<br/>
@@ -100,7 +100,7 @@ $\hat{A} = \lceil A / \delta_A \rfloor, \delta_A = \max(|A|) / 7$。<br/>
 <p><strong>相关工作与贡献</strong>。两级累加策略也已在 CUTLASS【索引39，CUTLASS: CUDA Templates for Linear Algebra Subroutines and Solvers，2023，GitHub】和 DeepGemm【索引10，Deepseek-v3 technical report，2024，arXiv】中实现，用于计算线性层中的权重-激活乘积。据我们所知，我们是第一个发现并研究 FP22 累加器效应，并为 Attention 实现两级累加的工作。</p>
 <p><strong>可选的平滑 V 技术</strong>。我们还找到了另一种方法来减轻由于 FP22 累加器导致的精度损失，特别是在 V 具有通道级偏差时：$\overrightarrow{V_m} = \text{mean}(V, \text{axis}=0)$, $V = V - \overrightarrow{V_m}$。此外，为保持 Attention 计算的正确性，只需将 $\overrightarrow{V_m}$ 添加到 O 的最终计算中：$O = O + \overrightarrow{V_m}$。这是因为 P 矩阵的每行之和等于1，所以 $P\overrightarrow{V_m} = \overrightarrow{V_m}$。</p>
 <p><strong>备注</strong>。关于平滑 V 的详细信息，请参见附录 A.3。该技术是可选的，并且未在我们主要实验中使用，因为它仅在 V 表现出通道级偏差时提供显著好处，而某些模型（如 Llama3.1）中不存在这种情况（见图2）。</p>
-<h2>A4 实验环境（总结）</h2>
+<h2>A4 实验环境</h2>
 <ul>
 <li><strong>模型</strong>: 实验覆盖了文本、图像和视频生成领域的十个代表性模型：<ul>
 <li><strong>文本生成</strong>: Llama2 (7B), Llama3.1 (8B), GLM4 (9B)</li>
@@ -137,7 +137,7 @@ $\hat{A} = \lceil A / \delta_A \rfloor, \delta_A = \max(|A|) / 7$。<br/>
 </ul>
 </li>
 </ul>
-<h2>A4 实验结果（总结）</h2>
+<h2>A4 实验结果</h2>
 <p><strong>核心结论</strong>: SageAttention2 的速度比 FlashAttention2 和 xformers 快约 3 倍和 4.5 倍。此外，SageAttention2 在 Hopper GPU 上的速度与 FlashAttn3(fp8) 相当，但精度远高于后者。SageAttention2 能够在语言、图像和视频生成模型上保持端到端指标。</p>
 <h3>4.2. 内核速度与精度</h3>
 <ul>

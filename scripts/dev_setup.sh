@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # 本地开发环境设置脚本
-# 用于生成缩略图和启动 Jekyll 开发服务器
+# 用于生成缩略图、摘要映射和启动 Jekyll 开发服务器
 
 set -e
 
@@ -25,6 +25,22 @@ if [ -f "scripts/gen_thumbs.py" ]; then
     echo "✅ 缩略图生成完成"
 else
     echo "❌ 错误：找不到 scripts/gen_thumbs.py"
+    exit 1
+fi
+
+# 生成摘要映射
+echo "📝 生成摘要映射..."
+if [ -f "scripts/generate_excerpts.py" ]; then
+    # 安装必要的Python依赖
+    if ! python3 -c "import bs4" 2>/dev/null; then
+        echo "📦 安装 BeautifulSoup4..."
+        pip3 install beautifulsoup4
+    fi
+    
+    python3 scripts/generate_excerpts.py
+    echo "✅ 摘要映射生成完成"
+else
+    echo "❌ 错误：找不到 scripts/generate_excerpts.py"
     exit 1
 fi
 

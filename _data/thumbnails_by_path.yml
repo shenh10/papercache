@@ -139,6 +139,8 @@
 : /assets/images/thumbs/bf66f5e6.jpg
 ? /papers/llm/engineering/attention/2024/10/01/sageattention-accurate-8-bit-attention-for-plug-and-play-inference-acceleration.html
 : /assets/images/thumbs/c98a7f45.jpg
+? /papers/llm/engineering/attention/2024/11/01/sageattention2-efficient-attention-with-thorough-outlier-smoothing-and-per-thread-int4-quantization.html
+: /assets/images/thumbs/d40ea037.jpg
 ? /papers/llm/engineering/attention/2025/02/01/tree-attention-topology-aware-decoding-for-long-context-attention-on-gpu-clusters.html
 : /assets/images/thumbs/033c9203.jpg
 ? /papers/llm/engineering/attention/2025/05/01/flashmla-etap-efficient-transpose-attention-pipeline-for-accelerating-mla-inference-on-nvidia-h20-gpus.html
@@ -148,6 +150,8 @@
 ? /papers/llm/engineering/attention/2025/06/01/gated-attention-for-large-language-models-non-linearity-sparsity-and-attention-sink-free.html
 : /assets/images/thumbs/93d3ad8a.jpg
 /papers/llm/engineering/attention/2025/08/01/mixture-of-contexts-for-long-video-generation.html: /assets/images/thumbs/c04d296d.jpg
+? /papers/llm/engineering/attention/2025/09/01/sla-beyond-sparsity-in-diffusion-transformers-via-fine-tunable-sparselinear-attention.html
+: /assets/images/thumbs/94a537f3.jpg
 /papers/llm/engineering/compiler/2018/10/01/tvm-an-automated-end-to-end-optimizing-compiler-for-deep-learning.html: /assets/images/thumbs/8434dd70.jpg
 ? /papers/llm/engineering/compiler/2024/10/01/flux-fast-software-based-communication-overlap-on-gpus-through-kernel-fusion.html
 : /assets/images/thumbs/80f8a0ae.jpg
@@ -288,6 +292,9 @@
 /papers/llm/engineering/rl/2025/08/01/rstar2-agent-agentic-reasoning-technical-report.html: /assets/images/thumbs/1941ac52.jpg
 ? /papers/llm/engineering/rl/2025/08/01/seamlessflow-a-traineragent-isolation-rl-framework-achieving-bubble-free-pipelines-via-tag-scheduling.html
 : /assets/images/thumbs/1d16dd2b.jpg
+/papers/llm/engineering/rl/2025/08/01/your-efficient-rl-framework-secretly-brings-you-offpolicy-rl-training.html: /assets/images/thumbs/e58bb98e.jpg
+? /papers/llm/engineering/rl/2025/10/01/stabilizing-moe-reinforcement-learning-by-aligning-training-and-inference-routers.html
+: /assets/images/thumbs/57d551ad.jpg
 /papers/llm/engineering/train/2018/06/01/pipedream-fast-and-efficient-pipeline-parallel-dnn-training.html: /assets/images/thumbs/01092e15.jpg
 /papers/llm/engineering/train/2019/07/01/gpipe-easy-scaling-with-micro-batch-pipeline-parallelism.html: /assets/images/thumbs/fa3ce918.jpg
 ? /papers/llm/engineering/train/2020/03/01/megatron-lm-training-multi-billion-parameter-language-models-using-model-parallelism.html

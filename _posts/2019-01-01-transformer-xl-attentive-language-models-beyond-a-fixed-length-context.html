@@ -20,7 +20,7 @@ title: 'Transformer-XL: Attentive Language Models Beyond a Fixed-Length Context'
 <p><strong>文章标题</strong>：Transformer-XL：超越固定长度上下文的注意力语言模型<br/>
 <strong>作者/机构</strong>：Zihang Dai, Zhilin Yang, Yiming Yang, Jaime Carbonell, Quoc V. Le, Ruslan Salakhutdinov<br/>
 <strong>所属机构</strong>：卡内基梅隆大学，谷歌大脑</p>
-<h2>A1 主要贡献（总结）</h2>
+<h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>：尽管Transformer在学习长期依赖方面具有潜力，但在语言建模中，它们受到固定长度上下文的限制。这种方法存在两个关键问题：1) 模型无法捕获超出预定义上下文长度的更长期依赖；2) 将文本简单地切分成固定长度的片段会导致“上下文碎片化”问题，即模型在预测片段开头的词符时缺乏必要的上下文信息，从而导致优化效率低下和性能下降。</p>
 <p><strong>研究目标</strong>：本文旨在解决标准Transformer模型在处理语言建模任务时因固定长度上下文带来的局限性，使其能够学习超越固定长度的依赖关系，同时不破坏时间连贯性。</p>
 <p><strong>创新点</strong>：<br/>
@@ -28,11 +28,11 @@ title: 'Transformer-XL: Attentive Language Models Beyond a Fixed-Length Context'
 1.  <strong>分段级循环机制（Segment-Level Recurrence）</strong>：在处理新的文本段时，模型会固定并缓存前一个文本段计算出的隐藏状态序列。这些被重用的隐藏状态作为当前段的记忆或扩展上下文，从而在段与段之间建立了循环连接。这种机制使得信息可以通过循环连接进行传播，从而能够建模非常长期的依赖关系，并解决了上下文碎片化问题。<br/>
 2.  <strong>相对位置编码方案（Relative Positional Encoding）</strong>：为了在重用隐藏状态时保持位置信息的一致性，本文提出了一种新的相对位置编码方案。与在初始嵌入中静态加入位置信息的绝对位置编码不同，该方案将相对位置信息（即两个位置之间的距离）动态地注入到每一层的注意力分数中。这使得模型能够区分不同段中相同相对位置的词符，使状态重用成为可能，并且在评估时能泛化到比训练时更长的注意力长度。</p>
 <p>这两个技术共同构成了一个完整的解决方案，使得Transformer-XL在多个语言建模基准测试中取得了显著优于RNN和标准Transformer的性能，不仅能捕获更长期的依赖，还能在评估时大幅提升速度。</p>
-<h2>A3 背景知识/关键Observation/设计原则（缩写）</h2>
+<h2>A3 背景知识/关键Observation/设计原则</h2>
 <p><strong>语言建模领域的进展</strong>。近年来，语言建模领域取得了许多重要进展，包括但不限于设计新颖的架构以更好地编码上下文【5, Bengio et al., 2003, Journal of machine learning research】【43, Mikolov et al., 2010, Eleventh Annual Conference of the International Speech Communication Association】【41, Merity et al., 2016, arXiv preprint arXiv:1609.07843】【1, Al-Rfou et al., 2018, arXiv preprint arXiv:1808.04444】，改进正则化和优化算法【13, Gal and Ghahramani, 2016, Advances in neural information processing systems】，加速Softmax计算【14, Grave et al., 2016a, arXiv preprint arXiv:1609.04309】，以及丰富输出分布族【69, Yang et al., 2017, arXiv preprint arXiv:1711.03953】。</p>
 <p><strong>捕捉长程上下文的方法</strong>。为了在语言建模中捕捉长程上下文，一种研究思路是将更广泛上下文的表示作为额外输入送入网络。现有工作范围广泛，从手动定义上下文表示【44, Mikolov and Zweig, 2012, SLT】【23, Ji et al., 2015, arXiv preprint arXiv:1511.03962】【62, Wang and Cho, 2015, arXiv preprint arXiv:1511.03729】，到依赖于从数据中学习的文档级主题【12, Dieng et al., 2016, arXiv preprint arXiv:1611.01702】【63, Wang et al., 2017, arXiv preprint arXiv:1712.09783】。</p>
 <p><strong>通用序列建模中的长期依赖问题</strong>。在更广泛的序列建模领域，如何捕捉长期依赖一直是一个长期的研究问题。从这个角度看，自从LSTM被广泛采用以来，许多努力都致力于缓解梯度消失问题，包括更好的初始化方法【33, Le et al., 2015, arXiv preprint arXiv:1504.00941】，增加额外的损失信号【59, Trinh et al., 2018, arXiv preprint arXiv:1803.00144】，增强的记忆结构【27, Ke et al., 2018, Advances in Neural Information Processing Systems】，以及其他修改RNN内部架构以简化优化的方法【68, Wu et al., 2016, Advances in neural information processing systems】【34, Li et al., 2018, Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition】。与这些方法不同，本文的工作基于Transformer架构，并表明语言建模作为一个真实世界的任务，可以从学习更长期依赖的能力中受益。</p>
-<h2>A2 方法细节（缩写）</h2>
+<h2>A2 方法细节</h2>
 <h3>模型概述</h3>
 <p><strong>语言建模任务的定义</strong>。给定一个由词符组成的语料库 $x = (x_1, \dots, x_T)$，语言建模的任务是估计联合概率 $P(x)$。这个概率通常被自回归地分解为 $P(x) = \prod_t P(x_t | x_{&lt;t})$。通过这种分解，问题简化为估计每个条件因子。本文遵循标准的神经方法来建模条件概率，即使用一个可训练的神经网络将上下文 $x_{&lt;t}$ 编码成一个固定大小的隐藏状态，然后该状态与词嵌入相乘以获得logits。这些logits随后被送入Softmax函数，从而产生下一个词符的分类概率分布。&lt;/p&gt;
 </p><h3>3.1 Vanilla Transformer语言模型</h3>
@@ -86,7 +86,7 @@ title: 'Transformer-XL: Attentive Language Models Beyond a Fixed-Length Context'
 <figcaption class="figure-caption">公式</figcaption>
 </figure><br/>
 其中 $h^0_{\tau} := E_{s_{\tau}}$ 定义为词嵌入序列。此外，值得一提的是，计算 $A$ 的一种朴素方法需要为所有对 $(i, j)$ 计算 $W_{k,R}^n R_{i-j}$，其成本与序列长度的平方成正比。然而，注意到 $i-j$ 的值仅在0到序列长度之间，我们在附录B中展示了一个简单的计算过程，将成本降低到与序列长度呈线性关系。</p>
-<h2>A4 实验环境（总结）</h2>
+<h2>A4 实验环境</h2>
 <ul>
 <li><strong>数据集</strong>：<ul>
 <li><strong>WikiText-103</strong>：大规模词级别语言建模基准，包含1.03亿训练词符，来自2.8万篇文章，文章平均长度3.6k词符，用于测试长期依赖建模能力。</li>
@@ -110,7 +110,7 @@ title: 'Transformer-XL: Attentive Language Models Beyond a Fixed-Length Context'
 </ul>
 </li>
 </ul>
-<h2>A4 实验结果（总结）</h2>
+<h2>A4 实验结果</h2>
 <h3>4.1 主要结果</h3>
 <ul>
 <li><strong>WikiText-103</strong>：Transformer-XL将SOTA（state-of-the-art）困惑度（perplexity）从20.5降至18.3，展示了其架构的优越性（见表1）。<br/>
@@ -174,9 +174,9 @@ title: 'Transformer-XL: Attentive Language Models Beyond a Fixed-Length Context'
 <figcaption class="figure-caption">表9：评估期间运行时间的减速情况。评估基于单个GPU上每个词符的时间。</figcaption>
 </figure></li>
 </ul>
-<h2>A5 结论（总结）</h2>
+<h2>A5 结论</h2>
 <p>本文提出的Transformer-XL架构通过引入分段级循环机制和新颖的相对位置编码方案，成功解决了标准Transformer在语言建模中受限于固定长度上下文的问题。实验结果表明，Transformer-XL在多个基准上取得了强大的困惑度结果，能够建模比RNN和标准Transformer更长期的依赖，评估速度得到巨大提升，并且能够生成连贯的长篇文章。作者展望Transformer-XL在文本生成、无监督特征学习、图像和语音建模等领域具有广阔的应用前景。</p>
-<h2>A6 附录（缩写）</h2>
+<h2>A6 附录</h2>
 <h3>A. 内存约束下的消融研究</h3>
 <p><strong>同等内存预算下的性能对比</strong>。表10比较了Transformer-XL与基线模型在相同内存预算下的性能。结果显示，即便反向传播的长度更短，Transformer-XL的性能仍然优于基线模型。</p>
 <p><figure class="image-figure">

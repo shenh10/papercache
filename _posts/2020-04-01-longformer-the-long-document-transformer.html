@@ -19,7 +19,7 @@ title: 'Longformer: The Long-Document Transformer'
 
 <h3>Longformer：面向长文档的Transformer</h3>
 <p><strong>作者/机构</strong>: Iz Beltagy, Matthew E. Peters, Arman Cohan (Allen Institute for Artificial Intelligence, Seattle, WA, USA)</p>
-<h2>A1 主要贡献（总结）</h2>
+<h2>A1 主要贡献</h2>
 <p>本文旨在解决基于Transformer的模型因其自注意力操作（其计算量与序列长度成二次方关系）而无法处理长序列的局限性。</p>
 <p><strong>核心问题</strong>: 标准Transformer模型的自注意力机制的内存和计算需求随序列长度二次方增长（$O(n^2)$），这使得处理长文档（如数千个token）变得不可行或成本极高。现有的方法通常通过分割长文档来规避这个问题，但这可能导致跨分片重要信息的丢失，并且需要复杂的任务特定架构来处理分片间的交互。</p>
 <p><strong>研究目标</strong>: 提出一种改进的Transformer架构，其自注意力操作的计算复杂度与序列长度呈线性关系（$O(n)$），从而能够高效地处理长文档。目标是创造一个可以作为标准自注意力“即插即用”替代品的模块，并将其应用于预训练和微调的范式中，以提升各种长文档自然语言处理任务的性能。</p>
@@ -40,7 +40,7 @@ title: 'Longformer: The Long-Document Transformer'
     *   在<strong>自回归语言建模</strong>任务（text8和enwik8）上取得了当时的SOTA结果。<br/>
     *   在<strong>预训练-微调范式</strong>中，证明了Longformer可以作为RoBERTa等预训练模型的直接替代品，并在多个长文档下游任务（包括问答、共指消解和文档分类）上持续优于基线模型，在WikiHop和TriviaQA上取得了SOTA结果。<br/>
     *   提出了<strong>Longformer-Encoder-Decoder (LED)</strong>模型，将Longformer的注意力机制应用于Encoder-Decoder架构，用于处理长文档的序列到序列任务（如摘要），并在arXiv摘要数据集上取得了SOTA结果。</p>
-<h2>A3 背景知识/关键Observation/设计原则（缩写）</h2>
+<h2>A3 背景知识/关键Observation/设计原则</h2>
 <h3>面向长文档的Transformer</h3>
 <p><strong>现有方法的分类</strong>。处理长文档的自注意力方法主要有两类。第一类是<strong>从左到右（ltr）</strong>的方法，它按块处理文档。这类模型在自回归语言建模中很成功，但不适用于需要双向上下文的迁移学习任务。本文的工作属于第二类，即定义某种形式的<strong>稀疏注意力模式</strong>，以避免计算完整的二次方注意力矩阵。</p>
 <p><strong>与Sparse Transformer的比较</strong>。与本文注意力模式最相似的模型是Sparse Transformer【7，Generating long sequences with sparse transformers，2019，arXiv】，它使用了BlockSparse【18，Gpu kernels for block-sparse weights，2017】提供的一种8x8块大小的扩张滑动窗口。本文的实现（§3）也包含一个自定义CUDA核，但它比用C++实现的、为特定TensorFlow版本设计的BlockSparse更灵活、更易于维护。此外，本文还引入了适用于常见NLP任务的、由任务驱动的全局注意力模式（§3），并证明了它们对于在迁移学习设置中取得良好性能至关重要。</p>
@@ -55,7 +55,7 @@ title: 'Longformer: The Long-Document Transformer'
 <p><strong>Longformer的优势</strong>。相比之下，Longformer可以处理长序列而无需截断或分块，这使得我们可以采用一种更简单的方法，即将所有可用上下文连接起来，在一次传递中进行处理。</p>
 <h3>同期相关工作</h3>
 <p><strong>与同期工作的比较</strong>。一些同期的工作探索了与Longformer类似的思想，即在Transformer中使用<strong>局部+全局注意力</strong>，并为长文档自然语言任务进行预训练。特别是，ETC【1，ETC: Encoding long and structured inputs in transformers，2020，EMNLP】使用了类似的局部+全局注意力来替代全自注意力，以将Transformer扩展到长文档。与Longformer不同的是，ETC使用了相对位置嵌入（本文只在自回归语言模型设置中使用），为预训练引入了一个额外的训练目标（CPC损失），并以略有不同的方式配置全局注意力，它在包括阅读理解和分类在内的多个任务上展示了强大的结果。GMAT【20，Gmat: Global memory augmentation for transformers，2020，ArXiv】使用了类似的想法，即输入中的少数全局位置充当全局记忆。BigBird【61，Big bird: Transformers for longer sequences，2020，ArXiv】是ETC的扩展，在包括摘要在内的更多任务上进行了评估。重要的是，通过理论分析，BigBird证明了稀疏Transformer是序列函数的通用近似器，并保留了全自注意力的这些属性。</p>
-<h2>A2 方法细节（缩写）</h2>
+<h2>A2 方法细节</h2>
 <h3>3. Longformer</h3>
 <p><strong>核心挑战与解决方案</strong>。原始Transformer模型的自注意力组件具有$O(n^2)$的时间和内存复杂度，其中$n$是输入序列的长度。为了解决这一挑战，本文根据一个指定输入位置对之间相互关注的“注意力模式”来稀疏化完整的自注意力矩阵。与完整的自注意力不同，本文提出的注意力模式与输入序列长度呈线性扩展关系，使其能高效处理更长的序列。本节将讨论这种注意力模式的设计与实现。</p>
 <h3>3.1 注意力模式</h3>
@@ -92,7 +92,7 @@ title: 'Longformer: The Long-Document Transformer'
 <p><strong>模型架构与动机</strong>。原始的Transformer【52，Attention is all you need，2017，NIPS】包含一个encoder-decoder架构，用于序列到序列任务（如摘要和翻译）。虽然仅有encoder的Transformer在多种NLP任务上有效，但预训练的encoder-decoder Transformer模型（例如BART【29，BART: Denoising sequence-to-sequence pre-training for natural language generation, translation, and comprehension，2020，ACL】和T5【42，Exploring the limits of transfer learning with a unified text-to-text transformer，2020，J. Mach. Learn. Res.】）在摘要等任务上取得了强大的结果。然而，这类模型无法高效地扩展到输入更长的序列到序列任务。</p>
 <p><strong>LED模型设计</strong>。为了便于对长序列进行序列到序列学习的建模，我们提出了一个Longformer的变体，它同时具有encoder和decoder的Transformer堆栈，但在encoder中不使用完整的自注意力，而是使用Longformer高效的<strong>局部+全局注意力模式</strong>。decoder则对整个编码后的token和先前解码的位置使用完整的自注意力。我们称这个模型为<strong>Longformer-Encoder-Decoder (LED)</strong>，它与输入长度呈线性扩展关系。</p>
 <p><strong>初始化与实现</strong>。由于预训练LED成本高昂，我们从BART初始化LED的参数，并在层数和隐藏层大小方面遵循BART的确切架构。唯一的区别是，为了处理更长的输入，我们将位置嵌入扩展到16K个token（BART为1K个token），并通过重复复制BART的1K个位置嵌入16次来初始化新的位置嵌入矩阵，做法与第5节中对RoBERTa的操作相同。遵循BART，我们发布了两种模型尺寸：LED-base和LED-large，它们分别在encoder和decoder堆栈中有6层和12层。</p>
-<h2>A4 实验环境（总结）</h2>
+<h2>A4 实验环境</h2>
 <p><strong>数据集</strong>:<br/>
 *   <strong>自回归语言建模</strong>: text8 和 enwik8，均为包含1亿个维基百科字符的字符级语言建模数据集。<br/>
 *   <strong>问答 (QA)</strong>:<br/>
@@ -121,7 +121,7 @@ title: 'Longformer: The Long-Document Transformer'
 *   <strong>实现</strong>: 基于PyTorch，部分任务使用PyTorch-Lightning。共指消解任务为了复用代码，使用了PyTorch和Tensorflow的混合实现。<br/>
 *   <strong>依赖库</strong>: fairseq用于预训练，TVM用于实现自定义CUDA核，apex用于混合精度训练。<br/>
 *   <strong>基线模型</strong>: RoBERTa-base和RoBERTa-large。</p>
-<h2>A4 实验结果（总结）</h2>
+<h2>A4 实验结果</h2>
 <h3>自回归语言建模</h3>
 <ul>
 <li><strong>实验内容</strong>: 在text8和enwik8数据集上进行字符级语言建模，评估指标为BPC (bits-per-character)。</li>
@@ -233,7 +233,7 @@ title: 'Longformer: The Long-Document Transformer'
 </figure><br/>
 图 3: 在arXiv验证集上改变输入大小时LED的ROUGE-1和ROUGE-2分数。</li>
 </ul>
-<h2>A5 结论（总结）</h2>
+<h2>A5 结论</h2>
 <p>本文提出了Longformer，一个基于Transformer的模型，能够可扩展地处理长文档，并简化了一系列文档级NLP任务的执行，避免了对长输入进行分块/截断或使用复杂架构来组合信息的需要。Longformer采用了一种结合了局部和全局信息的注意力模式，同时其计算复杂度与序列长度呈线性关系。</p>
 <p><strong>主要成果</strong>:<br/>
 1.  在字符级语言建模任务text8和enwik8上取得了SOTA结果。<br/>
@@ -241,7 +241,7 @@ title: 'Longformer: The Long-Document Transformer'
 3.  提出了LED，一个Longformer的encoder-decoder变体，用于序列到序列任务，并在arXiv长文档摘要任务上取得了SOTA结果。</p>
 <p><strong>未来工作</strong>:<br/>
 作者计划研究其他的预训练目标（特别是针对LED），增加序列长度，并探索其他可能受益于该模型的任务。</p>
-<h2>A6 附录（缩写）</h2>
+<h2>A6 附录</h2>
 <h3>A 实现细节</h3>
 <p><strong>实现方法对比</strong>。实现Longformer的扩张滑动窗口注意力需要一种带状矩阵乘法，而这在PyTorch/Tensorflow等现有深度学习库中没有直接支持。图1比较了三种实现方式的运行时间和内存占用。<br/>
 *   <strong>Longformer-loop</strong>：这是一个朴素的实现，通过循环单独计算每个对角线。它内存效率高，因为它只计算非零值，但速度非常慢，不适合实验，仅用于测试。<br/>
