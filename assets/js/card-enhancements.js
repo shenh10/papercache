@@ -17,8 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // 简易并发限制队列，避免一次性抓取过多页面
-  const MAX_CONCURRENCY = 2; // 降低并发数
-  const MAX_CARDS_TO_PROCESS = 50; // 限制处理的卡片数量
+  const MAX_CONCURRENCY = 4; // 增加并发数
+  const MAX_CARDS_TO_PROCESS = 100; // 增加处理的卡片数量
   let running = 0;
   let processedCount = 0;
   const queue = [];
@@ -50,9 +50,20 @@ document.addEventListener('DOMContentLoaded', () => {
         io.unobserve(card);
       }
     });
-  }, { rootMargin: '100px' });
+  }, { rootMargin: '200px' });
 
   cards.forEach(card => io.observe(card));
+  
+  // 预加载前几个卡片
+  setTimeout(() => {
+    const firstCards = cards.slice(0, 6);
+    firstCards.forEach(card => {
+      if (needsEnhance(card) && processedCount < MAX_CARDS_TO_PROCESS) {
+        processedCount++;
+        schedule(() => enhanceCard(card));
+      }
+    });
+  }, 500);
 
   // 简易图片灯箱（点击缩略图放大预览）
   setupLightbox();
