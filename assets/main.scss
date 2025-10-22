@@ -558,6 +558,14 @@ details.depth-5 {
   margin-left: auto !important;
 }
 
+/* 确保现代化标签样式正确 */
+.post-card-tag-modern {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  margin-left: auto !important;
+}
+
 /* Arxiv标签特殊样式 - 绿色渐变 */
 .tag-arxiv { 
   background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;

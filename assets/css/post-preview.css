@@ -211,7 +211,7 @@
 .collection-page .fourth-level-category { margin-left: 0; }
 
 .post-list-with-tags { list-style: none; padding-left: 0; }
-.post-list-with-tags .post-item { padding: 4px 6px; }
+.post-list-with-tags .post-item { padding: 0; }
 
 /* 侧边栏层次样式 */
 .sidebar-nav .main-category { margin-top: 1rem; font-weight: 700; }
@@ -244,7 +244,7 @@
 .post-card-meta { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
 .post-card-title { font-weight: 600; line-height: 1.4; color: #1f2937; }
 
-/* 卡片右上角Tag */
+/* 卡片右上角Tag - 仅用于旧版样式 */
 .post-card-tag {
   position: absolute;
   top: 12px;
@@ -255,6 +255,28 @@
   font-weight: 600;
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 确保现代化标签样式不被覆盖 */
+.post-card-tag-modern {
+  padding: 4px 12px !important;
+  font-size: 0.75em !important;
+  font-weight: 600 !important;
+  border-radius: 12px !important;
+  color: white !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  white-space: nowrap !important;
+}
+
+/* ARXIV标签 - 绿色渐变 */
+.post-card-tag-modern.tag-arxiv {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+}
+
+/* 其他标签 - 蓝紫色渐变 */
+.post-card-tag-modern:not(.tag-arxiv) {
+  background: linear-gradient(135deg, #667eea, #764ba2) !important;
 }
 
 /* ============ 缩略图与摘要 ============ */

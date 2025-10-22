@@ -524,4 +524,68 @@ document.addEventListener('DOMContentLoaded', function() {
   visibility: visible !important;
   display: block !important;
 }
+
+/* 修复卡片网格对齐问题 */
+.post-grid-modern {
+  align-items: stretch !important;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)) !important;
+}
+
+.post-card-modern {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.post-card-link-modern {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.post-card-body-modern {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+}
+
+.post-card-excerpt-modern {
+  flex: 1 !important;
+}
+
+/* 确保标签正确定位和颜色 */
+.post-card-tag-modern {
+  padding: 4px 12px !important;
+  font-size: 0.75em !important;
+  font-weight: 600 !important;
+  border-radius: 12px !important;
+  color: white !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+  white-space: nowrap !important;
+}
+
+/* ARXIV标签 - 绿色渐变 */
+.post-card-tag-modern.tag-arxiv {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+}
+
+/* 其他标签 - 蓝紫色渐变 */
+.post-card-tag-modern:not(.tag-arxiv) {
+  background: linear-gradient(135deg, #667eea, #764ba2) !important;
+}
+
+/* 确保日期正确显示 */
+.post-meta-modern {
+  color: #6c757d !important;
+  font-size: 0.85em !important;
+  font-weight: 500 !important;
+}
+
+.post-card-thumb-modern {
+  flex-shrink: 0 !important;
+  height: 180px !important;
+}
 </style>
