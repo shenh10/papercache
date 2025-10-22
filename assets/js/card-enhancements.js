@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
           // 根据卡片类型使用不同的CSS类
           const isModern = card.classList.contains('post-card-modern');
           para.className = isModern ? 'post-card-excerpt-modern' : 'post-card-excerpt';
-          para.textContent = excerptText;
+          para.textContent = truncate(excerptText, 80);
           body.appendChild(para);
           console.log(`✅ 为卡片添加了摘要: ${truncate(excerptText, 50)}...`);
         } else {
