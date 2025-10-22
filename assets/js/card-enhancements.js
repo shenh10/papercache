@@ -1,7 +1,25 @@
 console.log('🚀 card-enhancements.js 脚本已加载');
 
-document.addEventListener('DOMContentLoaded', () => {
+// 全局摘要映射
+let excerptsMapping = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
   console.log('📄 DOM 已加载，开始处理卡片');
+  
+  // 尝试加载预生成的摘要映射
+  try {
+    const response = await fetch('/papercache/assets/data/excerpts.json');
+    if (response.ok) {
+      excerptsMapping = await response.json();
+      console.log('✅ 预生成摘要映射加载成功，包含', Object.keys(excerptsMapping).length, '个文章');
+    } else {
+      console.log('⚠️ 预生成摘要映射不存在，将使用动态生成');
+      excerptsMapping = {};
+    }
+  } catch (error) {
+    console.log('⚠️ 预生成摘要映射加载失败，将使用动态生成:', error);
+    excerptsMapping = {};
+  }
   
   const cards = Array.from(document.querySelectorAll('.post-item.post-card, .post-item.post-card-modern'))
     .filter(card => card.querySelector('.post-card-link, .post-card-link-modern'));
@@ -108,50 +126,58 @@ document.addEventListener('DOMContentLoaded', () => {
         body.parentNode.insertBefore(thumb, body);
       }
 
-      // 2) 摘要：优先 "A1 主要贡献" 段落，否则正文第一段较长文本
+      // 2) 摘要：优先使用预生成的摘要，否则动态提取
       if (!card.querySelector('.post-card-excerpt, .post-card-excerpt-modern')) {
-        const postContent = doc.querySelector('.post-content');
         let excerptText = '';
-        console.log('🔍 开始提取摘要，文章URL:', postUrl);
+        
+        // 首先尝试从预生成的摘要映射中获取
+        if (excerptsMapping && excerptsMapping[postUrl]) {
+          excerptText = excerptsMapping[postUrl];
+          console.log('✅ 使用预生成摘要:', excerptText.substring(0, 50) + '...');
+        } else {
+          // 如果没有预生成摘要，则动态提取
+          console.log('🔍 预生成摘要不存在，开始动态提取，文章URL:', postUrl);
+          const postContent = doc.querySelector('.post-content');
 
-        if (postContent) {
-          const headingNodes = Array.from(postContent.querySelectorAll('h1,h2,h3,h4,h5,h6'));
-          console.log('🔍 找到', headingNodes.length, '个标题元素');
-          
-          const a1 = headingNodes.find(h => /(A1\s*)?主要贡献/.test(h.textContent.trim()));
-          if (a1) {
-            console.log('✅ 找到A1主要贡献段落');
-            // 找到 A1 后的首个段落或列表
-            let cur = a1.nextElementSibling;
-            while (cur) {
-              if (cur.tagName === 'P') {
-                excerptText = cur.textContent.trim();
-                console.log('✅ 从A1段落提取到摘要:', excerptText.substring(0, 50) + '...');
-                break;
-              }
-              if (cur.tagName === 'UL' || cur.tagName === 'OL') {
-                const li = cur.querySelector('li');
-                if (li) {
-                  excerptText = li.textContent.trim();
-                  console.log('✅ 从A1列表提取到摘要:', excerptText.substring(0, 50) + '...');
+          if (postContent) {
+            const headingNodes = Array.from(postContent.querySelectorAll('h1,h2,h3,h4,h5,h6'));
+            console.log('🔍 找到', headingNodes.length, '个标题元素');
+            
+            const a1 = headingNodes.find(h => /(A1\s*)?主要贡献/.test(h.textContent.trim()));
+            if (a1) {
+              console.log('✅ 找到A1主要贡献段落');
+              // 找到 A1 后的首个段落或列表
+              let cur = a1.nextElementSibling;
+              while (cur) {
+                if (cur.tagName === 'P') {
+                  excerptText = cur.textContent.trim();
+                  console.log('✅ 从A1段落提取到摘要:', excerptText.substring(0, 50) + '...');
                   break;
                 }
+                if (cur.tagName === 'UL' || cur.tagName === 'OL') {
+                  const li = cur.querySelector('li');
+                  if (li) {
+                    excerptText = li.textContent.trim();
+                    console.log('✅ 从A1列表提取到摘要:', excerptText.substring(0, 50) + '...');
+                    break;
+                  }
+                }
+                // 跳过空元素
+                cur = cur.nextElementSibling;
               }
-              // 跳过空元素
-              cur = cur.nextElementSibling;
+            } else {
+              console.log('❌ 没有找到A1主要贡献段落');
             }
           } else {
-            console.log('❌ 没有找到A1主要贡献段落');
+            console.log('❌ 没有找到.post-content元素');
           }
-        } else {
-          console.log('❌ 没有找到.post-content元素');
-        }
 
-        if (!excerptText) {
-          const p = Array.from(doc.querySelectorAll('.post-content p'))
-            .map(x => x.textContent.trim())
-            .find(t => t && t.length >= 60);
-          if (p) excerptText = p.replace(/\s+/g, ' ');
+          if (!excerptText) {
+            const p = Array.from(doc.querySelectorAll('.post-content p'))
+              .map(x => x.textContent.trim())
+              .find(t => t && t.length >= 60);
+            if (p) excerptText = p.replace(/\s+/g, ' ');
+          }
         }
 
         if (excerptText) {

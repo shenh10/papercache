@@ -772,6 +772,14 @@ llm:
         - llm
         - engineering
         - attention
+      - title: 'SLA: BEYOND SPARSITY IN DIFFUSION TRANSFORMERS VIA FINE-TUNABLE SPARSE–LINEAR
+          ATTENTION'
+        date: '2025-09-01'
+        url: /papers/llm/engineering/attention/2025/09/01/sla-beyond-sparsity-in-diffusion-transformers-via-fine-tunable-sparselinear-attention.html
+        categories:
+        - llm
+        - engineering
+        - attention
       - title: 'FlashAttention-2: Faster Attention with Better Parallelism and Work
           Partitioning'
         date: '2023-07-01'
@@ -809,6 +817,14 @@ llm:
           and Attention-Sink-Free'
         date: '2025-06-01'
         url: /papers/llm/engineering/attention/2025/06/01/gated-attention-for-large-language-models-non-linearity-sparsity-and-attention-sink-free.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'SageAttention2: Efficient Attention with Thorough Outlier Smoothing
+          and Per-thread INT4 Quantization'
+        date: '2024-11-01'
+        url: /papers/llm/engineering/attention/2024/11/01/sageattention2-efficient-attention-with-thorough-outlier-smoothing-and-per-thread-int4-quantization.html
         categories:
         - llm
         - engineering
@@ -1824,6 +1840,13 @@ llm:
         - llm
         - engineering
         - rl
+      - title: Your Efficient RL Framework Secretly Brings You OffPolicy RL Training
+        date: '2025-08-01'
+        url: /papers/llm/engineering/rl/2025/08/01/your-efficient-rl-framework-secretly-brings-you-offpolicy-rl-training.html
+        categories:
+        - llm
+        - engineering
+        - rl
       - title: 'OpenRLHF: An Easy-to-use, Scalable and High-performance RLHF Framework'
         date: '2024-05-01'
         url: /papers/llm/engineering/rl/2024/05/01/openrlhf-an-easy-to-use-scalable-and-high-performance-rlhf-framework.html
@@ -1847,6 +1870,14 @@ llm:
         - engineering
         - rl
         tag: eurosys25
+      - title: Stabilizing MoE Reinforcement Learning by Aligning Training and Inference
+          Routers
+        date: '2025-10-01'
+        url: /papers/llm/engineering/rl/2025/10/01/stabilizing-moe-reinforcement-learning-by-aligning-training-and-inference-routers.html
+        categories:
+        - llm
+        - engineering
+        - rl
     moe:
       posts:
       - title: 'ST-MOE: DESIGNING STABLE AND TRANSFERABLE SPARSE EXPERT MODELS'

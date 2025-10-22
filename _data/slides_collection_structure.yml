@@ -4,28 +4,28 @@ mlsys:
     - categories:
       - mlsys
       - gpu
-      date: '2025-10-19'
+      date: '2025-10-22'
+      title: HOW TO UNDERSTAND AND OPTIMIZE SHARED MEMORY ACCESSES USING NSIGHT COMPUTE
+      url: /slides/mlsys/gpu/2025/10/22/how-to-understand-and-optimize-shared-memory-accesses-using-nsight-compute.html
+    - categories:
+      - mlsys
+      - gpu
+      date: '2025-10-22'
       title: Become Faster in Writing Performant CUDA Kernels using the Source Page
         in Nsight Compute
-      url: /slides/mlsys/gpu/2025/10/19/become-faster-in-writing-performant-cuda-kernels-using-the-source-page-in-nsight-compute.html
+      url: /slides/mlsys/gpu/2025/10/22/become-faster-in-writing-performant-cuda-kernels-using-the-source-page-in-nsight-compute.html
     - categories:
       - mlsys
       - gpu
-      date: '2025-10-19'
+      date: '2025-10-22'
       title: 'CUDA: New Features and Beyond'
-      url: /slides/mlsys/gpu/2025/10/19/cuda-new-features-and-beyond.html
+      url: /slides/mlsys/gpu/2025/10/22/cuda-new-features-and-beyond.html
     - categories:
       - mlsys
       - gpu
-      date: '2025-10-19'
-      title: HOW TO UNDERSTAND AND OPTIMIZE SHARED MEMORY ACCESSES USING NSIGHT COMPUTE
-      url: /slides/mlsys/gpu/2025/10/19/how-to-understand-and-optimize-shared-memory-accesses-using-nsight-compute.html
-    - categories:
-      - mlsys
-      - gpu
-      date: '2025-10-19'
+      date: '2025-10-22'
       title: How To Write A CUDA Program
-      url: /slides/mlsys/gpu/2025/10/19/how-to-write-a-cuda-program.html
+      url: /slides/mlsys/gpu/2025/10/22/how-to-write-a-cuda-program.html
   networking:
     posts:
     - categories:
@@ -59,6 +59,6 @@ mlsys:
     - categories:
       - mlsys
       - networking
-      date: '2025-10-19'
+      date: '2025-10-22'
       title: RDMA Aware Networks Programming User Manual
-      url: /slides/mlsys/networking/2025/10/19/rdma-aware-networks-programming-user-manual.html
+      url: /slides/mlsys/networking/2025/10/22/rdma-aware-networks-programming-user-manual.html
