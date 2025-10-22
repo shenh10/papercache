@@ -44,6 +44,11 @@ jobs:
               run: |
                   pip install beautifulsoup4 PyYAML lxml Pillow requests
 
+            - name: 📝 Generate excerpts mapping
+              run: |
+                  echo "📝 生成摘要映射..."
+                  python3 scripts/generate_excerpts.py
+
             - name: 💎 Setup Ruby
               uses: ruby/setup-ruby@v1
               with:
