@@ -1,12 +1,19 @@
+console.log('🚀 card-enhancements.js 脚本已加载');
+
 document.addEventListener('DOMContentLoaded', () => {
-  const cards = Array.from(document.querySelectorAll('.post-item.post-card'))
-    .filter(card => card.querySelector('.post-card-link'));
+  console.log('📄 DOM 已加载，开始处理卡片');
+  
+  const cards = Array.from(document.querySelectorAll('.post-item.post-card, .post-item.post-card-modern'))
+    .filter(card => card.querySelector('.post-card-link, .post-card-link-modern'));
+  
+  console.log(`🔍 找到 ${cards.length} 个文章卡片`);
 
   // 仅在需要时才抓取：无缩略图或无摘要才排队
   function needsEnhance(card) {
-    const hasThumb = !!card.querySelector('.post-card-thumb img');
-    const hasExcerpt = !!card.querySelector('.post-card-excerpt');
-    return !(hasThumb && hasExcerpt);
+    const hasThumb = !!card.querySelector('.post-card-thumb img, .post-card-thumb-modern img');
+    const hasExcerpt = !!card.querySelector('.post-card-excerpt, .post-card-excerpt-modern');
+    // 如果没有摘要，就需要增强
+    return !hasExcerpt;
   }
 
   // 简易并发限制队列，避免一次性抓取过多页面
@@ -56,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 立即标记为正在处理，避免重复处理
     card.dataset.enhanced = '1';
     
-    const linkEl = card.querySelector('.post-card-link');
+    const linkEl = card.querySelector('.post-card-link, .post-card-link-modern');
     if (!linkEl) return;
 
     const postUrl = linkEl.getAttribute('href');
@@ -69,7 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const imgSrc = findFirstFigureImage(doc);
         const body = ensureBody(card);
         const thumb = document.createElement('div');
-        thumb.className = 'post-card-thumb' + (imgSrc ? '' : ' placeholder');
+        // 根据卡片类型使用不同的CSS类
+        const isModern = card.classList.contains('post-card-modern');
+        thumb.className = (isModern ? 'post-card-thumb-modern' : 'post-card-thumb') + (imgSrc ? '' : ' placeholder');
         if (imgSrc) {
           // 检查是否是兜底图片（data URL）
           if (imgSrc.startsWith('data:')) {
@@ -89,32 +98,42 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // 2) 摘要：优先 "A1 主要贡献" 段落，否则正文第一段较长文本
-      if (!card.querySelector('.post-card-excerpt')) {
+      if (!card.querySelector('.post-card-excerpt, .post-card-excerpt-modern')) {
         const postContent = doc.querySelector('.post-content');
         let excerptText = '';
+        console.log('🔍 开始提取摘要，文章URL:', postUrl);
 
         if (postContent) {
           const headingNodes = Array.from(postContent.querySelectorAll('h1,h2,h3,h4,h5,h6'));
+          console.log('🔍 找到', headingNodes.length, '个标题元素');
+          
           const a1 = headingNodes.find(h => /A1\s*主要贡献/.test(h.textContent.trim()));
           if (a1) {
+            console.log('✅ 找到A1主要贡献段落');
             // 找到 A1 后的首个段落或列表
             let cur = a1.nextElementSibling;
             while (cur) {
               if (cur.tagName === 'P') {
                 excerptText = cur.textContent.trim();
+                console.log('✅ 从A1段落提取到摘要:', excerptText.substring(0, 50) + '...');
                 break;
               }
               if (cur.tagName === 'UL' || cur.tagName === 'OL') {
                 const li = cur.querySelector('li');
                 if (li) {
                   excerptText = li.textContent.trim();
+                  console.log('✅ 从A1列表提取到摘要:', excerptText.substring(0, 50) + '...');
                   break;
                 }
               }
               // 跳过空元素
               cur = cur.nextElementSibling;
             }
+          } else {
+            console.log('❌ 没有找到A1主要贡献段落');
           }
+        } else {
+          console.log('❌ 没有找到.post-content元素');
         }
 
         if (!excerptText) {
@@ -127,9 +146,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (excerptText) {
           const body = ensureBody(card);
           const para = document.createElement('p');
-          para.className = 'post-card-excerpt';
+          // 根据卡片类型使用不同的CSS类
+          const isModern = card.classList.contains('post-card-modern');
+          para.className = isModern ? 'post-card-excerpt-modern' : 'post-card-excerpt';
           para.textContent = truncate(excerptText, 160);
           body.appendChild(para);
+          console.log(`✅ 为卡片添加了摘要: ${truncate(excerptText, 50)}...`);
+        } else {
+          console.log('❌ 无法提取摘要文本');
         }
       }
 
@@ -147,12 +171,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function ensureBody(card) {
-    let body = card.querySelector('.post-card-body');
+    let body = card.querySelector('.post-card-body, .post-card-body-modern');
     if (!body) {
       body = document.createElement('div');
-      body.className = 'post-card-body';
-      const link = card.querySelector('.post-card-link');
-      link.appendChild(body);
+      // 根据卡片类型使用不同的CSS类
+      const isModern = card.classList.contains('post-card-modern');
+      body.className = isModern ? 'post-card-body-modern' : 'post-card-body';
+      const link = card.querySelector('.post-card-link, .post-card-link-modern');
+      if (link) {
+        link.appendChild(body);
+      }
     }
     return body;
   }

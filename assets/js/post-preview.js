@@ -95,8 +95,8 @@ class PostPreviewLoader {
 
   async handlePostHover(postItem) {
     const postUrl = postItem.dataset.postUrl;
-    const postLink = postItem.querySelector('.post-link');
-    const postTitle = postLink.dataset.postTitle;
+    const postLink = postItem.querySelector('.post-link, .post-card-link, .post-card-link-modern');
+    const postTitle = postLink ? postLink.dataset.postTitle : '';
     
     // 创建预览容器（如果不存在）
     let previewContainer = postItem.querySelector('.post-preview');
