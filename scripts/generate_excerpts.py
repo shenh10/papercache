@@ -92,8 +92,8 @@ def generate_excerpts_mapping():
         else:
             article_slug = filename
         
-        # 构建文章URL
-        article_url = f"/papercache/papers/{article_slug}.html"
+        # 构建文章URL - 使用正确的路径格式
+        article_url = f"/papers/{article_slug}.html"
         
         # 提取摘要
         excerpt = extract_excerpt_from_file(file_path)
