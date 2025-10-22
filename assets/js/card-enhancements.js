@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const headingNodes = Array.from(postContent.querySelectorAll('h1,h2,h3,h4,h5,h6'));
           console.log('🔍 找到', headingNodes.length, '个标题元素');
           
-          const a1 = headingNodes.find(h => /A1\s*主要贡献/.test(h.textContent.trim()));
+          const a1 = headingNodes.find(h => /(A1\s*)?主要贡献/.test(h.textContent.trim()));
           if (a1) {
             console.log('✅ 找到A1主要贡献段落');
             // 找到 A1 后的首个段落或列表
