@@ -26,6 +26,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   console.log(`🔍 找到 ${cards.length} 个文章卡片`);
 
+  // 统计预生成摘要使用情况
+  let pregenCount = 0;
+  let dynamicCount = 0;
+
   // 仅在需要时才抓取：无缩略图或无摘要才排队
   function needsEnhance(card) {
     const hasThumb = !!card.querySelector('.post-card-thumb img, .post-card-thumb-modern img');
@@ -71,6 +75,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }, { rootMargin: '200px' });
 
   cards.forEach(card => io.observe(card));
+  
+  // 显示统计信息
+  setTimeout(() => {
+    console.log(`📊 摘要统计: 预生成 ${pregenCount} 个, 动态生成 ${dynamicCount} 个, 总计 ${pregenCount + dynamicCount} 个`);
+  }, 2000);
   
   // 预加载前几个卡片
   setTimeout(() => {
@@ -137,13 +146,15 @@ document.addEventListener('DOMContentLoaded', async () => {
           lookupUrl = postUrl.replace('/papercache', '');
         }
 
-        // 静默处理URL匹配，只在需要时记录
+        // 静默处理URL匹配
+        
         if (!excerptsMapping || !excerptsMapping[lookupUrl]) {
           console.log('🔍 预生成摘要不存在，开始动态提取，文章URL:', postUrl);
         }
 
         if (excerptsMapping && excerptsMapping[lookupUrl]) {
           excerptText = excerptsMapping[lookupUrl];
+          pregenCount++;
           console.log('✅ 使用预生成摘要:', excerptText.substring(0, 50) + '...');
         } else {
           // 如果没有预生成摘要，则动态提取
@@ -162,6 +173,7 @@ document.addEventListener('DOMContentLoaded', async () => {
               while (cur) {
                 if (cur.tagName === 'P') {
                   excerptText = cur.textContent.trim();
+                  dynamicCount++;
                   console.log('✅ 从A1段落提取到摘要:', excerptText.substring(0, 50) + '...');
                   break;
                 }
@@ -169,6 +181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                   const li = cur.querySelector('li');
                   if (li) {
                     excerptText = li.textContent.trim();
+                    dynamicCount++;
                     console.log('✅ 从A1列表提取到摘要:', excerptText.substring(0, 50) + '...');
                     break;
                   }
