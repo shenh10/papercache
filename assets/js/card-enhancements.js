@@ -131,8 +131,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         let excerptText = '';
         
         // 首先尝试从预生成的摘要映射中获取
-        if (excerptsMapping && excerptsMapping[postUrl]) {
-          excerptText = excerptsMapping[postUrl];
+        // 处理URL格式差异：前端可能是完整路径，摘要映射是相对路径
+        let lookupUrl = postUrl;
+        if (postUrl.startsWith('/papercache/papers/')) {
+          lookupUrl = postUrl.replace('/papercache', '');
+        }
+
+        // 静默处理URL匹配，只在需要时记录
+        if (!excerptsMapping || !excerptsMapping[lookupUrl]) {
+          console.log('🔍 预生成摘要不存在，开始动态提取，文章URL:', postUrl);
+        }
+
+        if (excerptsMapping && excerptsMapping[lookupUrl]) {
+          excerptText = excerptsMapping[lookupUrl];
           console.log('✅ 使用预生成摘要:', excerptText.substring(0, 50) + '...');
         } else {
           // 如果没有预生成摘要，则动态提取

@@ -9,23 +9,61 @@ import json
 import re
 from pathlib import Path
 from bs4 import BeautifulSoup
+import yaml
 
-def extract_excerpt_from_file(file_path):
-    """从单个文章文件中提取摘要"""
+def extract_url_and_excerpt(file_path):
+    """从单个文章文件中提取URL和摘要"""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
         
         # 分离 front matter 和内容
         if not content.startswith('---'):
-            return None
+            return None, None
         
         parts = content.split('---', 2)
         if len(parts) < 3:
-            return None
+            return None, None
         
         front_matter = parts[1].strip()
         post_content = parts[2]
+        
+        # 从front matter中提取permalink，如果没有则从文件名生成
+        try:
+            fm_data = yaml.safe_load(front_matter)
+            # 使用permalink作为URL
+            if 'permalink' in fm_data:
+                article_url = fm_data['permalink']
+            else:
+                # 如果没有permalink，从文件路径生成完整URL（与thumbnails_by_path.yml格式一致）
+                # 文件路径格式: _posts/2025-08-01-artificial-hippocampus-networks-for-efficient-long-context-modeling.html
+                # 目标URL格式: /papers/llm/algorithm/architecture/attention/linear/2025/08/01/artificial-hippocampus-networks-for-efficient-long-context-modeling.html
+                
+                # 从文件路径中提取日期和文章名
+                filename = file_path.stem
+                if len(filename) > 10 and filename[4] == '-' and filename[7] == '-':
+                    date_part = filename[:10]  # YYYY-MM-DD
+                    article_name = filename[11:]  # 移除日期前缀
+                    
+                    # 从front matter中提取categories来构建完整路径
+                    try:
+                        categories = fm_data.get('categories', [])
+                        if categories:
+                            # 构建完整路径: /papers/category1/category2/.../YYYY/MM/DD/article-name.html
+                            category_path = '/'.join(categories)
+                            year, month, day = date_part.split('-')
+                            article_url = f'/papers/{category_path}/{year}/{month}/{day}/{article_name}.html'
+                        else:
+                            # 如果没有categories，使用简化路径
+                            article_url = f'/papers/{article_name}.html'
+                    except:
+                        # 如果解析失败，使用简化路径
+                        article_url = f'/papers/{article_name}.html'
+                else:
+                    # 如果文件名格式不符合预期，使用简化路径
+                    article_url = f'/papers/{filename}.html'
+        except:
+            return None, None
         
         # 解析HTML内容
         soup = BeautifulSoup(post_content, 'html.parser')
@@ -62,13 +100,13 @@ def extract_excerpt_from_file(file_path):
         if excerpt_text:
             if len(excerpt_text) > 80:
                 excerpt_text = excerpt_text[:77] + '...'
-            return excerpt_text
+            return article_url, excerpt_text
         
-        return None
+        return article_url, None
         
     except Exception as e:
         print(f"处理 {file_path} 时出错: {e}")
-        return None
+        return None, None
 
 def generate_excerpts_mapping():
     """生成所有文章的摘要映射"""
@@ -84,25 +122,17 @@ def generate_excerpts_mapping():
     success_count = 0
     
     for file_path in html_files:
-        # 从文件名提取文章URL
-        filename = file_path.stem
-        # 移除日期前缀 (YYYY-MM-DD-)
-        if len(filename) > 10 and filename[10] == '-':
-            article_slug = filename[11:]  # 移除日期前缀
-        else:
-            article_slug = filename
+        # 提取URL和摘要
+        article_url, excerpt = extract_url_and_excerpt(file_path)
         
-        # 构建文章URL - 使用正确的路径格式
-        article_url = f"/papers/{article_slug}.html"
-        
-        # 提取摘要
-        excerpt = extract_excerpt_from_file(file_path)
-        if excerpt:
+        if article_url and excerpt:
             excerpts_mapping[article_url] = excerpt
             success_count += 1
-            print(f"✅ {article_slug}: {excerpt[:50]}...")
+            article_name = file_path.stem
+            print(f"✅ {article_name}: {excerpt[:50]}...")
         else:
-            print(f"❌ {article_slug}: 无法提取摘要")
+            article_name = file_path.stem
+            print(f"❌ {article_name}: 无法提取摘要或URL")
     
     # 保存到JSON文件
     output_file = 'assets/data/excerpts.json'
