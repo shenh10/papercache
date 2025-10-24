@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 简易并发限制队列，避免一次性抓取过多页面
   const MAX_CONCURRENCY = 4; // 增加并发数
-  const MAX_CARDS_TO_PROCESS = 100; // 增加处理的卡片数量
+  // 移除处理限制，处理所有卡片
   let running = 0;
   let processedCount = 0;
   const queue = [];
@@ -108,7 +108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     entries.forEach(e => {
       if (e.isIntersecting) {
         const card = e.target;
-        if (needsEnhance(card) && processedCount < MAX_CARDS_TO_PROCESS) {
+        if (needsEnhance(card)) {
           processedCount++;
           schedule(() => enhanceCard(card));
         }
@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     batches.forEach((batch, index) => {
       setTimeout(() => {
         batch.forEach(card => {
-          if (needsEnhance(card) && processedCount < MAX_CARDS_TO_PROCESS) {
+          if (needsEnhance(card)) {
             processedCount++;
             schedule(() => enhanceCard(card));
           }

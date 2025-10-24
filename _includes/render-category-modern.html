@@ -67,9 +67,14 @@
                   {%- endif -%}
                 </div>
                 <div class="post-card-title-modern">{{ p.title | escape }}</div>
-                {%- assign exc = p.excerpt | default: p.description | default: p.summary -%}
-                {%- if exc -%}
-                <p class="post-card-excerpt-modern">{{ exc | strip_html | truncate: 160 }}</p>
+                {%- assign excerpt_data = site.data.excerpts[p.url] -%}
+                {%- if excerpt_data -%}
+                <p class="post-card-excerpt-modern">{{ excerpt_data | truncate: 160 }}</p>
+                {%- else -%}
+                  {%- assign exc = p.excerpt | default: p.description | default: p.summary -%}
+                  {%- if exc -%}
+                  <p class="post-card-excerpt-modern">{{ exc | strip_html | truncate: 160 }}</p>
+                  {%- endif -%}
                 {%- endif -%}
               </div>
             </a>
