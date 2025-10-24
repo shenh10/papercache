@@ -24,16 +24,34 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     if (thumbnailsResponse.ok) {
       const yamlText = await thumbnailsResponse.text();
-      // 简单的YAML解析（只处理键值对）
+      // 改进的YAML解析（处理复杂格式）
       thumbnailsMapping = {};
-      yamlText.split('\n').forEach(line => {
-        if (line.includes(': ')) {
+      const lines = yamlText.split('\n');
+      let currentKey = '';
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        // 处理以 ? 开头的键
+        if (line.startsWith('?')) {
+          currentKey = line.substring(1).trim();
+        }
+        // 处理以 : 开头的值
+        else if (line.startsWith(':') && currentKey) {
+          const value = line.substring(1).trim();
+          if (value) {
+            thumbnailsMapping[currentKey] = value;
+          }
+          currentKey = '';
+        }
+        // 处理普通键值对
+        else if (line.includes(': ') && !line.startsWith('?') && !line.startsWith(':')) {
           const [key, value] = line.split(': ', 2);
           if (key && value) {
             thumbnailsMapping[key.trim()] = value.trim();
           }
         }
-      });
+      }
       console.log('✅ 预生成缩略图映射加载成功，包含', Object.keys(thumbnailsMapping).length, '个缩略图');
     } else {
       console.log('⚠️ 预生成缩略图映射不存在，将使用动态生成');
@@ -175,12 +193,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     const hasPregenThumb = thumbnailsMapping && thumbnailsMapping[lookupUrl];
     const hasPregenExcerpt = excerptsMapping && excerptsMapping[lookupUrl];
     
+    // 调试缩略图匹配
+    if (hasPregenThumb) {
+      console.log('🖼️ 找到预生成缩略图:', lookupUrl, '->', thumbnailsMapping[lookupUrl]);
+    } else {
+      console.log('❌ 未找到预生成缩略图:', lookupUrl);
+    }
+    
     // 检查是否可以使用预生成内容
     let usedPregenThumb = false;
     let usedPregenExcerpt = false;
     
     // 1) 使用预生成缩略图
-    if (hasPregenThumb && !card.querySelector('.post-card-thumb, .post-card-thumb-modern')) {
+    const hasExistingThumb = !!card.querySelector('.post-card-thumb, .post-card-thumb-modern');
+    console.log('🔍 缩略图检查:', { hasPregenThumb, hasExistingThumb, willUseThumb: hasPregenThumb && !hasExistingThumb });
+    
+    if (hasPregenThumb) {
+      // 如果已存在缩略图，先移除
+      const existingThumb = card.querySelector('.post-card-thumb, .post-card-thumb-modern');
+      if (existingThumb) {
+        existingThumb.remove();
+        console.log('🗑️ 移除现有缩略图');
+      }
       const body = ensureBody(card);
       const thumb = document.createElement('div');
       const isModern = card.classList.contains('post-card-modern');
@@ -202,6 +236,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       pregenExcerptCount++;
       console.log('✅ 使用预生成摘要:', truncate(excerptsMapping[lookupUrl], 50) + '...');
       console.log('✅ 摘要元素已添加到DOM:', excerpt.outerHTML);
+      console.log('✅ 卡片内容:', card.innerHTML.substring(0, 200) + '...');
     }
     
     // 如果缩略图和摘要都有预生成版本，完全跳过fetch
