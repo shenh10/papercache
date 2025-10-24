@@ -204,17 +204,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     let usedPregenThumb = false;
     let usedPregenExcerpt = false;
     
-    // 1) 使用预生成缩略图
+    // 1) 检查缩略图状态
     const hasExistingThumb = !!card.querySelector('.post-card-thumb, .post-card-thumb-modern');
-    console.log('🔍 缩略图检查:', { hasPregenThumb, hasExistingThumb, willUseThumb: hasPregenThumb && !hasExistingThumb });
+    const hasServerRenderedThumb = hasExistingThumb && card.querySelector('.post-card-thumb img, .post-card-thumb-modern img');
     
-    if (hasPregenThumb) {
-      // 如果已存在缩略图，先移除
-      const existingThumb = card.querySelector('.post-card-thumb, .post-card-thumb-modern');
-      if (existingThumb) {
-        existingThumb.remove();
-        console.log('🗑️ 移除现有缩略图');
-      }
+    console.log('🔍 缩略图检查:', { 
+      hasPregenThumb, 
+      hasExistingThumb, 
+      hasServerRenderedThumb,
+      skipThumb: hasServerRenderedThumb 
+    });
+    
+    // 如果服务器端已经渲染了缩略图，跳过客户端处理
+    if (hasServerRenderedThumb) {
+      console.log('✅ 服务器端已渲染缩略图，跳过客户端处理');
+      usedPregenThumb = true; // 标记为已使用预生成缩略图
+      pregenThumbCount++;
+    } else if (hasPregenThumb) {
+      // 只有在没有服务器端缩略图时才客户端处理
       const body = ensureBody(card);
       const thumb = document.createElement('div');
       const isModern = card.classList.contains('post-card-modern');
@@ -223,6 +230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       body.parentNode.insertBefore(thumb, body);
       usedPregenThumb = true;
       pregenThumbCount++;
+      console.log('🖼️ 客户端添加预生成缩略图');
     }
     
     // 2) 使用预生成摘要
