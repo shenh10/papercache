@@ -1,24 +1,48 @@
 console.log('🚀 card-enhancements.js 脚本已加载');
 
-// 全局摘要映射
+// 全局摘要映射和缩略图映射
 let excerptsMapping = null;
+let thumbnailsMapping = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('📄 DOM 已加载，开始处理卡片');
   
-  // 尝试加载预生成的摘要映射
+  // 尝试加载预生成的摘要映射和缩略图映射
   try {
-    const response = await fetch('/papercache/assets/data/excerpts.json');
-    if (response.ok) {
-      excerptsMapping = await response.json();
+    const [excerptsResponse, thumbnailsResponse] = await Promise.all([
+      fetch('/papercache/assets/data/excerpts.json'),
+      fetch('/papercache/_data/thumbnails_by_path.yml')
+    ]);
+    
+    if (excerptsResponse.ok) {
+      excerptsMapping = await excerptsResponse.json();
       console.log('✅ 预生成摘要映射加载成功，包含', Object.keys(excerptsMapping).length, '个文章');
     } else {
       console.log('⚠️ 预生成摘要映射不存在，将使用动态生成');
       excerptsMapping = {};
     }
+    
+    if (thumbnailsResponse.ok) {
+      const yamlText = await thumbnailsResponse.text();
+      // 简单的YAML解析（只处理键值对）
+      thumbnailsMapping = {};
+      yamlText.split('\n').forEach(line => {
+        if (line.includes(': ')) {
+          const [key, value] = line.split(': ', 2);
+          if (key && value) {
+            thumbnailsMapping[key.trim()] = value.trim();
+          }
+        }
+      });
+      console.log('✅ 预生成缩略图映射加载成功，包含', Object.keys(thumbnailsMapping).length, '个缩略图');
+    } else {
+      console.log('⚠️ 预生成缩略图映射不存在，将使用动态生成');
+      thumbnailsMapping = {};
+    }
   } catch (error) {
-    console.log('⚠️ 预生成摘要映射加载失败，将使用动态生成');
+    console.log('⚠️ 预生成映射加载失败，将使用动态生成');
     excerptsMapping = {};
+    thumbnailsMapping = {};
   }
   
   const cards = Array.from(document.querySelectorAll('.post-item.post-card, .post-item.post-card-modern'))
@@ -105,6 +129,44 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!linkEl) return;
 
     const postUrl = linkEl.getAttribute('href');
+    
+    // 检查是否可以使用预生成的缩略图和摘要
+    let lookupUrl = postUrl;
+    if (postUrl.startsWith('/papercache/papers/')) {
+      lookupUrl = postUrl.replace('/papercache', '');
+    }
+    
+    const hasPregenThumb = thumbnailsMapping && thumbnailsMapping[lookupUrl];
+    const hasPregenExcerpt = excerptsMapping && excerptsMapping[lookupUrl];
+    
+    // 如果缩略图和摘要都有预生成版本，直接使用，无需fetch
+    if (hasPregenThumb && hasPregenExcerpt) {
+      console.log('🚀 使用预生成缩略图和摘要，跳过fetch');
+      
+      // 1) 使用预生成缩略图
+      if (!card.querySelector('.post-card-thumb, .post-card-thumb-modern')) {
+        const body = ensureBody(card);
+        const thumb = document.createElement('div');
+        const isModern = card.classList.contains('post-card-modern');
+        thumb.className = (isModern ? 'post-card-thumb-modern' : 'post-card-thumb');
+        thumb.innerHTML = `<img loading="lazy" src="${thumbnailsMapping[lookupUrl]}" alt="thumbnail" style="width: 100%; height: 160px; object-fit: cover;">`;
+        body.parentNode.insertBefore(thumb, body);
+      }
+      
+      // 2) 使用预生成摘要
+      if (!card.querySelector('.post-card-excerpt, .post-card-excerpt-modern')) {
+        const body = ensureBody(card);
+        const excerpt = document.createElement('p');
+        excerpt.className = (card.classList.contains('post-card-modern') ? 'post-card-excerpt-modern' : 'post-card-excerpt');
+        excerpt.textContent = excerptsMapping[lookupUrl];
+        body.parentNode.insertBefore(excerpt, body);
+        console.log('✅ 使用预生成摘要:', excerptsMapping[lookupUrl].substring(0, 50) + '...');
+      }
+      
+      return; // 提前返回，避免fetch
+    }
+    
+    // 否则，回退到原来的fetch方式
     try {
       const html = await fetch(postUrl, { credentials: 'same-origin' }).then(r => r.text());
       const doc = new DOMParser().parseFromString(html, 'text/html');
