@@ -196,11 +196,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       const body = ensureBody(card);
       const excerpt = document.createElement('p');
       excerpt.className = (card.classList.contains('post-card-modern') ? 'post-card-excerpt-modern' : 'post-card-excerpt');
-      excerpt.textContent = excerptsMapping[lookupUrl];
+      excerpt.textContent = truncate(excerptsMapping[lookupUrl], 80);
       body.appendChild(excerpt);
       usedPregenExcerpt = true;
       pregenExcerptCount++;
-      console.log('✅ 使用预生成摘要:', excerptsMapping[lookupUrl].substring(0, 50) + '...');
+      console.log('✅ 使用预生成摘要:', truncate(excerptsMapping[lookupUrl], 50) + '...');
+      console.log('✅ 摘要元素已添加到DOM:', excerpt.outerHTML);
     }
     
     // 如果缩略图和摘要都有预生成版本，完全跳过fetch
