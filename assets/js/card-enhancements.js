@@ -99,23 +99,58 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }, { rootMargin: '200px' });
 
-  cards.forEach(card => io.observe(card));
-  
-  // 显示统计信息
-  setTimeout(() => {
-    console.log(`📊 内容统计: 预生成摘要 ${pregenExcerptCount} 个, 预生成缩略图 ${pregenThumbCount} 个, 动态生成 ${dynamicCount} 个`);
-  }, 2000);
-  
-  // 预加载前几个卡片
-  setTimeout(() => {
-    const firstCards = cards.slice(0, 6);
-    firstCards.forEach(card => {
+  // 立即处理有预生成内容的卡片
+  cards.forEach(card => {
+    const linkEl = card.querySelector('.post-card-link, .post-card-link-modern');
+    if (!linkEl) return;
+    
+    const postUrl = linkEl.getAttribute('href');
+    let lookupUrl = postUrl;
+    if (postUrl.startsWith('/papercache/papers/')) {
+      lookupUrl = postUrl.replace('/papercache', '');
+    }
+    
+    const hasPregenThumb = thumbnailsMapping && thumbnailsMapping[lookupUrl];
+    const hasPregenExcerpt = excerptsMapping && excerptsMapping[lookupUrl];
+    
+    // 如果有预生成内容，立即处理
+    if (hasPregenThumb || hasPregenExcerpt) {
       if (needsEnhance(card) && processedCount < MAX_CARDS_TO_PROCESS) {
         processedCount++;
         schedule(() => enhanceCard(card));
       }
+    } else {
+      // 没有预生成内容的卡片，使用IntersectionObserver延迟处理
+      io.observe(card);
+    }
+  });
+  
+  // 批量预加载更多卡片（分批处理，避免阻塞）
+  setTimeout(() => {
+    const remainingCards = cards.filter(card => !card.dataset.enhanced);
+    const batchSize = 10;
+    const batches = [];
+    
+    for (let i = 0; i < remainingCards.length; i += batchSize) {
+      batches.push(remainingCards.slice(i, i + batchSize));
+    }
+    
+    batches.forEach((batch, index) => {
+      setTimeout(() => {
+        batch.forEach(card => {
+          if (needsEnhance(card) && processedCount < MAX_CARDS_TO_PROCESS) {
+            processedCount++;
+            schedule(() => enhanceCard(card));
+          }
+        });
+      }, index * 100); // 每批间隔100ms
     });
-  }, 500);
+  }, 1000);
+  
+  // 显示统计信息
+  setTimeout(() => {
+    console.log(`📊 内容统计: 预生成摘要 ${pregenExcerptCount} 个, 预生成缩略图 ${pregenThumbCount} 个, 动态生成 ${dynamicCount} 个`);
+  }, 3000);
 
   // 简易图片灯箱（点击缩略图放大预览）
   setupLightbox();
