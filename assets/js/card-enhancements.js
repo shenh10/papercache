@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const excerpt = document.createElement('p');
       excerpt.className = (card.classList.contains('post-card-modern') ? 'post-card-excerpt-modern' : 'post-card-excerpt');
       excerpt.textContent = excerptsMapping[lookupUrl];
-      body.parentNode.insertBefore(excerpt, body);
+      body.appendChild(excerpt);
       usedPregenExcerpt = true;
       pregenExcerptCount++;
       console.log('✅ 使用预生成摘要:', excerptsMapping[lookupUrl].substring(0, 50) + '...');
