@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const [excerptsResponse, thumbnailsResponse] = await Promise.all([
       fetch('/papercache/assets/data/excerpts.json'),
-      fetch('/papercache/_data/thumbnails_by_path.yml')
+      fetch('/papercache/assets/data/thumbnails_by_path.yml')
     ]);
     
     if (excerptsResponse.ok) {
