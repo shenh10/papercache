@@ -10,8 +10,15 @@
       </div>
     </a>
     
+    <!-- 移动端汉堡菜单按钮 -->
+    <button class="mobile-menu-toggle" aria-label="Toggle navigation menu">
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+      <span class="hamburger-line"></span>
+    </button>
+    
     <!-- 导航菜单 -->
-    <nav>
+    <nav class="main-nav">
       <ul class="nav-menu">
         {% for page_path in site.header_pages %}
           {% assign page_obj = site.pages | where: "path", page_path | first %}
@@ -31,3 +38,35 @@
 
 <!-- 样式文件 -->
 <link rel="stylesheet" href="{{ '/assets/css/modern-header.css' | relative_url }}">
+
+<!-- 移动端菜单交互脚本 -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+  const mainNav = document.querySelector('.main-nav');
+  
+  if (mobileMenuToggle && mainNav) {
+    mobileMenuToggle.addEventListener('click', function() {
+      mobileMenuToggle.classList.toggle('active');
+      mainNav.classList.toggle('active');
+    });
+    
+    // 点击导航链接后关闭菜单
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+      link.addEventListener('click', function() {
+        mobileMenuToggle.classList.remove('active');
+        mainNav.classList.remove('active');
+      });
+    });
+    
+    // 点击页面其他区域关闭菜单
+    document.addEventListener('click', function(e) {
+      if (!mobileMenuToggle.contains(e.target) && !mainNav.contains(e.target)) {
+        mobileMenuToggle.classList.remove('active');
+        mainNav.classList.remove('active');
+      }
+    });
+  }
+});
+</script>

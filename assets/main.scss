@@ -1,13 +1,11 @@
 ---
 ---
 
-@import "minima";
-
 /* Widescreen Layout - 响应式最大宽度 */
 .wrapper {
   max-width: 100% !important;
-  padding-right: max(20px, 2vw) !important;
-  padding-left: max(20px, 2vw) !important;
+  padding-right: 20px !important;
+  padding-left: 20px !important;
   margin: 0 auto !important;
 }
 
@@ -15,16 +13,16 @@
 @media screen and (max-width: 800px) {
   .wrapper {
     max-width: 100% !important;
-    padding-right: max(20px, 2vw) !important;
-    padding-left: max(20px, 2vw) !important;
+    padding-right: 20px !important;
+    padding-left: 20px !important;
   }
 }
 
 @media screen and (max-width: 600px) {
   .wrapper {
     max-width: 100% !important;
-    padding-right: max(20px, 2vw) !important;
-    padding-left: max(20px, 2vw) !important;
+    padding-right: 20px !important;
+    padding-left: 20px !important;
   }
 }
 
@@ -116,7 +114,7 @@
   align-items: flex-start;
   max-width: 100%;
   margin: 0 auto;
-  padding: 0 max(20px, 2vw);
+  padding: 0 20px;
 }
 
 .sidebar {
