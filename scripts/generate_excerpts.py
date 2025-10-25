@@ -135,7 +135,7 @@ def generate_excerpts_mapping():
             print(f"❌ {article_name}: 无法提取摘要或URL")
     
     # 保存到JSON文件
-    output_file = 'assets/data/excerpts.json'
+    output_file = '_data/excerpts.json'
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     
     with open(output_file, 'w', encoding='utf-8') as f:

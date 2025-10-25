@@ -53,6 +53,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
       console.log('✅ 预生成缩略图映射加载成功，包含', Object.keys(thumbnailsMapping).length, '个缩略图');
+      // 调试：显示前几个映射条目
+      const sampleKeys = Object.keys(thumbnailsMapping).slice(0, 3);
+      console.log('🔍 缩略图映射示例:', sampleKeys.map(key => `${key} -> ${thumbnailsMapping[key]}`));
     } else {
       console.log('⚠️ 预生成缩略图映射不存在，将使用动态生成');
       thumbnailsMapping = {};
@@ -83,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 简易并发限制队列，避免一次性抓取过多页面
   const MAX_CONCURRENCY = 4; // 增加并发数
-  // 移除处理限制，处理所有卡片
+  const MAX_CARDS_TO_PROCESS = 100; // 限制处理的卡片数量，避免性能问题
   let running = 0;
   let processedCount = 0;
   const queue = [];
@@ -198,6 +201,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.log('🖼️ 找到预生成缩略图:', lookupUrl, '->', thumbnailsMapping[lookupUrl]);
     } else {
       console.log('❌ 未找到预生成缩略图:', lookupUrl);
+      // 调试：显示所有可用的键，帮助诊断匹配问题
+      const availableKeys = Object.keys(thumbnailsMapping || {});
+      console.log('🔍 可用的缩略图键数量:', availableKeys.length);
+      if (availableKeys.length > 0) {
+        console.log('🔍 前3个可用键:', availableKeys.slice(0, 3));
+        // 检查是否有相似的键
+        const similarKeys = availableKeys.filter(key => key.includes(lookupUrl.split('/').pop()));
+        if (similarKeys.length > 0) {
+          console.log('🔍 找到相似键:', similarKeys.slice(0, 3));
+        }
+      }
     }
     
     // 检查是否可以使用预生成内容

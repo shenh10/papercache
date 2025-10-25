@@ -16,12 +16,28 @@ fi
 # 创建必要的目录
 echo "📁 创建必要的目录..."
 mkdir -p assets/images/thumbs
+mkdir -p assets/data
 mkdir -p _data
 
-# 生成缩略图
+# 检查 Jekyll 是否已安装
+echo "🔍 检查 Jekyll 环境..."
+if ! command -v bundle &> /dev/null; then
+    echo "❌ 错误：未找到 bundle 命令，请先安装 Ruby 和 Bundler"
+    exit 1
+fi
+
+# 安装依赖
+echo "📦 安装 Jekyll 依赖..."
+bundle install
+
+# 先构建 Jekyll 站点（生成 _site 目录）
+echo "🏗️ 构建 Jekyll 站点..."
+bundle exec jekyll build
+
+# 生成缩略图（需要 _site 目录存在）
 echo "🖼️ 生成缩略图..."
 if [ -f "scripts/gen_thumbs.py" ]; then
-    python3 scripts/gen_thumbs.py --size 320x200 --out assets/images/thumbs
+    python3 scripts/gen_thumbs.py --size 320x200 --thumbnails-out assets/data --mapping-out _data
     echo "✅ 缩略图生成完成"
 else
     echo "❌ 错误：找不到 scripts/gen_thumbs.py"
@@ -38,22 +54,13 @@ if [ -f "scripts/generate_excerpts.py" ]; then
     fi
     
     python3 scripts/generate_excerpts.py
+    # 复制摘要映射文件到assets/data/供客户端使用
+    cp _data/excerpts.json assets/data/excerpts.json
     echo "✅ 摘要映射生成完成"
 else
     echo "❌ 错误：找不到 scripts/generate_excerpts.py"
     exit 1
 fi
-
-# 检查 Jekyll 是否已安装
-echo "🔍 检查 Jekyll 环境..."
-if ! command -v bundle &> /dev/null; then
-    echo "❌ 错误：未找到 bundle 命令，请先安装 Ruby 和 Bundler"
-    exit 1
-fi
-
-# 安装依赖
-echo "📦 安装 Jekyll 依赖..."
-bundle install
 
 # 启动 Jekyll 开发服务器
 echo "🌐 启动 Jekyll 开发服务器..."

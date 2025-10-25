@@ -549,6 +549,8 @@ def main():
     ap.add_argument("--root", default=".", help="project root (will try auto-detect site dir under it)")
     ap.add_argument("--site", default=None, help="explicit site directory (contains _site/_data)")
     ap.add_argument("--out", default="assets/images/thumbs", help="output directory (relative to site dir)")
+    ap.add_argument("--thumbnails-out", default="assets/data", help="thumbnails output directory (relative to site dir)")
+    ap.add_argument("--mapping-out", default="_data", help="mapping file output directory (relative to site dir)")
     ap.add_argument("--size", type=parse_size, default="320x200", help="e.g., 320x200")
     ap.add_argument("--placeholder", action="store_true", help="Generate placeholder thumbnails for posts without images")
     args = ap.parse_args()
@@ -559,8 +561,10 @@ def main():
     else:
         site_dir = auto_detect_site_dir(project_root)
 
-    out_dir = site_dir / args.out
-    mapping_path = site_dir / "_data" / "thumbnails_by_path.yml"
+    # 缩略图文件输出目录（供客户端访问）
+    out_dir = site_dir / args.thumbnails_out
+    # 映射文件输出目录（供服务器端访问）
+    mapping_path = site_dir / args.mapping_out / "thumbnails_by_path.yml"
     built_site = site_dir / "_site"
     
     # Check if _site exists (required for thumbnail generation)
@@ -605,7 +609,7 @@ def main():
             
             # Check if thumbnail already exists
             thumb_filename = generate_deterministic_filename(p_url)
-            dest_rel = f"/{args.out.strip('/')}/{thumb_filename}"
+            dest_rel = f"/{args.thumbnails_out.strip('/')}/{thumb_filename}"
             dest_abs = out_dir / thumb_filename
             
             if p_url in existing_mapping and dest_abs.exists():
@@ -684,7 +688,7 @@ def main():
                 
                 # Generate placeholder
                 thumb_filename = generate_deterministic_filename(p_url)
-                dest_rel = f"/{args.out.strip('/')}/{thumb_filename}"
+                dest_rel = f"/{args.thumbnails_out.strip('/')}/{thumb_filename}"
                 dest_abs = out_dir / thumb_filename
                 
                 # Ensure output directory exists
