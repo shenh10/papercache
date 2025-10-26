@@ -375,6 +375,13 @@
     grid-template-columns: 1fr;
     gap: 20px;
     margin-top: 15px;
+    padding: 0 10px;
+  }
+  
+  .post-card-modern {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
   }
 }
 
@@ -383,6 +390,13 @@
     grid-template-columns: 1fr;
     gap: 15px;
     margin-top: 10px;
+    padding: 0 5px;
+  }
+  
+  .post-card-modern {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
   }
 }
 
@@ -444,12 +458,22 @@
 @media (max-width: 768px) {
   .post-card-thumb-modern {
     height: 160px;
+    width: 100%;
+  }
+  
+  .post-card-body-modern {
+    padding: 15px;
   }
 }
 
 @media (max-width: 480px) {
   .post-card-thumb-modern {
     height: 140px;
+    width: 100%;
+  }
+  
+  .post-card-body-modern {
+    padding: 12px;
   }
 }
 
@@ -523,6 +547,9 @@
   .post-card-title-modern {
     font-size: 1.05em;
     line-height: 1.3;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
   }
 }
 
@@ -530,6 +557,9 @@
   .post-card-title-modern {
     font-size: 1em;
     line-height: 1.25;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
   }
 }
 
@@ -550,6 +580,9 @@
   .post-card-excerpt-modern {
     font-size: 0.85em;
     line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
   }
 }
 
@@ -557,6 +590,9 @@
   .post-card-excerpt-modern {
     font-size: 0.8em;
     line-height: 1.3;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
   }
 }
 
@@ -625,15 +661,20 @@
   .post-grid-modern {
     grid-template-columns: 1fr;
     gap: 20px;
+    padding: 0 10px;
   }
   
   .tag-buttons-modern {
     gap: 8px;
+    flex-wrap: wrap;
   }
   
   .tag-btn-modern {
     padding: 8px 16px;
     font-size: 0.85em;
+    flex: 1;
+    min-width: 0;
+    text-align: center;
   }
   
   .post-card-tag-modern {
@@ -657,6 +698,13 @@
   
   .main-category-content-modern {
     padding: 20px;
+  }
+  
+  /* 确保移动端内容区域占满宽度 */
+  .collection-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
   }
 }
 
@@ -695,6 +743,23 @@
   
   .main-category-summary-modern {
     padding: 15px;
+  }
+  
+  .post-grid-modern {
+    padding: 0 5px;
+    gap: 15px;
+  }
+  
+  .tag-btn-modern {
+    padding: 6px 12px;
+    font-size: 0.8em;
+  }
+  
+  /* 确保移动端内容区域占满宽度 */
+  .collection-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
   }
   
   .main-category-content-modern {

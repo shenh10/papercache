@@ -139,9 +139,15 @@
   .collection-wrapper {
     flex-direction: column;
     gap: 0;
+    padding: 0 10px;
   }
   .sidebar {
-    display: none;
+    display: none !important;
+  }
+  .collection-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
   }
 }
 
