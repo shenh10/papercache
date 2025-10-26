@@ -19,19 +19,50 @@
       {%- assign current_node_id = include.path_id | append: '-' | append: key | slugify -%}
     {%- endif -%}
 
+    {%- comment -%} 计算当前分类下的论文数量 {%- endcomment -%}
+    {%- assign category_posts = 0 -%}
+    {%- if val.posts -%}
+      {%- assign category_posts = val.posts.size -%}
+    {%- endif -%}
+    
+    {%- comment -%} 递归计算子分类的论文数量 {%- endcomment -%}
+    {%- for subpair in val -%}
+      {%- assign subkey = subpair[0] -%}
+      {%- assign subval = subpair[1] -%}
+      {%- if subkey != 'posts' and subval.posts -%}
+        {%- assign category_posts = category_posts | plus: subval.posts.size -%}
+        {%- comment -%} 递归计算更深层级的论文数量 {%- endcomment -%}
+        {%- for deeper_pair in subval -%}
+          {%- assign deeper_key = deeper_pair[0] -%}
+          {%- assign deeper_val = deeper_pair[1] -%}
+          {%- if deeper_key != 'posts' and deeper_val.posts -%}
+            {%- assign category_posts = category_posts | plus: deeper_val.posts.size -%}
+            {%- comment -%} 继续递归计算更深层级 {%- endcomment -%}
+            {%- for even_deeper_pair in deeper_val -%}
+              {%- assign even_deeper_key = even_deeper_pair[0] -%}
+              {%- assign even_deeper_val = even_deeper_pair[1] -%}
+              {%- if even_deeper_key != 'posts' and even_deeper_val.posts -%}
+                {%- assign category_posts = category_posts | plus: even_deeper_val.posts.size -%}
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endif -%}
+        {%- endfor -%}
+      {%- endif -%}
+    {%- endfor -%}
+
     {%- comment -%} 根据层级创建对应的div元素 - 直接使用include.depth {%- endcomment -%}
     {%- if include.depth == 1 -%}
       <div class="category-section">
-        <h3 class="main-category"><a href="#{{ current_node_id }}">{{ key | upcase }}</a></h3>
+        <h3 class="main-category"><a href="#{{ current_node_id }}">{{ key | upcase }} <span class="category-count">({{ category_posts }})</span></a></h3>
     {%- elsif include.depth == 2 -%}
       <div class="sub-category">
-        <h4 class="sub-category-title"><a href="#{{ current_node_id }}">{{ key | capitalize }}</a></h4>
+        <h4 class="sub-category-title"><a href="#{{ current_node_id }}">{{ key | capitalize }} <span class="category-count">({{ category_posts }})</span></a></h4>
     {%- elsif include.depth == 3 -%}
       <div class="sub-sub-category">
-        <div class="sub-sub-category-title"><a href="#{{ current_node_id }}">{{ key | replace: '_', ' ' | capitalize }}</a></div>
+        <div class="sub-sub-category-title"><a href="#{{ current_node_id }}">{{ key | replace: '_', ' ' | capitalize }} <span class="category-count">({{ category_posts }})</span></a></div>
     {%- else -%}
       <div class="fourth-level-category">
-        <a href="#{{ current_node_id }}">{{ key | replace: '_', ' ' | capitalize }}</a>
+        <a href="#{{ current_node_id }}">{{ key | replace: '_', ' ' | capitalize }} <span class="category-count">({{ category_posts }})</span></a>
     {%- endif -%}
 
     {%- comment -%} 检查是否有子分类节点（除了posts），如果有则递归渲染 {%- endcomment -%}

@@ -123,7 +123,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (content) {
         previewContent.innerHTML = `
           <div style="margin-bottom: 15px;">
-            <h3 style="margin: 0 0 10px 0; color: #2d3748; font-size: 16px; font-weight: 600; line-height: 1.4;">${postTitle}</h3>
             <div style="color: #4a5568; font-size: 14px; line-height: 1.6;">${content}</div>
           </div>
           <div style="text-align: center; margin-top: 15px;">

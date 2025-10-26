@@ -19,6 +19,9 @@ _slides/
 
 # Others
 .DS_Store
+Gemfile.lock
 
 assets/data/
 _data/
+vendor/
+.bundle/

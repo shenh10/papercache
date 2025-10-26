@@ -31,8 +31,18 @@
     {%- comment -%} 如果当前节点有posts，显示面包屑和卡片 {%- endcomment -%}
     {%- if val.posts -%}
       <div class="post-section">
-        <div class="breadcrumb-modern">{{ this_breadcrumb }}</div>
-        <ul class="post-list-with-tags post-grid-modern">
+        <div class="breadcrumb-modern">
+          <div class="breadcrumb-content">
+            <span class="breadcrumb-text">{{ this_breadcrumb }}</span>
+            <span class="breadcrumb-count">({{ val.posts.size }})</span>
+          </div>
+          <button class="breadcrumb-toggle" data-target="{{ current_node_id }}-posts">
+            <span class="toggle-icon">▼</span>
+          </button>
+        </div>
+        
+        <!-- 桌面端卡片网格 -->
+        <ul class="post-list-with-tags post-grid-modern" id="{{ current_node_id }}-posts">
           {%- assign sorted = val.posts | sort: 'date' -%}
           {%- for p in sorted reversed -%}
           <li class="post-item post-card-modern" data-post-url="{{ site.baseurl }}{{ p.url }}">
@@ -77,6 +87,26 @@
                   {%- endif -%}
                 {%- endif -%}
               </div>
+            </a>
+          </li>
+          {%- endfor -%}
+        </ul>
+        
+        <!-- 移动端列表 -->
+        <ul class="post-list-mobile" id="{{ current_node_id }}-mobile-posts">
+          {%- assign sorted = val.posts | sort: 'date' -%}
+          {%- for p in sorted reversed -%}
+          <li class="mobile-post-item" data-post-url="{{ site.baseurl }}{{ p.url }}">
+            <a class="mobile-post-link" href="{{ site.baseurl }}{{ p.url }}" data-post-title="{{ p.title | escape }}">
+              <div class="mobile-post-meta">
+                <span class="mobile-post-date">{{ p.date | date: "%Y-%m" }}</span>
+                {%- if p.tag -%}
+                <span class="mobile-post-tag subcategory-tag tag-{{ p.tag | downcase | replace: ' ', '_' | replace: '-', '_' }}">{{ p.tag }}</span>
+                {%- else -%}
+                <span class="mobile-post-tag subcategory-tag tag-arxiv">Arxiv</span>
+                {%- endif -%}
+              </div>
+              <div class="mobile-post-title">{{ p.title | escape }}</div>
             </a>
           </li>
           {%- endfor -%}
