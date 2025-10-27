@@ -38,6 +38,8 @@ bundle exec jekyll build
 echo "🖼️ 生成缩略图..."
 if [ -f "scripts/gen_thumbs.py" ]; then
     python3 scripts/gen_thumbs.py --size 320x200 --thumbnails-out assets/data --mapping-out _data
+    # 复制缩略图映射文件到assets/data/供客户端使用
+    cp _data/thumbnails_by_path.yml assets/data/thumbnails_by_path.yml
     echo "✅ 缩略图生成完成"
 else
     echo "❌ 错误：找不到 scripts/gen_thumbs.py"

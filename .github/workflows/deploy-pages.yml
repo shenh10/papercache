@@ -48,6 +48,9 @@ jobs:
               run: |
                   echo "📝 生成摘要映射..."
                   python3 scripts/generate_excerpts.py
+                  # 复制摘要映射文件到assets/data/供客户端使用
+                  cp _data/excerpts.json assets/data/excerpts.json
+                  echo "✅ 摘要映射生成完成"
 
             - name: 💎 Setup Ruby
               uses: ruby/setup-ruby@v1
@@ -69,13 +72,15 @@ jobs:
               run: |
                   echo "开始生成缩略图..."
                   python3 scripts/gen_thumbs.py
+                  # 复制缩略图映射文件到assets/data/供客户端使用
+                  cp _data/thumbnails_by_path.yml assets/data/thumbnails_by_path.yml
                   echo "缩略图生成完成！"
 
             - name: 📊 Check thumbnails
               run: |
                   echo "检查生成的缩略图..."
                   echo "thumbnails_by_path.yml 行数: $(wc -l < _data/thumbnails_by_path.yml)"
-                  echo "缩略图文件数量: $(ls -1 assets/images/thumbs/ | wc -l)"
+                  echo "缩略图文件数量: $(ls -1 assets/data/ | wc -l)"
                   echo "=== 缩略图 mapping 前10行预览 ==="
                   head -n 10 _data/thumbnails_by_path.yml
 
