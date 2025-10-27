@@ -1,0 +1,64 @@
+mlsys:
+  gpu:
+    posts:
+    - categories:
+      - mlsys
+      - gpu
+      date: '2025-10-25'
+      title: Become Faster in Writing Performant CUDA Kernels using the Source Page
+        in Nsight Compute
+      url: /slides/mlsys/gpu/2025/10/25/become-faster-in-writing-performant-cuda-kernels-using-the-source-page-in-nsight-compute.html
+    - categories:
+      - mlsys
+      - gpu
+      date: '2025-10-25'
+      title: How To Write A CUDA Program
+      url: /slides/mlsys/gpu/2025/10/25/how-to-write-a-cuda-program.html
+    - categories:
+      - mlsys
+      - gpu
+      date: '2025-10-25'
+      title: HOW TO UNDERSTAND AND OPTIMIZE SHARED MEMORY ACCESSES USING NSIGHT COMPUTE
+      url: /slides/mlsys/gpu/2025/10/25/how-to-understand-and-optimize-shared-memory-accesses-using-nsight-compute.html
+    - categories:
+      - mlsys
+      - gpu
+      date: '2025-10-25'
+      title: 'CUDA: New Features and Beyond'
+      url: /slides/mlsys/gpu/2025/10/25/cuda-new-features-and-beyond.html
+  networking:
+    posts:
+    - categories:
+      - mlsys
+      - networking
+      date: '2025-10-25'
+      title: RDMA Aware Networks Programming User Manual
+      url: /slides/mlsys/networking/2025/10/25/rdma-aware-networks-programming-user-manual.html
+    - categories:
+      - mlsys
+      - networking
+      date: '2020-06-01'
+      title: RDMA WITH GPU MEMORY VIA DMA-BUF
+      url: /slides/mlsys/networking/2020/06/01/rdma-with-gpu-memory-via-dma-buf.html
+    - categories:
+      - mlsys
+      - networking
+      date: '2020-07-01'
+      tag: atc20
+      title: Reexamining Direct Cache Access to Optimize I/O Intensive Applications
+        for Multi-hundred-gigabit Networks
+      url: /slides/mlsys/networking/2020/07/01/reexamining-direct-cache-access-to-optimize-io-intensive-applications-for-multi-hundred-gigabit-networks.html
+    - categories:
+      - mlsys
+      - networking
+      date: '2018-01-01'
+      title: RDMA Tutorial
+      url: /slides/mlsys/networking/2018/01/01/rdma-tutorial.html
+    - categories:
+      - mlsys
+      - networking
+      date: '2023-03-01'
+      tag: gtc23
+      title: How to Streamline Shared Memory Space With the NVSHMEM Communication
+        Library
+      url: /slides/mlsys/networking/2023/03/01/how-to-streamline-shared-memory-space-with-the-nvshmem-communication-library.html
