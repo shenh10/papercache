@@ -14,6 +14,33 @@
   opacity: 1;
 }
 
+/* 0.1 立即移除列表样式，防止闪现 */
+.post-list-with-tags,
+.post-list-with-tags ul {
+  list-style: none !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+.post-item {
+  list-style: none !important;
+}
+
+/* 0.2 移除移动端列表样式 */
+.post-list-mobile {
+  list-style: none !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+.mobile-post-item {
+  list-style: none !important;
+}
+
+.mobile-post-item::marker {
+  display: none !important;
+}
+
 /* 1. 页面头部区域 - 英雄式设计 */
 .collection-hero {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);

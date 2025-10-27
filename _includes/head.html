@@ -17,6 +17,7 @@
   
   <!-- SEO tags removed for compatibility -->
     <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}?v=1761019000">
+    <link rel="stylesheet" href="{{ "/assets/css/modern-collection.css" | relative_url }}?v=1761019000">
   <!-- Feed meta removed for compatibility -->
   
   <!-- 防止FOUC的基础样式 -->
@@ -41,6 +42,33 @@
     .modern-tag-filter,
     .modern-navigation {
       visibility: visible;
+    }
+    
+    /* 立即移除列表样式，防止闪现无CSS美化的列表 */
+    .post-list-with-tags,
+    .post-list-with-tags ul {
+      list-style: none !important;
+      padding-left: 0 !important;
+      margin-left: 0 !important;
+    }
+    
+    .post-item {
+      list-style: none !important;
+    }
+    
+    /* 立即移除移动端列表样式 */
+    .post-list-mobile {
+      list-style: none !important;
+      padding-left: 0 !important;
+      margin-left: 0 !important;
+    }
+    
+    .mobile-post-item {
+      list-style: none !important;
+    }
+    
+    .mobile-post-item::marker {
+      display: none !important;
     }
   </style>
   {%- if jekyll.environment == 'production' and site.google_analytics -%}

@@ -1462,6 +1462,16 @@ document.addEventListener('click', function(e) {
     font-size: 0.7em;
     padding: 1px 4px;
   }
+  
+  /* 移除移动端论文列表的圆点 */
+  .post-list-with-tags {
+    list-style: none;
+    padding-left: 0;
+  }
+  
+  .post-item {
+    list-style: none;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1474,5 +1484,38 @@ document.addEventListener('click', function(e) {
     font-size: 0.6em;
     padding: 1px 3px;
   }
+  
+  /* 确保小屏幕设备也移除圆点 */
+  .post-list-with-tags {
+    list-style: none;
+    padding-left: 0;
+  }
+  
+  .post-item {
+    list-style: none;
+  }
+}
+
+/* 防止内容闪烁 - 优化加载体验 */
+.post-card-modern {
+  transition: opacity 0.2s ease-in;
+}
+
+/* 为动态加载的缩略图和摘要添加平滑过渡 */
+.post-card-thumb-modern img,
+.post-card-excerpt-modern {
+  transition: opacity 0.3s ease-in;
+}
+
+/* 全局移除列表样式 - 防止闪现无CSS美化的列表 */
+.post-list-with-tags,
+.post-list-with-tags ul {
+  list-style: none !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+
+.post-item {
+  list-style: none !important;
 }
 </style>

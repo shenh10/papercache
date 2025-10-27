@@ -42,10 +42,10 @@
         </div>
         
         <!-- 桌面端卡片网格 -->
-        <ul class="post-list-with-tags post-grid-modern" id="{{ current_node_id }}-posts">
+        <ul class="post-list-with-tags post-grid-modern" id="{{ current_node_id }}-posts" style="list-style: none !important; padding-left: 0 !important; margin-left: 0 !important;">
           {%- assign sorted = val.posts | sort: 'date' -%}
           {%- for p in sorted reversed -%}
-          <li class="post-item post-card-modern" data-post-url="{{ site.baseurl }}{{ p.url }}">
+          <li class="post-item post-card-modern" data-post-url="{{ site.baseurl }}{{ p.url }}" style="list-style: none !important;">
             <a class="post-card-link-modern" href="{{ site.baseurl }}{{ p.url }}" data-post-title="{{ p.title | escape }}">
               {%- assign thumb_data = site.data.thumbnails_by_path[p.url] -%}
               {%- assign thumb = thumb_data | default: p.thumbnail | default: p.image | default: p.cover -%}
