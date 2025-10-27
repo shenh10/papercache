@@ -48,6 +48,8 @@ jobs:
               run: |
                   echo "📝 生成摘要映射..."
                   python3 scripts/generate_excerpts.py
+                  # 确保assets/data目录存在
+                  mkdir -p assets/data
                   # 复制摘要映射文件到assets/data/供客户端使用
                   cp _data/excerpts.json assets/data/excerpts.json
                   echo "✅ 摘要映射生成完成"
@@ -72,6 +74,8 @@ jobs:
               run: |
                   echo "开始生成缩略图..."
                   python3 scripts/gen_thumbs.py
+                  # 确保assets/data目录存在
+                  mkdir -p assets/data
                   # 复制缩略图映射文件到assets/data/供客户端使用
                   cp _data/thumbnails_by_path.yml assets/data/thumbnails_by_path.yml
                   echo "缩略图生成完成！"
