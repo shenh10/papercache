@@ -70,33 +70,118 @@
     .mobile-post-item::marker {
       display: none !important;
     }
+    
+    /* 移动端MathJax优化样式 */
+    @media (max-width: 768px) {
+      .MathJax {
+        font-size: 0.9em !important;
+        line-height: 1.2 !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+      }
+      
+      .MathJax_Display {
+        margin: 1em 0 !important;
+        padding: 0.5em !important;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+      }
+      
+      .MathJax_SVG {
+        max-width: 100% !important;
+        height: auto !important;
+      }
+      
+      /* 确保数学公式在小屏幕上不会溢出 */
+      .post-content .MathJax,
+      .page-content .MathJax {
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+      }
+      
+      /* 移动端数学公式容器 */
+      .math-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 0.5em 0;
+      }
+    }
+    
+    /* 超小屏幕优化 */
+    @media (max-width: 480px) {
+      .MathJax {
+        font-size: 0.8em !important;
+        line-height: 1.1 !important;
+      }
+      
+      .MathJax_Display {
+        margin: 0.8em 0 !important;
+        padding: 0.3em !important;
+      }
+    }
   </style>
   {%- if jekyll.environment == 'production' and site.google_analytics -%}
     {%- include google-analytics.html -%}
   {%- endif -%}
 
-  <!-- MathJax 3 Configuration - 延迟加载 -->
+  <!-- MathJax 3 Configuration - 移动端优化 -->
   {%- if page.mathjax != false -%}
+  <!-- ES6 Polyfill for mobile browsers -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  
   <script>
     window.MathJax = {
       tex: {
         inlineMath: [['$', '$']],
-        displayMath: [['$$', '$$']]
+        displayMath: [['$$', '$$']],
+        processEscapes: true,
+        processEnvironments: true
       },
-      svg: {
-        fontCache: 'global'
+      options: {
+        ignoreHtmlClass: 'tex2jax_ignore',
+        processHtmlClass: 'tex2jax_process'
       },
+      // 移动端优化配置
+      chtml: {
+        scale: 1.0,
+        minScale: 0.5,
+        maxScale: 2.0,
+        adaptiveCSS: true,
+        linebreaks: {
+          automatic: true,
+          width: 'container'
+        }
+      },
+      // 移动端启动配置
       startup: {
         ready: function () {
           MathJax.startup.defaultReady();
-          console.log('MathJax is loaded, but not yet initialized');
+          console.log('MathJax is loaded and ready for mobile');
+          
+          // 移动端特殊处理
+          if (window.innerWidth <= 768) {
+            // 调整移动端数学公式缩放
+            MathJax.typesetPromise().then(() => {
+              const mathElements = document.querySelectorAll('.MathJax');
+              mathElements.forEach(element => {
+                element.style.fontSize = '0.9em';
+                element.style.lineHeight = '1.2';
+              });
+            });
+          }
         }
       }
     };
   </script>
+  
+  <!-- 使用CHTML渲染器，更适合移动端 -->
   <script type="text/javascript" id="MathJax-script" async
-    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
   </script>
+  
+  <!-- 移动端MathJax优化脚本 -->
+  <script src="{{ "/assets/js/mathjax-mobile.js" | relative_url }}"></script>
   {%- endif -%}
 
   <!-- Busuanzi Analytics - 延迟加载 -->
