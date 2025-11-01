@@ -4,36 +4,30 @@ mlsys:
     - categories:
       - mlsys
       - gpu
-      date: '2025-10-25'
+      date: '2025-11-02'
+      title: How To Write A CUDA Program
+      url: /slides/mlsys/gpu/2025/11/02/how-to-write-a-cuda-program.html
+    - categories:
+      - mlsys
+      - gpu
+      date: '2025-11-02'
       title: Become Faster in Writing Performant CUDA Kernels using the Source Page
         in Nsight Compute
-      url: /slides/mlsys/gpu/2025/10/25/become-faster-in-writing-performant-cuda-kernels-using-the-source-page-in-nsight-compute.html
+      url: /slides/mlsys/gpu/2025/11/02/become-faster-in-writing-performant-cuda-kernels-using-the-source-page-in-nsight-compute.html
     - categories:
       - mlsys
       - gpu
-      date: '2025-10-25'
-      title: How To Write A CUDA Program
-      url: /slides/mlsys/gpu/2025/10/25/how-to-write-a-cuda-program.html
-    - categories:
-      - mlsys
-      - gpu
-      date: '2025-10-25'
+      date: '2025-11-02'
       title: HOW TO UNDERSTAND AND OPTIMIZE SHARED MEMORY ACCESSES USING NSIGHT COMPUTE
-      url: /slides/mlsys/gpu/2025/10/25/how-to-understand-and-optimize-shared-memory-accesses-using-nsight-compute.html
+      url: /slides/mlsys/gpu/2025/11/02/how-to-understand-and-optimize-shared-memory-accesses-using-nsight-compute.html
     - categories:
       - mlsys
       - gpu
-      date: '2025-10-25'
+      date: '2025-11-02'
       title: 'CUDA: New Features and Beyond'
-      url: /slides/mlsys/gpu/2025/10/25/cuda-new-features-and-beyond.html
+      url: /slides/mlsys/gpu/2025/11/02/cuda-new-features-and-beyond.html
   networking:
     posts:
-    - categories:
-      - mlsys
-      - networking
-      date: '2025-10-25'
-      title: RDMA Aware Networks Programming User Manual
-      url: /slides/mlsys/networking/2025/10/25/rdma-aware-networks-programming-user-manual.html
     - categories:
       - mlsys
       - networking
@@ -54,6 +48,12 @@ mlsys:
       date: '2018-01-01'
       title: RDMA Tutorial
       url: /slides/mlsys/networking/2018/01/01/rdma-tutorial.html
+    - categories:
+      - mlsys
+      - networking
+      date: '2025-11-02'
+      title: RDMA Aware Networks Programming User Manual
+      url: /slides/mlsys/networking/2025/11/02/rdma-aware-networks-programming-user-manual.html
     - categories:
       - mlsys
       - networking
