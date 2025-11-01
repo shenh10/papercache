@@ -32,7 +32,7 @@ bundle install
 
 # 先构建 Jekyll 站点（生成 _site 目录）
 echo "🏗️ 构建 Jekyll 站点..."
-bundle exec jekyll build
+bundle exec jekyll build --config _config.yml,_config_local.yml
 
 # 生成缩略图（需要 _site 目录存在）
 echo "🖼️ 生成缩略图..."
@@ -67,7 +67,8 @@ fi
 # 启动 Jekyll 开发服务器
 echo "🌐 启动 Jekyll 开发服务器..."
 echo "📍 网站将在 http://localhost:4000 运行"
+echo "📍 RSS Feed: http://127.0.0.1:4000/feed.xml"
 echo "🔄 使用 Ctrl+C 停止服务器"
 echo ""
 
-bundle exec jekyll serve --incremental --livereload
+bundle exec jekyll serve --incremental --livereload --config _config.yml,_config_local.yml

@@ -3,6 +3,9 @@ description: "深度学习、机器学习和人工智能研究论文的精选缓
 baseurl: "/papercache"
 url: "https://shenh10.github.io"
 
+# RSS Feed 配置 - 生产环境 URL（始终使用，不受本地开发环境影响）
+rss_base_url: "https://shenh10.github.io/papercache"
+
 author:
   name: shenh10
   email: thushenhan@gmail.com

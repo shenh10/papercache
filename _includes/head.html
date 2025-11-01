@@ -18,7 +18,9 @@
   <!-- SEO tags removed for compatibility -->
     <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}?v=1761019000">
     <link rel="stylesheet" href="{{ "/assets/css/modern-collection.css" | relative_url }}?v=1761019000">
-  <!-- Feed meta removed for compatibility -->
+  <!-- RSS Feed 自动发现 -->
+  <link rel="alternate" type="application/atom+xml" title="{{ site.title }} - 最新收录" href="{{ "/feed.xml" | relative_url }}" />
+  <link rel="alternate" type="application/atom+xml" title="{{ site.title }} - 最新发表" href="{{ "/feeds/latest-published.xml" | relative_url }}" />
   
   <!-- 防止FOUC的基础样式 -->
   <style>

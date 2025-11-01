@@ -717,6 +717,9 @@ layout: collection
 
 <script>
 console.log('[collection-search-first] inline script loaded');
+// 注入 RSS 订阅中心 URL
+window.RSS_SUBSCRIBE_URL = {{ '/feeds/index.html' | relative_url | jsonify }};
+
 // 预载入文章精简数据，使用 jsonify 保证合法 JSON
 (function(){
   try {
@@ -857,8 +860,9 @@ class SearchFirstMode {
     
     if (rssBtn) {
       rssBtn.addEventListener('click', () => {
-        // 跳转到RSS页面
-        window.location.href = '/feed.xml';
+        // 跳转到RSS订阅中心页面
+        const rssUrl = window.RSS_SUBSCRIBE_URL || '/feeds/index.html';
+        window.location.href = rssUrl;
       });
     }
 

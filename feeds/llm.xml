@@ -5,41 +5,43 @@ layout: null
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <generator uri="https://jekyllrb.com/" version="{{ jekyll.version }}">Jekyll</generator>
-  <link href="{{ site.url }}{{ site.baseurl }}/feed.xml" rel="self" type="application/atom+xml" />
+  <link href="{{ site.url }}{{ site.baseurl }}/feeds/llm.xml" rel="self" type="application/atom+xml" />
   <link href="{{ site.url }}{{ site.baseurl }}/" rel="alternate" type="text/html" />
   <updated>{{ site.time | date_to_xmlschema }}</updated>
-  <id>{{ site.url }}{{ site.baseurl }}/feed.xml</id>
-  <title type="html">{{ site.title | escape }} - 最新收录</title>
-  <subtitle>按添加到 PaperCache 的时间排序的最新 {{ site.title | escape }} 论文</subtitle>
+  <id>{{ site.url }}{{ site.baseurl }}/feeds/llm.xml</id>
+  <title type="html">{{ site.title | escape }} - LLM 分类</title>
+  <subtitle>大型语言模型（LLM）相关论文 RSS 订阅</subtitle>
   <author>
     <name>{{ site.author.name }}</name>
     <email>{{ site.author.email }}</email>
   </author>
-  {%- comment -%} 按 added_date 排序（如果存在），否则使用 date {%- endcomment -%}
-  {%- comment -%} 由于 Liquid 排序限制，优先显示有 added_date 的文章，使用 site.posts 默认排序 {%- endcomment -%}
+  {%- assign llm_posts = '' | split: '' -%}
+  {%- for post in site.posts -%}
+    {%- if post.categories contains 'llm' -%}
+      {%- assign llm_posts = llm_posts | push: post -%}
+    {%- endif -%}
+  {%- endfor -%}
   {%- assign count = 0 -%}
   {%- assign displayed_posts = '' | split: '' -%}
-  {%- comment -%} 先收集有 added_date 的文章 {%- endcomment -%}
-  {%- for post in site.posts -%}
-    {%- if post.added_date and count < 10 -%}
+  {%- comment -%} 优先显示有 added_date 的文章 {%- endcomment -%}
+  {%- for post in llm_posts -%}
+    {%- if post.added_date and count < 20 -%}
       {%- assign displayed_posts = displayed_posts | push: post -%}
       {%- assign count = count | plus: 1 -%}
     {%- endif -%}
   {%- endfor -%}
-  {%- comment -%} 如果还不够10篇，补充没有 added_date 的文章 {%- endcomment -%}
-  {%- for post in site.posts -%}
+  {%- for post in llm_posts -%}
     {%- unless post.added_date -%}
-      {%- if count < 10 -%}
+      {%- if count < 20 -%}
         {%- assign displayed_posts = displayed_posts | push: post -%}
         {%- assign count = count | plus: 1 -%}
       {%- endif -%}
     {%- endunless -%}
   {%- endfor -%}
-  {%- comment -%} 如果还是没有文章，使用默认的 site.posts {%- endcomment -%}
   {%- if displayed_posts.size == 0 -%}
-    {%- assign displayed_posts = site.posts -%}
+    {%- assign displayed_posts = llm_posts -%}
   {%- endif -%}
-  {%- assign latest_posts = displayed_posts | limit: 10 -%}
+  {%- assign latest_posts = displayed_posts | limit: 20 -%}
   {% for post in latest_posts %}
   <entry>
     <title type="html">{{ post.title | escape }}</title>
@@ -51,9 +53,8 @@ layout: null
     <content type="html" xml:base="{{ site.url }}{{ site.baseurl }}{{ post.url }}">
       <![CDATA[{{ post.excerpt | strip_html | truncate: 200 | escape }}]]>
     </content>
-    {%- if post.categories.size > 0 -%}
-    <category term="{{ post.categories | first | escape }}" />
-    {%- endif -%}
+    <category term="llm" />
   </entry>
   {% endfor %}
 </feed>
+
