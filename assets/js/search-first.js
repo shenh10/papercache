@@ -24,7 +24,14 @@
   }
   function getAllPosts(){var d=window.PAPERCACHE_POSTS||[];if(!Array.isArray(d)){log('PAPERCACHE_POSTS not array');return [];}return d;}
   function showResults(list){ var quick=qs('.quick-browse-section'); if(quick) quick.style.display='none'; var sec=qs('#search-results'); if(sec){ sec.style.display='block'; sec.classList.add('show'); } renderResults(list||[]); }
-  function doSearch(){var input=qs('#main-search-input');if(!input){log('missing input');return;}var q=input.value||'';if(q.trim().length<2){return;}var all=getAllPosts();log('posts loaded',all.length);var local=performLocalSearch(q,all);log('local results',local.length);if(local.length===0){showResults(all.slice(0,10));} else {showResults(local);}try{fetch('/api/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q})}).then(function(r){if(!r.ok)throw new Error('bad status');return r.json();}).then(function(data){var arr=Array.isArray(data&&data.results)?data.results:[];if(arr.length){var mapped=arr.map(function(r){return{title:r.title||r.name||'Untitled',excerpt:r.excerpt||r.summary||'',url:r.url||r.link||'#',tags:r.tags||[],categories:r.categories||[]};});log('api results',mapped.length);showResults(mapped);}}).catch(function(e){log('api failed',e&&e.message);});}catch(e){log('api failed',e&&e.message);} }
+  function doSearch(){var input=qs('#main-search-input');if(!input){return;}var q=input.value||'';if(q.trim().length<2){return;}
+    // 如果有 SearchFirstMode 实例，使用它的搜索方法（支持分组显示）
+    if(window.searchFirstMode && typeof window.searchFirstMode.performSearch === 'function'){
+      window.searchFirstMode.performSearch();
+      return;
+    }
+    // 否则使用原来的搜索逻辑（作为降级）
+    var all=getAllPosts();var local=performLocalSearch(q,all);if(local.length===0){showResults(all.slice(0,10));} else {showResults(local);}try{fetch('/api/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q})}).then(function(r){if(!r.ok)throw new Error('bad status');return r.json();}).then(function(data){var arr=Array.isArray(data&&data.results)?data.results:[];if(arr.length){var mapped=arr.map(function(r){return{title:r.title||r.name||'Untitled',excerpt:r.excerpt||r.summary||'',url:r.url||r.link||'#',tags:r.tags||[],categories:r.categories||[]};});showResults(mapped);}}).catch(function(e){});}catch(e){} }
   function bind(){log('bind start');
     var btn=qs('#search-btn'); if(btn)btn.addEventListener('click',doSearch);
     qsa('.suggestion-item').forEach(function(el){ var q=el.getAttribute('data-query')||el.textContent||''; el.setAttribute('data-query', q); el.addEventListener('click', function(){ var input=qs('#main-search-input'); if(input) input.value=q; doSearch(); });});

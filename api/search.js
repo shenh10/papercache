@@ -77,13 +77,45 @@ async function initializeSearchIndex() {
   }
 }
 
+// 中英文关键词映射，支持混合搜索
+function expandQuery(query) {
+  const keywordMap = {
+    'gpu优化': 'gpu optimization',
+    'gpu': 'gpu',
+    '优化': 'optimization optimize efficient',
+    '分布式': 'distributed parallel cluster',
+    '系统': 'system architecture framework',
+    '注意力': 'attention transformer',
+    '机制': 'mechanism method approach',
+    '性能': 'performance efficient optimization'
+  };
+  
+  let expandedQuery = query.toLowerCase();
+  
+  // 替换中文关键词为对应的英文关键词
+  for (const [chinese, english] of Object.entries(keywordMap)) {
+    if (expandedQuery.includes(chinese)) {
+      expandedQuery = expandedQuery.replace(new RegExp(chinese, 'gi'), english);
+    }
+  }
+  
+  return expandedQuery;
+}
+
 // 搜索函数
 function performSearch(query, filters = {}) {
   if (!searchIndex || !papersData) {
     throw new Error('Search index not initialized');
   }
 
-  let results = searchIndex.search(query);
+  // 扩展查询，支持中英文混合搜索
+  const expandedQuery = expandQuery(query);
+  let results = searchIndex.search(expandedQuery);
+  
+  // 如果扩展后的查询没有结果，尝试使用原始查询
+  if (results.length === 0) {
+    results = searchIndex.search(query);
+  }
   
   // 应用过滤器
   if (filters.categories && filters.categories.length > 0) {
