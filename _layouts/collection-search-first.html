@@ -662,6 +662,24 @@ layout: collection
   font-weight: 600;
 }
 
+/* 面包屑计数器样式 - 降低视觉存在感 */
+.category-count-badge {
+  font-size: 0.75em;
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.08);
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 500;
+  margin-left: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  transition: all 0.2s ease;
+}
+
+.category-count-badge:hover {
+  background: rgba(148, 163, 184, 0.12);
+  color: #64748b;
+}
+
 /* 层级过滤器（美化版） */
 .cat-filters { 
   display: flex; 
@@ -1547,7 +1565,7 @@ class SearchFirstMode {
       categoryTitle.innerHTML = `
         <span>📁</span>
         <span>${categoryPath.replace(/\//g, ' › ')}</span>
-        <span style="font-size: 0.85em; color: #667eea; font-weight: 700; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4px 12px; border-radius: 12px; box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);">${count}篇</span>
+        <span class="category-count-badge">${count}篇</span>
       `;
       
       // 让分类标题可点击，跳转到对应的分类浏览
@@ -1920,20 +1938,23 @@ class SearchFirstMode {
     
     const displayDate = formatDate(paper.date);
     
-    // 修复 URL：Jekyll 实际生成的 URL 不包含 /papers/ 前缀
-    // 搜索 API 返回的 URL 可能是 /papers/llm/...，但实际访问 URL 是 /llm/...
+    // 处理 URL：确保正确添加 baseurl，避免重复
+    // 搜索 API 返回的 URL 格式为 /papers/llm/...（不包含 baseurl）
     let paperUrl = paper.url || '#';
-    if (paperUrl.startsWith('/papers/')) {
-      paperUrl = paperUrl.substring('/papers'.length); // 移除 /papers 前缀
-    }
+    
     // 确保 URL 以 / 开头
     if (!paperUrl.startsWith('/') && paperUrl !== '#') {
       paperUrl = '/' + paperUrl;
     }
-    // 添加 baseurl 前缀（如果存在）
+    
+    // 添加 baseurl 前缀（如果存在且URL中尚未包含）
     const baseurl = window.PC_BASEURL || '';
     if (baseurl && paperUrl !== '#') {
-      paperUrl = baseurl + paperUrl;
+      // 检查 URL 是否已经包含 baseurl，避免重复添加
+      const normalizedBase = baseurl.endsWith('/') ? baseurl.slice(0, -1) : baseurl;
+      if (!paperUrl.startsWith(normalizedBase)) {
+        paperUrl = baseurl + paperUrl;
+      }
     }
     
     // 高亮标题和摘要中的关键词（支持模糊匹配和精确匹配）
