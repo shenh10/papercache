@@ -15,14 +15,19 @@ class EnhancedSearch {
     this.currentFilters = {};
     this.searchTimeout = null;
     this.isSearching = false;
+    this.filterEventsBound = false; // 标记过滤器事件是否已绑定
     
     this.init();
   }
 
   init() {
-    this.bindEvents();
-    this.createSearchUI();
-    this.loadPopularSearches();
+    try {
+      this.bindEvents();
+      this.createSearchUI();
+      this.loadPopularSearches();
+    } catch (error) {
+      console.error('[EnhancedSearch] Initialization failed:', error);
+    }
   }
 
   bindEvents() {
@@ -90,6 +95,17 @@ class EnhancedSearch {
   }
 
   createFilters() {
+    // 检查过滤器是否已存在（页面 HTML 中可能已经定义了）
+    const existingFilters = document.querySelector(this.filtersContainer);
+    if (existingFilters) {
+      console.log('[EnhancedSearch] Filters already exist, using existing filters');
+      // 使用现有的过滤器，只需要加载选项
+      this.loadFilterOptions();
+      this.bindFilterEvents();
+      return;
+    }
+
+    // 如果不存在，则创建新的过滤器
     const filtersDiv = document.createElement('div');
     filtersDiv.id = 'search-filters';
     filtersDiv.className = 'search-filters';
@@ -113,17 +129,107 @@ class EnhancedSearch {
         </select>
       </div>
       <div class="filter-group">
-        <button id="clear-filters">清除过滤器</button>
+        <button id="clear-filters" class="btn btn-secondary">清除过滤器</button>
       </div>
     `;
 
-    document.querySelector('.search-container').appendChild(filtersDiv);
+    // 尝试找到合适的容器插入过滤器
+    const searchContainer = document.querySelector('.search-container');
+    if (searchContainer) {
+      searchContainer.appendChild(filtersDiv);
+    } else {
+      // 如果找不到容器，插入到搜索输入框后面
+      const searchInput = document.querySelector(this.searchInput);
+      if (searchInput && searchInput.parentElement) {
+        searchInput.parentElement.insertAdjacentElement('afterend', filtersDiv);
+      } else {
+        document.body.appendChild(filtersDiv);
+      }
+    }
+    
     this.loadFilterOptions();
+    this.bindFilterEvents();
+  }
+
+  bindFilterEvents() {
+    // 绑定过滤器事件
+    const categoryFilter = document.getElementById('category-filter');
+    const yearFilter = document.getElementById('year-filter');
+    const tagFilter = document.getElementById('tag-filter');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+
+    if (categoryFilter) {
+      categoryFilter.addEventListener('change', () => {
+        this.updateFilters();
+        this.performSearch();
+      });
+    }
+
+    if (yearFilter) {
+      yearFilter.addEventListener('change', () => {
+        this.updateFilters();
+        this.performSearch();
+      });
+    }
+
+    if (tagFilter) {
+      tagFilter.addEventListener('change', () => {
+        this.updateFilters();
+        this.performSearch();
+      });
+    }
+
+    if (clearFiltersBtn) {
+      clearFiltersBtn.addEventListener('click', () => {
+        this.clearFilters();
+      });
+    }
+  }
+
+  updateFilters() {
+    const categoryFilter = document.getElementById('category-filter');
+    const yearFilter = document.getElementById('year-filter');
+    const tagFilter = document.getElementById('tag-filter');
+
+    this.currentFilters = {
+      categories: categoryFilter ? Array.from(categoryFilter.selectedOptions).map(opt => opt.value).filter(Boolean) : [],
+      year: yearFilter ? yearFilter.value : '',
+      tags: tagFilter ? Array.from(tagFilter.selectedOptions).map(opt => opt.value).filter(Boolean) : []
+    };
+  }
+
+  clearFilters() {
+    const categoryFilter = document.getElementById('category-filter');
+    const yearFilter = document.getElementById('year-filter');
+    const tagFilter = document.getElementById('tag-filter');
+
+    if (categoryFilter) {
+      categoryFilter.selectedIndex = -1;
+    }
+    if (yearFilter) {
+      yearFilter.value = '';
+    }
+    if (tagFilter) {
+      tagFilter.selectedIndex = -1;
+    }
+
+    this.currentFilters = {};
+    this.performSearch();
   }
 
   async loadFilterOptions() {
     try {
-      const response = await fetch(`${this.apiBase}/stats`);
+      // 处理 baseurl
+      const baseurl = window.PC_BASEURL || '';
+      const apiBase = baseurl && baseurl !== '/' ? `${baseurl}${this.apiBase}` : this.apiBase;
+      const apiPath = `${apiBase}/stats`;
+      
+      const response = await fetch(apiPath);
+      
+      if (!response.ok) {
+        throw new Error(`Stats API returned ${response.status}`);
+      }
+      
       const stats = await response.json();
 
       // 加载分类选项
@@ -153,11 +259,14 @@ class EnhancedSearch {
         tagSelect.appendChild(option);
       });
 
-      // 绑定过滤器事件
-      this.bindFilterEvents();
+      // 绑定过滤器事件（如果还没有绑定）
+      if (!this.filterEventsBound) {
+        this.bindFilterEvents();
+        this.filterEventsBound = true;
+      }
 
     } catch (error) {
-      console.error('Failed to load filter options:', error);
+      console.error('[EnhancedSearch] Failed to load filter options:', error);
     }
   }
 
@@ -289,7 +398,12 @@ class EnhancedSearch {
     this.showLoading();
 
     try {
-      const response = await fetch(`${this.apiBase}/search`, {
+      // 处理 baseurl
+      const baseurl = window.PC_BASEURL || '';
+      const apiBase = baseurl && baseurl !== '/' ? `${baseurl}${this.apiBase}` : this.apiBase;
+      const apiPath = `${apiBase}/search`;
+      
+      const response = await fetch(apiPath, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -301,10 +415,14 @@ class EnhancedSearch {
         })
       });
 
+      if (!response.ok) {
+        throw new Error(`Search API returned ${response.status}`);
+      }
+
       const data = await response.json();
       this.showResults(data);
     } catch (error) {
-      console.error('Search failed:', error);
+      console.error('[EnhancedSearch] Search failed:', error);
       this.showError('搜索失败，请稍后重试');
     } finally {
       this.isSearching = false;
@@ -386,14 +504,24 @@ class EnhancedSearch {
 
   async loadPopularSearches() {
     try {
-      const response = await fetch(`${this.apiBase}/suggestions?limit=10`);
+      // 处理 baseurl
+      const baseurl = window.PC_BASEURL || '';
+      const apiBase = baseurl && baseurl !== '/' ? `${baseurl}${this.apiBase}` : this.apiBase;
+      const apiPath = `${apiBase}/suggestions?limit=10`;
+      
+      const response = await fetch(apiPath);
+      
+      if (!response.ok) {
+        throw new Error(`Suggestions API returned ${response.status}`);
+      }
+      
       const data = await response.json();
       
       if (data.suggestions && data.suggestions.length > 0) {
         this.showPopularSearches(data.suggestions);
       }
     } catch (error) {
-      console.error('Failed to load popular searches:', error);
+      console.error('[EnhancedSearch] Failed to load popular searches:', error);
     }
   }
 
@@ -571,7 +699,26 @@ class EnhancedSearch {
 
 // 自动初始化
 document.addEventListener('DOMContentLoaded', () => {
-  window.enhancedSearch = new EnhancedSearch();
+  try {
+    // 只在搜索页面初始化（检查是否有搜索相关元素）
+    const searchInput = document.querySelector('#search-input');
+    const searchResults = document.querySelector('#search-results');
+    
+    if (searchInput || searchResults) {
+      console.log('[EnhancedSearch] Initializing...');
+      window.enhancedSearch = new EnhancedSearch({
+        searchInput: '#search-input',
+        resultsContainer: '#search-results',
+        suggestionsContainer: '#search-suggestions',
+        filtersContainer: '#search-filters'
+      });
+      console.log('[EnhancedSearch] Initialized successfully');
+    } else {
+      console.log('[EnhancedSearch] Search page elements not found, skipping initialization');
+    }
+  } catch (error) {
+    console.error('[EnhancedSearch] Failed to initialize:', error);
+  }
 });
 
 // 导出供外部使用

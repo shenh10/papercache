@@ -668,9 +668,6 @@ layout: collection
       <button class="btn-primary" id="browse-all-btn">
         📚 浏览所有论文
       </button>
-      <button class="btn-secondary" id="advanced-search-btn">
-        🔍 高级搜索
-      </button>
       <button class="btn-secondary" id="rss-subscribe-btn">
         📡 RSS订阅
       </button>
@@ -845,7 +842,6 @@ class SearchFirstMode {
 
     // 操作按钮
     const browseAllBtn = document.getElementById('browse-all-btn');
-    const advancedSearchBtn = document.getElementById('advanced-search-btn');
     const rssBtn = document.getElementById('rss-subscribe-btn');
     
     if (browseAllBtn) {
@@ -857,13 +853,6 @@ class SearchFirstMode {
         // 显示分类浏览界面，从根开始显示所有一级分类
         this.showCategoryBrowse();
       }, true); // 使用捕获阶段，确保优先处理
-    }
-    
-    if (advancedSearchBtn) {
-      advancedSearchBtn.addEventListener('click', () => {
-        // 跳转到高级搜索页面
-        window.location.href = '/search/';
-      });
     }
     
     if (rssBtn) {
