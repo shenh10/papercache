@@ -6,6 +6,10 @@ url: "https://shenh10.github.io"
 # RSS Feed 配置 - 生产环境 URL（始终使用，不受本地开发环境影响）
 rss_base_url: "https://shenh10.github.io/papercache"
 
+# API 配置 - Vercel Functions 部署地址
+# 生产环境 API 应该指向 Vercel，因为 GitHub Pages 不支持动态 API
+api_base_url: "https://papercache.vercel.app"
+
 author:
   name: shenh10
   email: thushenhan@gmail.com

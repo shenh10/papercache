@@ -398,10 +398,19 @@ class EnhancedSearch {
     this.showLoading();
 
     try {
-      // 处理 baseurl
+      // 处理 baseurl 和 API base URL
       const baseurl = window.PC_BASEURL || '';
-      const apiBase = baseurl && baseurl !== '/' ? `${baseurl}${this.apiBase}` : this.apiBase;
-      const apiPath = `${apiBase}/search`;
+      const apiBaseUrl = window.PC_API_BASE || '';
+      
+      let apiPath;
+      if (apiBaseUrl) {
+        // 如果配置了独立的 API base URL（生产环境，静态站点和 API 在不同域名）
+        apiPath = `${apiBaseUrl}${this.apiBase}/search`;
+      } else {
+        // 否则使用相对路径（Vercel 部署，静态站点和 API 在同一域名）
+        const apiBase = baseurl && baseurl !== '/' ? `${baseurl}${this.apiBase}` : this.apiBase;
+        apiPath = `${apiBase}/search`;
+      }
       
       const response = await fetch(apiPath, {
         method: 'POST',

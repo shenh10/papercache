@@ -8,10 +8,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   console.log('📄 DOM 已加载，开始处理卡片');
   
   // 尝试加载预生成的摘要映射和缩略图映射
+  // 使用相对路径，兼容本地开发和生产环境
+  const baseurl = window.PC_BASEURL || '';
+  const excerptsPath = baseurl ? `${baseurl}/assets/data/excerpts.json` : '/assets/data/excerpts.json';
+  const thumbnailsPath = baseurl ? `${baseurl}/assets/data/thumbnails_by_path.yml` : '/assets/data/thumbnails_by_path.yml';
+  
   try {
     const [excerptsResponse, thumbnailsResponse] = await Promise.all([
-      fetch('/papercache/assets/data/excerpts.json'),
-      fetch('/papercache/assets/data/thumbnails_by_path.yml')
+      fetch(excerptsPath),
+      fetch(thumbnailsPath)
     ]);
     
     if (excerptsResponse.ok) {
