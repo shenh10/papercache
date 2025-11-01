@@ -108,6 +108,159 @@ layout: collection
 
 #search-btn:hover { opacity: 0.9; }
 
+/* 搜索选项 */
+.search-options {
+  margin-top: 20px;
+}
+
+.advanced-search-toggle {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: white;
+  font-size: 0.95em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.advanced-search-toggle:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.toggle-icon {
+  transition: transform 0.3s ease;
+  font-size: 0.8em;
+}
+
+.advanced-search-toggle.active .toggle-icon {
+  transform: rotate(180deg);
+}
+
+.advanced-search-panel {
+  margin-top: 15px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.search-mode-toggle {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  justify-content: center;
+}
+
+.toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  color: white;
+  font-weight: 500;
+}
+
+.toggle-label:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.toggle-label input[type="radio"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.toggle-label input[type="radio"]:checked + span {
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.toggle-label:has(input:checked) {
+  background: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.search-fields-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.selector-label {
+  color: white;
+  font-weight: 500;
+  margin-right: 5px;
+}
+
+.field-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  transition: all 0.3s ease;
+  color: white;
+  font-size: 0.9em;
+}
+
+.field-checkbox:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.field-checkbox input[type="checkbox"] {
+  margin: 0;
+  cursor: pointer;
+}
+
+.field-checkbox:has(input:checked) {
+  background: rgba(255, 255, 255, 0.3);
+  font-weight: 500;
+}
+
+/* 搜索高亮样式 */
+.search-highlight {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+  color: #1a202c;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  display: inline-block;
+}
+
+/* 深色模式下的高亮样式（如果支持） */
+@media (prefers-color-scheme: dark) {
+  .search-highlight {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: #000000;
+  }
+}
+
 /* 搜索建议 */
 .search-suggestions {
   display: flex;
@@ -614,6 +767,27 @@ layout: collection
   .category-card {
     padding: 20px;
   }
+  
+  /* 搜索选项响应式 */
+  .search-options {
+    padding: 12px;
+  }
+  
+  .search-mode-toggle {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .search-fields-selector {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .selector-label {
+    width: 100%;
+    margin-bottom: 5px;
+  }
 }
 </style>
 
@@ -628,6 +802,51 @@ layout: collection
         <div class="search-input-wrapper">
           <input type="text" id="main-search-input" placeholder="输入关键词搜索论文...">
           <button type="button" id="search-btn">搜索</button>
+        </div>
+        
+        <!-- 搜索选项 - 默认隐藏精确匹配 -->
+        <div class="search-options">
+          <button type="button" class="advanced-search-toggle" id="advanced-search-toggle">
+            <span>⚙️ 高级搜索</span>
+            <span class="toggle-icon">▼</span>
+          </button>
+          
+          <div class="advanced-search-panel" id="advanced-search-panel" style="display: none;">
+            <div class="search-mode-toggle">
+              <label class="toggle-label">
+                <input type="radio" name="match-mode" value="fuzzy" checked>
+                <span>模糊匹配（默认）</span>
+              </label>
+              <label class="toggle-label">
+                <input type="radio" name="match-mode" value="exact">
+                <span>精确匹配</span>
+              </label>
+            </div>
+            
+            <div class="search-fields-selector" id="search-fields-selector" style="display: none;">
+              <span class="selector-label">搜索范围：</span>
+              <label class="field-checkbox">
+                <input type="checkbox" name="search-field" value="title" checked>
+                <span>标题</span>
+              </label>
+              <label class="field-checkbox">
+                <input type="checkbox" name="search-field" value="excerpt" checked>
+                <span>摘要</span>
+              </label>
+              <label class="field-checkbox">
+                <input type="checkbox" name="search-field" value="fulltext">
+                <span>全文</span>
+              </label>
+              <label class="field-checkbox">
+                <input type="checkbox" name="search-field" value="categories">
+                <span>分类</span>
+              </label>
+              <label class="field-checkbox">
+                <input type="checkbox" name="search-field" value="tag">
+                <span>标签</span>
+              </label>
+            </div>
+          </div>
         </div>
         
         <!-- 搜索建议 -->
@@ -767,6 +986,8 @@ class SearchFirstMode {
     this.filteredPapers = [];
     this.currentMode = 'search'; // 'search', 'browse', 'results'
     this.currentCategoryPath = [];
+    this.currentQuery = ''; // 保存当前搜索查询
+    this.currentMatchMode = 'fuzzy'; // 保存当前匹配模式
     
     this.init();
   }
@@ -774,7 +995,47 @@ class SearchFirstMode {
   async init() {
     this.loadAllPapers();
     this.bindEvents();
+    this.setupAdvancedSearch();
     this.showSuggestions();
+  }
+
+  setupAdvancedSearch() {
+    // 高级搜索展开/收起
+    const toggleBtn = document.getElementById('advanced-search-toggle');
+    const panel = document.getElementById('advanced-search-panel');
+    const fieldsSelector = document.getElementById('search-fields-selector');
+    
+    if (toggleBtn && panel) {
+      toggleBtn.addEventListener('click', () => {
+        const isVisible = panel.style.display !== 'none';
+        panel.style.display = isVisible ? 'none' : 'block';
+        toggleBtn.classList.toggle('active', !isVisible);
+      });
+    }
+    
+    // 监听匹配模式切换
+    const modeRadios = document.querySelectorAll('input[name="match-mode"]');
+    modeRadios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        if (radio.value === 'exact') {
+          // 精确匹配时显示搜索范围选择器
+          if (fieldsSelector) {
+            fieldsSelector.style.display = 'flex';
+          }
+        } else {
+          // 模糊匹配时隐藏搜索范围选择器
+          if (fieldsSelector) {
+            fieldsSelector.style.display = 'none';
+          }
+        }
+      });
+    });
+    
+    // 初始状态：如果模糊匹配被选中，隐藏搜索范围选择器
+    const fuzzyRadio = document.querySelector('input[name="match-mode"][value="fuzzy"]');
+    if (fuzzyRadio && fuzzyRadio.checked && fieldsSelector) {
+      fieldsSelector.style.display = 'none';
+    }
   }
 
   loadAllPapers() {
@@ -941,13 +1202,33 @@ class SearchFirstMode {
         apiPath = baseurl ? `${baseurl}/api/search` : '/api/search';
       }
       
+      // 获取匹配模式和搜索范围
+      const matchModeRadio = document.querySelector('input[name="match-mode"]:checked');
+      const matchMode = matchModeRadio ? matchModeRadio.value : 'fuzzy';
+      
+      let searchFields = ['title', 'excerpt']; // 模糊匹配的默认值
+      
+      // 只有在精确匹配模式下才需要搜索范围
+      if (matchMode === 'exact') {
+        const searchFieldCheckboxes = document.querySelectorAll('input[name="search-field"]:checked');
+        searchFields = Array.from(searchFieldCheckboxes).map(cb => cb.value);
+        
+        // 确保至少选择一个搜索范围
+        if (searchFields.length === 0) {
+          alert('请至少选择一个搜索范围');
+          return;
+        }
+      }
+      
       const resp = await fetch(apiPath, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           query,
           filters: {}, // 可以为将来扩展添加过滤器
-          limit: 50 
+          limit: 50,
+          matchMode: matchMode,
+          searchFields: searchFields
         }),
         signal: controller.signal
       });
@@ -959,6 +1240,11 @@ class SearchFirstMode {
         
         console.log(`[collection-search-first] ✅ API 搜索成功，返回 ${apiResults.length} 条结果`);
         console.log(`[collection-search-first] API 查询: "${query}", 总匹配数: ${data.total || 0}`);
+        console.log(`[collection-search-first] 匹配模式: ${data.matchMode || 'fuzzy'}, 搜索范围: ${(data.searchFields || []).join(', ')}`);
+        
+        // 保存当前搜索查询和匹配模式，用于高亮显示
+        this.currentQuery = query;
+        this.currentMatchMode = data.matchMode || 'fuzzy';
         
         // 使用API结果（即使为空也是有效的搜索结果）
         this.filteredPapers = apiResults.map(r => {
@@ -1054,6 +1340,9 @@ class SearchFirstMode {
       // 使用扩展后的关键词进行匹配，至少匹配一个关键词即可
       return uniqueTokens.some(t => hay.includes(t));
     });
+    // 保存当前搜索查询和匹配模式（本地搜索默认为模糊匹配）
+    this.currentQuery = query;
+    this.currentMatchMode = 'fuzzy';
     // 本地搜索结果已就绪
     this.showSearchResults(query);
   }
@@ -1312,6 +1601,121 @@ class SearchFirstMode {
     });
   }
 
+  // 高亮函数：在不修改原文的情况下对关键词进行高亮
+  highlightText(text, query, matchMode) {
+    if (!text || !query) {
+      return this.escapeHtml(text || '');
+    }
+    
+    // 转义 HTML，防止 XSS
+    const queryTrimmed = query.trim();
+    if (!queryTrimmed) {
+      return this.escapeHtml(text);
+    }
+    
+    const textLower = text.toLowerCase();
+    const queryLower = queryTrimmed.toLowerCase();
+    
+    // 提取搜索词中的关键词（单词）
+    // 按空格和标点符号分割，保留长度>=2的关键词
+    const keywords = queryTrimmed
+      .split(/[\s\u3000\u00a0\u2000-\u200b\u2028\u2029]+/) // 分割各种空白符
+      .map(k => k.trim())
+      .filter(k => k.length >= 2); // 只保留长度>=2的关键词
+    
+    // 如果没有提取到关键词，尝试使用整个查询词
+    if (keywords.length === 0) {
+      keywords.push(queryTrimmed);
+    }
+    
+    // 如果是精确匹配，也添加整个查询词作为关键词
+    if (matchMode === 'exact') {
+      keywords.unshift(queryTrimmed); // 优先匹配整个查询词
+    }
+    
+    // 收集所有匹配的位置
+    const matches = [];
+    
+    for (const keyword of keywords) {
+      const keywordLower = keyword.toLowerCase();
+      let startIndex = 0;
+      
+      // 找到所有匹配的位置（大小写不敏感）
+      while ((startIndex = textLower.indexOf(keywordLower, startIndex)) !== -1) {
+        // 检查是否已经在这个位置有匹配（避免重复）
+        const isOverlap = matches.some(m => 
+          (startIndex >= m.start && startIndex < m.end) ||
+          (startIndex + keyword.length > m.start && startIndex + keyword.length <= m.end) ||
+          (startIndex < m.start && startIndex + keyword.length > m.end)
+        );
+        
+        if (!isOverlap) {
+          matches.push({
+            start: startIndex,
+            end: startIndex + keyword.length,
+            keyword: keyword
+          });
+        }
+        
+        startIndex += keyword.length;
+      }
+    }
+    
+    // 如果没有匹配，直接返回转义后的文本
+    if (matches.length === 0) {
+      return this.escapeHtml(text);
+    }
+    
+    // 按起始位置排序
+    matches.sort((a, b) => a.start - b.start);
+    
+    // 合并重叠的匹配区间
+    const mergedMatches = [];
+    for (const match of matches) {
+      if (mergedMatches.length === 0) {
+        mergedMatches.push({ ...match });
+      } else {
+        const lastMatch = mergedMatches[mergedMatches.length - 1];
+        // 如果当前匹配与上一个匹配重叠或相邻（间距<3），合并它们
+        if (match.start <= lastMatch.end + 3) {
+          lastMatch.end = Math.max(lastMatch.end, match.end);
+          // 保留更长的关键词
+          if (match.keyword.length > lastMatch.keyword.length) {
+            lastMatch.keyword = match.keyword;
+          }
+        } else {
+          mergedMatches.push({ ...match });
+        }
+      }
+    }
+    
+    // 从后往前构建高亮文本（避免索引偏移问题）
+    let result = '';
+    let lastIndex = text.length;
+    
+    for (let i = mergedMatches.length - 1; i >= 0; i--) {
+      const match = mergedMatches[i];
+      // 添加匹配之后的文本
+      result = this.escapeHtml(text.substring(match.end, lastIndex)) + result;
+      // 添加高亮的匹配文本（使用原始文本保持大小写）
+      result = `<mark class="search-highlight">${this.escapeHtml(text.substring(match.start, match.end))}</mark>` + result;
+      lastIndex = match.start;
+    }
+    
+    // 添加开头的文本
+    result = this.escapeHtml(text.substring(0, lastIndex)) + result;
+    
+    return result;
+  }
+  
+  // HTML 转义函数
+  escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   createResultItem(paper) {
     const item = document.createElement('div');
     item.className = 'post-card-modern';
@@ -1516,8 +1920,28 @@ class SearchFirstMode {
     
     const displayDate = formatDate(paper.date);
     
+    // 修复 URL：Jekyll 实际生成的 URL 不包含 /papers/ 前缀
+    // 搜索 API 返回的 URL 可能是 /papers/llm/...，但实际访问 URL 是 /llm/...
+    let paperUrl = paper.url || '#';
+    if (paperUrl.startsWith('/papers/')) {
+      paperUrl = paperUrl.substring('/papers'.length); // 移除 /papers 前缀
+    }
+    // 确保 URL 以 / 开头
+    if (!paperUrl.startsWith('/') && paperUrl !== '#') {
+      paperUrl = '/' + paperUrl;
+    }
+    // 添加 baseurl 前缀（如果存在）
+    const baseurl = window.PC_BASEURL || '';
+    if (baseurl && paperUrl !== '#') {
+      paperUrl = baseurl + paperUrl;
+    }
+    
+    // 高亮标题和摘要中的关键词（支持模糊匹配和精确匹配）
+    const highlightedTitle = this.highlightText(paper.title || '', this.currentQuery, this.currentMatchMode);
+    const highlightedExcerpt = this.highlightText(paper.excerpt || '', this.currentQuery, this.currentMatchMode);
+    
     item.innerHTML = `
-      <a href="${paper.url || '#'}" class="post-card-link-modern">
+      <a href="${paperUrl}" class="post-card-link-modern">
         <div class="post-card-thumb-modern">
           <img src="${thumb}" alt="thumbnail" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" />
         </div>
@@ -1526,8 +1950,8 @@ class SearchFirstMode {
             <span class="post-meta-modern">${displayDate || '-'}</span>
             ${tag ? `<span class="post-card-tag-modern${tagClass}">${tag}</span>` : ''}
           </div>
-          <h3 class="post-card-title-modern">${(paper.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</h3>
-          <p class="post-card-excerpt-modern">${(paper.excerpt || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+          <h3 class="post-card-title-modern">${highlightedTitle}</h3>
+          <p class="post-card-excerpt-modern">${highlightedExcerpt}</p>
         </div>
       </a>
     `;
