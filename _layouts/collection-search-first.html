@@ -1,0 +1,1578 @@
+---
+layout: collection
+---
+
+<!-- 搜索优先布局 - 保持原有UI风格 -->
+<style>
+/* 搜索优先布局样式 - 基于原有设计风格 */
+.search-first-layout {
+  min-height: 100vh;
+}
+
+/* 本布局不需要左侧侧边栏，强制隐藏并还原内容区域宽度 */
+.site-sidebar, .sidebar, aside[role="complementary"] {
+  display: none !important;
+}
+.page-content, .wrapper {
+  margin-left: 0 !important;
+}
+
+/* 搜索区域 - 保持英雄式设计风格 */
+.search-hero {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  color: white;
+  padding: 60px 0;
+  margin: -2em -15px 3em -15px;
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+
+.search-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+  opacity: 0.3;
+}
+
+.search-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: min(800px, 85vw);
+  margin: 0 auto;
+  padding: 0 max(20px, 3vw);
+}
+
+.search-hero h1 {
+  font-size: 3.5em;
+  font-weight: 700;
+  margin: 0 0 20px 0;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  letter-spacing: -0.02em;
+}
+
+.search-hero-subtitle {
+  font-size: 1.3em;
+  opacity: 0.9;
+  margin-bottom: 40px;
+  font-weight: 300;
+}
+
+/* 搜索输入区域 */
+.search-input-container {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto 30px auto;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+}
+
+#main-search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 14px 16px;
+  font-size: 1.1em;
+  color: #2d3748;
+  outline: none;
+  border-radius: 12px 0 0 12px;
+}
+
+#main-search-input::placeholder {
+  color: #a0aec0;
+  font-weight: 400;
+}
+
+#search-btn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border: none;
+  border-radius: 0 12px 12px 0;
+  padding: 0 18px;
+  color: white;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+#search-btn:hover { opacity: 0.9; }
+
+/* 搜索建议 */
+.search-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.search-suggestions.show {
+  opacity: 1;
+}
+
+.suggestion-item {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 25px;
+  padding: 8px 16px;
+  color: white;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.suggestion-item:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+/* 快速浏览区域 */
+.quick-browse-section {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  margin: 2em 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.quick-browse-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+}
+
+.quick-browse-section h2 {
+  font-size: 1.8em;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 30px 0;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.quick-browse-section h2::before {
+  content: '📚';
+  font-size: 1.2em;
+}
+
+.category-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.category-card {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  border-radius: 16px;
+  padding: 25px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.category-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.category-card:hover::before {
+  opacity: 1;
+}
+
+.category-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  border-color: rgba(102, 126, 234, 0.2);
+}
+
+.category-card h3 {
+  font-size: 1.2em;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.category-card .count {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: 600;
+}
+
+.category-card p {
+  color: #6b7280;
+  font-size: 0.9em;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* 操作按钮区域 */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 15px 30px;
+  border-radius: 25px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.btn-secondary:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* 搜索结果区域 */
+.search-results-section {
+  display: none;
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  margin: 2em 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.search-results-section.show {
+  display: block;
+}
+
+.results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.results-header h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.results-header h2::before {
+  content: '🔍';
+  font-size: 1.2em;
+}
+
+.results-count {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9em;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+  font-weight: 600;
+}
+
+.clear-search-btn {
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clear-search-btn:hover {
+  background: rgba(220, 53, 69, 0.2);
+  transform: translateY(-1px);
+}
+
+/* 分类浏览区域 */
+.category-browse-section {
+  display: none;
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  margin: 2em 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.category-browse-section.show {
+  display: block;
+}
+
+.browse-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.browse-header h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.browse-header h2::before {
+  content: '📁';
+  font-size: 1.2em;
+}
+
+.browse-controls {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+#browse-search-input {
+  padding: 10px 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 25px;
+  font-size: 0.9em;
+  outline: none;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+#browse-search-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.back-to-search-btn {
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  color: #667eea;
+  padding: 10px 20px;
+  border-radius: 25px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-to-search-btn:hover {
+  background: rgba(102, 126, 234, 0.2);
+  transform: translateY(-1px);
+}
+
+/* 分类芯片与面包屑（美化版） */
+.cat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  margin: 8px 8px 8px 0;
+  border-radius: 12px;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  color: #4256d0;
+  background: linear-gradient(135deg, #f5f7ff, #f0f4ff);
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
+}
+.cat-chip:hover { 
+  background: linear-gradient(135deg, #edf0ff, #e0e7ff); 
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.4);
+}
+.cat-chip:active {
+  transform: translateY(0);
+}
+.cat-chip .count { 
+  background: linear-gradient(135deg, #667eea, #764ba2); 
+  color: #fff; 
+  padding: 4px 10px; 
+  border-radius: 10px; 
+  font-size: 0.85em;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+}
+.cat-breadcrumb { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 10px; 
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #f8f9fa, #f0f2f5);
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+}
+.cat-breadcrumb .crumb { 
+  color: #667eea; 
+  font-weight: 600; 
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+.cat-breadcrumb .crumb:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+.cat-breadcrumb .sep { 
+  color: #c0c4d6; 
+  font-weight: 600;
+}
+
+/* 层级过滤器（美化版） */
+.cat-filters { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 12px; 
+  margin: 20px 0 24px 0;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.03), rgba(118, 75, 162, 0.03));
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+.cat-filter-select { 
+  padding: 10px 16px; 
+  border: 2px solid #e2e8f0; 
+  border-radius: 10px; 
+  background: #fff; 
+  color: #374151; 
+  font-size: 0.95em; 
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+.cat-filter-select:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.15);
+}
+.cat-filter-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .search-hero {
+    margin: -2em -15px 2em -15px;
+    padding: 40px 0;
+  }
+  
+  .search-hero h1 {
+    font-size: 2.5em;
+  }
+  
+  .search-hero-subtitle {
+    font-size: 1.1em;
+  }
+  
+  .search-input-wrapper {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  #main-search-input, #search-btn {
+    border-radius: 25px;
+  }
+  
+  .category-cards {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    max-width: 300px;
+    justify-content: center;
+  }
+  
+  .browse-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  #browse-search-input {
+    min-width: auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-hero {
+    padding: 30px 0;
+    margin: -2em -10px 1.5em -10px;
+  }
+  
+  .search-hero h1 {
+    font-size: 2em;
+  }
+  
+  .search-hero-subtitle {
+    font-size: 1em;
+  }
+  
+  .quick-browse-section {
+    padding: 20px;
+  }
+  
+  .category-card {
+    padding: 20px;
+  }
+}
+</style>
+
+<div class="search-first-layout">
+  <!-- 搜索英雄区域 -->
+  <div class="search-hero">
+    <div class="search-hero-content">
+      <h1>🔍 搜索论文</h1>
+      <p class="search-hero-subtitle">从 {{ site.posts.size }} 篇论文中快速找到您需要的内容</p>
+      
+      <div class="search-input-container">
+        <div class="search-input-wrapper">
+          <input type="text" id="main-search-input" placeholder="输入关键词搜索论文...">
+          <button type="button" id="search-btn" onclick="window.__pc_search && window.__pc_search()">搜索</button>
+        </div>
+        
+        <!-- 搜索建议 -->
+        <div class="search-suggestions show" id="search-suggestions">
+          <div class="suggestion-item" onclick="window.__pc_fill && window.__pc_fill('Transformer')">Transformer</div>
+          <div class="suggestion-item" onclick="window.__pc_fill && window.__pc_fill('GPU优化')">GPU优化</div>
+          <div class="suggestion-item" onclick="window.__pc_fill && window.__pc_fill('分布式系统')">分布式系统</div>
+          <div class="suggestion-item" onclick="window.__pc_fill && window.__pc_fill('注意力机制')">注意力机制</div>
+          <div class="suggestion-item" onclick="window.__pc_fill && window.__pc_fill('性能优化')">性能优化</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 快速浏览区域 -->
+  <div class="quick-browse-section">
+    <h2>快速浏览</h2>
+    <div class="category-cards">
+      {%- for main_cat_entry in site.data.collection_structure limit: 6 -%}
+        {%- assign main_cat_name = main_cat_entry[0] -%}
+        {%- assign main_id = main_cat_name | slugify -%}
+        {%- assign total_posts = 0 -%}
+        {%- for post in site.posts -%}
+          {%- if post.categories contains main_cat_name -%}
+            {%- assign total_posts = total_posts | plus: 1 -%}
+          {%- endif -%}
+        {%- endfor -%}
+        
+        <div class="category-card" data-category="{{ main_id }}" data-category-name="{{ main_cat_name }}">
+          <h3>{{ main_cat_name | upcase }} <span class="count">{{ total_posts }}篇</span></h3>
+          <p>点击浏览该分类下的所有论文</p>
+        </div>
+      {%- endfor -%}
+    </div>
+    
+    <!-- 操作按钮 -->
+    <div class="action-buttons">
+      <button class="btn-primary" id="browse-all-btn">
+        📚 浏览所有论文
+      </button>
+      <button class="btn-secondary" id="advanced-search-btn">
+        🔍 高级搜索
+      </button>
+      <button class="btn-secondary" id="rss-subscribe-btn">
+        📡 RSS订阅
+      </button>
+    </div>
+  </div>
+
+  <!-- 搜索结果区域 -->
+  <div class="search-results-section" id="search-results">
+    <div class="results-header">
+      <h2>搜索结果</h2>
+      <span class="results-count" id="results-count">0篇</span>
+      <button class="clear-search-btn" id="clear-search-btn">清空搜索</button>
+    </div>
+    <div class="results-list" id="results-list">
+      <!-- 搜索结果将在这里显示 -->
+    </div>
+  </div>
+
+  <!-- 分类浏览区域 -->
+  <div class="category-browse-section" id="category-browse">
+    <div class="browse-header">
+      <h2>论文分类浏览</h2>
+      <div class="browse-controls">
+        <input type="text" id="browse-search-input" placeholder="在分类中搜索...">
+        <button class="back-to-search-btn" id="back-to-search-btn">返回搜索</button>
+      </div>
+    </div>
+    <!-- 移除下拉选择器，使用面包屑和分类芯片即可 -->
+    <!-- <div class="cat-filters" id="category-filters"></div> -->
+    <div class="categories-list" id="categories-list" style="margin-bottom: 20px;">
+      <!-- 分类列表将在这里显示 -->
+    </div>
+    <div class="browse-results" id="browse-results" style="margin-top: 30px; padding-top: 30px; border-top: 2px solid rgba(102, 126, 234, 0.1);">
+      <div class="browse-results-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="font-size: 1.3em; font-weight: 600; color: #2d3748; margin: 0; display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 1.2em;">📄</span>
+          <span>匹配的论文</span>
+        </h3>
+        <span class="results-count" id="browse-results-count" style="background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 0.9em; font-weight: 600; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">0篇</span>
+      </div>
+      <div class="results-list" id="browse-results-list">
+        <!-- 论文列表将在这里显示 -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+console.log('[collection-search-first] inline script loaded');
+// 预载入文章精简数据，使用 jsonify 保证合法 JSON
+(function(){
+  try {
+    window.PAPERCACHE_POSTS = [
+    {%- for post in site.posts -%}
+      {
+        title: {{ post.title | jsonify }},
+        url: {{ post.url | relative_url | jsonify }},
+        excerpt: {{ post.content | strip_html | strip_newlines | truncate: 240 | jsonify }},
+        tags: {{ post.tags | jsonify }},
+        categories: {{ post.categories | jsonify }}
+      }{%- if forloop.last == false -%},{%- endif -%}
+    {%- endfor -%}
+    ];
+    console.log('[collection-search-first] preload posts =', Array.isArray(window.PAPERCACHE_POSTS) ? window.PAPERCACHE_POSTS.length : 'N/A');
+  } catch (e) {
+    console.error('[collection-search-first] preload failed', e);
+    window.PAPERCACHE_POSTS = [];
+  }
+})();
+
+// 注入 baseurl 用于路径处理
+window.PC_BASEURL = {{ site.baseurl | jsonify }};
+// 注入缩略图映射与占位图
+window.PC_THUMBS = {{ site.data.thumbnails_by_path | jsonify }};
+window.PC_THUMB_FALLBACK = {{ '/assets/images/fallback-paper.svg' | relative_url | jsonify }};
+// 注入分类结构用于多级分类浏览
+window.PC_COLLECTION = {{ site.data.collection_structure | jsonify }};
+
+// 搜索优先模式管理
+class SearchFirstMode {
+  constructor() {
+    this.allPapers = [];
+    this.filteredPapers = [];
+    this.currentMode = 'search'; // 'search', 'browse', 'results'
+    this.currentCategoryPath = [];
+    
+    this.init();
+  }
+
+  async init() {
+    this.loadAllPapers();
+    this.bindEvents();
+    this.showSuggestions();
+  }
+
+  loadAllPapers() {
+    // 使用预载入的数据源，避免依赖页面已有 DOM
+    if (Array.isArray(window.PAPERCACHE_POSTS)) {
+      this.allPapers = window.PAPERCACHE_POSTS.map(p => ({
+        title: p.title || '',
+        excerpt: p.excerpt || '',
+        tags: Array.isArray(p.tags) ? p.tags : [],
+        categories: Array.isArray(p.categories) ? p.categories : [],
+        url: p.url || '#'
+      }));
+    } else {
+      this.allPapers = [];
+    }
+    console.log(`已预载入 ${this.allPapers.length} 篇论文数据用于本地搜索`);
+  }
+
+  bindEvents() {
+    // 搜索输入
+    const searchInput = document.getElementById('main-search-input');
+    const searchBtn = document.getElementById('search-btn');
+    
+    if (searchInput) {
+      searchInput.addEventListener('input', this.debounce((e) => {
+        this.handleSearchInput(e.target.value);
+      }, 300));
+      
+      searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          this.performSearch();
+        }
+      });
+    }
+    
+    if (searchBtn) {
+      searchBtn.addEventListener('click', () => {
+        this.performSearch();
+      });
+    }
+
+    // 搜索建议
+    const suggestions = document.querySelectorAll('.suggestion-item');
+    suggestions.forEach(suggestion => {
+      suggestion.addEventListener('click', () => {
+        const query = suggestion.getAttribute('data-query');
+        console.log('[collection-search-first] suggestion clicked:', query);
+        const si = document.getElementById('main-search-input');
+        if (si) si.value = query;
+        if (typeof this.performSearch === 'function') this.performSearch();
+      });
+    });
+
+    // 分类卡片
+    const categoryCards = document.querySelectorAll('.category-card');
+    categoryCards.forEach(card => {
+      card.addEventListener('click', (e) => {
+        // 阻止事件冒泡和默认行为，确保不会被外部脚本拦截
+        e.preventDefault();
+        e.stopPropagation();
+        // 优先使用原始分类名称，如果没有则使用slug
+        const categoryName = card.getAttribute('data-category-name');
+        const categorySlug = card.getAttribute('data-category');
+        const category = categoryName || categorySlug;
+        console.log('[collection-search-first] Category card clicked:', category);
+        this.showCategoryBrowse(category);
+      }, true); // 使用捕获阶段，确保优先处理
+    });
+
+    // 操作按钮
+    const browseAllBtn = document.getElementById('browse-all-btn');
+    const advancedSearchBtn = document.getElementById('advanced-search-btn');
+    const rssBtn = document.getElementById('rss-subscribe-btn');
+    
+    if (browseAllBtn) {
+      browseAllBtn.addEventListener('click', (e) => {
+        // 阻止事件冒泡和默认行为，确保不会被外部脚本拦截
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[collection-search-first] Browse all button clicked');
+        // 显示分类浏览界面，从根开始显示所有一级分类
+        this.showCategoryBrowse();
+      }, true); // 使用捕获阶段，确保优先处理
+    }
+    
+    if (advancedSearchBtn) {
+      advancedSearchBtn.addEventListener('click', () => {
+        // 跳转到高级搜索页面
+        window.location.href = '/search/';
+      });
+    }
+    
+    if (rssBtn) {
+      rssBtn.addEventListener('click', () => {
+        // 跳转到RSS页面
+        window.location.href = '/feed.xml';
+      });
+    }
+
+    // 清空搜索
+    const clearSearchBtn = document.getElementById('clear-search-btn');
+    if (clearSearchBtn) {
+      clearSearchBtn.addEventListener('click', () => {
+        this.clearSearch();
+      });
+    }
+
+    // 返回搜索
+    const backToSearchBtn = document.getElementById('back-to-search-btn');
+    if (backToSearchBtn) {
+      backToSearchBtn.addEventListener('click', () => {
+        this.showSearchMode();
+      });
+    }
+  }
+
+  showSuggestions() {
+    const suggestions = document.getElementById('search-suggestions');
+    if (suggestions) {
+      suggestions.classList.add('show');
+    }
+  }
+
+  handleSearchInput(query) {
+    if (query.length > 2) {
+      this.showSuggestions();
+    } else {
+      this.hideSuggestions();
+    }
+  }
+
+  hideSuggestions() {
+    const suggestions = document.getElementById('search-suggestions');
+    if (suggestions) {
+      suggestions.classList.remove('show');
+    }
+  }
+
+  async performSearch() {
+    console.log('[collection-search-first] performSearch called');
+    const query = document.getElementById('main-search-input').value.trim();
+    if (query.length < 2) {
+      alert('请输入至少2个字符进行搜索');
+      return;
+    }
+
+    // 优先调用后端API；失败时降级到前端本地匹配
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const resp = await fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+        signal: controller.signal
+      });
+      clearTimeout(timeout);
+
+      if (resp.ok) {
+        const data = await resp.json();
+        const apiResults = Array.isArray(data.results) ? data.results : [];
+        if (apiResults.length > 0) {
+          this.filteredPapers = apiResults.map(r => ({
+            title: r.title || r.name || 'Untitled',
+            excerpt: r.excerpt || r.summary || '',
+            url: r.url || r.link || '#',
+            tags: r.tags || []
+          }));
+          console.log('[collection-search-first] api results:', this.filteredPapers.length);
+          this.showSearchResults(query);
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn('调用 /api/search 失败，使用本地降级搜索:', e);
+    }
+
+    // 降级：在已加载的DOM中做简单包含匹配
+    const q = query.toLowerCase();
+    const tokens = q.split(/\s+/).filter(Boolean);
+    this.filteredPapers = this.allPapers.filter(paper => {
+      const hay = `${paper.title} ${paper.excerpt} ${paper.tags.join(' ')} ${paper.categories.join(' ')}`.toLowerCase();
+      return tokens.every(t => hay.includes(t));
+    });
+    console.log('[collection-search-first] local results:', this.filteredPapers.length);
+    this.showSearchResults(query);
+  }
+
+  showSearchResults(query, keepBrowse = false) {
+    this.currentMode = 'results';
+    this.hideSuggestions();
+    
+    // 隐藏其他区域（保留分类浏览时不隐藏）
+    document.querySelector('.quick-browse-section').style.display = 'none';
+    if (!keepBrowse) {
+      document.getElementById('category-browse').style.display = 'none';
+    } else {
+      const browseSection = document.getElementById('category-browse');
+      browseSection.classList.add('show');
+      browseSection.style.display = 'block';
+    }
+    
+    // 显示搜索结果
+    const resultsSection = document.getElementById('search-results');
+    const resultsCount = document.getElementById('results-count');
+    const resultsList = document.getElementById('results-list');
+    
+    resultsSection.classList.add('show');
+    resultsSection.style.display = 'block';
+    
+    if (resultsCount) {
+      resultsCount.textContent = `${this.filteredPapers.length}篇`;
+    }
+    
+    if (resultsList) {
+      resultsList.innerHTML = '';
+      
+      if (this.filteredPapers.length === 0) {
+        resultsList.innerHTML = `
+          <div style="text-align: center; padding: 40px; color: #6b7280;">
+            <h3>未找到相关论文</h3>
+            <p>尝试使用不同的关键词或浏览分类</p>
+          </div>
+        `;
+      } else {
+        this.filteredPapers.forEach(paper => {
+          const resultItem = this.createResultItem(paper);
+          resultsList.appendChild(resultItem);
+        });
+      }
+    }
+  }
+
+  showAllPapersResults() {
+    // 显示分类浏览界面（已废弃，统一使用 showCategoryBrowse）
+    this.showCategoryBrowse();
+  }
+
+  createResultItem(paper) {
+    const item = document.createElement('div');
+    item.className = 'post-card-modern';
+    
+    // 获取缩略图 - 使用与 search-first.js 相同的逻辑
+    const getThumb = (url) => {
+      const thumbs = window.PC_THUMBS || {};
+      const fallback = window.PC_THUMB_FALLBACK || '/assets/images/fallback-paper.svg';
+      if (!url) return fallback;
+      
+      // 规范化URL - 与 search-first.js 中的 normUrl 逻辑一致
+      const pathWithoutBase = (p) => {
+        try {
+          if (!p) return p;
+          if (!p.startsWith('/')) p = '/' + p;
+          const seg = p.split('/');
+          if (seg.length > 2) {
+            return '/' + seg.slice(2).join('/');
+          }
+          return p;
+        } catch(e) {
+          return p;
+        }
+      };
+      
+      try {
+        const a = document.createElement('a');
+        a.href = url;
+        let p = a.pathname || url;
+        if (!p.startsWith('/')) p = '/' + p;
+        
+        // 生成所有可能的URL变体
+        const candidates = [p];
+        candidates.push(pathWithoutBase(p));
+        
+        if (p.endsWith('/')) {
+          candidates.push(p.replace(/\/$/, '/index.html'));
+          candidates.push(pathWithoutBase(p.replace(/\/$/, '/index.html')));
+        }
+        
+        if (!/\.html?$/.test(p)) {
+          candidates.push(p + '.html');
+          candidates.push(pathWithoutBase(p + '.html'));
+        }
+        
+        // 去重
+        const uniqueCandidates = Array.from(new Set(candidates));
+        
+        // 尝试匹配
+        for (const candidate of uniqueCandidates) {
+          if (thumbs[candidate]) {
+            let thumbPath = thumbs[candidate];
+            
+            // 确保路径格式正确
+            if (!thumbPath.startsWith('/') && !thumbPath.startsWith('http')) {
+              thumbPath = '/' + thumbPath;
+            }
+            
+            // 如果有 baseurl（如 /papercache），需要添加到路径前
+            // 但前提是路径是站内路径（不是 http:// 开头）
+            if (!thumbPath.startsWith('http')) {
+              const baseurl = window.PC_BASEURL || '';
+              // 如果 baseurl 存在且不是根路径，且 thumbPath 不是以 baseurl 开头
+              if (baseurl && baseurl !== '/' && !thumbPath.startsWith(baseurl)) {
+                // 确保 baseurl 不以 / 结尾，thumbPath 以 / 开头
+                const normalizedBase = baseurl.endsWith('/') ? baseurl.slice(0, -1) : baseurl;
+                const normalizedThumb = thumbPath.startsWith('/') ? thumbPath : '/' + thumbPath;
+                thumbPath = normalizedBase + normalizedThumb;
+                console.log('[collection-search-first] Applied baseurl:', baseurl, '->', thumbPath);
+              }
+            }
+            
+            console.log('[collection-search-first] Found thumb for', url, '->', candidate, 'path:', thumbPath);
+            return thumbPath;
+          }
+        }
+      } catch(e) {
+        console.warn('[collection-search-first] Failed to normalize URL:', url, e);
+      }
+      
+      console.log('[collection-search-first] No thumb found for', url, 'using fallback');
+      return fallback;
+    };
+    
+    // 从 collection_structure.yml 中查找文章的 tag 字段
+    const getTagFromCollection = (url) => {
+      const collection = window.PC_COLLECTION || {};
+      if (!url || !collection) return null;
+      
+      // 规范化 URL（去掉 baseurl，确保匹配）
+      let normalizedUrl = url;
+      if (url.startsWith(window.PC_BASEURL || '')) {
+        normalizedUrl = url.substring((window.PC_BASEURL || '').length);
+      }
+      // 确保以 / 开头
+      if (!normalizedUrl.startsWith('/')) {
+        normalizedUrl = '/' + normalizedUrl;
+      }
+      
+      // 递归查找包含该 URL 的文章
+      const findPost = (node, path = []) => {
+        if (!node || typeof node !== 'object') return null;
+        
+        // 检查当前节点的 posts 数组
+        if (Array.isArray(node.posts)) {
+          for (const post of node.posts) {
+            let postUrl = post.url || '';
+            // 规范化 post URL
+            if (!postUrl.startsWith('/')) {
+              postUrl = '/' + postUrl;
+            }
+            // 精确匹配或去掉 baseurl 后匹配
+            if ((postUrl === normalizedUrl || postUrl === url) && post.tag) {
+              return post.tag;
+            }
+          }
+        }
+        
+        // 递归查找子节点
+        for (const key in node) {
+          if (key !== 'posts' && typeof node[key] === 'object') {
+            const result = findPost(node[key], path.concat(key));
+            if (result) return result;
+          }
+        }
+        
+        return null;
+      };
+      
+      return findPost(collection);
+    };
+    
+    // 选择标签：优先使用 collection_structure.yml 中的 tag 字段，否则使用 arXiv
+    const chooseTag = (p) => {
+      // 1. 优先从 collection_structure.yml 中查找 tag 字段
+      const collectionTag = getTagFromCollection(p.url);
+      if (collectionTag) {
+        return collectionTag.toString();
+      }
+      
+      // 2. 如果没有 tag 字段，使用 "arXiv" 作为默认标签
+      return 'arXiv';
+    };
+    
+    const thumb = getThumb(paper.url);
+    const tag = chooseTag(paper);
+    // 只有当标签是 "arXiv" 时应用绿色渐变样式
+    const isArxiv = tag && tag.toLowerCase() === 'arxiv';
+    const tagClass = isArxiv ? ' tag-arxiv' : '';
+    
+    item.innerHTML = `
+      <a href="${paper.url || '#'}" class="post-card-link-modern">
+        <div class="post-card-thumb-modern">
+          <img src="${thumb}" alt="thumbnail" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" />
+        </div>
+        <div class="post-card-body-modern">
+          <div class="post-card-meta-modern">
+            <span class="post-meta-modern">${new Date().toLocaleDateString()}</span>
+            ${tag ? `<span class="post-card-tag-modern${tagClass}">${tag}</span>` : ''}
+          </div>
+          <h3 class="post-card-title-modern">${(paper.title || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</h3>
+          <p class="post-card-excerpt-modern">${(paper.excerpt || '').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
+        </div>
+      </a>
+    `;
+    return item;
+  }
+
+  showCategoryBrowse(categoryId = null) {
+    console.log('[collection-search-first] showCategoryBrowse called with categoryId:', categoryId);
+    this.currentMode = 'browse';
+    
+    // 隐藏其他区域（包括快速浏览区域的分类卡片）
+    const quickSection = document.querySelector('.quick-browse-section');
+    const searchResults = document.getElementById('search-results');
+    // 隐藏快速浏览区域，因为分类浏览界面已经包含了所有一级分类
+    if (quickSection) quickSection.style.display = 'none';
+    if (searchResults) searchResults.style.display = 'none';
+    
+    // 显示分类浏览
+    const browseSection = document.getElementById('category-browse');
+    if (!browseSection) {
+      console.error('[collection-search-first] category-browse element not found!');
+      return;
+    }
+    browseSection.classList.add('show');
+    browseSection.style.display = 'block';
+    console.log('[collection-search-first] Category browse section shown');
+    
+    // 若点击了顶层分类卡片，则设定路径；否则从根开始显示
+    if (categoryId) {
+      // 如果 categoryId 是 slug，需要找到对应的原始分类名
+      const collection = window.PC_COLLECTION || {};
+      if (!collection || typeof collection !== 'object') {
+        console.error('[collection-search-first] PC_COLLECTION not available:', collection);
+      }
+      const topLevelKeys = Object.keys(collection || {}).filter(k => k !== 'posts');
+      console.log('[collection-search-first] Top level keys:', topLevelKeys);
+      // 尝试匹配 slug 或原始名称
+      let matchedKey = topLevelKeys.find(k => {
+        const slug = k.toLowerCase().replace(/\s+/g, '-');
+        return slug === categoryId || k.toLowerCase() === categoryId.toLowerCase();
+      });
+      this.currentCategoryPath = matchedKey ? [matchedKey] : [categoryId];
+      console.log('[collection-search-first] Matched key:', matchedKey, 'Final path:', this.currentCategoryPath);
+    } else {
+      // 从根开始显示所有一级分类
+      this.currentCategoryPath = [];
+      console.log('[collection-search-first] Starting from root, path:', this.currentCategoryPath);
+    }
+    // 渲染多级分类树（基于当前路径）并应用过滤
+    this.renderCategoryTree();
+    this.applyCategoryFilter();
+  }
+
+  renderCategoryTree(categoryId) {
+    try {
+      const container = document.getElementById('categories-list');
+      if (!container) return;
+      const collection = window.PC_COLLECTION || {};
+      container.innerHTML = '';
+      // 不再显示下拉选择器，因为面包屑和分类芯片已经足够直观
+      // this.renderCategoryFilters();
+
+      const getNodeByPath = (root, pathParts) => {
+        let node = root;
+        for (const p of pathParts) {
+          if (!node || typeof node !== 'object') return null;
+          // 尝试精确匹配，如果失败则尝试不区分大小写匹配
+          if (node[p] !== undefined) {
+            node = node[p];
+          } else {
+            // 不区分大小写匹配
+            const lowerKey = p.toLowerCase();
+            const matchedKey = Object.keys(node).find(k => k.toLowerCase() === lowerKey);
+            if (matchedKey) {
+              node = node[matchedKey];
+            } else {
+              return null;
+            }
+          }
+        }
+        return node || null;
+      };
+
+      // 以 currentCategoryPath 为准；若为空且传入了 categoryId，则用 [categoryId]
+      const startPath = (this.currentCategoryPath && this.currentCategoryPath.length)
+        ? this.currentCategoryPath.slice()
+        : (categoryId ? [categoryId] : []);
+      
+      // 如果 startPath 不为空，尝试找到匹配的节点
+      let startNode = collection;
+      if (startPath.length) {
+        startNode = getNodeByPath(collection, startPath);
+        // 如果找不到精确匹配，尝试不区分大小写查找一级分类
+        if (!startNode && startPath.length === 1) {
+          const targetKey = startPath[0].toLowerCase();
+          const matchedTopKey = Object.keys(collection).find(k => k.toLowerCase() === targetKey);
+          if (matchedTopKey) {
+            startNode = collection[matchedTopKey];
+            this.currentCategoryPath = [matchedTopKey]; // 更新路径为正确的键名
+          }
+        }
+      }
+
+      // 面包屑：使用更新后的 currentCategoryPath 以确保路径正确
+      // 只有当选择了分类时才显示面包屑
+      const parts = (this.currentCategoryPath && this.currentCategoryPath.length) 
+        ? this.currentCategoryPath.slice() 
+        : startPath;
+      if (parts.length > 0) {
+        const bc = document.createElement('div');
+        bc.className = 'cat-breadcrumb';
+        let acc = [];
+        parts.forEach((p, idx) => {
+          acc.push(p);
+          const crumb = document.createElement('span');
+          crumb.className = 'crumb';
+          crumb.textContent = p;
+          crumb.style.cursor = 'pointer';
+          crumb.addEventListener('click', (e) => {
+            // 阻止事件冒泡
+            e.preventDefault();
+            e.stopPropagation();
+            // 设置路径为点击的面包屑项对应的路径
+            const targetPath = acc.slice(0, idx + 1);
+            console.log('[collection-search-first] Breadcrumb clicked, path:', targetPath);
+            this.currentCategoryPath = targetPath;
+            // 重新渲染分类树（不传参数，使用 currentCategoryPath）
+            this.renderCategoryTree();
+            this.applyCategoryFilter();
+          });
+          bc.appendChild(crumb);
+          if (idx < parts.length - 1) {
+            const sep = document.createElement('span'); sep.className='sep'; sep.textContent = '›'; bc.appendChild(sep);
+          }
+        });
+        container.appendChild(bc);
+      }
+      // 如果没有选择分类（parts为空），不显示面包屑
+
+      // 当前层的所有子类渲染为"芯片"
+      if (!startNode || typeof startNode !== 'object') {
+        console.warn('[collection-search-first] startNode is invalid:', startNode, 'startPath:', startPath);
+        container.innerHTML += '<div style="padding: 20px; color: #999;">未找到分类或分类为空</div>';
+        return;
+      }
+      
+      const childKeys = Object.keys(startNode).filter(k => k !== 'posts');
+      
+      // 如果有子分类，显示分类芯片；如果没有，则不显示任何提示（因为面包屑已经说明了位置）
+      if (childKeys.length > 0) {
+        const wrap = document.createElement('div');
+        wrap.style.display = 'flex';
+        wrap.style.flexWrap = 'wrap';
+        wrap.style.gap = '8px';
+        wrap.style.marginBottom = '20px';
+        
+        childKeys.forEach(k => {
+          const chip = document.createElement('button');
+          chip.className = 'cat-chip';
+          chip.innerHTML = `<span>${k}</span>`;
+          // 统计数量：统计包含当前路径 + k 的所有论文
+          const currentPathForCount = (this.currentCategoryPath && this.currentCategoryPath.length) 
+            ? this.currentCategoryPath.slice() 
+            : startPath;
+          const targetPath = currentPathForCount.length ? currentPathForCount.concat(k) : [k];
+          const count = (this.allPapers || []).filter(p => {
+            const cats = Array.isArray(p.categories) ? p.categories : [];
+            // 检查 categories 数组是否以 targetPath 开头
+            if (cats.length < targetPath.length) return false;
+            for (let i = 0; i < targetPath.length; i++) {
+              if (cats[i]?.toLowerCase() !== targetPath[i]?.toLowerCase()) return false;
+            }
+            return true;
+          }).length;
+          const cnt = document.createElement('span'); cnt.className='count'; cnt.textContent = `${count}`; chip.appendChild(cnt);
+          chip.addEventListener('click', () => {
+            // 使用当前正确的路径（parts）而不是 startPath
+            const currentPath = (this.currentCategoryPath && this.currentCategoryPath.length) 
+              ? this.currentCategoryPath.slice() 
+              : startPath;
+            this.currentCategoryPath = currentPath.concat(k);
+            console.log('[collection-search-first] Category clicked, new path:', this.currentCategoryPath);
+            // 深一层重新渲染与过滤（基于 currentCategoryPath）
+            this.renderCategoryTree();
+            this.applyCategoryFilter();
+          });
+          wrap.appendChild(chip);
+        });
+        container.appendChild(wrap);
+      }
+      // 如果没有子分类，直接显示该分类下的论文列表即可
+
+      // 绑定分类内搜索
+      const inp = document.getElementById('browse-search-input');
+      if (inp && !inp.__pc_bound) {
+        inp.__pc_bound = true;
+        inp.addEventListener('input', this.debounce(() => {
+          this.applyCategoryFilter();
+        }, 300));
+      }
+    } catch (e) {
+      console.error('[collection-search-first] renderCategoryTree failed:', e);
+    }
+  }
+
+  renderCategoryFilters() {
+    try {
+      const bar = document.getElementById('category-filters');
+      if (!bar) return;
+      const root = window.PC_COLLECTION || {};
+      const current = this.currentCategoryPath || [];
+      bar.innerHTML='';
+
+      // 构建每一层的下拉：第 i 层的可选项为 parentPath 的所有子键
+      const getNode = (node, path) => {
+        let n = node; for(const p of path){ if(!n||typeof n!=='object') return null; n=n[p]; } return n;
+      };
+
+      // 生成层级（至少顶层一个选择器）
+      const levels = Math.max(1, current.length + 1);
+      for (let i = 0; i < levels; i++) {
+        const parentPath = current.slice(0, i);
+        const parentNode = i === 0 ? root : getNode(root, parentPath);
+        if (!parentNode || typeof parentNode !== 'object') break;
+        const keys = Object.keys(parentNode).filter(k => k !== 'posts');
+        if (!keys.length) break;
+
+        const select = document.createElement('select');
+        select.className = 'cat-filter-select';
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = i === 0 ? '选择顶层分类' : `选择第${i+1}层`; 
+        select.appendChild(placeholder);
+        keys.forEach(k => {
+          const opt = document.createElement('option');
+          opt.value = k; opt.textContent = k;
+          if (current[i] && current[i].toLowerCase() === k.toLowerCase()) opt.selected = true;
+          select.appendChild(opt);
+        });
+        select.addEventListener('change', () => {
+          const val = select.value;
+          const nextPath = current.slice(0, i);
+          if (val) nextPath.push(val);
+          this.currentCategoryPath = nextPath;
+          this.renderCategoryTree();
+          this.applyCategoryFilter();
+        });
+        bar.appendChild(select);
+        if (!current[i]) break; // 当前层未选择，不再往下生成
+      }
+    } catch(e) { console.error('[collection-search-first] renderCategoryFilters failed', e); }
+  }
+  applyCategoryFilter() {
+    const query = (document.getElementById('browse-search-input')?.value || '').trim().toLowerCase();
+    const tokens = query.split(/\s+/).filter(Boolean);
+    const path = this.currentCategoryPath || [];
+
+    const matchByPath = (paper) => {
+      if (path.length === 0) return true;
+      // 1) 基于 URL 的前缀匹配（更鲁棒）
+      try {
+        const a = document.createElement('a'); a.href = paper.url || '#';
+        const pathname = (a.pathname || '').replace(/\/$/, '');
+        const want = ('/papers/' + path.join('/')).replace(/\/+/, '/');
+        if (pathname.startsWith(want)) return true;
+      } catch(_) {}
+      // 2) 回退到 categories 顺序前缀匹配
+      const cats = Array.isArray(paper.categories) ? paper.categories : [];
+      if (cats.length < path.length) return false;
+      for (let i = 0; i < path.length; i++) {
+        if ((cats[i] || '').toLowerCase() !== (path[i] || '').toLowerCase()) return false;
+      }
+      return true;
+    };
+
+    const list = this.allPapers.filter(p => matchByPath(p)).filter(p => {
+      if (!tokens.length) return true;
+      const hay = `${p.title} ${p.excerpt} ${p.tags.join(' ')} ${p.categories.join(' ')}`.toLowerCase();
+      return tokens.every(t => hay.includes(t));
+    });
+
+    this.filteredPapers = list;
+    // 在分类浏览模式下，在分类浏览区域内显示结果，而不是调用 showSearchResults
+    this.renderBrowseResults();
+  }
+  
+  renderBrowseResults() {
+    const resultsList = document.getElementById('browse-results-list');
+    const resultsCount = document.getElementById('browse-results-count');
+    const resultsContainer = document.getElementById('browse-results');
+    
+    // 如果没有选择分类（路径为空），隐藏结果区域
+    const path = this.currentCategoryPath || [];
+    if (path.length === 0) {
+      if (resultsContainer) {
+        resultsContainer.style.display = 'none';
+      }
+      return;
+    }
+    
+    // 如果结果为空，也隐藏结果区域（避免显示空白区域）
+    if (!this.filteredPapers || this.filteredPapers.length === 0) {
+      if (resultsContainer) {
+        resultsContainer.style.display = 'none';
+      }
+      return;
+    }
+    
+    // 有选择分类且有结果时，显示结果区域
+    if (resultsContainer) {
+      resultsContainer.style.display = 'block';
+    }
+    
+    if (resultsCount) {
+      resultsCount.textContent = `${this.filteredPapers.length}篇`;
+    }
+    
+    if (resultsList) {
+      resultsList.innerHTML = '';
+      
+      if (this.filteredPapers.length === 0) {
+        resultsList.innerHTML = `
+          <div style="text-align: center; padding: 40px; color: #6b7280;">
+            <h3>未找到相关论文</h3>
+            <p>尝试选择不同的分类或使用搜索</p>
+          </div>
+        `;
+      } else {
+        // 设置网格样式
+        resultsList.style.display = 'grid';
+        resultsList.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+        resultsList.style.gap = '20px';
+        resultsList.className = 'post-grid-modern';
+        
+        this.filteredPapers.forEach(paper => {
+          const resultItem = this.createResultItem(paper);
+          resultsList.appendChild(resultItem);
+        });
+      }
+    }
+  }
+
+  showSearchMode() {
+    this.currentMode = 'search';
+    
+    // 隐藏其他区域
+    const searchResults = document.getElementById('search-results');
+    const categoryBrowse = document.getElementById('category-browse');
+    if (searchResults) searchResults.style.display = 'none';
+    if (categoryBrowse) {
+      categoryBrowse.style.display = 'none';
+      categoryBrowse.classList.remove('show');
+    }
+    
+    // 显示搜索区域（包括快速浏览区域的分类卡片）
+    const quickSection = document.querySelector('.quick-browse-section');
+    if (quickSection) quickSection.style.display = 'block';
+  }
+
+  clearSearch() {
+    document.getElementById('main-search-input').value = '';
+    this.showSearchMode();
+  }
+
+  debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+}
+
+// 自动初始化
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('[collection-search-first] DOMContentLoaded');
+  try {
+    window.searchFirstMode = new SearchFirstMode();
+    // 全局兜底函数，避免事件绑定被外部脚本阻断
+    window.__pc_search = function() {
+      try {
+        console.log('[collection-search-first] __pc_search()');
+        if (window.searchFirstMode) {
+          window.searchFirstMode.performSearch();
+        }
+      } catch (e) { console.error(e); }
+    };
+    window.__pc_fill = function(q) {
+      try {
+        console.log('[collection-search-first] __pc_fill()', q);
+        var si = document.getElementById('main-search-input');
+        if (si) si.value = q || '';
+        if (window.searchFirstMode) {
+          window.searchFirstMode.performSearch();
+        }
+      } catch (e) { console.error(e); }
+    };
+    const btn = document.getElementById('search-btn');
+    if (btn) {
+      btn.onclick = function() {
+        if (window.searchFirstMode) {
+          window.searchFirstMode.performSearch();
+        }
+      };
+    }
+  } catch (e) {
+    console.error('[collection-search-first] init failed:', e);
+  }
+});
+</script>
+
+<!-- 独立脚本，确保在PJAX/局部刷新下也能绑定事件 -->
+<script src="{{ '/assets/js/search-first.js' | relative_url }}" defer></script>
+
+<!-- 引入卡片样式，确保搜索结果使用与原页面一致的风格 -->
+<link rel="preload" href="{{ '/assets/css/post-preview.css' | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" href="{{ '/assets/css/modern-collection.css' | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript>
+  <link rel="stylesheet" href="{{ '/assets/css/post-preview.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/assets/css/modern-collection.css' | relative_url }}">
+  </noscript>
+

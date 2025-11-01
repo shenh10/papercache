@@ -49,6 +49,7 @@ header_pages:
   - 02-collection.html
   - 03-about.markdown
   - 04-slides.html
+  - 05-search.html
 
 # Jekyll Feed 配置 - 包含所有文章
 jekyll-feed:

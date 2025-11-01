@@ -1,0 +1,241 @@
+<!-- 搜索按钮 - 可放在导航栏中 -->
+<button class="search-toggle-btn" id="search-toggle-btn" title="搜索论文">
+  <span class="search-icon">🔍</span>
+  <span class="search-text">搜索</span>
+</button>
+
+<!-- 搜索模态框 -->
+<div class="search-modal" id="search-modal">
+  <div class="search-modal-content">
+    <div class="search-modal-header">
+      <h3>🔍 搜索论文</h3>
+      <button class="search-modal-close" id="search-modal-close">✕</button>
+    </div>
+    <div class="search-modal-body">
+      {% include search-widget.html %}
+    </div>
+  </div>
+</div>
+
+<style>
+/* 搜索按钮样式 */
+.search-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0,123,255,0.3);
+}
+
+.search-toggle-btn:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,123,255,0.4);
+}
+
+.search-icon {
+  font-size: 16px;
+}
+
+.search-text {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .search-text {
+    display: inline;
+  }
+}
+
+/* 搜索模态框样式 */
+.search-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  z-index: 9999;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.search-modal.active {
+  display: flex;
+  opacity: 1;
+}
+
+.search-modal-content {
+  background: white;
+  margin: 5% auto;
+  width: 90%;
+  max-width: 1000px;
+  max-height: 80vh;
+  border-radius: 15px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  overflow: hidden;
+  transform: translateY(-20px);
+  transition: transform 0.3s ease;
+}
+
+.search-modal.active .search-modal-content {
+  transform: translateY(0);
+}
+
+.search-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.search-modal-header h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.search-modal-close {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s;
+}
+
+.search-modal-close:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.search-modal-body {
+  padding: 30px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+/* 在模态框中调整搜索组件样式 */
+.search-modal .search-widget {
+  margin: 0;
+}
+
+.search-modal .search-input-wrapper {
+  max-width: none;
+}
+
+.search-modal .search-results-widget {
+  margin-top: 20px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .search-modal-content {
+    margin: 10% auto;
+    width: 95%;
+    max-height: 85vh;
+  }
+  
+  .search-modal-header {
+    padding: 15px 20px;
+  }
+  
+  .search-modal-header h3 {
+    font-size: 20px;
+  }
+  
+  .search-modal-body {
+    padding: 20px;
+  }
+}
+</style>
+
+<script>
+// 搜索模态框 JavaScript
+class SearchModal {
+  constructor() {
+    this.modal = document.getElementById('search-modal');
+    this.toggleBtn = document.getElementById('search-toggle-btn');
+    this.closeBtn = document.getElementById('search-modal-close');
+    
+    this.init();
+  }
+
+  init() {
+    if (this.toggleBtn) {
+      this.toggleBtn.addEventListener('click', () => {
+        this.openModal();
+      });
+    }
+
+    if (this.closeBtn) {
+      this.closeBtn.addEventListener('click', () => {
+        this.closeModal();
+      });
+    }
+
+    // 点击模态框背景关闭
+    if (this.modal) {
+      this.modal.addEventListener('click', (e) => {
+        if (e.target === this.modal) {
+          this.closeModal();
+        }
+      });
+    }
+
+    // ESC 键关闭
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.modal && this.modal.classList.contains('active')) {
+        this.closeModal();
+      }
+    });
+  }
+
+  openModal() {
+    if (this.modal) {
+      this.modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      
+      // 聚焦到搜索输入框
+      setTimeout(() => {
+        const searchInput = this.modal.querySelector('#search-widget-input');
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }, 300);
+    }
+  }
+
+  closeModal() {
+    if (this.modal) {
+      this.modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+  }
+}
+
+// 自动初始化
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('search-toggle-btn')) {
+    window.searchModal = new SearchModal();
+  }
+});
+</script>
+

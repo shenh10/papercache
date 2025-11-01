@@ -1,0 +1,541 @@
+---
+layout: collection
+---
+
+<!-- 懒加载优化版本 - 解决导航尴尬问题 -->
+<style>
+/* 保留原有的所有样式，添加懒加载优化 */
+.collection-page {
+  min-height: 100vh;
+}
+
+/* 懒加载占位符 */
+.paper-card-placeholder {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* 加载状态指示器 */
+.loading-indicator {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-size: 14px;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 搜索模式切换 */
+.search-mode-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: white;
+  border: 2px solid #007bff;
+  border-radius: 25px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #007bff;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.search-mode-toggle:hover {
+  background: #007bff;
+  color: white;
+}
+
+/* 简化的导航样式 */
+.simplified-nav {
+  background: #f8f9fa;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+}
+
+.nav-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.nav-stat-item {
+  text-align: center;
+  padding: 10px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  min-width: 100px;
+}
+
+.nav-stat-number {
+  display: block;
+  font-size: 18px;
+  font-weight: bold;
+  color: #007bff;
+  margin-bottom: 5px;
+}
+
+.nav-stat-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.quick-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.quick-filter-btn {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.quick-filter-btn:hover {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.quick-filter-btn.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+/* 搜索覆盖层 */
+.search-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  z-index: 9999;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.search-overlay.active {
+  display: flex;
+  opacity: 1;
+}
+
+.search-overlay-content {
+  background: white;
+  margin: 5% auto;
+  width: 90%;
+  max-width: 1000px;
+  max-height: 80vh;
+  border-radius: 15px;
+  overflow: hidden;
+  transform: translateY(-20px);
+  transition: transform 0.3s ease;
+}
+
+.search-overlay.active .search-overlay-content {
+  transform: translateY(0);
+}
+
+.search-overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+}
+
+.search-overlay-close {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .search-mode-toggle {
+    top: 10px;
+    right: 10px;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .search-overlay-content {
+    margin: 10% auto;
+    width: 95%;
+  }
+  
+  .nav-stats {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .quick-filters {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+</style>
+
+<div class="collection-page">
+  <!-- 搜索模式切换按钮 -->
+  <button class="search-mode-toggle" id="search-mode-toggle">
+    🔍 搜索模式
+  </button>
+
+  <!-- 搜索覆盖层 -->
+  <div class="search-overlay" id="search-overlay">
+    <div class="search-overlay-content">
+      <div class="search-overlay-header">
+        <h3>🔍 高级搜索</h3>
+        <button class="search-overlay-close" id="search-overlay-close">✕</button>
+      </div>
+      <div class="search-overlay-body" style="padding: 30px;">
+        {% include search-widget.html %}
+      </div>
+    </div>
+  </div>
+
+  <!-- 简化的导航区域 -->
+  <div class="simplified-nav">
+    <div class="nav-stats">
+      <div class="nav-stat-item">
+        <span class="nav-stat-number" id="current-loaded">0</span>
+        <span class="nav-stat-label">已加载</span>
+      </div>
+      <div class="nav-stat-item">
+        <span class="nav-stat-number">{{ site.posts.size }}</span>
+        <span class="nav-stat-label">总论文数</span>
+      </div>
+      <div class="nav-stat-item">
+        <span class="nav-stat-number" id="load-time">0</span>
+        <span class="nav-stat-label">加载时间(ms)</span>
+      </div>
+    </div>
+    
+    <div class="quick-filters">
+      <button class="quick-filter-btn active" data-filter="all">全部论文</button>
+      <button class="quick-filter-btn" data-filter="llm">LLM</button>
+      <button class="quick-filter-btn" data-filter="mlsys">ML系统</button>
+      <button class="quick-filter-btn" data-filter="diffusions">扩散模型</button>
+    </div>
+  </div>
+
+  <!-- 保留原有的所有内容，但添加懒加载 -->
+  <div class="collection-hero">
+    <div class="collection-hero-content">
+      <h1>{{ page.title }}</h1>
+      <p class="collection-hero-subtitle">探索最新的学术论文和研究发现</p>
+      
+      <div class="collection-stats">
+        <div class="stat-item">
+          <span class="stat-number">{{ site.posts.size }}</span>
+          <span class="stat-label">论文总数</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ site.categories.size }}</span>
+          <span class="stat-label">分类数量</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-number">{{ site.tags.size }}</span>
+          <span class="stat-label">标签数量</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 论文列表容器 - 添加懒加载 -->
+  <div class="wrapper">
+    <div class="collection-content" id="collection-content">
+      <!-- 论文卡片将通过JavaScript懒加载 -->
+    </div>
+    
+    <!-- 加载更多按钮 -->
+    <div class="load-more-container" id="load-more-container">
+      <button class="load-more-btn" id="load-more-btn">
+        <span class="btn-text">加载更多论文</span>
+        <span class="btn-loading" style="display: none;">
+          <span class="loading-spinner"></span>加载中...
+        </span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 浮动回到顶部按钮 -->
+  <button class="back-to-top" id="back-to-top" title="回到顶部">
+    <span class="back-to-top-icon">↑</span>
+  </button>
+</div>
+
+<script>
+// 懒加载优化的论文列表管理
+class LazyLoadCollection {
+  constructor() {
+    this.posts = [];
+    this.currentPage = 0;
+    this.postsPerPage = 20;
+    this.isLoading = false;
+    this.startTime = performance.now();
+    this.currentFilter = 'all';
+    
+    this.init();
+  }
+
+  async init() {
+    this.loadPostsData();
+    this.bindEvents();
+    this.loadInitialPosts();
+    this.initSearchOverlay();
+  }
+
+  loadPostsData() {
+    // 从Jekyll数据中提取所有论文
+    this.posts = Array.from(document.querySelectorAll('.post-item')).map(item => ({
+      element: item,
+      title: item.querySelector('.post-title')?.textContent || '',
+      categories: item.dataset.categories?.split(',') || [],
+      tags: item.dataset.tags?.split(',') || [],
+      date: item.dataset.date || '',
+      url: item.querySelector('.post-link')?.href || ''
+    }));
+  }
+
+  bindEvents() {
+    // 加载更多按钮
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', () => {
+        this.loadMorePosts();
+      });
+    }
+
+    // 快速过滤按钮
+    document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.setActiveFilter(btn);
+        this.filterPosts(btn.dataset.filter);
+      });
+    });
+
+    // 回到顶部按钮
+    const backToTop = document.getElementById('back-to-top');
+    if (backToTop) {
+      backToTop.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+
+    // 滚动监听
+    window.addEventListener('scroll', () => {
+      this.handleScroll();
+    });
+  }
+
+  setActiveFilter(activeBtn) {
+    document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+      btn.classList.remove('active');
+    });
+    activeBtn.classList.add('active');
+    this.currentFilter = activeBtn.dataset.filter;
+  }
+
+  filterPosts(filter) {
+    const container = document.getElementById('collection-content');
+    if (!container) return;
+
+    // 清空容器
+    container.innerHTML = '';
+    this.currentPage = 0;
+
+    // 过滤论文
+    let filteredPosts = this.posts;
+    if (filter !== 'all') {
+      filteredPosts = this.posts.filter(post => 
+        post.categories.some(cat => cat.toLowerCase().includes(filter.toLowerCase()))
+      );
+    }
+
+    // 重新设置论文数据
+    this.posts = filteredPosts;
+    this.loadInitialPosts();
+  }
+
+  loadInitialPosts() {
+    this.loadPosts(0, this.postsPerPage);
+  }
+
+  async loadMorePosts() {
+    if (this.isLoading) return;
+    
+    this.isLoading = true;
+    const btn = document.getElementById('load-more-btn');
+    const btnText = btn.querySelector('.btn-text');
+    const btnLoading = btn.querySelector('.btn-loading');
+    
+    btnText.style.display = 'none';
+    btnLoading.style.display = 'inline';
+    btn.disabled = true;
+
+    // 模拟加载延迟
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const startIndex = (this.currentPage + 1) * this.postsPerPage;
+    const endIndex = Math.min(startIndex + this.postsPerPage, this.posts.length);
+    
+    this.loadPosts(startIndex, endIndex);
+    this.currentPage++;
+
+    // 更新按钮状态
+    btnText.style.display = 'inline';
+    btnLoading.style.display = 'none';
+    btn.disabled = false;
+    
+    if (endIndex >= this.posts.length) {
+      btn.style.display = 'none';
+    }
+
+    this.isLoading = false;
+    this.updateStats();
+  }
+
+  loadPosts(startIndex, endIndex) {
+    const container = document.getElementById('collection-content');
+    if (!container) return;
+
+    const fragment = document.createDocumentFragment();
+    
+    for (let i = startIndex; i < endIndex && i < this.posts.length; i++) {
+      const post = this.posts[i];
+      const postElement = post.element.cloneNode(true);
+      postElement.style.display = 'block';
+      fragment.appendChild(postElement);
+    }
+
+    container.appendChild(fragment);
+    this.updateStats();
+  }
+
+  handleScroll() {
+    const backToTop = document.getElementById('back-to-top');
+    if (backToTop) {
+      if (window.scrollY > 300) {
+        backToTop.style.display = 'block';
+      } else {
+        backToTop.style.display = 'none';
+      }
+    }
+
+    // 自动加载更多
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000) {
+      this.loadMorePosts();
+    }
+  }
+
+  initSearchOverlay() {
+    const searchToggle = document.getElementById('search-mode-toggle');
+    const searchOverlay = document.getElementById('search-overlay');
+    const searchClose = document.getElementById('search-overlay-close');
+
+    if (searchToggle && searchOverlay) {
+      searchToggle.addEventListener('click', () => {
+        searchOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        setTimeout(() => {
+          const searchInput = searchOverlay.querySelector('#search-widget-input');
+          if (searchInput) {
+            searchInput.focus();
+          }
+        }, 300);
+      });
+    }
+
+    if (searchClose && searchOverlay) {
+      searchClose.addEventListener('click', () => {
+        searchOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+      });
+    }
+
+    if (searchOverlay) {
+      searchOverlay.addEventListener('click', (e) => {
+        if (e.target === searchOverlay) {
+          searchOverlay.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      });
+    }
+  }
+
+  updateStats() {
+    const currentLoaded = document.getElementById('current-loaded');
+    const loadTime = document.getElementById('load-time');
+
+    if (currentLoaded) {
+      const loaded = Math.min((this.currentPage + 1) * this.postsPerPage, this.posts.length);
+      currentLoaded.textContent = loaded;
+    }
+
+    if (loadTime) {
+      const currentTime = performance.now();
+      loadTime.textContent = Math.round(currentTime - this.startTime);
+    }
+  }
+}
+
+// 自动初始化
+document.addEventListener('DOMContentLoaded', () => {
+  window.lazyLoadCollection = new LazyLoadCollection();
+});
+</script>
+
+<!-- 加载调试脚本 -->
+<script src="{{ '/assets/js/search-debug.js' | relative_url }}" defer></script>
+

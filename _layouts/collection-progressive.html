@@ -1,0 +1,427 @@
+---
+layout: collection-modern
+---
+
+<!-- 渐进式加载优化 - 保持原有设计，添加性能优化 -->
+<style>
+/* 搜索模式切换 */
+.search-mode-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: white;
+  border: 2px solid #007bff;
+  border-radius: 25px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #007bff;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.search-mode-toggle:hover {
+  background: #007bff;
+  color: white;
+}
+
+/* 加载状态指示器 */
+.loading-indicator {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+  font-size: 14px;
+  display: none;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 加载更多按钮 */
+.load-more-container {
+  text-align: center;
+  margin: 40px 0;
+  display: none;
+}
+
+.load-more-btn {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0,123,255,0.3);
+}
+
+.load-more-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,123,255,0.4);
+}
+
+.load-more-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 性能统计 */
+.performance-stats {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(0,0,0,0.8);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 12px;
+  z-index: 1000;
+  display: none;
+}
+
+/* 搜索覆盖层 */
+.search-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  z-index: 9999;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.search-overlay.active {
+  display: flex;
+  opacity: 1;
+}
+
+.search-overlay-content {
+  background: white;
+  margin: 5% auto;
+  width: 90%;
+  max-width: 1000px;
+  max-height: 80vh;
+  border-radius: 15px;
+  overflow: hidden;
+  transform: translateY(-20px);
+  transition: transform 0.3s ease;
+}
+
+.search-overlay.active .search-overlay-content {
+  transform: translateY(0);
+}
+
+.search-overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+}
+
+.search-overlay-close {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .search-mode-toggle {
+    top: 10px;
+    right: 10px;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .search-overlay-content {
+    margin: 10% auto;
+    width: 95%;
+  }
+}
+</style>
+
+<!-- 搜索模式切换按钮 -->
+<button class="search-mode-toggle" id="search-mode-toggle">
+  🔍 搜索模式
+</button>
+
+<!-- 加载状态指示器 -->
+<div class="loading-indicator" id="loading-indicator">
+  <span class="loading-spinner"></span>正在加载更多论文...
+</div>
+
+<!-- 加载更多按钮 -->
+<div class="load-more-container" id="load-more-container">
+  <button class="load-more-btn" id="load-more-btn">
+    <span class="btn-text">加载更多论文</span>
+    <span class="btn-loading" style="display: none;">
+      <span class="loading-spinner"></span>加载中...
+    </span>
+  </button>
+</div>
+
+<!-- 性能统计 -->
+<div class="performance-stats" id="performance-stats">
+  <div>已加载: <span id="loaded-count">0</span> / <span id="total-count">0</span></div>
+  <div>加载时间: <span id="load-time">0</span>ms</div>
+</div>
+
+<!-- 搜索覆盖层 -->
+<div class="search-overlay" id="search-overlay">
+  <div class="search-overlay-content">
+    <div class="search-overlay-header">
+      <h3>🔍 高级搜索</h3>
+      <button class="search-overlay-close" id="search-overlay-close">✕</button>
+    </div>
+    <div class="search-overlay-body" style="padding: 30px;">
+      {% include search-widget.html %}
+    </div>
+  </div>
+</div>
+
+<script>
+// 渐进式加载优化
+class ProgressiveLoadCollection {
+  constructor() {
+    this.postSections = [];
+    this.currentPage = 0;
+    this.postsPerPage = 3; // 每次加载3个分类
+    this.isLoading = false;
+    this.startTime = performance.now();
+    this.totalSections = 0;
+    
+    this.init();
+  }
+
+  async init() {
+    this.collectPostSections();
+    this.bindEvents();
+    this.loadInitialSections();
+    this.initSearchOverlay();
+  }
+
+  collectPostSections() {
+    // 收集所有包含论文的分类区域
+    this.postSections = Array.from(document.querySelectorAll('.post-section')).map(section => ({
+      element: section,
+      posts: section.querySelectorAll('.post-item').length,
+      visible: false
+    }));
+    
+    this.totalSections = this.postSections.length;
+    console.log(`找到 ${this.totalSections} 个论文分类区域`);
+  }
+
+  bindEvents() {
+    // 加载更多按钮
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener('click', () => {
+        this.loadMoreSections();
+      });
+    }
+
+    // 回到顶部按钮
+    const backToTop = document.getElementById('back-to-top');
+    if (backToTop) {
+      backToTop.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    }
+
+    // 滚动监听
+    window.addEventListener('scroll', () => {
+      this.handleScroll();
+    });
+  }
+
+  loadInitialSections() {
+    // 初始加载前几个分类
+    const initialCount = Math.min(this.postsPerPage, this.totalSections);
+    for (let i = 0; i < initialCount; i++) {
+      this.showSection(i);
+    }
+    
+    this.currentPage = 1;
+    this.updateUI();
+  }
+
+  async loadMoreSections() {
+    if (this.isLoading) return;
+    
+    this.isLoading = true;
+    this.showLoading(true);
+    
+    // 模拟加载延迟（实际项目中可以移除）
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    const startIndex = this.currentPage * this.postsPerPage;
+    const endIndex = Math.min(startIndex + this.postsPerPage, this.totalSections);
+    
+    for (let i = startIndex; i < endIndex; i++) {
+      this.showSection(i);
+    }
+    
+    this.currentPage++;
+    this.isLoading = false;
+    this.showLoading(false);
+    this.updateUI();
+  }
+
+  showSection(index) {
+    if (index >= this.postSections.length) return;
+    
+    const section = this.postSections[index];
+    if (section.visible) return;
+    
+    section.element.style.display = 'block';
+    section.visible = true;
+  }
+
+  showLoading(show) {
+    const indicator = document.getElementById('loading-indicator');
+    if (indicator) {
+      indicator.style.display = show ? 'block' : 'none';
+    }
+  }
+
+  handleScroll() {
+    const backToTop = document.getElementById('back-to-top');
+    if (backToTop) {
+      if (window.scrollY > 300) {
+        backToTop.style.display = 'block';
+      } else {
+        backToTop.style.display = 'none';
+      }
+    }
+
+    // 自动加载更多（当滚动到底部时）
+    if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000) {
+      this.loadMoreSections();
+    }
+  }
+
+  updateUI() {
+    const loadedCount = document.getElementById('loaded-count');
+    const totalCount = document.getElementById('total-count');
+    const loadTime = document.getElementById('load-time');
+    const loadMoreContainer = document.getElementById('load-more-container');
+    const performanceStats = document.getElementById('performance-stats');
+
+    const visibleSections = this.postSections.filter(s => s.visible).length;
+    const totalPosts = this.postSections.reduce((sum, s) => sum + s.posts, 0);
+    const visiblePosts = this.postSections.filter(s => s.visible).reduce((sum, s) => sum + s.posts, 0);
+
+    if (loadedCount) {
+      loadedCount.textContent = visiblePosts;
+    }
+
+    if (totalCount) {
+      totalCount.textContent = totalPosts;
+    }
+
+    if (loadTime) {
+      const currentTime = performance.now();
+      loadTime.textContent = Math.round(currentTime - this.startTime);
+    }
+
+    // 显示/隐藏加载更多按钮
+    if (loadMoreContainer) {
+      if (visibleSections < this.totalSections) {
+        loadMoreContainer.style.display = 'block';
+      } else {
+        loadMoreContainer.style.display = 'none';
+      }
+    }
+
+    // 开发模式下显示性能统计
+    if (performanceStats && window.location.hostname === 'localhost') {
+      performanceStats.style.display = 'block';
+    }
+  }
+
+  initSearchOverlay() {
+    const searchToggle = document.getElementById('search-mode-toggle');
+    const searchOverlay = document.getElementById('search-overlay');
+    const searchClose = document.getElementById('search-overlay-close');
+
+    if (searchToggle && searchOverlay) {
+      searchToggle.addEventListener('click', () => {
+        searchOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        setTimeout(() => {
+          const searchInput = searchOverlay.querySelector('#search-widget-input');
+          if (searchInput) {
+            searchInput.focus();
+          }
+        }, 300);
+      });
+    }
+
+    if (searchClose && searchOverlay) {
+      searchClose.addEventListener('click', () => {
+        searchOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+      });
+    }
+
+    if (searchOverlay) {
+      searchOverlay.addEventListener('click', (e) => {
+        if (e.target === searchOverlay) {
+          searchOverlay.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      });
+    }
+
+    // ESC 键关闭
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && searchOverlay && searchOverlay.classList.contains('active')) {
+        searchOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+  }
+}
+
+// 自动初始化
+document.addEventListener('DOMContentLoaded', () => {
+  // 等待页面完全加载后再初始化
+  setTimeout(() => {
+    window.progressiveLoadCollection = new ProgressiveLoadCollection();
+  }, 100);
+});
+</script>
+

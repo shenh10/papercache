@@ -23,6 +23,7 @@
             <a class="page-link" href="{{ my_page.url | relative_url }}">{%- if my_page.nav_title -%}{{ my_page.nav_title | escape }}{%- else -%}{{ my_page.title | escape }}{%- endif -%}</a>
             {%- endif -%}
           {%- endfor -%}
+          {% include search-button.html %}
         </div>
       </nav>
     {%- endif -%}

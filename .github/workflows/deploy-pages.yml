@@ -40,9 +40,19 @@ jobs:
               with:
                   python-version: ${{ env.PYTHON_VERSION }}
 
+            - name: 📦 Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '18'
+                  cache: 'npm'
+
             - name: 📦 Install Python dependencies
               run: |
                   pip install beautifulsoup4 PyYAML lxml Pillow requests
+
+            - name: 📦 Install Node.js dependencies
+              run: |
+                  npm install
 
             - name: 📝 Generate excerpts mapping
               run: |

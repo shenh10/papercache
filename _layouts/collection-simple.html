@@ -1,0 +1,183 @@
+---
+layout: collection-modern
+---
+
+<!-- 简单的性能优化 - 只添加搜索功能，不破坏原有布局 -->
+<style>
+/* 搜索模式切换 */
+.search-mode-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: white;
+  border: 2px solid #007bff;
+  border-radius: 25px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #007bff;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.search-mode-toggle:hover {
+  background: #007bff;
+  color: white;
+}
+
+/* 搜索覆盖层 */
+.search-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  z-index: 9999;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.search-overlay.active {
+  display: flex;
+  opacity: 1;
+}
+
+.search-overlay-content {
+  background: white;
+  margin: 5% auto;
+  width: 90%;
+  max-width: 1000px;
+  max-height: 80vh;
+  border-radius: 15px;
+  overflow: hidden;
+  transform: translateY(-20px);
+  transition: transform 0.3s ease;
+}
+
+.search-overlay.active .search-overlay-content {
+  transform: translateY(0);
+}
+
+.search-overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 30px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+}
+
+.search-overlay-close {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 35px;
+  height: 35px;
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .search-mode-toggle {
+    top: 10px;
+    right: 10px;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  
+  .search-overlay-content {
+    margin: 10% auto;
+    width: 95%;
+  }
+}
+</style>
+
+<!-- 搜索模式切换按钮 -->
+<button class="search-mode-toggle" id="search-mode-toggle">
+  🔍 搜索模式
+</button>
+
+<!-- 搜索覆盖层 -->
+<div class="search-overlay" id="search-overlay">
+  <div class="search-overlay-content">
+    <div class="search-overlay-header">
+      <h3>🔍 高级搜索</h3>
+      <button class="search-overlay-close" id="search-overlay-close">✕</button>
+    </div>
+    <div class="search-overlay-body" style="padding: 30px;">
+      {% include search-widget.html %}
+    </div>
+  </div>
+</div>
+
+<script>
+// 简单的搜索覆盖层管理
+class SimpleSearchOverlay {
+  constructor() {
+    this.init();
+  }
+
+  init() {
+    this.bindEvents();
+  }
+
+  bindEvents() {
+    const searchToggle = document.getElementById('search-mode-toggle');
+    const searchOverlay = document.getElementById('search-overlay');
+    const searchClose = document.getElementById('search-overlay-close');
+
+    if (searchToggle && searchOverlay) {
+      searchToggle.addEventListener('click', () => {
+        searchOverlay.classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        setTimeout(() => {
+          const searchInput = searchOverlay.querySelector('#search-widget-input');
+          if (searchInput) {
+            searchInput.focus();
+          }
+        }, 300);
+      });
+    }
+
+    if (searchClose && searchOverlay) {
+      searchClose.addEventListener('click', () => {
+        searchOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+      });
+    }
+
+    if (searchOverlay) {
+      searchOverlay.addEventListener('click', (e) => {
+        if (e.target === searchOverlay) {
+          searchOverlay.classList.remove('active');
+          document.body.style.overflow = '';
+        }
+      });
+    }
+
+    // ESC 键关闭
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && searchOverlay && searchOverlay.classList.contains('active')) {
+        searchOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+  }
+}
+
+// 自动初始化
+document.addEventListener('DOMContentLoaded', () => {
+  window.simpleSearchOverlay = new SimpleSearchOverlay();
+});
+</script>
+

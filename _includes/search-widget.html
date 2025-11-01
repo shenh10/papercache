@@ -1,0 +1,812 @@
+<!-- 搜索组件 - 可嵌入到任何页面 -->
+<div class="search-widget" id="search-widget">
+  <!-- 搜索框 -->
+  <div class="search-box-container">
+    <div class="search-input-wrapper">
+      <input 
+        type="text" 
+        id="search-widget-input" 
+        class="search-widget-input" 
+        placeholder="🔍 搜索论文标题、内容、分类..."
+        autocomplete="off"
+      >
+      <button class="search-widget-btn" id="search-widget-btn">
+        <span class="search-icon">🔍</span>
+        <span class="search-text">搜索</span>
+      </button>
+    </div>
+    
+    <!-- 搜索建议下拉框 -->
+    <div class="search-suggestions-dropdown" id="search-suggestions-dropdown">
+      <div class="suggestions-content" id="suggestions-content">
+        <!-- 建议内容将通过 JavaScript 动态填充 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 快速过滤器 -->
+  <div class="search-filters-widget" id="search-filters-widget">
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="all">全部</button>
+      <button class="filter-tab" data-filter="llm">LLM</button>
+      <button class="filter-tab" data-filter="mlsys">ML系统</button>
+      <button class="filter-tab" data-filter="diffusions">扩散模型</button>
+    </div>
+    
+    <div class="filter-options">
+      <select id="year-filter-widget" class="filter-select">
+        <option value="">所有年份</option>
+      </select>
+      
+      <select id="tag-filter-widget" class="filter-select">
+        <option value="">所有标签</option>
+      </select>
+      
+      <button class="filter-clear-btn" id="filter-clear-btn">清除</button>
+    </div>
+  </div>
+
+  <!-- 搜索结果 -->
+  <div class="search-results-widget" id="search-results-widget">
+    <div class="search-results-header" id="search-results-header" style="display: none;">
+      <h3 id="search-results-title">搜索结果</h3>
+      <div class="search-results-count" id="search-results-count"></div>
+      <button class="search-results-close" id="search-results-close">✕</button>
+    </div>
+    
+    <div class="search-results-content" id="search-results-content">
+      <!-- 搜索结果将通过 JavaScript 动态填充 -->
+    </div>
+  </div>
+</div>
+
+<style>
+/* 搜索组件样式 */
+.search-widget {
+  margin: 20px 0;
+  position: relative;
+}
+
+.search-box-container {
+  position: relative;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.search-input-wrapper {
+  display: flex;
+  background: white;
+  border: 2px solid #e1e5e9;
+  border-radius: 25px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.search-input-wrapper:focus-within {
+  border-color: #007bff;
+  box-shadow: 0 6px 20px rgba(0,123,255,0.2);
+}
+
+.search-widget-input {
+  flex: 1;
+  padding: 15px 20px;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  background: transparent;
+}
+
+.search-widget-input::placeholder {
+  color: #6c757d;
+}
+
+.search-widget-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 15px 25px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.search-widget-btn:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-1px);
+}
+
+.search-icon {
+  font-size: 16px;
+}
+
+.search-text {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .search-text {
+    display: inline;
+  }
+}
+
+/* 搜索建议下拉框 */
+.search-suggestions-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-top: none;
+  border-radius: 0 0 15px 15px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  z-index: 1000;
+  display: none;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.suggestions-content {
+  padding: 10px 0;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.suggestion-item:hover {
+  background-color: #f8f9fa;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-icon {
+  margin-right: 12px;
+  font-size: 16px;
+}
+
+.suggestion-text {
+  flex: 1;
+  font-weight: 500;
+  color: #333;
+}
+
+.suggestion-count {
+  color: #6c757d;
+  font-size: 12px;
+  background: #e9ecef;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* 过滤器样式 */
+.search-filters-widget {
+  margin-top: 20px;
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 15px;
+  display: none;
+}
+
+.search-filters-widget.active {
+  display: block;
+}
+
+.filter-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.filter-tab {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.filter-tab:hover {
+  background: #e9ecef;
+}
+
+.filter-tab.active {
+  background: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+.filter-options {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: white;
+  font-size: 14px;
+  min-width: 120px;
+}
+
+.filter-clear-btn {
+  padding: 8px 16px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.filter-clear-btn:hover {
+  background: #5a6268;
+}
+
+/* 搜索结果样式 */
+.search-results-widget {
+  margin-top: 20px;
+  display: none;
+}
+
+.search-results-widget.active {
+  display: block;
+}
+
+.search-results-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.search-results-title {
+  margin: 0;
+  color: #333;
+  font-size: 24px;
+}
+
+.search-results-count {
+  color: #6c757d;
+  font-size: 14px;
+  background: #f8f9fa;
+  padding: 4px 12px;
+  border-radius: 15px;
+}
+
+.search-results-close {
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-results-content {
+  display: grid;
+  gap: 20px;
+}
+
+.paper-card-widget {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.paper-card-widget:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  border-color: #007bff;
+}
+
+.paper-title-widget {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.paper-meta-widget {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #6c757d;
+  flex-wrap: wrap;
+}
+
+.paper-date-widget {
+  font-weight: 500;
+}
+
+.paper-categories-widget {
+  color: #007bff;
+  font-weight: 500;
+}
+
+.paper-tag-widget {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.paper-excerpt-widget {
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.paper-score-widget {
+  font-size: 12px;
+  color: #999;
+  background: #f8f9fa;
+  padding: 3px 8px;
+  border-radius: 10px;
+  display: inline-block;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .search-input-wrapper {
+    flex-direction: column;
+    border-radius: 15px;
+  }
+  
+  .search-widget-input {
+    border-radius: 15px 15px 0 0;
+  }
+  
+  .search-widget-btn {
+    border-radius: 0 0 15px 15px;
+    justify-content: center;
+  }
+  
+  .filter-options {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-select {
+    min-width: auto;
+  }
+  
+  .paper-meta-widget {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .search-results-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+}
+
+/* 加载和错误状态 */
+.search-loading {
+  text-align: center;
+  padding: 40px;
+  color: #007bff;
+  font-size: 16px;
+}
+
+.search-error {
+  text-align: center;
+  padding: 40px;
+  color: #dc3545;
+  font-size: 16px;
+}
+
+.search-no-results {
+  text-align: center;
+  padding: 40px;
+  color: #6c757d;
+}
+
+.search-no-results h3 {
+  color: #333;
+  margin-bottom: 10px;
+}
+</style>
+
+<script>
+// 搜索组件 JavaScript
+class SearchWidget {
+  constructor() {
+    this.apiBase = '/api';
+    this.currentQuery = '';
+    this.currentFilters = {};
+    this.isSearching = false;
+    this.searchTimeout = null;
+    
+    this.init();
+  }
+
+  init() {
+    this.bindEvents();
+    this.loadFilterOptions();
+  }
+
+  bindEvents() {
+    const searchInput = document.getElementById('search-widget-input');
+    const searchBtn = document.getElementById('search-widget-btn');
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const clearBtn = document.getElementById('filter-clear-btn');
+    const closeBtn = document.getElementById('search-results-close');
+
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        this.handleSearchInput(e.target.value);
+      });
+
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          this.performSearch();
+        }
+      });
+    }
+
+    if (searchBtn) {
+      searchBtn.addEventListener('click', () => {
+        this.performSearch();
+      });
+    }
+
+    filterTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        this.setActiveFilter(tab);
+        this.performSearch();
+      });
+    });
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        this.clearFilters();
+      });
+    }
+
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        this.hideResults();
+      });
+    }
+
+    // 点击外部关闭建议
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.search-widget')) {
+        this.hideSuggestions();
+      }
+    });
+  }
+
+  handleSearchInput(query) {
+    this.currentQuery = query.trim();
+    
+    if (this.searchTimeout) {
+      clearTimeout(this.searchTimeout);
+    }
+
+    if (this.currentQuery.length === 0) {
+      this.hideSuggestions();
+      return;
+    }
+
+    if (this.currentQuery.length < 2) {
+      return;
+    }
+
+    this.searchTimeout = setTimeout(() => {
+      this.loadSuggestions();
+    }, 300);
+  }
+
+  async loadSuggestions() {
+    try {
+      const response = await fetch(`${this.apiBase}/suggestions?q=${encodeURIComponent(this.currentQuery)}&limit=6`);
+      const data = await response.json();
+      this.showSuggestions(data.suggestions || []);
+    } catch (error) {
+      console.error('Failed to load suggestions:', error);
+    }
+  }
+
+  showSuggestions(suggestions) {
+    const container = document.getElementById('suggestions-content');
+    const dropdown = document.getElementById('search-suggestions-dropdown');
+    
+    if (!container || !dropdown) return;
+
+    if (suggestions.length === 0) {
+      dropdown.style.display = 'none';
+      return;
+    }
+
+    container.innerHTML = suggestions.map(suggestion => `
+      <div class="suggestion-item" data-url="${suggestion.url || ''}">
+        <span class="suggestion-icon">${this.getSuggestionIcon(suggestion.type)}</span>
+        <span class="suggestion-text">${suggestion.text}</span>
+        ${suggestion.count ? `<span class="suggestion-count">${suggestion.count}</span>` : ''}
+      </div>
+    `).join('');
+
+    // 绑定点击事件
+    container.querySelectorAll('.suggestion-item').forEach(item => {
+      item.addEventListener('click', () => {
+        const url = item.dataset.url;
+        if (url) {
+          window.location.href = url;
+        } else {
+          document.getElementById('search-widget-input').value = item.querySelector('.suggestion-text').textContent;
+          this.performSearch();
+        }
+        this.hideSuggestions();
+      });
+    });
+
+    dropdown.style.display = 'block';
+  }
+
+  getSuggestionIcon(type) {
+    const icons = {
+      'paper': '📄',
+      'category': '📁',
+      'tag': '🏷️',
+      'excerpt': '📝'
+    };
+    return icons[type] || '🔍';
+  }
+
+  hideSuggestions() {
+    const dropdown = document.getElementById('search-suggestions-dropdown');
+    if (dropdown) {
+      dropdown.style.display = 'none';
+    }
+  }
+
+  setActiveFilter(tab) {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    
+    const filter = tab.dataset.filter;
+    if (filter === 'all') {
+      this.currentFilters.categories = [];
+    } else {
+      this.currentFilters.categories = [filter];
+    }
+  }
+
+  async loadFilterOptions() {
+    try {
+      const response = await fetch(`${this.apiBase}/stats`);
+      const stats = await response.json();
+
+      // 加载年份选项
+      const yearSelect = document.getElementById('year-filter-widget');
+      if (yearSelect && stats.years) {
+        Object.keys(stats.years).sort((a, b) => b - a).forEach(year => {
+          const option = document.createElement('option');
+          option.value = year;
+          option.textContent = `${year} (${stats.years[year]})`;
+          yearSelect.appendChild(option);
+        });
+      }
+
+      // 加载标签选项
+      const tagSelect = document.getElementById('tag-filter-widget');
+      if (tagSelect && stats.tags) {
+        Object.keys(stats.tags).forEach(tag => {
+          const option = document.createElement('option');
+          option.value = tag;
+          option.textContent = `${tag} (${stats.tags[tag]})`;
+          tagSelect.appendChild(option);
+        });
+      }
+
+      // 绑定过滤器事件
+      if (yearSelect) {
+        yearSelect.addEventListener('change', () => {
+          this.updateFilters();
+          this.performSearch();
+        });
+      }
+
+      if (tagSelect) {
+        tagSelect.addEventListener('change', () => {
+          this.updateFilters();
+          this.performSearch();
+        });
+      }
+
+    } catch (error) {
+      console.error('Failed to load filter options:', error);
+    }
+  }
+
+  updateFilters() {
+    const yearFilter = document.getElementById('year-filter-widget');
+    const tagFilter = document.getElementById('tag-filter-widget');
+
+    if (yearFilter && yearFilter.value) {
+      this.currentFilters.dateRange = {
+        start: `${yearFilter.value}-01-01`,
+        end: `${yearFilter.value}-12-31`
+      };
+    } else {
+      delete this.currentFilters.dateRange;
+    }
+
+    if (tagFilter && tagFilter.value) {
+      this.currentFilters.tags = [tagFilter.value];
+    } else {
+      delete this.currentFilters.tags;
+    }
+  }
+
+  clearFilters() {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.filter-tab[data-filter="all"]').classList.add('active');
+    document.getElementById('year-filter-widget').selectedIndex = 0;
+    document.getElementById('tag-filter-widget').selectedIndex = 0;
+    this.currentFilters = {};
+    this.performSearch();
+  }
+
+  async performSearch() {
+    if (this.isSearching || !this.currentQuery) return;
+
+    this.isSearching = true;
+    this.showLoading();
+    this.showFilters();
+    this.hideSuggestions();
+
+    try {
+      const response = await fetch(`${this.apiBase}/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          query: this.currentQuery,
+          filters: this.currentFilters,
+          limit: 20
+        })
+      });
+
+      const data = await response.json();
+      this.showResults(data);
+    } catch (error) {
+      console.error('Search failed:', error);
+      this.showError('搜索失败，请稍后重试');
+    } finally {
+      this.isSearching = false;
+    }
+  }
+
+  showLoading() {
+    const container = document.getElementById('search-results-content');
+    if (container) {
+      container.innerHTML = '<div class="search-loading">🔍 搜索中...</div>';
+    }
+  }
+
+  showResults(data) {
+    const resultsWidget = document.getElementById('search-results-widget');
+    const resultsHeader = document.getElementById('search-results-header');
+    const resultsTitle = document.getElementById('search-results-title');
+    const resultsCount = document.getElementById('search-results-count');
+    const resultsContent = document.getElementById('search-results-content');
+
+    if (!resultsWidget || !resultsHeader || !resultsTitle || !resultsCount || !resultsContent) return;
+
+    if (data.results.length === 0) {
+      resultsContent.innerHTML = `
+        <div class="search-no-results">
+          <h3>未找到相关论文</h3>
+          <p>尝试使用不同的关键词或调整过滤器</p>
+        </div>
+      `;
+    } else {
+      resultsTitle.textContent = `"${data.query}" 的搜索结果`;
+      resultsCount.textContent = `找到 ${data.total} 篇论文`;
+      resultsContent.innerHTML = data.results.map(paper => this.renderPaperCard(paper)).join('');
+
+      // 绑定论文卡片事件
+      resultsContent.querySelectorAll('.paper-card-widget').forEach(card => {
+        card.addEventListener('click', () => {
+          window.location.href = card.dataset.url;
+        });
+      });
+    }
+
+    resultsHeader.style.display = 'flex';
+    resultsWidget.classList.add('active');
+  }
+
+  renderPaperCard(paper) {
+    return `
+      <div class="paper-card-widget" data-url="${paper.url}">
+        <div class="paper-title-widget">${paper.title}</div>
+        <div class="paper-meta-widget">
+          <span class="paper-date-widget">${new Date(paper.date).toLocaleDateString()}</span>
+          <span class="paper-categories-widget">${paper.categories.join(' / ')}</span>
+          ${paper.tag ? `<span class="paper-tag-widget">${paper.tag}</span>` : ''}
+        </div>
+        ${paper.excerpt ? `<div class="paper-excerpt-widget">${paper.excerpt.substring(0, 150)}...</div>` : ''}
+        <div class="paper-score-widget">相关度: ${Math.round(paper.score * 100)}%</div>
+      </div>
+    `;
+  }
+
+  showError(message) {
+    const container = document.getElementById('search-results-content');
+    if (container) {
+      container.innerHTML = `<div class="search-error">❌ ${message}</div>`;
+    }
+  }
+
+  showFilters() {
+    const filtersWidget = document.getElementById('search-filters-widget');
+    if (filtersWidget) {
+      filtersWidget.classList.add('active');
+    }
+  }
+
+  hideResults() {
+    const resultsWidget = document.getElementById('search-results-widget');
+    const filtersWidget = document.getElementById('search-filters-widget');
+    
+    if (resultsWidget) {
+      resultsWidget.classList.remove('active');
+    }
+    
+    if (filtersWidget) {
+      filtersWidget.classList.remove('active');
+    }
+  }
+}
+
+// 自动初始化
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('search-widget')) {
+    window.searchWidget = new SearchWidget();
+  }
+});
+</script>
+
