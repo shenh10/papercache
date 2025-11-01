@@ -1,5 +1,6 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { parse } from 'yaml';
 
 // 全局变量缓存统计数据
 let statsData = null;
@@ -18,8 +19,7 @@ async function initializeStats() {
       throw new Error('Data files not found');
     }
 
-    const yaml = require('yaml');
-    const collectionData = yaml.parse(fs.readFileSync(collectionPath, 'utf8'));
+    const collectionData = parse(fs.readFileSync(collectionPath, 'utf8'));
     const excerptsData = JSON.parse(fs.readFileSync(excerptsPath, 'utf8'));
 
     // 提取所有论文数据

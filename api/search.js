@@ -1,6 +1,11 @@
+import fs from 'fs';
+import path from 'path';
+import { parse } from 'yaml';
+
+// lunr 可能需要使用动态导入或 createRequire
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 const lunr = require('lunr');
-const fs = require('fs');
-const path = require('path');
 
 // 全局变量缓存搜索索引
 let searchIndex = null;
@@ -22,8 +27,7 @@ async function initializeSearchIndex() {
       throw new Error('Data files not found');
     }
 
-    const yaml = require('yaml');
-    const collectionData = yaml.parse(fs.readFileSync(collectionPath, 'utf8'));
+    const collectionData = parse(fs.readFileSync(collectionPath, 'utf8'));
     const excerptsData = JSON.parse(fs.readFileSync(excerptsPath, 'utf8'));
 
     // 提取所有论文数据
@@ -193,15 +197,20 @@ function getSuggestions(query, limit = 5) {
 
 // API 处理函数
 export default async function handler(req, res) {
-  // 设置 CORS 头
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
+  // OPTIONS 请求（CORS 预检）必须最先处理，立即返回
+  // 使用 .end() 而不是 .json() 以避免潜在的序列化错误
   if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     res.status(200).end();
     return;
   }
+
+  // 设置 CORS 头 - 必须在任何响应之前设置
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   try {
     // 初始化搜索索引

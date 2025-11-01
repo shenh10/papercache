@@ -752,6 +752,8 @@ window.RSS_SUBSCRIBE_URL = {{ '/feeds/index.html' | relative_url | jsonify }};
 
 // 注入 baseurl 用于路径处理
 window.PC_BASEURL = {{ site.baseurl | jsonify }};
+// 注入 API base URL（如果配置了）
+window.PC_API_BASE = {{ site.api_base_url | default: '' | jsonify }};
 // 注入缩略图映射与占位图
 window.PC_THUMBS = {{ site.data.thumbnails_by_path | jsonify }};
 window.PC_THUMB_FALLBACK = {{ '/assets/images/fallback-paper.svg' | relative_url | jsonify }};
@@ -920,6 +922,8 @@ class SearchFirstMode {
       
       // 构建API路径，考虑baseurl和本地开发环境
       const baseurl = window.PC_BASEURL || '';
+      const apiBaseUrl = window.PC_API_BASE || '';
+      
       // 本地开发时，如果当前端口是4000（Jekyll），API在3000端口（Vercel）
       const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
       const isJekyllPort = window.location.port === '4000';
@@ -928,8 +932,12 @@ class SearchFirstMode {
       if (isLocalDev && isJekyllPort) {
         // 本地开发：Jekyll在4000，Vercel在3000
         apiPath = 'http://localhost:3000/api/search';
+      } else if (apiBaseUrl) {
+        // 生产环境：使用配置的 API base URL（Vercel）
+        // 如果配置了 api_base_url，说明静态站点和 API 在不同域名
+        apiPath = `${apiBaseUrl}/api/search`;
       } else {
-        // 生产环境或vercel dev环境（使用相同端口）
+        // Vercel 部署环境（静态站点和 API 在同一域名）
         apiPath = baseurl ? `${baseurl}/api/search` : '/api/search';
       }
       
@@ -948,6 +956,9 @@ class SearchFirstMode {
       if (resp.ok) {
         const data = await resp.json();
         const apiResults = Array.isArray(data.results) ? data.results : [];
+        
+        console.log(`[collection-search-first] ✅ API 搜索成功，返回 ${apiResults.length} 条结果`);
+        console.log(`[collection-search-first] API 查询: "${query}", 总匹配数: ${data.total || 0}`);
         
         // 使用API结果（即使为空也是有效的搜索结果）
         this.filteredPapers = apiResults.map(r => {
@@ -989,13 +1000,18 @@ class SearchFirstMode {
         });
         this.showSearchResults(query);
         return; // API成功返回，无论结果数量如何都使用API结果
+      } else {
+        // API返回非200状态
+        console.warn(`[collection-search-first] ⚠️ API 返回非200状态: ${resp.status}，降级到本地搜索`);
       }
       // API返回非200状态，静默降级到本地搜索（本地开发时API可能不可用）
     } catch (e) {
       // API调用失败，静默降级到本地搜索（本地开发时API可能不可用）
+      console.warn(`[collection-search-first] ⚠️ API 调用失败: ${e.message}，降级到本地搜索`);
     }
 
     // 降级：在已加载的DOM中做简单包含匹配
+    console.log(`[collection-search-first] 🔄 使用本地搜索（fallback），查询: "${query}"`);
     // 支持中英文混合搜索：将中文关键词映射为对应的英文关键词
     const keywordMap = {
       'gpu优化': ['gpu', 'optimization', 'optimize', 'accelerate', 'acceleration'],
@@ -1354,20 +1370,51 @@ class SearchFirstMode {
               thumbPath = '/' + thumbPath;
             }
             
-            // 如果有 baseurl（如 /papercache），需要添加到路径前
-            // 但前提是路径是站内路径（不是 http:// 开头）
+            // 本地开发时，baseurl 应该为空，不需要添加前缀
+            // 生产环境才需要添加 baseurl（如 /papercache）
+            // 注意：thumbPath 已经是绝对路径（以 / 开头），不需要 baseurl
+            // 只在生产环境且 baseurl 不为空时才添加
             if (!thumbPath.startsWith('http')) {
               const baseurl = window.PC_BASEURL || '';
-              // 如果 baseurl 存在且不是根路径，且 thumbPath 不是以 baseurl 开头
-              if (baseurl && baseurl !== '/' && !thumbPath.startsWith(baseurl)) {
-                // 确保 baseurl 不以 / 结尾，thumbPath 以 / 开头
+              // 只在 baseurl 存在且不是根路径时添加
+              // 本地开发时 baseurl 为空，不添加
+              if (baseurl && baseurl !== '' && baseurl !== '/' && !thumbPath.startsWith(baseurl)) {
                 const normalizedBase = baseurl.endsWith('/') ? baseurl.slice(0, -1) : baseurl;
-                const normalizedThumb = thumbPath.startsWith('/') ? thumbPath : '/' + thumbPath;
-                thumbPath = normalizedBase + normalizedThumb;
+                thumbPath = normalizedBase + thumbPath;
               }
             }
             
             return thumbPath;
+          }
+        }
+        
+        // 如果直接匹配失败，尝试添加 /papers/ 前缀
+        // 因为 Jekyll 的 post.url 可能不包含 /papers/，但 thumbnails_by_path.yml 中的键都包含
+        for (const candidate of uniqueCandidates) {
+          // 如果候选路径不以 /papers/ 开头，尝试添加该前缀
+          if (!candidate.startsWith('/papers/')) {
+            const papersCandidate = '/papers' + candidate;
+            if (thumbs[papersCandidate]) {
+              let thumbPath = thumbs[papersCandidate];
+              
+              // 确保路径格式正确
+              if (!thumbPath.startsWith('/') && !thumbPath.startsWith('http')) {
+                thumbPath = '/' + thumbPath;
+              }
+              
+              // 本地开发时，baseurl 应该为空，不需要添加前缀
+              // 生产环境才需要添加 baseurl（如 /papercache）
+              if (!thumbPath.startsWith('http')) {
+                const baseurl = window.PC_BASEURL || '';
+                // 只在 baseurl 存在且不是根路径时添加
+                if (baseurl && baseurl !== '' && baseurl !== '/' && !thumbPath.startsWith(baseurl)) {
+                  const normalizedBase = baseurl.endsWith('/') ? baseurl.slice(0, -1) : baseurl;
+                  thumbPath = normalizedBase + thumbPath;
+                }
+              }
+              
+              return thumbPath;
+            }
           }
         }
       } catch(e) {

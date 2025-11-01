@@ -721,7 +721,23 @@ def main():
 
     mapping_path.parent.mkdir(parents=True, exist_ok=True)
     with open(mapping_path, "w", encoding="utf-8") as f:
-        yaml.safe_dump(mapping, f, allow_unicode=True, sort_keys=True)
+        # 手动格式化输出，确保所有键值对使用简单的 "key": "value" 格式
+        # 避免 PyYAML 自动使用 ? key / : value 显式格式，确保 Jekyll Liquid 能正确访问
+        def escape_yaml_string(s):
+            """转义 YAML 字符串中的特殊字符"""
+            # 转义反斜杠、引号、换行符等
+            return (s.replace('\\', '\\\\')  # 必须先转义反斜杠
+                    .replace('"', '\\"')
+                    .replace('\n', '\\n')
+                    .replace('\r', '\\r')
+                    .replace('\t', '\\t'))
+        
+        sorted_items = sorted(mapping.items())
+        for key, value in sorted_items:
+            escaped_key = escape_yaml_string(key)
+            escaped_value = escape_yaml_string(value)
+            # 使用引号格式写入，确保所有键值对都使用统一格式
+            f.write(f'"{escaped_key}": "{escaped_value}"\n')
 
     print(f"Wrote {len(mapping)} thumbnails -> {mapping_path}")
 

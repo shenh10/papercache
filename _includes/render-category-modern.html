@@ -47,22 +47,16 @@
           {%- for p in sorted reversed -%}
           <li class="post-item post-card-modern" data-post-url="{{ site.baseurl }}{{ p.url }}" style="list-style: none !important;">
             <a class="post-card-link-modern" href="{{ site.baseurl }}{{ p.url }}" data-post-title="{{ p.title | escape }}">
+              {%- comment -%} 访问缩略图映射数据 {%- endcomment -%}
               {%- assign thumb_data = site.data.thumbnails_by_path[p.url] -%}
               {%- assign thumb = thumb_data | default: p.thumbnail | default: p.image | default: p.cover -%}
               <div class="post-card-thumb-modern">
                 {%- if thumb -%}
-                  {%- assign thumb_file_exists = false -%}
-                  {%- for file in site.static_files -%}
-                    {%- if file.path == thumb -%}
-                      {%- assign thumb_file_exists = true -%}
-                      {%- break -%}
-                    {%- endif -%}
-                  {%- endfor -%}
-                  {%- if thumb_file_exists -%}
-                    <img loading="lazy" src="{{ thumb | relative_url }}" alt="thumbnail of {{ p.title | escape }}">
-                  {%- else -%}
-                    <img loading="lazy" src="{{ '/assets/images/fallback-paper.svg' | relative_url }}" alt="PaperCache - AI Research Papers">
-                  {%- endif -%}
+                  {%- comment -%} 直接使用缩略图路径，通过 onerror 处理加载失败 {%- endcomment -%}
+                  <img loading="lazy" 
+                       src="{{ thumb | relative_url }}" 
+                       alt="thumbnail of {{ p.title | escape }}"
+                       onerror="this.onerror=null; this.src='{{ '/assets/images/fallback-paper.svg' | relative_url }}';">
                 {%- else -%}
                   <img loading="lazy" src="{{ '/assets/images/fallback-paper.svg' | relative_url }}" alt="PaperCache - AI Research Papers">
                 {%- endif -%}
