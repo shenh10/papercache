@@ -190,8 +190,16 @@ function performSearch(query, filters = {}, matchMode = 'fuzzy', searchFields = 
   
   let results = [];
   
+  // 如果查询为空，返回所有论文（之后会应用过滤器）
+  if (!query || query.trim() === '') {
+    // 返回所有论文，格式化为搜索结果格式
+    results = papersData.map((paper, index) => ({
+      ref: paper.id,
+      score: 1.0 // 默认分数
+    }));
+  }
   // 精确匹配模式
-  if (matchMode === 'exact') {
+  else if (matchMode === 'exact') {
     results = performExactMatch(query, searchFields, papersData);
   } 
   // 模糊匹配模式（默认）- 使用 Lunr 全文搜索，不使用搜索范围限制
@@ -329,15 +337,16 @@ export default async function handler(req, res) {
     } else if (method === 'POST') {
       // 高级搜索
       const { 
-        query, 
+        query = '', 
         filters = {}, 
         limit = 20,
         matchMode = 'fuzzy', // 'exact' 或 'fuzzy'
         searchFields = ['title', 'excerpt'] // ['title', 'excerpt', 'categories', 'tag']
       } = req.body;
       
-      if (!query) {
-        return res.status(400).json({ error: 'Query is required' });
+      // 如果查询为空，必须至少有tag过滤或其他过滤器
+      if (!query && (!filters.tags || filters.tags.length === 0)) {
+        return res.status(400).json({ error: 'Query is required when no filters are provided' });
       }
       
       // 验证 matchMode
@@ -345,14 +354,17 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'matchMode must be "exact" or "fuzzy"' });
       }
       
-      // 验证 searchFields
-      const validFields = ['title', 'excerpt', 'fulltext', 'categories', 'tag'];
-      if (!Array.isArray(searchFields) || searchFields.length === 0) {
-        return res.status(400).json({ error: 'searchFields must be a non-empty array' });
-      }
-      const invalidFields = searchFields.filter(f => !validFields.includes(f));
-      if (invalidFields.length > 0) {
-        return res.status(400).json({ error: `Invalid searchFields: ${invalidFields.join(', ')}. Valid fields are: ${validFields.join(', ')}` });
+      // 只有当查询不为空时才需要验证searchFields
+      if (query && query.trim()) {
+        // 验证 searchFields
+        const validFields = ['title', 'excerpt', 'fulltext', 'categories', 'tag'];
+        if (!Array.isArray(searchFields) || searchFields.length === 0) {
+          return res.status(400).json({ error: 'searchFields must be a non-empty array' });
+        }
+        const invalidFields = searchFields.filter(f => !validFields.includes(f));
+        if (invalidFields.length > 0) {
+          return res.status(400).json({ error: `Invalid searchFields: ${invalidFields.join(', ')}. Valid fields are: ${validFields.join(', ')}` });
+        }
       }
 
       const results = performSearch(query, filters, matchMode, searchFields);
