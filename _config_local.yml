@@ -5,14 +5,32 @@
 baseurl: ""
 url: "http://127.0.0.1:4000"
 
-# 包含slides页面
+# 本地开发时包含 slides 页面（生产环境不包含）
 header_pages:
   - 01-index.markdown
   - 02-collection.html
   - 03-about.markdown
   - 04-slides.html
 
-# 本地开发时不排除slides相关文件
+# Collections 配置 - 仅在本地开发时启用 slides
+collections:
+  slides:
+    output: true
+    permalink: /slides/:categories/:year/:month/:day/:title.html
+
+# 默认设置 - 本地开发时处理 _slides 目录
+defaults:
+  - scope:
+      path: "_slides"
+      type: "slides"
+    values:
+      layout: "post"
+      comments: true
+      mathjax: true
+      share: true
+      permalink: /slides/:categories/:year/:month/:day/:title.html
+
+# 本地开发时不排除 slides 相关文件（_slides/ 需要被 Jekyll 处理）
 exclude:
   - .sass-cache/
   - .jekyll-cache/
@@ -20,3 +38,4 @@ exclude:
   - Gemfile.lock
   - node_modules/
   - .DS_Store
+  # 注意：不排除 _slides/，让 Jekyll 在本地开发时处理

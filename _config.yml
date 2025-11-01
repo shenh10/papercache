@@ -47,11 +47,11 @@ paginate: 20  # 每页显示的文章数量
 paginate_path: "/page:num/"  # 分页路径
 
 # 顶部导航仅展示指定页面
+# 注意：04-slides.html 仅在本地开发时显示（通过 _config_local.yml 添加）
 header_pages:
   - 01-index.markdown
   - 02-collection.html
   - 03-about.markdown
-  - 04-slides.html
 
 # Jekyll Feed 配置 - 包含所有文章
 jekyll-feed:
@@ -81,6 +81,9 @@ giscus:
 # 统计系统
 google_analytics: "G-MWWFKJXJLN"
 busuanzi_analytics: true
+
+# Collections 配置
+# 注意：slides collection 仅在本地开发时启用（通过 _config_local.yml 添加）
 
 # 默认设置
 defaults:

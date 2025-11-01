@@ -8,7 +8,7 @@
     <!-- 关键CSS内联，防止FOUC -->
     <style>
     /* 防止FOUC的关键样式 */
-    .collection-stats .stat-number,
+    #slides-total-count,
     #slides-category-count,
     #slides-tag-count,
     #tag-count-modern,
@@ -17,7 +17,7 @@
       transition: opacity 0.3s ease-in;
     }
 
-    .collection-stats .stat-number.loaded,
+    #slides-total-count.loaded,
     #slides-category-count.loaded,
     #slides-tag-count.loaded,
     #tag-count-modern.loaded,
@@ -34,18 +34,20 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
       color: white;
       padding: 60px 0;
-      margin: -2em -15px 3em -15px;
+      margin: 0;
       position: relative;
       overflow: hidden;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .collection-hero-content {
       position: relative;
       z-index: 2;
       text-align: center;
-      max-width: 800px;
+      max-width: min(1200px, 95vw);
       margin: 0 auto;
-      padding: 0 20px;
+      padding: 0 max(20px, 3vw);
     }
 
     .collection-hero h1 {
@@ -162,7 +164,34 @@
     }
 
     .collection-content {
+      max-width: min(1200px, 95vw);
+      margin: 0 auto;
+      padding: 0 max(20px, 3vw);
+    }
+    
+    /* 确保 collection-page 有正确的容器 */
+    .collection-page {
       max-width: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* 确保 body 没有默认 margin/padding 影响布局 */
+    body.layout-collection {
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* 确保现代化头部正确显示 */
+    .modern-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    
+    /* 确保 collection-hero 在 header 下方正确显示 */
+    .collection-hero {
+      margin-top: 0;
     }
 
     /* 响应式设计 */
@@ -187,17 +216,9 @@
     }
     </style>
 
-    {%- include header.html -%}
+    {%- include modern-header.html -%}
 
-    <div class="collection-wrapper">
-      <aside class="sidebar">
-        {%- include slides-sidebar.html -%}
-      </aside>
-
-      <main class="collection-content">
-        <div class="wrapper">
-
-<div class="collection-page">
+    <div class="collection-page">
   <!-- 现代化英雄式头部 -->
   <div class="collection-hero">
     <div class="collection-hero-content">
@@ -206,12 +227,7 @@
       
       <div class="collection-stats">
         <div class="stat-item">
-          {% assign slides_posts = site.slides | default: empty %}
-          {% if slides_posts %}
-          <span class="stat-number">{{ slides_posts | size }}</span>
-          {% else %}
-          <span class="stat-number">0</span>
-          {% endif %}
+          <span class="stat-number" id="slides-total-count">计算中...</span>
           <span class="stat-label">演示文稿总数</span>
         </div>
         <div class="stat-item">
@@ -236,18 +252,10 @@
     </div>
     
     <div class="tag-buttons-modern">
-      {% assign slides_posts = site.slides | default: empty %}
-      {% if slides_posts %}
       <button class="tag-btn-modern active" data-tag="all">
         <span>全部</span>
-        <span class="tag-btn-count">({{ slides_posts | size }})</span>
+        <span class="tag-btn-count" id="slides-all-count">(0)</span>
       </button>
-      {% else %}
-      <button class="tag-btn-modern active" data-tag="all">
-        <span>全部</span>
-        <span class="tag-btn-count">(0)</span>
-      </button>
-      {% endif %}
       <div id="slides-tag-buttons-container-modern">
         <!-- 标签按钮将通过JavaScript动态生成 -->
       </div>
@@ -298,39 +306,55 @@
 // 立即执行函数，减少FOUC
 (function() {
   // 立即显示基础内容，避免"计算中..."的闪烁
+  const totalCountEl = document.getElementById('slides-total-count');
   const categoryCountEl = document.getElementById('slides-category-count');
   const tagCountEl = document.getElementById('slides-tag-count');
   const tagCountModernEl = document.getElementById('slides-tag-count-modern');
   
+  if (totalCountEl) {
+    totalCountEl.textContent = '0';
+  }
+  
   if (categoryCountEl) {
     categoryCountEl.textContent = '0';
-    categoryCountEl.classList.add('loaded');
   }
   
   if (tagCountEl) {
     tagCountEl.textContent = '0';
-    tagCountEl.classList.add('loaded');
   }
   
   if (tagCountModernEl) {
     tagCountModernEl.textContent = '0';
-    tagCountModernEl.classList.add('loaded');
   }
 })();
 
 document.addEventListener('DOMContentLoaded', function() {
-  // 使用 requestAnimationFrame 确保DOM完全渲染后再执行
+// 使用 requestAnimationFrame 确保DOM完全渲染后再执行
   requestAnimationFrame(function() {
+    // 计算演示文稿总数
+    const postItems = document.querySelectorAll('.post-item[data-post-url]');
+    const totalCount = postItems.length;
+    const totalCountEl = document.getElementById('slides-total-count');
+    const allCountEl = document.getElementById('slides-all-count');
+    
+    if (totalCountEl) {
+      totalCountEl.textContent = totalCount;
+      totalCountEl.classList.add('loaded');
+    }
+    if (allCountEl) {
+      allCountEl.textContent = `(${totalCount})`;
+    }
+    
     // 计算分类数量
     const categoryCount = document.querySelectorAll('.main-category-modern').length;
     const categoryCountEl = document.getElementById('slides-category-count');
     if (categoryCountEl) {
       categoryCountEl.textContent = categoryCount;
+      categoryCountEl.classList.add('loaded');
     }
     
     // 收集所有演示文稿标签
     const tagMap = new Map();
-    const postItems = document.querySelectorAll('.post-item[data-post-url]');
     
     postItems.forEach(item => {
       const tagElement = item.querySelector('.subcategory-tag');
@@ -346,9 +370,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (tagCountEl) {
       tagCountEl.textContent = tagMap.size;
+      tagCountEl.classList.add('loaded');
     }
     if (tagCountModernEl) {
       tagCountModernEl.textContent = tagMap.size;
+      tagCountModernEl.classList.add('loaded');
     }
     
     // 生成现代化标签按钮
@@ -416,8 +442,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-        </div>
-      </main>
     </div>
 
     {%- include footer.html -%}
