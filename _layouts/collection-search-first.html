@@ -1792,14 +1792,11 @@ class SearchFirstMode {
               thumbPath = '/' + thumbPath;
             }
             
-            // 本地开发时，baseurl 应该为空，不需要添加前缀
-            // 生产环境才需要添加 baseurl（如 /papercache）
-            // 注意：thumbPath 已经是绝对路径（以 / 开头），不需要 baseurl
-            // 只在生产环境且 baseurl 不为空时才添加
+            // 添加 baseurl 前缀（如果存在且URL中尚未包含）
+            // 注意：thumbPath 已经是绝对路径（以 / 开头）
             if (!thumbPath.startsWith('http')) {
               const baseurl = window.PC_BASEURL || '';
-              // 只在 baseurl 存在且不是根路径时添加
-              // 本地开发时 baseurl 为空，不添加
+              // 只在 baseurl 存在且不是根路径时添加，避免重复
               if (baseurl && baseurl !== '' && baseurl !== '/' && !thumbPath.startsWith(baseurl)) {
                 const normalizedBase = baseurl.endsWith('/') ? baseurl.slice(0, -1) : baseurl;
                 thumbPath = normalizedBase + thumbPath;
@@ -1824,11 +1821,10 @@ class SearchFirstMode {
                 thumbPath = '/' + thumbPath;
               }
               
-              // 本地开发时，baseurl 应该为空，不需要添加前缀
-              // 生产环境才需要添加 baseurl（如 /papercache）
+              // 添加 baseurl 前缀（如果存在且URL中尚未包含）
               if (!thumbPath.startsWith('http')) {
                 const baseurl = window.PC_BASEURL || '';
-                // 只在 baseurl 存在且不是根路径时添加
+                // 只在 baseurl 存在且不是根路径时添加，避免重复
                 if (baseurl && baseurl !== '' && baseurl !== '/' && !thumbPath.startsWith(baseurl)) {
                   const normalizedBase = baseurl.endsWith('/') ? baseurl.slice(0, -1) : baseurl;
                   thumbPath = normalizedBase + thumbPath;

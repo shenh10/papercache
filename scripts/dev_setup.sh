@@ -90,8 +90,8 @@ fi
 
 # 启动 Jekyll 开发服务器
 echo "🌐 启动 Jekyll 开发服务器..."
-echo "📍 网站将在 http://localhost:4000 运行"
-echo "📍 RSS Feed: http://127.0.0.1:4000/feed.xml"
+echo "📍 网站将在 http://localhost:4000/papercache 运行"
+echo "📍 RSS Feed: http://127.0.0.1:4000/papercache/feed.xml"
 echo "🔄 使用 Ctrl+C 停止服务器"
 echo ""
 

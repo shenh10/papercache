@@ -26,9 +26,10 @@ bundle install
 
 # 启动 Jekyll 开发服务器
 echo "🌐 启动 Jekyll 开发服务器..."
-echo "📍 网站将在 http://localhost:4000 运行"
+echo "📍 网站将在 http://localhost:4000/papercache 运行"
 echo "🔄 使用 Ctrl+C 停止服务器"
 echo "💡 注意：缩略图和摘要将动态生成"
 echo ""
 
-bundle exec jekyll serve --incremental --livereload
+# 使用 _config_local.yml 确保本地也使用 /papercache baseurl
+bundle exec jekyll serve --incremental --livereload --config _config.yml,_config_local.yml
