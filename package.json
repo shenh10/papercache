@@ -1,0 +1,22 @@
+{
+  "name": "papercache-api",
+  "version": "1.0.0",
+  "description": "PaperCache API functions for enhanced search and user features",
+  "main": "index.js",
+  "scripts": {
+    "start": "vercel dev",
+    "build": "echo 'No build step required'",
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "lunr": "^2.3.9",
+    "yaml": "^2.3.4"
+  },
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
+
