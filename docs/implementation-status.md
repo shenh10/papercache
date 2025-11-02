@@ -58,38 +58,21 @@
 - ✅ 设置Git pre-commit hook，防止误提交敏感信息
 - ✅ 创建配置说明文档（`scripts/README-config.md`）
 
-## 待完成 🔄
+## 已完成 ✅（配置阶段）
 
-### 数据库设置（需要在Supabase Dashboard执行）
+### 数据库设置
+- ✅ 在Supabase Dashboard执行 `scripts/supabase-schema.sql`
+- ✅ 执行 `scripts/supabase-rls.sql`
+- ✅ 执行 `scripts/supabase-functions.sql`
 
-1. **执行数据库脚本**
-   - [ ] 在Supabase Dashboard → SQL Editor执行 `scripts/supabase-schema.sql`
-   - [ ] 执行 `scripts/supabase-rls.sql`
-   - [ ] 执行 `scripts/supabase-functions.sql`
-
-2. **验证表结构**
-   - [ ] 检查 `profiles` 表是否创建
-   - [ ] 检查 `favorites` 表是否创建
-   - [ ] 检查 `login_logs` 表是否创建
-   - [ ] 检查索引是否创建
-
-### OAuth配置（需要在第三方平台配置）
-
-3. **GitHub OAuth**
-   - [ ] 在GitHub创建OAuth App
-   - [ ] 获取Client ID和Client Secret
-   - [ ] 在Supabase Dashboard配置GitHub provider
-
-4. **Google OAuth**
-   - [ ] 在Google Cloud Console创建OAuth客户端
-   - [ ] 获取Client ID和Client Secret
-   - [ ] 在Supabase Dashboard配置Google provider
+### OAuth配置
+- ✅ GitHub OAuth配置完成（GitHub OAuth App + Supabase Provider）
+- ✅ 不配置Google OAuth（按需求）
 
 ### URL配置
+- ✅ Supabase URL Configuration完成（Site URL + Redirect URLs）
 
-5. **Supabase URL Configuration**
-   - [ ] 设置Site URL
-   - [ ] 添加Redirect URLs
+## 待完成 🔄
 
 ### 测试 🧪
 
