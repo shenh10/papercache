@@ -3,8 +3,8 @@
 
 # 本地开发时也使用 /papercache，与生产环境保持一致
 # 这样本地和生产环境的URL完全一致，避免路径处理逻辑的复杂性
-baseurl: "https://dlwudpirfvzidtthoxtv.supabase.co"
-url: "https://dlwudpirfvzidtthoxtv.supabase.co"
+baseurl: "/papercache"
+url: "http://127.0.0.1:4000"
 
 # 本地开发时包含 slides 页面（生产环境不包含）
 header_pages:
