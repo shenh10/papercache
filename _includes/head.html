@@ -32,6 +32,26 @@
   </script>
   {%- endif -%}
   
+  <!-- Supabase配置 - 用于用户管理系统 -->
+  {%- if site.supabase and site.supabase.enabled -%}
+  {%- if site.supabase.url and site.supabase.anon_key -%}
+  <meta name="supabase-url" content="{{ site.supabase.url }}" />
+  <meta name="supabase-anon-key" content="{{ site.supabase.anon_key }}" />
+  <script>
+    window.siteConfig = window.siteConfig || {};
+    window.siteConfig.supabase = {
+      url: "{{ site.supabase.url }}",
+      anon_key: "{{ site.supabase.anon_key }}"
+    };
+  </script>
+  {%- endif -%}
+  
+  <!-- 加载Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 初始化Supabase客户端 -->
+  <script src="{{ '/assets/js/supabase-client.js' | relative_url }}"></script>
+  {%- endif -%}
+  
   <!-- 防止FOUC的基础样式 -->
   <style>
     /* 确保页面在CSS加载前有基础样式 */
