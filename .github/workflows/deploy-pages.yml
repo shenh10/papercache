@@ -75,6 +75,18 @@ jobs:
               id: pages
               uses: actions/configure-pages@v4
 
+            - name: 🔧 Inject Supabase config from environment
+              run: |
+                  if [ -n "${{ secrets.SUPABASE_URL }}" ] && [ -n "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
+                    echo "注入 Supabase 配置..."
+                    python3 scripts/inject-env-to-config.py
+                  else
+                    echo "⚠️  Supabase 环境变量未设置，跳过配置注入"
+                  fi
+              env:
+                  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+                  SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+
             - name: 🏗️ Build with Jekyll (first build for thumbnail extraction)
               run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
               env:
@@ -102,6 +114,15 @@ jobs:
               run: |
                   echo "清理 Jekyll 缓存..."
                   rm -rf .jekyll-cache .jekyll-metadata _site
+
+            - name: 🔧 Re-inject Supabase config (before rebuild)
+              run: |
+                  if [ -n "${{ secrets.SUPABASE_URL }}" ] && [ -n "${{ secrets.SUPABASE_ANON_KEY }}" ]; then
+                    python3 scripts/inject-env-to-config.py
+                  fi
+              env:
+                  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+                  SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
 
             - name: 🏗️ Rebuild with Jekyll (second build to include thumbnails)
               run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"

@@ -1,6 +1,6 @@
 {
   "installCommand": "bundle install",
-  "buildCommand": "JEKYLL_ENV=production bundle exec jekyll build",
+  "buildCommand": "python3 scripts/inject-env-to-config.py && JEKYLL_ENV=production bundle exec jekyll build",
   "outputDirectory": "_site",
   "rewrites": [
     {

@@ -146,17 +146,40 @@ bundle exec jekyll serve --config _config.yml,_config_local.yml
 
 ### Vercel部署
 
-在 Vercel Dashboard → Project Settings → Environment Variables 中添加：
-- `SUPABASE_URL`: `https://your-project.supabase.co`
-- `SUPABASE_ANON_KEY`: `your-anon-key`
+1. 在 Vercel Dashboard → **Project Settings** → **Environment Variables** 中添加：
+   - `SUPABASE_URL`: `https://your-project.supabase.co`
+   - `SUPABASE_ANON_KEY`: `your-anon-key`
 
-然后在构建时，需要修改 `vercel.json` 或构建脚本，从环境变量注入到 `_config.yml`。
+2. 配置已完成！构建时会自动从环境变量注入到 `_config.yml`。
+
+   `vercel.json` 中的构建命令已配置为：
+   ```json
+   "buildCommand": "python3 scripts/inject-env-to-config.py && JEKYLL_ENV=production bundle exec jekyll build"
+   ```
+
+3. 重新部署项目，配置会自动生效。
 
 ### GitHub Pages部署
 
-GitHub Pages 不支持环境变量。建议：
-1. 使用 Vercel 部署（推荐，支持环境变量）
-2. 或者使用 GitHub Actions，在 workflow 中设置环境变量并在构建时注入
+1. 在 GitHub 仓库中设置 Secrets：
+   - 进入 **Settings** → **Secrets and variables** → **Actions**
+   - 点击 **New repository secret**
+   - 添加以下两个 secrets：
+     - `SUPABASE_URL`: `https://your-project.supabase.co`
+     - `SUPABASE_ANON_KEY`: `your-anon-key`
+
+2. 配置已完成！GitHub Actions workflow 已更新为自动注入配置。
+
+   在 `.github/workflows/deploy-pages.yml` 中，构建步骤会自动执行：
+   ```yaml
+   - name: 🔧 Inject Supabase config from environment
+     run: python3 scripts/inject-env-to-config.py
+     env:
+       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+   ```
+
+3. 推送代码或触发 workflow，配置会自动生效。
 
 ### 重要提示
 
