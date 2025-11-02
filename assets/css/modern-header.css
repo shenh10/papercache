@@ -72,6 +72,12 @@
   font-weight: 400;
 }
 
+.main-nav {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .nav-menu {
   display: flex;
   align-items: center;

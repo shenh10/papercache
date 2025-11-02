@@ -32,12 +32,54 @@
           {% endif %}
         {% endfor %}
       </ul>
+      
+      <!-- 用户菜单 -->
+      {%- if site.supabase and site.supabase.enabled -%}
+      <div class="user-menu" id="user-menu">
+        <!-- 未登录状态 -->
+        <div class="user-menu-guest" id="user-menu-guest" style="display: none;">
+          <button class="auth-btn-header" onclick="openAuthModal('login')">登录</button>
+        </div>
+        
+        <!-- 已登录状态 -->
+        <div class="user-menu-authenticated" id="user-menu-authenticated" style="display: none;">
+          <div class="user-avatar" id="user-avatar">
+            <img src="" alt="Avatar" id="user-avatar-img" style="display: none;">
+            <span id="user-avatar-text"></span>
+          </div>
+          <div class="user-dropdown" id="user-dropdown">
+            <div class="user-info">
+              <div class="user-name" id="user-name"></div>
+              <div class="user-email" id="user-email"></div>
+            </div>
+            <div class="user-dropdown-menu">
+              <a href="{{ '/account/favorites.html' | relative_url }}" class="user-menu-item">
+                <span class="user-menu-icon">⭐</span>
+                我的收藏
+              </a>
+              <a href="{{ '/account/profile.html' | relative_url }}" class="user-menu-item">
+                <span class="user-menu-icon">👤</span>
+                个人资料
+              </a>
+              <hr class="user-menu-divider">
+              <button class="user-menu-item user-menu-logout" onclick="handleLogout()">
+                <span class="user-menu-icon">🚪</span>
+                退出登录
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {%- endif -%}
     </nav>
   </div>
 </header>
 
 <!-- 样式文件 -->
 <link rel="stylesheet" href="{{ '/assets/css/modern-header.css' | relative_url }}">
+{%- if site.supabase and site.supabase.enabled -%}
+<link rel="stylesheet" href="{{ '/assets/css/auth.css' | relative_url }}">
+{%- endif -%}
 
 <!-- 移动端菜单交互脚本 -->
 <script>
