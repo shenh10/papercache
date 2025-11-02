@@ -51,10 +51,10 @@ exclude:
   # 注意：不排除 _slides/，让 Jekyll 在本地开发时处理
 
 # Supabase 配置 - 本地开发环境
-# 注意：请从 .env.local 文件中读取值并填入下面
-# 不要将敏感信息提交到 Git（.env.local 应该在 .gitignore 中）
-# 如果不想手动填写，可以使用脚本：scripts/load-env-to-config.sh
+# 注意：此文件会被提交到 Git，请勿包含真实的密钥
+# 真实密钥存储在 .env.local 中（已在 .gitignore 中）
+# 使用脚本自动同步：./scripts/load-env-to-config.sh
 supabase:
-  url: "https://dlwudpirfvzidtthoxtv.supabase.co"  # 从 .env.local 的 SUPABASE_URL 复制到这里
-  anon_key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsd3VkcGlyZnZ6aWR0dGhveHR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNTU5MTksImV4cCI6MjA3NzYzMTkxOX0.mW5FtqF72BgdUMuS1-KcJMF3VIqnGsnzTS5sF59wYjY"  # 从 .env.local 的 SUPABASE_ANON_KEY 复制到这里
+  url: ""  # 从 .env.local 的 SUPABASE_URL 自动同步（运行 load-env-to-config.sh）
+  anon_key: ""  # 从 .env.local 的 SUPABASE_ANON_KEY 自动同步（运行 load-env-to-config.sh）
   enabled: true

@@ -25,6 +25,9 @@ Gemfile.lock
 .env.local
 .env
 
+# Local config backups (may contain sensitive data)
+_config_local.yml.bak
+
 assets/data/
 _data/
 vendor/
