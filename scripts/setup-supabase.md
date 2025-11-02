@@ -18,7 +18,7 @@
 2. 点击左侧菜单 "Settings" → "API"
 3. 复制以下信息：
    - **Project URL**: `https://xxxxx.supabase.co`
-   - **anon/public key**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` (公开的，可以在前端使用)
+   - **anon/public key**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsd3VkcGlyZnZ6aWR0dGhveHR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNTU5MTksImV4cCI6MjA3NzYzMTkxOX0.mW5FtqF72BgdUMuS1-KcJMF3VIqnGsnzTS5sF59wYjY` (公开的，可以在前端使用)
    - **service_role key**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` (保密的，仅服务器端使用)
 
 ## 第三步：配置OAuth提供商
@@ -99,13 +99,69 @@ https://<your-project-ref>.supabase.co/auth/v1/callback
 2. 执行 `scripts/supabase-schema.sql` 中的SQL语句
 3. 执行 `scripts/supabase-rls.sql` 中的RLS策略
 
-## 第六步：配置本地环境
+## 第六步：配置本地开发环境
 
-创建 `.env.local` 文件（不提交到git）：
+### 方法一：使用脚本自动同步（推荐）
+
+1. 创建 `.env.local` 文件（不提交到git，已在.gitignore中）：
 ```env
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your-anon-key
 ```
 
-然后在 `_config.yml` 中添加配置（使用环境变量或直接配置，根据部署方式选择）
+2. 运行脚本自动更新配置：
+```bash
+chmod +x scripts/load-env-to-config.sh
+./scripts/load-env-to-config.sh
+```
+
+脚本会自动从 `.env.local` 读取配置并更新 `_config_local.yml`。
+
+### 方法二：手动配置
+
+1. 创建 `.env.local` 文件：
+```env
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+```
+
+2. 手动编辑 `_config_local.yml`，在文件末尾添加：
+```yaml
+supabase:
+  url: "https://your-project.supabase.co"  # 从 .env.local 复制
+  anon_key: "your-anon-key"  # 从 .env.local 复制
+  enabled: true
+```
+
+### 验证配置
+
+本地开发时使用：
+```bash
+bundle exec jekyll serve --config _config.yml,_config_local.yml
+```
+
+配置成功后，页面头部应该显示登录按钮（如果Supabase已正确配置）。
+
+## 第七步：配置生产环境
+
+### Vercel部署
+
+在 Vercel Dashboard → Project Settings → Environment Variables 中添加：
+- `SUPABASE_URL`: `https://your-project.supabase.co`
+- `SUPABASE_ANON_KEY`: `your-anon-key`
+
+然后在构建时，需要修改 `vercel.json` 或构建脚本，从环境变量注入到 `_config.yml`。
+
+### GitHub Pages部署
+
+GitHub Pages 不支持环境变量。建议：
+1. 使用 Vercel 部署（推荐，支持环境变量）
+2. 或者使用 GitHub Actions，在 workflow 中设置环境变量并在构建时注入
+
+### 重要提示
+
+⚠️ **安全提醒**：
+- `.env.local` 文件已在 `.gitignore` 中，不会提交到Git
+- `_config_local.yml` 中的敏感信息也不会提交（如果包含真实密钥，建议也加入.gitignore）
+- 生产环境的密钥应该通过环境变量或密钥管理服务配置，不要硬编码在代码中
 

@@ -3,8 +3,8 @@
 
 # 本地开发时也使用 /papercache，与生产环境保持一致
 # 这样本地和生产环境的URL完全一致，避免路径处理逻辑的复杂性
-baseurl: "/papercache"
-url: "http://127.0.0.1:4000"
+baseurl: "https://dlwudpirfvzidtthoxtv.supabase.co"
+url: "https://dlwudpirfvzidtthoxtv.supabase.co"
 
 # 本地开发时包含 slides 页面（生产环境不包含）
 header_pages:
@@ -49,3 +49,12 @@ exclude:
   - node_modules/
   - .DS_Store
   # 注意：不排除 _slides/，让 Jekyll 在本地开发时处理
+
+# Supabase 配置 - 本地开发环境
+# 注意：请从 .env.local 文件中读取值并填入下面
+# 不要将敏感信息提交到 Git（.env.local 应该在 .gitignore 中）
+# 如果不想手动填写，可以使用脚本：scripts/load-env-to-config.sh
+supabase:
+  url: "https://dlwudpirfvzidtthoxtv.supabase.co"  # 从 .env.local 的 SUPABASE_URL 复制到这里
+  anon_key: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRsd3VkcGlyZnZ6aWR0dGhveHR2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIwNTU5MTksImV4cCI6MjA3NzYzMTkxOX0.mW5FtqF72BgdUMuS1-KcJMF3VIqnGsnzTS5sF59wYjY"  # 从 .env.local 的 SUPABASE_ANON_KEY 复制到这里
+  enabled: true

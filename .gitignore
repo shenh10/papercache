@@ -21,6 +21,10 @@ _slides/
 .DS_Store
 Gemfile.lock
 
+# Environment variables
+.env.local
+.env
+
 assets/data/
 _data/
 vendor/
