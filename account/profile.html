@@ -1,0 +1,571 @@
+---
+layout: default
+title: 个人资料
+permalink: /account/profile.html
+---
+
+<div class="account-page">
+  <div class="account-header">
+    <h1>个人资料</h1>
+    <p class="account-subtitle">管理你的账户信息</p>
+  </div>
+
+  {%- if site.supabase and site.supabase.enabled -%}
+  <div id="profile-container" class="profile-container">
+    <div id="profile-loading" class="profile-loading">
+      <div class="loading-spinner"></div>
+      <p>加载中...</p>
+    </div>
+    
+    <div id="profile-content" class="profile-content" style="display: none;">
+      <!-- 用户基本信息 -->
+      <div class="profile-section">
+        <h2 class="profile-section-title">基本信息</h2>
+        <div class="profile-info-grid">
+          <div class="profile-info-item">
+            <label>用户名</label>
+            <input type="text" id="profile-username" class="profile-input" placeholder="用户名">
+          </div>
+          <div class="profile-info-item">
+            <label>邮箱</label>
+            <input type="email" id="profile-email" class="profile-input" disabled>
+          </div>
+          <div class="profile-info-item">
+            <label>全名</label>
+            <input type="text" id="profile-fullname" class="profile-input" placeholder="全名（可选）">
+          </div>
+          <div class="profile-info-item">
+            <label>个人简介</label>
+            <textarea id="profile-bio" class="profile-textarea" placeholder="介绍一下自己（可选）" rows="4"></textarea>
+          </div>
+        </div>
+        <button id="profile-save-btn" class="btn-primary" onclick="saveProfile()">保存更改</button>
+      </div>
+
+      <!-- 账户统计 -->
+      <div class="profile-section">
+        <h2 class="profile-section-title">账户统计</h2>
+        <div class="profile-stats-grid">
+          <div class="profile-stat-item">
+            <div class="stat-value" id="stat-favorites">-</div>
+            <div class="stat-label">收藏数</div>
+          </div>
+          <div class="profile-stat-item">
+            <div class="stat-value" id="stat-joined">-</div>
+            <div class="stat-label">注册时间</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="profile-error" class="profile-error" style="display: none;">
+      <p id="profile-error-message"></p>
+      <button onclick="loadProfile()" class="btn-retry">重试</button>
+    </div>
+  </div>
+
+  <script>
+  // 加载个人资料
+  async function loadProfile() {
+    const loadingEl = document.getElementById('profile-loading');
+    const contentEl = document.getElementById('profile-content');
+    const errorEl = document.getElementById('profile-error');
+    
+    if (!loadingEl || !contentEl || !errorEl) {
+      console.error('必要的DOM元素未找到');
+      return;
+    }
+    
+    // 显示加载状态
+    loadingEl.style.display = 'block';
+    contentEl.style.display = 'none';
+    errorEl.style.display = 'none';
+    
+    try {
+      // 等待服务加载完成
+      let waitCount = 0;
+      while (waitCount < 50 && (!window.authService || !window.favoritesService || !window.getSupabaseClient)) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        waitCount++;
+      }
+      
+      if (!window.authService) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        document.getElementById('profile-error-message').textContent = '认证服务未加载';
+        return;
+      }
+      
+      // 检查登录状态
+      console.log('个人资料页面：开始检查登录状态');
+      
+      // 先尝试直接从Supabase获取session（更快，更可靠，从localStorage读取）
+      const supabase = window.getSupabaseClient();
+      let user = null;
+      let hasSession = false;
+      
+      if (supabase) {
+        try {
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          console.log('个人资料页面：session检查结果', session ? '有session' : '无session', sessionError);
+          
+          if (session?.user) {
+            hasSession = true;
+            console.log('个人资料页面：检测到session，用户邮箱:', session.user.email);
+            
+            // 如果有session，先使用session中的基本信息，然后尝试获取完整信息
+            if (window.authService) {
+              try {
+                user = await window.authService.getCurrentUser();
+                console.log('个人资料页面：通过authService获取用户', user ? '成功' : '失败');
+              } catch (e) {
+                console.warn('个人资料页面：通过authService获取用户失败', e);
+                // 如果authService失败，但session存在，使用session中的基本信息
+                user = {
+                  ...session.user,
+                  profile: null
+                };
+              }
+            } else {
+              // 如果authService还没准备好，使用session中的基本信息
+              user = {
+                ...session.user,
+                profile: null
+              };
+            }
+          }
+        } catch (e) {
+          console.warn('个人资料页面：直接从session获取用户失败', e);
+        }
+      }
+      
+      // 如果直接从session获取失败，尝试通过authService
+      if (!user && window.authService) {
+        try {
+          user = await window.authService.getCurrentUser();
+          console.log('个人资料页面：通过authService获取用户', user ? '成功' : '失败');
+        } catch (e) {
+          console.warn('个人资料页面：通过authService获取用户失败', e);
+        }
+      }
+      
+      if (!user) {
+        console.warn('个人资料页面：未检测到登录用户');
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        document.getElementById('profile-error-message').textContent = '请先登录';
+        return;
+      }
+      
+      console.log('个人资料页面：用户已登录，开始加载资料', user.email);
+      
+      // 加载用户资料
+      const profile = user.profile || {};
+      
+      // 填充表单
+      document.getElementById('profile-username').value = profile.username || user.user_metadata?.username || user.email?.split('@')[0] || '';
+      document.getElementById('profile-email').value = user.email || '';
+      // 注意：如果数据库中没有 full_name 和 bio 字段，这些值可能为空
+      document.getElementById('profile-fullname').value = profile.full_name || user.user_metadata?.full_name || '';
+      document.getElementById('profile-bio').value = profile.bio || '';
+      
+      // 加载统计数据
+      if (window.favoritesService) {
+        const favoritesResult = await window.favoritesService.getUserFavorites();
+        if (favoritesResult && favoritesResult.success) {
+          document.getElementById('stat-favorites').textContent = favoritesResult.favorites?.length || 0;
+        }
+      }
+      
+      // 显示注册时间
+      if (user.created_at) {
+        const joinDate = new Date(user.created_at);
+        document.getElementById('stat-joined').textContent = joinDate.toLocaleDateString('zh-CN');
+      }
+      
+      // 显示内容
+      loadingEl.style.display = 'none';
+      contentEl.style.display = 'block';
+    } catch (error) {
+      console.error('加载个人资料出错:', error);
+      loadingEl.style.display = 'none';
+      errorEl.style.display = 'block';
+      document.getElementById('profile-error-message').textContent = '加载出错：' + (error.message || '未知错误');
+    }
+  }
+  
+  // 保存个人资料
+  async function saveProfile() {
+    const saveBtn = document.getElementById('profile-save-btn');
+    const originalText = saveBtn.textContent;
+    
+    try {
+      saveBtn.disabled = true;
+      saveBtn.textContent = '保存中...';
+      
+      if (!window.authService) {
+        alert('认证服务未加载');
+        return;
+      }
+      
+      const user = await window.authService.getCurrentUser();
+      if (!user) {
+        alert('请先登录');
+        return;
+      }
+      
+      const supabase = window.getSupabaseClient();
+      if (!supabase) {
+        alert('Supabase客户端未加载');
+        return;
+      }
+      
+      const username = document.getElementById('profile-username').value.trim();
+      const fullName = document.getElementById('profile-fullname').value.trim();
+      const bio = document.getElementById('profile-bio').value.trim();
+      
+      if (!username) {
+        alert('用户名不能为空');
+        return;
+      }
+      
+      // 更新profile表
+      const updateData = {
+        id: user.id,
+        username: username,
+        full_name: fullName || null,
+        bio: bio || null,
+        updated_at: new Date().toISOString()
+      };
+      
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(updateData);
+      
+      if (error) throw error;
+      
+      // 同时更新用户metadata
+      const { error: updateError } = await supabase.auth.updateUser({
+        data: {
+          username: username,
+          full_name: fullName || null
+        }
+      });
+      
+      if (updateError) {
+        console.warn('更新用户metadata失败:', updateError);
+      }
+      
+      alert('保存成功！');
+      // 重新加载资料
+      loadProfile();
+    } catch (error) {
+      console.error('保存个人资料失败:', error);
+      alert('保存失败：' + (error.message || '未知错误'));
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalText;
+    }
+  }
+  
+  // 页面加载时获取个人资料
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('个人资料页面：DOMContentLoaded');
+    
+    // 先尝试直接从Supabase检查session（最快的方式）
+    const tryDirectSessionCheck = async () => {
+      const supabase = window.getSupabaseClient();
+      if (supabase) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            console.log('个人资料页面：检测到session，用户已登录', session.user.email);
+            // 如果有session但authService还没准备好，等待一下
+            if (!window.authService) {
+              console.log('个人资料页面：等待authService初始化...');
+              let waitCount = 0;
+              const waitInterval = setInterval(() => {
+                waitCount++;
+                if (window.authService) {
+                  clearInterval(waitInterval);
+                  loadProfile();
+                } else if (waitCount > 30) {
+                  clearInterval(waitInterval);
+                  // 即使authService没准备好，也尝试直接使用supabase加载
+                  loadProfile();
+                }
+              }, 100);
+            } else {
+              loadProfile();
+            }
+            return true;
+          }
+        } catch (e) {
+          console.warn('个人资料页面：直接检查session失败', e);
+        }
+      }
+      return false;
+    };
+    
+    // 先尝试直接检查session
+    tryDirectSessionCheck().then(hasSession => {
+      if (!hasSession) {
+        // 如果没有session，等待服务加载
+        if (window.authService && window.favoritesService && window.getSupabaseClient) {
+          loadProfile();
+        } else {
+          // 等待服务加载完成
+          let waitCount = 0;
+          const checkInterval = setInterval(() => {
+            waitCount++;
+            if (window.authService && window.favoritesService && window.getSupabaseClient) {
+              clearInterval(checkInterval);
+              loadProfile();
+            } else if (waitCount > 50) {
+              clearInterval(checkInterval);
+              loadProfile(); // 即使服务未就绪也尝试加载，让 loadProfile 处理错误
+            }
+          }, 100);
+        }
+      }
+    });
+    
+    // 监听认证状态变化（当用户登录后刷新页面）
+    if (window.authService) {
+      window.authService.onAuthStateChange((user, event) => {
+        console.log('个人资料页面：认证状态变化', event, user?.email || '未登录');
+        if (user) {
+          loadProfile();
+        } else {
+          const loadingEl = document.getElementById('profile-loading');
+          const errorEl = document.getElementById('profile-error');
+          if (loadingEl) loadingEl.style.display = 'none';
+          if (errorEl) {
+            errorEl.style.display = 'block';
+            document.getElementById('profile-error-message').textContent = '请先登录';
+          }
+        }
+      });
+    } else {
+      // 如果authService还没加载，等待它加载后再注册监听器
+      let retryCount = 0;
+      const waitForAuthService = setInterval(() => {
+        retryCount++;
+        if (window.authService) {
+          clearInterval(waitForAuthService);
+          window.authService.onAuthStateChange((user, event) => {
+            console.log('个人资料页面：认证状态变化', event, user?.email || '未登录');
+            if (user) {
+              loadProfile();
+            }
+          });
+        } else if (retryCount > 50) {
+          clearInterval(waitForAuthService);
+        }
+      }, 100);
+    }
+  });
+  </script>
+  
+  <style>
+  .account-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+  
+  .account-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+  
+  .account-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+  }
+  
+  .account-subtitle {
+    color: #718096;
+    font-size: 1.1rem;
+  }
+  
+  .profile-container {
+    min-height: 400px;
+  }
+  
+  .profile-loading {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+  
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e2e8f0;
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .profile-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .profile-section {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 2rem;
+  }
+  
+  .profile-section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  
+  .profile-info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  @media (min-width: 768px) {
+    .profile-info-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  .profile-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .profile-info-item label {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.9rem;
+  }
+  
+  .profile-input,
+  .profile-textarea {
+    padding: 0.75rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s;
+  }
+  
+  .profile-input:focus,
+  .profile-textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+  
+  .profile-input:disabled {
+    background: #f7fafc;
+    color: #718096;
+    cursor: not-allowed;
+  }
+  
+  .profile-textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  .profile-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .profile-stat-item {
+    text-align: center;
+    padding: 1.5rem;
+    background: #f7fafc;
+    border-radius: 8px;
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stat-label {
+    color: #718096;
+    font-size: 0.9rem;
+  }
+  
+  .btn-primary {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-decoration: none;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1rem;
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  }
+  
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  .profile-error {
+    text-align: center;
+    padding: 2rem;
+    background: #fed7d7;
+    color: #c53030;
+    border-radius: 8px;
+  }
+  
+  .btn-retry {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid #c53030;
+    color: #c53030;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .btn-retry:hover {
+    background: #c53030;
+    color: white;
+  }
+  </style>
+  {%- else -%}
+  <div class="account-disabled">
+    <p>用户系统未启用</p>
+  </div>
+  {%- endif -%}
+</div>
+

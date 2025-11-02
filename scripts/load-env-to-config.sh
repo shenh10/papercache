@@ -23,14 +23,15 @@ fi
 cp "$CONFIG_FILE" "$CONFIG_FILE.bak"
 
 # 使用 sed 更新配置（macOS 和 Linux 兼容）
+# 注意：只更新 supabase 配置块中的 url 和 anon_key，不修改 Jekyll 的 baseurl 和 url
 if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS
-    sed -i '' "s|url: \".*\"|url: \"$SUPABASE_URL\"|" "$CONFIG_FILE"
-    sed -i '' "s|anon_key: \".*\"|anon_key: \"$SUPABASE_ANON_KEY\"|" "$CONFIG_FILE"
+    # macOS - 使用更精确的匹配，只更新 supabase 块中的配置
+    sed -i '' "/^supabase:/,/^[^[:space:]]/{s|\([[:space:]]*url: \)\".*\"|\1\"$SUPABASE_URL\"|;}" "$CONFIG_FILE"
+    sed -i '' "/^supabase:/,/^[^[:space:]]/{s|\([[:space:]]*anon_key: \)\".*\"|\1\"$SUPABASE_ANON_KEY\"|;}" "$CONFIG_FILE"
 else
     # Linux
-    sed -i "s|url: \".*\"|url: \"$SUPABASE_URL\"|" "$CONFIG_FILE"
-    sed -i "s|anon_key: \".*\"|anon_key: \"$SUPABASE_ANON_KEY\"|" "$CONFIG_FILE"
+    sed -i "/^supabase:/,/^[^[:space:]]/{s|\([[:space:]]*url: \)\".*\"|\1\"$SUPABASE_URL\"|;}" "$CONFIG_FILE"
+    sed -i "/^supabase:/,/^[^[:space:]]/{s|\([[:space:]]*anon_key: \)\".*\"|\1\"$SUPABASE_ANON_KEY\"|;}" "$CONFIG_FILE"
 fi
 
 echo "✅ 已更新 _config_local.yml"

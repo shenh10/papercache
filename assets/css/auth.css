@@ -12,9 +12,15 @@
   right: 0;
   bottom: 0;
   z-index: 10000;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  box-sizing: border-box;
+}
+
+.auth-modal[style*="flex"] {
+  display: flex !important;
 }
 
 .auth-modal-overlay {
@@ -30,15 +36,19 @@
 .auth-modal-content {
   position: relative;
   background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  max-width: 420px;
-  width: 100%;
-  max-height: 90vh;
+  border-radius: 12px;
+  padding: 1.5rem;
+  max-width: 360px;
+  width: 360px;
+  min-width: 300px;
+  max-height: 85vh;
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   z-index: 1;
   animation: modalFadeIn 0.3s ease;
+  margin: 0;
+  box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 @keyframes modalFadeIn {
@@ -71,8 +81,8 @@
 }
 
 .auth-form h2 {
-  margin: 0 0 1.5rem 0;
-  font-size: 1.75rem;
+  margin: 0 0 1.25rem 0;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #2d3748;
 }
@@ -155,6 +165,11 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+  line-height: 1.5;
+  height: fit-content;
+  display: inline-flex;
+  align-items: center;
 }
 
 .auth-btn-header:hover {
@@ -284,8 +299,11 @@
    ============================================ */
 
 .user-menu {
-  margin-left: 1.5rem;
+  margin-left: 0; /* 在 main-nav 中已经通过 flex 布局推到右侧 */
   position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .user-menu-guest {
@@ -412,9 +430,19 @@
 
 /* 响应式 */
 @media (max-width: 768px) {
+  .auth-modal {
+    padding: 1rem;
+  }
+  
   .auth-modal-content {
-    padding: 1.5rem;
-    margin: 1rem;
+    padding: 1.25rem;
+    max-width: calc(100vw - 2rem) !important;
+    width: calc(100vw - 2rem) !important;
+    min-width: 280px;
+  }
+  
+  .auth-form h2 {
+    font-size: 1.25rem;
   }
   
   .user-dropdown {

@@ -35,6 +35,21 @@ permalink: /account/favorites.html
   </div>
 
   <script>
+  // 等待服务加载完成
+  async function waitForServices(maxWait = 5000) {
+    const startTime = Date.now();
+    while ((Date.now() - startTime) < maxWait) {
+      if (window.authService && window.favoritesService && window.getSupabaseClient) {
+        const supabase = window.getSupabaseClient();
+        if (supabase) {
+          return true;
+        }
+      }
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    return false;
+  }
+  
   // 加载收藏列表
   async function loadFavorites() {
     const loadingEl = document.getElementById('favorites-loading');
@@ -42,7 +57,10 @@ permalink: /account/favorites.html
     const emptyEl = document.getElementById('favorites-empty');
     const errorEl = document.getElementById('favorites-error');
     
-    if (!loadingEl || !listEl || !emptyEl || !errorEl) return;
+    if (!loadingEl || !listEl || !emptyEl || !errorEl) {
+      console.error('必要的DOM元素未找到');
+      return;
+    }
     
     // 显示加载状态
     loadingEl.style.display = 'block';
@@ -50,53 +68,94 @@ permalink: /account/favorites.html
     emptyEl.style.display = 'none';
     errorEl.style.display = 'none';
     
-    // 检查登录状态
-    const user = await window.authService?.getCurrentUser();
-    if (!user) {
+    try {
+      // 等待服务加载完成
+      const servicesReady = await waitForServices();
+      if (!servicesReady) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        document.getElementById('favorites-error-message').textContent = '服务加载超时，请刷新页面重试';
+        return;
+      }
+      
+      // 检查登录状态
+      if (!window.authService) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        document.getElementById('favorites-error-message').textContent = '认证服务未加载';
+        return;
+      }
+      
+      const user = await window.authService.getCurrentUser();
+      if (!user) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        document.getElementById('favorites-error-message').textContent = '请先登录';
+        return;
+      }
+      
+      // 获取收藏列表
+      if (!window.favoritesService) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        document.getElementById('favorites-error-message').textContent = '收藏服务未加载';
+        return;
+      }
+      
+      const result = await window.favoritesService.getUserFavorites();
+      
+      loadingEl.style.display = 'none';
+      
+      if (!result || !result.success) {
+        errorEl.style.display = 'block';
+        document.getElementById('favorites-error-message').textContent = result?.error || '加载失败';
+        return;
+      }
+      
+      if (result.favorites && result.favorites.length === 0) {
+        emptyEl.style.display = 'block';
+        return;
+      }
+      
+      // 显示收藏列表
+      listEl.style.display = 'block';
+      renderFavoritesList(result.favorites);
+    } catch (error) {
+      console.error('加载收藏列表出错:', error);
       loadingEl.style.display = 'none';
       errorEl.style.display = 'block';
-      document.getElementById('favorites-error-message').textContent = '请先登录';
-      return;
+      document.getElementById('favorites-error-message').textContent = '加载出错：' + (error.message || '未知错误');
     }
-    
-    // 获取收藏列表
-    const result = await window.favoritesService?.getUserFavorites();
-    
-    loadingEl.style.display = 'none';
-    
-    if (!result || !result.success) {
-      errorEl.style.display = 'block';
-      document.getElementById('favorites-error-message').textContent = result?.error || '加载失败';
-      return;
-    }
-    
-    if (result.favorites.length === 0) {
-      emptyEl.style.display = 'block';
-      return;
-    }
-    
-    // 显示收藏列表
-    listEl.style.display = 'block';
-    renderFavoritesList(result.favorites);
   }
   
   // 渲染收藏列表
   function renderFavoritesList(favorites) {
     const listEl = document.getElementById('favorites-list');
-    if (!listEl) return;
+    if (!listEl) {
+      console.error('favorites-list 元素未找到');
+      return;
+    }
     
     // 清空列表
     listEl.innerHTML = '';
     
+    if (!favorites || favorites.length === 0) {
+      document.getElementById('favorites-empty').style.display = 'block';
+      return;
+    }
+    
     favorites.forEach(fav => {
       const item = document.createElement('div');
       item.className = 'favorite-item';
+      // 转义特殊字符，防止XSS
+      const postUrl = String(fav.post_url || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      const createdDate = fav.created_at ? new Date(fav.created_at).toLocaleDateString('zh-CN') : '未知日期';
       item.innerHTML = `
-        <a href="${fav.post_url}" class="favorite-item-link">
-          <span class="favorite-item-url">${fav.post_url}</span>
-          <span class="favorite-item-date">${new Date(fav.created_at).toLocaleDateString('zh-CN')}</span>
+        <a href="${postUrl}" class="favorite-item-link">
+          <span class="favorite-item-url">${postUrl}</span>
+          <span class="favorite-item-date">${createdDate}</span>
         </a>
-        <button class="favorite-item-remove" onclick="removeFavorite('${fav.post_url}')" title="取消收藏">×</button>
+        <button class="favorite-item-remove" onclick="removeFavorite('${postUrl.replace(/'/g, "\\'")}')" title="取消收藏">×</button>
       `;
       listEl.appendChild(item);
     });
@@ -117,7 +176,40 @@ permalink: /account/favorites.html
   // 页面加载时获取收藏列表
   document.addEventListener('DOMContentLoaded', function() {
     // 等待认证服务和收藏服务加载完成
-    setTimeout(loadFavorites, 500);
+    // 先尝试立即加载，如果服务未就绪则等待
+    if (window.authService && window.favoritesService && window.getSupabaseClient) {
+      loadFavorites();
+    } else {
+      // 等待最多3秒
+      let waitCount = 0;
+      const checkInterval = setInterval(() => {
+        waitCount++;
+        if (window.authService && window.favoritesService && window.getSupabaseClient) {
+          clearInterval(checkInterval);
+          loadFavorites();
+        } else if (waitCount > 30) {
+          clearInterval(checkInterval);
+          loadFavorites(); // 即使服务未就绪也尝试加载，让 loadFavorites 处理错误
+        }
+      }, 100);
+    }
+    
+    // 监听认证状态变化，如果用户登录状态改变，重新加载
+    if (window.authService) {
+      window.authService.onAuthStateChange((user) => {
+        if (user) {
+          loadFavorites();
+        } else {
+          const loadingEl = document.getElementById('favorites-loading');
+          const errorEl = document.getElementById('favorites-error');
+          if (loadingEl) loadingEl.style.display = 'none';
+          if (errorEl) {
+            errorEl.style.display = 'block';
+            document.getElementById('favorites-error-message').textContent = '请先登录';
+          }
+        }
+      });
+    }
   });
   </script>
   

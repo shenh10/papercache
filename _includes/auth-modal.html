@@ -34,6 +34,10 @@
           <input type="password" id="login-password" name="password" required autocomplete="current-password">
         </div>
         
+        <div class="auth-form-group" style="text-align: right; margin-bottom: 1rem;">
+          <a href="#" onclick="switchToForgotPassword(); return false;" style="color: #667eea; text-decoration: none; font-size: 0.9rem;">忘记密码？</a>
+        </div>
+        
         <button type="submit" class="auth-btn auth-btn-primary">登录</button>
       </form>
       
@@ -86,6 +90,50 @@
       </div>
     </div>
     
+    <!-- 忘记密码表单 -->
+    <div id="auth-forgot-password-form" class="auth-form" style="display: none;">
+      <h2>忘记密码</h2>
+      
+      <p style="color: #718096; font-size: 0.9rem; margin-bottom: 1.5rem;">
+        请输入您的邮箱地址，我们将发送密码重置链接到您的邮箱。
+      </p>
+      
+      <form id="forgot-password-form" onsubmit="handleForgotPassword(event)">
+        <div class="auth-form-group">
+          <label for="forgot-email">邮箱</label>
+          <input type="email" id="forgot-email" name="email" required autocomplete="email">
+        </div>
+        
+        <button type="submit" class="auth-btn auth-btn-primary">发送重置链接</button>
+      </form>
+      
+      <div class="auth-form-footer">
+        <p><a href="#" onclick="switchToLogin()">返回登录</a></p>
+      </div>
+    </div>
+    
+    <!-- 重发验证邮件表单 -->
+    <div id="auth-resend-email-form" class="auth-form" style="display: none;">
+      <h2>重发验证邮件</h2>
+      
+      <p style="color: #718096; font-size: 0.9rem; margin-bottom: 1.5rem;">
+        未收到验证邮件？请输入您的邮箱地址，我们将重新发送验证链接。
+      </p>
+      
+      <form id="resend-email-form" onsubmit="handleResendConfirmationEmail(event)">
+        <div class="auth-form-group">
+          <label for="resend-email">邮箱</label>
+          <input type="email" id="resend-email" name="email" required autocomplete="email">
+        </div>
+        
+        <button type="submit" class="auth-btn auth-btn-primary">重发验证邮件</button>
+      </form>
+      
+      <div class="auth-form-footer">
+        <p><a href="#" onclick="switchToLogin()">返回登录</a> | <a href="#" onclick="switchToRegister()">去注册</a></p>
+      </div>
+    </div>
+    
     <!-- 加载状态 -->
     <div id="auth-loading" class="auth-loading" style="display: none;">
       <div class="auth-spinner"></div>
@@ -104,7 +152,7 @@
 function openAuthModal(mode = 'login') {
   const modal = document.getElementById('auth-modal');
   if (modal) {
-    modal.style.display = 'flex';
+    modal.style.display = 'flex'; // 确保使用 flex 布局
     if (mode === 'register') {
       switchToRegister();
     } else {
@@ -128,10 +176,45 @@ function switchToRegister() {
 }
 
 function switchToLogin() {
+  // 隐藏所有表单
   document.getElementById('auth-register-form').classList.remove('active');
   document.getElementById('auth-register-form').style.display = 'none';
+  document.getElementById('auth-forgot-password-form').classList.remove('active');
+  document.getElementById('auth-forgot-password-form').style.display = 'none';
+  document.getElementById('auth-resend-email-form').classList.remove('active');
+  document.getElementById('auth-resend-email-form').style.display = 'none';
+  
+  // 显示登录表单
   document.getElementById('auth-login-form').classList.add('active');
   document.getElementById('auth-login-form').style.display = 'block';
+}
+
+function switchToForgotPassword() {
+  // 隐藏所有表单
+  document.getElementById('auth-login-form').classList.remove('active');
+  document.getElementById('auth-login-form').style.display = 'none';
+  document.getElementById('auth-register-form').classList.remove('active');
+  document.getElementById('auth-register-form').style.display = 'none';
+  document.getElementById('auth-resend-email-form').classList.remove('active');
+  document.getElementById('auth-resend-email-form').style.display = 'none';
+  
+  // 显示忘记密码表单
+  document.getElementById('auth-forgot-password-form').classList.add('active');
+  document.getElementById('auth-forgot-password-form').style.display = 'block';
+}
+
+function switchToResendEmail() {
+  // 隐藏所有表单
+  document.getElementById('auth-login-form').classList.remove('active');
+  document.getElementById('auth-login-form').style.display = 'none';
+  document.getElementById('auth-register-form').classList.remove('active');
+  document.getElementById('auth-register-form').style.display = 'none';
+  document.getElementById('auth-forgot-password-form').classList.remove('active');
+  document.getElementById('auth-forgot-password-form').style.display = 'none';
+  
+  // 显示重发邮件表单
+  document.getElementById('auth-resend-email-form').classList.add('active');
+  document.getElementById('auth-resend-email-form').style.display = 'block';
 }
 
 function showAuthError(message) {
@@ -166,17 +249,43 @@ async function handleGitHubLogin() {
 async function handleEmailLogin(event) {
   event.preventDefault();
   showAuthLoading(true);
+  showAuthError(''); // 清除之前的错误
   
-  const email = document.getElementById('login-email').value;
-  const password = document.getElementById('login-password').value;
-  
-  const result = await window.authService?.signInWithEmail(email, password);
-  showAuthLoading(false);
-  
-  if (result?.success) {
-    closeAuthModal();
-  } else {
-    showAuthError(result?.error || '登录失败');
+  try {
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    
+    if (!window.authService) {
+      showAuthLoading(false);
+      showAuthError('认证服务未加载，请刷新页面重试');
+      return;
+    }
+    
+    // 执行登录
+    const result = await window.authService.signInWithEmail(email, password);
+    
+    if (result?.success) {
+      // 登录成功，立即关闭加载状态和模态框
+      // 因为 auth.js 中的 signInWithEmail 已经会立即更新状态并通知监听器
+      showAuthLoading(false);
+      closeAuthModal();
+    } else {
+      // 登录失败
+      showAuthLoading(false);
+      const error = result?.error || '登录失败';
+      showAuthError(error);
+      
+      // 如果是因为邮箱未验证，提示重发验证邮件
+      if (error.includes('Email not confirmed') || error.includes('未验证') || error.includes('not confirmed')) {
+        setTimeout(() => {
+          showAuthError(error + '。点击"重发验证邮件"可重新发送验证链接。');
+        }, 2000);
+      }
+    }
+  } catch (error) {
+    console.error('登录处理出错:', error);
+    showAuthLoading(false);
+    showAuthError('登录失败：' + (error.message || '未知错误'));
   }
 }
 
@@ -192,12 +301,50 @@ async function handleEmailRegister(event) {
   showAuthLoading(false);
   
   if (result?.success) {
-    showAuthError('注册成功！请查收邮箱验证链接。');
+    showAuthError('注册成功！请查收邮箱验证链接。如未收到，可点击"重发验证邮件"。');
     setTimeout(() => {
       switchToLogin();
-    }, 2000);
+    }, 3000);
   } else {
     showAuthError(result?.error || '注册失败');
+  }
+}
+
+async function handleForgotPassword(event) {
+  event.preventDefault();
+  showAuthLoading(true);
+  
+  const email = document.getElementById('forgot-email').value;
+  
+  const result = await window.authService?.resetPasswordForEmail(email);
+  showAuthLoading(false);
+  
+  if (result?.success) {
+    showAuthError('密码重置链接已发送到您的邮箱，请查收。');
+    setTimeout(() => {
+      switchToLogin();
+    }, 3000);
+  } else {
+    showAuthError(result?.error || '发送失败，请检查邮箱地址是否正确。');
+  }
+}
+
+async function handleResendConfirmationEmail(event) {
+  event.preventDefault();
+  showAuthLoading(true);
+  
+  const email = document.getElementById('resend-email').value;
+  
+  const result = await window.authService?.resendConfirmationEmail(email);
+  showAuthLoading(false);
+  
+  if (result?.success) {
+    showAuthError('验证邮件已重新发送，请查收邮箱。');
+    setTimeout(() => {
+      switchToLogin();
+    }, 3000);
+  } else {
+    showAuthError(result?.error || '发送失败，请检查邮箱地址是否正确。');
   }
 }
 

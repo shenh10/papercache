@@ -8,15 +8,33 @@
 -- 当新用户注册时，自动创建对应的profile记录
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  v_username TEXT;
 BEGIN
+  -- 从 metadata 获取 username，如果没有则从 email 提取
+  v_username := COALESCE(
+    NEW.raw_user_meta_data->>'username',
+    CASE 
+      WHEN NEW.email IS NOT NULL THEN split_part(NEW.email, '@', 1)
+      ELSE 'user'
+    END
+  );
+  
   INSERT INTO public.profiles (id, username, avatar_url, full_name)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'user_name', NEW.email),
+    v_username,
     NEW.raw_user_meta_data->>'avatar_url',
     NEW.raw_user_meta_data->>'full_name'
-  );
+  )
+  ON CONFLICT (id) DO NOTHING;
+  
   RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    -- 如果插入失败，记录错误但不阻止用户创建
+    RAISE WARNING 'Failed to create profile for user %: %', NEW.id, SQLERRM;
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

@@ -38,10 +38,27 @@
     return null;
   }
 
-  // 初始化Supabase客户端
+  // 初始化Supabase客户端（单例模式，确保全局只有一个实例）
   let supabaseClient = null;
+  let isInitializing = false;
 
   function initSupabase() {
+    // 如果已经有客户端实例，直接返回（避免创建多个实例）
+    if (supabaseClient) {
+      return supabaseClient;
+    }
+    
+    // 检查全局是否已有实例（避免多个脚本创建多个实例）
+    if (window._supabaseClientInstance) {
+      supabaseClient = window._supabaseClientInstance;
+      return supabaseClient;
+    }
+    
+    // 如果正在初始化，等待完成
+    if (isInitializing) {
+      return null;
+    }
+    
     const config = getSupabaseConfig();
     
     if (!config || !config.url || !config.anonKey) {
@@ -56,28 +73,42 @@
     }
 
     try {
+      isInitializing = true;
+      
+      // 使用统一的storage key，确保多个页面共享同一个session
       supabaseClient = window.supabase.createClient(config.url, config.anonKey, {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
-          detectSessionInUrl: true
+          detectSessionInUrl: true,
+          storage: window.localStorage, // 明确使用localStorage
+          storageKey: 'supabase.auth.token' // 统一的storage key，避免多个实例冲突
         }
       });
+      
+      // 保存到全局，避免重复创建
+      window._supabaseClientInstance = supabaseClient;
 
-      console.log('Supabase客户端初始化成功');
+      isInitializing = false;
+      console.log('Supabase客户端初始化成功（单例模式）');
       return supabaseClient;
     } catch (error) {
+      isInitializing = false;
       console.error('Supabase客户端初始化失败:', error);
       return null;
     }
   }
 
-  // 导出全局Supabase客户端
+  // 导出全局Supabase客户端（单例模式）
   window.getSupabaseClient = function() {
-    if (!supabaseClient) {
-      supabaseClient = initSupabase();
+    if (supabaseClient) {
+      return supabaseClient;
     }
-    return supabaseClient;
+    if (window._supabaseClientInstance) {
+      supabaseClient = window._supabaseClientInstance;
+      return supabaseClient;
+    }
+    return initSupabase();
   };
 
   // 页面加载完成后初始化
