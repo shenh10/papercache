@@ -56,6 +56,10 @@
     window.authService.getCurrentUser().then(user => {
       updateUserMenu(user);
     });
+  } else {
+    // 如果认证服务未加载，直接显示登录按钮（未登录状态）
+    console.warn('authService 未加载，显示登录按钮');
+    updateUserMenu(null);
   }
 
   // 处理退出登录
