@@ -330,9 +330,9 @@
 /* 最新动态样式 */
 .latest-posts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: 1fr;
   gap: 2rem;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
 .latest-posts-panel {
@@ -473,6 +473,14 @@
   background: linear-gradient(135deg, #ed8936, #f56565);
 }
 
+.post-list-header-popular {
+  background: linear-gradient(135deg, rgba(245, 101, 101, 0.05), rgba(237, 100, 166, 0.05));
+}
+
+.post-list-header-popular::before {
+  background: linear-gradient(135deg, #f56565, #ed64a6);
+}
+
 .header-label {
   display: inline-block;
   position: relative;
@@ -496,6 +504,19 @@
   padding: 1rem 1.5rem;
   border-bottom: 1px solid rgba(102, 126, 234, 0.1);
   transition: background-color 0.3s ease;
+}
+
+.post-item .post-date {
+  flex-shrink: 0;
+}
+
+.post-item .post-subcategory {
+  flex-shrink: 0;
+}
+
+.post-item .post-link {
+  flex: 1;
+  min-width: 0;
 }
 
 .latest-posts-panel .latest-posts-list .post-item:last-child {
@@ -535,6 +556,52 @@
   line-height: 1.4;
   transition: color 0.3s ease;
   flex: 1;
+}
+
+.post-subcategory {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  display: inline-block;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+  width: 80px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.post-subcategory:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.post-subcategory-added {
+  background: linear-gradient(135deg, rgba(66, 153, 225, 0.2), rgba(102, 126, 234, 0.2));
+  color: #2563eb;
+  border: 1px solid rgba(66, 153, 225, 0.4);
+}
+
+.post-subcategory-published {
+  background: linear-gradient(135deg, rgba(237, 137, 54, 0.2), rgba(245, 101, 101, 0.2));
+  color: #c05621;
+  border: 1px solid rgba(237, 137, 54, 0.4);
+}
+
+.post-subcategory-popular {
+  background: linear-gradient(135deg, rgba(245, 101, 101, 0.2), rgba(237, 100, 166, 0.2));
+  color: #c53030;
+  border: 1px solid rgba(245, 101, 101, 0.4);
+}
+
+/* 最多关注 - 红粉色渐变 */
+.post-date-popular {
+  background: linear-gradient(135deg, #f56565 0%, #ed64a6 50%, #d53f8c 100%);
 }
 
 .post-link:hover {
@@ -589,7 +656,7 @@
 }
 
 /* 响应式设计 */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .latest-posts-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
@@ -626,6 +693,16 @@
   .latest-posts-panel .latest-posts-list .post-item {
     padding: 0.875rem 1.25rem;
   }
+  
+  .post-subcategory {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.5rem;
+    width: 70px;
+  }
+}
+
+
+@media (max-width: 768px) {
   .hero-title {
     font-size: 2.5em;
   }

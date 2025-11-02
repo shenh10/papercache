@@ -22,6 +22,16 @@
   <link rel="alternate" type="application/atom+xml" title="{{ site.title }} - 最新收录" href="{{ "/feed.xml" | relative_url }}" />
   <link rel="alternate" type="application/atom+xml" title="{{ site.title }} - 最新发表" href="{{ "/feeds/latest-published.xml" | relative_url }}" />
   
+  <!-- API配置 - 用于点击统计 -->
+  {%- if site.api_base_url -%}
+  <meta name="api-base-url" content="{{ site.api_base_url }}" />
+  <script>
+    window.siteConfig = {
+      api_base_url: "{{ site.api_base_url }}"
+    };
+  </script>
+  {%- endif -%}
+  
   <!-- 防止FOUC的基础样式 -->
   <style>
     /* 确保页面在CSS加载前有基础样式 */
