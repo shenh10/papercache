@@ -1,0 +1,304 @@
+---
+layout: default
+title: 我的收藏
+permalink: /account/favorites.html
+---
+
+<div class="account-page">
+  <div class="account-header">
+    <h1>我的收藏</h1>
+    <p class="account-subtitle">你收藏的所有论文</p>
+  </div>
+
+  {%- if site.supabase and site.supabase.enabled -%}
+  <div id="favorites-container" class="favorites-container">
+    <div id="favorites-loading" class="favorites-loading">
+      <div class="loading-spinner"></div>
+      <p>加载中...</p>
+    </div>
+    
+    <div id="favorites-list" class="favorites-list" style="display: none;">
+      <!-- 收藏列表将通过JavaScript动态生成 -->
+    </div>
+    
+    <div id="favorites-empty" class="favorites-empty" style="display: none;">
+      <div class="empty-icon">📚</div>
+      <h2>还没有收藏任何论文</h2>
+      <p>去浏览论文并收藏你感兴趣的内容吧！</p>
+      <a href="{{ '/collection.html' | relative_url }}" class="btn-primary">浏览论文</a>
+    </div>
+    
+    <div id="favorites-error" class="favorites-error" style="display: none;">
+      <p id="favorites-error-message"></p>
+      <button onclick="loadFavorites()" class="btn-retry">重试</button>
+    </div>
+  </div>
+
+  <script>
+  // 加载收藏列表
+  async function loadFavorites() {
+    const loadingEl = document.getElementById('favorites-loading');
+    const listEl = document.getElementById('favorites-list');
+    const emptyEl = document.getElementById('favorites-empty');
+    const errorEl = document.getElementById('favorites-error');
+    
+    if (!loadingEl || !listEl || !emptyEl || !errorEl) return;
+    
+    // 显示加载状态
+    loadingEl.style.display = 'block';
+    listEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+    errorEl.style.display = 'none';
+    
+    // 检查登录状态
+    const user = await window.authService?.getCurrentUser();
+    if (!user) {
+      loadingEl.style.display = 'none';
+      errorEl.style.display = 'block';
+      document.getElementById('favorites-error-message').textContent = '请先登录';
+      return;
+    }
+    
+    // 获取收藏列表
+    const result = await window.favoritesService?.getUserFavorites();
+    
+    loadingEl.style.display = 'none';
+    
+    if (!result || !result.success) {
+      errorEl.style.display = 'block';
+      document.getElementById('favorites-error-message').textContent = result?.error || '加载失败';
+      return;
+    }
+    
+    if (result.favorites.length === 0) {
+      emptyEl.style.display = 'block';
+      return;
+    }
+    
+    // 显示收藏列表
+    listEl.style.display = 'block';
+    renderFavoritesList(result.favorites);
+  }
+  
+  // 渲染收藏列表
+  function renderFavoritesList(favorites) {
+    const listEl = document.getElementById('favorites-list');
+    if (!listEl) return;
+    
+    // 清空列表
+    listEl.innerHTML = '';
+    
+    favorites.forEach(fav => {
+      const item = document.createElement('div');
+      item.className = 'favorite-item';
+      item.innerHTML = `
+        <a href="${fav.post_url}" class="favorite-item-link">
+          <span class="favorite-item-url">${fav.post_url}</span>
+          <span class="favorite-item-date">${new Date(fav.created_at).toLocaleDateString('zh-CN')}</span>
+        </a>
+        <button class="favorite-item-remove" onclick="removeFavorite('${fav.post_url}')" title="取消收藏">×</button>
+      `;
+      listEl.appendChild(item);
+    });
+  }
+  
+  // 移除收藏
+  async function removeFavorite(postUrl) {
+    if (!confirm('确定要取消收藏吗？')) return;
+    
+    const result = await window.favoritesService?.unfavoritePost(postUrl);
+    if (result?.success) {
+      loadFavorites(); // 重新加载列表
+    } else {
+      alert('操作失败：' + (result?.error || '未知错误'));
+    }
+  }
+  
+  // 页面加载时获取收藏列表
+  document.addEventListener('DOMContentLoaded', function() {
+    // 等待认证服务和收藏服务加载完成
+    setTimeout(loadFavorites, 500);
+  });
+  </script>
+  
+  <style>
+  .account-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+  
+  .account-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+  
+  .account-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+  }
+  
+  .account-subtitle {
+    color: #718096;
+    font-size: 1.1rem;
+  }
+  
+  .favorites-container {
+    min-height: 400px;
+  }
+  
+  .favorites-loading {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+  
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e2e8f0;
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .favorites-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .favorite-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    transition: all 0.2s;
+  }
+  
+  .favorite-item:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+  }
+  
+  .favorite-item-link {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    text-decoration: none;
+    color: #2d3748;
+  }
+  
+  .favorite-item-link:hover {
+    text-decoration: none;
+  }
+  
+  .favorite-item-url {
+    font-weight: 500;
+    color: #667eea;
+  }
+  
+  .favorite-item-date {
+    font-size: 0.85rem;
+    color: #718096;
+  }
+  
+  .favorite-item-remove {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #fed7d7;
+    color: #c53030;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  
+  .favorite-item-remove:hover {
+    background: #fc8181;
+    color: white;
+    transform: scale(1.1);
+  }
+  
+  .favorites-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+  
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+  }
+  
+  .favorites-empty h2 {
+    font-size: 1.5rem;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+  }
+  
+  .favorites-empty p {
+    color: #718096;
+    margin-bottom: 2rem;
+  }
+  
+  .btn-primary {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    text-decoration: none;
+    color: white;
+  }
+  
+  .favorites-error {
+    text-align: center;
+    padding: 2rem;
+    background: #fed7d7;
+    color: #c53030;
+    border-radius: 8px;
+  }
+  
+  .btn-retry {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid #c53030;
+    color: #c53030;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .btn-retry:hover {
+    background: #c53030;
+    color: white;
+  }
+  </style>
+  {%- else -%}
+  <div class="account-disabled">
+    <p>用户系统未启用</p>
+  </div>
+  {%- endif -%}
+</div>
+

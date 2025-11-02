@@ -22,6 +22,11 @@ layout: default
         </span>
       {%- endif -%}
     </p>
+    {%- if site.supabase and site.supabase.enabled -%}
+    <div class="post-actions">
+      {%- include favorite-button.html -%}
+    </div>
+    {%- endif -%}
   </header>
 
   <div class="post-content e-content" itemprop="articleBody">
@@ -37,6 +42,13 @@ layout: default
   padding-bottom: 1rem;
   border-bottom: 1px solid #e2e8f0;
   text-align: center;
+}
+
+.post-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
 }
 
 .post-title {
