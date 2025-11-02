@@ -16,7 +16,8 @@ layout: null
     <email>{{ site.author.email }}</email>
   </author>
   {%- comment -%} 按论文发表时间（date）排序，最新的在前 {%- endcomment -%}
-  {%- assign latest_published = site.posts | limit: 10 -%}
+  {%- assign sorted_by_date = site.posts | sort: 'date' | reverse -%}
+  {%- assign latest_published = sorted_by_date | limit: 10 -%}
   {% for post in latest_published %}
   <entry>
     <title type="html">{{ post.title | escape }}</title>
