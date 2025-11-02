@@ -1064,10 +1064,17 @@ window.RSS_SUBSCRIBE_URL = {{ '/feeds/index.html' | relative_url | jsonify }};
   try {
     window.PAPERCACHE_POSTS = [
     {%- for post in site.posts -%}
+      {%- assign excerpt_data = site.data.excerpts[post.url] -%}
+      {%- if excerpt_data -%}
+        {%- assign final_excerpt = excerpt_data | truncate: 240 -%}
+      {%- else -%}
+        {%- assign exc = post.excerpt | default: post.description | default: post.summary | default: post.content | strip_html | strip_newlines | truncate: 240 -%}
+        {%- assign final_excerpt = exc -%}
+      {%- endif -%}
       {
         title: {{ post.title | jsonify }},
         url: {{ post.url | relative_url | jsonify }},
-        excerpt: {{ post.content | strip_html | strip_newlines | truncate: 240 | jsonify }},
+        excerpt: {{ final_excerpt | jsonify }},
         tags: {{ post.tags | jsonify }},
         categories: {{ post.categories | jsonify }},
         date: {%- if post.date -%}{{ post.date | date: "%Y-%m-%d" | jsonify }}{%- else -%}{{ "" | jsonify }}{%- endif -%}

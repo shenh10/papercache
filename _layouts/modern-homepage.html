@@ -408,13 +408,68 @@ layout: default
     <!-- 最新动态 -->
     <section class="latest-section">
       <h2 class="section-title">🚀 最新动态</h2>
-      <div class="latest-posts-list">
-        {% for post in site.posts limit:10 %}
-        <div class="post-item">
-          <span class="post-date">{{ post.date | date: "%Y-%m" }}</span>
-          <a href="{{ post.url | relative_url }}" class="post-link">{{ post.title }}</a>
+      <div class="latest-posts-grid">
+        <!-- 最新添加 -->
+        <div class="latest-posts-panel">
+          <h3 class="panel-title">
+            📥 最新添加
+            <span class="info-icon" data-tooltip="按添加到 PaperCache 的时间排序">?</span>
+          </h3>
+          <div class="latest-posts-list">
+            {%- comment -%} 按 added_date 排序，显示最近添加的论文 {%- endcomment -%}
+            {%- assign posts_with_added_date = '' | split: '' -%}
+            {%- assign posts_without_added_date = '' | split: '' -%}
+            {%- for post in site.posts -%}
+              {%- if post.added_date -%}
+                {%- assign posts_with_added_date = posts_with_added_date | push: post -%}
+              {%- else -%}
+                {%- assign posts_without_added_date = posts_without_added_date | push: post -%}
+              {%- endif -%}
+            {%- endfor -%}
+            {%- assign sorted_with_added = posts_with_added_date | sort: 'added_date' | reverse -%}
+            {%- assign sorted_without_added = posts_without_added_date | sort: 'date' | reverse -%}
+            {%- assign all_sorted_posts = '' | split: '' -%}
+            {%- for post in sorted_with_added -%}
+              {%- assign all_sorted_posts = all_sorted_posts | push: post -%}
+            {%- endfor -%}
+            {%- for post in sorted_without_added -%}
+              {%- assign all_sorted_posts = all_sorted_posts | push: post -%}
+            {%- endfor -%}
+            {%- assign latest_added = all_sorted_posts | limit: 10 -%}
+            <div class="post-list-header post-list-header-added">
+              <span class="header-label">添加时间</span>
+            </div>
+            {% for post in latest_added limit: 10 %}
+            <div class="post-item">
+              {%- assign display_date = post.added_date | default: post.date -%}
+              <span class="post-date post-date-added">{{ display_date | date: "%Y-%m-%d" }}</span>
+              <a href="{{ post.url | relative_url }}" class="post-link">{{ post.title }}</a>
+            </div>
+            {% endfor %}
+          </div>
         </div>
-        {% endfor %}
+        
+        <!-- 最新发表 -->
+        <div class="latest-posts-panel">
+          <h3 class="panel-title">
+            📰 最新发表
+            <span class="info-icon" data-tooltip="按论文发表时间排序">?</span>
+          </h3>
+          <div class="latest-posts-list">
+            {%- comment -%} 按 date 排序，显示最近发表的论文 {%- endcomment -%}
+            {%- assign sorted_by_date = site.posts | sort: 'date' | reverse -%}
+            {%- assign latest_published = sorted_by_date | limit: 10 -%}
+            <div class="post-list-header post-list-header-published">
+              <span class="header-label">发表时间</span>
+            </div>
+            {% for post in latest_published limit: 10 %}
+            <div class="post-item">
+              <span class="post-date post-date-published">{{ post.date | date: "%Y-%m" }}</span>
+              <a href="{{ post.url | relative_url }}" class="post-link">{{ post.title }}</a>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
       </div>
       
       <div class="cta-section">
