@@ -1,0 +1,426 @@
+---
+layout: default
+title: 管理后台
+permalink: /admin/index.html
+---
+
+<div class="admin-page">
+  <div class="admin-header">
+    <h1>管理后台</h1>
+    <p class="admin-subtitle">用户管理和统计数据</p>
+  </div>
+
+  {%- if site.supabase and site.supabase.enabled and site.admin and site.admin.enabled -%}
+  <div id="admin-container">
+    <!-- 权限检查 -->
+    <div id="admin-auth-check" class="admin-loading">
+      <div class="loading-spinner"></div>
+      <p>正在验证管理员权限...</p>
+    </div>
+    
+    <!-- 未授权提示 -->
+    <div id="admin-unauthorized" class="admin-unauthorized" style="display: none;">
+      <div class="unauthorized-icon">🔒</div>
+      <h2>访问受限</h2>
+      <p>您没有管理员权限，无法访问此页面。</p>
+      <a href="{{ '/' | relative_url }}" class="btn-primary">返回首页</a>
+    </div>
+    
+    <!-- 管理面板 -->
+    <div id="admin-panel" class="admin-panel" style="display: none;">
+      <!-- 统计卡片 -->
+      <div class="admin-stats">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-content">
+            <div class="stat-value" id="stat-total-users">-</div>
+            <div class="stat-label">总用户数</div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">⭐</div>
+          <div class="stat-content">
+            <div class="stat-value" id="stat-total-favorites">-</div>
+            <div class="stat-label">总收藏数</div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <div class="stat-value" id="stat-total-logs">-</div>
+            <div class="stat-label">登录记录</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 标签页 -->
+      <div class="admin-tabs">
+        <button class="admin-tab active" onclick="switchTab('users')">用户列表</button>
+        <button class="admin-tab" onclick="switchTab('favorites')">收藏统计</button>
+        <button class="admin-tab" onclick="switchTab('logs')">登录日志</button>
+      </div>
+      
+      <!-- 用户列表 -->
+      <div id="tab-users" class="admin-tab-content active">
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>邮箱</th>
+                <th>用户名</th>
+                <th>注册时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <tr>
+                <td colspan="5" class="table-loading">加载中...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- 收藏统计 -->
+      <div id="tab-favorites" class="admin-tab-content">
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>文章URL</th>
+                <th>收藏数</th>
+                <th>最早收藏</th>
+              </tr>
+            </thead>
+            <tbody id="favorites-table-body">
+              <tr>
+                <td colspan="3" class="table-loading">加载中...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- 登录日志 -->
+      <div id="tab-logs" class="admin-tab-content">
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>用户邮箱</th>
+                <th>登录时间</th>
+                <th>IP地址</th>
+                <th>User Agent</th>
+              </tr>
+            </thead>
+            <tbody id="logs-table-body">
+              <tr>
+                <td colspan="4" class="table-loading">加载中...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // 检查管理员权限
+  async function checkAdminAccess() {
+    const authCheck = document.getElementById('admin-auth-check');
+    const unauthorized = document.getElementById('admin-unauthorized');
+    const adminPanel = document.getElementById('admin-panel');
+    
+    const user = await window.authService?.getCurrentUser();
+    if (!user) {
+      authCheck.style.display = 'none';
+      unauthorized.style.display = 'block';
+      unauthorized.innerHTML = `
+        <div class="unauthorized-icon">🔒</div>
+        <h2>请先登录</h2>
+        <p>您需要登录才能访问管理后台。</p>
+        <button onclick="window.openAuthModal('login')" class="btn-primary">立即登录</button>
+      `;
+      return false;
+    }
+    
+    // 检查是否是管理员（从配置文件读取）
+    const adminEmails = {{ site.admin.admin_emails | jsonify }};
+    const isAdmin = adminEmails && adminEmails.includes(user.email);
+    
+    if (!isAdmin) {
+      authCheck.style.display = 'none';
+      unauthorized.style.display = 'block';
+      return false;
+    }
+    
+    // 显示管理面板
+    authCheck.style.display = 'none';
+    adminPanel.style.display = 'block';
+    
+    // 加载数据
+    loadAdminData();
+    
+    return true;
+  }
+  
+  // 加载管理数据
+  async function loadAdminData() {
+    await Promise.all([
+      loadUserStats(),
+      loadFavoritesStats(),
+      loadLoginLogsStats(),
+      loadUsersTable(),
+      loadFavoritesTable(),
+      loadLogsTable()
+    ]);
+  }
+  
+  // 加载用户统计
+  async function loadUserStats() {
+    // 注意：需要Supabase Admin API或服务端函数
+    // 这里先显示占位符，实际需要服务端支持
+    document.getElementById('stat-total-users').textContent = '需要服务端支持';
+  }
+  
+  // 加载收藏统计
+  async function loadFavoritesStats() {
+    // 同上
+    document.getElementById('stat-total-favorites').textContent = '需要服务端支持';
+  }
+  
+  // 加载登录日志统计
+  async function loadLoginLogsStats() {
+    // 同上
+    document.getElementById('stat-total-logs').textContent = '需要服务端支持';
+  }
+  
+  // 加载用户列表
+  async function loadUsersTable() {
+    const tbody = document.getElementById('users-table-body');
+    if (!tbody) return;
+    
+    // 注意：需要服务端API或Supabase Admin SDK
+    tbody.innerHTML = '<tr><td colspan="5" class="table-message">需要服务端API支持</td></tr>';
+  }
+  
+  // 加载收藏统计表
+  async function loadFavoritesTable() {
+    const tbody = document.getElementById('favorites-table-body');
+    if (!tbody) return;
+    
+    // 可以通过公开的收藏数据统计（需要调整RLS策略或使用服务端API）
+    tbody.innerHTML = '<tr><td colspan="3" class="table-message">需要服务端API支持</td></tr>';
+  }
+  
+  // 加载登录日志表
+  async function loadLogsTable() {
+    const tbody = document.getElementById('logs-table-body');
+    if (!tbody) return;
+    
+    // 需要服务端API
+    tbody.innerHTML = '<tr><td colspan="4" class="table-message">需要服务端API支持</td></tr>';
+  }
+  
+  // 切换标签页
+  function switchTab(tabName) {
+    // 更新标签按钮
+    document.querySelectorAll('.admin-tab').forEach(tab => {
+      tab.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // 更新内容
+    document.querySelectorAll('.admin-tab-content').forEach(content => {
+      content.classList.remove('active');
+    });
+    document.getElementById('tab-' + tabName).classList.add('active');
+  }
+  
+  // 页面加载时检查权限
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(checkAdminAccess, 500);
+  });
+  </script>
+  
+  <style>
+  .admin-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+  
+  .admin-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+  
+  .admin-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+  }
+  
+  .admin-subtitle {
+    color: #718096;
+    font-size: 1.1rem;
+  }
+  
+  .admin-loading {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+  
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e2e8f0;
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .admin-unauthorized {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+  
+  .unauthorized-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+  }
+  
+  .admin-unauthorized h2 {
+    font-size: 1.5rem;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+  }
+  
+  .admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+  
+  .stat-icon {
+    font-size: 2.5rem;
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2d3748;
+  }
+  
+  .stat-label {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-top: 0.25rem;
+  }
+  
+  .admin-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  
+  .admin-tab {
+    padding: 0.75rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #718096;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: -2px;
+  }
+  
+  .admin-tab:hover {
+    color: #667eea;
+  }
+  
+  .admin-tab.active {
+    color: #667eea;
+    border-bottom-color: #667eea;
+  }
+  
+  .admin-tab-content {
+    display: none;
+  }
+  
+  .admin-tab-content.active {
+    display: block;
+  }
+  
+  .admin-table-container {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .admin-table thead {
+    background: #f7fafc;
+  }
+  
+  .admin-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #2d3748;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  
+  .admin-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    color: #4a5568;
+  }
+  
+  .admin-table tr:hover {
+    background: #f7fafc;
+  }
+  
+  .table-loading,
+  .table-message {
+    text-align: center;
+    color: #718096;
+    padding: 2rem !important;
+  }
+  </style>
+  {%- else -%}
+  <div class="admin-disabled">
+    <p>管理后台未启用</p>
+  </div>
+  {%- endif -%}
+</div>
+
