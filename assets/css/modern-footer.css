@@ -79,8 +79,8 @@
 
 .social-links a:hover {
   color: white;
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.1);
+  border-color: rgba(59, 130, 246, 0.8);
+  background: rgba(59, 130, 246, 0.1);
   text-decoration: none;
 }
 

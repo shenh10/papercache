@@ -22,7 +22,9 @@ supabase:
 admin:
   enabled: true
   admin_emails:
-    - "thushenhan@gmail.com"  # 替换为实际管理员邮箱
+    - "thushenhan@gmail.com"  # 现有管理员
+    # 添加更多管理员邮箱（每行一个）
+    # - "your-admin-email@example.com"
 
 author:
   name: shenh10

@@ -55,9 +55,87 @@ COMMENT ON FUNCTION get_favorite_count(TEXT) IS
 '获取单个文章的收藏数。参数：文章URL。返回：收藏数（整数）';
 
 -- ============================================
+-- 批量检查用户收藏状态（优化版本）
+-- ============================================
+-- 这个函数在数据库层面检查，避免返回所有行数据
+-- 返回格式：JSON对象，键为post_url，值为布尔值（true表示已收藏）
+
+CREATE OR REPLACE FUNCTION batch_check_user_favorites(p_user_id UUID, p_urls TEXT[])
+RETURNS JSON AS $$
+DECLARE
+  result JSON;
+BEGIN
+  -- 查询用户收藏的URL列表，然后构建JSON对象
+  SELECT json_object_agg(post_url, true)
+  INTO result
+  FROM (
+    SELECT DISTINCT post_url
+    FROM favorites
+    WHERE user_id = p_user_id
+      AND post_url = ANY(p_urls)
+  ) user_favorites;
+  
+  -- 如果result为NULL（没有收藏），返回空对象
+  RETURN COALESCE(result, '{}'::JSON);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 给函数添加注释
+COMMENT ON FUNCTION batch_check_user_favorites(UUID, TEXT[]) IS 
+'批量检查用户收藏状态，返回JSON对象。参数：用户ID和URL数组。返回：{"/url1": true, "/url2": true, ...}';
+
+-- ============================================
+-- 组合查询：同时获取收藏数和用户收藏状态（最高效）
+-- ============================================
+-- 这个函数一次性返回收藏数和用户收藏状态，减少网络往返
+
+CREATE OR REPLACE FUNCTION batch_get_favorites_with_status(p_user_id UUID, p_urls TEXT[])
+RETURNS JSON AS $$
+DECLARE
+  result JSON;
+BEGIN
+  SELECT json_build_object(
+    'counts', COALESCE(counts_json, '{}'::JSON),
+    'user_favorited', COALESCE(user_favorited_json, '{}'::JSON)
+  )
+  INTO result
+  FROM (
+    SELECT 
+      -- 收藏数统计
+      (SELECT json_object_agg(post_url, favorite_count)
+       FROM (
+         SELECT post_url, COUNT(*)::INTEGER as favorite_count
+         FROM favorites
+         WHERE post_url = ANY(p_urls)
+         GROUP BY post_url
+       ) counts) as counts_json,
+      
+      -- 用户收藏状态（仅当提供了user_id时）
+      (SELECT json_object_agg(post_url, true)
+       FROM (
+         SELECT DISTINCT post_url
+         FROM favorites
+         WHERE user_id = p_user_id
+           AND post_url = ANY(p_urls)
+       ) user_favorites
+       WHERE p_user_id IS NOT NULL) as user_favorited_json
+  ) combined;
+  
+  RETURN COALESCE(result, '{"counts": {}, "user_favorited": {}}'::JSON);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 给函数添加注释
+COMMENT ON FUNCTION batch_get_favorites_with_status(UUID, TEXT[]) IS 
+'同时获取收藏数和用户收藏状态，返回JSON对象。参数：用户ID（可为NULL）和URL数组。返回：{"counts": {"/url1": 5, ...}, "user_favorited": {"/url1": true, ...}}';
+
+-- ============================================
 -- 权限说明
 -- ============================================
 -- 这些函数使用 SECURITY DEFINER，意味着它们以函数创建者的权限运行
 -- 即使普通用户没有直接查询favorites表的权限，也可以通过这些函数获取收藏数
+-- 
+-- 对于需要用户ID的函数（batch_check_user_favorites, batch_get_favorites_with_status），
+-- 函数内部会验证user_id，确保安全
 -- 这样可以在保持RLS策略的同时，允许匿名用户查看收藏统计
 

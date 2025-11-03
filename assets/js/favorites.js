@@ -493,7 +493,7 @@
     // 批量检查收藏状态
     // ============================================
 
-    // 批量检查多个文章的收藏状态
+    // 批量检查多个文章的收藏状态（优化版本：优先使用RPC函数）
     async function batchCheckFavorites(postUrls) {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -519,18 +519,33 @@
           return {};
         }
 
-        // 构建URL映射，避免重复规范化
-        const urlMap = {};
-        postUrls.forEach((originalUrl) => {
-          const normalized = cachedNormalize(originalUrl);
-          if (normalized && normalized !== '/') {
-            if (!urlMap[normalized]) {
-              urlMap[normalized] = [];
+        // 优先使用RPC函数（更高效）
+        try {
+          const { data: rpcData, error: rpcError } = await supabase.rpc('batch_check_user_favorites', {
+            p_user_id: user.id,
+            p_urls: normalizedUrls
+          });
+          
+          if (!rpcError && rpcData && typeof rpcData === 'object') {
+            // RPC函数返回JSON对象，键为post_url，值为true
+            // 需要构建原始URL到布尔值的映射
+            const result = {};
+            postUrls.forEach(originalUrl => {
+              const normalized = cachedNormalize(originalUrl);
+              result[originalUrl] = rpcData[normalized] === true;
+            });
+            return result;
+          } else if (rpcError) {
+            // 如果是函数不存在的错误（42883），静默降级
+            if (rpcError.code !== '42883' && rpcError.code !== 'P0001') {
+              console.warn('[favorites] batchCheckFavorites RPC函数调用失败，使用降级方案:', rpcError);
             }
-            urlMap[normalized].push(originalUrl);
           }
-        });
+        } catch (rpcError) {
+          // RPC函数可能不存在，使用降级方案（静默处理）
+        }
 
+        // 降级方案：使用原有的客户端查询方法
         const { data, error } = await supabase
           .from('favorites')
           .select('post_url')
@@ -561,6 +576,87 @@
       }
     }
 
+    // 批量获取收藏数和用户收藏状态（组合查询，最高效）
+    async function batchGetFavoritesWithStatus(postUrls, userId = null) {
+      try {
+        if (!postUrls || postUrls.length === 0) {
+          return { counts: {}, userFavorited: {} };
+        }
+
+        // 如果没有提供userId，尝试获取当前用户
+        if (!userId) {
+          const { data: { user } } = await supabase.auth.getUser();
+          userId = user?.id || null;
+        }
+
+        // 规范化URL
+        const normalizedUrls = postUrls
+          .map(originalUrl => {
+            try {
+              const normalized = normalizeUrl(originalUrl);
+              if (typeof normalized !== 'string' || normalized.length === 0 || normalized === '/') {
+                return null;
+              }
+              return normalized;
+            } catch (e) {
+              return null;
+            }
+          })
+          .filter(url => url !== null && url !== undefined && url !== '' && url !== '/');
+        
+        if (normalizedUrls.length === 0) {
+          return { counts: {}, userFavorited: {} };
+        }
+
+        // 优先使用组合RPC函数（一次查询获取所有数据）
+        try {
+          const { data: rpcData, error: rpcError } = await supabase.rpc('batch_get_favorites_with_status', {
+            p_user_id: userId,
+            p_urls: normalizedUrls
+          });
+          
+          if (!rpcError && rpcData && typeof rpcData === 'object') {
+            // RPC函数返回：{counts: {...}, user_favorited: {...}}
+            const countsMap = rpcData.counts || {};
+            const userFavoritedMap = rpcData.user_favorited || {};
+            
+            // 构建原始URL到结果的映射
+            const countsResult = {};
+            const favoritedResult = {};
+            
+            postUrls.forEach(originalUrl => {
+              const normalized = normalizeUrl(originalUrl);
+              countsResult[originalUrl] = countsMap[normalized] || 0;
+              favoritedResult[originalUrl] = userFavoritedMap[normalized] === true;
+            });
+            
+            return { counts: countsResult, userFavorited: favoritedResult };
+          } else if (rpcError) {
+            // 如果是函数不存在的错误（42883），静默降级
+            if (rpcError.code !== '42883' && rpcError.code !== 'P0001') {
+              console.warn('[favorites] batchGetFavoritesWithStatus RPC函数调用失败，使用降级方案:', rpcError);
+            }
+          }
+        } catch (rpcError) {
+          // RPC函数可能不存在，使用降级方案（静默处理）
+        }
+
+        // 降级方案：分别查询收藏数和收藏状态
+        const [countsMap, favoritedMap] = await Promise.all([
+          batchGetFavoriteCounts(postUrls),
+          userId ? batchCheckFavorites(postUrls) : Promise.resolve({})
+        ]);
+
+        return { 
+          counts: countsMap, 
+          userFavorited: favoritedMap 
+        };
+      } catch (error) {
+        console.error('[favorites] batchGetFavoritesWithStatus: 批量获取失败', error);
+        return { counts: {}, userFavorited: {} };
+      }
+    }
+
     // ============================================
     // 导出API
     // ============================================
@@ -573,7 +669,8 @@
       getUserFavorites,
       getPostFavoriteCount,
       batchCheckFavorites,
-      batchGetFavoriteCounts
+      batchGetFavoriteCounts,
+      batchGetFavoritesWithStatus  // 新增：组合查询函数
     };
   }
 })();

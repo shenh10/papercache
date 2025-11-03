@@ -61,6 +61,12 @@
                 <span class="user-menu-icon">👤</span>
                 个人资料
               </a>
+              {%- if site.admin and site.admin.enabled and site.admin.admin_emails -%}
+              <a href="{{ '/admin/index.html' | relative_url }}" class="user-menu-item user-menu-admin" id="user-menu-admin-link" style="display: none;">
+                <span class="user-menu-icon">📊</span>
+                统计分析
+              </a>
+              {%- endif -%}
               <hr class="user-menu-divider">
               <button class="user-menu-item user-menu-logout" onclick="handleLogout()">
                 <span class="user-menu-icon">🚪</span>
@@ -126,6 +132,23 @@
       
       link.addEventListener('click', closeMenuHandler);
       link._closeMenuHandler = closeMenuHandler;
+    });
+    
+    // 点击用户菜单项后关闭菜单（移动端）
+    const userMenuItems = document.querySelectorAll('.user-menu-item, .auth-btn-header');
+    userMenuItems.forEach(item => {
+      // 移除旧的监听器
+      if (item._closeMenuHandler) {
+        item.removeEventListener('click', item._closeMenuHandler);
+      }
+      
+      const closeMenuHandler = function() {
+        mobileMenuToggle.classList.remove('active');
+        mainNav.classList.remove('active');
+      };
+      
+      item.addEventListener('click', closeMenuHandler);
+      item._closeMenuHandler = closeMenuHandler;
     });
     
     // 点击页面其他区域关闭菜单

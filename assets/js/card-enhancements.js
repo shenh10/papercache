@@ -309,13 +309,26 @@ async function initCardEnhancements() {
       
       if (postUrls.length === 0) return;
 
-      // 同时获取收藏状态和收藏数
-      const [favoritesMap, countsMap] = await Promise.all([
-        isLoggedIn
-          ? window.favoritesService.batchCheckFavorites(postUrls)
-          : Promise.resolve({}),
-        window.favoritesService.batchGetFavoriteCounts(postUrls)
-      ]);
+      // 使用组合查询函数（一次查询获取收藏数和用户收藏状态，最高效）
+      let favoritesMap = {};
+      let countsMap = {};
+      
+      if (window.favoritesService.batchGetFavoritesWithStatus) {
+        // 使用新的组合查询函数（数据库端统计，一次查询获取所有数据）
+        const result = await window.favoritesService.batchGetFavoritesWithStatus(postUrls);
+        countsMap = result.counts || {};
+        favoritesMap = isLoggedIn ? (result.userFavorited || {}) : {};
+      } else {
+        // 降级方案：分别查询（向后兼容）
+        const [favoritesResult, countsResult] = await Promise.all([
+          isLoggedIn
+            ? window.favoritesService.batchCheckFavorites(postUrls)
+            : Promise.resolve({}),
+          window.favoritesService.batchGetFavoriteCounts(postUrls)
+        ]);
+        favoritesMap = favoritesResult;
+        countsMap = countsResult;
+      }
 
       console.log('📄 批量检查收藏状态，共', postUrls.length, '篇文章，已登录:', isLoggedIn);
 
@@ -971,13 +984,13 @@ async function initCardEnhancements() {
     const svg = `
     <svg width="400" height="200" xmlns="http://www.w3.org/2000/svg">
       <rect width="100%" height="100%" fill="#f8fafc"/>
-      <rect x="10" y="10" width="380" height="180" fill="none" stroke="#667eea" stroke-width="1"/>
-      
+      <rect x="10" y="10" width="380" height="180" fill="none" stroke="#3b82f6" stroke-width="1"/>
+
       <!-- 简单的ASCII艺术字 -->
-      <text x="200" y="40" font-family="monospace" font-size="12" text-anchor="middle" fill="#667eea">+--------------------------------------+</text>
-      <text x="200" y="60" font-family="monospace" font-size="16" font-weight="bold" text-anchor="middle" fill="#667eea">PaperCache</text>
-      <text x="200" y="80" font-family="monospace" font-size="10" text-anchor="middle" fill="#667eea">AI Research Papers</text>
-      <text x="200" y="100" font-family="monospace" font-size="12" text-anchor="middle" fill="#667eea">+--------------------------------------+</text>
+      <text x="200" y="40" font-family="monospace" font-size="12" text-anchor="middle" fill="#3b82f6">+--------------------------------------+</text>
+      <text x="200" y="60" font-family="monospace" font-size="16" font-weight="bold" text-anchor="middle" fill="#3b82f6">PaperCache</text>
+      <text x="200" y="80" font-family="monospace" font-size="10" text-anchor="middle" fill="#3b82f6">AI Research Papers</text>
+      <text x="200" y="100" font-family="monospace" font-size="12" text-anchor="middle" fill="#3b82f6">+--------------------------------------+</text>
       
       <!-- 分隔线 -->
       <text x="200" y="120" font-family="monospace" font-size="8" text-anchor="middle" fill="#4a5568">────────────────────────────────────────────────────────────────────────────</text>

@@ -149,12 +149,20 @@
       });
 
       window._simpleAuthUser = AuthState.user;
-      notifyStateChange();
-
+      
+      // 延迟通知，避免在初始化过程中频繁触发
+      // 如果是首次初始化时加载profile，会在 init() 的 finally 中统一通知
+      if (AuthState.isInitialized) {
+        notifyStateChange();
+      }
     } catch (error) {
       console.error('SimpleAuth: 加载profile异常', error);
       AuthState.user.profile = createDefaultProfile(userId);
-      notifyStateChange();
+      
+      // 延迟通知
+      if (AuthState.isInitialized) {
+        notifyStateChange();
+      }
     }
   }
 
@@ -177,20 +185,27 @@
    */
   function setupAuthListener() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // 忽略 INITIAL_SESSION 和 TOKEN_REFRESHED，避免重复通知
+      // INITIAL_SESSION: 已经在 init() 时处理过了
+      // TOKEN_REFRESHED: token刷新不影响用户状态，不需要通知UI
+      if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
+        return; // 直接返回，不触发状态变化通知
+      }
+
       console.log('SimpleAuth: 认证状态变化', event, session?.user?.email || '未登录');
 
       if (event === 'SIGNED_IN' && session?.user) {
         AuthState.user = session.user;
         window._simpleAuthUser = session.user;
         loadProfile(session.user.id);
+        notifyStateChange();
       } else if (event === 'SIGNED_OUT') {
         AuthState.user = null;
         window._simpleAuthUser = null;
         profileCache.clear();
+        notifyStateChange();
       }
-      // INITIAL_SESSION 和 TOKEN_REFRESHED 忽略，因为我们已经有更好的状态管理
-
-      notifyStateChange();
+      // 其他事件（如 PASSWORD_RECOVERY）暂不处理
     });
 
     // 保存订阅以便清理

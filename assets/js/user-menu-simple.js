@@ -10,7 +10,8 @@
 (function() {
   'use strict';
 
-  // 更新用户菜单UI
+  // 更新用户菜单UI（带防抖，避免频繁更新）
+  let updateTimeout = null;
   function updateUserMenu(user) {
     const guestMenu = document.getElementById('user-menu-guest');
     const authMenu = document.getElementById('user-menu-authenticated');
@@ -21,45 +22,95 @@
 
     if (!guestMenu || !authMenu) return;
 
-    console.log('UserMenu: 更新UI', user?.email || '未登录');
-
-    if (user) {
-      // 显示已登录菜单
-      guestMenu.style.display = 'none';
-      authMenu.style.display = 'block';
-
-      // 更新用户信息
-      if (userName) {
-        userName.textContent = user.profile?.username || user.user_metadata?.username || user.email?.split('@')[0] || '用户';
-      }
-
-      if (userEmail) {
-        userEmail.textContent = user.email || '';
-      }
-
-      // 更新头像
-      const avatarUrl = user.profile?.avatar_url || user.user_metadata?.avatar_url;
-      if (avatarUrl && userAvatarImg) {
-        userAvatarImg.src = avatarUrl;
-        userAvatarImg.style.display = 'block';
-        if (userAvatarText) userAvatarText.style.display = 'none';
-      } else if (userAvatarText) {
-        // 显示用户名首字母
-        const name = user.profile?.username || user.user_metadata?.username || user.email?.split('@')[0] || 'U';
-        userAvatarText.textContent = name.charAt(0).toUpperCase();
-        userAvatarText.style.display = 'flex';
-        if (userAvatarImg) userAvatarImg.style.display = 'none';
-      }
-
-      // 用户登录后，重新初始化下拉菜单（DOM已更新）
-      setTimeout(() => {
-        initUserDropdown();
-      }, 50);
-    } else {
-      // 显示未登录菜单
-      guestMenu.style.display = 'block';
-      authMenu.style.display = 'none';
+    // 防抖：如果上次更新在100ms内，合并更新
+    if (updateTimeout) {
+      clearTimeout(updateTimeout);
     }
+    
+    updateTimeout = setTimeout(() => {
+      const currentUser = window.SimpleAuth?.getCurrentUser();
+      const finalUser = user !== undefined ? user : currentUser;
+      
+      console.log('UserMenu: 更新UI', finalUser?.email || '未登录');
+
+      if (finalUser) {
+        // 显示已登录菜单
+        guestMenu.style.display = 'none';
+        authMenu.style.display = 'block';
+
+        // 更新用户信息
+        if (userName) {
+          userName.textContent = finalUser.profile?.username || finalUser.user_metadata?.username || finalUser.email?.split('@')[0] || '用户';
+        }
+
+        if (userEmail) {
+          userEmail.textContent = finalUser.email || '';
+        }
+
+        // 更新头像
+        const avatarUrl = finalUser.profile?.avatar_url || finalUser.user_metadata?.avatar_url;
+        if (avatarUrl && userAvatarImg) {
+          userAvatarImg.src = avatarUrl;
+          userAvatarImg.style.display = 'block';
+          if (userAvatarText) userAvatarText.style.display = 'none';
+        } else if (userAvatarText) {
+          // 显示用户名首字母
+          const name = finalUser.profile?.username || finalUser.user_metadata?.username || finalUser.email?.split('@')[0] || 'U';
+          userAvatarText.textContent = name.charAt(0).toUpperCase();
+          userAvatarText.style.display = 'flex';
+          if (userAvatarImg) userAvatarImg.style.display = 'none';
+        }
+
+        // 检查是否是管理员，显示/隐藏统计分析菜单项
+        const adminLink = document.getElementById('user-menu-admin-link');
+        if (adminLink) {
+          // 从 Jekyll 配置中获取管理员邮箱列表（通过全局变量或 meta 标签）
+          let adminEmails = [];
+          try {
+            // 尝试从 window.siteConfig 获取（如果有）
+            if (window.siteConfig && window.siteConfig.adminEmails) {
+              adminEmails = window.siteConfig.adminEmails;
+            } else {
+              // 从 meta 标签获取（需要在 head.html 中添加）
+              const adminMeta = document.querySelector('meta[name="admin-emails"]');
+              if (adminMeta) {
+                adminEmails = JSON.parse(adminMeta.content);
+              } else {
+                // 尝试从 Jekyll 注入的全局变量获取（如果有）
+                // 这里我们使用一个简单的检查：如果配置存在，尝试从页面变量获取
+                const adminEmailsScript = document.getElementById('admin-emails-config');
+                if (adminEmailsScript) {
+                  adminEmails = JSON.parse(adminEmailsScript.textContent);
+                }
+              }
+            }
+          } catch (e) {
+            console.warn('UserMenu: 无法获取管理员邮箱列表', e);
+          }
+
+          // 检查当前用户是否是管理员
+          const isAdmin = finalUser.email && adminEmails.includes(finalUser.email);
+          adminLink.style.display = isAdmin ? 'flex' : 'none';
+          
+          if (isAdmin) {
+            console.log('UserMenu: 管理员已登录，显示统计分析菜单');
+          }
+        }
+
+        // 只在需要时初始化下拉菜单（如果还没初始化）
+        if (!document.getElementById('user-avatar')?._dropdownInitialized) {
+          setTimeout(() => {
+            initUserDropdown();
+          }, 50);
+        }
+      } else {
+        // 显示未登录菜单
+        guestMenu.style.display = 'block';
+        authMenu.style.display = 'none';
+      }
+      
+      updateTimeout = null;
+    }, 50); // 50ms防抖
   }
 
   // 初始化用户菜单
@@ -100,7 +151,12 @@
     waitForSimpleAuth();
   }
 
-  // 用户菜单下拉功能
+  // 检查是否是移动端
+  function isMobileDevice() {
+    return window.innerWidth <= 768;
+  }
+
+  // 用户菜单下拉功能（带防重复初始化）
   function initUserDropdown() {
     const userAvatar = document.getElementById('user-avatar');
     const userDropdown = document.getElementById('user-dropdown');
@@ -109,7 +165,17 @@
       return; // 元素不存在，可能未登录或页面没有用户菜单
     }
 
-    // 移除旧的事件监听器（如果存在）
+    // 检查是否已经初始化过（通过检查是否有事件监听器）
+    if (userAvatar._dropdownHandler && userAvatar._dropdownInitialized) {
+      // 已经初始化，只需要确保下拉状态正确
+      // 移动端始终显示下拉菜单
+      if (isMobileDevice()) {
+        userDropdown.classList.add('open');
+      }
+      return;
+    }
+
+    // 移除旧的事件监听器（如果存在但不完整）
     if (userAvatar._dropdownHandler) {
       userAvatar.removeEventListener('click', userAvatar._dropdownHandler);
       userAvatar._dropdownHandler = null;
@@ -120,32 +186,72 @@
     }
 
     let isOpen = false;
+    const isMobile = isMobileDevice();
 
-    // 头像点击事件
+    // 移动端：下拉菜单始终可见
+    if (isMobile) {
+      userDropdown.classList.add('open');
+      isOpen = true;
+      // 移动端不需要点击头像来切换，菜单始终展开
+      userAvatar.style.cursor = 'default';
+      return;
+    }
+
+    // 桌面端：头像点击事件
     const clickHandler = function(e) {
       e.stopPropagation();
       isOpen = !isOpen;
       userDropdown.classList.toggle('open', isOpen);
-      console.log('UserMenu: 用户头像点击，下拉菜单状态:', isOpen ? '打开' : '关闭');
     };
 
     userAvatar.addEventListener('click', clickHandler);
     userAvatar._dropdownHandler = clickHandler; // 保存引用以便后续移除
 
-    // 点击外部关闭下拉菜单
-    const outsideClickHandler = function(e) {
-      if (isOpen && userDropdown && userAvatar) {
-        if (!userDropdown.contains(e.target) && !userAvatar.contains(e.target)) {
-          isOpen = false;
-          userDropdown.classList.remove('open');
+    // 点击外部关闭下拉菜单（仅桌面端）
+    if (!isMobile) {
+      const outsideClickHandler = function(e) {
+        if (isOpen && userDropdown && userAvatar) {
+          if (!userDropdown.contains(e.target) && !userAvatar.contains(e.target)) {
+            isOpen = false;
+            userDropdown.classList.remove('open');
+          }
         }
-      }
+      };
+
+      document.addEventListener('click', outsideClickHandler);
+      window._dropdownOutsideHandler = outsideClickHandler; // 保存引用以便后续移除
+    }
+
+    userAvatar._dropdownInitialized = true;
+    
+    // 监听窗口大小变化，更新移动端/桌面端状态
+    let resizeTimer;
+    const resizeHandler = function() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const currentlyMobile = isMobileDevice();
+        if (currentlyMobile !== isMobile) {
+          // 重新初始化以适应新的屏幕尺寸
+          userAvatar._dropdownInitialized = false;
+          if (userAvatar._dropdownHandler) {
+            userAvatar.removeEventListener('click', userAvatar._dropdownHandler);
+            userAvatar._dropdownHandler = null;
+          }
+          if (window._dropdownOutsideHandler) {
+            document.removeEventListener('click', window._dropdownOutsideHandler);
+            window._dropdownOutsideHandler = null;
+          }
+          // 延迟重新初始化，避免频繁触发
+          setTimeout(() => {
+            initUserDropdown();
+          }, 100);
+        }
+      }, 200);
     };
+    
+    window.addEventListener('resize', resizeHandler);
 
-    document.addEventListener('click', outsideClickHandler);
-    window._dropdownOutsideHandler = outsideClickHandler; // 保存引用以便后续移除
-
-    console.log('UserMenu: 下拉菜单已初始化');
+    console.log('UserMenu: 下拉菜单已初始化', isMobile ? '(移动端模式)' : '(桌面端模式)');
   }
 
   // 处理退出登录
@@ -176,21 +282,20 @@
 
   // 在Turbolinks页面加载时也初始化（重要！）
   document.addEventListener('turbolinks:load', function() {
-    console.log('UserMenu: Turbolinks页面加载，重新初始化');
-
-    // 重新初始化主菜单逻辑
+    // 重新初始化主菜单逻辑（如果需要）
     if (!window.userMenuInitialized) {
+      console.log('UserMenu: Turbolinks页面加载，重新初始化');
       initUserMenu();
     } else {
-      // 如果已经初始化，只是更新UI
-      const currentUser = window.SimpleAuth?.getCurrentUser();
-      if (currentUser !== undefined) {
-        updateUserMenu(currentUser);
-      }
+      // 如果已经初始化，只在需要时更新UI（避免频繁更新）
+      // UI更新会由 SimpleAuth 的状态变化通知自动触发，这里不需要手动更新
     }
 
-    // 重新初始化下拉菜单
-    initUserDropdown();
+    // 只在元素存在且未初始化时才初始化下拉菜单
+    const userAvatar = document.getElementById('user-avatar');
+    if (userAvatar && !userAvatar._dropdownInitialized) {
+      initUserDropdown();
+    }
   });
 
   console.log('UserMenu: 🚀 用户菜单组件已加载');

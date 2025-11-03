@@ -1,6 +1,45 @@
-// 点击统计和最多关注排序（使用 Supabase）
+// 点击统计和最多关注排序（使用 Supabase + 现代批处理）
 (function() {
   'use strict';
+  
+  // 配置 - 现代批处理参数
+  const BATCH_CONFIG = {
+    BATCH_SIZE: 10,           // 批量处理大小
+    FLUSH_INTERVAL: 5000,    // 5秒刷新一次
+    MAX_RETRY: 3,            // 最大重试次数
+    STORAGE_KEY: 'pc_click_queue', // localStorage key
+  };
+  
+  // 点击队列
+  let clickQueue = [];
+  let flushTimer = null;
+  let isFlushing = false;
+  
+  // 从 localStorage 恢复队列（防止刷新丢失）
+  function loadQueue() {
+    try {
+      const stored = localStorage.getItem(BATCH_CONFIG.STORAGE_KEY);
+      if (stored) {
+        clickQueue = JSON.parse(stored) || [];
+        if (clickQueue.length > 0) {
+          console.log('[ClickTracker] 恢复队列，待处理:', clickQueue.length);
+          scheduleFlush(); // 恢复后立即调度刷新
+        }
+      }
+    } catch (e) {
+      console.warn('[ClickTracker] 恢复队列失败:', e);
+      clickQueue = [];
+    }
+  }
+  
+  // 保存队列到 localStorage
+  function saveQueue() {
+    try {
+      localStorage.setItem(BATCH_CONFIG.STORAGE_KEY, JSON.stringify(clickQueue));
+    } catch (e) {
+      console.warn('[ClickTracker] 保存队列失败:', e);
+    }
+  }
   
   // 规范化 URL（与 favorites.js 保持一致，移除 baseurl 前缀）
   function normalizeUrl(url) {
@@ -165,68 +204,291 @@
     }
   }
   
-  // 记录文章点击到 Supabase
-  async function trackClick(postUrl) {
-    const normalizedUrl = normalizeUrl(postUrl);
-    const service = await waitForClickStatsService();
+  // 调度刷新
+  function scheduleFlush() {
+    if (flushTimer) return;
     
-    if (!service) {
-      console.warn('[ClickTracker] clickStatsService not available');
-      return { success: false, error: 'Service not available' };
-    }
+    flushTimer = setTimeout(() => {
+      flushTimer = null;
+      flushQueue();
+    }, BATCH_CONFIG.FLUSH_INTERVAL);
+  }
+  
+  // 批量刷新队列到 Supabase
+  async function flushQueue() {
+    if (isFlushing || clickQueue.length === 0) return;
     
-    console.log('[ClickTracker] 开始追踪点击:', normalizedUrl);
+    isFlushing = true;
+    const batch = clickQueue.splice(0, BATCH_CONFIG.BATCH_SIZE);
+    saveQueue(); // 立即保存剩余队列
+    
+    console.log('[ClickTracker] 开始批量刷新，数量:', batch.length);
     
     try {
-      const result = await service.trackClick(normalizedUrl);
+      // 等待服务可用
+      const service = await waitForClickStatsService();
       
-      if (result.success) {
-        console.log('[ClickTracker] 点击追踪成功:', normalizedUrl, '点击量:', result.clickCount);
-        // 重新加载数据以获取最新统计
-        const data = await loadClickData();
-        // 更新页面上的显示
-        const clickCount = data.clicks[normalizedUrl] || result.clickCount || 0;
-        updateClickDisplay(normalizedUrl, clickCount);
-        return result;
-      } else {
-        console.error('[ClickTracker] 点击追踪失败:', result.error, 'URL:', normalizedUrl);
-        return result;
+      if (!service) {
+        console.warn('[ClickTracker] 服务不可用，重新加入队列');
+        clickQueue.unshift(...batch); // 重新加入队列
+        saveQueue();
+        isFlushing = false;
+        return;
       }
+      
+      // 统计每个 URL 的点击次数（去重并聚合）
+      const urlCounts = {};
+      batch.forEach(item => {
+        urlCounts[item.url] = (urlCounts[item.url] || 0) + 1;
+      });
+      
+      // 批量发送（并行处理多个 URL）
+      const promises = Object.entries(urlCounts).map(([url, count]) => 
+        incrementClickMultiple(service, url, count)
+      );
+      
+      const results = await Promise.allSettled(promises);
+      
+      // 检查失败的项目并重新加入队列（重试）
+      const failed = [];
+      results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+          const url = Object.keys(urlCounts)[index];
+          failed.push(url);
+          console.error('[ClickTracker] 批量刷新失败:', url, result.reason);
+        }
+      });
+      
+      if (failed.length > 0) {
+        // 重试失败的项目（最多重试3次）
+        batch.forEach(item => {
+          if (failed.includes(item.url) && item.retryCount < BATCH_CONFIG.MAX_RETRY) {
+            item.retryCount++;
+            clickQueue.push(item);
+          }
+        });
+        saveQueue();
+      }
+      
+      const successCount = results.filter(r => r.status === 'fulfilled').length;
+      console.log('[ClickTracker] 批量刷新完成，成功:', successCount, '失败:', failed.length);
+      
+      // 如果成功刷新了，更新显示（仅当在首页时）
+      if (successCount > 0 && document.getElementById('popular-posts-list')) {
+        const data = await loadClickData();
+        updatePopularPosts(data);
+      }
+      
     } catch (error) {
-      console.error('[ClickTracker] 点击追踪异常:', error, 'URL:', normalizedUrl);
-      return { success: false, error: error.message };
+      console.error('[ClickTracker] 批量刷新异常:', error);
+      // 异常时重新加入队列
+      clickQueue.unshift(...batch);
+      saveQueue();
+    } finally {
+      isFlushing = false;
+      
+      // 如果还有待处理的，继续调度
+      if (clickQueue.length > 0) {
+        scheduleFlush();
+      }
     }
   }
   
-  // 更新页面上的点击数显示并重新排序
-  async function updateClickDisplay(postUrl, clickCount) {
-    // 这里不需要单独更新显示，因为 updatePopularPosts 会统一更新
-    // 重新排序"最多关注"列表
-    const data = await loadClickData();
-    updatePopularPosts(data);
+  // 多次增加点击量（针对同一个 URL 多次点击的情况）
+  async function incrementClickMultiple(service, url, count) {
+    // 直接调用服务多次
+    for (let i = 0; i < count; i++) {
+      const result = await service.trackClick(url);
+      if (!result.success) {
+        throw new Error(result.error || 'Track failed');
+      }
+    }
+    return { success: true };
   }
   
+  // 使用 sendBeacon 发送（页面卸载时）
+  function sendBeaconClick(postUrl) {
+    const normalizedUrl = normalizeUrl(postUrl);
+    if (!normalizedUrl || normalizedUrl === '/') return false;
+    
+    try {
+      // 尝试使用 fetch with keepalive（比 sendBeacon 更灵活）
+      const supabaseUrl = window.getSupabaseClient?.()?._url || '';
+      if (!supabaseUrl) return false;
+      
+      const endpoint = `${supabaseUrl}/rest/v1/rpc/increment_post_click`;
+      const supabaseKey = window.getSupabaseClient?.()?._anonKey || '';
+      
+      fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`
+        },
+        body: JSON.stringify({ p_url: normalizedUrl }),
+        keepalive: true
+      }).catch(err => {
+        console.warn('[ClickTracker] sendBeacon fallback failed:', err);
+        // Fallback: 保存到队列
+        enqueueClick(normalizedUrl);
+      });
+      
+      return true;
+    } catch (e) {
+      console.warn('[ClickTracker] sendBeacon failed:', e);
+      return false;
+    }
+  }
   
+  // 添加到队列（现代批处理方式）
+  function enqueueClick(postUrl) {
+    const normalizedUrl = normalizeUrl(postUrl);
+    if (!normalizedUrl || normalizedUrl === '/') {
+      console.warn('[ClickTracker] 跳过无效URL:', postUrl);
+      return;
+    }
+    
+    // 添加到队列
+    clickQueue.push({
+      url: normalizedUrl,
+      timestamp: Date.now(),
+      retryCount: 0
+    });
+    
+    saveQueue();
+    
+    // 如果队列达到批次大小，立即刷新
+    if (clickQueue.length >= BATCH_CONFIG.BATCH_SIZE) {
+      flushQueue();
+    } else {
+      // 否则设置定时器
+      scheduleFlush();
+    }
+    
+    console.log('[ClickTracker] 点击已加入队列:', normalizedUrl, '队列长度:', clickQueue.length);
+  }
+  
+  // 记录文章点击（现代批处理版本 - 使用队列）
+  function trackClick(postUrl) {
+    // 直接加入队列，由批处理系统统一处理
+    enqueueClick(postUrl);
+    return { success: true, queued: true };
+  }
+  
+  // 检查当前页面是否应该启用点击追踪
+  function shouldTrackClicksOnThisPage() {
+    const pathname = window.location.pathname || '';
+    
+    // 处理 baseurl - 直接移除，不经过 normalizeUrl（避免过度处理）
+    const baseurl = window.PC_BASEURL || '';
+    let checkPath = pathname;
+    if (baseurl && baseurl !== '/' && baseurl !== '') {
+      const normalizedBase = baseurl.endsWith('/') ? baseurl.slice(0, -1) : baseurl;
+      if (checkPath.startsWith(normalizedBase)) {
+        checkPath = checkPath.substring(normalizedBase.length);
+      }
+    }
+    
+    // 确保以 / 开头
+    if (!checkPath.startsWith('/')) {
+      checkPath = '/' + checkPath;
+    }
+    
+    // 排除个人账户相关页面（不追踪这些页面的点击）
+    if (checkPath.startsWith('/account/') || 
+        checkPath.startsWith('/profile/') || 
+        checkPath.startsWith('/auth/') ||
+        checkPath === '/account' ||
+        checkPath === '/profile' ||
+        checkPath === '/auth') {
+      return false;
+    }
+    
+    // 排除已经是文章页面本身（用户已经在目标页面了，不需要追踪）
+    // 文章页面格式：/papers/.../.../YYYY/MM/DD/title.html 或 /slides/.../.../title.html
+    // 注意：collection.html、index.html 等非文章页面应该允许追踪
+    if (checkPath.includes('.html')) {
+      // 只有以 /papers/ 或 /slides/ 开头的 .html 页面才是文章页面
+      if (checkPath.startsWith('/papers/') || checkPath.startsWith('/slides/')) {
+        return false;  // 文章页面本身不追踪点击（用户已经在阅读了）
+      }
+      // 其他 .html 页面（如 /collection.html, /index.html）应该允许追踪
+    }
+    
+    // 允许追踪的页面：
+    // 1. 首页（/ 或 /index.html）
+    // 2. 搜索结果页面（/collection.html）
+    // 3. 分类浏览页面（但不包括文章页面）
+    // 4. 其他非账户、非文章页面
+    return true;
+  }
+
   // 初始化函数
   async function initClickTracker() {
+    // 恢复队列（如果有）
+    loadQueue();
+    
+    // 检查是否应该在这个页面启用点击追踪
+    if (!shouldTrackClicksOnThisPage()) {
+      console.log('[ClickTracker] 当前页面不需要点击追踪，跳过初始化');
+      return;
+    }
+    
+    // 页面可见性变化时刷新
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && clickQueue.length > 0) {
+        flushQueue();
+      }
+    });
+    
+    // 页面卸载前尝试发送剩余的点击
+    window.addEventListener('beforeunload', () => {
+      if (clickQueue.length > 0) {
+        // 尝试使用 keepalive 发送
+        clickQueue.forEach(item => {
+          sendBeaconClick(item.url);
+        });
+      }
+    });
     // 从服务器加载点击和收藏数据
     const data = await loadClickData();
     
-    // 为所有文章链接添加点击追踪（支持多种链接样式）
-    // 1. .post-link 类（首页的"最多关注"列表）
-    // 2. .post-card-link-modern 类（搜索和分类页面的卡片链接）
-    // 3. 任何包含 /papers/ 或 /slides/ 的链接
-    // 4. 更通用的选择器：所有指向文章页面的链接
+    // 为所有文章链接添加点击追踪（只追踪文章页面，不追踪分类页面）
+    // 选择器策略：只选择有特定类名或明确指向.html文章的链接
     const postLinks = document.querySelectorAll(
       'a.post-link[href*="/papers/"], a.post-link[href*="/slides/"], ' +
       'a.post-card-link-modern[href*="/papers/"], a.post-card-link-modern[href*="/slides/"], ' +
-      'a[href*="/papers/"][href*=".html"], a[href*="/slides/"][href*=".html"], ' +
-      'a[href*="/papers/"], a[href*="/slides/"]'
+      'a[href*="/papers/"][href*=".html"], a[href*="/slides/"][href*=".html"]'
     );
     
-    console.log(`[ClickTracker] 找到 ${postLinks.length} 个文章链接`);
+    // 过滤掉分类页面链接（不包含.html的URL）
+    const validPostLinks = Array.from(postLinks).filter(link => {
+      const href = link.getAttribute('href') || link.href || '';
+      // 必须包含 .html 或者是明确的文章链接格式
+      // 排除分类页面（如 /papers/llm/, /papers/algorithm/）
+      const normalizedHref = normalizeUrl(href);
+      
+      // 检查是否是文章URL（必须包含.html或匹配文章路径模式）
+      // 文章URL格式：/papers/category/subcategory/YYYY/MM/DD/title.html
+      // 或：/papers/category/title.html
+      // 分类URL格式：/papers/category/ 或 /papers/category/subcategory/
+      const isArticleUrl = normalizedHref.includes('.html') || 
+                          /^\/papers\/[^/]+\/[^/]+\/\d{4}\/\d{2}\/\d{2}\//.test(normalizedHref) ||
+                          /^\/slides\/[^/]+\/[^/]+\/\d{4}\/\d{2}\/\d{2}\//.test(normalizedHref);
+      
+      // 排除分类页面（以斜杠结尾，且不是根路径）
+      const isCategoryPage = normalizedHref.match(/^\/papers\/[^/]+\/?$/) || 
+                            normalizedHref.match(/^\/papers\/[^/]+\/[^/]+\/?$/) ||
+                            normalizedHref.match(/^\/slides\/[^/]+\/?$/) ||
+                            normalizedHref.match(/^\/slides\/[^/]+\/[^/]+\/?$/);
+      
+      return isArticleUrl && !isCategoryPage;
+    });
     
-    postLinks.forEach(link => {
+    console.log(`[ClickTracker] 找到 ${validPostLinks.length} 个文章链接（已过滤分类链接）`);
+    
+    validPostLinks.forEach(link => {
       // 跳过已经绑定过追踪的链接
       if (link.dataset.clickTracked === 'true') {
         return;
@@ -244,18 +506,33 @@
         // 规范化 URL
         url = normalizeUrl(url);
         if (!url || url === '/') {
-          console.warn('[ClickTracker] 跳过无效URL:', this.getAttribute('href'));
-          return; // 跳过无效URL
+          return; // 跳过无效URL（不再输出警告，减少日志）
+        }
+        
+        // 再次验证是否是文章URL（双重检查）
+        const isArticleUrl = url.includes('.html') || 
+                            /^\/papers\/[^/]+\/[^/]+\/\d{4}\/\d{2}\/\d{2}\//.test(url) ||
+                            /^\/slides\/[^/]+\/[^/]+\/\d{4}\/\d{2}\/\d{2}\//.test(url);
+        
+        const isCategoryPage = url.match(/^\/papers\/[^/]+\/?$/) || 
+                              url.match(/^\/papers\/[^/]+\/[^/]+\/?$/) ||
+                              url.match(/^\/slides\/[^/]+\/?$/) ||
+                              url.match(/^\/slides\/[^/]+\/[^/]+\/?$/);
+        
+        if (!isArticleUrl || isCategoryPage) {
+          return; // 跳过分类页面和其他非文章链接
         }
         
         console.log('[ClickTracker] 追踪点击:', url);
         
-        // 异步追踪点击，不阻塞页面跳转
-        // 注意：由于使用了 passive: true，无法阻止页面跳转
-        // 但异步请求应该在跳转前完成，如果跳转太快可能丢失
-        trackClick(url).catch(err => {
-          console.error('[ClickTracker] Failed to track click:', err);
-        });
+        // 使用现代批处理方式：加入队列（不阻塞页面跳转）
+        trackClick(url);
+        
+        // 如果页面即将跳转，尝试立即发送（使用 keepalive）
+        // 这可以确保在快速跳转时也能记录点击
+        if (document.visibilityState === 'hidden' || !document.hasFocus()) {
+          sendBeaconClick(url);
+        }
       }, { passive: true }); // 使用 passive 以提高性能
     });
     
@@ -420,7 +697,9 @@
   window.papercacheClickTracker = {
     trackClick,
     loadClickData,
-    updatePopularPosts
+    updatePopularPosts,
+    flushQueue,  // 暴露刷新函数，允许手动触发
+    getQueueSize: () => clickQueue.length  // 获取队列大小（用于调试）
   };
 })();
 

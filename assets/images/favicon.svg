@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- 背景圆形 -->
+  <circle cx="16" cy="16" r="14" fill="url(#gradient)" stroke="#e1e5e9" stroke-width="1.5"/>
+
+  <!-- 文档图标 -->
+  <rect x="9" y="6" width="10" height="13" rx="1.5" fill="white" opacity="0.9"/>
+  <rect x="10.5" y="8.5" width="7" height="0.8" fill="#4a5568"/>
+  <rect x="10.5" y="10.5" width="5" height="0.8" fill="#4a5568"/>
+  <rect x="10.5" y="12.5" width="6" height="0.8" fill="#4a5568"/>
+  <rect x="10.5" y="14.5" width="4" height="0.8" fill="#4a5568"/>
+
+  <!-- 缓存符号 (C) -->
+  <circle cx="23" cy="23" r="5" fill="#3182ce" opacity="0.8"/>
+  <text x="23" y="26.5" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="6.5" font-weight="bold">C</text>
+
+  <!-- 渐变定义 -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#10b981;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>

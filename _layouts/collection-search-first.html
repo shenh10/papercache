@@ -17,17 +17,30 @@ layout: collection
   margin-left: 0 !important;
 }
 
-/* 搜索区域 - 保持英雄式设计风格 */
+/* 搜索区域 - Geek风格英雄式设计 */
 .search-hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background:
+    linear-gradient(135deg,
+      rgba(15, 23, 42, 0.98) 0%,
+      rgba(30, 41, 59, 0.98) 30%,
+      rgba(51, 65, 85, 0.98) 60%,
+      rgba(71, 85, 105, 0.98) 100%
+    ),
+    linear-gradient(45deg,
+      rgba(59, 130, 246, 0.08) 0%,
+      rgba(16, 185, 129, 0.08) 30%,
+      rgba(99, 102, 241, 0.06) 60%,
+      rgba(6, 182, 212, 0.08) 100%
+    );
   color: white;
-  padding: 60px 0;
+  padding: 80px 0;
   margin: -2em -15px 3em -15px;
   position: relative;
   overflow: hidden;
   text-align: center;
 }
 
+/* Geek风格网格背景 */
 .search-hero::before {
   content: '';
   position: absolute;
@@ -35,8 +48,38 @@ layout: collection
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-  opacity: 0.3;
+  background-image:
+    linear-gradient(rgba(59, 130, 246, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.08) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: grid-move 20s linear infinite;
+}
+
+/* 霓虹光晕效果 */
+.search-hero::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at center,
+    rgba(59, 130, 246, 0.08) 0%,
+    rgba(16, 185, 129, 0.04) 25%,
+    transparent 50%
+  );
+  animation: neon-pulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes grid-move {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(50px, 50px); }
+}
+
+@keyframes neon-pulse {
+  0% { opacity: 0.3; transform: scale(1); }
+  100% { opacity: 0.6; transform: scale(1.1); }
 }
 
 .search-hero-content {
@@ -48,18 +91,35 @@ layout: collection
 }
 
 .search-hero h1 {
-  font-size: 3.5em;
-  font-weight: 700;
+  font-size: 4em;
+  font-weight: 800;
   margin: 0 0 20px 0;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  text-shadow:
+    0 0 20px rgba(59, 130, 246, 0.4),
+    0 0 40px rgba(16, 185, 129, 0.2),
+    0 2px 4px rgba(0,0,0,0.3);
   letter-spacing: -0.02em;
+  line-height: 1.1;
+  background: linear-gradient(135deg, #ffffff 0%, #dbeafe 40%, #d1fae5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: title-glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes title-glow {
+  0% { filter: brightness(1); }
+  100% { filter: brightness(1.2); }
 }
 
 .search-hero-subtitle {
-  font-size: 1.3em;
-  opacity: 0.9;
+  font-size: 1.4em;
+  opacity: 0.95;
   margin-bottom: 40px;
-  font-weight: 300;
+  font-weight: 400;
+  line-height: 1.6;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 /* 搜索输入区域 */
@@ -95,7 +155,7 @@ layout: collection
 }
 
 #search-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(16, 185, 129, 0.8));
   border: none;
   border-radius: 0 12px 12px 0;
   padding: 0 18px;
@@ -103,10 +163,15 @@ layout: collection
   font-size: 1em;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
-#search-btn:hover { opacity: 0.9; }
+#search-btn:hover {
+  opacity: 0.9;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(16, 185, 129, 0.9));
+  transform: translateY(-1px);
+}
 
 /* 搜索选项 */
 .search-options {
@@ -283,11 +348,11 @@ layout: collection
 }
 
 .tag-filter-btn.active {
-  background: rgba(102, 126, 234, 0.4);
-  border-color: rgba(102, 126, 234, 0.6);
+  background: rgba(59, 130, 246, 0.4);
+  border-color: rgba(59, 130, 246, 0.6);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
 .tag-count {
@@ -310,11 +375,11 @@ layout: collection
 }
 
 .category-browse-section .tag-filter-btn.active {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.9), rgba(118, 75, 162, 0.9));
-  border-color: rgba(102, 126, 234, 1);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(16, 185, 129, 0.9));
+  border-color: rgba(59, 130, 246, 1);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .category-browse-section .tag-filter-btn .tag-count {
@@ -384,7 +449,7 @@ layout: collection
   padding: 40px;
   margin: 2em 0;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.1);
   position: relative;
   overflow: hidden;
 }
@@ -396,7 +461,7 @@ layout: collection
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+  background: linear-gradient(90deg, #3b82f6, #10b981, #06b6d4);
 }
 
 .quick-browse-section h2 {
@@ -441,7 +506,7 @@ layout: collection
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, #3b82f6, #10b981);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -452,9 +517,9 @@ layout: collection
 
 .category-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15);
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-  border-color: rgba(102, 126, 234, 0.2);
+  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
 .category-card h3 {
@@ -468,7 +533,7 @@ layout: collection
 }
 
 .category-card .count {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #3b82f6, #10b981);
   color: white;
   padding: 4px 12px;
   border-radius: 12px;
@@ -507,24 +572,24 @@ layout: collection
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #3b82f6, #10b981);
   color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
 .btn-secondary {
   background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
+  color: #3b82f6;
+  border: 2px solid #3b82f6;
 }
 
 .btn-secondary:hover {
-  background: #667eea;
+  background: #3b82f6;
   color: white;
   transform: translateY(-2px);
 }
@@ -677,9 +742,9 @@ layout: collection
 }
 
 .back-to-search-btn {
-  background: rgba(102, 126, 234, 0.1);
-  border: 1px solid rgba(102, 126, 234, 0.2);
-  color: #667eea;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
   padding: 10px 20px;
   border-radius: 25px;
   font-size: 0.9em;
@@ -688,7 +753,7 @@ layout: collection
 }
 
 .back-to-search-btn:hover {
-  background: rgba(102, 126, 234, 0.2);
+  background: rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
 }
 
@@ -700,32 +765,32 @@ layout: collection
   padding: 12px 18px;
   margin: 8px 8px 8px 0;
   border-radius: 12px;
-  border: 2px solid rgba(102, 126, 234, 0.2);
-  color: #4256d0;
-  background: linear-gradient(135deg, #f5f7ff, #f0f4ff);
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  color: #1e40af;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
   cursor: pointer;
   font-size: 1em;
   font-weight: 500;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
 }
-.cat-chip:hover { 
-  background: linear-gradient(135deg, #edf0ff, #e0e7ff); 
+.cat-chip:hover {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-  border-color: rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.4);
 }
 .cat-chip:active {
   transform: translateY(0);
 }
-.cat-chip .count { 
-  background: linear-gradient(135deg, #667eea, #764ba2); 
-  color: #fff; 
-  padding: 4px 10px; 
-  border-radius: 10px; 
+.cat-chip .count {
+  background: linear-gradient(135deg, #3b82f6, #10b981);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 10px;
   font-size: 0.85em;
   font-weight: 600;
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 .cat-breadcrumb { 
   display: flex; 
@@ -1045,7 +1110,7 @@ layout: collection
           <span style="font-size: 1.2em;">📄</span>
           <span>匹配的论文</span>
         </h3>
-        <span class="results-count" id="browse-results-count" style="background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 0.9em; font-weight: 600; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">0篇</span>
+        <span class="results-count" id="browse-results-count" style="background: linear-gradient(135deg, #3b82f6, #10b981); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 0.9em; font-weight: 600; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);">0篇</span>
       </div>
       <div class="results-list" id="browse-results-list">
         <!-- 论文列表将在这里显示 -->
@@ -1839,6 +1904,11 @@ if (typeof window.SearchFirstMode === 'undefined') {
         console.log(`[collection-search-first] API 查询: "${query}", 总匹配数: ${data.total || 0}`);
         console.log(`[collection-search-first] 匹配模式: ${data.matchMode || 'fuzzy'}, 搜索范围: ${(data.searchFields || []).join(', ')}`);
         
+        // 记录搜索活动
+        if (window.AnalyticsService && query && query.trim()) {
+          window.AnalyticsService.logSearch(query);
+        }
+        
         // 保存当前搜索查询和匹配模式，用于高亮显示
         this.currentQuery = query;
         this.currentMatchMode = data.matchMode || 'fuzzy';
@@ -1952,20 +2022,52 @@ if (typeof window.SearchFirstMode === 'undefined') {
     // 去重
     const uniqueTokens = [...new Set(expandedTokens)];
     
-    this.filteredPapers = this.allPapers.filter(paper => {
-      // 首先应用tag过滤
-      if (this.selectedTags.length > 0) {
-        const paperTag = this.getTagFromPaper(paper.url) || 'arXiv';
-        if (!this.selectedTags.includes(paperTag)) {
-          return false;
+    // 使用 map + filter + sort 来保留优先级和匹配信息
+    const scoredPapers = this.allPapers
+      .map(paper => {
+        // 首先应用tag过滤
+        if (this.selectedTags.length > 0) {
+          const paperTag = this.getTagFromPaper(paper.url) || 'arXiv';
+          if (!this.selectedTags.includes(paperTag)) {
+            return null;
+          }
         }
-      }
-      
-      // 然后应用关键词搜索
-      const hay = `${paper.title} ${paper.excerpt} ${paper.tags.join(' ')} ${paper.categories.join(' ')}`.toLowerCase();
-      // 使用扩展后的关键词进行匹配，至少匹配一个关键词即可
-      return uniqueTokens.some(t => hay.includes(t));
-    });
+        
+        // 然后应用关键词搜索（智能匹配：优先短语，其次AND，最后部分匹配）
+        const hay = `${paper.title} ${paper.excerpt} ${paper.tags.join(' ')} ${paper.categories.join(' ')}`.toLowerCase();
+        
+        // 1. 优先尝试短语匹配（整个查询作为短语）
+        const queryPhrase = q.trim();
+        if (hay.includes(queryPhrase)) {
+          return { paper, match: true, priority: 1, score: 100 }; // 最高优先级
+        }
+        
+        // 2. 如果短语匹配失败，尝试AND匹配（所有关键词都必须存在）
+        const matchedTokens = tokens.filter(token => hay.includes(token));
+        if (matchedTokens.length === tokens.length && tokens.length > 0) {
+          return { paper, match: true, priority: 2, score: 80 + matchedTokens.length }; // 第二优先级
+        }
+        
+        // 3. 如果AND匹配失败，尝试部分匹配（匹配至少一半的关键词）
+        if (matchedTokens.length >= Math.ceil(tokens.length / 2) && tokens.length > 1) {
+          return { paper, match: true, priority: 3, score: 50 + matchedTokens.length * 10 }; // 第三优先级，至少匹配一半
+        }
+        
+        // 不再使用纯OR匹配，避免返回过多无关结果
+        return null;
+      })
+      .filter(item => item !== null)
+      .sort((a, b) => {
+        // 先按优先级排序，再按匹配分数排序
+        if (a.priority !== b.priority) {
+          return a.priority - b.priority;
+        }
+        return b.score - a.score;
+      })
+      .slice(0, 50) // 限制最多返回50个结果
+      .map(item => item.paper); // 只返回论文对象
+    
+    this.filteredPapers = scoredPapers;
     // 保存当前搜索查询和匹配模式（本地搜索默认为模糊匹配）
     this.currentQuery = query;
     this.currentMatchMode = 'fuzzy';
@@ -2295,13 +2397,26 @@ if (typeof window.SearchFirstMode === 'undefined') {
       
       const isLoggedIn = window.SimpleAuth && window.SimpleAuth.isLoggedIn();
       
-      // 同时获取收藏状态和收藏数
-      const [favoritesMap, countsMap] = await Promise.all([
-        isLoggedIn 
-          ? window.favoritesService.batchCheckFavorites(postUrls) 
-          : Promise.resolve({}),
-        window.favoritesService.batchGetFavoriteCounts(postUrls)
-      ]);
+      // 使用组合查询函数（一次查询获取收藏数和用户收藏状态，最高效）
+      let favoritesMap = {};
+      let countsMap = {};
+      
+      if (window.favoritesService.batchGetFavoritesWithStatus) {
+        // 使用新的组合查询函数（数据库端统计，一次查询获取所有数据）
+        const result = await window.favoritesService.batchGetFavoritesWithStatus(postUrls);
+        countsMap = result.counts || {};
+        favoritesMap = isLoggedIn ? (result.userFavorited || {}) : {};
+      } else {
+        // 降级方案：分别查询（向后兼容）
+        const [favoritesResult, countsResult] = await Promise.all([
+          isLoggedIn 
+            ? window.favoritesService.batchCheckFavorites(postUrls) 
+            : Promise.resolve({}),
+          window.favoritesService.batchGetFavoriteCounts(postUrls)
+        ]);
+        favoritesMap = favoritesResult;
+        countsMap = countsResult;
+      }
       
       // 调试：如果用户已登录但favoritesMap为空，输出警告
       if (postUrls.length > 0 && Object.keys(favoritesMap).length === 0 && isLoggedIn) {
@@ -2388,31 +2503,37 @@ if (typeof window.SearchFirstMode === 'undefined') {
       keywords.unshift(queryTrimmed); // 优先匹配整个查询词
     }
     
-    // 收集所有匹配的位置
+    // 收集所有匹配的位置（单词级匹配，使用单词边界避免部分匹配）
     const matches = [];
     
     for (const keyword of keywords) {
       const keywordLower = keyword.toLowerCase();
       let startIndex = 0;
       
-      // 找到所有匹配的位置（大小写不敏感）
-      while ((startIndex = textLower.indexOf(keywordLower, startIndex)) !== -1) {
+      // 使用正则表达式进行单词级匹配（更准确）
+      // 转义特殊字符，并使用单词边界
+      const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const wordBoundaryRegex = new RegExp(`\\b${escapedKeyword}\\b`, 'gi');
+      
+      let match;
+      while ((match = wordBoundaryRegex.exec(text)) !== null) {
+        startIndex = match.index;
+        const endIndex = startIndex + keyword.length;
+        
         // 检查是否已经在这个位置有匹配（避免重复）
         const isOverlap = matches.some(m => 
           (startIndex >= m.start && startIndex < m.end) ||
-          (startIndex + keyword.length > m.start && startIndex + keyword.length <= m.end) ||
-          (startIndex < m.start && startIndex + keyword.length > m.end)
+          (endIndex > m.start && endIndex <= m.end) ||
+          (startIndex < m.start && endIndex > m.end)
         );
         
         if (!isOverlap) {
           matches.push({
             start: startIndex,
-            end: startIndex + keyword.length,
+            end: endIndex,
             keyword: keyword
           });
         }
-        
-        startIndex += keyword.length;
       }
     }
     
@@ -2486,9 +2607,12 @@ if (typeof window.SearchFirstMode === 'undefined') {
         try {
           if (!p) return p;
           if (!p.startsWith('/')) p = '/' + p;
-          const seg = p.split('/');
-          if (seg.length > 2) {
-            return '/' + seg.slice(2).join('/');
+          const baseurl = window.PC_BASEURL || '';
+          if (baseurl && baseurl !== '/' && baseurl !== '') {
+            const normalizedBase = baseurl.endsWith('/') ? baseurl.slice(0, -1) : baseurl;
+            if (p.startsWith(normalizedBase)) {
+              return p.substring(normalizedBase.length) || '/';
+            }
           }
           return p;
         } catch(e) {
@@ -2497,27 +2621,72 @@ if (typeof window.SearchFirstMode === 'undefined') {
       };
       
       try {
-        const a = document.createElement('a');
-        a.href = url;
-        let p = a.pathname || url;
-        if (!p.startsWith('/')) p = '/' + p;
+        // 处理相对URL或绝对URL
+        let p = url;
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          const a = document.createElement('a');
+          a.href = url;
+          p = a.pathname;
+        } else {
+          // 相对URL或路径
+          p = url;
+        }
+        
+        // 确保路径以 / 开头
+        if (!p.startsWith('/')) {
+          p = '/' + p;
+        }
+        
+        // 移除 baseurl 前缀（如果存在），因为 thumbnails_by_path.yml 中的键不包含 baseurl
+        p = pathWithoutBase(p);
         
         // 生成所有可能的URL变体
         const candidates = [p];
-        candidates.push(pathWithoutBase(p));
         
+        // 移除尾部斜杠的变体
         if (p.endsWith('/')) {
-          candidates.push(p.replace(/\/$/, '/index.html'));
-          candidates.push(pathWithoutBase(p.replace(/\/$/, '/index.html')));
+          candidates.push(p.slice(0, -1));
+        } else {
+          candidates.push(p + '/');
         }
         
-        if (!/\.html?$/.test(p)) {
-          candidates.push(p + '.html');
-          candidates.push(pathWithoutBase(p + '.html'));
+        // 添加 index.html 变体
+        if (p.endsWith('/')) {
+          candidates.push(p + 'index.html');
+          candidates.push(p.slice(0, -1) + '.html');
+        } else {
+          candidates.push(p.replace(/\.html?$/, '/') + 'index.html');
+          if (!/\.html?$/.test(p)) {
+            candidates.push(p + '.html');
+          }
         }
+        
+        // 尝试添加 /papers/ 前缀（因为搜索 API 可能返回不带 /papers/ 的 URL）
+        const candidatesWithPapers = candidates.map(c => {
+          if (!c.startsWith('/papers/') && !c.startsWith('/slides/')) {
+            // 如果路径不是 /papers/ 或 /slides/ 开头，尝试添加 /papers/
+            return '/papers' + c;
+          }
+          return null;
+        }).filter(c => c !== null);
+        
+        candidates.push(...candidatesWithPapers);
         
         // 去重
         const uniqueCandidates = Array.from(new Set(candidates));
+        
+        // 调试：记录匹配尝试（仅在开发环境）
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          const matchedKey = uniqueCandidates.find(c => thumbs[c]);
+          if (!matchedKey) {
+            console.log('[getThumb] 未找到缩略图:', {
+              originalUrl: url,
+              normalizedPath: p,
+              candidates: uniqueCandidates.slice(0, 5),
+              availableKeys: Object.keys(thumbs).slice(0, 5)
+            });
+          }
+        }
         
         // 尝试匹配
         for (const candidate of uniqueCandidates) {
@@ -2530,10 +2699,8 @@ if (typeof window.SearchFirstMode === 'undefined') {
             }
             
             // 添加 baseurl 前缀（如果存在且URL中尚未包含）
-            // 注意：thumbPath 已经是绝对路径（以 / 开头）
             if (!thumbPath.startsWith('http')) {
               const baseurl = window.PC_BASEURL || '';
-              // 只在 baseurl 存在且不是根路径时添加，避免重复
               if (baseurl && baseurl !== '' && baseurl !== '/' && !thumbPath.startsWith(baseurl)) {
                 const normalizedBase = baseurl.endsWith('/') ? baseurl.slice(0, -1) : baseurl;
                 thumbPath = normalizedBase + thumbPath;
@@ -2543,37 +2710,8 @@ if (typeof window.SearchFirstMode === 'undefined') {
             return thumbPath;
           }
         }
-        
-        // 如果直接匹配失败，尝试添加 /papers/ 前缀
-        // 因为 Jekyll 的 post.url 可能不包含 /papers/，但 thumbnails_by_path.yml 中的键都包含
-        for (const candidate of uniqueCandidates) {
-          // 如果候选路径不以 /papers/ 开头，尝试添加该前缀
-          if (!candidate.startsWith('/papers/')) {
-            const papersCandidate = '/papers' + candidate;
-            if (thumbs[papersCandidate]) {
-              let thumbPath = thumbs[papersCandidate];
-              
-              // 确保路径格式正确
-              if (!thumbPath.startsWith('/') && !thumbPath.startsWith('http')) {
-                thumbPath = '/' + thumbPath;
-              }
-              
-              // 添加 baseurl 前缀（如果存在且URL中尚未包含）
-              if (!thumbPath.startsWith('http')) {
-                const baseurl = window.PC_BASEURL || '';
-                // 只在 baseurl 存在且不是根路径时添加，避免重复
-                if (baseurl && baseurl !== '' && baseurl !== '/' && !thumbPath.startsWith(baseurl)) {
-                  const normalizedBase = baseurl.endsWith('/') ? baseurl.slice(0, -1) : baseurl;
-                  thumbPath = normalizedBase + thumbPath;
-                }
-              }
-              
-              return thumbPath;
-            }
-          }
-        }
       } catch(e) {
-        // URL normalization failed, use fallback
+        console.warn('[getThumb] URL normalization failed:', url, e);
       }
       
       return fallback;
@@ -2697,7 +2835,10 @@ if (typeof window.SearchFirstMode === 'undefined') {
     item.innerHTML = `
       <a href="${paperUrl}" class="post-card-link-modern">
         <div class="post-card-thumb-modern">
-          <img src="${thumb}" alt="thumbnail" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" />
+          <img src="${thumb}" 
+               alt="thumbnail" 
+               loading="lazy" 
+               onerror="this.onerror=null; this.src='${window.PC_THUMB_FALLBACK || '/assets/images/fallback-paper.svg'}';" />
         </div>
         <div class="post-card-body-modern">
           <div class="post-card-meta-modern">

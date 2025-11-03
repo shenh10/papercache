@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // 显示加载状态
       previewContent.innerHTML = `
         <div style="text-align: center; padding: 20px;">
-          <div style="width: 20px; height: 20px; border: 2px solid #667eea; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
+          <div style="width: 20px; height: 20px; border: 2px solid #3b82f6; border-top: 2px solid transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px;"></div>
           <div style="color: #666; font-size: 14px;">正在加载文章内容...</div>
         </div>
         <style>
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div style="color: #4a5568; font-size: 14px; line-height: 1.6;">${content}</div>
           </div>
           <div style="text-align: center; margin-top: 15px;">
-            <a href="${postUrl}" style="color: #667eea; text-decoration: none; font-size: 14px; font-weight: 500;">查看完整文章 →</a>
+            <a href="${postUrl}" style="color: #3b82f6; text-decoration: none; font-size: 14px; font-weight: 500;">查看完整文章 →</a>
           </div>
         `;
       } else {

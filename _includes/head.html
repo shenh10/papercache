@@ -2,6 +2,11 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="{{ '/assets/images/favicon.svg' | relative_url }}">
+  <link rel="icon" type="image/png" href="{{ '/assets/images/favicon.png' | relative_url }}">
+  <link rel="apple-touch-icon" href="{{ '/assets/images/apple-touch-icon.png' | relative_url }}">
   
   <!-- 性能优化：预加载关键资源 -->
   <link rel="preload" href="{{ "/assets/main.css" | relative_url }}" as="style">
@@ -43,6 +48,9 @@
       url: "{{ site.supabase.url }}",
       anon_key: "{{ site.supabase.anon_key }}"
     };
+    {%- if site.admin and site.admin.enabled and site.admin.admin_emails -%}
+    window.siteConfig.adminEmails = {{ site.admin.admin_emails | jsonify }};
+    {%- endif -%}
   </script>
   {%- endif -%}
   
@@ -55,10 +63,17 @@
   <!-- 加载收藏功能 -->
   <script src="{{ '/assets/js/favorites.js' | relative_url }}"></script>
   <script src="{{ '/assets/js/click-stats.js' | relative_url }}"></script>
+  <!-- 加载用户活动分析服务 -->
+  <script src="{{ '/assets/js/analytics-service.js' | relative_url }}"></script>
   <!-- 加载用户菜单组件 -->
   <script src="{{ '/assets/js/user-menu-simple.js' | relative_url }}"></script>
   <!-- 加载认证模态框组件 -->
   <script src="{{ '/assets/js/auth-modal-simple.js' | relative_url }}"></script>
+  {%- endif -%}
+  
+  {%- if page.layout == 'admin' or page.url contains '/admin/' -%}
+  <!-- 管理后台分析服务 -->
+  <script src="{{ '/assets/js/admin-analytics.js' | relative_url }}"></script>
   {%- endif -%}
   
   <!-- 注入 baseurl 用于路径处理（所有页面都需要） -->

@@ -218,8 +218,8 @@
   }
   
   .nav-link:hover {
-    background: rgba(102, 126, 234, 0.1);
-    color: #667eea;
+    background: rgba(59, 130, 246, 0.1);
+    color: rgba(59, 130, 246, 0.9);
   }
   
   .user-menu {
@@ -227,6 +227,22 @@
     margin-top: 0.5rem;
     width: 100%;
     justify-content: flex-start;
+    order: 999; /* 确保在导航菜单之后显示 */
+  }
+  
+  .user-menu-authenticated {
+    width: 100%;
+  }
+  
+  .user-avatar {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 1.1rem !important;
+    margin-bottom: 0.5rem;
+  }
+  
+  .user-menu-guest {
+    width: 100%;
   }
   
   .brand-name {

@@ -214,6 +214,11 @@
 
     try {
       const result = await window.favoritesService.toggleFavorite(postUrl);
+      
+      // 记录收藏活动
+      if (window.AnalyticsService && result.success) {
+        window.AnalyticsService.logFavorite(postUrl, result.favorited);
+      }
 
       if (result.success) {
         // 更新UI
@@ -277,7 +282,7 @@
       top: 20px;
       left: 50%;
       transform: translateX(-50%) translateY(-20px);
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
       color: white;
       padding: 12px 24px;
       border-radius: 8px;

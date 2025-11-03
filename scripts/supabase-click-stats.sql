@@ -31,7 +31,21 @@ CREATE POLICY "Anyone can view click stats"
   ON post_clicks FOR SELECT
   USING (true);
 
+-- RLS策略：所有人都可以插入新记录（匿名用户也可以）
+DROP POLICY IF EXISTS "Anyone can insert clicks" ON post_clicks;
+CREATE POLICY "Anyone can insert clicks"
+  ON post_clicks FOR INSERT
+  WITH CHECK (true);
+
+-- RLS策略：所有人都可以更新点击量（匿名用户也可以）
+DROP POLICY IF EXISTS "Anyone can update clicks" ON post_clicks;
+CREATE POLICY "Anyone can update clicks"
+  ON post_clicks FOR UPDATE
+  USING (true)
+  WITH CHECK (true);
+
 -- 使用PostgreSQL函数来原子性地增加点击量（避免并发问题）
+-- SECURITY DEFINER 确保函数以创建者权限运行，绕过RLS检查
 CREATE OR REPLACE FUNCTION increment_post_click(p_url TEXT)
 RETURNS INTEGER AS $$
 DECLARE
@@ -49,10 +63,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- RLS策略：所有人都可以增加点击量（通过函数）
-DROP POLICY IF EXISTS "Anyone can increment clicks" ON post_clicks;
-CREATE POLICY "Anyone can increment clicks"
-  ON post_clicks FOR UPDATE
-  USING (true)
-  WITH CHECK (true);
+-- 确保函数可以被匿名用户和已认证用户调用
+GRANT EXECUTE ON FUNCTION public.increment_post_click(TEXT) TO anon, authenticated;
 

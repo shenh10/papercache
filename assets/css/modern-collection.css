@@ -53,8 +53,8 @@
 }
 
 .mobile-post-item:hover {
-  border-color: #667eea;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+  border-color: rgba(59, 130, 246, 0.8);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
   transform: translateY(-1px);
 }
 
@@ -105,19 +105,32 @@
 }
 
 .mobile-post-item:hover .mobile-post-title {
-  color: #667eea;
+  color: rgba(59, 130, 246, 0.9);
 }
 
 /* 1. 页面头部区域 - 英雄式设计 */
 .collection-hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background:
+    linear-gradient(135deg,
+      rgba(15, 23, 42, 0.98) 0%,
+      rgba(30, 41, 59, 0.98) 30%,
+      rgba(51, 65, 85, 0.98) 60%,
+      rgba(71, 85, 105, 0.98) 100%
+    ),
+    linear-gradient(45deg,
+      rgba(59, 130, 246, 0.08) 0%,
+      rgba(16, 185, 129, 0.08) 30%,
+      rgba(99, 102, 241, 0.06) 60%,
+      rgba(6, 182, 212, 0.08) 100%
+    );
   color: white;
-  padding: 60px 0;
+  padding: 80px 0;
   margin: -2em -15px 3em -15px;
   position: relative;
   overflow: hidden;
 }
 
+/* Geek风格网格背景 */
 .collection-hero::before {
   content: '';
   position: absolute;
@@ -125,8 +138,38 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-  opacity: 0.3;
+  background-image:
+    linear-gradient(rgba(99, 102, 241, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: grid-move 20s linear infinite;
+}
+
+/* 霓虹光晕效果 */
+.collection-hero::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at center,
+    rgba(99, 102, 241, 0.1) 0%,
+    rgba(168, 85, 247, 0.05) 25%,
+    transparent 50%
+  );
+  animation: neon-pulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes grid-move {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(50px, 50px); }
+}
+
+@keyframes neon-pulse {
+  0% { opacity: 0.3; transform: scale(1); }
+  100% { opacity: 0.6; transform: scale(1.1); }
 }
 
 .collection-hero-content {
@@ -139,18 +182,35 @@
 }
 
 .collection-hero h1 {
-  font-size: 3.5em;
-  font-weight: 700;
+  font-size: 4em;
+  font-weight: 800;
   margin: 0 0 20px 0;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  text-shadow:
+    0 0 20px rgba(59, 130, 246, 0.4),
+    0 0 40px rgba(16, 185, 129, 0.2),
+    0 2px 4px rgba(0,0,0,0.3);
   letter-spacing: -0.02em;
+  line-height: 1.1;
+  background: linear-gradient(135deg, #ffffff 0%, #dbeafe 40%, #d1fae5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: title-glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes title-glow {
+  0% { filter: brightness(1); }
+  100% { filter: brightness(1.2); }
 }
 
 .collection-hero-subtitle {
-  font-size: 1.3em;
-  opacity: 0.9;
-  margin-bottom: 30px;
-  font-weight: 300;
+  font-size: 1.4em;
+  opacity: 0.95;
+  margin-bottom: 40px;
+  font-weight: 400;
+  line-height: 1.6;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 .collection-stats {
@@ -162,26 +222,57 @@
 
 .stat-item {
   text-align: center;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 20px;
-  min-width: 120px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(15px);
+  border-radius: 20px;
+  padding: 25px;
+  min-width: 140px;
   border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.stat-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.6s ease;
+}
+
+.stat-item:hover::before {
+  left: 100%;
+}
+
+.stat-item:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .stat-number {
-  font-size: 2.5em;
-  font-weight: 700;
+  font-size: 2.8em;
+  font-weight: 800;
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #ffffff 0%, #a5b4fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
 }
 
 .stat-label {
-  font-size: 0.9em;
-  opacity: 0.8;
+  font-size: 0.95em;
+  opacity: 0.9;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 /* RSS 订阅入口 */
@@ -224,12 +315,13 @@
 
 /* 2. 现代化标签过滤器 */
 .modern-tag-filter {
-  background: white;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(15px);
   border-radius: 20px;
   padding: 30px;
   margin: 2em 0;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(102, 126, 234, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.2);
   position: relative;
   overflow: hidden;
 }
@@ -241,7 +333,8 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.8), rgba(16, 185, 129, 0.8), rgba(6, 182, 212, 0.8));
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
 }
 
 .tag-filter-header {
@@ -318,17 +411,17 @@
 
 .tag-btn-modern:hover {
   background: #f7fafc;
-  border-color: #667eea;
-  color: #667eea;
+  border-color: rgba(59, 130, 246, 0.6);
+  color: rgba(59, 130, 246, 0.9);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
 }
 
 .tag-btn-modern.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8) 0%, rgba(16, 185, 129, 0.8) 100%);
   border-color: transparent;
   color: white;
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
   transform: translateY(-2px);
 }
 
@@ -346,13 +439,13 @@
 
 /* 3. 现代化导航设计 */
 .modern-navigation {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 30px;
   margin-bottom: 2em;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.2);
   position: relative;
   overflow: hidden;
 }
@@ -364,7 +457,8 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.8), rgba(16, 185, 129, 0.8), rgba(6, 182, 212, 0.8));
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
 }
 
 .main-category-modern {
@@ -381,7 +475,7 @@
 .main-category-modern:hover {
   background: rgba(255, 255, 255, 0.8);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.1);
 }
 
 .main-category-summary-modern {
@@ -393,7 +487,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(16, 185, 129, 0.05));
 }
 
 .main-category-summary-modern::-webkit-details-marker {
@@ -417,18 +511,18 @@
   content: '';
   width: 6px;
   height: 6px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(16, 185, 129, 0.8));
   border-radius: 50%;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .main-category-summary-modern::after {
   content: '▼';
   font-size: 16px;
-  color: #667eea;
+  color: rgba(59, 130, 246, 0.8);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform: rotate(0deg);
-  background: rgba(102, 126, 234, 0.1);
+  background: rgba(59, 130, 246, 0.1);
   width: 32px;
   height: 32px;
   border-radius: 50%;
@@ -439,16 +533,16 @@
 
 .main-category-modern[open] > .main-category-summary-modern::after {
   transform: rotate(180deg);
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(16, 185, 129, 0.8));
   color: white;
 }
 
 .main-category-summary-modern:hover {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
 }
 
 .main-category-summary-modern:hover::after {
-  background: rgba(102, 126, 234, 0.2);
+  background: rgba(59, 130, 246, 0.2);
   transform: scale(1.1);
 }
 
@@ -465,11 +559,11 @@
   color: #4a5568;
   margin-bottom: 25px;
   padding: 16px 20px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(16, 185, 129, 0.08));
   border-radius: 16px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  border: 1px solid rgba(102, 126, 234, 0.15);
+  border: 1px solid rgba(59, 130, 246, 0.15);
   position: relative;
   overflow: hidden;
 }
@@ -478,7 +572,7 @@
   content: '📁';
   margin-right: 12px;
   font-size: 18px;
-  filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.3));
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
 }
 
 .breadcrumb-modern::after {
@@ -488,7 +582,7 @@
   left: 0;
   width: 4px;
   height: 100%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(16, 185, 129, 0.8));
   border-radius: 0 2px 2px 0;
 }
 
@@ -533,13 +627,13 @@
 }
 
 .post-card-modern {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border-radius: 20px;
   overflow: visible;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(99, 102, 241, 0.2);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -553,9 +647,10 @@
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.8), rgba(16, 185, 129, 0.8));
   opacity: 0;
   transition: opacity 0.3s ease;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
 }
 
 .post-card-modern:hover::before {
@@ -564,9 +659,9 @@
 
 .post-card-modern:hover {
   transform: translateY(-8px);
-  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.15);
-  background: rgba(255, 255, 255, 0.95);
-  border-color: rgba(102, 126, 234, 0.2);
+  box-shadow: 0 20px 60px rgba(59, 130, 246, 0.15);
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(59, 130, 246, 0.4);
 }
 
 .post-card-link-modern {
@@ -687,7 +782,7 @@
 
 /* 其他标签 - 蓝紫色渐变 */
 .post-card-tag-modern:not(.tag-arxiv) {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(16, 185, 129, 0.8));
 }
 
 .post-card-title-modern {
@@ -986,12 +1081,12 @@
 }
 
 .modern-navigation::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(16, 185, 129, 0.8));
   border-radius: 3px;
 }
 
 .modern-navigation::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #5a67d8, #6b46c1);
+  background: linear-gradient(135deg, #3b82f6, #10b981);
 }
 
 /* 9. 演示文稿特殊样式 */
@@ -1001,11 +1096,11 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(16, 185, 129, 0.8));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 2px 4px rgba(102, 126, 234, 0.3));
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
 }
 
 .no-slides-modern {
@@ -1041,10 +1136,10 @@
 }
 
 .no-slides-card code {
-  background: rgba(102, 126, 234, 0.1);
+  background: rgba(59, 130, 246, 0.1);
   padding: 4px 8px;
   border-radius: 6px;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  color: #667eea;
+  color: rgba(59, 130, 246, 0.9);
   font-weight: 600;
 }

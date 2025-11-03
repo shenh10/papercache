@@ -204,13 +204,76 @@ function performSearch(query, filters = {}, matchMode = 'fuzzy', searchFields = 
   } 
   // 模糊匹配模式（默认）- 使用 Lunr 全文搜索，不使用搜索范围限制
   else {
-    // 扩展查询，支持中英文混合搜索
-    const expandedQuery = expandQuery(query);
-    results = searchIndex.search(expandedQuery);
+    // Lunr 默认会将查询分词并按 OR 逻辑搜索
+    // 我们希望实现更智能的搜索：优先短语匹配，然后AND匹配，最后OR匹配
+    // 每个级别都有结果数量限制和相关性阈值
     
-    // 如果扩展后的查询没有结果，尝试使用原始查询
-    if (results.length === 0) {
-      results = searchIndex.search(query);
+    const MAX_RESULTS_PER_LEVEL = 50; // 每个级别的最大结果数
+    const MIN_SCORE_THRESHOLD = 0.1; // 最小相关性分数阈值
+    
+    // 1. 首先尝试短语搜索（用引号包裹整个查询）
+    const phraseQuery = `"${query}"`;
+    let phraseResults = searchIndex.search(phraseQuery);
+    
+    // 过滤低分结果并限制数量
+    phraseResults = phraseResults
+      .filter(r => r.score >= MIN_SCORE_THRESHOLD)
+      .slice(0, MAX_RESULTS_PER_LEVEL);
+    
+    if (phraseResults.length > 0) {
+      results = phraseResults;
+    } else {
+      // 2. 如果短语搜索没有结果，尝试AND搜索（所有词都必须存在）
+      const terms = query.trim().split(/\s+/).filter(t => t.length >= 2);
+      
+      if (terms.length > 0) {
+        // 先执行OR搜索获取候选结果
+        let orResults = searchIndex.search(query);
+        
+        // 过滤并限制候选结果数量
+        orResults = orResults
+          .filter(r => r.score >= MIN_SCORE_THRESHOLD)
+          .slice(0, MAX_RESULTS_PER_LEVEL * 2); // AND 过滤会减少结果，所以放宽候选数量
+        
+        // 然后在客户端过滤：只保留包含所有词的结果，并按匹配词数量排序
+        results = orResults
+          .map(result => {
+            const paper = papersData.find(p => p.id === result.ref);
+            if (!paper) return null;
+            
+            const searchText = `${paper.title} ${paper.excerpt} ${(paper.categories || []).join(' ')} ${paper.tag || ''}`.toLowerCase();
+            const matchedTerms = terms.filter(term => searchText.includes(term.toLowerCase()));
+            
+            // 只保留包含所有词的结果
+            if (matchedTerms.length === terms.length) {
+              return {
+                ...result,
+                // 增强分数：匹配的词越多分数越高
+                enhancedScore: result.score * (1 + matchedTerms.length * 0.1)
+              };
+            }
+            return null;
+          })
+          .filter(r => r !== null)
+          .sort((a, b) => b.enhancedScore - a.enhancedScore)
+          .slice(0, MAX_RESULTS_PER_LEVEL)
+          .map(r => ({ ref: r.ref, score: r.score })); // 恢复原始格式
+      } else {
+        // 如果查询太短（只有1个词），直接使用OR搜索但限制结果
+        results = searchIndex.search(query)
+          .filter(r => r.score >= MIN_SCORE_THRESHOLD)
+          .slice(0, MAX_RESULTS_PER_LEVEL);
+      }
+      
+      // 3. 如果AND搜索也没有结果，尝试原始查询的OR搜索（不再使用扩展查询，避免结果过多）
+      if (results.length === 0) {
+        results = searchIndex.search(query)
+          .filter(r => r.score >= MIN_SCORE_THRESHOLD)
+          .slice(0, MAX_RESULTS_PER_LEVEL);
+      }
+      
+      // 移除扩展查询回退，避免返回过多无关结果
+      // 如果仍然没有结果，就返回空数组（而不是扩展查询）
     }
   }
   

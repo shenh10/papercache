@@ -60,6 +60,7 @@ permalink: /admin/index.html
         <button class="admin-tab active" onclick="switchTab('users')">用户列表</button>
         <button class="admin-tab" onclick="switchTab('favorites')">收藏统计</button>
         <button class="admin-tab" onclick="switchTab('logs')">登录日志</button>
+        <button class="admin-tab" onclick="switchTab('analytics')">数据分析</button>
       </div>
       
       <!-- 用户列表 -->
@@ -90,7 +91,7 @@ permalink: /admin/index.html
           <table class="admin-table">
             <thead>
               <tr>
-                <th>文章URL</th>
+                <th>文章标题</th>
                 <th>收藏数</th>
                 <th>最早收藏</th>
               </tr>
@@ -124,18 +125,174 @@ permalink: /admin/index.html
           </table>
         </div>
       </div>
+
+      <!-- 数据分析 -->
+      <div id="tab-analytics" class="admin-tab-content">
+        <div class="analytics-container">
+          <!-- 日活统计卡片 -->
+          <div class="analytics-section analytics-section-card">
+            <h3 class="analytics-section-title">📊 日活跃用户 (DAU)</h3>
+            <div class="analytics-stats-row">
+              <div class="analytics-stat-card">
+                <div class="analytics-stat-label">今日</div>
+                <div class="analytics-stat-value" id="dau-today">-</div>
+              </div>
+              <div class="analytics-stat-card">
+                <div class="analytics-stat-label">昨日</div>
+                <div class="analytics-stat-value" id="dau-yesterday">-</div>
+              </div>
+              <div class="analytics-stat-card">
+                <div class="analytics-stat-label">7日均值</div>
+                <div class="analytics-stat-value" id="dau-7days-avg">-</div>
+              </div>
+            </div>
+            <div class="analytics-date-range">
+              <label>日期范围：</label>
+              <input type="date" id="dau-start-date" value="">
+              <span> 至 </span>
+              <input type="date" id="dau-end-date" value="">
+              <button id="dau-query-btn" class="btn-primary">查询</button>
+            </div>
+            <div id="dau-chart-container" class="analytics-chart-container">
+              <div class="chart-loading">加载中...</div>
+            </div>
+          </div>
+
+          <!-- 热门页面 -->
+          <div class="analytics-section analytics-section-card">
+            <h3 class="analytics-section-title">🔥 热门页面</h3>
+            <div class="analytics-date-range">
+              <label>日期范围：</label>
+              <input type="date" id="popular-start-date" value="">
+              <span> 至 </span>
+              <input type="date" id="popular-end-date" value="">
+              <button id="popular-query-btn" class="btn-primary">查询</button>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>排名</th>
+                    <th>页面路径</th>
+                    <th>页面标题</th>
+                    <th>访问次数</th>
+                    <th>独立访客</th>
+                  </tr>
+                </thead>
+                <tbody id="popular-pages-body">
+                  <tr>
+                    <td colspan="5" class="table-loading">加载中...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 搜索热词 -->
+          <div class="analytics-section analytics-section-card">
+            <h3 class="analytics-section-title">🔍 搜索热词</h3>
+            <div class="analytics-date-range">
+              <label>日期范围：</label>
+              <input type="date" id="search-start-date" value="">
+              <span> 至 </span>
+              <input type="date" id="search-end-date" value="">
+              <button id="search-query-btn" class="btn-primary">查询</button>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>排名</th>
+                    <th>搜索关键词</th>
+                    <th>搜索次数</th>
+                    <th>独立搜索用户</th>
+                  </tr>
+                </thead>
+                <tbody id="search-keywords-body">
+                  <tr>
+                    <td colspan="4" class="table-loading">加载中...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
+  // 预载入文章数据（用于显示标题）
+  (function(){
+    try {
+      if (!window.PAPERCACHE_POSTS) {
+        window.PAPERCACHE_POSTS = [
+        {%- for post in site.posts -%}
+          {%- assign excerpt_data = site.data.excerpts[post.url] -%}
+          {%- if excerpt_data -%}
+            {%- assign final_excerpt = excerpt_data | truncate: 240 -%}
+          {%- else -%}
+            {%- assign exc = post.excerpt | default: post.description | default: post.summary | default: post.content | strip_html | strip_newlines | truncate: 240 -%}
+            {%- assign final_excerpt = exc -%}
+          {%- endif -%}
+          {
+            title: {{ post.title | jsonify }},
+            url: {{ post.url | relative_url | jsonify }},
+            excerpt: {{ final_excerpt | jsonify }},
+            tags: {{ post.tags | jsonify }},
+            categories: {{ post.categories | jsonify }},
+            date: {%- if post.date -%}{{ post.date | date: "%Y-%m-%d" | jsonify }}{%- else -%}{{ "" | jsonify }}{%- endif -%}
+          }{%- if forloop.last == false -%},{%- endif -%}
+        {%- endfor -%}
+        ];
+        console.log('[Admin] 预加载论文数据:', window.PAPERCACHE_POSTS.length, '篇');
+      }
+    } catch (e) {
+      console.error('[Admin] 预加载论文数据失败', e);
+      window.PAPERCACHE_POSTS = window.PAPERCACHE_POSTS || [];
+    }
+  })();
+
   // 检查管理员权限
   async function checkAdminAccess() {
+    console.log('[Admin] 开始检查管理员权限');
     const authCheck = document.getElementById('admin-auth-check');
     const unauthorized = document.getElementById('admin-unauthorized');
     const adminPanel = document.getElementById('admin-panel');
     
-    const user = await window.authService?.getCurrentUser();
+    if (!authCheck || !unauthorized || !adminPanel) {
+      console.error('[Admin] 必要的DOM元素未找到');
+      return false;
+    }
+    
+    // 等待 SimpleAuth 加载完成（最多等待 5 秒）
+    let waitCount = 0;
+    while (waitCount < 50 && !window.SimpleAuth) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      waitCount++;
+    }
+    
+    if (!window.SimpleAuth) {
+      console.error('[Admin] SimpleAuth 未加载');
+      authCheck.style.display = 'none';
+      unauthorized.style.display = 'block';
+      unauthorized.innerHTML = `
+        <div class="unauthorized-icon">🔒</div>
+        <h2>系统错误</h2>
+        <p>认证服务未加载，请刷新页面重试。</p>
+        <button onclick="location.reload()" class="btn-primary">刷新页面</button>
+      `;
+      return false;
+    }
+    
+    console.log('[Admin] SimpleAuth 已加载，获取当前用户');
+    
+    // 使用 SimpleAuth 获取当前用户
+    const user = window.SimpleAuth?.getCurrentUser();
+    console.log('[Admin] 当前用户:', user?.email || '未登录');
+    
     if (!user) {
+      console.log('[Admin] 用户未登录');
       authCheck.style.display = 'none';
       unauthorized.style.display = 'block';
       unauthorized.innerHTML = `
@@ -150,18 +307,31 @@ permalink: /admin/index.html
     // 检查是否是管理员（从配置文件读取）
     const adminEmails = {{ site.admin.admin_emails | jsonify }};
     const isAdmin = adminEmails && adminEmails.includes(user.email);
+    console.log('[Admin] 管理员邮箱列表:', adminEmails);
+    console.log('[Admin] 用户邮箱:', user.email);
+    console.log('[Admin] 是否是管理员:', isAdmin);
     
     if (!isAdmin) {
+      console.log('[Admin] 用户不是管理员');
       authCheck.style.display = 'none';
       unauthorized.style.display = 'block';
+      unauthorized.innerHTML = `
+        <div class="unauthorized-icon">🔒</div>
+        <h2>访问受限</h2>
+        <p>您没有管理员权限，无法访问此页面。</p>
+        <a href="{{ '/' | relative_url }}" class="btn-primary">返回首页</a>
+      `;
       return false;
     }
+    
+    console.log('[Admin] ✅ 权限验证通过，显示管理面板');
     
     // 显示管理面板
     authCheck.style.display = 'none';
     adminPanel.style.display = 'block';
     
     // 加载数据
+    console.log('[Admin] 开始加载管理数据');
     loadAdminData();
     
     return true;
@@ -175,54 +345,398 @@ permalink: /admin/index.html
       loadLoginLogsStats(),
       loadUsersTable(),
       loadFavoritesTable(),
-      loadLogsTable()
+      loadLogsTable(),
+      loadAnalyticsData()
     ]);
   }
+
+  // 初始化分析页面的日期选择器默认值
+  function initAnalyticsDateInputs() {
+    const today = new Date().toISOString().split('T')[0];
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    // DAU 日期范围（默认最近30天）
+    const dauStart = document.getElementById('dau-start-date');
+    const dauEnd = document.getElementById('dau-end-date');
+    if (dauStart && !dauStart.value) dauStart.value = thirtyDaysAgo;
+    if (dauEnd && !dauEnd.value) dauEnd.value = today;
+
+    // 热门页面日期范围（默认最近7天）
+    const popularStart = document.getElementById('popular-start-date');
+    const popularEnd = document.getElementById('popular-end-date');
+    if (popularStart && !popularStart.value) popularStart.value = sevenDaysAgo;
+    if (popularEnd && !popularEnd.value) popularEnd.value = today;
+
+    // 搜索热词日期范围（默认最近7天）
+    const searchStart = document.getElementById('search-start-date');
+    const searchEnd = document.getElementById('search-end-date');
+    if (searchStart && !searchStart.value) searchStart.value = sevenDaysAgo;
+    if (searchEnd && !searchEnd.value) searchEnd.value = today;
+  }
+
+  // 等待 AdminAnalytics 服务加载
+  async function waitForAdminAnalytics(maxWait = 5000) {
+    const startTime = Date.now();
+    while (!window.AdminAnalytics && (Date.now() - startTime) < maxWait) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    if (!window.AdminAnalytics) {
+      console.error('[Admin] AdminAnalytics service failed to load within', maxWait, 'ms');
+      return false;
+    }
+    return true;
+  }
+
+  // 加载分析数据
+  async function loadAnalyticsData() {
+    // 等待 AdminAnalytics 服务加载
+    const loaded = await waitForAdminAnalytics();
+    if (!loaded) {
+      console.error('[Admin] Cannot load analytics data: AdminAnalytics service not available');
+      document.getElementById('dau-today').textContent = '服务未加载';
+      document.getElementById('dau-yesterday').textContent = '服务未加载';
+      document.getElementById('dau-7days-avg').textContent = '服务未加载';
+      return;
+    }
+
+    // 初始化日期输入框默认值
+    initAnalyticsDateInputs();
+    
+    // 初始化查询按钮事件监听器
+    initAnalyticsQueryButtons();
+    
+    await loadDAUStats();
+    await loadDAUChart();
+    await loadPopularPages();
+    await loadSearchKeywords();
+  }
   
+  // 获取 Supabase 客户端
+  function getSupabase() {
+    if (window.getSupabaseClient) {
+      return window.getSupabaseClient();
+    }
+    return null;
+  }
+
   // 加载用户统计
   async function loadUserStats() {
-    // 注意：需要Supabase Admin API或服务端函数
-    // 这里先显示占位符，实际需要服务端支持
-    document.getElementById('stat-total-users').textContent = '需要服务端支持';
+    const statEl = document.getElementById('stat-total-users');
+    if (!statEl) return;
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      statEl.textContent = '未初始化';
+      return;
+    }
+
+    try {
+      // 查询 profiles 表获取用户数（如果表存在）
+      const { count, error } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        console.warn('[Admin] 无法查询用户数:', error);
+        statEl.textContent = '-';
+      } else {
+        statEl.textContent = count || 0;
+      }
+    } catch (error) {
+      console.error('[Admin] 加载用户统计失败:', error);
+      statEl.textContent = '错误';
+    }
   }
   
   // 加载收藏统计
   async function loadFavoritesStats() {
-    // 同上
-    document.getElementById('stat-total-favorites').textContent = '需要服务端支持';
+    const statEl = document.getElementById('stat-total-favorites');
+    if (!statEl) return;
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      statEl.textContent = '未初始化';
+      return;
+    }
+
+    try {
+      const { count, error } = await supabase
+        .from('favorites')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        console.warn('[Admin] 无法查询收藏数:', error);
+        statEl.textContent = '-';
+      } else {
+        statEl.textContent = count || 0;
+      }
+    } catch (error) {
+      console.error('[Admin] 加载收藏统计失败:', error);
+      statEl.textContent = '错误';
+    }
   }
   
   // 加载登录日志统计
   async function loadLoginLogsStats() {
-    // 同上
-    document.getElementById('stat-total-logs').textContent = '需要服务端支持';
+    const statEl = document.getElementById('stat-total-logs');
+    if (!statEl) return;
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      statEl.textContent = '未初始化';
+      return;
+    }
+
+    try {
+      const { count, error } = await supabase
+        .from('login_logs')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        console.warn('[Admin] 无法查询登录记录数:', error);
+        statEl.textContent = '-';
+      } else {
+        statEl.textContent = count || 0;
+      }
+    } catch (error) {
+      console.error('[Admin] 加载登录日志统计失败:', error);
+      statEl.textContent = '错误';
+    }
   }
   
   // 加载用户列表
   async function loadUsersTable() {
     const tbody = document.getElementById('users-table-body');
     if (!tbody) return;
-    
-    // 注意：需要服务端API或Supabase Admin SDK
-    tbody.innerHTML = '<tr><td colspan="5" class="table-message">需要服务端API支持</td></tr>';
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      tbody.innerHTML = '<tr><td colspan="5" class="table-message">Supabase客户端未初始化</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '<tr><td colspan="5" class="table-loading">加载中...</td></tr>';
+
+    try {
+      // 查询 profiles 表（包含用户基本信息）
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, created_at, updated_at')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (error) {
+        console.error('[Admin] 加载用户列表失败:', error);
+        tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败：' + error.message + '</td></tr>';
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="table-message">暂无用户数据</td></tr>';
+        return;
+      }
+
+      let html = '';
+      for (const profile of data) {
+        // 获取用户邮箱（客户端无法直接访问 auth.users，显示 ID 的部分）
+        const emailDisplay = profile.id.substring(0, 8) + '...';
+        const username = profile.username || '-';
+        const createdDate = profile.created_at ? new Date(profile.created_at).toLocaleDateString('zh-CN') : '-';
+
+        html += `<tr>
+          <td>${profile.id.substring(0, 8)}...</td>
+          <td>${emailDisplay}</td>
+          <td>${username}</td>
+          <td>${createdDate}</td>
+          <td>-</td>
+        </tr>`;
+      }
+      tbody.innerHTML = html;
+    } catch (error) {
+      console.error('[Admin] 加载用户列表异常:', error);
+      tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败</td></tr>';
+    }
   }
   
   // 加载收藏统计表
   async function loadFavoritesTable() {
     const tbody = document.getElementById('favorites-table-body');
     if (!tbody) return;
-    
-    // 可以通过公开的收藏数据统计（需要调整RLS策略或使用服务端API）
-    tbody.innerHTML = '<tr><td colspan="3" class="table-message">需要服务端API支持</td></tr>';
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      tbody.innerHTML = '<tr><td colspan="3" class="table-message">Supabase客户端未初始化</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '<tr><td colspan="3" class="table-loading">加载中...</td></tr>';
+
+    try {
+      // 查询收藏统计（按文章分组）
+      const { data, error } = await supabase
+        .from('favorites')
+        .select('post_url, created_at')
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('[Admin] 加载收藏统计失败:', error);
+        tbody.innerHTML = '<tr><td colspan="3" class="table-message">加载失败：' + error.message + '</td></tr>';
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="table-message">暂无收藏数据</td></tr>';
+        return;
+      }
+
+      // 按 post_url 分组统计
+      const favoriteStats = {};
+      data.forEach(fav => {
+        if (!favoriteStats[fav.post_url]) {
+          favoriteStats[fav.post_url] = {
+            count: 0,
+            firstFavorited: fav.created_at
+          };
+        }
+        favoriteStats[fav.post_url].count++;
+        if (fav.created_at < favoriteStats[fav.post_url].firstFavorited) {
+          favoriteStats[fav.post_url].firstFavorited = fav.created_at;
+        }
+      });
+
+      // 转换为数组并按收藏数排序
+      const sortedStats = Object.entries(favoriteStats)
+        .map(([url, stats]) => ({ url, ...stats }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 50); // 只显示前50个
+
+      // 获取文章标题的辅助函数
+      function getPostTitle(postUrl) {
+        if (!postUrl) return '-';
+        
+        // 从 window.PAPERCACHE_POSTS 查找
+        if (window.PAPERCACHE_POSTS && Array.isArray(window.PAPERCACHE_POSTS)) {
+          const baseurl = window.PC_BASEURL || '';
+          const normalizeUrl = (u) => {
+            if (!u) return '';
+            let n = u;
+            if (baseurl && n.startsWith(baseurl)) {
+              n = n.substring(baseurl.length);
+            }
+            if (!n.startsWith('/')) n = '/' + n;
+            return n;
+          };
+          
+          const normalizedUrl = normalizeUrl(postUrl);
+          const matchedPost = window.PAPERCACHE_POSTS.find(p => {
+            const normalizedPUrl = normalizeUrl(p.url);
+            return normalizedPUrl === normalizedUrl || normalizedPUrl === postUrl || p.url === postUrl;
+          });
+          
+          if (matchedPost && matchedPost.title) {
+            return matchedPost.title;
+          }
+        }
+        
+        // 如果没找到，从URL提取
+        const segments = postUrl.split('/');
+        const lastSegment = segments[segments.length - 1];
+        if (lastSegment && lastSegment.includes('-')) {
+          const withoutExt = lastSegment.replace(/\.html?$/, '');
+          return withoutExt.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+        
+        return postUrl.length > 50 ? postUrl.substring(0, 50) + '...' : postUrl;
+      }
+
+      // 生成完整的链接URL
+      function getFullUrl(postUrl) {
+        if (!postUrl) return '#';
+        const baseurl = window.PC_BASEURL || '';
+        if (postUrl.startsWith('http')) return postUrl;
+        if (baseurl && !postUrl.startsWith(baseurl)) {
+          return baseurl + (postUrl.startsWith('/') ? postUrl : '/' + postUrl);
+        }
+        return postUrl.startsWith('/') ? postUrl : '/' + postUrl;
+      }
+
+      let html = '';
+      sortedStats.forEach((stat, index) => {
+        const date = new Date(stat.firstFavorited).toLocaleDateString('zh-CN');
+        const title = getPostTitle(stat.url);
+        const fullUrl = getFullUrl(stat.url);
+        
+        html += `<tr>
+          <td>
+            <a href="${fullUrl}" target="_blank" class="admin-link" title="${stat.url}">
+              ${title}
+            </a>
+            <div class="admin-url-hint">${stat.url.length > 60 ? stat.url.substring(0, 60) + '...' : stat.url}</div>
+          </td>
+          <td>${stat.count}</td>
+          <td>${date}</td>
+        </tr>`;
+      });
+      tbody.innerHTML = html;
+    } catch (error) {
+      console.error('[Admin] 加载收藏统计异常:', error);
+      tbody.innerHTML = '<tr><td colspan="3" class="table-message">加载失败</td></tr>';
+    }
   }
   
   // 加载登录日志表
   async function loadLogsTable() {
     const tbody = document.getElementById('logs-table-body');
     if (!tbody) return;
-    
-    // 需要服务端API
-    tbody.innerHTML = '<tr><td colspan="4" class="table-message">需要服务端API支持</td></tr>';
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      tbody.innerHTML = '<tr><td colspan="4" class="table-message">Supabase客户端未初始化</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '<tr><td colspan="4" class="table-loading">加载中...</td></tr>';
+
+    try {
+      // 查询登录日志（需要 RLS 策略允许管理员查看）
+      const { data, error } = await supabase
+        .from('login_logs')
+        .select('user_id, login_at, ip_address, user_agent')
+        .order('login_at', { ascending: false })
+        .limit(100);
+
+      if (error) {
+        console.error('[Admin] 加载登录日志失败:', error);
+        tbody.innerHTML = '<tr><td colspan="4" class="table-message">加载失败：' + error.message + '</td></tr>';
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="table-message">暂无登录记录</td></tr>';
+        return;
+      }
+
+      // 获取用户邮箱（需要查询 profiles，但这里先显示 user_id）
+      let html = '';
+      for (const log of data) {
+        const email = log.user_id ? log.user_id.substring(0, 8) + '...' : '-';
+        const loginDate = new Date(log.login_at).toLocaleString('zh-CN');
+        const ip = log.ip_address || '-';
+        const ua = log.user_agent ? (log.user_agent.length > 50 ? log.user_agent.substring(0, 50) + '...' : log.user_agent) : '-';
+
+        html += `<tr>
+          <td>${email}</td>
+          <td>${loginDate}</td>
+          <td>${ip}</td>
+          <td>${ua}</td>
+        </tr>`;
+      }
+      tbody.innerHTML = html;
+    } catch (error) {
+      console.error('[Admin] 加载登录日志异常:', error);
+      tbody.innerHTML = '<tr><td colspan="4" class="table-message">加载失败</td></tr>';
+    }
   }
   
   // 切换标签页
@@ -238,12 +752,292 @@ permalink: /admin/index.html
       content.classList.remove('active');
     });
     document.getElementById('tab-' + tabName).classList.add('active');
+
+    // 如果切换到分析标签页，加载数据
+    if (tabName === 'analytics' && window.AdminAnalytics) {
+      loadAnalyticsData();
+    }
+  }
+
+  // 初始化查询按钮事件监听器
+  function initAnalyticsQueryButtons() {
+    // DAU 查询按钮
+    const dauQueryBtn = document.getElementById('dau-query-btn');
+    if (dauQueryBtn) {
+      // 移除旧的监听器（通过克隆）
+      const newBtn = dauQueryBtn.cloneNode(true);
+      dauQueryBtn.parentNode.replaceChild(newBtn, dauQueryBtn);
+      newBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadDAUChart();
+      });
+    }
+
+    // 热门页面查询按钮
+    const popularQueryBtn = document.getElementById('popular-query-btn');
+    if (popularQueryBtn) {
+      const newBtn = popularQueryBtn.cloneNode(true);
+      popularQueryBtn.parentNode.replaceChild(newBtn, popularQueryBtn);
+      newBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadPopularPages();
+      });
+    }
+
+    // 搜索热词查询按钮
+    const searchQueryBtn = document.getElementById('search-query-btn');
+    if (searchQueryBtn) {
+      const newBtn = searchQueryBtn.cloneNode(true);
+      searchQueryBtn.parentNode.replaceChild(newBtn, searchQueryBtn);
+      newBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadSearchKeywords();
+      });
+    }
+  }
+
+  // ============================================
+  // 分析数据加载函数
+  // ============================================
+
+  // 加载DAU统计
+  async function loadDAUStats() {
+    if (!window.AdminAnalytics) {
+      console.error('[Admin] AdminAnalytics service not loaded');
+      document.getElementById('dau-today').textContent = '服务未加载';
+      document.getElementById('dau-yesterday').textContent = '服务未加载';
+      document.getElementById('dau-7days-avg').textContent = '服务未加载';
+      return;
+    }
+
+    try {
+      // 今日DAU
+      const today = new Date().toISOString().split('T')[0];
+      console.log('[Admin] 查询今日DAU:', today);
+      const todayDAU = await window.AdminAnalytics.getDailyActiveUsers(today);
+      console.log('[Admin] 今日DAU结果:', todayDAU);
+      document.getElementById('dau-today').textContent = todayDAU !== null && todayDAU !== undefined ? todayDAU : 0;
+
+      // 昨日DAU
+      const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      console.log('[Admin] 查询昨日DAU:', yesterday);
+      const yesterdayDAU = await window.AdminAnalytics.getDailyActiveUsers(yesterday);
+      console.log('[Admin] 昨日DAU结果:', yesterdayDAU);
+      document.getElementById('dau-yesterday').textContent = yesterdayDAU !== null && yesterdayDAU !== undefined ? yesterdayDAU : 0;
+
+      // 7日均值
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      console.log('[Admin] 查询7日DAU范围:', sevenDaysAgo, '到', today);
+      const dauData = await window.AdminAnalytics.getActiveUsersInRange(sevenDaysAgo, today);
+      console.log('[Admin] 7日DAU数据:', dauData);
+      if (dauData && Array.isArray(dauData) && dauData.length > 0) {
+        const avg = Math.round(dauData.reduce((sum, d) => sum + (d.active_users || 0), 0) / dauData.length);
+        document.getElementById('dau-7days-avg').textContent = avg;
+      } else {
+        document.getElementById('dau-7days-avg').textContent = 0;
+      }
+    } catch (error) {
+      console.error('[Admin] Failed to load DAU stats:', error);
+      console.error('[Admin] Error details:', error.message, error.stack);
+      document.getElementById('dau-today').textContent = '错误';
+      document.getElementById('dau-yesterday').textContent = '错误';
+      document.getElementById('dau-7days-avg').textContent = '错误';
+    }
+  }
+
+  // 加载DAU图表
+  async function loadDAUChart() {
+    if (!window.AdminAnalytics) return;
+
+    const container = document.getElementById('dau-chart-container');
+    const startDate = document.getElementById('dau-start-date').value || 
+      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const endDate = document.getElementById('dau-end-date').value || 
+      new Date().toISOString().split('T')[0];
+
+    container.innerHTML = '<div class="chart-loading">加载中...</div>';
+
+    try {
+      const data = await window.AdminAnalytics.getActiveUsersInRange(startDate, endDate);
+      
+      if (!data || data.length === 0) {
+        container.innerHTML = '<div class="chart-message">暂无数据</div>';
+        return;
+      }
+
+      // 简单的文本表格展示（可以用图表库如Chart.js替代）
+      let html = '<table class="analytics-chart-table"><thead><tr><th>日期</th><th>总用户</th><th>已登录</th><th>匿名</th></tr></thead><tbody>';
+      data.forEach(row => {
+        html += `<tr>
+          <td>${window.AdminAnalytics.formatDate(row.date)}</td>
+          <td>${row.active_users}</td>
+          <td>${row.authenticated_users}</td>
+          <td>${row.anonymous_users}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      container.innerHTML = html;
+    } catch (error) {
+      console.error('[Admin] Failed to load DAU chart:', error);
+      container.innerHTML = '<div class="chart-message">加载失败</div>';
+    }
+  }
+
+  // 加载热门页面
+  async function loadPopularPages() {
+    if (!window.AdminAnalytics) return;
+
+    const tbody = document.getElementById('popular-pages-body');
+    const startDate = document.getElementById('popular-start-date').value || 
+      new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const endDate = document.getElementById('popular-end-date').value || 
+      new Date().toISOString().split('T')[0];
+
+    tbody.innerHTML = '<tr><td colspan="5" class="table-loading">加载中...</td></tr>';
+
+    try {
+      const data = await window.AdminAnalytics.getPopularPages(startDate, endDate, 20);
+      
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="table-message">暂无数据</td></tr>';
+        return;
+      }
+
+      // 生成完整URL的辅助函数
+      function getFullUrl(path) {
+        if (!path) return '#';
+        const baseurl = window.PC_BASEURL || '';
+        if (path.startsWith('http')) return path;
+        if (baseurl && !path.startsWith(baseurl)) {
+          return baseurl + (path.startsWith('/') ? path : '/' + path);
+        }
+        return path.startsWith('/') ? path : '/' + path;
+      }
+
+      // 获取文章标题的辅助函数
+      function getPostTitle(pagePath, defaultTitle) {
+        if (!pagePath) return defaultTitle || '-';
+        
+        // 如果是文章页面，从 window.PAPERCACHE_POSTS 查找
+        if (pagePath.includes('/papers/') || pagePath.includes('/slides/')) {
+          if (window.PAPERCACHE_POSTS && Array.isArray(window.PAPERCACHE_POSTS)) {
+            const baseurl = window.PC_BASEURL || '';
+            const normalizeUrl = (u) => {
+              if (!u) return '';
+              let n = u;
+              if (baseurl && n.startsWith(baseurl)) {
+                n = n.substring(baseurl.length);
+              }
+              if (!n.startsWith('/')) n = '/' + n;
+              return n;
+            };
+            
+            const normalizedPath = normalizeUrl(pagePath);
+            const matchedPost = window.PAPERCACHE_POSTS.find(p => {
+              const normalizedPUrl = normalizeUrl(p.url);
+              return normalizedPUrl === normalizedPath || normalizedPUrl === pagePath || p.url === pagePath;
+            });
+            
+            if (matchedPost && matchedPost.title) {
+              return matchedPost.title;
+            }
+          }
+        }
+        
+        return defaultTitle || pagePath;
+      }
+
+      let html = '';
+      data.forEach((row, index) => {
+        const pageTitle = getPostTitle(row.page_path, row.page_title);
+        const fullUrl = row.page_path ? getFullUrl(row.page_path) : '#';
+        
+        html += `<tr>
+          <td>${index + 1}</td>
+          <td>
+            ${row.page_path ? `<a href="${fullUrl}" target="_blank" class="admin-link" title="${row.page_path}">${pageTitle}</a>` : '-'}
+            ${row.page_path ? `<div class="admin-url-hint">${row.page_path.length > 50 ? row.page_path.substring(0, 50) + '...' : row.page_path}</div>` : ''}
+          </td>
+          <td>${row.page_title || pageTitle || '-'}</td>
+          <td>${row.view_count}</td>
+          <td>${row.unique_visitors}</td>
+        </tr>`;
+      });
+      tbody.innerHTML = html;
+    } catch (error) {
+      console.error('[Admin] Failed to load popular pages:', error);
+      tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败</td></tr>';
+    }
+  }
+
+  // 加载搜索热词
+  async function loadSearchKeywords() {
+    if (!window.AdminAnalytics) return;
+
+    const tbody = document.getElementById('search-keywords-body');
+    const startDate = document.getElementById('search-start-date').value || 
+      new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const endDate = document.getElementById('search-end-date').value || 
+      new Date().toISOString().split('T')[0];
+
+    tbody.innerHTML = '<tr><td colspan="4" class="table-loading">加载中...</td></tr>';
+
+    try {
+      const data = await window.AdminAnalytics.getSearchKeywords(startDate, endDate, 20);
+      
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="table-message">暂无数据</td></tr>';
+        return;
+      }
+
+      let html = '';
+      data.forEach((row, index) => {
+        html += `<tr>
+          <td>${index + 1}</td>
+          <td>${row.search_query}</td>
+          <td>${row.search_count}</td>
+          <td>${row.unique_searchers}</td>
+        </tr>`;
+      });
+      tbody.innerHTML = html;
+    } catch (error) {
+      console.error('[Admin] Failed to load search keywords:', error);
+      tbody.innerHTML = '<tr><td colspan="4" class="table-message">加载失败</td></tr>';
+    }
   }
   
   // 页面加载时检查权限
-  document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(checkAdminAccess, 500);
-  });
+  function initAdminPage() {
+    console.log('[Admin] 初始化管理页面');
+    // 使用 setTimeout 确保所有脚本都已加载
+    setTimeout(() => {
+      checkAdminAccess().catch(error => {
+        console.error('[Admin] 权限检查失败:', error);
+        const authCheck = document.getElementById('admin-auth-check');
+        const unauthorized = document.getElementById('admin-unauthorized');
+        if (authCheck) authCheck.style.display = 'none';
+        if (unauthorized) {
+          unauthorized.style.display = 'block';
+          unauthorized.innerHTML = `
+            <div class="unauthorized-icon">❌</div>
+            <h2>加载失败</h2>
+            <p>页面初始化出错：${error.message || '未知错误'}</p>
+            <button onclick="location.reload()" class="btn-primary">刷新页面</button>
+          `;
+        }
+      });
+    }, 500);
+  }
+
+  // DOMContentLoaded 和 turbolinks:load 都监听
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAdminPage);
+  } else {
+    initAdminPage();
+  }
+
+  // Turbolinks 页面加载时也初始化
+  document.addEventListener('turbolinks:load', initAdminPage);
   </script>
   
   <style>
@@ -279,7 +1073,7 @@ permalink: /admin/index.html
     width: 50px;
     height: 50px;
     border: 4px solid #e2e8f0;
-    border-top-color: #667eea;
+    border-top-color: #3b82f6;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
     margin: 0 auto 1rem;
@@ -360,12 +1154,12 @@ permalink: /admin/index.html
   }
   
   .admin-tab:hover {
-    color: #667eea;
+    color: #3b82f6;
   }
-  
+
   .admin-tab.active {
-    color: #667eea;
-    border-bottom-color: #667eea;
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
   }
   
   .admin-tab-content {
@@ -415,6 +1209,224 @@ permalink: /admin/index.html
     text-align: center;
     color: #718096;
     padding: 2rem !important;
+  }
+
+  /* ============================================
+     数据分析页面美化样式
+     ============================================ */
+  
+  .analytics-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .analytics-section {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.2s;
+  }
+
+  .analytics-section:hover {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .analytics-section-card {
+    border: 1px solid #e2e8f0;
+    background: linear-gradient(135deg, #ffffff 0%, #f7fafc 100%);
+  }
+
+  .analytics-section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .analytics-stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .analytics-stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    color: white;
+    box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .analytics-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+  }
+
+  .analytics-stat-card:nth-child(2) {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    box-shadow: 0 4px 6px rgba(245, 87, 108, 0.3);
+  }
+
+  .analytics-stat-card:nth-child(2):hover {
+    box-shadow: 0 6px 12px rgba(245, 87, 108, 0.4);
+  }
+
+  .analytics-stat-card:nth-child(3) {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    box-shadow: 0 4px 6px rgba(79, 172, 254, 0.3);
+  }
+
+  .analytics-stat-card:nth-child(3):hover {
+    box-shadow: 0 6px 12px rgba(79, 172, 254, 0.4);
+  }
+
+  .analytics-stat-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+
+  .analytics-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+
+  .analytics-date-range {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    padding: 1rem;
+    background: #f7fafc;
+    border-radius: 8px;
+  }
+
+  .analytics-date-range label {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.95rem;
+  }
+
+  .analytics-date-range input[type="date"] {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #2d3748;
+    transition: border-color 0.2s;
+  }
+
+  .analytics-date-range input[type="date"]:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .analytics-date-range span {
+    color: #718096;
+    font-size: 0.9rem;
+  }
+
+  .analytics-chart-container {
+    margin-top: 1.5rem;
+    min-height: 200px;
+  }
+
+  .analytics-chart-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .analytics-chart-table thead {
+    background: #f7fafc;
+  }
+
+  .analytics-chart-table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #2d3748;
+    border-bottom: 2px solid #e2e8f0;
+    font-size: 0.9rem;
+  }
+
+  .analytics-chart-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    color: #4a5568;
+    font-size: 0.9rem;
+  }
+
+  .analytics-chart-table tr:hover {
+    background: #f7fafc;
+  }
+
+  .chart-loading,
+  .chart-message {
+    text-align: center;
+    color: #718096;
+    padding: 3rem 1rem;
+    font-size: 1rem;
+  }
+
+  /* 链接样式 */
+  .admin-link {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+  }
+
+  .admin-link:hover {
+    color: #764ba2;
+    text-decoration: underline;
+  }
+
+  .admin-url-hint {
+    font-size: 0.75rem;
+    color: #a0aec0;
+    margin-top: 0.25rem;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  }
+
+  /* 响应式设计 */
+  @media (max-width: 768px) {
+    .analytics-section {
+      padding: 1.5rem;
+    }
+
+    .analytics-stats-row {
+      grid-template-columns: 1fr;
+    }
+
+    .analytics-stat-value {
+      font-size: 1.5rem;
+    }
+
+    .analytics-date-range {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .analytics-date-range input[type="date"] {
+      width: 100%;
+    }
   }
   </style>
   {%- else -%}

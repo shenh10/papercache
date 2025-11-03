@@ -143,21 +143,21 @@
 }
 
 .auth-btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8) 0%, rgba(16, 185, 129, 0.8) 100%);
   color: white;
   border-color: transparent;
   font-weight: 600;
 }
 
 .auth-btn-primary:hover {
-  background: linear-gradient(135deg, #5568d3 0%, #6b3d8f 100%);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.9) 0%, rgba(5, 150, 105, 0.9) 100%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
 .auth-btn-header {
   padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8) 0%, rgba(16, 185, 129, 0.8) 100%);
   color: white;
   border: none;
   border-radius: 8px;
@@ -173,9 +173,9 @@
 }
 
 .auth-btn-header:hover {
-  background: linear-gradient(135deg, #5568d3 0%, #6b3d8f 100%);
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.9) 0%, rgba(5, 150, 105, 0.9) 100%);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 /* ============================================
@@ -234,8 +234,8 @@
 
 .auth-form-group input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: rgba(59, 130, 246, 0.8);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .auth-form-help {
@@ -253,7 +253,7 @@
 }
 
 .auth-form-footer a {
-  color: #667eea;
+  color: rgba(59, 130, 246, 0.9);
   text-decoration: none;
   font-weight: 500;
 }
@@ -275,7 +275,7 @@
   width: 40px;
   height: 40px;
   border: 3px solid #e2e8f0;
-  border-top-color: #667eea;
+  border-top-color: rgba(59, 130, 246, 0.8);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
   margin: 0 auto 1rem;
@@ -323,7 +323,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8) 0%, rgba(16, 185, 129, 0.8) 100%);
   color: white;
   font-weight: 600;
   font-size: 0.9rem;
@@ -445,9 +445,87 @@
     font-size: 1.25rem;
   }
   
+  /* 移动端用户菜单优化 */
+  .user-menu {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 0.5rem;
+    justify-content: flex-start;
+    order: 999; /* 确保在导航菜单之后显示 */
+  }
+  
+  .user-menu-authenticated {
+    width: 100%;
+  }
+  
+  .user-avatar {
+    width: 48px;
+    height: 48px;
+    font-size: 1.1rem;
+  }
+  
   .user-dropdown {
-    right: -1rem;
-    min-width: 200px;
+    position: static; /* 移动端改为静态定位，显示在菜单内 */
+    right: auto;
+    left: auto;
+    min-width: 100%;
+    width: 100%;
+    box-shadow: none;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition: none;
+  }
+  
+  .user-dropdown.open {
+    /* 移动端下拉菜单始终可见 */
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+  
+  .user-info {
+    padding: 1rem;
+  }
+  
+  .user-name {
+    font-size: 1rem;
+  }
+  
+  .user-email {
+    font-size: 0.85rem;
+  }
+  
+  .user-menu-item {
+    padding: 0.875rem 1rem;
+    font-size: 0.95rem;
+  }
+  
+  .auth-btn-header {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 1rem;
+  }
+  
+  .user-dropdown {
+    border-radius: 6px;
+  }
+  
+  .user-menu-item {
+    padding: 0.75rem 0.875rem;
+    font-size: 0.9rem;
   }
 }
 
