@@ -68,7 +68,7 @@ if [ -f "scripts/gen_thumbs.py" ]; then
         pip3 install Pillow PyYAML 2>/dev/null || echo "⚠️  警告：无法自动安装依赖，请手动安装: pip install Pillow PyYAML"
     fi
     
-    python3 scripts/gen_thumbs.py --size 320x200 --thumbnails-out assets/data --mapping-out _data
+    python3 scripts/gen_thumbs.py --size 960x600 --thumbnails-out assets/data --mapping-out _data
     
     # 检查映射文件是否生成
     if [ ! -f "_data/thumbnails_by_path.yml" ]; then

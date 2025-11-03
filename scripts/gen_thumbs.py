@@ -469,16 +469,139 @@ def generate_deterministic_filename(post_url: str) -> str:
     return hash_obj.hexdigest()[:8] + '.jpg'
 
 
+def _trim_white_borders_unused(img: Image.Image, threshold: int = 240) -> Image.Image:
+    """自动裁剪图片的白色边距（使用PIL内置方法，不依赖numpy）"""
+    # 转换为RGB（如果不是的话）
+    if img.mode != 'RGB':
+        img = img.convert('RGB')
+    
+    # 获取图片像素数据
+    pixels = img.load()
+    width, height = img.size
+    
+    # 找到非白色像素的边界
+    # 从上下左右四个方向扫描，找到第一个非白色像素的位置
+    
+    # 从上到下扫描，找到第一个非白色行
+    top = 0
+    for y in range(height):
+        row_is_white = True
+        for x in range(width):
+            r, g, b = pixels[x, y]
+            if r <= threshold or g <= threshold or b <= threshold:
+                row_is_white = False
+                break
+        if not row_is_white:
+            top = y
+            break
+    else:
+        # 如果整张图都是白色，返回原图
+        return img
+    
+    # 从下到上扫描，找到最后一个非白色行
+    bottom = height - 1
+    for y in range(height - 1, -1, -1):
+        row_is_white = True
+        for x in range(width):
+            r, g, b = pixels[x, y]
+            if r <= threshold or g <= threshold or b <= threshold:
+                row_is_white = False
+                break
+        if not row_is_white:
+            bottom = y
+            break
+    
+    # 从左到右扫描，找到第一个非白色列
+    left = 0
+    for x in range(width):
+        col_is_white = True
+        for y in range(height):
+            r, g, b = pixels[x, y]
+            if r <= threshold or g <= threshold or b <= threshold:
+                col_is_white = False
+                break
+        if not col_is_white:
+            left = x
+            break
+    
+    # 从右到左扫描，找到最后一个非白色列
+    right = width - 1
+    for x in range(width - 1, -1, -1):
+        col_is_white = True
+        for y in range(height):
+            r, g, b = pixels[x, y]
+            if r <= threshold or g <= threshold or b <= threshold:
+                col_is_white = False
+                break
+        if not col_is_white:
+            right = x
+            break
+    
+    # 添加一点边距（5像素）避免裁剪太紧
+    top = max(0, top - 5)
+    left = max(0, left - 5)
+    bottom = min(height, bottom + 6)
+    right = min(width, right + 6)
+    
+    # 裁剪图片
+    return img.crop((left, top, right, bottom))
+
+
 def ensure_thumb(image_path: pathlib.Path, size: tuple[int, int], dest_path: pathlib.Path):
+    """生成缩略图
+    - 对于长宽比特别夸张的图片（> 10:1 或 < 1:10），使用 cover 模式（裁剪填满）
+    - 其他图片使用 contain 模式（保持完整，不裁剪）
+    """
     dest_path.parent.mkdir(parents=True, exist_ok=True)
     with Image.open(image_path) as im:
         im = im.convert("RGB")
-        im.thumbnail(size, Image.LANCZOS)
-        bg = Image.new("RGB", size, (245, 247, 250))
-        x = (size[0] - im.width) // 2
-        y = (size[1] - im.height) // 2
-        bg.paste(im, (x, y))
-        bg.save(dest_path, format="JPEG", quality=85, optimize=True)
+        
+        # 计算原图长宽比
+        orig_width, orig_height = im.size
+        aspect_ratio = orig_width / orig_height if orig_height > 0 else 1
+        
+        # 判断是否需要裁剪：长宽比 > 10:1（非常宽）或 < 1:10（非常高）
+        USE_CROP = aspect_ratio > 10.0 or aspect_ratio < 1/10.0
+        
+        if USE_CROP:
+            # 对于极端比例的图片，裁剪到接近 6:1 的比例
+            # 目标长宽比限制在 6:1 到 1:6 之间
+            MAX_RATIO = 6.0
+            
+            if aspect_ratio > MAX_RATIO:
+                # 图片太宽：保持宽度，限制高度使比例不超过 6:1
+                target_width = size[0]
+                target_height = int(size[0] / MAX_RATIO)
+            elif aspect_ratio < 1/MAX_RATIO:
+                # 图片太高：保持高度，限制宽度使比例不超过 1:6
+                target_height = size[1]
+                target_width = int(size[1] / MAX_RATIO)
+            else:
+                # 虽然触发了裁剪条件，但比例已经在合理范围内，按原始大小处理
+                target_width = size[0]
+                target_height = size[1]
+            
+            # 计算缩放比例，使图片能填满目标尺寸
+            ratio_w = target_width / orig_width
+            ratio_h = target_height / orig_height
+            ratio = max(ratio_w, ratio_h)  # 使用较大的比例，确保能填满
+            
+            # 按比例放大/缩小
+            new_width = int(orig_width * ratio)
+            new_height = int(orig_height * ratio)
+            im = im.resize((new_width, new_height), Image.LANCZOS)
+            
+            # 居中裁剪到目标尺寸（target_width x target_height）
+            left = (new_width - target_width) // 2
+            top = (new_height - target_height) // 2
+            right = left + target_width
+            bottom = top + target_height
+            im = im.crop((left, top, right, bottom))
+        else:
+            # Contain 模式：使用 thumbnail 按比例缩放，保持宽高比，不裁剪内容
+            im.thumbnail(size, Image.LANCZOS)
+        
+        im.save(dest_path, format="JPEG", quality=92, optimize=True)
 
 
 def auto_detect_site_dir(start: pathlib.Path) -> pathlib.Path:
@@ -551,7 +674,7 @@ def main():
     ap.add_argument("--out", default="assets/images/thumbs", help="output directory (relative to site dir)")
     ap.add_argument("--thumbnails-out", default="assets/data", help="thumbnails output directory (relative to site dir)")
     ap.add_argument("--mapping-out", default="_data", help="mapping file output directory (relative to site dir)")
-    ap.add_argument("--size", type=parse_size, default="320x200", help="e.g., 320x200")
+    ap.add_argument("--size", type=parse_size, default="960x600", help="e.g., 960x600 (increased for better quality)")
     ap.add_argument("--placeholder", action="store_true", help="Generate placeholder thumbnails for posts without images")
     args = ap.parse_args()
 
@@ -696,7 +819,7 @@ def main():
                 
                 # Create a simple placeholder image
                 placeholder_img = Image.new('RGB', args.size, color='#1a1a2e')
-                placeholder_img.save(dest_abs, 'JPEG', quality=85)
+                placeholder_img.save(dest_abs, 'JPEG', quality=92)
                 mapping[p_url] = dest_rel
                 placeholder_count += 1
                 

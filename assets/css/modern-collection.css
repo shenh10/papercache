@@ -580,21 +580,29 @@
 .post-card-thumb-modern {
   position: relative;
   width: 100%;
-  height: 180px;
-  min-height: 180px;
+  height: 240px;
+  min-height: 240px;
   overflow: hidden;
   background: linear-gradient(135deg, #f8f9fa, #e9ecef);
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 8px;
+  box-sizing: border-box;
 }
 
 /* 移动端卡片缩略图优化 */
 @media (max-width: 768px) {
   .post-card-thumb-modern {
-    height: 160px;
+    height: 200px;
     width: 100%;
+    padding: 6px;
+  }
+  
+  .post-card-thumb-modern img {
+    object-fit: contain;
+    object-position: center;
   }
   
   .post-card-body-modern {
@@ -604,8 +612,14 @@
 
 @media (max-width: 480px) {
   .post-card-thumb-modern {
-    height: 140px;
+    height: 180px;
     width: 100%;
+    padding: 5px;
+  }
+  
+  .post-card-thumb-modern img {
+    object-fit: contain;
+    object-position: center;
   }
   
   .post-card-body-modern {
@@ -616,9 +630,14 @@
 .post-card-thumb-modern img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  object-position: center;
   transition: transform 0.3s ease;
   display: block;
+  border-radius: 8px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 .post-card-modern:hover .post-card-thumb-modern img {

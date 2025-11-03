@@ -18,7 +18,7 @@ mkdir -p _data
 
 # 生成缩略图
 if [ -f "scripts/gen_thumbs.py" ]; then
-    python3 scripts/gen_thumbs.py --size 320x200 --out assets/images/thumbs
+    python3 scripts/gen_thumbs.py --size 960x600 --out assets/images/thumbs
     echo "✅ 缩略图生成完成！"
     echo "📊 生成了 $(ls -1 assets/images/thumbs/*.jpg 2>/dev/null | wc -l) 个缩略图文件"
 else
