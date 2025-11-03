@@ -343,7 +343,7 @@
     }
   }
   
-  // 获取点击量最高的文章
+  // 获取点击量最高的文章（旧方法，仅按点击量排序）
   async function getTopPosts(limit = 10) {
     if (!supabase) {
       await waitForSupabase();
@@ -372,12 +372,52 @@
     }
   }
   
+  // 获取按点击量+收藏量总和排序的Top N文章（高效方法，使用RPC函数）
+  async function getTopPostsByEngagement(limit = 10) {
+    if (!supabase) {
+      await waitForSupabase();
+    }
+    
+    if (!supabase) {
+      return [];
+    }
+    
+    try {
+      // 调用 PostgreSQL RPC 函数
+      const { data, error } = await supabase.rpc('get_top_posts_by_engagement', {
+        limit_count: limit
+      });
+      
+      if (error) {
+        console.error('ClickStats: Failed to get top posts by engagement', error);
+        // 如果RPC函数不存在，回退到旧方法
+        if (error.code === '42883' || error.message?.includes('function') || error.message?.includes('does not exist')) {
+          console.warn('ClickStats: RPC函数不存在，回退到旧方法');
+          return await getTopPosts(limit);
+        }
+        return [];
+      }
+      
+      return data || [];
+    } catch (error) {
+      console.error('ClickStats: Error getting top posts by engagement', error);
+      // 出错时回退到旧方法
+      try {
+        return await getTopPosts(limit);
+      } catch (fallbackError) {
+        console.error('ClickStats: Fallback also failed', fallbackError);
+        return [];
+      }
+    }
+  }
+  
   // 导出 API
   window.clickStatsService = {
     trackClick,
     getPostClickCount,
     batchGetClickCounts,
     getTopPosts,
+    getTopPostsByEngagement,
     init: initClickStatsService
   };
   
