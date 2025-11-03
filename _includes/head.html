@@ -50,7 +50,21 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- 初始化Supabase客户端 -->
   <script src="{{ '/assets/js/supabase-client.js' | relative_url }}"></script>
+  <!-- 加载简化的认证系统 -->
+  <script src="{{ '/assets/js/simple-auth.js' | relative_url }}"></script>
+  <!-- 加载收藏功能 -->
+  <script src="{{ '/assets/js/favorites.js' | relative_url }}"></script>
+  <script src="{{ '/assets/js/click-stats.js' | relative_url }}"></script>
+  <!-- 加载用户菜单组件 -->
+  <script src="{{ '/assets/js/user-menu-simple.js' | relative_url }}"></script>
+  <!-- 加载认证模态框组件 -->
+  <script src="{{ '/assets/js/auth-modal-simple.js' | relative_url }}"></script>
   {%- endif -%}
+  
+  <!-- 注入 baseurl 用于路径处理（所有页面都需要） -->
+  <script>
+    window.PC_BASEURL = {{ site.baseurl | jsonify }};
+  </script>
   
   <!-- 防止FOUC的基础样式 -->
   <style>
@@ -225,5 +239,173 @@
       script.src = '//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js';
       document.head.appendChild(script);
     }, 2000);
+  </script>
+  
+  <!-- Turbolinks - 实现SPA式页面导航，保持JavaScript状态 -->
+  <script src="https://cdn.jsdelivr.net/npm/turbolinks@5.2.0/dist/turbolinks.min.js"></script>
+  <script>
+    // Turbolinks 配置和事件处理
+    (function() {
+      // 等待Turbolinks加载完成
+      function initTurbolinks() {
+        if (typeof Turbolinks === 'undefined') {
+          console.warn('Turbolinks未加载，页面导航将使用完整刷新');
+          return;
+        }
+        
+        // 防止重复初始化
+        if (window._turbolinksInitialized) {
+          return;
+        }
+        window._turbolinksInitialized = true;
+        
+        console.log('✅ Turbolinks已加载');
+        
+        // 直接监听Turbolinks事件
+        // Turbolinks 5 使用 'turbolinks:load' 事件
+        if (window.Turbolinks && window.Turbolinks.supported) {
+          console.log('Turbolinks已启用，页面导航将使用AJAX加载');
+          
+          // 监听Turbolinks的页面加载事件
+          document.addEventListener('turbolinks:load', function() {
+            console.log('Turbolinks: 页面已加载（AJAX）');
+
+            // 重新初始化需要重新运行的脚本（如果有）
+            // 例如：MathJax渲染、点击追踪等
+            if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+              window.MathJax.typesetPromise().catch(function(err) {
+                console.warn('MathJax重新渲染失败:', err);
+              });
+            }
+            
+            // 重新初始化点击追踪（延迟执行，确保DOM已完全加载）
+            setTimeout(function() {
+              if (window.papercacheClickTracker && typeof window.papercacheClickTracker.loadClickData === 'function') {
+                window.papercacheClickTracker.loadClickData().then(function(clicks) {
+                  if (window.papercacheClickTracker.updatePopularPosts) {
+                    window.papercacheClickTracker.updatePopularPosts(clicks);
+                  }
+                }).catch(function(err) {
+                  console.warn('重新初始化点击追踪失败:', err);
+                });
+              }
+            }, 300);
+            
+            // 强制重新触发所有需要的事件绑定
+            // 通过触发一个自定义事件来通知所有脚本重新初始化
+            const reinitEvent = new CustomEvent('turbolinks:reinit');
+            document.dispatchEvent(reinitEvent);
+          });
+          
+          // 监听Turbolinks的缓存事件（可选，用于性能优化）
+          document.addEventListener('turbolinks:before-cache', function() {
+            console.log('Turbolinks: 缓存当前页面');
+            // 可以在这里清理一些页面特定的状态（如果有）
+          });
+        }
+        
+        // 配置Turbolinks不拦截某些链接（如果需要）
+        document.addEventListener('turbolinks:click', function(event) {
+          // 获取实际点击的链接元素（可能是a标签或其子元素）
+          var element = event.target;
+          while (element && element.tagName !== 'A') {
+            element = element.parentElement;
+          }
+          
+          if (!element || !element.href) {
+            // 不是链接，可能是按钮或其他元素，让Turbolinks正常处理
+            // 但不要阻止事件，让其他事件监听器处理
+            return;
+          }
+          
+          var href = element.href;
+          
+          // 跳过外部链接
+          try {
+            var linkUrl = new URL(href);
+            var currentUrl = new URL(window.location.href);
+            if (linkUrl.origin !== currentUrl.origin) {
+              console.log('Turbolinks: 跳过外部链接', href);
+              event.preventDefault();
+              window.location.href = href;
+              return false;
+            }
+          } catch (e) {
+            // URL解析失败，可能是相对路径或特殊协议，让Turbolinks处理
+          }
+          
+          // 跳过下载链接（有download属性）
+          if (element.hasAttribute('download')) {
+            console.log('Turbolinks: 跳过下载链接', href);
+            event.preventDefault();
+            return false;
+          }
+          
+          // 跳过target="_blank"的链接
+          if (element.getAttribute('target') === '_blank') {
+            console.log('Turbolinks: 跳过新窗口链接', href);
+            event.preventDefault();
+            return false;
+          }
+          
+          // 跳过锚点链接（仅跳转页面内位置）
+          if (href.indexOf('#') === href.length - 1 || (href.indexOf('#') > 0 && href.split('#')[0] === window.location.href.split('#')[0])) {
+            // 纯锚点或同页锚点，让浏览器默认处理（平滑滚动等）
+            console.log('Turbolinks: 跳过锚点链接', href);
+            return true; // 允许默认行为
+          }
+          
+          // 其他情况让Turbolinks正常处理（返回undefined，Turbolinks会继续）
+        });
+        
+        // 重要：Turbolinks导航时禁用全局点击拦截，避免阻止按钮点击
+        // 只在Turbolinks加载时重新启用事件系统
+        document.addEventListener('turbolinks:before-cache', function() {
+          // 在缓存前清理状态，但不要阻止事件
+          console.log('Turbolinks: 准备缓存页面');
+        });
+      }
+      
+      // 立即尝试初始化（如果Turbolinks已加载）
+      if (document.readyState === 'loading') {
+        // 如果DOM还在加载，等待DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', initTurbolinks);
+      } else {
+        // DOM已加载，立即初始化
+        initTurbolinks();
+      }
+      
+      // 如果Turbolinks加载较慢，也尝试延迟初始化
+      setTimeout(function() {
+        if (typeof Turbolinks !== 'undefined') {
+          initTurbolinks();
+        }
+      }, 100);
+      
+    })();
+  </script>
+  
+  <!-- 处理重置密码链接错误重定向 -->
+  <script>
+    // 检查URL中是否有重置密码的错误参数（链接过期等）
+    (function() {
+      if (typeof window === 'undefined') return;
+      
+      // 检查hash中的错误参数
+      const hash = window.location.hash || '';
+      const hashParams = new URLSearchParams(hash.substring(1));
+      const error = hashParams.get('error');
+      const errorCode = hashParams.get('error_code');
+      
+      // 如果是重置密码相关的错误，重定向到reset-password页面
+      if (error && (errorCode === 'otp_expired' || errorCode === 'token_not_found' || error.includes('password') || error.includes('reset'))) {
+        const baseurl = window.PC_BASEURL || '{{ site.baseurl }}' || '';
+        const resetPasswordUrl = baseurl + '/auth/reset-password.html' + hash;
+        // 只重定向到reset-password页面（保留hash参数）
+        if (window.location.pathname !== resetPasswordUrl.replace(/^[^/]*/, '').split('#')[0]) {
+          window.location.href = resetPasswordUrl;
+        }
+      }
+    })();
   </script>
 </head>

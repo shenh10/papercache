@@ -17,6 +17,30 @@ permalink: /account/favorites.html
       <p>加载中...</p>
     </div>
     
+    <!-- 搜索和筛选工具栏 -->
+    <div id="favorites-toolbar" class="favorites-toolbar" style="display: none;">
+      <div class="toolbar-left">
+        <div class="toolbar-checkbox-wrapper">
+          <input type="checkbox" id="select-all-checkbox" class="select-all-checkbox" />
+          <label for="select-all-checkbox" class="select-all-label">全选</label>
+        </div>
+        <div class="search-box">
+          <input type="text" id="favorites-search-input" class="search-input" placeholder="搜索收藏的论文..." />
+          <span class="search-icon">🔍</span>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <span class="favorites-count" id="favorites-count-text">共 0 篇</span>
+        <span class="selected-count" id="selected-count-text" style="display: none;">已选 0 项</span>
+        <button class="toolbar-btn" id="sort-btn" title="排序">
+          <span>📊</span> 排序
+        </button>
+        <button class="toolbar-btn toolbar-btn-danger" id="batch-delete-btn" style="display: none;" title="批量删除">
+          <span>🗑️</span> 批量删除
+        </button>
+      </div>
+    </div>
+    
     <div id="favorites-list" class="favorites-list" style="display: none;">
       <!-- 收藏列表将通过JavaScript动态生成 -->
     </div>
@@ -39,7 +63,7 @@ permalink: /account/favorites.html
   async function waitForServices(maxWait = 5000) {
     const startTime = Date.now();
     while ((Date.now() - startTime) < maxWait) {
-      if (window.authService && window.favoritesService && window.getSupabaseClient) {
+      if (window.SimpleAuth && window.favoritesService && window.getSupabaseClient) {
         const supabase = window.getSupabaseClient();
         if (supabase) {
           return true;
@@ -79,14 +103,14 @@ permalink: /account/favorites.html
       }
       
       // 检查登录状态
-      if (!window.authService) {
+      if (!window.SimpleAuth) {
         loadingEl.style.display = 'none';
         errorEl.style.display = 'block';
         document.getElementById('favorites-error-message').textContent = '认证服务未加载';
         return;
       }
-      
-      const user = await window.authService.getCurrentUser();
+
+      const user = window.SimpleAuth.getCurrentUser();
       if (!user) {
         loadingEl.style.display = 'none';
         errorEl.style.display = 'block';
@@ -119,7 +143,9 @@ permalink: /account/favorites.html
       
       // 显示收藏列表
       listEl.style.display = 'block';
-      renderFavoritesList(result.favorites);
+      await renderFavoritesList(result.favorites);
+      // 绑定事件
+      bindFavoritesEvents();
     } catch (error) {
       console.error('加载收藏列表出错:', error);
       loadingEl.style.display = 'none';
@@ -128,48 +154,562 @@ permalink: /account/favorites.html
     }
   }
   
+  // 全局变量：存储所有收藏和当前显示列表
+  let allFavorites = [];
+  let currentDisplayedFavorites = [];
+  let currentSortMode = 'date-desc'; // 'date-desc', 'date-asc', 'title-asc', 'title-desc'
+
   // 渲染收藏列表
-  function renderFavoritesList(favorites) {
+  async function renderFavoritesList(favorites) {
     const listEl = document.getElementById('favorites-list');
+    const toolbarEl = document.getElementById('favorites-toolbar');
     if (!listEl) {
       console.error('favorites-list 元素未找到');
       return;
     }
-    
+
     // 清空列表
     listEl.innerHTML = '';
-    
+
     if (!favorites || favorites.length === 0) {
       document.getElementById('favorites-empty').style.display = 'block';
+      if (toolbarEl) toolbarEl.style.display = 'none';
       return;
     }
+
+    // 显示工具栏
+    if (toolbarEl) toolbarEl.style.display = 'flex';
+
+    // 创建处理后的收藏列表，获取真实标题
+    const processedFavorites = [];
+    const processedUrls = new Set();
+
+    for (const fav of favorites) {
+      const postUrl = String(fav.post_url || '');
+
+      // 跳过重复的URL
+      if (processedUrls.has(postUrl)) continue;
+      processedUrls.add(postUrl);
+
+      // 获取论文标题（优先从预加载数据）
+      const title = await getPostTitle(postUrl);
+      
+      processedFavorites.push({
+        post_url: postUrl,
+        title: title,
+        created_at: fav.created_at,
+        favorite_id: fav.id || fav.favorite_id
+      });
+    }
+
+    // 保存到全局变量
+    allFavorites = processedFavorites;
+    currentDisplayedFavorites = [...processedFavorites];
     
-    favorites.forEach(fav => {
+    // 应用排序和搜索
+    applySortAndFilter();
+  }
+
+  // 应用排序和过滤
+  function applySortAndFilter() {
+    const listEl = document.getElementById('favorites-list');
+    if (!listEl) return;
+
+    // 获取搜索关键词
+    const searchInput = document.getElementById('favorites-search-input');
+    const searchQuery = searchInput ? searchInput.value.trim().toLowerCase() : '';
+
+    // 过滤
+    let filtered = allFavorites;
+    if (searchQuery) {
+      filtered = allFavorites.filter(fav => {
+        const titleLower = (fav.title || '').toLowerCase();
+        const urlLower = fav.post_url.toLowerCase();
+        return titleLower.includes(searchQuery) || urlLower.includes(searchQuery);
+      });
+    }
+
+    // 排序
+    filtered.sort((a, b) => {
+      switch (currentSortMode) {
+        case 'date-desc':
+          return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+        case 'date-asc':
+          return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+        case 'title-asc':
+          return (a.title || '').localeCompare(b.title || '');
+        case 'title-desc':
+          return (b.title || '').localeCompare(a.title || '');
+        default:
+          return 0;
+      }
+    });
+
+    currentDisplayedFavorites = filtered;
+
+    // 更新计数
+    const countEl = document.getElementById('favorites-count-text');
+    if (countEl) {
+      countEl.textContent = searchQuery 
+        ? `共 ${filtered.length} 篇（搜索到 ${filtered.length} 篇）`
+        : `共 ${allFavorites.length} 篇`;
+    }
+
+    // 清空列表
+    listEl.innerHTML = '';
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = `
+        <div class="no-results">
+          <p>${searchQuery ? '没有找到匹配的收藏' : '暂无收藏'}</p>
+        </div>
+      `;
+      return;
+    }
+
+    // 渲染列表
+    filtered.forEach((fav, index) => {
+      const escapedPostUrl = fav.post_url.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      const escapedTitle = (fav.title || fav.post_url).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const createdDate = fav.created_at ? new Date(fav.created_at).toLocaleDateString('zh-CN') : '未知日期';
+
+      // 获取论文的类别和tag
+      const categories = getCategoriesFromUrl(fav.post_url);
+      const tag = getTagFromUrl(fav.post_url);
+
       const item = document.createElement('div');
       item.className = 'favorite-item';
-      // 转义特殊字符，防止XSS
-      const postUrl = String(fav.post_url || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-      const createdDate = fav.created_at ? new Date(fav.created_at).toLocaleDateString('zh-CN') : '未知日期';
+      item.dataset.postUrl = fav.post_url;
       item.innerHTML = `
-        <a href="${postUrl}" class="favorite-item-link">
-          <span class="favorite-item-url">${postUrl}</span>
-          <span class="favorite-item-date">${createdDate}</span>
+        <div class="favorite-item-checkbox-wrapper">
+          <input type="checkbox" class="favorite-item-checkbox" id="fav-checkbox-${index}" data-post-url="${escapedPostUrl}" />
+          <label for="fav-checkbox-${index}" class="checkbox-label"></label>
+        </div>
+        <a href="${escapedPostUrl}" class="favorite-item-link">
+          <div class="favorite-item-content">
+            <h3 class="favorite-item-title">${escapedTitle}</h3>
+            <div class="favorite-item-meta">
+              ${categories.length > 0 ? `<div class="favorite-item-categories">
+                <span class="categories-label">分类：</span>
+                <span class="categories-path">${categories.join(' › ')}</span>
+              </div>` : ''}
+              ${tag ? `<div class="favorite-item-tag-wrapper">
+                <span class="favorite-item-tag ${tag.toLowerCase() === 'arxiv' ? 'tag-arxiv' : ''}">${tag}</span>
+              </div>` : ''}
+              <div class="favorite-item-meta-row">
+                <span class="favorite-item-date">${createdDate}</span>
+              </div>
+            </div>
+          </div>
         </a>
-        <button class="favorite-item-remove" onclick="removeFavorite('${postUrl.replace(/'/g, "\\'")}')" title="取消收藏">×</button>
       `;
       listEl.appendChild(item);
     });
+    
+    // 绑定复选框事件
+    bindCheckboxEvents();
+    updateSelectedCount();
   }
   
-  // 移除收藏
-  async function removeFavorite(postUrl) {
-    if (!confirm('确定要取消收藏吗？')) return;
+  // 从URL获取最终分类名称（如 "RL"、"MOE"）
+  function getCategoriesFromUrl(url) {
+    if (!url) return [];
+    try {
+      const baseurl = window.PC_BASEURL || '';
+      let pathname = url;
+      
+      // 移除baseurl
+      if (baseurl && pathname.startsWith(baseurl)) {
+        pathname = pathname.substring(baseurl.length);
+      }
+      
+      // 确保以/开头
+      if (!pathname.startsWith('/')) {
+        pathname = '/' + pathname;
+      }
+      
+      let allCategories = [];
+      
+      // 优先从PAPERCACHE_POSTS中获取分类
+      if (window.PAPERCACHE_POSTS && Array.isArray(window.PAPERCACHE_POSTS)) {
+        const normalizeUrl = (u) => {
+          if (!u) return '';
+          let n = u;
+          if (baseurl && n.startsWith(baseurl)) {
+            n = n.substring(baseurl.length);
+          }
+          if (!n.startsWith('/')) n = '/' + n;
+          return n;
+        };
+        
+        const normalizedUrl = normalizeUrl(url);
+        const matchedPost = window.PAPERCACHE_POSTS.find(p => {
+          const normalizedPUrl = normalizeUrl(p.url);
+          return normalizedPUrl === normalizedUrl || normalizedPUrl === url || p.url === url;
+        });
+        
+        if (matchedPost && Array.isArray(matchedPost.categories) && matchedPost.categories.length > 0) {
+          allCategories = matchedPost.categories;
+        }
+      }
+      
+      // 如果从PAPERCACHE_POSTS中没有获取到，尝试从URL路径中提取
+      if (allCategories.length === 0 && pathname.startsWith('/papers/')) {
+        const withoutPapers = pathname.substring(8); // 去掉 '/papers/'
+        const parts = withoutPapers.split('/').filter(p => p);
+        
+        for (const part of parts) {
+          // 遇到日期部分（4位数字年份或2位数字）或文件名（包含.）时停止
+          if (/^\d{4}$/.test(part) || /^\d{2}$/.test(part) || part.includes('.')) {
+            break;
+          }
+          allCategories.push(part);
+        }
+      }
+      
+      // 只返回最后的分类名称（最终的分类，如 "RL"、"MOE"）
+      // 跳过中间路径如 "engineering"、"train" 等
+      if (allCategories.length > 0) {
+        // 返回最后一个分类名称
+        return [allCategories[allCategories.length - 1]];
+      }
+      
+      return [];
+    } catch (error) {
+      console.warn('获取分类失败:', error);
+      return [];
+    }
+  }
+  
+  // 从URL获取tag
+  function getTagFromUrl(url) {
+    if (!url) return null;
     
-    const result = await window.favoritesService?.unfavoritePost(postUrl);
-    if (result?.success) {
-      loadFavorites(); // 重新加载列表
-    } else {
-      alert('操作失败：' + (result?.error || '未知错误'));
+    // 1. 从collection_structure中查找
+    if (window.PC_COLLECTION) {
+      const collection = window.PC_COLLECTION;
+      const baseurl = window.PC_BASEURL || '';
+      
+      const normalizeUrl = (u) => {
+        if (!u) return '';
+        let n = u;
+        if (baseurl && n.startsWith(baseurl)) {
+          n = n.substring(baseurl.length);
+        }
+        if (!n.startsWith('/')) n = '/' + n;
+        return n;
+      };
+      
+      const normalizedUrl = normalizeUrl(url);
+      
+      const findPost = (node) => {
+        if (!node || typeof node !== 'object') return null;
+        
+        if (Array.isArray(node.posts)) {
+          for (const post of node.posts) {
+            let postUrl = post.url || '';
+            if (!postUrl.startsWith('/')) postUrl = '/' + postUrl;
+            const normalizedPostUrl = normalizeUrl(postUrl);
+            if ((normalizedPostUrl === normalizedUrl || postUrl === url) && post.tag) {
+              return post.tag;
+            }
+          }
+        }
+        
+        for (const key in node) {
+          if (key !== 'posts' && typeof node[key] === 'object') {
+            const result = findPost(node[key]);
+            if (result) return result;
+          }
+        }
+        return null;
+      };
+      
+      const tag = findPost(collection);
+      if (tag) return tag;
+    }
+    
+    // 2. 从PAPERCACHE_POSTS中查找
+    if (window.PAPERCACHE_POSTS && Array.isArray(window.PAPERCACHE_POSTS)) {
+      const baseurl = window.PC_BASEURL || '';
+      const normalizeUrl = (u) => {
+        if (!u) return '';
+        let n = u;
+        if (baseurl && n.startsWith(baseurl)) {
+          n = n.substring(baseurl.length);
+        }
+        if (!n.startsWith('/')) n = '/' + n;
+        return n;
+      };
+      
+      const normalizedUrl = normalizeUrl(url);
+      const matchedPost = window.PAPERCACHE_POSTS.find(p => {
+        const normalizedPUrl = normalizeUrl(p.url);
+        return normalizedPUrl === normalizedUrl || normalizedPUrl === url || p.url === url;
+      });
+      
+      if (matchedPost && Array.isArray(matchedPost.tags) && matchedPost.tags.length > 0) {
+        return matchedPost.tags[0];
+      }
+    }
+    
+    // 3. 默认返回arXiv
+    return 'arXiv';
+  }
+
+  // 获取论文标题
+  async function getPostTitle(postUrl) {
+    try {
+      // 1. 优先从预加载的论文数据中获取标题
+      if (window.PAPERCACHE_POSTS && Array.isArray(window.PAPERCACHE_POSTS)) {
+        // 规范化URL以便匹配
+        const normalizeUrl = (url) => {
+          if (!url) return '';
+          // 移除baseurl
+          let normalized = url;
+          const baseurl = window.PC_BASEURL || '';
+          if (baseurl && normalized.startsWith(baseurl)) {
+            normalized = normalized.substring(baseurl.length);
+          }
+          // 确保以/开头
+          if (!normalized.startsWith('/')) {
+            normalized = '/' + normalized;
+          }
+          return normalized;
+        };
+
+        const normalizedPostUrl = normalizeUrl(postUrl);
+        
+        // 查找匹配的论文
+        const matchedPost = window.PAPERCACHE_POSTS.find(p => {
+          const normalizedPUrl = normalizeUrl(p.url);
+          return normalizedPUrl === normalizedPostUrl || 
+                 normalizedPUrl === postUrl ||
+                 p.url === postUrl;
+        });
+
+        if (matchedPost && matchedPost.title) {
+          return matchedPost.title;
+        }
+      }
+
+      // 2. 如果预加载数据中没有，尝试从URL推断标题
+      if (postUrl.includes('/')) {
+        const segments = postUrl.split('/');
+        const lastSegment = segments[segments.length - 1];
+        if (lastSegment && lastSegment.includes('-')) {
+          // 移除.html扩展名
+          const withoutExt = lastSegment.replace(/\.html?$/, '');
+          // 将kebab-case转换为标题格式
+          return withoutExt.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+      }
+
+      // 3. 默认返回URL（不截断）
+      return postUrl;
+    } catch (error) {
+      console.warn('获取论文标题失败:', error);
+      return postUrl;
+    }
+  }
+  
+  // 移除收藏（单个或批量）
+  async function removeFavorite(postUrls) {
+    const urls = Array.isArray(postUrls) ? postUrls : [postUrls];
+    
+    if (urls.length === 0) return;
+    
+    const confirmMsg = urls.length === 1 
+      ? '确定要取消收藏这篇论文吗？'
+      : `确定要取消收藏这 ${urls.length} 篇论文吗？`;
+    
+    if (!confirm(confirmMsg)) return;
+    
+    try {
+      let successCount = 0;
+      let failCount = 0;
+      
+      for (const postUrl of urls) {
+        const result = await window.favoritesService?.unfavoritePost(postUrl);
+        if (result?.success) {
+          successCount++;
+          // 从全局列表中移除
+          allFavorites = allFavorites.filter(fav => fav.post_url !== postUrl);
+        } else {
+          failCount++;
+        }
+      }
+      
+      // 重新应用过滤和排序
+      applySortAndFilter();
+      
+      // 显示结果提示
+      if (successCount > 0) {
+        showToast(failCount > 0 
+          ? `已取消 ${successCount} 篇收藏${failCount > 0 ? `，${failCount} 篇失败` : ''}`
+          : `已取消 ${successCount} 篇收藏`);
+      } else {
+        alert('操作失败：' + (failCount > 0 ? `${failCount} 篇操作失败` : '未知错误'));
+      }
+      
+      // 清除选择状态
+      clearSelection();
+    } catch (error) {
+      console.error('批量删除失败:', error);
+      alert('操作失败：' + (error.message || '未知错误'));
+    }
+  }
+  
+  // 绑定复选框事件
+  function bindCheckboxEvents() {
+    // 单项复选框
+    const checkboxes = document.querySelectorAll('.favorite-item-checkbox');
+    checkboxes.forEach(checkbox => {
+      checkbox.addEventListener('change', () => {
+        updateSelectedCount();
+        updateBatchDeleteButton();
+      });
+    });
+    
+    // 全选复选框
+    const selectAllCheckbox = document.getElementById('select-all-checkbox');
+    if (selectAllCheckbox) {
+      selectAllCheckbox.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        checkboxes.forEach(cb => {
+          cb.checked = isChecked;
+        });
+        updateSelectedCount();
+        updateBatchDeleteButton();
+      });
+    }
+    
+    // 批量删除按钮
+    const batchDeleteBtn = document.getElementById('batch-delete-btn');
+    if (batchDeleteBtn) {
+      batchDeleteBtn.addEventListener('click', () => {
+        const selectedUrls = Array.from(checkboxes)
+          .filter(cb => cb.checked)
+          .map(cb => cb.getAttribute('data-post-url'));
+        
+        if (selectedUrls.length > 0) {
+          removeFavorite(selectedUrls);
+        }
+      });
+    }
+  }
+  
+  // 更新选中数量
+  function updateSelectedCount() {
+    const checkboxes = document.querySelectorAll('.favorite-item-checkbox:checked');
+    const count = checkboxes.length;
+    const selectedCountEl = document.getElementById('selected-count-text');
+    
+    if (selectedCountEl) {
+      if (count > 0) {
+        selectedCountEl.textContent = `已选 ${count} 项`;
+        selectedCountEl.style.display = 'inline';
+      } else {
+        selectedCountEl.style.display = 'none';
+      }
+    }
+    
+    // 更新全选复选框状态
+    const allCheckboxes = document.querySelectorAll('.favorite-item-checkbox');
+    const selectAllCheckbox = document.getElementById('select-all-checkbox');
+    if (selectAllCheckbox && allCheckboxes.length > 0) {
+      selectAllCheckbox.checked = count === allCheckboxes.length && allCheckboxes.length > 0;
+      selectAllCheckbox.indeterminate = count > 0 && count < allCheckboxes.length;
+    }
+  }
+  
+  // 更新批量删除按钮显示
+  function updateBatchDeleteButton() {
+    const checkboxes = document.querySelectorAll('.favorite-item-checkbox:checked');
+    const batchDeleteBtn = document.getElementById('batch-delete-btn');
+    
+    if (batchDeleteBtn) {
+      if (checkboxes.length > 0) {
+        batchDeleteBtn.style.display = 'inline-flex';
+      } else {
+        batchDeleteBtn.style.display = 'none';
+      }
+    }
+  }
+  
+  // 清除选择状态
+  function clearSelection() {
+    const checkboxes = document.querySelectorAll('.favorite-item-checkbox');
+    checkboxes.forEach(cb => cb.checked = false);
+    const selectAllCheckbox = document.getElementById('select-all-checkbox');
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = false;
+      selectAllCheckbox.indeterminate = false;
+    }
+    updateSelectedCount();
+    updateBatchDeleteButton();
+  }
+
+  // 显示提示消息
+  function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-message';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.classList.add('show');
+    }, 10);
+    
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 2000);
+  }
+
+  // 切换排序模式
+  function toggleSort() {
+    const sortModes = ['date-desc', 'date-asc', 'title-asc', 'title-desc'];
+    const currentIndex = sortModes.indexOf(currentSortMode);
+    currentSortMode = sortModes[(currentIndex + 1) % sortModes.length];
+    
+    // 更新按钮文本
+    const sortBtn = document.getElementById('sort-btn');
+    if (sortBtn) {
+      const sortLabels = {
+        'date-desc': '📊 按日期降序',
+        'date-asc': '📊 按日期升序',
+        'title-asc': '📊 按标题升序',
+        'title-desc': '📊 按标题降序'
+      };
+      sortBtn.innerHTML = `<span>${sortLabels[currentSortMode] || '📊 排序'}</span>`;
+    }
+    
+    applySortAndFilter();
+  }
+
+  // 绑定搜索和排序事件
+  function bindFavoritesEvents() {
+    // 搜索输入框
+    const searchInput = document.getElementById('favorites-search-input');
+    if (searchInput) {
+      let searchTimeout;
+      searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          applySortAndFilter();
+        }, 300);
+      });
+    }
+
+    // 排序按钮
+    const sortBtn = document.getElementById('sort-btn');
+    if (sortBtn) {
+      sortBtn.addEventListener('click', toggleSort);
     }
   }
   
@@ -177,14 +717,14 @@ permalink: /account/favorites.html
   document.addEventListener('DOMContentLoaded', function() {
     // 等待认证服务和收藏服务加载完成
     // 先尝试立即加载，如果服务未就绪则等待
-    if (window.authService && window.favoritesService && window.getSupabaseClient) {
+    if (window.SimpleAuth && window.favoritesService && window.getSupabaseClient) {
       loadFavorites();
     } else {
       // 等待最多3秒
       let waitCount = 0;
       const checkInterval = setInterval(() => {
         waitCount++;
-        if (window.authService && window.favoritesService && window.getSupabaseClient) {
+        if (window.SimpleAuth && window.favoritesService && window.getSupabaseClient) {
           clearInterval(checkInterval);
           loadFavorites();
         } else if (waitCount > 30) {
@@ -193,10 +733,10 @@ permalink: /account/favorites.html
         }
       }, 100);
     }
-    
+
     // 监听认证状态变化，如果用户登录状态改变，重新加载
-    if (window.authService) {
-      window.authService.onAuthStateChange((user) => {
+    if (window.SimpleAuth) {
+      window.SimpleAuth.onAuthChange((user) => {
         if (user) {
           loadFavorites();
         } else {
@@ -211,11 +751,32 @@ permalink: /account/favorites.html
       });
     }
   });
+
+  // Turbolinks页面导航时的处理
+  document.addEventListener('turbolinks:load', function() {
+    // 先尝试立即加载
+    if (window.SimpleAuth && window.favoritesService && window.getSupabaseClient) {
+      loadFavorites();
+    } else {
+      // 等待服务加载
+      let waitCount = 0;
+      const checkInterval = setInterval(() => {
+        waitCount++;
+        if (window.SimpleAuth && window.favoritesService && window.getSupabaseClient) {
+          clearInterval(checkInterval);
+          loadFavorites();
+        } else if (waitCount > 30) {
+          clearInterval(checkInterval);
+          loadFavorites();
+        }
+      }, 100);
+    }
+  });
   </script>
   
   <style>
   .account-page {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 2rem 1rem;
   }
@@ -268,81 +829,231 @@ permalink: /account/favorites.html
   
   .favorite-item {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem;
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    transition: all 0.2s;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid #e2e8f0;
+    border-left: 4px solid #fbbf24;
+    border-radius: 16px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: visible;
   }
   
   .favorite-item:hover {
-    border-color: #667eea;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+    border-color: #fbbf24;
+    border-left-color: #f59e0b;
+    box-shadow: 0 8px 24px rgba(251, 191, 36, 0.25);
+    transform: translateY(-4px);
+    background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
   }
   
+  .favorite-item-checkbox-wrapper {
+    flex-shrink: 0;
+    margin-top: 0.25rem;
+  }
+  
+  .favorite-item-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #667eea;
+  }
+  
+  .checkbox-label {
+    display: none;
+  }
+
+  /* 移除右上角的星标装饰 */
+  /* .favorite-item::before {
+    content: '★';
+    position: absolute;
+    top: 1rem;
+    right: 4rem;
+    font-size: 1.5rem;
+    color: rgba(251, 191, 36, 0.2);
+    pointer-events: none;
+  } */
+
+  .favorite-item:hover {
+    border-color: #fbbf24;
+    border-left-color: #f59e0b;
+    box-shadow: 0 8px 24px rgba(251, 191, 36, 0.25);
+    transform: translateY(-4px);
+    background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
+  }
+
   .favorite-item-link {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+    display: block;
     text-decoration: none;
     color: #2d3748;
   }
-  
+
   .favorite-item-link:hover {
     text-decoration: none;
   }
-  
-  .favorite-item-url {
-    font-weight: 500;
+
+  .favorite-item-content {
+    flex: 1;
+    min-width: 0; /* 允许flex子元素收缩 */
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .favorite-item-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.5;
+    word-wrap: break-word;
+    word-break: break-word;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  /* 移除标题前的星标图标，避免冗余 */
+  /* .favorite-item-title::before {
+    content: '⭐';
+    font-size: 1.1rem;
+    opacity: 0.8;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  } */
+
+  .favorite-item-title:hover {
     color: #667eea;
   }
-  
-  .favorite-item-date {
-    font-size: 0.85rem;
-    color: #718096;
+
+  .favorite-item-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
   }
   
-  .favorite-item-remove {
-    width: 32px;
-    height: 32px;
-    border: none;
-    background: #fed7d7;
-    color: #c53030;
-    border-radius: 50%;
-    font-size: 1.2rem;
-    cursor: pointer;
-    transition: all 0.2s;
+  .favorite-item-categories {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    flex-wrap: wrap;
+  }
+  
+  .categories-label {
+    color: #718096;
+    font-weight: 500;
     flex-shrink: 0;
   }
   
-  .favorite-item-remove:hover {
-    background: #fc8181;
+  .categories-path {
+    color: #667eea;
+    font-weight: 500;
+    background: rgba(102, 126, 234, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    display: inline-block;
+  }
+  
+  .favorite-item-tag-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .favorite-item-tag {
+    display: inline-block;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 12px;
     color: white;
-    transform: scale(1.1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .favorite-item-tag.tag-arxiv {
+    background: linear-gradient(135deg, #10b981, #059669);
+  }
+  
+  .favorite-item-tag:not(.tag-arxiv) {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+  }
+
+  .favorite-item-meta-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+  }
+
+  .favorite-item-url {
+    font-size: 0.85rem;
+    color: #667eea;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    background: rgba(102, 126, 234, 0.08);
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    word-break: break-all;
+    overflow-wrap: break-word;
+    line-height: 1.4;
+    display: block;
+    max-width: 100%;
+  }
+
+  .favorite-item-date {
+    font-size: 0.85rem;
+    color: #718096;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .favorite-item-date::before {
+    content: '📅';
+    font-size: 0.9rem;
   }
   
   .favorites-empty {
     text-align: center;
     padding: 4rem 2rem;
+    background: linear-gradient(135deg, #fff9e6 0%, #fff5d9 100%);
+    border-radius: 20px;
+    border: 2px dashed rgba(251, 191, 36, 0.3);
+    margin-top: 2rem;
   }
   
   .empty-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
+    font-size: 5rem;
+    margin-bottom: 1.5rem;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
   }
   
   .favorites-empty h2 {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     color: #2d3748;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
   }
   
   .favorites-empty p {
     color: #718096;
     margin-bottom: 2rem;
+    font-size: 1.05rem;
   }
   
   .btn-primary {
@@ -385,6 +1096,190 @@ permalink: /account/favorites.html
   .btn-retry:hover {
     background: #c53030;
     color: white;
+  }
+
+  /* 工具栏样式 */
+  .favorites-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    flex-wrap: wrap;
+  }
+
+  .toolbar-left {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .toolbar-checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .select-all-checkbox {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #667eea;
+  }
+  
+  .select-all-label {
+    font-size: 0.9rem;
+    color: #4a5568;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+  }
+  
+  .selected-count {
+    font-size: 0.9rem;
+    color: #667eea;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 6px;
+  }
+  
+  .toolbar-btn-danger {
+    background: #fee2e2;
+    border-color: #f87171;
+    color: #dc2626;
+  }
+  
+  .toolbar-btn-danger:hover {
+    background: #dc2626;
+    border-color: #dc2626;
+    color: white;
+  }
+
+  .toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .search-box {
+    position: relative;
+    max-width: 400px;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .search-icon {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .favorites-count {
+    font-size: 0.9rem;
+    color: #718096;
+    font-weight: 500;
+  }
+
+  .toolbar-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    color: #4a5568;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .toolbar-btn:hover {
+    border-color: #667eea;
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+  }
+
+  .no-results {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: #718096;
+    font-size: 1rem;
+  }
+
+  /* Toast 消息样式 */
+  .toast-message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+  }
+
+  .toast-message.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* 响应式优化 */
+  @media (max-width: 768px) {
+    .favorites-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .toolbar-left,
+    .toolbar-right {
+      width: 100%;
+    }
+
+    .search-box {
+      max-width: 100%;
+    }
+
+    .favorite-item {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .favorite-item-checkbox-wrapper {
+      margin-top: 0;
+    }
   }
   </style>
   {%- else -%}

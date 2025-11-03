@@ -83,32 +83,71 @@
 
 <!-- 移动端菜单交互脚本 -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
-  const mainNav = document.querySelector('.main-nav');
-  
-  if (mobileMenuToggle && mainNav) {
-    mobileMenuToggle.addEventListener('click', function() {
+(function() {
+  function initMobileMenu() {
+    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+    const mainNav = document.querySelector('.main-nav');
+    
+    if (!mobileMenuToggle || !mainNav) {
+      return;
+    }
+    
+    // 移除旧的事件监听器（如果存在）
+    if (mobileMenuToggle._toggleHandler) {
+      mobileMenuToggle.removeEventListener('click', mobileMenuToggle._toggleHandler);
+      mobileMenuToggle._toggleHandler = null;
+    }
+    if (window._mobileMenuOutsideHandler) {
+      document.removeEventListener('click', window._mobileMenuOutsideHandler);
+      window._mobileMenuOutsideHandler = null;
+    }
+    
+    // 移动端菜单切换
+    const toggleHandler = function() {
       mobileMenuToggle.classList.toggle('active');
       mainNav.classList.toggle('active');
-    });
+    };
+    
+    mobileMenuToggle.addEventListener('click', toggleHandler);
+    mobileMenuToggle._toggleHandler = toggleHandler;
     
     // 点击导航链接后关闭菜单
     const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
-      link.addEventListener('click', function() {
+      // 移除旧的监听器
+      if (link._closeMenuHandler) {
+        link.removeEventListener('click', link._closeMenuHandler);
+      }
+      
+      const closeMenuHandler = function() {
         mobileMenuToggle.classList.remove('active');
         mainNav.classList.remove('active');
-      });
+      };
+      
+      link.addEventListener('click', closeMenuHandler);
+      link._closeMenuHandler = closeMenuHandler;
     });
     
     // 点击页面其他区域关闭菜单
-    document.addEventListener('click', function(e) {
+    const outsideClickHandler = function(e) {
       if (!mobileMenuToggle.contains(e.target) && !mainNav.contains(e.target)) {
         mobileMenuToggle.classList.remove('active');
         mainNav.classList.remove('active');
       }
-    });
+    };
+    
+    document.addEventListener('click', outsideClickHandler);
+    window._mobileMenuOutsideHandler = outsideClickHandler;
   }
-});
+  
+  // 在DOM加载时初始化
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMobileMenu);
+  } else {
+    initMobileMenu();
+  }
+  
+  // 在Turbolinks页面加载时也初始化
+  document.addEventListener('turbolinks:load', initMobileMenu);
+})();
 </script>

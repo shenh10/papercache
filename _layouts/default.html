@@ -6,10 +6,6 @@
   <body>
 
     {%- include modern-header.html -%}
-    
-    {%- if site.supabase and site.supabase.enabled -%}
-    {%- include auth-modal.html -%}
-    {%- endif -%}
 
     <main class="page-content" aria-label="Content">
       <div class="wrapper">
@@ -21,15 +17,6 @@
     </main>
 
     {%- include footer.html -%}
-    
-    {%- if site.supabase and site.supabase.enabled -%}
-    <!-- 认证服务脚本 -->
-    <script src="{{ '/assets/js/auth.js' | relative_url }}"></script>
-    <!-- 收藏服务脚本 -->
-    <script src="{{ '/assets/js/favorites.js' | relative_url }}"></script>
-    <!-- 用户菜单UI更新 -->
-    <script src="{{ '/assets/js/user-menu.js' | relative_url }}"></script>
-    {%- endif -%}
 
   </body>
 

@@ -336,3 +336,4 @@ async function getFavorites() {
 *文档创建时间：2025-01-XX*
 *最后更新：等待选择方案后实施*
 
+

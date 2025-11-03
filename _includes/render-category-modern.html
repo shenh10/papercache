@@ -69,6 +69,7 @@
                   {%- else -%}
                   <span class="post-card-tag-modern subcategory-tag tag-arxiv">Arxiv</span>
                   {%- endif -%}
+                  {%- include favorite-button.html page=p -%}
                 </div>
                 <div class="post-card-title-modern">{{ p.title | escape }}</div>
                 {%- assign excerpt_data = site.data.excerpts[p.url] -%}

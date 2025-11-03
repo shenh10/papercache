@@ -148,16 +148,30 @@
 </div>
 
 <script>
+// 全局变量：标记是否登录超时（用于防止登录成功后自动关闭模态框）
+// 防止重复声明
+if (typeof window.isLoginTimeout === 'undefined') {
+  window.isLoginTimeout = false;
+}
+
 // 模态框控制函数
 function openAuthModal(mode = 'login') {
   const modal = document.getElementById('auth-modal');
   if (modal) {
     modal.style.display = 'flex'; // 确保使用 flex 布局
+    // 清除之前的状态
+    showAuthLoading(false);
+    // 重置超时标记
+    window.isLoginTimeout = false;
+    // 打开模态框时清除之前的错误（新开始）
+    showAuthError('');
     if (mode === 'register') {
       switchToRegister();
     } else {
       switchToLogin();
     }
+    // 设置认证状态监听器（用于自动关闭模态框）
+    setupAuthModalCloseListener();
   }
 }
 
@@ -165,6 +179,10 @@ function closeAuthModal() {
   const modal = document.getElementById('auth-modal');
   if (modal) {
     modal.style.display = 'none';
+    // 关闭时清除加载状态
+    showAuthLoading(false);
+    // 注意：不清除错误提示，让用户看到错误信息（除非手动关闭）
+    // 如果确实需要清除错误，应该在成功登录时单独处理
   }
 }
 
@@ -183,6 +201,26 @@ function switchToLogin() {
   document.getElementById('auth-forgot-password-form').style.display = 'none';
   document.getElementById('auth-resend-email-form').classList.remove('active');
   document.getElementById('auth-resend-email-form').style.display = 'none';
+  
+  // 重置忘记密码表单（恢复显示，以便下次使用）
+  const forgotPasswordForm = document.getElementById('forgot-password-form');
+  if (forgotPasswordForm) {
+    forgotPasswordForm.style.display = 'block';
+  }
+  const emailInput = document.getElementById('forgot-email');
+  if (emailInput) {
+    const formGroup = emailInput.closest('.auth-form-group');
+    if (formGroup) {
+      formGroup.style.display = '';
+    }
+  }
+  const submitForm = document.getElementById('forgot-password-form');
+  if (submitForm) {
+    submitForm.style.display = '';
+  }
+  
+  // 清除错误提示
+  showAuthError('');
   
   // 显示登录表单
   document.getElementById('auth-login-form').classList.add('active');
@@ -217,15 +255,59 @@ function switchToResendEmail() {
   document.getElementById('auth-resend-email-form').style.display = 'block';
 }
 
-function showAuthError(message) {
+// 存储当前的自动隐藏定时器，以便可以取消
+// 防止重复声明
+if (typeof window.authErrorTimeout === 'undefined') {
+  window.authErrorTimeout = null;
+}
+
+function showAuthError(message, autoHide = true) {
   const errorDiv = document.getElementById('auth-error');
   const errorMsg = document.getElementById('auth-error-message');
   if (errorDiv && errorMsg) {
+    // 清除之前的定时器（如果有）
+    if (window.authErrorTimeout) {
+      clearTimeout(window.authErrorTimeout);
+      window.authErrorTimeout = null;
+    }
+    
+    // 如果消息为空或空白，隐藏错误框
+    if (!message || message.trim() === '') {
+      errorDiv.style.display = 'none';
+      errorMsg.textContent = '';
+      return;
+    }
+    
     errorMsg.textContent = message;
     errorDiv.style.display = 'block';
-    setTimeout(() => {
-      errorDiv.style.display = 'none';
-    }, 5000);
+    
+    // 只有非关键错误才自动隐藏（如成功提示）
+    // 关键错误（超时、认证失败等）保留显示，直到用户手动操作
+    if (autoHide && !message.includes('超时') && !message.includes('失败') && !message.includes('错误')) {
+      window.authErrorTimeout = setTimeout(() => {
+        errorDiv.style.display = 'none';
+        window.authErrorTimeout = null;
+      }, 5000);
+    } else {
+      // 关键错误：添加点击关闭功能
+      errorDiv.style.cursor = 'pointer';
+      errorDiv.title = '点击关闭';
+      
+      // 移除之前的事件监听器（如果有）
+      const existingHandler = errorDiv._closeHandler;
+      if (existingHandler) {
+        errorDiv.removeEventListener('click', existingHandler);
+      }
+      
+      // 添加点击关闭功能
+      const closeHandler = function() {
+        errorDiv.style.display = 'none';
+        errorDiv.removeEventListener('click', closeHandler);
+        errorDiv._closeHandler = null;
+      };
+      errorDiv._closeHandler = closeHandler;
+      errorDiv.addEventListener('click', closeHandler);
+    }
   }
 }
 
@@ -239,10 +321,38 @@ function showAuthLoading(show) {
 // 登录处理函数
 async function handleGitHubLogin() {
   showAuthLoading(true);
-  const result = await window.authService?.signInWithOAuth('github');
+  // GitHub登录暂时不可用（SimpleAuth暂未实现OAuth）
   showAuthLoading(false);
-  if (!result?.success) {
-    showAuthError(result?.error || 'GitHub登录失败');
+  showAuthError('GitHub登录暂不可用，请使用邮箱登录', false);
+}
+
+// 监听认证状态变化，自动关闭模态框
+// 防止重复声明
+if (typeof window.authModalCloseListenerRegistered === 'undefined') {
+  window.authModalCloseListenerRegistered = false;
+}
+function setupAuthModalCloseListener() {
+  if (!window.authModalCloseListenerRegistered && window.SimpleAuth) {
+    window.authModalCloseListenerRegistered = true;
+    window.SimpleAuth.onAuthChange((user) => {
+      const modal = document.getElementById('auth-modal');
+      // 只在模态框显示时响应登录成功事件
+      // 注意：如果登录最终成功了，无论是否超时，都应该清除错误并关闭模态框
+      if (user && modal) {
+        // 检查模态框是否真正显示（可能是 'flex' 或其他值，只要不是 'none'）
+        const isModalVisible = modal.style.display !== 'none' && modal.style.display !== '';
+        if (isModalVisible) {
+          // 登录成功（无论是否之前超时），清除错误、关闭加载状态和模态框
+          console.log('检测到登录成功（onAuthStateChange），关闭模态框', window.isLoginTimeout ? '（之前超时）' : '');
+          showAuthLoading(false);
+          showAuthError(''); // 成功时清除错误提示
+          window.isLoginTimeout = false; // 重置超时标记
+          closeAuthModal();
+        } else {
+          console.log('检测到登录成功，但模态框已关闭，无需操作');
+        }
+      }
+    });
   }
 }
 
@@ -250,101 +360,180 @@ async function handleEmailLogin(event) {
   event.preventDefault();
   showAuthLoading(true);
   showAuthError(''); // 清除之前的错误
-  
+
   try {
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
-    
-    if (!window.authService) {
+
+    if (!window.SimpleAuth) {
       showAuthLoading(false);
-      showAuthError('认证服务未加载，请刷新页面重试');
+      showAuthError('认证服务未加载，请刷新页面重试', false);
       return;
     }
-    
+
+    // 设置认证状态监听器（用于自动关闭模态框）
+    setupAuthModalCloseListener();
+
     // 执行登录
-    const result = await window.authService.signInWithEmail(email, password);
-    
-    if (result?.success) {
-      // 登录成功，立即关闭加载状态和模态框
-      // 因为 auth.js 中的 signInWithEmail 已经会立即更新状态并通知监听器
+    console.log('开始登录:', email);
+    const result = await window.SimpleAuth.login(email, password);
+
+    // 处理登录结果
+    try {
+      console.log('登录成功');
       showAuthLoading(false);
-      closeAuthModal();
-    } else {
+      showAuthError(''); // 成功时清除错误提示
+
+      // 登录成功后，onAuthChange监听器会自动关闭模态框
+      // 这里作为备份，如果监听器没有关闭，手动关闭
+      setTimeout(() => {
+        const modal = document.getElementById('auth-modal');
+        if (modal && modal.style.display !== 'none') {
+          console.log('手动关闭模态框（登录成功）');
+          closeAuthModal();
+        }
+      }, 500);
+    } catch (error) {
       // 登录失败
       showAuthLoading(false);
-      const error = result?.error || '登录失败';
-      showAuthError(error);
-      
+      const errorMessage = error?.message || '登录失败';
+      showAuthError(errorMessage, false);
+
       // 如果是因为邮箱未验证，提示重发验证邮件
-      if (error.includes('Email not confirmed') || error.includes('未验证') || error.includes('not confirmed')) {
+      if (errorMessage.includes('Email not confirmed') || errorMessage.includes('未验证') || errorMessage.includes('not confirmed')) {
         setTimeout(() => {
-          showAuthError(error + '。点击"重发验证邮件"可重新发送验证链接。');
+          showAuthError(errorMessage + '。点击"重发验证邮件"可重新发送验证链接。', false);
         }, 2000);
       }
     }
   } catch (error) {
     console.error('登录处理出错:', error);
     showAuthLoading(false);
-    showAuthError('登录失败：' + (error.message || '未知错误'));
+    showAuthError('登录失败：' + (error.message || '未知错误'), false);
   }
 }
 
 async function handleEmailRegister(event) {
   event.preventDefault();
   showAuthLoading(true);
-  
+
   const username = document.getElementById('register-username').value;
   const email = document.getElementById('register-email').value;
   const password = document.getElementById('register-password').value;
-  
-  const result = await window.authService?.signUpWithEmail(email, password, username);
-  showAuthLoading(false);
-  
-  if (result?.success) {
-    showAuthError('注册成功！请查收邮箱验证链接。如未收到，可点击"重发验证邮件"。');
+
+  try {
+    // 使用Supabase直接注册
+    const supabase = window.getSupabaseClient();
+    if (!supabase) {
+      throw new Error('数据库服务未加载');
+    }
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          username: username
+        }
+      }
+    });
+
+    if (error) throw error;
+
+    showAuthLoading(false);
+    showAuthError('注册成功！请查收邮箱验证链接。如未收到，可点击"重发验证邮件"。', true); // 成功提示，可以自动隐藏
     setTimeout(() => {
       switchToLogin();
     }, 3000);
-  } else {
-    showAuthError(result?.error || '注册失败');
+  } catch (error) {
+    showAuthLoading(false);
+    let errorMessage = '注册失败';
+
+    if (error.message.includes('User already registered')) {
+      errorMessage = '该邮箱已被注册';
+    } else if (error.message.includes('Password should be')) {
+      errorMessage = '密码格式不符合要求';
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    showAuthError(errorMessage, false); // 关键错误，不自动隐藏
   }
 }
 
 async function handleForgotPassword(event) {
   event.preventDefault();
   showAuthLoading(true);
-  
+
   const email = document.getElementById('forgot-email').value;
-  
-  const result = await window.authService?.resetPasswordForEmail(email);
-  showAuthLoading(false);
-  
-  if (result?.success) {
-    showAuthError('密码重置链接已发送到您的邮箱，请查收。');
-    setTimeout(() => {
-      switchToLogin();
-    }, 3000);
-  } else {
-    showAuthError(result?.error || '发送失败，请检查邮箱地址是否正确。');
+
+  try {
+    // 使用Supabase直接发送重置邮件
+    const supabase = window.getSupabaseClient();
+    if (!supabase) {
+      throw new Error('数据库服务未加载');
+    }
+
+    // 构建重置密码的重定向URL
+    const baseurl = window.PC_BASEURL || '';
+    const redirectTo = window.location.origin + baseurl + '/auth/reset-password.html';
+    
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: redirectTo
+    });
+
+    if (error) throw error;
+
+    showAuthLoading(false);
+    
+    // 隐藏表单，显示成功提示
+    const forgotPasswordForm = document.getElementById('forgot-password-form');
+    if (forgotPasswordForm) {
+      forgotPasswordForm.style.display = 'none';
+    }
+    
+    // 显示成功提示（不自动隐藏，直到用户点击返回登录）
+    showAuthError('密码重置链接已发送到您的邮箱，请查收。', false); // 保留提示，不自动隐藏
+    
+    // 隐藏邮箱输入框，但保留"返回登录"链接可见
+    const emailInput = document.getElementById('forgot-email');
+    if (emailInput) {
+      emailInput.closest('.auth-form-group')?.style.setProperty('display', 'none');
+    }
+  } catch (error) {
+    showAuthLoading(false);
+    showAuthError('发送失败：' + (error.message || '请检查邮箱地址是否正确'), false); // 关键错误，不自动隐藏
   }
 }
 
 async function handleResendConfirmationEmail(event) {
   event.preventDefault();
   showAuthLoading(true);
-  
+
   const email = document.getElementById('resend-email').value;
-  
-  const result = await window.authService?.resendConfirmationEmail(email);
-  showAuthLoading(false);
-  
-  if (result?.success) {
-    showAuthError('验证邮件已重新发送，请查收邮箱。');
+
+  try {
+    // 使用Supabase直接重发验证邮件
+    const supabase = window.getSupabaseClient();
+    if (!supabase) {
+      throw new Error('数据库服务未加载');
+    }
+
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email: email
+    });
+
+    if (error) throw error;
+
+    showAuthLoading(false);
+    showAuthError('验证邮件已重新发送，请查收邮箱。', true); // 成功提示，可以自动隐藏
     setTimeout(() => {
       switchToLogin();
     }, 3000);
-  } else {
-    showAuthError(result?.error || '发送失败，请检查邮箱地址是否正确。');
+  } catch (error) {
+    showAuthLoading(false);
+    showAuthError('发送失败：' + (error.message || '请检查邮箱地址是否正确'), false); // 关键错误，不自动隐藏
   }
 }
 

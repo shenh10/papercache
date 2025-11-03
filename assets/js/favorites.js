@@ -119,11 +119,12 @@
           .select('id')
           .eq('user_id', user.id)
           .eq('post_url', postUrl)
-          .single();
+          .limit(1)
+          .maybeSingle();
 
         if (error) {
+          // 如果是未找到记录的错误（PGRST116），返回false
           if (error.code === 'PGRST116') {
-            // 没有找到记录
             return false;
           }
           throw error;
@@ -176,6 +177,66 @@
       }
     }
 
+    // 批量获取多个文章的收藏数
+    async function batchGetFavoriteCounts(postUrls) {
+      try {
+        // 规范化 URL
+        const normalizeUrl = (url) => {
+          if (!url) return '';
+          let normalized = url;
+          const baseurl = window.PC_BASEURL || '';
+          if (baseurl && baseurl !== '/' && normalized.startsWith(baseurl)) {
+            normalized = normalized.substring(baseurl.length);
+          }
+          if (!normalized.startsWith('/')) {
+            normalized = '/' + normalized;
+          }
+          return normalized;
+        };
+
+        const normalizedUrls = postUrls.map(normalizeUrl).filter(url => url && url !== '/');
+        
+        if (normalizedUrls.length === 0) {
+          return {};
+        }
+
+        // 查询这些 URL 的收藏数（使用聚合查询）
+        const { data, error } = await supabase
+          .from('favorites')
+          .select('post_url')
+          .in('post_url', normalizedUrls);
+
+        if (error) throw error;
+
+        // 统计每个 URL 的收藏数
+        const countsMap = {};
+        normalizedUrls.forEach(url => {
+          countsMap[url] = 0;
+        });
+
+        if (data && Array.isArray(data)) {
+          data.forEach(item => {
+            const url = item.post_url;
+            if (url in countsMap) {
+              countsMap[url] = (countsMap[url] || 0) + 1;
+            }
+          });
+        }
+
+        // 同时构建原始 URL 到计数的映射
+        const result = {};
+        postUrls.forEach(originalUrl => {
+          const normalized = normalizeUrl(originalUrl);
+          result[originalUrl] = countsMap[normalized] || 0;
+        });
+
+        return result;
+      } catch (error) {
+        console.error('批量获取收藏数失败:', error);
+        return {};
+      }
+    }
+
     // ============================================
     // 批量检查收藏状态
     // ============================================
@@ -188,19 +249,58 @@
           return {};
         }
 
+        // 规范化URL，确保格式一致
+        const normalizeUrl = (url) => {
+          if (!url) return '';
+          let normalized = url;
+          // 移除baseurl
+          const baseurl = window.PC_BASEURL || '';
+          if (baseurl && baseurl !== '/' && normalized.startsWith(baseurl)) {
+            normalized = normalized.substring(baseurl.length);
+          }
+          // 确保以/开头
+          if (!normalized.startsWith('/')) {
+            normalized = '/' + normalized;
+          }
+          return normalized;
+        };
+
+        // 规范化所有URL
+        const normalizedUrls = postUrls.map(normalizeUrl).filter(url => url && url !== '/');
+        if (normalizedUrls.length === 0) {
+          return {};
+        }
+
+        // 构建URL映射，以便后续匹配
+        const urlMap = {};
+        postUrls.forEach((originalUrl, index) => {
+          const normalized = normalizeUrl(originalUrl);
+          if (normalized && normalized !== '/') {
+            if (!urlMap[normalized]) {
+              urlMap[normalized] = [];
+            }
+            urlMap[normalized].push(originalUrl);
+          }
+        });
+
         const { data, error } = await supabase
           .from('favorites')
           .select('post_url')
           .eq('user_id', user.id)
-          .in('post_url', postUrls);
+          .in('post_url', normalizedUrls);
 
         if (error) throw error;
 
         // 构建一个Set，便于快速查找
-        const favoritedSet = new Set((data || []).map(item => item.post_url));
+        const favoritedSet = new Set((data || []).map(item => {
+          const normalized = normalizeUrl(item.post_url);
+          return normalized;
+        }));
+        
         const result = {};
         postUrls.forEach(url => {
-          result[url] = favoritedSet.has(url);
+          const normalized = normalizeUrl(url);
+          result[url] = favoritedSet.has(normalized);
         });
 
         return result;
@@ -221,7 +321,8 @@
       isPostFavorited,
       getUserFavorites,
       getPostFavoriteCount,
-      batchCheckFavorites
+      batchCheckFavorites,
+      batchGetFavoriteCounts
     };
   }
 })();

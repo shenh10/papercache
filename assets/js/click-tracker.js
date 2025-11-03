@@ -1,66 +1,97 @@
-// 点击统计和最多关注排序（服务器端）
+// 点击统计和最多关注排序（使用 Supabase）
 (function() {
   'use strict';
   
-  // 检测API地址：优先使用配置的API地址，否则使用当前域名
-  function getApiBaseUrl() {
-    // 尝试从页面配置中读取（如果Jekyll注入了）
-    if (window.siteConfig && window.siteConfig.api_base_url) {
-      return window.siteConfig.api_base_url;
-    }
-    // 尝试从meta标签读取
-    const metaApi = document.querySelector('meta[name="api-base-url"]');
-    if (metaApi) {
-      return metaApi.getAttribute('content');
-    }
-    // 默认使用当前域名
-    return window.location.origin;
-  }
-  
-  const API_BASE_URL = getApiBaseUrl();
-  const TRACK_CLICK_API = `${API_BASE_URL}/api/track-click`;
-  const GET_CLICKS_API = `${API_BASE_URL}/api/get-clicks`;
-  
-  // 从服务器获取点击数据
-  async function loadClickData() {
+  // 规范化 URL
+  function normalizeUrl(url) {
+    if (!url) return '';
     try {
-      const response = await fetch(GET_CLICKS_API);
-      if (response.ok) {
-        const data = await response.json();
-        return data || {};
-      } else {
-        console.warn('Failed to load click data from server:', response.status);
-        return {};
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        const urlObj = new URL(url);
+        return urlObj.pathname;
       }
     } catch (e) {
-      console.warn('Error loading click data:', e);
+      // 忽略 URL 解析错误
+    }
+    if (!url.startsWith('/')) {
+      url = '/' + url;
+    }
+    return url;
+  }
+  
+  // 等待 clickStatsService 初始化
+  async function waitForClickStatsService() {
+    let attempts = 0;
+    const maxAttempts = 50;
+    
+    while (attempts < maxAttempts && !window.clickStatsService) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
+    }
+    
+    return window.clickStatsService || null;
+  }
+  
+  // 从 Supabase 获取点击数据
+  async function loadClickData() {
+    const service = await waitForClickStatsService();
+    if (!service) {
+      console.warn('ClickTracker: clickStatsService not available');
+      return {};
+    }
+    
+    // 获取所有需要显示的文章 URL
+    const container = document.getElementById('popular-posts-list');
+    if (!container) {
+      return {};
+    }
+    
+    const items = Array.from(container.querySelectorAll('.post-item[data-post-url]'));
+    const postUrls = items.map(item => {
+      let url = item.getAttribute('data-post-url');
+      return normalizeUrl(url);
+    }).filter(url => url && url !== '/');
+    
+    if (postUrls.length === 0) {
+      return {};
+    }
+    
+    try {
+      const clicksMap = await service.batchGetClickCounts(postUrls);
+      return clicksMap;
+    } catch (error) {
+      console.error('ClickTracker: Failed to load click data', error);
       return {};
     }
   }
   
-  // 记录文章点击到服务器
+  // 记录文章点击到 Supabase
   async function trackClick(postUrl) {
+    const normalizedUrl = normalizeUrl(postUrl);
+    const service = await waitForClickStatsService();
+    
+    if (!service) {
+      console.warn('ClickTracker: clickStatsService not available');
+      return { success: false };
+    }
+    
     try {
-      const response = await fetch(TRACK_CLICK_API, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ postUrl: postUrl })
-      });
+      const result = await service.trackClick(normalizedUrl);
       
-      if (response.ok) {
-        const result = await response.json();
+      if (result.success) {
         // 重新加载数据以获取最新统计
         const clicks = await loadClickData();
         // 更新页面上的显示
-        updateClickDisplay(postUrl, clicks[postUrl] || 0);
+        const count = clicks[normalizedUrl] || result.clickCount || 0;
+        updateClickDisplay(normalizedUrl, count);
         return result;
       } else {
-        console.warn('Failed to track click:', response.status);
+        console.error('ClickTracker: Failed to track click', result.error);
+        return result;
       }
-    } catch (e) {
-      console.error('Error tracking click:', e);
+    } catch (error) {
+      console.error('ClickTracker: Error tracking click', error);
+      return { success: false, error: error.message };
     }
   }
   
@@ -76,26 +107,81 @@
     updatePopularPosts(clicks);
   }
   
-  // 初始化：追踪所有文章链接的点击
-  document.addEventListener('DOMContentLoaded', async function() {
+  // 规范化 URL（确保相对路径和绝对路径一致）
+  function normalizeUrl(url) {
+    if (!url) return '';
+    // 如果是完整 URL，提取路径部分
+    try {
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        const urlObj = new URL(url);
+        return urlObj.pathname;
+      }
+    } catch (e) {
+      // 忽略 URL 解析错误
+    }
+    // 确保以 / 开头
+    if (!url.startsWith('/')) {
+      url = '/' + url;
+    }
+    return url;
+  }
+  
+  // 初始化函数
+  async function initClickTracker() {
     // 从服务器加载点击数据
     const clicks = await loadClickData();
     
-    // 为所有文章链接添加点击追踪
-    const postLinks = document.querySelectorAll('a.post-link[href*="/papers/"], a.post-link[href*="/slides/"]');
+    // 为所有文章链接添加点击追踪（支持多种链接样式）
+    // 1. .post-link 类（首页的"最多关注"列表）
+    // 2. .post-card-link-modern 类（搜索和分类页面的卡片链接）
+    // 3. 任何包含 /papers/ 或 /slides/ 的链接
+    const postLinks = document.querySelectorAll(
+      'a.post-link[href*="/papers/"], a.post-link[href*="/slides/"], ' +
+      'a.post-card-link-modern[href*="/papers/"], a.post-card-link-modern[href*="/slides/"], ' +
+      'a[href*="/papers/"][href*=".html"], a[href*="/slides/"][href*=".html"]'
+    );
+    
     postLinks.forEach(link => {
+      // 跳过已经绑定过追踪的链接
+      if (link.dataset.clickTracked === 'true') {
+        return;
+      }
+      
+      // 标记为已追踪
+      link.dataset.clickTracked = 'true';
+      
       link.addEventListener('click', function(e) {
-        const url = this.getAttribute('href');
+        let url = this.getAttribute('href') || this.href;
+        if (!url || url === '#' || url.startsWith('javascript:')) {
+          return; // 跳过无效链接
+        }
+        
+        // 规范化 URL
+        url = normalizeUrl(url);
+        if (!url || url === '/') {
+          return; // 跳过无效URL
+        }
+        
         // 异步追踪点击，不阻塞页面跳转
         trackClick(url).catch(err => {
           console.error('Failed to track click:', err);
         });
-      });
+      }, { passive: true }); // 使用 passive 以提高性能
     });
     
     // 更新并排序"最多关注"面板
     updatePopularPosts(clicks);
-  });
+  }
+  
+  // DOMContentLoaded 时初始化
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initClickTracker);
+  } else {
+    initClickTracker();
+  }
+  
+  // Turbolinks 页面加载时也初始化
+  document.addEventListener('turbolinks:load', initClickTracker);
   
   // 更新"最多关注"面板的显示和排序
   function updatePopularPosts(clicks) {
@@ -107,8 +193,11 @@
     // 更新点击数显示并过滤掉点击量为0的项目
     const validItems = [];
     items.forEach(item => {
-      const url = item.getAttribute('data-post-url');
-      const count = clicks[url] || 0;
+      let url = item.getAttribute('data-post-url');
+      // 规范化 URL 以确保匹配
+      url = normalizeUrl(url);
+      // 尝试多种 URL 格式进行匹配
+      const count = clicks[url] || clicks[item.getAttribute('data-post-url')] || 0;
       const dateEl = item.querySelector('.post-date-popular');
       if (dateEl) {
         dateEl.textContent = count;
@@ -116,7 +205,7 @@
       
       // 只保留点击量大于0的项目
       if (count > 0) {
-        validItems.push(item);
+        validItems.push({ item, count, url });
       } else {
         // 隐藏点击量为0的项目
         item.style.display = 'none';
@@ -125,31 +214,26 @@
     
     // 按点击量排序（降序）
     validItems.sort((a, b) => {
-      const urlA = a.getAttribute('data-post-url');
-      const urlB = b.getAttribute('data-post-url');
-      const clicksA = clicks[urlA] || 0;
-      const clicksB = clicks[urlB] || 0;
-      
       // 如果点击量相同，按标题排序（保持一致性）
-      if (clicksB === clicksA) {
-        const titleA = a.getAttribute('data-post-title') || '';
-        const titleB = b.getAttribute('data-post-title') || '';
+      if (b.count === a.count) {
+        const titleA = a.item.getAttribute('data-post-title') || '';
+        const titleB = b.item.getAttribute('data-post-title') || '';
         return titleA.localeCompare(titleB);
       }
       
-      return clicksB - clicksA;
+      return b.count - a.count;
     });
     
     // 重新插入到容器中（保持表头在顶部）
     const header = container.querySelector('.post-list-header-popular');
     // 先移除所有有效项目
-    validItems.forEach(item => {
+    validItems.forEach(({ item }) => {
       item.style.display = '';
       item.remove();
     });
     // 重新插入排序后的项目（只显示前10个）
     const topItems = validItems.slice(0, 10);
-    topItems.forEach(item => {
+    topItems.forEach(({ item }) => {
       if (header) {
         header.after(item);
       } else {

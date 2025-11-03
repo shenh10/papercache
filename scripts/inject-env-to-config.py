@@ -68,3 +68,4 @@ supabase:"""
 if __name__ == "__main__":
     inject_supabase_config()
 
+

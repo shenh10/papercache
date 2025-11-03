@@ -76,3 +76,4 @@ echo "配置完成！"
 echo "  SUPABASE_URL: $SUPABASE_URL"
 echo "  SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:0:20}..."
 
+

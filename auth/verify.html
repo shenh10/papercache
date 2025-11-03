@@ -16,6 +16,20 @@ permalink: /auth/verify.html
 (function() {
   'use strict';
   
+  // 检查并修复路径（如果访问的路径不包含baseurl，重定向到正确的路径）
+  (function() {
+    const baseurl = {{ site.baseurl | jsonify }} || '';
+    const currentPath = window.location.pathname;
+    const expectedPath = baseurl + '/auth/verify.html';
+    
+    // 如果当前路径不包含baseurl，且baseurl不为空，则重定向
+    if (baseurl && baseurl !== '/' && !currentPath.startsWith(baseurl)) {
+      const hash = window.location.hash || '';
+      window.location.replace(baseurl + '/auth/verify.html' + hash);
+      return;
+    }
+  })();
+  
   // 等待Supabase客户端初始化
   function checkSupabaseReady() {
     if (window.getSupabaseClient && window.getSupabaseClient()) {

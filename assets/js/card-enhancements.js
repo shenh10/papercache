@@ -4,7 +4,8 @@ console.log('🚀 card-enhancements.js 脚本已加载');
 let excerptsMapping = null;
 let thumbnailsMapping = null;
 
-document.addEventListener('DOMContentLoaded', async () => {
+// 初始化函数
+async function initCardEnhancements() {
   console.log('📄 DOM 已加载，开始处理卡片');
   
   // 尝试加载预生成的摘要映射和缩略图映射
@@ -178,8 +179,139 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log(`📊 内容统计: 预生成摘要 ${pregenExcerptCount} 个, 预生成缩略图 ${pregenThumbCount} 个, 动态生成 ${dynamicCount} 个`);
   }, 3000);
 
+  // 批量检查收藏状态（已登录用户）
+  // 延迟检查，确保所有卡片都渲染完成
+  setTimeout(() => {
+    batchCheckFavoritesForCards();
+  }, 1500);
+  
+  // 如果服务加载较慢，在服务就绪后也触发一次
+  const checkServiceReady = setInterval(() => {
+    if (window.favoritesService && window.SimpleAuth) {
+      clearInterval(checkServiceReady);
+      // 服务已就绪，触发一次批量检查
+      setTimeout(batchCheckFavoritesForCards, 500);
+    }
+  }, 500);
+  
+  // 10秒后停止检查（避免无限循环）
+  setTimeout(() => {
+    clearInterval(checkServiceReady);
+  }, 10000);
+  
+  // 如果页面有动态加载内容，使用MutationObserver监听DOM变化
+  const observer = new MutationObserver(() => {
+    // 延迟执行，避免频繁触发
+    clearTimeout(window.favoriteCheckTimeout);
+    window.favoriteCheckTimeout = setTimeout(() => {
+      batchCheckFavoritesForCards();
+    }, 1000);
+  });
+  
+  // 监听整个文档的变化
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+  
+  // 监听用户登录状态变化
+  if (window.SimpleAuth && typeof window.SimpleAuth.onAuthChange === 'function') {
+    window.SimpleAuth.onAuthChange(() => {
+      console.log('用户登录状态变化，重新检查收藏状态');
+      setTimeout(batchCheckFavoritesForCards, 500);
+    });
+  }
+
   // 简易图片灯箱（点击缩略图放大预览）
   setupLightbox();
+  
+  // 批量检查收藏状态函数（公开以便外部调用）
+  async function batchCheckFavoritesForCards() {
+    // 等待服务加载完成（增加等待时间）
+    let waitCount = 0;
+    const maxWait = 100; // 增加到10秒
+    while (waitCount < maxWait && (!window.favoritesService || !window.SimpleAuth)) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      waitCount++;
+    }
+    
+    // 如果服务未加载，尝试再次等待
+    if (!window.favoritesService || !window.SimpleAuth) {
+      console.log('收藏服务未就绪，延迟重试...');
+      setTimeout(batchCheckFavoritesForCards, 1000);
+      return;
+    }
+    
+    // 如果用户未登录，也要更新收藏数（但不高亮个人收藏状态）
+    const isLoggedIn = window.SimpleAuth.isLoggedIn();
+    
+    try {
+      // 查找所有收藏按钮（包括动态渲染和静态渲染的）
+      const favoriteButtons = document.querySelectorAll('.card-favorite-btn, .favorite-btn');
+      if (favoriteButtons.length === 0) {
+        // 如果没有按钮，可能卡片还未渲染，稍后重试
+        setTimeout(batchCheckFavoritesForCards, 500);
+        return;
+      }
+      
+      // 收集所有URL
+      const postUrls = Array.from(favoriteButtons)
+        .map(btn => {
+          const url = btn.getAttribute('data-post-url') || btn.closest('[data-post-url]')?.getAttribute('data-post-url');
+          return url;
+        })
+        .filter(url => url && url !== '#');
+      
+      if (postUrls.length === 0) return;
+      
+      // 同时获取收藏状态和收藏数
+      const [favoritesMap, countsMap] = await Promise.all([
+        isLoggedIn 
+          ? window.favoritesService.batchCheckFavorites(postUrls)
+          : Promise.resolve({}),
+        window.favoritesService.batchGetFavoriteCounts(postUrls)
+      ]);
+      
+      // 更新所有按钮状态
+      favoriteButtons.forEach(btn => {
+        const postUrl = btn.getAttribute('data-post-url') || btn.closest('[data-post-url]')?.getAttribute('data-post-url');
+        if (!postUrl || postUrl === '#') return;
+        
+        const icon = btn.querySelector('.favorite-icon');
+        const countEl = btn.querySelector('.favorite-count');
+        
+        // 更新收藏状态（仅已登录用户）
+        if (isLoggedIn && icon) {
+          const isFavorited = favoritesMap[postUrl] || false;
+          
+          if (isFavorited) {
+            btn.classList.add('favorited');
+            icon.textContent = '★';
+            icon.style.color = '#fbbf24';
+          } else {
+            btn.classList.remove('favorited');
+            icon.textContent = '☆';
+            icon.style.color = '#9ca3af';
+          }
+        }
+        
+        // 更新收藏数（所有用户都能看到）
+        if (countEl) {
+          const count = countsMap[postUrl] || 0;
+          countEl.textContent = count > 0 ? count : '0';
+        }
+      });
+      
+      console.log(`✅ 批量更新了 ${favoriteButtons.length} 个收藏按钮的状态`);
+    } catch (error) {
+      console.warn('批量检查收藏状态失败:', error);
+      // 如果失败，稍后重试
+      setTimeout(batchCheckFavoritesForCards, 2000);
+    }
+  }
+  
+  // 导出函数供外部调用
+  window.batchCheckFavoritesForCards = batchCheckFavoritesForCards;
 
   async function enhanceCard(card) {
     if (card.dataset.enhanced === '1') return;
@@ -732,6 +864,24 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   }
-});
+}
 
+// DOMContentLoaded 时初始化
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initCardEnhancements);
+} else {
+  initCardEnhancements();
+}
+
+// Turbolinks 页面加载时也初始化
+document.addEventListener('turbolinks:load', function() {
+  console.log('📄 Turbolinks 页面加载，重新初始化卡片增强');
+  initCardEnhancements();
+  // 延迟触发批量检查收藏状态
+  setTimeout(() => {
+    if (window.batchCheckFavoritesForCards) {
+      window.batchCheckFavoritesForCards();
+    }
+  }, 1500);
+});
 

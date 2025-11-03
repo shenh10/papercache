@@ -22,12 +22,7 @@ layout: default
         </span>
       {%- endif -%}
     </p>
-    {%- if site.supabase and site.supabase.enabled -%}
-    <div class="post-actions">
-      {%- include favorite-button.html -%}
-    </div>
-    {%- endif -%}
-  </header>
+    </header>
 
   <div class="post-content e-content" itemprop="articleBody">
     {{ content }}
