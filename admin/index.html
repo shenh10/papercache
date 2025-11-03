@@ -450,6 +450,9 @@ permalink: /admin/index.html
   }
   
   // 加载收藏统计
+  // 注意：统计的是所有用户的总收藏数，不是当前用户的
+  // 由于 RLS 策略限制，如果当前用户不是管理员，可能只能看到自己的收藏数
+  // 建议在 Supabase 中为管理员添加特殊 RLS 策略以查看所有数据
   async function loadFavoritesStats() {
     const statEl = document.getElementById('stat-total-favorites');
     if (!statEl) return;
@@ -461,15 +464,20 @@ permalink: /admin/index.html
     }
 
     try {
+      // 尝试使用 RPC 函数统计（如果存在且绕过 RLS）
+      // 如果没有，则使用直接查询（可能受 RLS 限制）
       const { count, error } = await supabase
         .from('favorites')
         .select('*', { count: 'exact', head: true });
 
       if (error) {
         console.warn('[Admin] 无法查询收藏数:', error);
+        console.warn('[Admin] 错误详情:', error.message);
+        console.warn('[Admin] 注意：可能由于 RLS 策略限制，只能查询当前用户的收藏');
         statEl.textContent = '-';
       } else {
         statEl.textContent = count || 0;
+        console.log('[Admin] 总收藏数（可能受RLS限制）:', count);
       }
     } catch (error) {
       console.error('[Admin] 加载收藏统计失败:', error);
@@ -801,6 +809,9 @@ permalink: /admin/index.html
   // ============================================
 
   // 加载DAU统计
+  // 注意：DAU统计的是活跃的会话数（session），不是唯一的注册用户数
+  // 如果同一个用户在一天内多次访问，或匿名用户访问，都会增加DAU计数
+  // 因此DAU可能大于总用户数，这是正常的
   async function loadDAUStats() {
     if (!window.AdminAnalytics) {
       console.error('[Admin] AdminAnalytics service not loaded');
@@ -811,9 +822,10 @@ permalink: /admin/index.html
     }
 
     try {
-      // 今日DAU
+      // 今日DAU（使用本地日期，注意时区）
       const today = new Date().toISOString().split('T')[0];
-      console.log('[Admin] 查询今日DAU:', today);
+      console.log('[Admin] 查询今日DAU（UTC日期）:', today);
+      console.log('[Admin] 本地时间:', new Date().toLocaleString('zh-CN'));
       const todayDAU = await window.AdminAnalytics.getDailyActiveUsers(today);
       console.log('[Admin] 今日DAU结果:', todayDAU);
       document.getElementById('dau-today').textContent = todayDAU !== null && todayDAU !== undefined ? todayDAU : 0;
@@ -850,15 +862,27 @@ permalink: /admin/index.html
     if (!window.AdminAnalytics) return;
 
     const container = document.getElementById('dau-chart-container');
-    const startDate = document.getElementById('dau-start-date').value || 
-      new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    const endDate = document.getElementById('dau-end-date').value || 
-      new Date().toISOString().split('T')[0];
+    let startDate = document.getElementById('dau-start-date').value;
+    let endDate = document.getElementById('dau-end-date').value;
+    
+    // 如果没有设置日期，使用默认值
+    if (!startDate) {
+      const defaultStart = new Date();
+      defaultStart.setDate(defaultStart.getDate() - 30);
+      startDate = defaultStart.toISOString().split('T')[0];
+      document.getElementById('dau-start-date').value = startDate;
+    }
+    if (!endDate) {
+      endDate = new Date().toISOString().split('T')[0];
+      document.getElementById('dau-end-date').value = endDate;
+    }
 
+    console.log('[Admin] 查询DAU图表，日期范围:', startDate, '到', endDate);
     container.innerHTML = '<div class="chart-loading">加载中...</div>';
 
     try {
       const data = await window.AdminAnalytics.getActiveUsersInRange(startDate, endDate);
+      console.log('[Admin] DAU图表数据:', data);
       
       if (!data || data.length === 0) {
         container.innerHTML = '<div class="chart-message">暂无数据</div>';

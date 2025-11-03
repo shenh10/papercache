@@ -110,7 +110,7 @@ BEGIN
   RETURN QUERY
   SELECT
     DATE(created_at) as date,
-    COUNT(DISTINCT COALESCE(user_id, session_id))::INTEGER as active_users,
+    COUNT(DISTINCT COALESCE(user_id::TEXT, session_id))::INTEGER as active_users,
     COUNT(DISTINCT user_id) FILTER (WHERE user_id IS NOT NULL)::INTEGER as authenticated_users,
     COUNT(DISTINCT session_id) FILTER (WHERE user_id IS NULL)::INTEGER as anonymous_users
   FROM user_activity_logs
@@ -141,7 +141,7 @@ BEGIN
     page_path,
     MAX(page_title) as page_title,
     COUNT(*)::INTEGER as view_count,
-    COUNT(DISTINCT COALESCE(user_id, session_id))::INTEGER as unique_visitors
+    COUNT(DISTINCT COALESCE(user_id::TEXT, session_id))::INTEGER as unique_visitors
   FROM user_activity_logs
   WHERE activity_type = 'page_view'
     AND DATE(created_at) BETWEEN p_start_date AND p_end_date
@@ -171,7 +171,7 @@ BEGIN
   SELECT
     search_query,
     COUNT(*)::INTEGER as search_count,
-    COUNT(DISTINCT COALESCE(user_id, session_id))::INTEGER as unique_searchers
+    COUNT(DISTINCT COALESCE(user_id::TEXT, session_id))::INTEGER as unique_searchers
   FROM user_activity_logs
   WHERE activity_type = 'search'
     AND DATE(created_at) BETWEEN p_start_date AND p_end_date
