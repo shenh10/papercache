@@ -91,11 +91,18 @@
     }
     
     if (!supabase) {
-      console.error('ClickStats: Supabase client not available');
+      console.error('[ClickStats] Supabase client not available');
       return { success: false, error: 'Supabase client not available' };
     }
     
     const normalizedUrl = normalizeUrl(postUrl);
+    
+    if (!normalizedUrl || normalizedUrl === '/') {
+      console.error('[ClickStats] 无效的URL:', postUrl, '规范化后:', normalizedUrl);
+      return { success: false, error: 'Invalid URL' };
+    }
+    
+    console.log('[ClickStats] 调用 increment_post_click, URL:', normalizedUrl);
     
     try {
       // 使用 PostgreSQL 函数原子性增加点击量
@@ -104,13 +111,80 @@
       });
       
       if (error) {
-        console.error('ClickStats: Failed to track click', error);
+        console.error('[ClickStats] RPC调用失败:', error, 'URL:', normalizedUrl);
+        // 如果RPC函数不存在，尝试直接更新表
+        if (error.code === '42883' || error.message?.includes('function') || error.message?.includes('does not exist')) {
+          console.warn('[ClickStats] RPC函数不存在，尝试直接更新表');
+          return await trackClickFallback(normalizedUrl);
+        }
         return { success: false, error: error.message };
       }
       
+      console.log('[ClickStats] 点击量更新成功:', normalizedUrl, '新计数:', data);
       return { success: true, clickCount: data };
     } catch (error) {
-      console.error('ClickStats: Error tracking click', error);
+      console.error('[ClickStats] 点击追踪异常:', error, 'URL:', normalizedUrl);
+      return { success: false, error: error.message };
+    }
+  }
+  
+  // 降级方案：直接更新表（如果RPC函数不存在）
+  async function trackClickFallback(normalizedUrl) {
+    try {
+      console.log('[ClickStats] 使用降级方案更新点击量:', normalizedUrl);
+      
+      // 先尝试查询是否存在
+      const { data: existing, error: queryError } = await supabase
+        .from('post_clicks')
+        .select('click_count')
+        .eq('post_url', normalizedUrl)
+        .maybeSingle();
+      
+      if (queryError && queryError.code !== 'PGRST116') {
+        console.error('[ClickStats] 查询现有记录失败:', queryError);
+        return { success: false, error: queryError.message };
+      }
+      
+      if (existing) {
+        // 更新现有记录
+        const { data, error } = await supabase
+          .from('post_clicks')
+          .update({ 
+            click_count: (existing.click_count || 0) + 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq('post_url', normalizedUrl)
+          .select('click_count')
+          .single();
+        
+        if (error) {
+          console.error('[ClickStats] 更新失败:', error);
+          return { success: false, error: error.message };
+        }
+        
+        console.log('[ClickStats] 更新成功，新计数:', data?.click_count);
+        return { success: true, clickCount: data?.click_count || 0 };
+      } else {
+        // 插入新记录
+        const { data, error } = await supabase
+          .from('post_clicks')
+          .insert({
+            post_url: normalizedUrl,
+            click_count: 1
+          })
+          .select('click_count')
+          .single();
+        
+        if (error) {
+          console.error('[ClickStats] 插入失败:', error);
+          return { success: false, error: error.message };
+        }
+        
+        console.log('[ClickStats] 插入成功，新计数:', data?.click_count);
+        return { success: true, clickCount: data?.click_count || 1 };
+      }
+    } catch (error) {
+      console.error('[ClickStats] Fallback方案失败:', error);
       return { success: false, error: error.message };
     }
   }

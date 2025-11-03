@@ -321,9 +321,28 @@ function showAuthLoading(show) {
 // 登录处理函数
 async function handleGitHubLogin() {
   showAuthLoading(true);
-  // GitHub登录暂时不可用（SimpleAuth暂未实现OAuth）
-  showAuthLoading(false);
-  showAuthError('GitHub登录暂不可用，请使用邮箱登录', false);
+  showAuthError(''); // 清除之前的错误
+
+  try {
+    if (!window.SimpleAuth) {
+      throw new Error('认证系统未初始化，请刷新页面重试');
+    }
+
+    console.log('开始GitHub登录...');
+    
+    // 调用SimpleAuth的OAuth登录方法
+    await window.SimpleAuth.signInWithOAuth('github');
+    
+    // OAuth登录会重定向，所以这里不会继续执行
+    // 如果执行到这里，说明没有重定向（可能是错误情况）
+    console.log('GitHub登录流程已启动');
+    // 不要关闭loading，因为即将重定向
+
+  } catch (error) {
+    console.error('GitHub登录失败:', error);
+    showAuthLoading(false);
+    showAuthError('GitHub登录失败：' + (error.message || '未知错误'), false);
+  }
 }
 
 // 监听认证状态变化，自动关闭模态框

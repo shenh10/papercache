@@ -211,7 +211,7 @@
   }
 
   /**
-   * 用户登录
+   * 用户登录（邮箱/密码）
    */
   async function login(email, password) {
     if (!supabase) {
@@ -231,6 +231,68 @@
 
     console.log('SimpleAuth: ✅ 登录成功');
     return data;
+  }
+
+  /**
+   * OAuth登录（GitHub等）
+   */
+  async function signInWithOAuth(provider) {
+    if (!supabase) {
+      throw new Error('认证系统未初始化');
+    }
+
+    console.log('SimpleAuth: 开始OAuth登录，提供商:', provider);
+
+    try {
+      // 构建重定向URL，包含baseurl
+      const baseurl = window.PC_BASEURL || '';
+      const currentPath = window.location.pathname;
+      
+      // 如果当前路径不包含baseurl，需要添加
+      let redirectTo = window.location.origin;
+      if (baseurl && baseurl !== '/') {
+        redirectTo += baseurl;
+      }
+      // 添加当前路径（去掉可能的baseurl前缀）
+      let path = currentPath;
+      if (baseurl && baseurl !== '/' && path.startsWith(baseurl)) {
+        path = path.substring(baseurl.length);
+      }
+      redirectTo += path || '/';
+      
+      // 添加hash和search参数（如果有）
+      if (window.location.search) {
+        redirectTo += window.location.search;
+      }
+      if (window.location.hash) {
+        redirectTo += window.location.hash;
+      }
+
+      console.log('SimpleAuth: OAuth重定向URL:', redirectTo);
+
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: provider, // 'github' 或 'google'
+        options: {
+          redirectTo: redirectTo,
+          // 可选：指定需要请求的权限范围
+          // scopes: 'read:user user:email' // GitHub scope示例
+        }
+      });
+
+      if (error) {
+        console.error('SimpleAuth: OAuth登录失败', error.message);
+        throw error;
+      }
+
+      // OAuth登录会重定向到提供商，所以这里返回的数据可能为空
+      // 实际登录状态会在重定向回来后通过auth state listener更新
+      console.log('SimpleAuth: OAuth登录流程已启动，即将重定向');
+      return { success: true, data };
+
+    } catch (error) {
+      console.error('SimpleAuth: OAuth登录异常', error);
+      throw error;
+    }
   }
 
   /**
@@ -367,6 +429,7 @@
   window.SimpleAuth = {
     init,
     login,
+    signInWithOAuth,
     logout,
     getCurrentUser,
     isLoggedIn,

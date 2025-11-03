@@ -180,38 +180,45 @@ async function initCardEnhancements() {
   }, 3000);
 
   // 批量检查收藏状态（已登录用户）
-  // 延迟检查，确保所有卡片都渲染完成
-  setTimeout(() => {
+  // 使用微任务确保在DOM渲染前执行
+  Promise.resolve().then(() => {
     batchCheckFavoritesForCards();
-  }, 1500);
-  
-  // 如果服务加载较慢，在服务就绪后也触发一次
-  const checkServiceReady = setInterval(() => {
-    if (window.favoritesService && window.SimpleAuth) {
-      clearInterval(checkServiceReady);
-      // 服务已就绪，触发一次批量检查
-      setTimeout(batchCheckFavoritesForCards, 500);
-    }
-  }, 500);
-  
-  // 10秒后停止检查（避免无限循环）
-  setTimeout(() => {
-    clearInterval(checkServiceReady);
-  }, 10000);
-  
-  // 如果页面有动态加载内容，使用MutationObserver监听DOM变化
-  const observer = new MutationObserver(() => {
-    // 延迟执行，避免频繁触发
-    clearTimeout(window.favoriteCheckTimeout);
-    window.favoriteCheckTimeout = setTimeout(() => {
-      batchCheckFavoritesForCards();
-    }, 1000);
   });
   
-  // 监听整个文档的变化
+  // 添加防抖标记，避免重复检查
+  let isCheckingFavorites = false;
+
+  // 如果页面有动态加载内容，使用MutationObserver监听DOM变化（只监听新增元素）
+  const observer = new MutationObserver((mutations) => {
+    // 检查是否有新增的收藏按钮
+    const hasNewFavoriteButtons = mutations.some(mutation =>
+      mutation.type === 'childList' &&
+      Array.from(mutation.addedNodes).some(node => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          return node.querySelector('.card-favorite-btn, .favorite-btn') ||
+                 node.classList?.contains('.card-favorite-btn') ||
+                 node.classList?.contains('.favorite-btn');
+        }
+        return false;
+      })
+    );
+
+    if (hasNewFavoriteButtons && !isCheckingFavorites) {
+      // 较短的防抖时间，避免明显延迟
+      clearTimeout(window.favoriteCheckTimeout);
+      window.favoriteCheckTimeout = setTimeout(() => {
+        if (!isCheckingFavorites) {
+          batchCheckFavoritesForCards();
+        }
+      }, 300); // 减少到300ms
+    }
+  });
+
+  // 监听整个文档的变化（优化配置）
   observer.observe(document.body, {
     childList: true,
-    subtree: true
+    subtree: true,
+    attributes: false // 不监听属性变化以减少触发
   });
   
   // 监听用户登录状态变化
@@ -227,32 +234,70 @@ async function initCardEnhancements() {
   
   // 批量检查收藏状态函数（公开以便外部调用）
   async function batchCheckFavoritesForCards() {
-    // 等待服务加载完成（增加等待时间）
-    let waitCount = 0;
-    const maxWait = 100; // 增加到10秒
-    while (waitCount < maxWait && (!window.favoritesService || !window.SimpleAuth)) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      waitCount++;
-    }
-    
-    // 如果服务未加载，尝试再次等待
-    if (!window.favoritesService || !window.SimpleAuth) {
-      console.log('收藏服务未就绪，延迟重试...');
-      setTimeout(batchCheckFavoritesForCards, 1000);
+    // 防止重复检查
+    if (isCheckingFavorites) {
+      console.log('📄 正在检查收藏状态，跳过重复调用');
       return;
     }
-    
-    // 如果用户未登录，也要更新收藏数（但不高亮个人收藏状态）
-    const isLoggedIn = window.SimpleAuth.isLoggedIn();
-    
+
+    isCheckingFavorites = true;
+
     try {
-      // 查找所有收藏按钮（包括动态渲染和静态渲染的）
+      // 如果收藏服务还未就绪，先只显示收藏数（如果可能）
       const favoriteButtons = document.querySelectorAll('.card-favorite-btn, .favorite-btn');
       if (favoriteButtons.length === 0) {
-        // 如果没有按钮，可能卡片还未渲染，稍后重试
-        setTimeout(batchCheckFavoritesForCards, 500);
+        // 如果没有按钮，可能卡片还未渲染，快速重试一次
+        console.log('📄 未找到收藏按钮，200ms后重试');
+        setTimeout(() => {
+          if (!isCheckingFavorites) {
+            batchCheckFavoritesForCards();
+          }
+        }, 200);
         return;
       }
+
+      // 如果收藏服务未就绪，等待服务就绪但不显示任何状态
+      if (!window.favoritesService) {
+        console.log('📄 收藏服务未就绪，等待服务加载...');
+
+        // 隐藏收藏按钮直到状态确定，避免闪烁
+        favoriteButtons.forEach(btn => {
+          btn.style.visibility = 'hidden';
+        });
+
+        // 设置服务就绪后立即更新
+        const checkServiceReady = setInterval(() => {
+          if (window.favoritesService) {
+            clearInterval(checkServiceReady);
+            console.log('📄 收藏服务已就绪，立即更新收藏状态');
+
+            // 恢复按钮可见性并执行检查
+            favoriteButtons.forEach(btn => {
+              btn.style.visibility = 'visible';
+            });
+
+            // 立即执行，无需延迟
+            if (!isCheckingFavorites) {
+              batchCheckFavoritesForCards();
+            }
+          }
+        }, 100);
+
+        // 3秒后停止检查并显示按钮
+        setTimeout(() => {
+          clearInterval(checkServiceReady);
+          favoriteButtons.forEach(btn => {
+            btn.style.visibility = 'visible';
+          });
+        }, 3000);
+
+        return;
+      }
+    
+    // SimpleAuth 可能不存在，但不需要等待（未登录用户也可以显示收藏数）
+    const isLoggedIn = window.SimpleAuth && window.SimpleAuth.isLoggedIn();
+
+    {
       
       // 收集所有URL
       const postUrls = Array.from(favoriteButtons)
@@ -263,27 +308,29 @@ async function initCardEnhancements() {
         .filter(url => url && url !== '#');
       
       if (postUrls.length === 0) return;
-      
+
       // 同时获取收藏状态和收藏数
       const [favoritesMap, countsMap] = await Promise.all([
-        isLoggedIn 
+        isLoggedIn
           ? window.favoritesService.batchCheckFavorites(postUrls)
           : Promise.resolve({}),
         window.favoritesService.batchGetFavoriteCounts(postUrls)
       ]);
-      
+
+      console.log('📄 批量检查收藏状态，共', postUrls.length, '篇文章，已登录:', isLoggedIn);
+
       // 更新所有按钮状态
       favoriteButtons.forEach(btn => {
         const postUrl = btn.getAttribute('data-post-url') || btn.closest('[data-post-url]')?.getAttribute('data-post-url');
         if (!postUrl || postUrl === '#') return;
-        
+
         const icon = btn.querySelector('.favorite-icon');
         const countEl = btn.querySelector('.favorite-count');
-        
+
         // 更新收藏状态（仅已登录用户）
         if (isLoggedIn && icon) {
           const isFavorited = favoritesMap[postUrl] || false;
-          
+
           if (isFavorited) {
             btn.classList.add('favorited');
             icon.textContent = '★';
@@ -294,25 +341,53 @@ async function initCardEnhancements() {
             icon.style.color = '#9ca3af';
           }
         }
-        
+
         // 更新收藏数（所有用户都能看到）
         if (countEl) {
           const count = countsMap[postUrl] || 0;
           countEl.textContent = count > 0 ? count : '0';
         }
       });
-      
-      console.log(`✅ 批量更新了 ${favoriteButtons.length} 个收藏按钮的状态`);
+
+      console.log(`✅ 批量更新了 ${favoriteButtons.length} 个收藏按钮的状态（已登录: ${isLoggedIn}）`);
     } catch (error) {
       console.warn('批量检查收藏状态失败:', error);
-      // 如果失败，稍后重试
-      setTimeout(batchCheckFavoritesForCards, 2000);
+      // 快速重试一次，如果还失败就放弃
+      setTimeout(() => {
+        if (!isCheckingFavorites) {
+          batchCheckFavoritesForCards();
+        }
+      }, 1000);
+    } finally {
+      // 确保重置检查标记
+      isCheckingFavorites = false;
     }
   }
   
   // 导出函数供外部调用
   window.batchCheckFavoritesForCards = batchCheckFavoritesForCards;
 
+  // 简单的字符串相似度计算（用于验证标题匹配）
+  function calculateSimilarity(str1, str2) {
+    if (!str1 || !str2) return 0;
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+    if (longer.length === 0) return 1.0;
+    
+    // 简单的匹配：检查较短字符串有多少字符在较长字符串中出现
+    let matches = 0;
+    const longerLower = longer.toLowerCase();
+    const shorterLower = shorter.toLowerCase();
+    
+    for (let i = 0; i < shorterLower.length; i++) {
+      if (longerLower.includes(shorterLower[i])) {
+        matches++;
+      }
+    }
+    
+    return matches / longer.length;
+  }
+  
   async function enhanceCard(card) {
     if (card.dataset.enhanced === '1') return;
     
@@ -323,6 +398,23 @@ async function initCardEnhancements() {
     if (!linkEl) return;
 
     const postUrl = linkEl.getAttribute('href');
+    
+    // 验证URL是否有效
+    if (!postUrl || postUrl === '#' || postUrl.startsWith('javascript:')) {
+      console.warn('[card-enhancements] 无效的URL，跳过增强:', postUrl);
+      return;
+    }
+    
+    // 验证卡片标题是否与URL匹配（防止错误的卡片被处理）
+    const titleEl = card.querySelector('.post-card-title, .post-card-title-modern');
+    const expectedTitle = titleEl ? titleEl.textContent.trim() : '';
+    
+    // 记录处理的卡片信息用于调试
+    console.log('[card-enhancements] 开始增强卡片:', {
+      url: postUrl,
+      title: expectedTitle.substring(0, 50),
+      cardIndex: Array.from(card.parentElement?.children || []).indexOf(card)
+    });
     
     // 检查是否可以使用预生成的缩略图和摘要
     let lookupUrl = postUrl;
@@ -373,7 +465,21 @@ async function initCardEnhancements() {
       pregenThumbCount++;
     } else if (hasPregenThumb) {
       // 只有在没有服务器端缩略图时才客户端处理
+      // 再次验证URL（防止在检查过程中URL被修改）
+      const currentPostUrl = linkEl.getAttribute('href');
+      if (currentPostUrl !== postUrl) {
+        console.warn('[card-enhancements] URL在添加预生成缩略图时被修改，停止处理');
+        return;
+      }
+      
       const body = ensureBody(card);
+      
+      // 验证body是否还在当前卡片中
+      if (!card.contains(body)) {
+        console.warn('[card-enhancements] 卡片结构在添加预生成缩略图时改变，停止处理');
+        return;
+      }
+      
       const thumb = document.createElement('div');
       const isModern = card.classList.contains('post-card-modern');
       thumb.className = (isModern ? 'post-card-thumb-modern' : 'post-card-thumb');
@@ -381,21 +487,33 @@ async function initCardEnhancements() {
       body.parentNode.insertBefore(thumb, body);
       usedPregenThumb = true;
       pregenThumbCount++;
-      console.log('🖼️ 客户端添加预生成缩略图');
+      console.log('🖼️ 客户端添加预生成缩略图，URL:', postUrl);
     }
     
     // 2) 使用预生成摘要
     if (hasPregenExcerpt && !card.querySelector('.post-card-excerpt, .post-card-excerpt-modern')) {
+      // 再次验证URL（防止在检查过程中URL被修改）
+      const currentPostUrl = linkEl.getAttribute('href');
+      if (currentPostUrl !== postUrl) {
+        console.warn('[card-enhancements] URL在添加预生成摘要时被修改，停止处理');
+        return;
+      }
+      
       const body = ensureBody(card);
+      
+      // 验证body是否还在当前卡片中
+      if (!card.contains(body)) {
+        console.warn('[card-enhancements] 卡片结构在添加预生成摘要时改变，停止处理');
+        return;
+      }
+      
       const excerpt = document.createElement('p');
       excerpt.className = (card.classList.contains('post-card-modern') ? 'post-card-excerpt-modern' : 'post-card-excerpt');
       excerpt.textContent = truncate(excerptsMapping[lookupUrl], 80);
       body.appendChild(excerpt);
       usedPregenExcerpt = true;
       pregenExcerptCount++;
-      console.log('✅ 使用预生成摘要:', truncate(excerptsMapping[lookupUrl], 50) + '...');
-      console.log('✅ 摘要元素已添加到DOM:', excerpt.outerHTML);
-      console.log('✅ 卡片内容:', card.innerHTML.substring(0, 200) + '...');
+      console.log('✅ 使用预生成摘要，URL:', postUrl, '摘要:', truncate(excerptsMapping[lookupUrl], 50) + '...');
     }
     
     // 如果缩略图和摘要都有预生成版本，完全跳过fetch
@@ -411,13 +529,48 @@ async function initCardEnhancements() {
     
     // 否则，回退到原来的fetch方式
     try {
+      // 在fetch前再次验证URL（防止URL被修改）
+      const currentPostUrl = linkEl.getAttribute('href');
+      if (!currentPostUrl || currentPostUrl !== postUrl) {
+        console.warn('[card-enhancements] URL在增强过程中被修改，停止处理:', {
+          original: postUrl,
+          current: currentPostUrl
+        });
+        return;
+      }
+      
       const html = await fetch(postUrl, { credentials: 'same-origin' }).then(r => r.text());
       const doc = new DOMParser().parseFromString(html, 'text/html');
+      
+      // 验证获取的HTML是否是正确的文章页面
+      const fetchedTitle = doc.querySelector('h1, .post-title, .page-title, title');
+      const fetchedTitleText = fetchedTitle ? fetchedTitle.textContent.trim() : '';
+      
+      // 如果标题完全不匹配（差异超过50%），可能是错误的页面
+      if (expectedTitle && fetchedTitleText) {
+        const similarity = calculateSimilarity(expectedTitle.toLowerCase(), fetchedTitleText.toLowerCase());
+        if (similarity < 0.3) {
+          console.warn('[card-enhancements] 获取的页面标题与卡片标题不匹配:', {
+            cardTitle: expectedTitle.substring(0, 50),
+            fetchedTitle: fetchedTitleText.substring(0, 50),
+            url: postUrl,
+            similarity
+          });
+          // 不返回，继续处理，但记录警告
+        }
+      }
 
       // 1) 缩略图：顺序选择第一个"图/figure/fig"相关的非公式图片；否则占位
       if (!card.querySelector('.post-card-thumb, .post-card-thumb-modern')) {
         const imgSrc = findFirstFigureImage(doc);
         const body = ensureBody(card);
+        
+        // 再次验证body是否还在当前卡片中（防止DOM结构改变）
+        if (!card.contains(body)) {
+          console.warn('[card-enhancements] 卡片结构在增强过程中改变，停止添加缩略图');
+          return;
+        }
+        
         const thumb = document.createElement('div');
         // 根据卡片类型使用不同的CSS类
         const isModern = card.classList.contains('post-card-modern');
@@ -464,6 +617,20 @@ async function initCardEnhancements() {
         } else {
           // 如果没有预生成摘要，则动态提取
           console.log('🔍 预生成摘要不存在，开始动态提取，文章URL:', postUrl);
+          
+          // 再次验证URL和卡片结构（在提取摘要前）
+          const currentPostUrl = linkEl.getAttribute('href');
+          if (currentPostUrl !== postUrl) {
+            console.warn('[card-enhancements] URL在提取摘要时被修改，停止处理');
+            return;
+          }
+          
+          const body = ensureBody(card);
+          if (!card.contains(body)) {
+            console.warn('[card-enhancements] 卡片结构在提取摘要时改变，停止处理');
+            return;
+          }
+          
           const postContent = doc.querySelector('.post-content');
 
           if (postContent) {
@@ -866,22 +1033,30 @@ async function initCardEnhancements() {
   }
 }
 
-// DOMContentLoaded 时初始化
+// 尽早初始化，不等待DOMContentLoaded
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', initCardEnhancements);
 } else {
   initCardEnhancements();
 }
 
+// 同时立即执行一次收藏状态预检查（如果可能）
+if (window.favoritesService && document.readyState !== 'loading') {
+  Promise.resolve().then(() => {
+    const favoriteButtons = document.querySelectorAll('.card-favorite-btn, .favorite-btn');
+    if (favoriteButtons.length > 0) {
+      window.batchCheckFavoritesForCards?.();
+    }
+  });
+}
+
 // Turbolinks 页面加载时也初始化
 document.addEventListener('turbolinks:load', function() {
   console.log('📄 Turbolinks 页面加载，重新初始化卡片增强');
   initCardEnhancements();
-  // 延迟触发批量检查收藏状态
-  setTimeout(() => {
-    if (window.batchCheckFavoritesForCards) {
-      window.batchCheckFavoritesForCards();
-    }
-  }, 1500);
+  // 立即执行收藏状态检查
+  if (window.batchCheckFavoritesForCards) {
+    window.batchCheckFavoritesForCards();
+  }
 });
 

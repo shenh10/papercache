@@ -48,7 +48,7 @@ jobs:
 
             - name: 📦 Install Python dependencies
               run: |
-                  pip install beautifulsoup4 PyYAML lxml Pillow requests
+                  pip install beautifulsoup4 PyYAML lxml Pillow requests python-dotenv
 
             - name: 📦 Install Node.js dependencies
               run: |
@@ -127,7 +127,22 @@ jobs:
             - name: 🏗️ Rebuild with Jekyll (second build to include thumbnails)
               run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
               env:
-                  JEKYLL_ENV: production
+                JEKYLL_ENV: production
+
+            - name: 🧹 Sync Supabase with posts (cleanup orphan records)
+              run: |
+                if [ -n "${{ secrets.SUPABASE_URL }}" ] && [ -n "${{ secrets.SUPABASE_SERVICE_KEY }}" ]; then
+                  echo "🔄 同步 Supabase 数据库..."
+                  export SUPABASE_URL="${{ secrets.SUPABASE_URL }}"
+                  export SUPABASE_SERVICE_KEY="${{ secrets.SUPABASE_SERVICE_KEY }}"
+                  python3 scripts/sync_supabase_with_posts.py || echo "⚠️  Supabase 同步失败，继续部署..."
+                else
+                  echo "⚠️  Supabase 配置未设置，跳过同步"
+                fi
+              continue-on-error: true
+              env:
+                SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+                SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
 
             - name: 📤 Upload artifact
               uses: actions/upload-pages-artifact@v3

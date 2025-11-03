@@ -269,7 +269,26 @@ permalink: /account/favorites.html
 
     // 渲染列表
     filtered.forEach((fav, index) => {
-      const escapedPostUrl = fav.post_url.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      // 获取baseurl并构建完整的URL
+      const baseurl = window.PC_BASEURL || '';
+      let postUrl = fav.post_url;
+      
+      // 确保URL包含baseurl前缀（数据库中存储的URL可能已经移除了baseurl）
+      if (baseurl && baseurl !== '/' && !postUrl.startsWith(baseurl)) {
+        // 确保postUrl以/开头
+        if (!postUrl.startsWith('/')) {
+          postUrl = '/' + postUrl;
+        }
+        postUrl = baseurl + postUrl;
+      } else if (!postUrl.startsWith('/')) {
+        // 如果没有baseurl，确保URL至少以/开头
+        postUrl = '/' + postUrl;
+      }
+      
+      // 用于显示的URL（包含baseurl）
+      const escapedPostUrl = postUrl.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+      // 用于checkbox标识的URL（原始URL，不包含baseurl，用于删除操作）
+      const escapedOriginalUrl = fav.post_url.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       const escapedTitle = (fav.title || fav.post_url).replace(/</g, '&lt;').replace(/>/g, '&gt;');
       const createdDate = fav.created_at ? new Date(fav.created_at).toLocaleDateString('zh-CN') : '未知日期';
 
@@ -282,7 +301,7 @@ permalink: /account/favorites.html
       item.dataset.postUrl = fav.post_url;
       item.innerHTML = `
         <div class="favorite-item-checkbox-wrapper">
-          <input type="checkbox" class="favorite-item-checkbox" id="fav-checkbox-${index}" data-post-url="${escapedPostUrl}" />
+          <input type="checkbox" class="favorite-item-checkbox" id="fav-checkbox-${index}" data-post-url="${escapedOriginalUrl}" />
           <label for="fav-checkbox-${index}" class="checkbox-label"></label>
         </div>
         <a href="${escapedPostUrl}" class="favorite-item-link">

@@ -281,9 +281,9 @@
             // 重新初始化点击追踪（延迟执行，确保DOM已完全加载）
             setTimeout(function() {
               if (window.papercacheClickTracker && typeof window.papercacheClickTracker.loadClickData === 'function') {
-                window.papercacheClickTracker.loadClickData().then(function(clicks) {
+                window.papercacheClickTracker.loadClickData().then(function(data) {
                   if (window.papercacheClickTracker.updatePopularPosts) {
-                    window.papercacheClickTracker.updatePopularPosts(clicks);
+                    window.papercacheClickTracker.updatePopularPosts(data);
                   }
                 }).catch(function(err) {
                   console.warn('重新初始化点击追踪失败:', err);

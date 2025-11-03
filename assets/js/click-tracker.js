@@ -2,21 +2,38 @@
 (function() {
   'use strict';
   
-  // 规范化 URL
+  // 规范化 URL（与 favorites.js 保持一致，移除 baseurl 前缀）
   function normalizeUrl(url) {
-    if (!url) return '';
+    if (!url || typeof url !== 'string') return '';
+    let normalized = url.trim();
+    
     try {
+      // 处理完整的URL
       if (url.startsWith('http://') || url.startsWith('https://')) {
         const urlObj = new URL(url);
-        return urlObj.pathname;
+        normalized = urlObj.pathname;
       }
     } catch (e) {
       // 忽略 URL 解析错误
     }
-    if (!url.startsWith('/')) {
-      url = '/' + url;
+    
+    // 移除baseurl前缀（如果存在）- 这是关键，确保与数据库存储格式一致
+    const baseurl = window.PC_BASEURL || '';
+    if (baseurl && baseurl !== '/' && normalized.startsWith(baseurl)) {
+      normalized = normalized.substring(baseurl.length);
     }
-    return url;
+    
+    // 确保以 / 开头
+    if (!normalized.startsWith('/')) {
+      normalized = '/' + normalized;
+    }
+    
+    // 移除尾部斜杠（除了根路径），确保存储和查询格式一致
+    if (normalized.length > 1 && normalized.endsWith('/')) {
+      normalized = normalized.slice(0, -1);
+    }
+    
+    return normalized;
   }
   
   // 等待 clickStatsService 初始化
@@ -32,36 +49,61 @@
     return window.clickStatsService || null;
   }
   
-  // 从 Supabase 获取点击数据
-  async function loadClickData() {
-    const service = await waitForClickStatsService();
-    if (!service) {
-      console.warn('ClickTracker: clickStatsService not available');
-      return {};
+  // 等待 favoritesService 初始化
+  async function waitForFavoritesService() {
+    let attempts = 0;
+    const maxAttempts = 50;
+    
+    while (attempts < maxAttempts && !window.favoritesService) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      attempts++;
     }
+    
+    return window.favoritesService || null;
+  }
+  
+  // 从 Supabase 获取点击数据和收藏数据
+  async function loadClickData() {
+    const clickService = await waitForClickStatsService();
+    const favoriteService = await waitForFavoritesService();
     
     // 获取所有需要显示的文章 URL
     const container = document.getElementById('popular-posts-list');
     if (!container) {
-      return {};
+      return { clicks: {}, favorites: {} };
     }
     
     const items = Array.from(container.querySelectorAll('.post-item[data-post-url]'));
-    const postUrls = items.map(item => {
-      let url = item.getAttribute('data-post-url');
-      return normalizeUrl(url);
-    }).filter(url => url && url !== '/');
+    // 收集原始URL（传递给服务，让服务内部进行规范化）
+    const originalUrls = items.map(item => item.getAttribute('data-post-url')).filter(url => url);
     
-    if (postUrls.length === 0) {
-      return {};
+    if (originalUrls.length === 0) {
+      return { clicks: {}, favorites: {} };
     }
     
     try {
-      const clicksMap = await service.batchGetClickCounts(postUrls);
-      return clicksMap;
+      // 并行获取点击量和收藏量
+      // 注意：传递给服务的应该是原始URL，服务内部会进行规范化
+      // 但 clickStatsService.batchGetClickCounts 可能需要规范化URL，所以我们也传递规范化URL
+      const normalizedUrls = originalUrls.map(url => normalizeUrl(url)).filter(url => url && url !== '/');
+      const [clicksMap, favoritesMap] = await Promise.all([
+        clickService ? clickService.batchGetClickCounts(normalizedUrls) : Promise.resolve({}),
+        favoriteService ? favoriteService.batchGetFavoriteCounts(originalUrls) : Promise.resolve({})
+      ]);
+      
+      // 将结果映射回原始URL（因为服务可能返回规范化URL作为键）
+      const clicksResult = {};
+      const favoritesResult = {};
+      originalUrls.forEach(originalUrl => {
+        const normalized = normalizeUrl(originalUrl);
+        clicksResult[originalUrl] = clicksMap[normalized] || clicksMap[originalUrl] || 0;
+        favoritesResult[originalUrl] = favoritesMap[originalUrl] || favoritesMap[normalized] || 0;
+      });
+      
+      return { clicks: clicksResult, favorites: favoritesResult };
     } catch (error) {
-      console.error('ClickTracker: Failed to load click data', error);
-      return {};
+      console.error('ClickTracker: Failed to load data', error);
+      return { clicks: {}, favorites: {} };
     }
   }
   
@@ -71,75 +113,60 @@
     const service = await waitForClickStatsService();
     
     if (!service) {
-      console.warn('ClickTracker: clickStatsService not available');
-      return { success: false };
+      console.warn('[ClickTracker] clickStatsService not available');
+      return { success: false, error: 'Service not available' };
     }
+    
+    console.log('[ClickTracker] 开始追踪点击:', normalizedUrl);
     
     try {
       const result = await service.trackClick(normalizedUrl);
       
       if (result.success) {
+        console.log('[ClickTracker] 点击追踪成功:', normalizedUrl, '点击量:', result.clickCount);
         // 重新加载数据以获取最新统计
-        const clicks = await loadClickData();
+        const data = await loadClickData();
         // 更新页面上的显示
-        const count = clicks[normalizedUrl] || result.clickCount || 0;
-        updateClickDisplay(normalizedUrl, count);
+        const clickCount = data.clicks[normalizedUrl] || result.clickCount || 0;
+        updateClickDisplay(normalizedUrl, clickCount);
         return result;
       } else {
-        console.error('ClickTracker: Failed to track click', result.error);
+        console.error('[ClickTracker] 点击追踪失败:', result.error, 'URL:', normalizedUrl);
         return result;
       }
     } catch (error) {
-      console.error('ClickTracker: Error tracking click', error);
+      console.error('[ClickTracker] 点击追踪异常:', error, 'URL:', normalizedUrl);
       return { success: false, error: error.message };
     }
   }
   
   // 更新页面上的点击数显示并重新排序
-  async function updateClickDisplay(postUrl, count) {
-    const items = document.querySelectorAll(`[data-post-url="${postUrl}"] .post-date-popular`);
-    items.forEach(el => {
-      el.textContent = count;
-    });
-    
+  async function updateClickDisplay(postUrl, clickCount) {
+    // 这里不需要单独更新显示，因为 updatePopularPosts 会统一更新
     // 重新排序"最多关注"列表
-    const clicks = await loadClickData();
-    updatePopularPosts(clicks);
+    const data = await loadClickData();
+    updatePopularPosts(data);
   }
   
-  // 规范化 URL（确保相对路径和绝对路径一致）
-  function normalizeUrl(url) {
-    if (!url) return '';
-    // 如果是完整 URL，提取路径部分
-    try {
-      if (url.startsWith('http://') || url.startsWith('https://')) {
-        const urlObj = new URL(url);
-        return urlObj.pathname;
-      }
-    } catch (e) {
-      // 忽略 URL 解析错误
-    }
-    // 确保以 / 开头
-    if (!url.startsWith('/')) {
-      url = '/' + url;
-    }
-    return url;
-  }
   
   // 初始化函数
   async function initClickTracker() {
-    // 从服务器加载点击数据
-    const clicks = await loadClickData();
+    // 从服务器加载点击和收藏数据
+    const data = await loadClickData();
     
     // 为所有文章链接添加点击追踪（支持多种链接样式）
     // 1. .post-link 类（首页的"最多关注"列表）
     // 2. .post-card-link-modern 类（搜索和分类页面的卡片链接）
     // 3. 任何包含 /papers/ 或 /slides/ 的链接
+    // 4. 更通用的选择器：所有指向文章页面的链接
     const postLinks = document.querySelectorAll(
       'a.post-link[href*="/papers/"], a.post-link[href*="/slides/"], ' +
       'a.post-card-link-modern[href*="/papers/"], a.post-card-link-modern[href*="/slides/"], ' +
-      'a[href*="/papers/"][href*=".html"], a[href*="/slides/"][href*=".html"]'
+      'a[href*="/papers/"][href*=".html"], a[href*="/slides/"][href*=".html"], ' +
+      'a[href*="/papers/"], a[href*="/slides/"]'
     );
+    
+    console.log(`[ClickTracker] 找到 ${postLinks.length} 个文章链接`);
     
     postLinks.forEach(link => {
       // 跳过已经绑定过追踪的链接
@@ -159,18 +186,23 @@
         // 规范化 URL
         url = normalizeUrl(url);
         if (!url || url === '/') {
+          console.warn('[ClickTracker] 跳过无效URL:', this.getAttribute('href'));
           return; // 跳过无效URL
         }
         
+        console.log('[ClickTracker] 追踪点击:', url);
+        
         // 异步追踪点击，不阻塞页面跳转
+        // 注意：由于使用了 passive: true，无法阻止页面跳转
+        // 但异步请求应该在跳转前完成，如果跳转太快可能丢失
         trackClick(url).catch(err => {
-          console.error('Failed to track click:', err);
+          console.error('[ClickTracker] Failed to track click:', err);
         });
       }, { passive: true }); // 使用 passive 以提高性能
     });
     
     // 更新并排序"最多关注"面板
-    updatePopularPosts(clicks);
+    updatePopularPosts(data);
   }
   
   // DOMContentLoaded 时初始化
@@ -184,62 +216,102 @@
   document.addEventListener('turbolinks:load', initClickTracker);
   
   // 更新"最多关注"面板的显示和排序
-  function updatePopularPosts(clicks) {
+  function updatePopularPosts(data) {
     const container = document.getElementById('popular-posts-list');
     if (!container) return;
     
+    // data 可能是旧格式（只有 clicks 对象）或新格式（{ clicks: {}, favorites: {} }）
+    let clicks = {};
+    let favorites = {};
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
+      if (data.clicks && data.favorites) {
+        // 新格式
+        clicks = data.clicks || {};
+        favorites = data.favorites || {};
+      } else {
+        // 旧格式（向后兼容）
+        clicks = data || {};
+        favorites = {};
+      }
+    }
+    
     const items = Array.from(container.querySelectorAll('.post-item[data-post-url]'));
     
-    // 更新点击数显示并过滤掉点击量为0的项目
+    // 更新显示并过滤掉点击量和收藏量都为0的项目
     const validItems = [];
     items.forEach(item => {
       let url = item.getAttribute('data-post-url');
+      const originalUrl = url;
       // 规范化 URL 以确保匹配
       url = normalizeUrl(url);
-      // 尝试多种 URL 格式进行匹配
-      const count = clicks[url] || clicks[item.getAttribute('data-post-url')] || 0;
+      
+      // 获取点击量和收藏量
+      const clickCount = clicks[url] || clicks[originalUrl] || 0;
+      const favoriteCount = favorites[url] || favorites[originalUrl] || 0;
+      const totalCount = clickCount + favoriteCount;
+      
       const dateEl = item.querySelector('.post-date-popular');
       if (dateEl) {
-        dateEl.textContent = count;
+        // 显示格式：点击量/收藏量
+        dateEl.textContent = `${clickCount}/${favoriteCount}`;
       }
       
-      // 只保留点击量大于0的项目
-      if (count > 0) {
-        validItems.push({ item, count, url });
+      // 只保留点击量和收藏量至少有一个大于0的项目
+      if (totalCount > 0) {
+        validItems.push({ item, clickCount, favoriteCount, totalCount, url });
       } else {
-        // 隐藏点击量为0的项目
+        // 隐藏点击量和收藏量都为0的项目
         item.style.display = 'none';
       }
     });
     
-    // 按点击量排序（降序）
+    // 按总排序（点击量+收藏量，降序）
     validItems.sort((a, b) => {
-      // 如果点击量相同，按标题排序（保持一致性）
-      if (b.count === a.count) {
-        const titleA = a.item.getAttribute('data-post-title') || '';
-        const titleB = b.item.getAttribute('data-post-title') || '';
-        return titleA.localeCompare(titleB);
+      // 首先按总排序
+      if (b.totalCount !== a.totalCount) {
+        return b.totalCount - a.totalCount;
       }
-      
-      return b.count - a.count;
+      // 如果总排序相同，优先按点击量排序
+      if (b.clickCount !== a.clickCount) {
+        return b.clickCount - a.clickCount;
+      }
+      // 如果点击量也相同，按标题排序（保持一致性）
+      const titleA = a.item.getAttribute('data-post-title') || '';
+      const titleB = b.item.getAttribute('data-post-title') || '';
+      return titleA.localeCompare(titleB);
     });
     
     // 重新插入到容器中（保持表头在顶部）
     const header = container.querySelector('.post-list-header-popular');
+    
+    // 先隐藏所有项目（包括那些totalCount为0的）
+    items.forEach(item => {
+      item.style.display = 'none';
+      item.classList.add('popular-posts-loading');
+    });
+    
     // 先移除所有有效项目
     validItems.forEach(({ item }) => {
-      item.style.display = '';
       item.remove();
     });
+    
     // 重新插入排序后的项目（只显示前10个）
     const topItems = validItems.slice(0, 10);
     topItems.forEach(({ item }) => {
+      // 移除loading类，显示项目
+      item.classList.remove('popular-posts-loading');
+      item.style.display = '';
       if (header) {
         header.after(item);
       } else {
         container.appendChild(item);
       }
     });
+    
+    // 如果没有任何有效项目，显示提示（可选）
+    if (topItems.length === 0 && items.length > 0) {
+      // 可以在这里添加一个"暂无数据"的提示，如果需要的话
+    }
   }
   
   // 导出给其他脚本使用
