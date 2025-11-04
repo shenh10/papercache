@@ -223,6 +223,64 @@ permalink: /admin/index.html
             </div>
           </div>
 
+          <!-- 综合活跃用户分析 -->
+          <div class="analytics-section analytics-section-card">
+            <h3 class="analytics-section-title">📊 综合活跃用户分析</h3>
+            <div class="analytics-stats-row">
+              <div class="analytics-stat-card">
+                <div class="analytics-stat-label">今日总活跃用户</div>
+                <div class="analytics-stat-value" id="comprehensive-total-active-today">-</div>
+              </div>
+              <div class="analytics-stat-card">
+                <div class="analytics-stat-label">登录用户</div>
+                <div class="analytics-stat-value" id="comprehensive-login-users-today">-</div>
+              </div>
+              <div class="analytics-stat-card">
+                <div class="analytics-stat-label">会话活跃用户</div>
+                <div class="analytics-stat-value" id="comprehensive-session-active-today">-</div>
+              </div>
+              <div class="analytics-stat-card">
+                <div class="analytics-stat-label">页面浏览用户</div>
+                <div class="analytics-stat-value" id="comprehensive-page-view-today">-</div>
+              </div>
+              <div class="analytics-stat-card">
+                <div class="analytics-stat-label">搜索用户</div>
+                <div class="analytics-stat-value" id="comprehensive-search-users-today">-</div>
+              </div>
+              <div class="analytics-stat-card">
+                <div class="analytics-stat-label">人均活动次数</div>
+                <div class="analytics-stat-value" id="comprehensive-avg-activities">-</div>
+              </div>
+            </div>
+            <div class="analytics-date-range">
+              <label>日期范围：</label>
+              <input type="date" id="comprehensive-start-date" value="">
+              <span> 至 </span>
+              <input type="date" id="comprehensive-end-date" value="">
+              <button id="comprehensive-query-btn" class="btn-primary">查询</button>
+            </div>
+            <div id="comprehensive-chart-container" class="analytics-chart-container">
+              <div class="chart-loading">加载中...</div>
+            </div>
+          </div>
+
+          <!-- 用户活跃度等级分布 -->
+          <div class="analytics-section analytics-section-card">
+            <h3 class="analytics-section-title">👥 用户活跃度等级分布</h3>
+            <div class="analytics-date-range">
+              <label>统计周期：</label>
+              <select id="activity-level-period">
+                <option value="7">最近7天</option>
+                <option value="30" selected>最近30天</option>
+                <option value="90">最近90天</option>
+              </select>
+              <button id="activity-level-query-btn" class="btn-primary">刷新</button>
+            </div>
+            <div id="activity-level-container" class="analytics-chart-container">
+              <div class="chart-loading">加载中...</div>
+            </div>
+          </div>
+
           <!-- 热门页面 -->
           <div class="analytics-section analytics-section-card">
             <h3 class="analytics-section-title">🔥 热门页面</h3>
@@ -1475,7 +1533,25 @@ permalink: /admin/index.html
       });
     }
 
-    // 活跃用户分析查询按钮
+    // 绑定综合活跃用户分析查询按钮
+    const comprehensiveQueryBtn = document.getElementById('comprehensive-query-btn');
+    if (comprehensiveQueryBtn) {
+      comprehensiveQueryBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadComprehensiveActiveUsersStats();
+      });
+    }
+
+    // 绑定用户活跃度等级分布查询按钮
+    const activityLevelQueryBtn = document.getElementById('activity-level-query-btn');
+    if (activityLevelQueryBtn) {
+      activityLevelQueryBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadActivityLevels();
+      });
+    }
+
+    // 绑定活跃用户分析查询按钮
     const activeUsersQueryBtn = document.getElementById('active-users-query-btn');
     if (activeUsersQueryBtn) {
       const newBtn = activeUsersQueryBtn.cloneNode(true);
@@ -1674,6 +1750,172 @@ permalink: /admin/index.html
     } catch (error) {
       console.error('[Admin] Failed to load popular pages:', error);
       tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败</td></tr>';
+    }
+  }
+
+  // 加载综合活跃用户分析
+  async function loadComprehensiveActiveUsersStats() {
+    const supabase = getSupabase();
+    if (!supabase) {
+      console.error('[Admin] Supabase客户端未初始化');
+      return;
+    }
+
+    try {
+      const startDate = document.getElementById('comprehensive-start-date').value ||
+        new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const endDate = document.getElementById('comprehensive-end-date').value ||
+        new Date().toISOString().split('T')[0];
+
+      if (!document.getElementById('comprehensive-start-date').value) {
+        document.getElementById('comprehensive-start-date').value = startDate;
+      }
+      if (!document.getElementById('comprehensive-end-date').value) {
+        document.getElementById('comprehensive-end-date').value = endDate;
+      }
+
+      // 加载今日统计（使用综合统计函数）
+      const { data: todayStats, error: todayError } = await supabase
+        .rpc('get_comprehensive_active_users_stats_by_date', {
+          p_start_date: new Date().toISOString().split('T')[0],
+          p_end_date: new Date().toISOString().split('T')[0]
+        });
+
+      if (!todayError && todayStats && todayStats.length > 0) {
+        const stats = todayStats[0];
+        document.getElementById('comprehensive-total-active-today').textContent = stats.active_users || 0;
+        document.getElementById('comprehensive-login-users-today').textContent = stats.login_users || 0;
+        document.getElementById('comprehensive-session-active-today').textContent = stats.session_active_users || 0;
+        // 计算页面浏览用户和搜索用户（从总活动数中估算，或使用统计表数据）
+        document.getElementById('comprehensive-page-view-today').textContent = '-'; // 需要单独统计
+        document.getElementById('comprehensive-search-users-today').textContent = '-'; // 需要单独统计
+        document.getElementById('comprehensive-avg-activities').textContent = stats.avg_activities_per_user || 0;
+      } else {
+        document.getElementById('comprehensive-total-active-today').textContent = '0';
+        document.getElementById('comprehensive-login-users-today').textContent = '0';
+        document.getElementById('comprehensive-session-active-today').textContent = '0';
+        document.getElementById('comprehensive-page-view-today').textContent = '0';
+        document.getElementById('comprehensive-search-users-today').textContent = '0';
+        document.getElementById('comprehensive-avg-activities').textContent = '0';
+      }
+
+      // 加载图表数据
+      const container = document.getElementById('comprehensive-chart-container');
+      container.innerHTML = '<div class="chart-loading">加载中...</div>';
+
+      const { data, error } = await supabase.rpc('get_comprehensive_active_users_stats_by_date', {
+        p_start_date: startDate,
+        p_end_date: endDate
+      });
+
+      if (error) {
+        container.innerHTML = '<div class="chart-message">加载失败：' + error.message + '</div>';
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        container.innerHTML = '<div class="chart-message">暂无数据</div>';
+        return;
+      }
+
+      // 生成图表表格
+      let html = '<table class="analytics-chart-table"><thead><tr><th>日期</th><th>总活跃用户</th><th>登录用户</th><th>会话活跃用户</th><th>总活动数</th><th>登录次数</th><th>页面浏览</th><th>搜索次数</th></tr></thead><tbody>';
+      data.forEach(row => {
+        html += `<tr>
+          <td>${new Date(row.date).toLocaleDateString('zh-CN')}</td>
+          <td>${row.active_users}</td>
+          <td>${row.login_users}</td>
+          <td>${row.session_active_users}</td>
+          <td>${row.total_activities}</td>
+          <td>${row.login_count}</td>
+          <td>${row.page_view_count}</td>
+          <td>${row.search_count}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      container.innerHTML = html;
+
+    } catch (error) {
+      console.error('[Admin] 加载综合活跃用户分析异常:', error);
+      document.getElementById('comprehensive-chart-container').innerHTML = '<div class="chart-message">加载失败</div>';
+    }
+  }
+
+  // 加载用户活跃度等级分布
+  async function loadActivityLevels() {
+    const supabase = getSupabase();
+    if (!supabase) return;
+
+    try {
+      const period = parseInt(document.getElementById('activity-level-period').value);
+      const startDate = new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const endDate = new Date().toISOString().split('T')[0];
+
+      // 使用 get_comprehensive_active_users_list 获取所有用户数据，然后在前端计算等级分布
+      const { data, error } = await supabase.rpc('get_comprehensive_active_users_list', {
+        p_start_date: startDate,
+        p_end_date: endDate,
+        p_limit: 10000, // 获取足够多的数据
+        p_offset: 0,
+        p_order_by: 'total_activities'
+      });
+
+      if (error) {
+        console.error('[Admin] 获取用户活跃度等级失败:', error);
+        document.getElementById('activity-level-container').innerHTML = '<div class="chart-message">加载失败</div>';
+        return;
+      }
+
+      const container = document.getElementById('activity-level-container');
+
+      if (!data || data.length === 0) {
+        container.innerHTML = '<div class="chart-message">暂无数据</div>';
+        return;
+      }
+
+      // 计算等级分布
+      const levelStats = {
+        '超级活跃用户': { count: 0, description: '总活动数 ≥ 50' },
+        '活跃用户': { count: 0, description: '总活动数 20-49' },
+        '一般活跃用户': { count: 0, description: '总活动数 5-19' },
+        '低活跃用户': { count: 0, description: '总活动数 1-4' }
+      };
+
+      data.forEach(user => {
+        const level = user.activity_level || '低活跃用户';
+        if (levelStats[level]) {
+          levelStats[level].count++;
+        }
+      });
+
+      const total = data.length;
+      const levelOrder = ['超级活跃用户', '活跃用户', '一般活跃用户', '低活跃用户'];
+
+      // 生成等级分布表格
+      let html = '<table class="analytics-chart-table"><thead><tr><th>活跃度等级</th><th>用户数</th><th>占比</th><th>描述</th></tr></thead><tbody>';
+      levelOrder.forEach(level => {
+        const stats = levelStats[level];
+        const percentage = total > 0 ? ((stats.count / total) * 100).toFixed(1) : '0.0';
+        const levelColor = {
+          '超级活跃用户': '#22c55e',
+          '活跃用户': '#3b82f6',
+          '一般活跃用户': '#f59e0b',
+          '低活跃用户': '#6b7280'
+        }[level] || '#6b7280';
+
+        html += `<tr>
+          <td><span style="color: ${levelColor}; font-weight: bold;">${level}</span></td>
+          <td>${stats.count}</td>
+          <td>${percentage}%</td>
+          <td>${stats.description}</td>
+        </tr>`;
+      });
+      html += '</tbody></table>';
+      container.innerHTML = html;
+
+    } catch (error) {
+      console.error('[Admin] 加载用户活跃度等级异常:', error);
+      document.getElementById('activity-level-container').innerHTML = '<div class="chart-message">加载失败</div>';
     }
   }
 
