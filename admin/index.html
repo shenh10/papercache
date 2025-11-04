@@ -299,6 +299,52 @@ permalink: /admin/index.html
                 </tbody>
               </table>
             </div>
+            
+            <!-- 活跃用户名单 -->
+            <div style="margin-top: 2rem;">
+              <h4 style="margin-bottom: 1rem; color: #2d3748; font-size: 1.1rem;">📋 活跃用户名单</h4>
+              <div class="analytics-date-range" style="margin-bottom: 1rem;">
+                <label>筛选日期：</label>
+                <input type="date" id="active-users-list-start-date" value="">
+                <span> 至 </span>
+                <input type="date" id="active-users-list-end-date" value="">
+                <label style="margin-left: 1rem;">排序：</label>
+                <select id="active-users-list-order-by" style="padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                  <option value="login_count">按登录次数</option>
+                  <option value="last_login">按最后登录时间</option>
+                </select>
+                <button id="active-users-list-query-btn" class="btn-primary" style="margin-left: 1rem;">查询</button>
+              </div>
+              <div class="table-pagination-info" style="margin-bottom: 1rem;">
+                <span id="active-users-list-pagination-info">共 0 条记录</span>
+              </div>
+              <div class="admin-table-container">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>排名</th>
+                      <th>用户邮箱</th>
+                      <th>用户名</th>
+                      <th>登录次数</th>
+                      <th>首次登录</th>
+                      <th>最后登录</th>
+                    </tr>
+                  </thead>
+                  <tbody id="active-users-list-body">
+                    <tr>
+                      <td colspan="6" class="table-loading">加载中...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="table-pagination" id="active-users-list-pagination" style="display: none; margin-top: 1rem;">
+                <button id="active-users-list-prev-btn" class="pagination-btn" disabled>上一页</button>
+                <span class="pagination-info">
+                  <span id="active-users-list-current-page">1</span> / <span id="active-users-list-total-pages">1</span>
+                </span>
+                <button id="active-users-list-next-btn" class="pagination-btn">下一页</button>
+              </div>
+            </div>
           </div>
 
           <!-- 搜索热词 -->
@@ -491,6 +537,7 @@ permalink: /admin/index.html
     initUsersPagination();
     initFavoritesPagination();
     initLogsPage();
+    initActiveUsersListPagination();
     
     await Promise.all([
       loadUserStats(),
@@ -564,6 +611,7 @@ permalink: /admin/index.html
     await loadPopularPages();
     await loadSearchKeywords();
     await loadActiveUsersStats();
+    await loadActiveUsersList();
   }
   
   // 获取 Supabase 客户端
@@ -1714,6 +1762,196 @@ permalink: /admin/index.html
       if (tbody) {
         tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败</td></tr>';
       }
+    }
+  }
+
+  // 活跃用户名单分页状态
+  const activeUsersListPaginationState = {
+    currentPage: 1,
+    pageSize: 20,
+    totalCount: 0,
+    startDate: null,
+    endDate: null,
+    orderBy: 'login_count'
+  };
+
+  // 初始化活跃用户名单分页
+  function initActiveUsersListPagination() {
+    const prevBtn = document.getElementById('active-users-list-prev-btn');
+    const nextBtn = document.getElementById('active-users-list-next-btn');
+    const queryBtn = document.getElementById('active-users-list-query-btn');
+    const orderBySelect = document.getElementById('active-users-list-order-by');
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        if (activeUsersListPaginationState.currentPage > 1) {
+          activeUsersListPaginationState.currentPage--;
+          loadActiveUsersList();
+        }
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(activeUsersListPaginationState.totalCount / activeUsersListPaginationState.pageSize);
+        if (activeUsersListPaginationState.currentPage < totalPages) {
+          activeUsersListPaginationState.currentPage++;
+          loadActiveUsersList();
+        }
+      });
+    }
+
+    if (queryBtn) {
+      queryBtn.addEventListener('click', () => {
+        activeUsersListPaginationState.currentPage = 1;
+        const startDate = document.getElementById('active-users-list-start-date')?.value || null;
+        const endDate = document.getElementById('active-users-list-end-date')?.value || null;
+        const orderBy = document.getElementById('active-users-list-order-by')?.value || 'login_count';
+        activeUsersListPaginationState.startDate = startDate;
+        activeUsersListPaginationState.endDate = endDate;
+        activeUsersListPaginationState.orderBy = orderBy;
+        loadActiveUsersList();
+      });
+    }
+
+    if (orderBySelect) {
+      orderBySelect.addEventListener('change', () => {
+        activeUsersListPaginationState.orderBy = orderBySelect.value;
+        activeUsersListPaginationState.currentPage = 1;
+        loadActiveUsersList();
+      });
+    }
+  }
+
+  // 更新活跃用户名单分页信息
+  function updateActiveUsersListPaginationInfo() {
+    const totalPages = Math.ceil(activeUsersListPaginationState.totalCount / activeUsersListPaginationState.pageSize);
+    const pagination = document.getElementById('active-users-list-pagination');
+    const paginationInfo = document.getElementById('active-users-list-pagination-info');
+    const currentPageEl = document.getElementById('active-users-list-current-page');
+    const totalPagesEl = document.getElementById('active-users-list-total-pages');
+    const prevBtn = document.getElementById('active-users-list-prev-btn');
+    const nextBtn = document.getElementById('active-users-list-next-btn');
+
+    if (paginationInfo) {
+      paginationInfo.textContent = `共 ${activeUsersListPaginationState.totalCount} 条记录`;
+    }
+
+    if (pagination) {
+      pagination.style.display = totalPages > 1 ? 'flex' : 'none';
+    }
+
+    if (currentPageEl) {
+      currentPageEl.textContent = activeUsersListPaginationState.currentPage;
+    }
+
+    if (totalPagesEl) {
+      totalPagesEl.textContent = totalPages || 1;
+    }
+
+    if (prevBtn) {
+      prevBtn.disabled = activeUsersListPaginationState.currentPage <= 1;
+    }
+
+    if (nextBtn) {
+      nextBtn.disabled = activeUsersListPaginationState.currentPage >= totalPages;
+    }
+  }
+
+  // 加载活跃用户名单
+  async function loadActiveUsersList() {
+    const tbody = document.getElementById('active-users-list-body');
+    if (!tbody) return;
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      tbody.innerHTML = '<tr><td colspan="6" class="table-message">Supabase客户端未初始化</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '<tr><td colspan="6" class="table-loading">加载中...</td></tr>';
+
+    try {
+      const pageSize = activeUsersListPaginationState.pageSize;
+      const offset = (activeUsersListPaginationState.currentPage - 1) * pageSize;
+      const startDate = activeUsersListPaginationState.startDate || 
+        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const endDate = activeUsersListPaginationState.endDate || 
+        new Date().toISOString().split('T')[0];
+      const orderBy = activeUsersListPaginationState.orderBy || 'login_count';
+
+      // 设置默认日期
+      if (!activeUsersListPaginationState.startDate) {
+        activeUsersListPaginationState.startDate = startDate;
+        const startDateInput = document.getElementById('active-users-list-start-date');
+        if (startDateInput) startDateInput.value = startDate;
+      }
+      if (!activeUsersListPaginationState.endDate) {
+        activeUsersListPaginationState.endDate = endDate;
+        const endDateInput = document.getElementById('active-users-list-end-date');
+        if (endDateInput) endDateInput.value = endDate;
+      }
+
+      // 先获取总数
+      const { data: countData, error: countError } = await supabase
+        .rpc('get_active_users_list_count', {
+          p_start_date: startDate,
+          p_end_date: endDate
+        });
+
+      if (countError) {
+        console.warn('[Admin] 获取活跃用户名单总数失败:', countError);
+      } else {
+        activeUsersListPaginationState.totalCount = countData || 0;
+        updateActiveUsersListPaginationInfo();
+      }
+
+      // 获取活跃用户名单
+      const { data, error } = await supabase
+        .rpc('get_active_users_list', {
+          p_start_date: startDate,
+          p_end_date: endDate,
+          p_limit: pageSize,
+          p_offset: offset,
+          p_order_by: orderBy
+        });
+
+      if (error) {
+        console.error('[Admin] 加载活跃用户名单失败:', error);
+        tbody.innerHTML = '<tr><td colspan="6" class="table-message">加载失败：' + error.message + '</td></tr>';
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="table-message">暂无数据</td></tr>';
+        updateActiveUsersListPaginationInfo();
+        return;
+      }
+
+      let html = '';
+      const baseRank = (activeUsersListPaginationState.currentPage - 1) * pageSize;
+      data.forEach((user, index) => {
+        const rank = baseRank + index + 1;
+        const email = user.user_email || '-';
+        const username = user.username || '-';
+        const loginCount = user.login_count || 0;
+        const firstLogin = user.first_login_at ? new Date(user.first_login_at).toLocaleDateString('zh-CN') : '-';
+        const lastLogin = user.last_login_at ? new Date(user.last_login_at).toLocaleString('zh-CN') : '-';
+
+        html += `<tr>
+          <td>${rank}</td>
+          <td class="logs-email">${email}</td>
+          <td>${username}</td>
+          <td>${loginCount}</td>
+          <td class="logs-time">${firstLogin}</td>
+          <td class="logs-time">${lastLogin}</td>
+        </tr>`;
+      });
+      tbody.innerHTML = html;
+      updateActiveUsersListPaginationInfo();
+    } catch (error) {
+      console.error('[Admin] 加载活跃用户名单异常:', error);
+      tbody.innerHTML = '<tr><td colspan="6" class="table-message">加载失败</td></tr>';
     }
   }
 

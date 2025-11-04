@@ -604,6 +604,77 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- 函数：获取活跃用户名单（包含登录次数和最后登录时间）
+CREATE OR REPLACE FUNCTION public.get_active_users_list(
+  p_start_date DATE DEFAULT CURRENT_DATE - INTERVAL '30 days',
+  p_end_date DATE DEFAULT CURRENT_DATE,
+  p_limit INTEGER DEFAULT 100,
+  p_offset INTEGER DEFAULT 0,
+  p_order_by TEXT DEFAULT 'login_count' -- 'login_count' 或 'last_login'
+)
+RETURNS TABLE(
+  user_id UUID,
+  user_email TEXT,
+  username TEXT,
+  full_name TEXT,
+  login_count INTEGER,
+  last_login_at TIMESTAMP WITH TIME ZONE,
+  first_login_at TIMESTAMP WITH TIME ZONE
+) AS $$
+BEGIN
+  RETURN QUERY
+  WITH user_login_stats AS (
+    SELECT 
+      ll.user_id,
+      COUNT(*)::INTEGER as login_count,
+      MAX(ll.login_at) as last_login_at,
+      MIN(ll.login_at) as first_login_at
+    FROM public.login_logs ll
+    WHERE DATE(ll.login_at) BETWEEN p_start_date AND p_end_date
+      AND ll.user_id IS NOT NULL
+    GROUP BY ll.user_id
+  )
+  SELECT
+    uls.user_id,
+    COALESCE(au.email::TEXT, 'N/A') as user_email,
+    p.username,
+    p.full_name,
+    uls.login_count,
+    uls.last_login_at,
+    uls.first_login_at
+  FROM user_login_stats uls
+  LEFT JOIN auth.users au ON uls.user_id = au.id
+  LEFT JOIN public.profiles p ON uls.user_id = p.id
+  ORDER BY 
+    CASE 
+      WHEN p_order_by = 'last_login' THEN uls.last_login_at
+      ELSE NULL
+    END DESC NULLS LAST,
+    CASE 
+      WHEN p_order_by = 'login_count' THEN uls.login_count
+      ELSE NULL
+    END DESC NULLS LAST
+  LIMIT p_limit
+  OFFSET p_offset;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 函数：获取活跃用户名单总数
+CREATE OR REPLACE FUNCTION public.get_active_users_list_count(
+  p_start_date DATE DEFAULT CURRENT_DATE - INTERVAL '30 days',
+  p_end_date DATE DEFAULT CURRENT_DATE
+)
+RETURNS INTEGER AS $$
+BEGIN
+  RETURN (
+    SELECT COUNT(DISTINCT user_id)::INTEGER
+    FROM public.login_logs
+    WHERE DATE(login_at) BETWEEN p_start_date AND p_end_date
+      AND user_id IS NOT NULL
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- 授予函数执行权限
 GRANT EXECUTE ON FUNCTION public.add_admin(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.remove_admin(UUID) TO authenticated;
@@ -615,6 +686,8 @@ GRANT EXECUTE ON FUNCTION public.get_active_users_stats(p_start_date DATE, p_end
 GRANT EXECUTE ON FUNCTION public.get_new_users_today() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_active_users_today() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_active_users_in_days(p_days INTEGER) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_active_users_list(DATE, DATE, INTEGER, INTEGER, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_active_users_list_count(DATE, DATE) TO authenticated;
 
 -- ============================================
 -- 初始化管理员（重要！）
