@@ -568,18 +568,22 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- 函数：获取今日新注册用户数
 CREATE OR REPLACE FUNCTION public.get_new_users_today()
 RETURNS INTEGER AS $$
+DECLARE
+  count_result INTEGER;
 BEGIN
-  RETURN (
-    SELECT COUNT(DISTINCT ll.user_id)::INTEGER
-    FROM public.login_logs ll
-    WHERE DATE(ll.login_at) = CURRENT_DATE
-      AND NOT EXISTS (
-        SELECT 1 
-        FROM public.profiles p 
-        WHERE p.id = ll.user_id 
-        AND p.created_at <= ll.login_at
-      )
-  );
+  SELECT COUNT(DISTINCT ll.user_id)::INTEGER
+  INTO count_result
+  FROM public.login_logs ll
+  WHERE DATE(ll.login_at) = CURRENT_DATE
+    AND ll.user_id IS NOT NULL
+    AND NOT EXISTS (
+      SELECT 1 
+      FROM public.profiles p 
+      WHERE p.id = ll.user_id 
+      AND p.created_at <= ll.login_at
+    );
+  
+  RETURN COALESCE(count_result, 0);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

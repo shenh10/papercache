@@ -58,6 +58,7 @@ BEGIN
   INTO count_result
   FROM public.login_logs ll
   WHERE DATE(ll.login_at) = CURRENT_DATE
+    AND ll.user_id IS NOT NULL
     AND NOT EXISTS (
       SELECT 1 
       FROM public.profiles p 
