@@ -524,16 +524,49 @@ permalink: /admin/index.html
     tbody.innerHTML = '<tr><td colspan="5" class="table-loading">加载中...</td></tr>';
 
     try {
-      // 查询 profiles 表（包含用户基本信息）
+      // 使用 RPC 函数获取用户列表（包含用户邮箱）
       const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, full_name, created_at, updated_at')
-        .order('created_at', { ascending: false })
-        .limit(100);
+        .rpc('get_users_with_email', {
+          p_limit: 100,
+          p_offset: 0
+        });
 
       if (error) {
         console.error('[Admin] 加载用户列表失败:', error);
-        tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败：' + error.message + '</td></tr>';
+        console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_users_with_email() 函数');
+        // 如果函数不存在，尝试直接查询（可能受RLS限制，且无法获取邮箱）
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, created_at, updated_at')
+          .order('created_at', { ascending: false })
+          .limit(100);
+        
+        if (fallbackError) {
+          tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败：' + fallbackError.message + '</td></tr>';
+          return;
+        }
+        
+        if (!fallbackData || fallbackData.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="table-message">暂无用户数据</td></tr>';
+          return;
+        }
+        
+        // 使用fallback数据（只显示user_id）
+        let html = '';
+        for (const profile of fallbackData) {
+          const emailDisplay = profile.id.substring(0, 8) + '...';
+          const username = profile.username || '-';
+          const createdDate = profile.created_at ? new Date(profile.created_at).toLocaleDateString('zh-CN') : '-';
+
+          html += `<tr>
+            <td>${profile.id.substring(0, 8)}...</td>
+            <td>${emailDisplay}</td>
+            <td>${username}</td>
+            <td>${createdDate}</td>
+            <td>-</td>
+          </tr>`;
+        }
+        tbody.innerHTML = html;
         return;
       }
 
@@ -542,15 +575,16 @@ permalink: /admin/index.html
         return;
       }
 
+      // 显示完整的用户列表（包含用户邮箱）
       let html = '';
-      for (const profile of data) {
-        // 获取用户邮箱（客户端无法直接访问 auth.users，显示 ID 的部分）
-        const emailDisplay = profile.id.substring(0, 8) + '...';
-        const username = profile.username || '-';
-        const createdDate = profile.created_at ? new Date(profile.created_at).toLocaleDateString('zh-CN') : '-';
+      for (const user of data) {
+        const emailDisplay = user.user_email || '-';
+        const username = user.username || '-';
+        const fullName = user.full_name || '-';
+        const createdDate = user.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '-';
 
         html += `<tr>
-          <td>${profile.id.substring(0, 8)}...</td>
+          <td>${user.id.substring(0, 8)}...</td>
           <td>${emailDisplay}</td>
           <td>${username}</td>
           <td>${createdDate}</td>

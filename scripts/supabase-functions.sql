@@ -151,6 +151,44 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 GRANT EXECUTE ON FUNCTION public.get_login_logs_with_email(INTEGER, INTEGER) TO authenticated;
 
 -- ============================================
+-- 获取用户列表（带用户邮箱）
+-- ============================================
+
+-- 函数：获取用户列表，包含用户邮箱
+-- 用于管理后台显示用户信息
+CREATE OR REPLACE FUNCTION public.get_users_with_email(
+  p_limit INTEGER DEFAULT 100,
+  p_offset INTEGER DEFAULT 0
+)
+RETURNS TABLE(
+  id UUID,
+  user_email TEXT,
+  username TEXT,
+  full_name TEXT,
+  created_at TIMESTAMP WITH TIME ZONE,
+  updated_at TIMESTAMP WITH TIME ZONE
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    p.id,
+    COALESCE(au.email::TEXT, 'N/A') as user_email,
+    p.username,
+    p.full_name,
+    p.created_at,
+    p.updated_at
+  FROM public.profiles p
+  LEFT JOIN auth.users au ON p.id = au.id
+  ORDER BY p.created_at DESC
+  LIMIT p_limit
+  OFFSET p_offset;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 授予函数执行权限
+GRANT EXECUTE ON FUNCTION public.get_users_with_email(INTEGER, INTEGER) TO authenticated;
+
+-- ============================================
 -- 获取收藏统计函数
 -- ============================================
 
