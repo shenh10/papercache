@@ -320,26 +320,33 @@ function showAuthLoading(show) {
 
 // 登录处理函数
 async function handleGitHubLogin() {
+  console.log('[AuthModal] handleGitHubLogin 被调用');
   showAuthLoading(true);
   showAuthError(''); // 清除之前的错误
 
   try {
+    console.log('[AuthModal] 检查 SimpleAuth 是否可用...');
     if (!window.SimpleAuth) {
+      console.error('[AuthModal] SimpleAuth 未初始化');
       throw new Error('认证系统未初始化，请刷新页面重试');
     }
 
-    console.log('开始GitHub登录...');
+    console.log('[AuthModal] 开始GitHub登录...');
+    console.log('[AuthModal] 调用 SimpleAuth.signInWithOAuth("github")');
     
     // 调用SimpleAuth的OAuth登录方法
-    await window.SimpleAuth.signInWithOAuth('github');
+    const result = await window.SimpleAuth.signInWithOAuth('github');
+    
+    console.log('[AuthModal] signInWithOAuth 返回:', result);
     
     // OAuth登录会重定向，所以这里不会继续执行
     // 如果执行到这里，说明没有重定向（可能是错误情况）
-    console.log('GitHub登录流程已启动');
+    console.warn('[AuthModal] GitHub登录流程已启动，但未重定向（可能异常）');
     // 不要关闭loading，因为即将重定向
 
   } catch (error) {
-    console.error('GitHub登录失败:', error);
+    console.error('[AuthModal] GitHub登录失败:', error);
+    console.error('[AuthModal] 错误详情:', error.stack);
     showAuthLoading(false);
     showAuthError('GitHub登录失败：' + (error.message || '未知错误'), false);
   }
