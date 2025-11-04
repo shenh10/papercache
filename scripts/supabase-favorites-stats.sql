@@ -130,6 +130,32 @@ COMMENT ON FUNCTION batch_get_favorites_with_status(UUID, TEXT[]) IS
 '同时获取收藏数和用户收藏状态，返回JSON对象。参数：用户ID（可为NULL）和URL数组。返回：{"counts": {"/url1": 5, ...}, "user_favorited": {"/url1": true, ...}}';
 
 -- ============================================
+-- 获取总收藏数（所有用户）
+-- ============================================
+-- 这个函数用于统计所有用户的总收藏数，绕过 RLS 策略限制
+-- 用于管理员页面显示统计信息
+
+CREATE OR REPLACE FUNCTION get_total_favorites_count()
+RETURNS INTEGER AS $$
+DECLARE
+  count_result INTEGER;
+BEGIN
+  SELECT COUNT(*)::INTEGER
+  INTO count_result
+  FROM favorites;
+  
+  RETURN COALESCE(count_result, 0);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 给函数添加注释
+COMMENT ON FUNCTION get_total_favorites_count() IS 
+'获取所有用户的总收藏数，绕过RLS策略限制。用于管理员页面统计。返回：总收藏数（整数）';
+
+-- 授予函数执行权限
+GRANT EXECUTE ON FUNCTION get_total_favorites_count() TO anon, authenticated;
+
+-- ============================================
 -- 权限说明
 -- ============================================
 -- 这些函数使用 SECURITY DEFINER，意味着它们以函数创建者的权限运行

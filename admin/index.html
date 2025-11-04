@@ -450,9 +450,7 @@ permalink: /admin/index.html
   }
   
   // 加载收藏统计
-  // 注意：统计的是所有用户的总收藏数，不是当前用户的
-  // 由于 RLS 策略限制，如果当前用户不是管理员，可能只能看到自己的收藏数
-  // 建议在 Supabase 中为管理员添加特殊 RLS 策略以查看所有数据
+  // 使用 SECURITY DEFINER 函数绕过 RLS 策略限制，获取所有用户的总收藏数
   async function loadFavoritesStats() {
     const statEl = document.getElementById('stat-total-favorites');
     if (!statEl) return;
@@ -464,20 +462,19 @@ permalink: /admin/index.html
     }
 
     try {
-      // 尝试使用 RPC 函数统计（如果存在且绕过 RLS）
-      // 如果没有，则使用直接查询（可能受 RLS 限制）
-      const { count, error } = await supabase
-        .from('favorites')
-        .select('*', { count: 'exact', head: true });
+      // 使用 RPC 函数统计总收藏数（绕过 RLS 策略）
+      const { data, error } = await supabase
+        .rpc('get_total_favorites_count');
 
       if (error) {
         console.warn('[Admin] 无法查询收藏数:', error);
         console.warn('[Admin] 错误详情:', error.message);
-        console.warn('[Admin] 注意：可能由于 RLS 策略限制，只能查询当前用户的收藏');
+        console.warn('[Admin] 提示：请确保已在 Supabase 中执行 get_total_favorites_count() 函数');
         statEl.textContent = '-';
       } else {
-        statEl.textContent = count || 0;
-        console.log('[Admin] 总收藏数（可能受RLS限制）:', count);
+        const totalCount = data || 0;
+        statEl.textContent = totalCount;
+        console.log('[Admin] 总收藏数:', totalCount);
       }
     } catch (error) {
       console.error('[Admin] 加载收藏统计失败:', error);
