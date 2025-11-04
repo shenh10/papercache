@@ -170,11 +170,12 @@ permalink: /admin/index.html
                 <th>登录时间</th>
                 <th>IP地址</th>
                 <th>User Agent</th>
+                <th>用户类型</th>
               </tr>
             </thead>
             <tbody id="logs-table-body">
               <tr>
-                <td colspan="4" class="table-loading">加载中...</td>
+                <td colspan="5" class="table-loading">加载中...</td>
               </tr>
             </tbody>
           </table>
@@ -244,6 +245,54 @@ permalink: /admin/index.html
                   </tr>
                 </thead>
                 <tbody id="popular-pages-body">
+                  <tr>
+                    <td colspan="5" class="table-loading">加载中...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 活跃用户分析 -->
+          <div class="analytics-section analytics-section-card">
+            <h3 class="analytics-section-title">👥 活跃用户分析</h3>
+            <div class="analytics-stats-row">
+              <div class="analytics-stat-card">
+                <div class="analytics-stat-label">新注册用户（今日）</div>
+                <div class="analytics-stat-value" id="new-users-today">-</div>
+              </div>
+              <div class="analytics-stat-card">
+                <div class="analytics-stat-label">活跃用户（今日）</div>
+                <div class="analytics-stat-value" id="active-users-today">-</div>
+              </div>
+              <div class="analytics-stat-card">
+                <div class="analytics-stat-label">活跃用户（7日）</div>
+                <div class="analytics-stat-value" id="active-users-7days">-</div>
+              </div>
+              <div class="analytics-stat-card">
+                <div class="analytics-stat-label">活跃用户（30日）</div>
+                <div class="analytics-stat-value" id="active-users-30days">-</div>
+              </div>
+            </div>
+            <div class="analytics-date-range">
+              <label>日期范围：</label>
+              <input type="date" id="active-users-start-date" value="">
+              <span> 至 </span>
+              <input type="date" id="active-users-end-date" value="">
+              <button id="active-users-query-btn" class="btn-primary">查询</button>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>日期</th>
+                    <th>新注册用户</th>
+                    <th>活跃用户</th>
+                    <th>登录次数</th>
+                    <th>平均登录次数</th>
+                  </tr>
+                </thead>
+                <tbody id="active-users-body">
                   <tr>
                     <td colspan="5" class="table-loading">加载中...</td>
                   </tr>
@@ -514,6 +563,7 @@ permalink: /admin/index.html
     await loadDAUChart();
     await loadPopularPages();
     await loadSearchKeywords();
+    await loadActiveUsersStats();
   }
   
   // 获取 Supabase 客户端
@@ -1191,11 +1241,11 @@ permalink: /admin/index.html
 
     const supabase = getSupabase();
     if (!supabase) {
-      tbody.innerHTML = '<tr><td colspan="4" class="table-message">Supabase客户端未初始化</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="table-message">Supabase客户端未初始化</td></tr>';
       return;
     }
 
-    tbody.innerHTML = '<tr><td colspan="4" class="table-loading">加载中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="table-loading">加载中...</td></tr>';
 
     try {
       const pageSize = logsPaginationState.pageSize;
@@ -1232,36 +1282,42 @@ permalink: /admin/index.html
       if (error) {
         console.error('[Admin] 加载登录日志失败:', error);
         console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_login_logs_with_email() 函数');
-        tbody.innerHTML = '<tr><td colspan="4" class="table-message">加载失败：' + error.message + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败：' + error.message + '</td></tr>';
         return;
       }
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="table-message">暂无登录记录</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5" class="table-message">暂无登录记录</td></tr>';
         updateLogsPaginationInfo();
         return;
       }
 
-      // 显示完整的登录日志（包含用户邮箱）
+      // 显示完整的登录日志（包含用户邮箱和用户类型）
       let html = '';
       for (const log of data) {
         const email = log.user_email || '-';
         const loginDate = new Date(log.login_at).toLocaleString('zh-CN');
         const ip = log.ip_address || '-';
         const ua = log.user_agent ? (log.user_agent.length > 80 ? log.user_agent.substring(0, 80) + '...' : log.user_agent) : '-';
+        // is_new_user为true表示该次登录时还没有profile，是首次登录（新注册用户）
+        // is_new_user为false表示该次登录时已有profile，是已注册用户（非首次登录）
+        const userType = log.is_new_user === true 
+          ? '<span class="user-type-badge new-user">新注册</span>' 
+          : '<span class="user-type-badge existing-user">已注册</span>';
 
         html += `<tr>
           <td class="logs-email">${email}</td>
           <td class="logs-time">${loginDate}</td>
           <td class="logs-ip">${ip}</td>
           <td class="logs-ua" title="${log.user_agent || ''}">${ua}</td>
+          <td>${userType}</td>
         </tr>`;
       }
       tbody.innerHTML = html;
       updateLogsPaginationInfo();
     } catch (error) {
       console.error('[Admin] 加载登录日志异常:', error);
-      tbody.innerHTML = '<tr><td colspan="4" class="table-message">加载失败</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败</td></tr>';
     }
   }
 
@@ -1371,6 +1427,17 @@ permalink: /admin/index.html
       newBtn.addEventListener('click', (e) => {
         e.preventDefault();
         loadSearchKeywords();
+      });
+    }
+
+    // 活跃用户分析查询按钮
+    const activeUsersQueryBtn = document.getElementById('active-users-query-btn');
+    if (activeUsersQueryBtn) {
+      const newBtn = activeUsersQueryBtn.cloneNode(true);
+      activeUsersQueryBtn.parentNode.replaceChild(newBtn, activeUsersQueryBtn);
+      newBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        loadActiveUsersStats();
       });
     }
   }
@@ -1562,6 +1629,91 @@ permalink: /admin/index.html
     } catch (error) {
       console.error('[Admin] Failed to load popular pages:', error);
       tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败</td></tr>';
+    }
+  }
+
+  // 加载活跃用户分析
+  async function loadActiveUsersStats() {
+    const supabase = getSupabase();
+    if (!supabase) {
+      console.error('[Admin] Supabase客户端未初始化');
+      document.getElementById('new-users-today').textContent = '未初始化';
+      document.getElementById('active-users-today').textContent = '未初始化';
+      document.getElementById('active-users-7days').textContent = '未初始化';
+      document.getElementById('active-users-30days').textContent = '未初始化';
+      return;
+    }
+
+    try {
+      // 加载今日统计
+      const [newUsersToday, activeUsersToday, activeUsers7Days, activeUsers30Days] = await Promise.all([
+        supabase.rpc('get_new_users_today'),
+        supabase.rpc('get_active_users_today'),
+        supabase.rpc('get_active_users_in_days', { p_days: 7 }),
+        supabase.rpc('get_active_users_in_days', { p_days: 30 })
+      ]);
+
+      document.getElementById('new-users-today').textContent = newUsersToday.data || 0;
+      document.getElementById('active-users-today').textContent = activeUsersToday.data || 0;
+      document.getElementById('active-users-7days').textContent = activeUsers7Days.data || 0;
+      document.getElementById('active-users-30days').textContent = activeUsers30Days.data || 0;
+
+      // 加载日期范围统计表
+      const tbody = document.getElementById('active-users-body');
+      const startDate = document.getElementById('active-users-start-date').value || 
+        new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const endDate = document.getElementById('active-users-end-date').value || 
+        new Date().toISOString().split('T')[0];
+
+      if (!document.getElementById('active-users-start-date').value) {
+        document.getElementById('active-users-start-date').value = startDate;
+      }
+      if (!document.getElementById('active-users-end-date').value) {
+        document.getElementById('active-users-end-date').value = endDate;
+      }
+
+      tbody.innerHTML = '<tr><td colspan="5" class="table-loading">加载中...</td></tr>';
+
+      const { data, error } = await supabase
+        .rpc('get_active_users_stats', {
+          p_start_date: startDate,
+          p_end_date: endDate
+        });
+
+      if (error) {
+        console.error('[Admin] 加载活跃用户统计失败:', error);
+        tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败：' + error.message + '</td></tr>';
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="table-message">暂无数据</td></tr>';
+        return;
+      }
+
+      let html = '';
+      let rank = 1;
+      for (const row of data) {
+        html += `<tr>
+          <td>${new Date(row.date).toLocaleDateString('zh-CN')}</td>
+          <td>${row.new_users || 0}</td>
+          <td>${row.active_users || 0}</td>
+          <td>${row.login_count || 0}</td>
+          <td>${row.avg_login_per_user || 0}</td>
+        </tr>`;
+        rank++;
+      }
+      tbody.innerHTML = html;
+    } catch (error) {
+      console.error('[Admin] 加载活跃用户分析异常:', error);
+      document.getElementById('new-users-today').textContent = '错误';
+      document.getElementById('active-users-today').textContent = '错误';
+      document.getElementById('active-users-7days').textContent = '错误';
+      document.getElementById('active-users-30days').textContent = '错误';
+      const tbody = document.getElementById('active-users-body');
+      if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败</td></tr>';
+      }
     }
   }
 
@@ -1885,6 +2037,26 @@ permalink: /admin/index.html
     border-radius: 12px;
     font-size: 0.75rem;
     font-weight: 500;
+  }
+
+  .user-type-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .user-type-badge.new-user {
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.2) 0%, rgba(14, 165, 233, 0.2) 100%);
+    color: #0ea5e9;
+    border: 1px solid rgba(34, 211, 238, 0.3);
+  }
+
+  .user-type-badge.existing-user {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
   }
 
   /* ============================================

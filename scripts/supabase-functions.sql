@@ -116,7 +116,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- 获取登录日志（带用户邮箱）
 -- ============================================
 
--- 函数：获取登录日志列表，包含用户邮箱
+-- 函数：获取登录日志列表，包含用户邮箱和是否为新用户
 -- 用于管理后台显示登录记录
 CREATE OR REPLACE FUNCTION public.get_login_logs_with_email(
   p_limit INTEGER DEFAULT 100,
@@ -131,7 +131,8 @@ RETURNS TABLE(
   user_email TEXT,
   login_at TIMESTAMP WITH TIME ZONE,
   ip_address INET,
-  user_agent TEXT
+  user_agent TEXT,
+  is_new_user BOOLEAN
 ) AS $$
 BEGIN
   RETURN QUERY
@@ -141,7 +142,15 @@ BEGIN
     COALESCE(au.email::TEXT, 'N/A') as user_email,
     ll.login_at,
     ll.ip_address,
-    ll.user_agent
+    ll.user_agent,
+    -- 判断是否为新用户：如果该用户在登录时还没有profile，则认为是新用户（注册用户）
+    -- 如果登录时已有profile，则认为是已注册用户
+    NOT EXISTS (
+      SELECT 1 
+      FROM public.profiles p 
+      WHERE p.id = ll.user_id 
+      AND p.created_at <= ll.login_at
+    ) as is_new_user
   FROM public.login_logs ll
   LEFT JOIN auth.users au ON ll.user_id = au.id
   WHERE 
@@ -505,12 +514,106 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- ============================================
+-- 活跃用户分析
+-- ============================================
+
+-- 函数：获取活跃用户统计（按日期）
+CREATE OR REPLACE FUNCTION public.get_active_users_stats(
+  p_start_date DATE DEFAULT CURRENT_DATE - INTERVAL '30 days',
+  p_end_date DATE DEFAULT CURRENT_DATE
+)
+RETURNS TABLE(
+  date DATE,
+  new_users INTEGER,
+  active_users INTEGER,
+  login_count INTEGER,
+  avg_login_per_user NUMERIC
+) AS $$
+BEGIN
+  RETURN QUERY
+  WITH daily_logs AS (
+    SELECT 
+      DATE(ll.login_at) as log_date,
+      ll.user_id,
+      -- 判断是否为新用户：如果该用户在登录时还没有profile，则认为是新用户
+      NOT EXISTS (
+        SELECT 1 
+        FROM public.profiles p 
+        WHERE p.id = ll.user_id 
+        AND p.created_at <= ll.login_at
+      ) as is_new_user
+    FROM public.login_logs ll
+    WHERE DATE(ll.login_at) BETWEEN p_start_date AND p_end_date
+  )
+  SELECT
+    log_date as date,
+    COUNT(DISTINCT user_id) FILTER (WHERE is_new_user = true)::INTEGER as new_users,
+    COUNT(DISTINCT user_id)::INTEGER as active_users,
+    COUNT(*)::INTEGER as login_count,
+    CASE 
+      WHEN COUNT(DISTINCT user_id) > 0 
+      THEN ROUND(COUNT(*)::NUMERIC / COUNT(DISTINCT user_id), 2)
+      ELSE 0
+    END as avg_login_per_user
+  FROM daily_logs
+  GROUP BY log_date
+  ORDER BY log_date DESC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 函数：获取今日新注册用户数
+CREATE OR REPLACE FUNCTION public.get_new_users_today()
+RETURNS INTEGER AS $$
+BEGIN
+  RETURN (
+    SELECT COUNT(DISTINCT ll.user_id)::INTEGER
+    FROM public.login_logs ll
+    WHERE DATE(ll.login_at) = CURRENT_DATE
+      AND NOT EXISTS (
+        SELECT 1 
+        FROM public.profiles p 
+        WHERE p.id = ll.user_id 
+        AND p.created_at <= ll.login_at
+      )
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 函数：获取今日活跃用户数
+CREATE OR REPLACE FUNCTION public.get_active_users_today()
+RETURNS INTEGER AS $$
+BEGIN
+  RETURN (
+    SELECT COUNT(DISTINCT user_id)::INTEGER
+    FROM public.login_logs
+    WHERE DATE(login_at) = CURRENT_DATE
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 函数：获取指定天数内的活跃用户数
+CREATE OR REPLACE FUNCTION public.get_active_users_in_days(p_days INTEGER)
+RETURNS INTEGER AS $$
+BEGIN
+  RETURN (
+    SELECT COUNT(DISTINCT user_id)::INTEGER
+    FROM public.login_logs
+    WHERE login_at >= CURRENT_DATE - (p_days || ' days')::INTERVAL
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- 授予函数执行权限
 GRANT EXECUTE ON FUNCTION public.add_admin(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.remove_admin(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.check_user_is_admin(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_users_with_admin_status(INTEGER, INTEGER) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.delete_user_data(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_active_users_stats(DATE, DATE) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_new_users_today() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_active_users_today() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_active_users_in_days(INTEGER) TO authenticated;
 
 -- ============================================
 -- 初始化管理员（重要！）
