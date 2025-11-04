@@ -23,9 +23,10 @@
   const profileCache = new Map();
   const PROFILE_CACHE_TTL = 60000;
 
-  // 登录日志去重：记录当前正在处理的登录事件，避免SIGNED_IN和INITIAL_SESSION重复记录
-  // 使用Set存储正在处理的userId，处理完成后立即清除
-  const loginLogProcessing = new Set(); // userId
+  // 登录日志去重：记录最近记录的session token，避免SIGNED_IN和INITIAL_SESSION重复记录
+  // 使用Map存储userId -> 最近记录的session access_token
+  // 如果新的session token和最近记录的一样，说明是同一个登录事件，跳过
+  const loginLogDedupe = new Map(); // userId -> access_token
 
   // Supabase客户端
   let supabase = null;
@@ -217,7 +218,8 @@
           window._simpleAuthUser = session.user;
           loadProfile(session.user.id);
           // 记录登录日志（OAuth登录时可能只触发INITIAL_SESSION而不是SIGNED_IN）
-          logUserLogin(session.user.id).catch(err => {
+          // 传递session的access_token用于去重
+          logUserLogin(session.user.id, session?.access_token || null).catch(err => {
             console.warn('SimpleAuth: 记录登录日志失败', err);
           });
           notifyStateChange();
@@ -231,8 +233,8 @@
         AuthState.user = session.user;
         window._simpleAuthUser = session.user;
         loadProfile(session.user.id);
-        // 记录登录日志
-        logUserLogin(session.user.id).catch(err => {
+        // 记录登录日志，传递session的access_token用于去重
+        logUserLogin(session.user.id, session?.access_token || null).catch(err => {
           console.warn('SimpleAuth: 记录登录日志失败', err);
         });
         notifyStateChange();
@@ -240,8 +242,8 @@
         AuthState.user = null;
         window._simpleAuthUser = null;
         profileCache.clear();
-        // 清除登录日志处理标记（用户登出后，下次登录应该重新记录）
-        loginLogProcessing.clear();
+        // 清除登录日志去重缓存（用户登出后，下次登录会生成新的session token，应该重新记录）
+        loginLogDedupe.clear();
         notifyStateChange();
       }
       // 其他事件（如 PASSWORD_RECOVERY）暂不处理
@@ -267,20 +269,20 @@
   /**
    * 记录用户登录日志（带去重机制，避免SIGNED_IN和INITIAL_SESSION重复记录）
    */
-  async function logUserLogin(userId) {
+  async function logUserLogin(userId, sessionAccessToken = null) {
     if (!supabase || !userId) {
       return;
     }
 
-    // 去重检查：如果这个用户正在处理登录日志，跳过
-    // 这样可以避免SIGNED_IN和INITIAL_SESSION事件同时触发时重复记录
-    if (loginLogProcessing.has(userId)) {
-      console.log('SimpleAuth: 跳过重复的登录日志（正在处理中）', userId);
-      return;
+    // 去重检查：如果提供了session token，检查是否已经记录过这个token
+    // 这样可以避免SIGNED_IN和INITIAL_SESSION事件同时触发时重复记录同一个session
+    if (sessionAccessToken) {
+      const lastRecordedToken = loginLogDedupe.get(userId);
+      if (lastRecordedToken === sessionAccessToken) {
+        console.log('SimpleAuth: 跳过重复的登录日志（已记录过此session）', userId);
+        return;
+      }
     }
-
-    // 标记为正在处理
-    loginLogProcessing.add(userId);
 
     try {
       // 获取IP地址（如果有第三方服务）
@@ -309,16 +311,14 @@
       if (error) {
         console.warn('SimpleAuth: 记录登录日志失败', error);
       } else {
+        // 记录成功，保存session token用于去重
+        if (sessionAccessToken) {
+          loginLogDedupe.set(userId, sessionAccessToken);
+        }
         console.log('SimpleAuth: ✅ 登录日志已记录');
       }
     } catch (error) {
       console.warn('SimpleAuth: 记录登录日志异常', error);
-    } finally {
-      // 处理完成，清除标记（使用setTimeout确保异步操作完成）
-      // 延迟一小段时间再清除，防止同一事件流的快速重复调用
-      setTimeout(() => {
-        loginLogProcessing.delete(userId);
-      }, 1000); // 1秒后清除标记
     }
   }
 
