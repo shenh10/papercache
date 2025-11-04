@@ -306,19 +306,28 @@
     return { success: true };
   }
   
-  // 使用 sendBeacon 发送（页面卸载时）
+  // 使用 fetch with keepalive 发送点击（页面卸载时或立即发送）
+  // 返回 true 表示已尝试发送（但不保证成功）
   function sendBeaconClick(postUrl) {
     const normalizedUrl = normalizeUrl(postUrl);
-    if (!normalizedUrl || normalizedUrl === '/') return false;
+    if (!normalizedUrl || normalizedUrl === '/') {
+      console.warn('[ClickTracker] sendBeaconClick: 无效URL:', postUrl);
+      return false;
+    }
     
     try {
       // 尝试使用 fetch with keepalive（比 sendBeacon 更灵活）
       const supabaseUrl = window.getSupabaseClient?.()?._url || '';
-      if (!supabaseUrl) return false;
-      
-      const endpoint = `${supabaseUrl}/rest/v1/rpc/increment_post_click`;
       const supabaseKey = window.getSupabaseClient?.()?._anonKey || '';
       
+      if (!supabaseUrl || !supabaseKey) {
+        console.warn('[ClickTracker] sendBeaconClick: Supabase客户端不可用');
+        return false;
+      }
+      
+      const endpoint = `${supabaseUrl}/rest/v1/rpc/increment_post_click`;
+      
+      // 使用 fetch with keepalive 确保在页面卸载时也能发送
       fetch(endpoint, {
         method: 'POST',
         headers: {
@@ -327,16 +336,21 @@
           'Authorization': `Bearer ${supabaseKey}`
         },
         body: JSON.stringify({ p_url: normalizedUrl }),
-        keepalive: true
+        keepalive: true  // 关键：允许在页面卸载后继续发送
+      }).then(response => {
+        if (!response.ok) {
+          console.warn('[ClickTracker] sendBeaconClick: 请求失败:', response.status, normalizedUrl);
+        } else {
+          console.log('[ClickTracker] sendBeaconClick: 成功发送:', normalizedUrl);
+        }
       }).catch(err => {
-        console.warn('[ClickTracker] sendBeacon fallback failed:', err);
-        // Fallback: 保存到队列
-        enqueueClick(normalizedUrl);
+        console.warn('[ClickTracker] sendBeaconClick: 请求异常:', err, normalizedUrl);
+        // 不在这里加入队列，因为调用者已经会加入队列
       });
       
-      return true;
+      return true; // 表示已尝试发送
     } catch (e) {
-      console.warn('[ClickTracker] sendBeacon failed:', e);
+      console.warn('[ClickTracker] sendBeaconClick: 异常:', e, postUrl);
       return false;
     }
   }
@@ -445,10 +459,13 @@
     // 页面卸载前尝试发送剩余的点击
     window.addEventListener('beforeunload', () => {
       if (clickQueue.length > 0) {
-        // 尝试使用 keepalive 发送
+        console.log('[ClickTracker] 页面卸载，尝试发送剩余点击:', clickQueue.length);
+        // 尝试使用 keepalive 发送所有待处理的点击
         clickQueue.forEach(item => {
           sendBeaconClick(item.url);
         });
+        // 注意：不在这里清空队列，因为无法保证所有请求都成功
+        // 队列会在下次页面加载时恢复并重试
       }
     });
     // 从服务器加载点击和收藏数据
@@ -525,13 +542,17 @@
         
         console.log('[ClickTracker] 追踪点击:', url);
         
-        // 使用现代批处理方式：加入队列（不阻塞页面跳转）
+        // 立即尝试发送点击记录（使用 keepalive，不阻塞页面跳转）
+        // 这是关键：在页面跳转前立即发送，确保点击被记录
+        const sent = sendBeaconClick(url);
+        
+        // 同时加入队列作为备用（如果立即发送失败，队列会在后续刷新）
         trackClick(url);
         
-        // 如果页面即将跳转，尝试立即发送（使用 keepalive）
-        // 这可以确保在快速跳转时也能记录点击
-        if (document.visibilityState === 'hidden' || !document.hasFocus()) {
-          sendBeaconClick(url);
+        // 如果立即发送失败，尝试同步刷新队列（但不在页面跳转时阻塞）
+        if (!sent) {
+          console.warn('[ClickTracker] 立即发送失败，使用队列:', url);
+          // 不阻塞，让队列异步处理
         }
       }, { passive: true }); // 使用 passive 以提高性能
     });

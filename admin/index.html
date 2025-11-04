@@ -287,14 +287,18 @@ permalink: /admin/index.html
                   <tr>
                     <th>日期</th>
                     <th>新注册用户</th>
-                    <th>活跃用户</th>
+                    <th>总活跃用户</th>
+                    <th>登录用户</th>
+                    <th>会话活跃用户</th>
+                    <th>总活动数</th>
                     <th>登录次数</th>
-                    <th>平均登录次数</th>
+                    <th>页面浏览</th>
+                    <th>搜索次数</th>
                   </tr>
                 </thead>
                 <tbody id="active-users-body">
                   <tr>
-                    <td colspan="5" class="table-loading">加载中...</td>
+                    <td colspan="9" class="table-loading">加载中...</td>
                   </tr>
                 </tbody>
               </table>
@@ -310,8 +314,9 @@ permalink: /admin/index.html
                 <input type="date" id="active-users-list-end-date" value="">
                 <label style="margin-left: 1rem;">排序：</label>
                 <select id="active-users-list-order-by" style="padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 6px;">
+                  <option value="total_activities" selected>按总活动数</option>
                   <option value="login_count">按登录次数</option>
-                  <option value="last_login">按最后登录时间</option>
+                  <option value="last_activity_at">按最后活动时间</option>
                 </select>
                 <button id="active-users-list-query-btn" class="btn-primary" style="margin-left: 1rem;">查询</button>
               </div>
@@ -325,14 +330,19 @@ permalink: /admin/index.html
                       <th>排名</th>
                       <th>用户邮箱</th>
                       <th>用户名</th>
-                      <th>登录次数</th>
-                      <th>首次登录</th>
-                      <th>最后登录</th>
+                      <th>总活动数</th>
+                      <th>登录</th>
+                      <th>页面浏览</th>
+                      <th>搜索</th>
+                      <th>收藏</th>
+                      <th>活跃天数</th>
+                      <th>最后活动</th>
+                      <th>活跃度等级</th>
                     </tr>
                   </thead>
                   <tbody id="active-users-list-body">
                     <tr>
-                      <td colspan="6" class="table-loading">加载中...</td>
+                      <td colspan="11" class="table-loading">加载中...</td>
                     </tr>
                   </tbody>
                 </table>
@@ -1135,6 +1145,7 @@ permalink: /admin/index.html
   }
 
   // 加载收藏统计表
+  // 使用 SECURITY DEFINER 函数绕过 RLS 策略限制，获取所有用户的收藏数据
   async function loadFavoritesTable() {
     const tbody = document.getElementById('favorites-table-body');
     if (!tbody) return;
@@ -1148,14 +1159,13 @@ permalink: /admin/index.html
     tbody.innerHTML = '<tr><td colspan="3" class="table-loading">加载中...</td></tr>';
 
     try {
-      // 查询收藏统计（按文章分组）
+      // 使用 RPC 函数获取收藏统计（绕过 RLS 策略）
       const { data, error } = await supabase
-        .from('favorites')
-        .select('post_url, created_at')
-        .order('created_at', { ascending: true });
+        .rpc('get_favorites_stats_by_post');
 
       if (error) {
         console.error('[Admin] 加载收藏统计失败:', error);
+        console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_favorites_stats_by_post() 函数');
         tbody.innerHTML = '<tr><td colspan="3" class="table-message">加载失败：' + error.message + '</td></tr>';
         return;
       }
@@ -1168,25 +1178,12 @@ permalink: /admin/index.html
         return;
       }
 
-      // 按 post_url 分组统计
-      const favoriteStats = {};
-      data.forEach(fav => {
-        if (!favoriteStats[fav.post_url]) {
-          favoriteStats[fav.post_url] = {
-            count: 0,
-            firstFavorited: fav.created_at
-          };
-        }
-        favoriteStats[fav.post_url].count++;
-        if (fav.created_at < favoriteStats[fav.post_url].firstFavorited) {
-          favoriteStats[fav.post_url].firstFavorited = fav.created_at;
-        }
-      });
-
-      // 转换为数组并按收藏数排序
-      const sortedStats = Object.entries(favoriteStats)
-        .map(([url, stats]) => ({ url, ...stats }))
-        .sort((a, b) => b.count - a.count);
+      // 转换数据格式以匹配渲染函数
+      const sortedStats = data.map(item => ({
+        url: item.post_url,
+        count: item.favorite_count,
+        firstFavorited: item.first_favorited
+      }));
 
       // 缓存所有数据
       favoritesPaginationState.allStats = sortedStats;
@@ -1680,7 +1677,7 @@ permalink: /admin/index.html
     }
   }
 
-  // 加载活跃用户分析
+  // 加载活跃用户分析（使用综合统计，整合 login_logs 和 user_activity_logs）
   async function loadActiveUsersStats() {
     const supabase = getSupabase();
     if (!supabase) {
@@ -1693,12 +1690,12 @@ permalink: /admin/index.html
     }
 
     try {
-      // 加载今日统计
+      // 加载今日统计（使用综合统计函数）
       const [newUsersTodayResult, activeUsersTodayResult, activeUsers7DaysResult, activeUsers30DaysResult] = await Promise.all([
-        supabase.rpc('get_new_users_today'),
-        supabase.rpc('get_active_users_today'),
-        supabase.rpc('get_active_users_in_days', { p_days: 7 }),
-        supabase.rpc('get_active_users_in_days', { p_days: 30 })
+        supabase.rpc('get_new_users_today'),  // 这个仍使用原有的，因为需要判断新用户
+        supabase.rpc('get_comprehensive_active_users_today_count'),  // 综合统计
+        supabase.rpc('get_comprehensive_active_users_in_days_count', { p_days: 7 }),  // 综合统计
+        supabase.rpc('get_comprehensive_active_users_in_days_count', { p_days: 30 })  // 综合统计
       ]);
 
       // 检查错误并处理数据
@@ -1730,7 +1727,7 @@ permalink: /admin/index.html
         document.getElementById('active-users-30days').textContent = activeUsers30DaysResult.data !== null && activeUsers30DaysResult.data !== undefined ? activeUsers30DaysResult.data : 0;
       }
 
-      // 加载日期范围统计表
+      // 加载日期范围统计表（使用综合统计函数）
       const tbody = document.getElementById('active-users-body');
       const startDate = document.getElementById('active-users-start-date').value || 
         new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -1744,22 +1741,23 @@ permalink: /admin/index.html
         document.getElementById('active-users-end-date').value = endDate;
       }
 
-      tbody.innerHTML = '<tr><td colspan="5" class="table-loading">加载中...</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="table-loading">加载中...</td></tr>';
 
       const { data, error } = await supabase
-        .rpc('get_active_users_stats', {
+        .rpc('get_comprehensive_active_users_stats_by_date', {
           p_start_date: startDate,
           p_end_date: endDate
         });
 
       if (error) {
         console.error('[Admin] 加载活跃用户统计失败:', error);
-        tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败：' + error.message + '</td></tr>';
+        console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_comprehensive_active_users_stats_by_date() 函数');
+        tbody.innerHTML = '<tr><td colspan="9" class="table-message">加载失败：' + error.message + '</td></tr>';
         return;
       }
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="table-message">暂无数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="table-message">暂无数据</td></tr>';
         return;
       }
 
@@ -1769,9 +1767,13 @@ permalink: /admin/index.html
         html += `<tr>
           <td>${new Date(row.date).toLocaleDateString('zh-CN')}</td>
           <td>${row.new_users || 0}</td>
-          <td>${row.active_users || 0}</td>
+          <td><strong>${row.active_users || 0}</strong></td>
+          <td>${row.login_users || 0}</td>
+          <td>${row.session_active_users || 0}</td>
+          <td>${row.total_activities || 0}</td>
           <td>${row.login_count || 0}</td>
-          <td>${row.avg_login_per_user || 0}</td>
+          <td>${row.page_view_count || 0}</td>
+          <td>${row.search_count || 0}</td>
         </tr>`;
         rank++;
       }
@@ -1784,7 +1786,7 @@ permalink: /admin/index.html
       document.getElementById('active-users-30days').textContent = '错误';
       const tbody = document.getElementById('active-users-body');
       if (tbody) {
-        tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="table-message">加载失败</td></tr>';
       }
     }
   }
@@ -1796,7 +1798,7 @@ permalink: /admin/index.html
     totalCount: 0,
     startDate: null,
     endDate: null,
-    orderBy: 'login_count'
+    orderBy: 'total_activities'
   };
 
   // 初始化活跃用户名单分页
@@ -1889,11 +1891,11 @@ permalink: /admin/index.html
 
     const supabase = getSupabase();
     if (!supabase) {
-      tbody.innerHTML = '<tr><td colspan="6" class="table-message">Supabase客户端未初始化</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" class="table-message">Supabase客户端未初始化</td></tr>';
       return;
     }
 
-    tbody.innerHTML = '<tr><td colspan="6" class="table-loading">加载中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" class="table-loading">加载中...</td></tr>';
 
     try {
       const pageSize = activeUsersListPaginationState.pageSize;
@@ -1902,7 +1904,7 @@ permalink: /admin/index.html
         new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       const endDate = activeUsersListPaginationState.endDate || 
         new Date().toISOString().split('T')[0];
-      const orderBy = activeUsersListPaginationState.orderBy || 'login_count';
+      const orderBy = activeUsersListPaginationState.orderBy || 'total_activities';
 
       // 设置默认日期
       if (!activeUsersListPaginationState.startDate) {
@@ -1916,9 +1918,9 @@ permalink: /admin/index.html
         if (endDateInput) endDateInput.value = endDate;
       }
 
-      // 先获取总数
+      // 先获取总数（使用综合统计函数）
       const { data: countData, error: countError } = await supabase
-        .rpc('get_active_users_list_count', {
+        .rpc('get_comprehensive_active_users_list_count', {
           p_start_date: startDate,
           p_end_date: endDate
         });
@@ -1930,24 +1932,27 @@ permalink: /admin/index.html
         updateActiveUsersListPaginationInfo();
       }
 
-      // 获取活跃用户名单
+      // 获取活跃用户名单（使用综合统计函数）
+      // 注意：order_by参数需要映射，因为函数参数名不同
+      const orderByParam = orderBy === 'last_login' ? 'last_activity_at' : orderBy;
       const { data, error } = await supabase
-        .rpc('get_active_users_list', {
+        .rpc('get_comprehensive_active_users_list', {
           p_start_date: startDate,
           p_end_date: endDate,
           p_limit: pageSize,
           p_offset: offset,
-          p_order_by: orderBy
+          p_order_by: orderByParam
         });
 
       if (error) {
         console.error('[Admin] 加载活跃用户名单失败:', error);
-        tbody.innerHTML = '<tr><td colspan="6" class="table-message">加载失败：' + error.message + '</td></tr>';
+        console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_comprehensive_active_users_list() 函数');
+        tbody.innerHTML = '<tr><td colspan="11" class="table-message">加载失败：' + error.message + '</td></tr>';
         return;
       }
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="table-message">暂无数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="11" class="table-message">暂无数据</td></tr>';
         updateActiveUsersListPaginationInfo();
         return;
       }
@@ -1958,24 +1963,42 @@ permalink: /admin/index.html
         const rank = baseRank + index + 1;
         const email = user.user_email || '-';
         const username = user.username || '-';
+        const totalActivities = user.total_activities || 0;
         const loginCount = user.login_count || 0;
-        const firstLogin = user.first_login_at ? new Date(user.first_login_at).toLocaleDateString('zh-CN') : '-';
-        const lastLogin = user.last_login_at ? new Date(user.last_login_at).toLocaleString('zh-CN') : '-';
+        const pageViewCount = user.page_view_count || 0;
+        const searchCount = user.search_count || 0;
+        const favoriteCount = user.favorite_count || 0;
+        const activeDays = user.active_days || 0;
+        const lastActivity = user.last_activity_at ? new Date(user.last_activity_at).toLocaleString('zh-CN') : '-';
+        const activityLevel = user.activity_level || '-';
+        
+        // 活跃度等级颜色
+        const levelColor = {
+          '超级活跃用户': '#22c55e',
+          '活跃用户': '#3b82f6',
+          '一般活跃用户': '#f59e0b',
+          '低活跃用户': '#6b7280'
+        }[activityLevel] || '#6b7280';
 
         html += `<tr>
           <td>${rank}</td>
           <td class="logs-email">${email}</td>
           <td>${username}</td>
+          <td><strong>${totalActivities}</strong></td>
           <td>${loginCount}</td>
-          <td class="logs-time">${firstLogin}</td>
-          <td class="logs-time">${lastLogin}</td>
+          <td>${pageViewCount}</td>
+          <td>${searchCount}</td>
+          <td>${favoriteCount}</td>
+          <td>${activeDays}</td>
+          <td class="logs-time">${lastActivity}</td>
+          <td><span style="color: ${levelColor}; font-weight: bold;">${activityLevel}</span></td>
         </tr>`;
       });
       tbody.innerHTML = html;
       updateActiveUsersListPaginationInfo();
     } catch (error) {
       console.error('[Admin] 加载活跃用户名单异常:', error);
-      tbody.innerHTML = '<tr><td colspan="6" class="table-message">加载失败</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" class="table-message">加载失败</td></tr>';
     }
   }
 
