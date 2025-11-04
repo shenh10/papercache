@@ -107,8 +107,24 @@ permalink: /admin/index.html
       
       <!-- 登录日志 -->
       <div id="tab-logs" class="admin-tab-content">
-        <div class="admin-table-container">
-          <table class="admin-table">
+        <!-- 日期筛选器 -->
+        <div class="logs-filter-container">
+          <div class="logs-date-range">
+            <label>日期范围：</label>
+            <input type="date" id="logs-start-date" value="">
+            <span> 至 </span>
+            <input type="date" id="logs-end-date" value="">
+            <button id="logs-query-btn" class="btn-primary">查询</button>
+            <button id="logs-reset-btn" class="btn-secondary">重置</button>
+          </div>
+          <div class="logs-pagination-info">
+            <span id="logs-pagination-info">共 0 条记录</span>
+          </div>
+        </div>
+        
+        <!-- 登录日志表格 -->
+        <div class="admin-table-container logs-table-container">
+          <table class="admin-table logs-table">
             <thead>
               <tr>
                 <th>用户邮箱</th>
@@ -123,6 +139,15 @@ permalink: /admin/index.html
               </tr>
             </tbody>
           </table>
+        </div>
+        
+        <!-- 分页控件 -->
+        <div class="logs-pagination" id="logs-pagination" style="display: none;">
+          <button id="logs-prev-btn" class="pagination-btn" disabled>上一页</button>
+          <span class="pagination-info">
+            <span id="logs-current-page">1</span> / <span id="logs-total-pages">1</span>
+          </span>
+          <button id="logs-next-btn" class="pagination-btn">下一页</button>
         </div>
       </div>
 
@@ -339,6 +364,9 @@ permalink: /admin/index.html
   
   // 加载管理数据
   async function loadAdminData() {
+    // 初始化登录日志页面
+    initLogsPage();
+    
     await Promise.all([
       loadUserStats(),
       loadFavoritesStats(),
@@ -729,6 +757,81 @@ permalink: /admin/index.html
     }
   }
   
+  // 登录日志分页状态
+  const logsPaginationState = {
+    currentPage: 1,
+    pageSize: 20,
+    totalCount: 0,
+    startDate: null,
+    endDate: null
+  };
+
+  // 初始化登录日志页面
+  function initLogsPage() {
+    // 设置默认日期范围（最近30天）
+    const today = new Date().toISOString().split('T')[0];
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    const startDateInput = document.getElementById('logs-start-date');
+    const endDateInput = document.getElementById('logs-end-date');
+    
+    if (startDateInput && !startDateInput.value) {
+      startDateInput.value = thirtyDaysAgo;
+      logsPaginationState.startDate = thirtyDaysAgo;
+    }
+    if (endDateInput && !endDateInput.value) {
+      endDateInput.value = today;
+      logsPaginationState.endDate = today;
+    }
+
+    // 绑定查询按钮
+    const queryBtn = document.getElementById('logs-query-btn');
+    const resetBtn = document.getElementById('logs-reset-btn');
+    const prevBtn = document.getElementById('logs-prev-btn');
+    const nextBtn = document.getElementById('logs-next-btn');
+
+    if (queryBtn) {
+      queryBtn.addEventListener('click', () => {
+        logsPaginationState.currentPage = 1;
+        const startDate = document.getElementById('logs-start-date')?.value || null;
+        const endDate = document.getElementById('logs-end-date')?.value || null;
+        logsPaginationState.startDate = startDate;
+        logsPaginationState.endDate = endDate;
+        loadLogsTable();
+      });
+    }
+
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        logsPaginationState.currentPage = 1;
+        logsPaginationState.startDate = null;
+        logsPaginationState.endDate = null;
+        if (startDateInput) startDateInput.value = '';
+        if (endDateInput) endDateInput.value = '';
+        loadLogsTable();
+      });
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        if (logsPaginationState.currentPage > 1) {
+          logsPaginationState.currentPage--;
+          loadLogsTable();
+        }
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(logsPaginationState.totalCount / logsPaginationState.pageSize);
+        if (logsPaginationState.currentPage < totalPages) {
+          logsPaginationState.currentPage++;
+          loadLogsTable();
+        }
+      });
+    }
+  }
+
   // 加载登录日志表
   async function loadLogsTable() {
     const tbody = document.getElementById('logs-table-body');
@@ -743,54 +846,44 @@ permalink: /admin/index.html
     tbody.innerHTML = '<tr><td colspan="4" class="table-loading">加载中...</td></tr>';
 
     try {
+      const pageSize = logsPaginationState.pageSize;
+      const offset = (logsPaginationState.currentPage - 1) * pageSize;
+      const startDate = logsPaginationState.startDate || null;
+      const endDate = logsPaginationState.endDate || null;
+
+      // 先获取总数
+      const { data: countData, error: countError } = await supabase
+        .rpc('get_login_logs_count', {
+          p_start_date: startDate,
+          p_end_date: endDate
+        });
+
+      if (countError) {
+        console.warn('[Admin] 获取登录日志总数失败:', countError);
+      } else {
+        logsPaginationState.totalCount = countData || 0;
+        updateLogsPaginationInfo();
+      }
+
       // 使用 RPC 函数获取登录日志（包含用户邮箱）
       const { data, error } = await supabase
         .rpc('get_login_logs_with_email', {
-          p_limit: 100,
-          p_offset: 0
+          p_limit: pageSize,
+          p_offset: offset,
+          p_start_date: startDate,
+          p_end_date: endDate
         });
 
       if (error) {
         console.error('[Admin] 加载登录日志失败:', error);
         console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_login_logs_with_email() 函数');
-        // 如果函数不存在，尝试直接查询（可能受RLS限制）
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('login_logs')
-          .select('user_id, login_at, ip_address, user_agent')
-          .order('login_at', { ascending: false })
-          .limit(100);
-        
-        if (fallbackError) {
-          tbody.innerHTML = '<tr><td colspan="4" class="table-message">加载失败：' + fallbackError.message + '</td></tr>';
-          return;
-        }
-        
-        if (!fallbackData || fallbackData.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="table-message">暂无登录记录</td></tr>';
-          return;
-        }
-        
-        // 使用fallback数据（只显示user_id）
-        let html = '';
-        for (const log of fallbackData) {
-          const email = log.user_id ? log.user_id.substring(0, 8) + '...' : '-';
-          const loginDate = new Date(log.login_at).toLocaleString('zh-CN');
-          const ip = log.ip_address || '-';
-          const ua = log.user_agent ? (log.user_agent.length > 50 ? log.user_agent.substring(0, 50) + '...' : log.user_agent) : '-';
-
-          html += `<tr>
-            <td>${email}</td>
-            <td>${loginDate}</td>
-            <td>${ip}</td>
-            <td>${ua}</td>
-          </tr>`;
-        }
-        tbody.innerHTML = html;
+        tbody.innerHTML = '<tr><td colspan="4" class="table-message">加载失败：' + error.message + '</td></tr>';
         return;
       }
 
       if (!data || data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" class="table-message">暂无登录记录</td></tr>';
+        updateLogsPaginationInfo();
         return;
       }
 
@@ -800,19 +893,55 @@ permalink: /admin/index.html
         const email = log.user_email || '-';
         const loginDate = new Date(log.login_at).toLocaleString('zh-CN');
         const ip = log.ip_address || '-';
-        const ua = log.user_agent ? (log.user_agent.length > 50 ? log.user_agent.substring(0, 50) + '...' : log.user_agent) : '-';
+        const ua = log.user_agent ? (log.user_agent.length > 80 ? log.user_agent.substring(0, 80) + '...' : log.user_agent) : '-';
 
         html += `<tr>
-          <td>${email}</td>
-          <td>${loginDate}</td>
-          <td>${ip}</td>
-          <td>${ua}</td>
+          <td class="logs-email">${email}</td>
+          <td class="logs-time">${loginDate}</td>
+          <td class="logs-ip">${ip}</td>
+          <td class="logs-ua" title="${log.user_agent || ''}">${ua}</td>
         </tr>`;
       }
       tbody.innerHTML = html;
+      updateLogsPaginationInfo();
     } catch (error) {
       console.error('[Admin] 加载登录日志异常:', error);
       tbody.innerHTML = '<tr><td colspan="4" class="table-message">加载失败</td></tr>';
+    }
+  }
+
+  // 更新分页信息
+  function updateLogsPaginationInfo() {
+    const totalPages = Math.ceil(logsPaginationState.totalCount / logsPaginationState.pageSize);
+    const pagination = document.getElementById('logs-pagination');
+    const paginationInfo = document.getElementById('logs-pagination-info');
+    const currentPageEl = document.getElementById('logs-current-page');
+    const totalPagesEl = document.getElementById('logs-total-pages');
+    const prevBtn = document.getElementById('logs-prev-btn');
+    const nextBtn = document.getElementById('logs-next-btn');
+
+    if (paginationInfo) {
+      paginationInfo.textContent = `共 ${logsPaginationState.totalCount} 条记录`;
+    }
+
+    if (pagination) {
+      pagination.style.display = totalPages > 1 ? 'flex' : 'none';
+    }
+
+    if (currentPageEl) {
+      currentPageEl.textContent = logsPaginationState.currentPage;
+    }
+
+    if (totalPagesEl) {
+      totalPagesEl.textContent = totalPages || 1;
+    }
+
+    if (prevBtn) {
+      prevBtn.disabled = logsPaginationState.currentPage <= 1;
+    }
+
+    if (nextBtn) {
+      nextBtn.disabled = logsPaginationState.currentPage >= totalPages;
     }
   }
   
@@ -833,6 +962,12 @@ permalink: /admin/index.html
     // 如果切换到分析标签页，加载数据
     if (tabName === 'analytics' && window.AdminAnalytics) {
       loadAnalyticsData();
+    }
+
+    // 如果切换到登录日志标签页，初始化并加载数据
+    if (tabName === 'logs') {
+      initLogsPage();
+      loadLogsTable();
     }
   }
 
@@ -1498,6 +1633,214 @@ permalink: /admin/index.html
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   }
 
+  /* ============================================
+     登录日志页面美化样式
+     ============================================ */
+
+  .logs-filter-container {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .logs-date-range {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .logs-date-range label {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.95rem;
+  }
+
+  .logs-date-range input[type="date"] {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #2d3748;
+    transition: border-color 0.2s;
+    background: white;
+  }
+
+  .logs-date-range input[type="date"]:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .logs-date-range span {
+    color: #718096;
+    font-size: 0.9rem;
+  }
+
+  .btn-primary {
+    padding: 0.5rem 1.25rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .btn-secondary {
+    padding: 0.5rem 1.25rem;
+    background: #e2e8f0;
+    color: #4a5568;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+
+  .btn-secondary:hover {
+    background: #cbd5e1;
+  }
+
+  .logs-pagination-info {
+    font-size: 0.95rem;
+    color: #4a5568;
+    font-weight: 500;
+  }
+
+  .logs-table-container {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .logs-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .logs-table thead {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+  }
+
+  .logs-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+  }
+
+  .logs-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    color: #4a5568;
+    font-size: 0.9rem;
+  }
+
+  .logs-table tbody tr {
+    transition: background-color 0.2s;
+  }
+
+  .logs-table tbody tr:hover {
+    background: #f7fafc;
+  }
+
+  .logs-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .logs-email {
+    color: #667eea;
+    font-weight: 500;
+  }
+
+  .logs-time {
+    color: #718096;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.85rem;
+  }
+
+  .logs-ip {
+    color: #4a5568;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.85rem;
+  }
+
+  .logs-ua {
+    color: #718096;
+    font-size: 0.85rem;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .logs-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .pagination-btn {
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+    min-width: 80px;
+  }
+
+  .pagination-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+  }
+
+  .pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #cbd5e1;
+  }
+
+  .pagination-info {
+    font-size: 0.95rem;
+    color: #4a5568;
+    font-weight: 500;
+    min-width: 100px;
+    text-align: center;
+  }
+
   /* 响应式设计 */
   @media (max-width: 768px) {
     .analytics-section {
@@ -1518,6 +1861,42 @@ permalink: /admin/index.html
     }
 
     .analytics-date-range input[type="date"] {
+      width: 100%;
+    }
+
+    .logs-filter-container {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .logs-date-range {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .logs-date-range input[type="date"] {
+      width: 100%;
+    }
+
+    .logs-table {
+      font-size: 0.85rem;
+    }
+
+    .logs-table th,
+    .logs-table td {
+      padding: 0.75rem 0.5rem;
+    }
+
+    .logs-ua {
+      max-width: 150px;
+    }
+
+    .logs-pagination {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .pagination-btn {
       width: 100%;
     }
   }

@@ -120,7 +120,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- 用于管理后台显示登录记录
 CREATE OR REPLACE FUNCTION public.get_login_logs_with_email(
   p_limit INTEGER DEFAULT 100,
-  p_offset INTEGER DEFAULT 0
+  p_offset INTEGER DEFAULT 0,
+  p_start_date DATE DEFAULT NULL,
+  p_end_date DATE DEFAULT NULL
 )
 RETURNS TABLE(
   id UUID,
@@ -141,11 +143,37 @@ BEGIN
     ll.user_agent
   FROM public.login_logs ll
   LEFT JOIN auth.users au ON ll.user_id = au.id
+  WHERE 
+    (p_start_date IS NULL OR DATE(ll.login_at) >= p_start_date)
+    AND (p_end_date IS NULL OR DATE(ll.login_at) <= p_end_date)
   ORDER BY ll.login_at DESC
   LIMIT p_limit
   OFFSET p_offset;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 函数：获取登录日志总数（用于分页）
+CREATE OR REPLACE FUNCTION public.get_login_logs_count(
+  p_start_date DATE DEFAULT NULL,
+  p_end_date DATE DEFAULT NULL
+)
+RETURNS INTEGER AS $$
+DECLARE
+  count_result INTEGER;
+BEGIN
+  SELECT COUNT(*)::INTEGER
+  INTO count_result
+  FROM public.login_logs
+  WHERE 
+    (p_start_date IS NULL OR DATE(login_at) >= p_start_date)
+    AND (p_end_date IS NULL OR DATE(login_at) <= p_end_date);
+  
+  RETURN COALESCE(count_result, 0);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 授予函数执行权限
+GRANT EXECUTE ON FUNCTION public.get_login_logs_count(DATE, DATE) TO authenticated;
 
 -- 授予函数执行权限
 GRANT EXECUTE ON FUNCTION public.get_login_logs_with_email(INTEGER, INTEGER) TO authenticated;
