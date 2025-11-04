@@ -704,16 +704,49 @@ permalink: /admin/index.html
     tbody.innerHTML = '<tr><td colspan="4" class="table-loading">加载中...</td></tr>';
 
     try {
-      // 查询登录日志（需要 RLS 策略允许管理员查看）
+      // 使用 RPC 函数获取登录日志（包含用户邮箱）
       const { data, error } = await supabase
-        .from('login_logs')
-        .select('user_id, login_at, ip_address, user_agent')
-        .order('login_at', { ascending: false })
-        .limit(100);
+        .rpc('get_login_logs_with_email', {
+          p_limit: 100,
+          p_offset: 0
+        });
 
       if (error) {
         console.error('[Admin] 加载登录日志失败:', error);
-        tbody.innerHTML = '<tr><td colspan="4" class="table-message">加载失败：' + error.message + '</td></tr>';
+        console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_login_logs_with_email() 函数');
+        // 如果函数不存在，尝试直接查询（可能受RLS限制）
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('login_logs')
+          .select('user_id, login_at, ip_address, user_agent')
+          .order('login_at', { ascending: false })
+          .limit(100);
+        
+        if (fallbackError) {
+          tbody.innerHTML = '<tr><td colspan="4" class="table-message">加载失败：' + fallbackError.message + '</td></tr>';
+          return;
+        }
+        
+        if (!fallbackData || fallbackData.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="table-message">暂无登录记录</td></tr>';
+          return;
+        }
+        
+        // 使用fallback数据（只显示user_id）
+        let html = '';
+        for (const log of fallbackData) {
+          const email = log.user_id ? log.user_id.substring(0, 8) + '...' : '-';
+          const loginDate = new Date(log.login_at).toLocaleString('zh-CN');
+          const ip = log.ip_address || '-';
+          const ua = log.user_agent ? (log.user_agent.length > 50 ? log.user_agent.substring(0, 50) + '...' : log.user_agent) : '-';
+
+          html += `<tr>
+            <td>${email}</td>
+            <td>${loginDate}</td>
+            <td>${ip}</td>
+            <td>${ua}</td>
+          </tr>`;
+        }
+        tbody.innerHTML = html;
         return;
       }
 
@@ -722,10 +755,10 @@ permalink: /admin/index.html
         return;
       }
 
-      // 获取用户邮箱（需要查询 profiles，但这里先显示 user_id）
+      // 显示完整的登录日志（包含用户邮箱）
       let html = '';
       for (const log of data) {
-        const email = log.user_id ? log.user_id.substring(0, 8) + '...' : '-';
+        const email = log.user_email || '-';
         const loginDate = new Date(log.login_at).toLocaleString('zh-CN');
         const ip = log.ip_address || '-';
         const ua = log.user_agent ? (log.user_agent.length > 50 ? log.user_agent.substring(0, 50) + '...' : log.user_agent) : '-';

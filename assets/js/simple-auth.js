@@ -198,6 +198,10 @@
         AuthState.user = session.user;
         window._simpleAuthUser = session.user;
         loadProfile(session.user.id);
+        // 记录登录日志
+        logUserLogin(session.user.id).catch(err => {
+          console.warn('SimpleAuth: 记录登录日志失败', err);
+        });
         notifyStateChange();
       } else if (event === 'SIGNED_OUT') {
         AuthState.user = null;
@@ -223,6 +227,48 @@
         console.error('SimpleAuth: 监听器回调异常', error);
       }
     });
+  }
+
+  /**
+   * 记录用户登录日志
+   */
+  async function logUserLogin(userId) {
+    if (!supabase || !userId) {
+      return;
+    }
+
+    try {
+      // 获取IP地址（如果有第三方服务）
+      // 注意：客户端无法直接获取真实IP，可以通过后端API获取
+      // 这里先使用空值，或者通过fetch获取IP
+      let ipAddress = null;
+      try {
+        // 尝试从公共API获取IP（可选）
+        // const ipResponse = await fetch('https://api.ipify.org?format=json');
+        // const ipData = await ipResponse.json();
+        // ipAddress = ipData.ip;
+      } catch (e) {
+        // 忽略IP获取失败
+      }
+
+      // 获取User Agent
+      const userAgent = navigator.userAgent || null;
+
+      // 调用数据库函数记录登录日志
+      const { data, error } = await supabase.rpc('log_user_login', {
+        p_user_id: userId,
+        p_ip_address: ipAddress,
+        p_user_agent: userAgent
+      });
+
+      if (error) {
+        console.warn('SimpleAuth: 记录登录日志失败', error);
+      } else {
+        console.log('SimpleAuth: ✅ 登录日志已记录');
+      }
+    } catch (error) {
+      console.warn('SimpleAuth: 记录登录日志异常', error);
+    }
   }
 
   /**

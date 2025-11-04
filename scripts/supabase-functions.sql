@@ -113,6 +113,44 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================
+-- 获取登录日志（带用户邮箱）
+-- ============================================
+
+-- 函数：获取登录日志列表，包含用户邮箱
+-- 用于管理后台显示登录记录
+CREATE OR REPLACE FUNCTION public.get_login_logs_with_email(
+  p_limit INTEGER DEFAULT 100,
+  p_offset INTEGER DEFAULT 0
+)
+RETURNS TABLE(
+  id UUID,
+  user_id UUID,
+  user_email TEXT,
+  login_at TIMESTAMP WITH TIME ZONE,
+  ip_address INET,
+  user_agent TEXT
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    ll.id,
+    ll.user_id,
+    COALESCE(au.email::TEXT, 'N/A') as user_email,
+    ll.login_at,
+    ll.ip_address,
+    ll.user_agent
+  FROM public.login_logs ll
+  LEFT JOIN auth.users au ON ll.user_id = au.id
+  ORDER BY ll.login_at DESC
+  LIMIT p_limit
+  OFFSET p_offset;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 授予函数执行权限
+GRANT EXECUTE ON FUNCTION public.get_login_logs_with_email(INTEGER, INTEGER) TO authenticated;
+
+-- ============================================
 -- 获取收藏统计函数
 -- ============================================
 
