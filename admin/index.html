@@ -136,13 +136,21 @@ permalink: /admin/index.html
       
       <!-- 登录日志 -->
       <div id="tab-logs" class="admin-tab-content">
-        <!-- 日期筛选器 -->
+        <!-- 筛选器 -->
         <div class="logs-filter-container">
-          <div class="logs-date-range">
-            <label>日期范围：</label>
-            <input type="date" id="logs-start-date" value="">
-            <span> 至 </span>
-            <input type="date" id="logs-end-date" value="">
+          <div class="logs-filters">
+            <div class="logs-date-range">
+              <label>日期范围：</label>
+              <input type="date" id="logs-start-date" value="">
+              <span> 至 </span>
+              <input type="date" id="logs-end-date" value="">
+            </div>
+            <div class="logs-email-filter">
+              <label>用户邮箱：</label>
+              <input type="text" id="logs-email-filter" placeholder="输入邮箱关键词筛选..." value="">
+            </div>
+          </div>
+          <div class="logs-filter-actions">
             <button id="logs-query-btn" class="btn-primary">查询</button>
             <button id="logs-reset-btn" class="btn-secondary">重置</button>
           </div>
@@ -937,7 +945,8 @@ permalink: /admin/index.html
     pageSize: 20,
     totalCount: 0,
     startDate: null,
-    endDate: null
+    endDate: null,
+    userEmail: null
   };
 
   // 初始化登录日志页面
@@ -969,8 +978,10 @@ permalink: /admin/index.html
         logsPaginationState.currentPage = 1;
         const startDate = document.getElementById('logs-start-date')?.value || null;
         const endDate = document.getElementById('logs-end-date')?.value || null;
+        const userEmail = document.getElementById('logs-email-filter')?.value?.trim() || null;
         logsPaginationState.startDate = startDate;
         logsPaginationState.endDate = endDate;
+        logsPaginationState.userEmail = userEmail;
         loadLogsTable();
       });
     }
@@ -980,8 +991,11 @@ permalink: /admin/index.html
         logsPaginationState.currentPage = 1;
         logsPaginationState.startDate = null;
         logsPaginationState.endDate = null;
+        logsPaginationState.userEmail = null;
         if (startDateInput) startDateInput.value = '';
         if (endDateInput) endDateInput.value = '';
+        const emailFilter = document.getElementById('logs-email-filter');
+        if (emailFilter) emailFilter.value = '';
         loadLogsTable();
       });
     }
@@ -1024,12 +1038,14 @@ permalink: /admin/index.html
       const offset = (logsPaginationState.currentPage - 1) * pageSize;
       const startDate = logsPaginationState.startDate || null;
       const endDate = logsPaginationState.endDate || null;
+      const userEmail = logsPaginationState.userEmail || null;
 
       // 先获取总数
       const { data: countData, error: countError } = await supabase
         .rpc('get_login_logs_count', {
           p_start_date: startDate,
-          p_end_date: endDate
+          p_end_date: endDate,
+          p_user_email: userEmail
         });
 
       if (countError) {
@@ -1045,7 +1061,8 @@ permalink: /admin/index.html
           p_limit: pageSize,
           p_offset: offset,
           p_start_date: startDate,
-          p_end_date: endDate
+          p_end_date: endDate,
+          p_user_email: userEmail
         });
 
       if (error) {
@@ -1862,6 +1879,13 @@ permalink: /admin/index.html
     gap: 1rem;
   }
 
+  .logs-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+  }
+
   .logs-date-range {
     display: flex;
     align-items: center;
@@ -1885,10 +1909,42 @@ permalink: /admin/index.html
     background: white;
   }
 
-  .logs-date-range input[type="date"]:focus {
+  .logs-email-filter {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .logs-email-filter label {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.95rem;
+  }
+
+  .logs-email-filter input[type="text"] {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #2d3748;
+    transition: border-color 0.2s;
+    background: white;
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .logs-filter-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .logs-date-range input[type="date"]:focus,
+  .logs-email-filter input[type="text"]:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #22d3ee;
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.1);
   }
 
   .logs-date-range span {
@@ -1898,19 +1954,20 @@ permalink: /admin/index.html
 
   .btn-primary {
     padding: 0.5rem 1.25rem;
-    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.9) 0%, rgba(14, 165, 233, 0.9) 100%);
     color: white;
     border: none;
     border-radius: 6px;
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
   }
 
   .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+    background: linear-gradient(135deg, rgba(34, 211, 238, 1) 0%, rgba(14, 165, 233, 1) 100%);
+    box-shadow: 0 4px 6px rgba(34, 211, 238, 0.25);
   }
 
   .btn-primary:active {
@@ -1952,7 +2009,7 @@ permalink: /admin/index.html
   }
 
   .logs-table thead {
-    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.85) 0%, rgba(14, 165, 233, 0.85) 100%);
     color: white;
   }
 
@@ -1984,7 +2041,7 @@ permalink: /admin/index.html
   }
 
   .logs-email {
-    color: #3b82f6;
+    color: #22d3ee;
     font-weight: 500;
   }
 
@@ -2023,20 +2080,21 @@ permalink: /admin/index.html
 
   .pagination-btn {
     padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.9) 0%, rgba(14, 165, 233, 0.9) 100%);
     color: white;
     border: none;
     border-radius: 6px;
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s, background 0.2s;
     min-width: 80px;
   }
 
   .pagination-btn:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+    background: linear-gradient(135deg, rgba(34, 211, 238, 1) 0%, rgba(14, 165, 233, 1) 100%);
+    box-shadow: 0 4px 6px rgba(34, 211, 238, 0.25);
   }
 
   .pagination-btn:disabled {
@@ -2081,6 +2139,10 @@ permalink: /admin/index.html
       align-items: stretch;
     }
 
+    .logs-filters {
+      width: 100%;
+    }
+
     .logs-date-range {
       flex-direction: column;
       align-items: stretch;
@@ -2088,6 +2150,25 @@ permalink: /admin/index.html
 
     .logs-date-range input[type="date"] {
       width: 100%;
+    }
+
+    .logs-email-filter {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .logs-email-filter input[type="text"] {
+      width: 100%;
+      min-width: auto;
+    }
+
+    .logs-filter-actions {
+      width: 100%;
+      justify-content: stretch;
+    }
+
+    .logs-filter-actions button {
+      flex: 1;
     }
 
     .logs-table {
