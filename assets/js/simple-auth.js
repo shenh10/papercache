@@ -88,11 +88,27 @@
 
       if (session?.user) {
         console.log('SimpleAuth: 发现有效session', session.user.email);
+        
+        // 检查这是否是新登录（之前没有用户，现在有了）
+        // 这种情况通常发生在OAuth重定向回来后，触发的是INITIAL_SESSION而不是SIGNED_IN
+        const wasLoggedIn = AuthState.user !== null;
+        const isNewLogin = !wasLoggedIn && session?.user;
+        
         AuthState.user = session.user;
         window._simpleAuthUser = session.user;
 
         // 异步加载profile（不阻塞初始化）
         loadProfile(session.user.id);
+        
+        // 如果是新登录（比如OAuth重定向回来），记录登录日志
+        // 注意：这里不检查是否是首次初始化，因为首次初始化时可能已经有session了
+        if (isNewLogin) {
+          console.log('SimpleAuth: 检测到新登录（可能来自OAuth重定向），记录登录日志');
+          logUserLogin(session.user.id).catch(err => {
+            console.warn('SimpleAuth: 记录登录日志失败', err);
+          });
+        }
+        
         return session.user;
       }
 
@@ -185,11 +201,28 @@
    */
   function setupAuthListener() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // 忽略 INITIAL_SESSION 和 TOKEN_REFRESHED，避免重复通知
-      // INITIAL_SESSION: 已经在 init() 时处理过了
+      // 忽略 TOKEN_REFRESHED，避免重复通知
       // TOKEN_REFRESHED: token刷新不影响用户状态，不需要通知UI
-      if (event === 'INITIAL_SESSION' || event === 'TOKEN_REFRESHED') {
+      if (event === 'TOKEN_REFRESHED') {
         return; // 直接返回，不触发状态变化通知
+      }
+
+      // 处理 INITIAL_SESSION：这通常发生在OAuth重定向回来时
+      // 如果之前没有用户，现在有了session，说明是新登录，需要记录日志
+      if (event === 'INITIAL_SESSION') {
+        const wasLoggedIn = AuthState.user !== null;
+        if (!wasLoggedIn && session?.user) {
+          console.log('SimpleAuth: INITIAL_SESSION - 检测到新登录（OAuth重定向），记录登录日志');
+          AuthState.user = session.user;
+          window._simpleAuthUser = session.user;
+          loadProfile(session.user.id);
+          // 记录登录日志（OAuth登录时可能只触发INITIAL_SESSION而不是SIGNED_IN）
+          logUserLogin(session.user.id).catch(err => {
+            console.warn('SimpleAuth: 记录登录日志失败', err);
+          });
+          notifyStateChange();
+        }
+        return; // 不触发额外通知，避免重复
       }
 
       console.log('SimpleAuth: 认证状态变化', event, session?.user?.email || '未登录');
