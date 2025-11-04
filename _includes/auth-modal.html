@@ -333,16 +333,13 @@ async function handleGitHubLogin() {
 
     console.log('[AuthModal] 开始GitHub登录...');
     console.log('[AuthModal] 调用 SimpleAuth.signInWithOAuth("github")');
-    
+
     // 调用SimpleAuth的OAuth登录方法
-    const result = await window.SimpleAuth.signInWithOAuth('github');
-    
-    console.log('[AuthModal] signInWithOAuth 返回:', result);
-    
-    // OAuth登录会重定向，所以这里不会继续执行
-    // 如果执行到这里，说明没有重定向（可能是错误情况）
-    console.warn('[AuthModal] GitHub登录流程已启动，但未重定向（可能异常）');
-    // 不要关闭loading，因为即将重定向
+    // Supabase会自动处理重定向到GitHub授权页面
+    await window.SimpleAuth.signInWithOAuth('github');
+
+    // 理论上不会执行到这里，因为Supabase会自动重定向
+    console.log('[AuthModal] OAuth登录调用完成');
 
   } catch (error) {
     console.error('[AuthModal] GitHub登录失败:', error);

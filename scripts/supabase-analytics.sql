@@ -77,6 +77,11 @@ CREATE POLICY "Anyone can manage sessions"
 
 -- ============================================
 -- 分析函数：日活跃用户（DAU）
+-- 修复：正确统计已登录用户和匿名用户，确保去重
+-- 已登录用户：通过 user_id 标识（需要在 profiles 表中存在）
+-- 匿名用户：通过 session_id 标识（user_id IS NULL 时）
+-- 整合 login_logs 和 user_activity_logs 两个数据源
+-- 注意：使用与 comprehensive 函数一致的逻辑，确保统计口径一致
 -- ============================================
 
 CREATE OR REPLACE FUNCTION get_daily_active_users(
@@ -85,15 +90,52 @@ CREATE OR REPLACE FUNCTION get_daily_active_users(
 RETURNS INTEGER AS $$
 BEGIN
   RETURN (
-    SELECT COUNT(DISTINCT COALESCE(user_id::TEXT, session_id))
-    FROM user_activity_logs
-    WHERE DATE(created_at) = p_date
+    SELECT COUNT(DISTINCT user_identifier)::INTEGER
+    FROM (
+      -- 从 login_logs 获取今日登录的用户（已登录用户）
+      SELECT DISTINCT 
+        ll.user_id::TEXT as user_identifier
+      FROM public.login_logs ll
+      INNER JOIN public.profiles p ON ll.user_id = p.id  -- 只统计真实存在的用户
+      WHERE DATE(ll.login_at) = p_date
+        AND ll.user_id IS NOT NULL
+
+      UNION
+
+      -- 从 user_activity_logs 获取今日有活动的用户
+      -- 已登录用户：使用 user_id（验证在 profiles 中存在），匿名用户：使用 session_id
+      SELECT DISTINCT
+        CASE 
+          WHEN ual.user_id IS NOT NULL AND EXISTS (
+            SELECT 1 FROM public.profiles p WHERE p.id = ual.user_id
+          ) THEN ual.user_id::TEXT
+          WHEN ual.user_id IS NULL AND ual.session_id IS NOT NULL THEN 'anon_' || ual.session_id
+          ELSE NULL
+        END as user_identifier
+      FROM public.user_activity_logs ual
+      WHERE DATE(ual.created_at) = p_date
+        AND (
+          -- 已登录用户：验证在 profiles 中存在
+          (ual.user_id IS NOT NULL AND EXISTS (
+            SELECT 1 FROM public.profiles p WHERE p.id = ual.user_id
+          ))
+          OR
+          -- 匿名用户：使用 session_id
+          (ual.user_id IS NULL AND ual.session_id IS NOT NULL)
+        )
+        AND ual.activity_type IN ('page_view', 'search', 'click', 'favorite')
+    ) active_users
+    WHERE user_identifier IS NOT NULL  -- 排除无效记录
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- ============================================
 -- 分析函数：获取指定日期范围内的活跃用户数
+-- 修复：正确统计已登录用户和匿名用户，确保去重
+-- 已登录用户：通过 user_id 标识（需要在 profiles 表中存在）
+-- 匿名用户：通过 session_id 标识（user_id IS NULL 时）
+-- 整合 login_logs 和 user_activity_logs 两个数据源
 -- ============================================
 
 CREATE OR REPLACE FUNCTION get_active_users_in_range(
@@ -108,15 +150,52 @@ RETURNS TABLE(
 ) AS $$
 BEGIN
   RETURN QUERY
+  WITH daily_activities AS (
+    SELECT
+      DATE(activity_date) as activity_date,
+      user_identifier,
+      is_authenticated
+    FROM (
+      -- login_logs 数据（已登录用户）
+      SELECT
+        ll.login_at as activity_date,
+        ll.user_id::TEXT as user_identifier,
+        true as is_authenticated
+      FROM public.login_logs ll
+      INNER JOIN public.profiles p ON ll.user_id = p.id  -- 只统计真实存在的用户
+      WHERE DATE(ll.login_at) BETWEEN p_start_date AND p_end_date
+        AND ll.user_id IS NOT NULL
+
+      UNION
+
+      -- user_activity_logs 数据
+      -- 已登录用户：使用 user_id，匿名用户：使用 session_id
+      SELECT
+        ual.created_at as activity_date,
+        COALESCE(ual.user_id::TEXT, 'anon_' || ual.session_id) as user_identifier,
+        CASE WHEN ual.user_id IS NOT NULL THEN true ELSE false END as is_authenticated
+      FROM public.user_activity_logs ual
+      WHERE DATE(ual.created_at) BETWEEN p_start_date AND p_end_date
+        AND (
+          -- 已登录用户：验证在 profiles 中存在
+          (ual.user_id IS NOT NULL AND EXISTS (
+            SELECT 1 FROM public.profiles p WHERE p.id = ual.user_id
+          ))
+          OR
+          -- 匿名用户：使用 session_id
+          (ual.user_id IS NULL AND ual.session_id IS NOT NULL)
+        )
+        AND ual.activity_type IN ('page_view', 'search', 'click', 'favorite')
+    ) all_activities
+  )
   SELECT
-    DATE(created_at) as date,
-    COUNT(DISTINCT COALESCE(user_id::TEXT, session_id))::INTEGER as active_users,
-    COUNT(DISTINCT user_id) FILTER (WHERE user_id IS NOT NULL)::INTEGER as authenticated_users,
-    COUNT(DISTINCT session_id) FILTER (WHERE user_id IS NULL)::INTEGER as anonymous_users
-  FROM user_activity_logs
-  WHERE DATE(created_at) BETWEEN p_start_date AND p_end_date
-  GROUP BY DATE(created_at)
-  ORDER BY date;
+    activity_date as date,
+    COUNT(DISTINCT user_identifier)::INTEGER as active_users,  -- 总活跃用户数（已登录+匿名）
+    COUNT(DISTINCT user_identifier) FILTER (WHERE is_authenticated)::INTEGER as authenticated_users,  -- 已登录用户数
+    COUNT(DISTINCT user_identifier) FILTER (WHERE NOT is_authenticated)::INTEGER as anonymous_users  -- 匿名用户数
+  FROM daily_activities
+  GROUP BY activity_date
+  ORDER BY activity_date;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -138,15 +217,15 @@ RETURNS TABLE(
 BEGIN
   RETURN QUERY
   SELECT
-    page_path,
-    MAX(page_title) as page_title,
+    ual.page_path,
+    MAX(ual.page_title) as page_title,
     COUNT(*)::INTEGER as view_count,
-    COUNT(DISTINCT COALESCE(user_id::TEXT, session_id))::INTEGER as unique_visitors
-  FROM user_activity_logs
-  WHERE activity_type = 'page_view'
-    AND DATE(created_at) BETWEEN p_start_date AND p_end_date
-    AND page_path IS NOT NULL
-  GROUP BY page_path
+    COUNT(DISTINCT COALESCE(ual.user_id::TEXT, ual.session_id))::INTEGER as unique_visitors
+  FROM user_activity_logs ual
+  WHERE ual.activity_type = 'page_view'
+    AND DATE(ual.created_at) BETWEEN p_start_date AND p_end_date
+    AND ual.page_path IS NOT NULL
+  GROUP BY ual.page_path
   ORDER BY view_count DESC
   LIMIT p_limit;
 END;
@@ -169,15 +248,15 @@ RETURNS TABLE(
 BEGIN
   RETURN QUERY
   SELECT
-    search_query,
+    ual.search_query,
     COUNT(*)::INTEGER as search_count,
-    COUNT(DISTINCT COALESCE(user_id::TEXT, session_id))::INTEGER as unique_searchers
-  FROM user_activity_logs
-  WHERE activity_type = 'search'
-    AND DATE(created_at) BETWEEN p_start_date AND p_end_date
-    AND search_query IS NOT NULL
-    AND search_query != ''
-  GROUP BY search_query
+    COUNT(DISTINCT COALESCE(ual.user_id::TEXT, ual.session_id))::INTEGER as unique_searchers
+  FROM user_activity_logs ual
+  WHERE ual.activity_type = 'search'
+    AND DATE(ual.created_at) BETWEEN p_start_date AND p_end_date
+    AND ual.search_query IS NOT NULL
+    AND ual.search_query != ''
+  GROUP BY ual.search_query
   ORDER BY search_count DESC
   LIMIT p_limit;
 END;

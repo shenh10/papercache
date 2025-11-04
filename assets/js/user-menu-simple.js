@@ -278,10 +278,15 @@
   window.handleLogout = async function() {
     if (window.SimpleAuth) {
       try {
+        console.log('UserMenu: 开始退出登录...');
         await window.SimpleAuth.logout();
-        updateUserMenu(null);
+        // 注意：不需要手动调用updateUserMenu(null)，因为logout会触发SIGNED_OUT事件
+        // SIGNED_OUT事件会自动调用updateUserState，进而通知UI更新
+        console.log('UserMenu: 退出登录完成');
       } catch (error) {
         console.error('UserMenu: 登出失败', error);
+        // 如果登出失败，手动更新UI确保显示未登录状态
+        updateUserMenu(null);
       }
     }
   };

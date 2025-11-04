@@ -6,14 +6,50 @@
 (function() {
   'use strict';
 
-  // 获取或创建会话ID
-  function getSessionId() {
-    let sessionId = sessionStorage.getItem('pc_session_id');
-    if (!sessionId) {
-      sessionId = crypto.randomUUID ? crypto.randomUUID() : generateUUID();
-      sessionStorage.setItem('pc_session_id', sessionId);
+  // 获取或创建访客ID（持久化，用于匿名用户追踪）
+  // 使用 localStorage 而不是 sessionStorage，确保跨会话追踪
+  // 访客ID有效期：365天（1年），过期后重新生成
+  function getVisitorId() {
+    const VISITOR_ID_KEY = 'pc_visitor_id';
+    const VISITOR_ID_EXPIRY_KEY = 'pc_visitor_id_expiry';
+    const VISITOR_ID_EXPIRY_DAYS = 365; // 1年有效期
+    
+    try {
+      const storedId = localStorage.getItem(VISITOR_ID_KEY);
+      const storedExpiry = localStorage.getItem(VISITOR_ID_EXPIRY_KEY);
+      
+      // 检查是否有效且未过期
+      if (storedId && storedExpiry) {
+        const expiryDate = new Date(storedExpiry);
+        if (expiryDate > new Date()) {
+          return storedId;
+        }
+      }
+      
+      // 生成新的访客ID
+      const visitorId = crypto.randomUUID ? crypto.randomUUID() : generateUUID();
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + VISITOR_ID_EXPIRY_DAYS);
+      
+      localStorage.setItem(VISITOR_ID_KEY, visitorId);
+      localStorage.setItem(VISITOR_ID_EXPIRY_KEY, expiryDate.toISOString());
+      
+      return visitorId;
+    } catch (e) {
+      // 如果 localStorage 不可用（某些隐私模式），fallback 到 sessionStorage
+      console.warn('[Analytics] localStorage not available, falling back to sessionStorage');
+      let sessionId = sessionStorage.getItem('pc_session_id');
+      if (!sessionId) {
+        sessionId = crypto.randomUUID ? crypto.randomUUID() : generateUUID();
+        sessionStorage.setItem('pc_session_id', sessionId);
+      }
+      return sessionId;
     }
-    return sessionId;
+  }
+  
+  // 保持向后兼容：getSessionId 现在返回 visitorId
+  function getSessionId() {
+    return getVisitorId();
   }
 
   // 生成UUID（兼容旧浏览器）
