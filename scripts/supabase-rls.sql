@@ -69,25 +69,22 @@ CREATE POLICY "System can insert login logs"
   WITH CHECK (true);
 
 -- ============================================
--- 管理员权限（可选）
+-- 管理员权限（已废弃）
 -- ============================================
-
--- 创建一个函数来检查管理员权限
--- 管理员列表可以从配置表或环境变量中读取
--- 这里使用简单的邮箱白名单方式
-
-CREATE OR REPLACE FUNCTION is_admin(user_email TEXT)
-RETURNS BOOLEAN AS $$
-BEGIN
-  -- 这里可以从配置表读取管理员列表
-  -- 暂时使用硬编码的方式，后续可以从配置文件读取
-  RETURN user_email IN (
-    'thushenhan@gmail.com'  -- 替换为实际管理员邮箱
-  );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 为管理员添加查看所有数据的策略（可选，如果需要）
--- 注意：需要先创建管理员表或在配置中存储管理员列表
+--
+-- 注意：此文件中的 is_admin() 函数已废弃
+-- 现在使用 supabase-functions.sql 中的 is_admin() 函数
+-- 该函数从 admins 表读取管理员列表，而不是硬编码邮箱
+--
+-- 如果已执行 supabase-functions.sql，则无需执行下面的代码
+-- 如果尚未执行，请先执行 supabase-functions.sql 创建 admins 表和 is_admin() 函数
+--
+-- 旧的硬编码邮箱方式（已废弃）：
+-- CREATE OR REPLACE FUNCTION is_admin(user_email TEXT)
+-- RETURNS BOOLEAN AS $$
+-- BEGIN
+--   RETURN user_email IN ('thushenhan@gmail.com');
+-- END;
+-- $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 

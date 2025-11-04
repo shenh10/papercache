@@ -63,38 +63,58 @@
 
         // 检查是否是管理员，显示/隐藏统计分析菜单项
         const adminLink = document.getElementById('user-menu-admin-link');
-        if (adminLink) {
-          // 从 Jekyll 配置中获取管理员邮箱列表（通过全局变量或 meta 标签）
-          let adminEmails = [];
-          try {
-            // 尝试从 window.siteConfig 获取（如果有）
-            if (window.siteConfig && window.siteConfig.adminEmails) {
-              adminEmails = window.siteConfig.adminEmails;
-            } else {
-              // 从 meta 标签获取（需要在 head.html 中添加）
-              const adminMeta = document.querySelector('meta[name="admin-emails"]');
-              if (adminMeta) {
-                adminEmails = JSON.parse(adminMeta.content);
-              } else {
-                // 尝试从 Jekyll 注入的全局变量获取（如果有）
-                // 这里我们使用一个简单的检查：如果配置存在，尝试从页面变量获取
-                const adminEmailsScript = document.getElementById('admin-emails-config');
-                if (adminEmailsScript) {
-                  adminEmails = JSON.parse(adminEmailsScript.textContent);
+        if (adminLink && finalUser.id) {
+          // 从数据库的 admins 表检查管理员权限
+          const checkAdminStatus = async () => {
+            try {
+              // 检查是否有 Supabase 客户端
+              if (window.supabase || (window.SimpleAuth && window.SimpleAuth.getSupabase)) {
+                const supabase = window.supabase || window.SimpleAuth.getSupabase();
+                if (supabase) {
+                  const { data: isAdmin, error } = await supabase
+                    .rpc('check_user_is_admin', {
+                      p_user_id: finalUser.id
+                    });
+
+                  if (!error && isAdmin) {
+                    adminLink.style.display = 'flex';
+                    console.log('UserMenu: 管理员已登录，显示统计分析菜单');
+                    return;
+                  }
                 }
               }
+            } catch (e) {
+              console.warn('UserMenu: 检查管理员权限失败，使用配置文件（向后兼容）', e);
             }
-          } catch (e) {
-            console.warn('UserMenu: 无法获取管理员邮箱列表', e);
-          }
 
-          // 检查当前用户是否是管理员
-          const isAdmin = finalUser.email && adminEmails.includes(finalUser.email);
-          adminLink.style.display = isAdmin ? 'flex' : 'none';
-          
-          if (isAdmin) {
-            console.log('UserMenu: 管理员已登录，显示统计分析菜单');
-          }
+            // 降级：使用配置文件方式（向后兼容）
+            try {
+              let adminEmails = [];
+              if (window.siteConfig && window.siteConfig.adminEmails) {
+                adminEmails = window.siteConfig.adminEmails;
+              } else {
+                const adminMeta = document.querySelector('meta[name="admin-emails"]');
+                if (adminMeta) {
+                  adminEmails = JSON.parse(adminMeta.content);
+                } else {
+                  const adminEmailsScript = document.getElementById('admin-emails-config');
+                  if (adminEmailsScript) {
+                    adminEmails = JSON.parse(adminEmailsScript.textContent);
+                  }
+                }
+              }
+              const isAdmin = finalUser.email && adminEmails.includes(finalUser.email);
+              adminLink.style.display = isAdmin ? 'flex' : 'none';
+              if (isAdmin) {
+                console.log('UserMenu: 管理员已登录，显示统计分析菜单（配置文件方式）');
+              }
+            } catch (e) {
+              console.warn('UserMenu: 无法获取管理员信息', e);
+              adminLink.style.display = 'none';
+            }
+          };
+
+          checkAdminStatus();
         }
 
         // 只在需要时初始化下拉菜单（如果还没初始化）

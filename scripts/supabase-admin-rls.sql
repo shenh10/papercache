@@ -2,8 +2,15 @@
 -- 管理员 RLS 策略
 -- 允许管理员查看所有用户的数据
 -- ============================================
-
--- 获取当前用户的邮箱
+-- 
+-- 注意：此文件中的 is_admin() 函数已废弃
+-- 现在使用 supabase-functions.sql 中的 is_admin() 函数
+-- 该函数从 admins 表读取管理员列表，而不是硬编码邮箱
+--
+-- 如果已执行 supabase-functions.sql，则无需执行此文件
+-- 如果尚未执行，请先执行 supabase-functions.sql 创建 admins 表和 is_admin() 函数
+--
+-- 获取当前用户的邮箱（保留此函数，可能被其他代码使用）
 CREATE OR REPLACE FUNCTION get_user_email(user_id UUID)
 RETURNS TEXT AS $$
 BEGIN
@@ -11,27 +18,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 检查是否为管理员
-CREATE OR REPLACE FUNCTION is_admin(user_id UUID DEFAULT auth.uid())
-RETURNS BOOLEAN AS $$
-DECLARE
-  user_email TEXT;
-BEGIN
-  IF user_id IS NULL THEN
-    RETURN FALSE;
-  END IF;
-  
-  user_email := get_user_email(user_id);
-  
-  -- 管理员邮箱列表（可以从配置文件或环境变量读取）
-  RETURN user_email IN (
-    'thushenhan@gmail.com'  -- 替换为实际管理员邮箱列表
-    -- 可以添加更多管理员邮箱
-    -- 'admin2@example.com',
-    -- 'admin3@example.com'
-  );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+-- 注意：is_admin() 函数现在在 supabase-functions.sql 中定义
+-- 它从 admins 表读取管理员列表，不再使用硬编码邮箱
+-- 请执行 supabase-functions.sql 中的 is_admin() 函数定义
 
 -- ============================================
 -- favorites 表：管理员可以查看所有收藏

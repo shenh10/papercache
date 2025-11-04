@@ -368,10 +368,45 @@ permalink: /admin/index.html
       return false;
     }
     
-    // 检查是否是管理员（从配置文件读取）
-    const adminEmails = {{ site.admin.admin_emails | jsonify }};
-    const isAdmin = adminEmails && adminEmails.includes(user.email);
-    console.log('[Admin] 管理员邮箱列表:', adminEmails);
+    // 检查是否是管理员（从数据库的 admins 表读取）
+    const supabase = getSupabase();
+    if (!supabase) {
+      console.error('[Admin] Supabase客户端未初始化');
+      authCheck.style.display = 'none';
+      unauthorized.style.display = 'block';
+      unauthorized.innerHTML = `
+        <div class="unauthorized-icon">🔒</div>
+        <h2>系统错误</h2>
+        <p>Supabase客户端未初始化，请刷新页面重试。</p>
+        <button onclick="location.reload()" class="btn-primary">刷新页面</button>
+      `;
+      return false;
+    }
+
+    let isAdmin = false;
+    try {
+      const { data: adminCheckData, error: adminCheckError } = await supabase
+        .rpc('check_user_is_admin', {
+          p_user_id: user.id
+        });
+
+      if (adminCheckError) {
+        console.error('[Admin] 检查管理员权限失败:', adminCheckError);
+        // 如果函数不存在，尝试使用旧的配置文件方式（向后兼容）
+        const adminEmails = {{ site.admin.admin_emails | jsonify }};
+        isAdmin = adminEmails && adminEmails.includes(user.email);
+        console.warn('[Admin] 使用配置文件检查管理员权限（向后兼容）');
+      } else {
+        isAdmin = adminCheckData || false;
+      }
+    } catch (error) {
+      console.error('[Admin] 检查管理员权限异常:', error);
+      // 降级到配置文件方式
+      const adminEmails = {{ site.admin.admin_emails | jsonify }};
+      isAdmin = adminEmails && adminEmails.includes(user.email);
+      console.warn('[Admin] 使用配置文件检查管理员权限（向后兼容）');
+    }
+
     console.log('[Admin] 用户邮箱:', user.email);
     console.log('[Admin] 是否是管理员:', isAdmin);
     

@@ -21,8 +21,11 @@ supabase:
 # 管理员配置
 admin:
   enabled: true
+  # 注意：admin_emails 已废弃，现在使用数据库的 admins 表管理
+  # 保留此配置仅用于向后兼容（如果数据库函数不可用时降级使用）
+  # 推荐方式：通过管理后台或执行 supabase-init-admin.sql 初始化管理员
   admin_emails:
-    - "thushenhan@gmail.com"  # 现有管理员
+    - "thushenhan@gmail.com"  # 向后兼容：现有管理员邮箱（已废弃，建议删除）
     # 添加更多管理员邮箱（每行一个）
     # - "your-admin-email@example.com"
 
