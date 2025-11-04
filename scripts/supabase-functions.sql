@@ -610,10 +610,11 @@ GRANT EXECUTE ON FUNCTION public.remove_admin(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.check_user_is_admin(UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_users_with_admin_status(INTEGER, INTEGER) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.delete_user_data(UUID) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_active_users_stats(DATE, DATE) TO authenticated;
+-- 注意：使用命名参数传递，确保参数顺序正确
+GRANT EXECUTE ON FUNCTION public.get_active_users_stats(p_start_date DATE, p_end_date DATE) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_new_users_today() TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_active_users_today() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_active_users_in_days(INTEGER) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_active_users_in_days(p_days INTEGER) TO authenticated;
 
 -- ============================================
 -- 初始化管理员（重要！）
