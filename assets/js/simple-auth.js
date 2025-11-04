@@ -338,6 +338,27 @@
     console.log('SimpleAuth: 开始OAuth登录，提供商:', provider);
 
     try {
+      // 检查是否已有session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      // 如果已有session，且用户想要重新登录（可能是切换账号），先登出
+      // 这样可以确保会重定向到OAuth提供商页面
+      if (session?.user) {
+        console.log('SimpleAuth: 检测到已有session，先登出以确保OAuth流程正常');
+        try {
+          await supabase.auth.signOut();
+          // 清除本地状态
+          AuthState.user = null;
+          window._simpleAuthUser = null;
+          console.log('SimpleAuth: 已登出，准备重新OAuth登录');
+          // 等待一小段时间，确保登出完成
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (logoutError) {
+          console.warn('SimpleAuth: 登出失败，继续OAuth流程', logoutError);
+          // 即使登出失败，也继续尝试OAuth登录
+        }
+      }
+
       // 构建重定向URL，包含baseurl
       const baseurl = window.PC_BASEURL || '';
       const currentPath = window.location.pathname;
@@ -368,6 +389,8 @@
         provider: provider, // 'github' 或 'google'
         options: {
           redirectTo: redirectTo,
+          // 确保会重定向到OAuth提供商页面
+          skipBrowserRedirect: false,
           // 可选：指定需要请求的权限范围
           // scopes: 'read:user user:email' // GitHub scope示例
         }
@@ -378,10 +401,17 @@
         throw error;
       }
 
-      // OAuth登录会重定向到提供商，所以这里返回的数据可能为空
-      // 实际登录状态会在重定向回来后通过auth state listener更新
-      console.log('SimpleAuth: OAuth登录流程已启动，即将重定向');
-      return { success: true, data };
+      // 检查是否有重定向URL
+      if (data?.url) {
+        console.log('SimpleAuth: OAuth登录流程已启动，重定向到:', data.url);
+        // 手动重定向到OAuth提供商页面
+        window.location.href = data.url;
+        return { success: true, data };
+      } else {
+        // 如果没有URL，可能是Supabase认为已经登录了，但我们期望重定向
+        console.warn('SimpleAuth: OAuth登录返回数据中没有URL，可能已有session');
+        throw new Error('OAuth登录流程异常，请先登出后重试');
+      }
 
     } catch (error) {
       console.error('SimpleAuth: OAuth登录异常', error);
