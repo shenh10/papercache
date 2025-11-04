@@ -309,6 +309,7 @@ CREATE TABLE IF NOT EXISTS public.admins (
 ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
 
 -- 管理员表的RLS策略：只有管理员可以查看和管理
+-- 注意：首次初始化时，需要先插入第一个管理员，然后才能使用这些策略
 DROP POLICY IF EXISTS "Admins can view all admins" ON public.admins;
 CREATE POLICY "Admins can view all admins"
   ON public.admins FOR SELECT
@@ -338,6 +339,14 @@ CREATE POLICY "Admins can delete admins"
       WHERE user_id = auth.uid()
     )
   );
+
+-- 临时策略：允许首次初始化管理员（仅用于首次部署）
+-- 首次部署后，建议删除此策略以增强安全性
+-- 使用方法：先执行此策略，插入第一个管理员，然后删除此策略
+DROP POLICY IF EXISTS "Initial admin setup (temporary)" ON public.admins;
+CREATE POLICY "Initial admin setup (temporary)"
+  ON public.admins FOR INSERT
+  WITH CHECK (true);
 
 -- 更新 is_admin() 函数，从管理员表读取
 CREATE OR REPLACE FUNCTION public.is_admin(check_user_id UUID DEFAULT auth.uid())
@@ -507,15 +516,26 @@ GRANT EXECUTE ON FUNCTION public.delete_user_data(UUID) TO authenticated;
 -- 初始化管理员（重要！）
 -- ============================================
 -- 首次部署后，需要手动插入第一个管理员
--- 替换 YOUR_ADMIN_USER_ID 为实际的管理员用户ID（从auth.users表获取）
 --
--- 示例：
+-- 推荐使用独立的初始化脚本：supabase-init-admin.sql
+-- 该脚本包含详细的说明和验证步骤
+--
+-- 快速初始化（在Supabase SQL Editor中执行）：
+-- 
+-- 1. 确保已执行此文件中的表创建语句（第300-306行）
+-- 2. 执行以下SQL插入第一个管理员（替换邮箱）：
+--
 -- INSERT INTO public.admins (user_id, created_by)
--- VALUES ('YOUR_ADMIN_USER_ID', 'YOUR_ADMIN_USER_ID')
+-- SELECT id, id 
+-- FROM auth.users 
+-- WHERE email = 'your-admin-email@example.com'
 -- ON CONFLICT (user_id) DO NOTHING;
 --
--- 或者通过邮箱查找用户ID：
--- INSERT INTO public.admins (user_id, created_by)
--- SELECT id, id FROM auth.users WHERE email = 'admin@example.com'
--- ON CONFLICT (user_id) DO NOTHING;
+-- 3. 验证插入成功：
+-- SELECT a.user_id, au.email, a.created_at
+-- FROM public.admins a
+-- JOIN auth.users au ON a.user_id = au.id;
+--
+-- 4. （可选）安全加固：删除临时初始化策略
+-- DROP POLICY IF EXISTS "Initial admin setup (temporary)" ON public.admins;
 
