@@ -79,11 +79,13 @@ permalink: /admin/index.html
                 <th>邮箱</th>
                 <th>用户名</th>
                 <th>注册时间</th>
+                <th>管理员</th>
+                <th>操作</th>
               </tr>
             </thead>
             <tbody id="users-table-body">
               <tr>
-                <td colspan="4" class="table-loading">加载中...</td>
+                <td colspan="6" class="table-loading">加载中...</td>
               </tr>
             </tbody>
           </table>
@@ -656,11 +658,11 @@ permalink: /admin/index.html
 
     const supabase = getSupabase();
     if (!supabase) {
-      tbody.innerHTML = '<tr><td colspan="4" class="table-message">Supabase客户端未初始化</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="table-message">Supabase客户端未初始化</td></tr>';
       return;
     }
 
-    tbody.innerHTML = '<tr><td colspan="4" class="table-loading">加载中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="table-loading">加载中...</td></tr>';
 
     try {
       const pageSize = usersPaginationState.pageSize;
@@ -677,45 +679,172 @@ permalink: /admin/index.html
         updateUsersPaginationInfo();
       }
 
-      // 使用 RPC 函数获取用户列表（包含用户邮箱）
+      // 获取当前用户ID（用于判断是否可以操作）
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const currentUserId = currentUser?.id;
+
+      // 使用 RPC 函数获取用户列表（包含管理员状态）
       const { data, error } = await supabase
-        .rpc('get_users_with_email', {
+        .rpc('get_users_with_admin_status', {
           p_limit: pageSize,
           p_offset: offset
         });
 
       if (error) {
         console.error('[Admin] 加载用户列表失败:', error);
-        console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_users_with_email() 函数');
-        tbody.innerHTML = '<tr><td colspan="4" class="table-message">加载失败：' + error.message + '</td></tr>';
+        console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_users_with_admin_status() 函数');
+        tbody.innerHTML = '<tr><td colspan="6" class="table-message">加载失败：' + error.message + '</td></tr>';
         return;
       }
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" class="table-message">暂无用户数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="table-message">暂无用户数据</td></tr>';
         updateUsersPaginationInfo();
         return;
       }
 
-      // 显示完整的用户列表（包含用户邮箱）
+      // 显示完整的用户列表（包含用户邮箱和管理员状态）
       let html = '';
       for (const user of data) {
         const emailDisplay = user.user_email || '-';
         const username = user.username || '-';
         const createdDate = user.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '-';
+        const isAdmin = user.is_admin || false;
+        const isCurrentUser = user.id === currentUserId;
+        const adminBadge = isAdmin ? '<span class="admin-badge">管理员</span>' : '<span class="user-badge">普通用户</span>';
+        
+        const deleteBtn = isCurrentUser 
+          ? '<button class="btn-delete" disabled title="不能删除自己">删除</button>'
+          : `<button class="btn-delete" onclick="handleDeleteUser('${user.id}', '${emailDisplay}')">删除</button>`;
+        
+        const adminBtn = isCurrentUser
+          ? '<button class="btn-admin" disabled title="不能操作自己">-</button>'
+          : isAdmin
+          ? `<button class="btn-admin btn-remove-admin" onclick="handleRemoveAdmin('${user.id}', '${emailDisplay}')">移除管理员</button>`
+          : `<button class="btn-admin btn-add-admin" onclick="handleAddAdmin('${user.id}', '${emailDisplay}')">设为管理员</button>`;
 
         html += `<tr>
           <td>${user.id.substring(0, 8)}...</td>
           <td>${emailDisplay}</td>
           <td>${username}</td>
           <td>${createdDate}</td>
+          <td>${adminBadge}</td>
+          <td class="action-buttons">
+            ${adminBtn}
+            ${deleteBtn}
+          </td>
         </tr>`;
       }
       tbody.innerHTML = html;
       updateUsersPaginationInfo();
     } catch (error) {
       console.error('[Admin] 加载用户列表异常:', error);
-      tbody.innerHTML = '<tr><td colspan="4" class="table-message">加载失败</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="table-message">加载失败</td></tr>';
+    }
+  }
+
+  // 删除用户
+  async function handleDeleteUser(userId, userEmail) {
+    if (!confirm(`确定要删除用户 "${userEmail}" 吗？\n\n此操作将永久删除该用户的所有数据，包括：\n- 用户档案\n- 收藏记录\n- 登录日志\n\n此操作不可恢复！`)) {
+      return;
+    }
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      alert('Supabase客户端未初始化');
+      return;
+    }
+
+    try {
+      // 先删除用户数据（通过SQL函数）
+      const { data, error } = await supabase
+        .rpc('delete_user_data', {
+          p_user_id: userId
+        });
+
+      if (error) {
+        console.error('[Admin] 删除用户失败:', error);
+        alert('删除用户失败：' + error.message);
+        return;
+      }
+
+      // 注意：auth.users需要通过Admin API删除，这里只删除了公共表数据
+      // 如果需要完全删除，需要调用Supabase Admin API
+      alert('用户数据已删除。注意：auth.users中的记录需要通过Supabase Dashboard或Admin API手动删除。');
+      
+      // 重新加载用户列表
+      loadUsersTable();
+    } catch (error) {
+      console.error('[Admin] 删除用户异常:', error);
+      alert('删除用户时发生错误：' + error.message);
+    }
+  }
+
+  // 添加管理员
+  async function handleAddAdmin(userId, userEmail) {
+    if (!confirm(`确定要将用户 "${userEmail}" 设为管理员吗？`)) {
+      return;
+    }
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      alert('Supabase客户端未初始化');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .rpc('add_admin', {
+          p_user_id: userId
+        });
+
+      if (error) {
+        console.error('[Admin] 添加管理员失败:', error);
+        alert('添加管理员失败：' + error.message);
+        return;
+      }
+
+      alert('已成功将用户设为管理员');
+      
+      // 重新加载用户列表
+      loadUsersTable();
+    } catch (error) {
+      console.error('[Admin] 添加管理员异常:', error);
+      alert('添加管理员时发生错误：' + error.message);
+    }
+  }
+
+  // 移除管理员
+  async function handleRemoveAdmin(userId, userEmail) {
+    if (!confirm(`确定要移除用户 "${userEmail}" 的管理员权限吗？`)) {
+      return;
+    }
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      alert('Supabase客户端未初始化');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .rpc('remove_admin', {
+          p_user_id: userId
+        });
+
+      if (error) {
+        console.error('[Admin] 移除管理员失败:', error);
+        alert('移除管理员失败：' + error.message);
+        return;
+      }
+
+      alert('已成功移除管理员权限');
+      
+      // 重新加载用户列表
+      loadUsersTable();
+    } catch (error) {
+      console.error('[Admin] 移除管理员异常:', error);
+      alert('移除管理员时发生错误：' + error.message);
     }
   }
   
@@ -1640,6 +1769,87 @@ permalink: /admin/index.html
     text-align: center;
     color: #718096;
     padding: 2rem !important;
+  }
+
+  /* 用户管理相关样式 */
+  .action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .btn-admin,
+  .btn-delete {
+    padding: 0.4rem 0.8rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-admin {
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.9) 0%, rgba(14, 165, 233, 0.9) 100%);
+    color: white;
+  }
+
+  .btn-admin:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(34, 211, 238, 1) 0%, rgba(14, 165, 233, 1) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(34, 211, 238, 0.3);
+  }
+
+  .btn-remove-admin {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(220, 38, 38, 0.9) 100%);
+  }
+
+  .btn-remove-admin:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 1) 0%, rgba(220, 38, 38, 1) 100%);
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+  }
+
+  .btn-delete {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(220, 38, 38, 0.9) 100%);
+    color: white;
+  }
+
+  .btn-delete:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 1) 0%, rgba(220, 38, 38, 1) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+  }
+
+  .btn-admin:disabled,
+  .btn-delete:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #cbd5e1;
+    transform: none;
+  }
+
+  .admin-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.9) 0%, rgba(14, 165, 233, 0.9) 100%);
+    color: white;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .user-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    background: #e2e8f0;
+    color: #64748b;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
   }
 
   /* ============================================

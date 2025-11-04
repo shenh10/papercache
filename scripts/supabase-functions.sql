@@ -293,3 +293,229 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- ============================================
+-- 管理员管理
+-- ============================================
+
+-- 创建管理员表（如果不存在）
+CREATE TABLE IF NOT EXISTS public.admins (
+  user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_by UUID REFERENCES auth.users(id),
+  UNIQUE(user_id)
+);
+
+-- 启用Row Level Security
+ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
+
+-- 管理员表的RLS策略：只有管理员可以查看和管理
+DROP POLICY IF EXISTS "Admins can view all admins" ON public.admins;
+CREATE POLICY "Admins can view all admins"
+  ON public.admins FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.admins 
+      WHERE user_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Admins can insert admins" ON public.admins;
+CREATE POLICY "Admins can insert admins"
+  ON public.admins FOR INSERT
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.admins 
+      WHERE user_id = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Admins can delete admins" ON public.admins;
+CREATE POLICY "Admins can delete admins"
+  ON public.admins FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.admins 
+      WHERE user_id = auth.uid()
+    )
+  );
+
+-- 更新 is_admin() 函数，从管理员表读取
+CREATE OR REPLACE FUNCTION public.is_admin(check_user_id UUID DEFAULT auth.uid())
+RETURNS BOOLEAN AS $$
+BEGIN
+  IF check_user_id IS NULL THEN
+    RETURN FALSE;
+  END IF;
+  
+  -- 从管理员表检查
+  RETURN EXISTS (
+    SELECT 1 FROM public.admins 
+    WHERE admins.user_id = check_user_id
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 函数：添加管理员
+CREATE OR REPLACE FUNCTION public.add_admin(p_user_id UUID)
+RETURNS BOOLEAN AS $$
+DECLARE
+  current_admin_id UUID;
+BEGIN
+  -- 检查当前用户是否为管理员
+  current_admin_id := auth.uid();
+  IF NOT EXISTS (SELECT 1 FROM public.admins WHERE user_id = current_admin_id) THEN
+    RAISE EXCEPTION 'Only admins can add other admins';
+  END IF;
+
+  -- 检查目标用户是否存在
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = p_user_id) THEN
+    RAISE EXCEPTION 'User does not exist';
+  END IF;
+
+  -- 插入管理员记录（如果不存在）
+  INSERT INTO public.admins (user_id, created_by)
+  VALUES (p_user_id, current_admin_id)
+  ON CONFLICT (user_id) DO NOTHING;
+
+  RETURN TRUE;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE EXCEPTION 'Failed to add admin: %', SQLERRM;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 函数：移除管理员
+CREATE OR REPLACE FUNCTION public.remove_admin(p_user_id UUID)
+RETURNS BOOLEAN AS $$
+DECLARE
+  current_admin_id UUID;
+  admin_count INTEGER;
+BEGIN
+  -- 检查当前用户是否为管理员
+  current_admin_id := auth.uid();
+  IF NOT EXISTS (SELECT 1 FROM public.admins WHERE user_id = current_admin_id) THEN
+    RAISE EXCEPTION 'Only admins can remove other admins';
+  END IF;
+
+  -- 检查是否为最后一个管理员
+  SELECT COUNT(*) INTO admin_count FROM public.admins;
+  IF admin_count <= 1 THEN
+    RAISE EXCEPTION 'Cannot remove the last admin';
+  END IF;
+
+  -- 不能移除自己
+  IF p_user_id = current_admin_id THEN
+    RAISE EXCEPTION 'Cannot remove yourself as admin';
+  END IF;
+
+  -- 删除管理员记录
+  DELETE FROM public.admins WHERE user_id = p_user_id;
+
+  RETURN TRUE;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE EXCEPTION 'Failed to remove admin: %', SQLERRM;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 函数：检查用户是否为管理员
+CREATE OR REPLACE FUNCTION public.check_user_is_admin(p_user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.admins 
+    WHERE user_id = p_user_id
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 函数：获取用户列表（包含管理员状态）
+CREATE OR REPLACE FUNCTION public.get_users_with_admin_status(
+  p_limit INTEGER DEFAULT 100,
+  p_offset INTEGER DEFAULT 0
+)
+RETURNS TABLE(
+  id UUID,
+  user_email TEXT,
+  username TEXT,
+  full_name TEXT,
+  created_at TIMESTAMP WITH TIME ZONE,
+  is_admin BOOLEAN
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    p.id,
+    COALESCE(au.email::TEXT, 'N/A') as user_email,
+    p.username,
+    p.full_name,
+    p.created_at,
+    EXISTS(SELECT 1 FROM public.admins WHERE user_id = p.id) as is_admin
+  FROM public.profiles p
+  LEFT JOIN auth.users au ON p.id = au.id
+  ORDER BY p.created_at DESC
+  LIMIT p_limit
+  OFFSET p_offset;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 函数：删除用户（级联删除所有相关数据）
+-- 注意：此函数只删除公共表的数据，auth.users需要通过Admin API删除
+CREATE OR REPLACE FUNCTION public.delete_user_data(p_user_id UUID)
+RETURNS BOOLEAN AS $$
+DECLARE
+  current_admin_id UUID;
+BEGIN
+  -- 检查当前用户是否为管理员
+  current_admin_id := auth.uid();
+  IF NOT EXISTS (SELECT 1 FROM public.admins WHERE user_id = current_admin_id) THEN
+    RAISE EXCEPTION 'Only admins can delete users';
+  END IF;
+
+  -- 不能删除自己
+  IF p_user_id = current_admin_id THEN
+    RAISE EXCEPTION 'Cannot delete yourself';
+  END IF;
+
+  -- 检查目标用户是否存在
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = p_user_id) THEN
+    RAISE EXCEPTION 'User does not exist';
+  END IF;
+
+  -- 删除用户相关的所有数据（级联删除会自动处理profiles、favorites、login_logs等）
+  -- 先从admins表中删除（如果存在）
+  DELETE FROM public.admins WHERE user_id = p_user_id;
+  
+  -- 删除profiles（这会触发级联删除favorites、login_logs等）
+  DELETE FROM public.profiles WHERE id = p_user_id;
+
+  RETURN TRUE;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE EXCEPTION 'Failed to delete user data: %', SQLERRM;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 授予函数执行权限
+GRANT EXECUTE ON FUNCTION public.add_admin(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.remove_admin(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.check_user_is_admin(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_users_with_admin_status(INTEGER, INTEGER) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.delete_user_data(UUID) TO authenticated;
+
+-- ============================================
+-- 初始化管理员（重要！）
+-- ============================================
+-- 首次部署后，需要手动插入第一个管理员
+-- 替换 YOUR_ADMIN_USER_ID 为实际的管理员用户ID（从auth.users表获取）
+--
+-- 示例：
+-- INSERT INTO public.admins (user_id, created_by)
+-- VALUES ('YOUR_ADMIN_USER_ID', 'YOUR_ADMIN_USER_ID')
+-- ON CONFLICT (user_id) DO NOTHING;
+--
+-- 或者通过邮箱查找用户ID：
+-- INSERT INTO public.admins (user_id, created_by)
+-- SELECT id, id FROM auth.users WHERE email = 'admin@example.com'
+-- ON CONFLICT (user_id) DO NOTHING;
+
