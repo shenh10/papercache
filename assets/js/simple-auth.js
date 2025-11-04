@@ -369,15 +369,17 @@
         provider: provider, // 'github' 或 'google'
         options: {
           redirectTo: redirectTo,
-          // 确保会重定向到OAuth提供商页面
-          skipBrowserRedirect: false,
+          // 确保会重定向到OAuth提供商页面（不自动重定向，返回URL让我们手动处理）
+          skipBrowserRedirect: true,
           // 可选：指定需要请求的权限范围
           // scopes: 'read:user user:email' // GitHub scope示例
         }
       });
 
+      console.log('SimpleAuth: OAuth登录响应:', { data, error, hasUrl: !!data?.url });
+
       if (error) {
-        console.error('SimpleAuth: OAuth登录失败', error.message);
+        console.error('SimpleAuth: OAuth登录失败', error.message, error);
         throw error;
       }
 
@@ -389,12 +391,26 @@
         return { success: true, data };
       }
 
+      // 如果data存在但没有url，打印详细信息用于调试
+      if (data) {
+        console.warn('SimpleAuth: OAuth返回了data但没有url:', JSON.stringify(data, null, 2));
+      } else {
+        console.warn('SimpleAuth: OAuth返回的data为null或undefined');
+      }
+
       // 如果没有URL，可能是Supabase认为已经登录了（已有相同provider的session）
       // 这时需要先登出，然后重新尝试OAuth登录
-      console.warn('SimpleAuth: OAuth登录返回数据中没有URL，可能已有相同provider的session');
+      console.warn('SimpleAuth: OAuth登录返回数据中没有URL，检查是否已有session');
       
       // 检查是否已有session
       const { data: { session } } = await supabase.auth.getSession();
+      console.log('SimpleAuth: 当前session状态:', { 
+        hasSession: !!session, 
+        userId: session?.user?.id,
+        email: session?.user?.email,
+        provider: session?.user?.app_metadata?.provider
+      });
+      
       if (session?.user) {
         console.log('SimpleAuth: 检测到已有session，先登出以允许切换账号');
         try {
@@ -411,9 +427,11 @@
             provider: provider,
             options: {
               redirectTo: redirectTo,
-              skipBrowserRedirect: false,
+              skipBrowserRedirect: true,
             }
           }));
+
+          console.log('SimpleAuth: 重新OAuth登录响应:', { data, error, hasUrl: !!data?.url });
 
           if (error) {
             console.error('SimpleAuth: 重新OAuth登录失败', error.message);
