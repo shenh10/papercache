@@ -23,6 +23,11 @@
   const profileCache = new Map();
   const PROFILE_CACHE_TTL = 60000;
 
+  // 登录日志去重：记录最近记录过登录日志的用户和时间戳
+  // 5分钟内同一个用户只记录一次登录日志
+  const loginLogDedupe = new Map(); // userId -> timestamp
+  const LOGIN_LOG_DEDUPE_TTL = 5 * 60 * 1000; // 5分钟
+
   // Supabase客户端
   let supabase = null;
 
@@ -100,14 +105,10 @@
         // 异步加载profile（不阻塞初始化）
         loadProfile(session.user.id);
         
-        // 如果是新登录（比如OAuth重定向回来），记录登录日志
-        // 注意：这里不检查是否是首次初始化，因为首次初始化时可能已经有session了
-        if (isNewLogin) {
-          console.log('SimpleAuth: 检测到新登录（可能来自OAuth重定向），记录登录日志');
-          logUserLogin(session.user.id).catch(err => {
-            console.warn('SimpleAuth: 记录登录日志失败', err);
-          });
-        }
+        // 注意：不在checkSession中记录登录日志，因为：
+        // 1. checkSession只是检查现有session，不是真正的登录事件
+        // 2. 真正的登录事件应该由onAuthStateChange的SIGNED_IN或INITIAL_SESSION事件处理
+        // 3. 这样可以避免重复记录（页面刷新时checkSession会被调用，但这不是新登录）
         
         return session.user;
       }
@@ -236,10 +237,12 @@
           console.warn('SimpleAuth: 记录登录日志失败', err);
         });
         notifyStateChange();
-      } else if (event === 'SIGNED_OUT') {
+      } else       if (event === 'SIGNED_OUT') {
         AuthState.user = null;
         window._simpleAuthUser = null;
         profileCache.clear();
+        // 清除登录日志去重缓存（用户登出后，下次登录应该重新记录）
+        loginLogDedupe.clear();
         notifyStateChange();
       }
       // 其他事件（如 PASSWORD_RECOVERY）暂不处理
@@ -263,10 +266,18 @@
   }
 
   /**
-   * 记录用户登录日志
+   * 记录用户登录日志（带去重机制）
    */
   async function logUserLogin(userId) {
     if (!supabase || !userId) {
+      return;
+    }
+
+    // 去重检查：如果5分钟内已经记录过这个用户的登录日志，跳过
+    const lastLogTime = loginLogDedupe.get(userId);
+    const now = Date.now();
+    if (lastLogTime && (now - lastLogTime) < LOGIN_LOG_DEDUPE_TTL) {
+      console.log('SimpleAuth: 跳过重复的登录日志（5分钟内已记录）', userId);
       return;
     }
 
@@ -297,6 +308,8 @@
       if (error) {
         console.warn('SimpleAuth: 记录登录日志失败', error);
       } else {
+        // 记录成功，更新去重缓存
+        loginLogDedupe.set(userId, now);
         console.log('SimpleAuth: ✅ 登录日志已记录');
       }
     } catch (error) {
