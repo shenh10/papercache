@@ -118,6 +118,9 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 函数：获取登录日志列表，包含用户邮箱和是否为新用户
 -- 用于管理后台显示登录记录
+-- 注意：如果函数已存在，需要先DROP再创建（因为返回类型可能改变）
+DROP FUNCTION IF EXISTS public.get_login_logs_with_email(INTEGER, INTEGER, DATE, DATE, TEXT);
+
 CREATE OR REPLACE FUNCTION public.get_login_logs_with_email(
   p_limit INTEGER DEFAULT 100,
   p_offset INTEGER DEFAULT 0,
@@ -583,24 +586,32 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- 函数：获取今日活跃用户数
 CREATE OR REPLACE FUNCTION public.get_active_users_today()
 RETURNS INTEGER AS $$
+DECLARE
+  count_result INTEGER;
 BEGIN
-  RETURN (
-    SELECT COUNT(DISTINCT user_id)::INTEGER
-    FROM public.login_logs
-    WHERE DATE(login_at) = CURRENT_DATE
-  );
+  SELECT COUNT(DISTINCT user_id)::INTEGER
+  INTO count_result
+  FROM public.login_logs
+  WHERE DATE(login_at) = CURRENT_DATE
+    AND user_id IS NOT NULL;
+  
+  RETURN COALESCE(count_result, 0);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 函数：获取指定天数内的活跃用户数
 CREATE OR REPLACE FUNCTION public.get_active_users_in_days(p_days INTEGER)
 RETURNS INTEGER AS $$
+DECLARE
+  count_result INTEGER;
 BEGIN
-  RETURN (
-    SELECT COUNT(DISTINCT user_id)::INTEGER
-    FROM public.login_logs
-    WHERE login_at >= CURRENT_DATE - (p_days || ' days')::INTERVAL
-  );
+  SELECT COUNT(DISTINCT user_id)::INTEGER
+  INTO count_result
+  FROM public.login_logs
+  WHERE login_at >= CURRENT_DATE - (p_days || ' days')::INTERVAL
+    AND user_id IS NOT NULL;
+  
+  RETURN COALESCE(count_result, 0);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

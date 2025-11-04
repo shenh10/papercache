@@ -1694,17 +1694,41 @@ permalink: /admin/index.html
 
     try {
       // 加载今日统计
-      const [newUsersToday, activeUsersToday, activeUsers7Days, activeUsers30Days] = await Promise.all([
+      const [newUsersTodayResult, activeUsersTodayResult, activeUsers7DaysResult, activeUsers30DaysResult] = await Promise.all([
         supabase.rpc('get_new_users_today'),
         supabase.rpc('get_active_users_today'),
         supabase.rpc('get_active_users_in_days', { p_days: 7 }),
         supabase.rpc('get_active_users_in_days', { p_days: 30 })
       ]);
 
-      document.getElementById('new-users-today').textContent = newUsersToday.data || 0;
-      document.getElementById('active-users-today').textContent = activeUsersToday.data || 0;
-      document.getElementById('active-users-7days').textContent = activeUsers7Days.data || 0;
-      document.getElementById('active-users-30days').textContent = activeUsers30Days.data || 0;
+      // 检查错误并处理数据
+      if (newUsersTodayResult.error) {
+        console.error('[Admin] 获取今日新注册用户数失败:', newUsersTodayResult.error);
+        document.getElementById('new-users-today').textContent = '错误';
+      } else {
+        document.getElementById('new-users-today').textContent = newUsersTodayResult.data !== null && newUsersTodayResult.data !== undefined ? newUsersTodayResult.data : 0;
+      }
+
+      if (activeUsersTodayResult.error) {
+        console.error('[Admin] 获取今日活跃用户数失败:', activeUsersTodayResult.error);
+        document.getElementById('active-users-today').textContent = '错误';
+      } else {
+        document.getElementById('active-users-today').textContent = activeUsersTodayResult.data !== null && activeUsersTodayResult.data !== undefined ? activeUsersTodayResult.data : 0;
+      }
+
+      if (activeUsers7DaysResult.error) {
+        console.error('[Admin] 获取7日活跃用户数失败:', activeUsers7DaysResult.error);
+        document.getElementById('active-users-7days').textContent = '错误';
+      } else {
+        document.getElementById('active-users-7days').textContent = activeUsers7DaysResult.data !== null && activeUsers7DaysResult.data !== undefined ? activeUsers7DaysResult.data : 0;
+      }
+
+      if (activeUsers30DaysResult.error) {
+        console.error('[Admin] 获取30日活跃用户数失败:', activeUsers30DaysResult.error);
+        document.getElementById('active-users-30days').textContent = '错误';
+      } else {
+        document.getElementById('active-users-30days').textContent = activeUsers30DaysResult.data !== null && activeUsers30DaysResult.data !== undefined ? activeUsers30DaysResult.data : 0;
+      }
 
       // 加载日期范围统计表
       const tbody = document.getElementById('active-users-body');

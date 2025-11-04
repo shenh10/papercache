@@ -51,42 +51,53 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- 函数：获取今日新注册用户数
 CREATE OR REPLACE FUNCTION public.get_new_users_today()
 RETURNS INTEGER AS $$
+DECLARE
+  count_result INTEGER;
 BEGIN
-  RETURN (
-    SELECT COUNT(DISTINCT ll.user_id)::INTEGER
-    FROM public.login_logs ll
-    WHERE DATE(ll.login_at) = CURRENT_DATE
-      AND NOT EXISTS (
-        SELECT 1 
-        FROM public.profiles p 
-        WHERE p.id = ll.user_id 
-        AND p.created_at <= ll.login_at
-      )
-  );
+  SELECT COUNT(DISTINCT ll.user_id)::INTEGER
+  INTO count_result
+  FROM public.login_logs ll
+  WHERE DATE(ll.login_at) = CURRENT_DATE
+    AND NOT EXISTS (
+      SELECT 1 
+      FROM public.profiles p 
+      WHERE p.id = ll.user_id 
+      AND p.created_at <= ll.login_at
+    );
+  
+  RETURN COALESCE(count_result, 0);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 函数：获取今日活跃用户数
 CREATE OR REPLACE FUNCTION public.get_active_users_today()
 RETURNS INTEGER AS $$
+DECLARE
+  count_result INTEGER;
 BEGIN
-  RETURN (
-    SELECT COUNT(DISTINCT user_id)::INTEGER
-    FROM public.login_logs
-    WHERE DATE(login_at) = CURRENT_DATE
-  );
+  SELECT COUNT(DISTINCT user_id)::INTEGER
+  INTO count_result
+  FROM public.login_logs
+  WHERE DATE(login_at) = CURRENT_DATE
+    AND user_id IS NOT NULL;
+  
+  RETURN COALESCE(count_result, 0);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 函数：获取指定天数内的活跃用户数
 CREATE OR REPLACE FUNCTION public.get_active_users_in_days(p_days INTEGER)
 RETURNS INTEGER AS $$
+DECLARE
+  count_result INTEGER;
 BEGIN
-  RETURN (
-    SELECT COUNT(DISTINCT user_id)::INTEGER
-    FROM public.login_logs
-    WHERE login_at >= CURRENT_DATE - (p_days || ' days')::INTERVAL
-  );
+  SELECT COUNT(DISTINCT user_id)::INTEGER
+  INTO count_result
+  FROM public.login_logs
+  WHERE login_at >= CURRENT_DATE - (p_days || ' days')::INTERVAL
+    AND user_id IS NOT NULL;
+  
+  RETURN COALESCE(count_result, 0);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
