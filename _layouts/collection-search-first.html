@@ -2318,11 +2318,135 @@ if (typeof window.SearchFirstMode === 'undefined') {
       // 论文列表容器
       const papersContainer = document.createElement('div');
       papersContainer.className = 'category-papers-list';
-      papersContainer.style.cssText = `
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 20px;
-      `;
+      
+      // 根据窗口大小设置样式的函数
+      const updatePapersContainerStyle = () => {
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+          // 移动端：列表样式
+          papersContainer.style.cssText = `
+            display: block;
+            gap: 0;
+          `;
+          // 为移动端添加列表类
+          papersContainer.classList.remove('post-grid-modern');
+          papersContainer.classList.add('post-list-mobile-modern');
+        } else {
+          // 桌面端：网格样式
+          papersContainer.style.cssText = `
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+          `;
+          // 为桌面端添加网格类
+          papersContainer.classList.add('post-grid-modern');
+          papersContainer.classList.remove('post-list-mobile-modern');
+        }
+      };
+      
+      // 初始设置样式
+      updatePapersContainerStyle();
+      
+      // 监听窗口大小变化（全局单例）
+      if (!window._collectionResizeHandler) {
+        let lastIsMobile = window.innerWidth <= 768;
+        let resizeTimer;
+        
+        window._collectionResizeHandler = () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => {
+            const currentIsMobile = window.innerWidth <= 768;
+            
+            // 如果移动端/桌面端状态发生变化，重新渲染
+            if (currentIsMobile !== lastIsMobile) {
+              lastIsMobile = currentIsMobile;
+              
+              // 重新设置所有 papersContainer 的样式
+              document.querySelectorAll('.category-papers-list').forEach(container => {
+                if (currentIsMobile) {
+                  container.style.cssText = `display: block; gap: 0;`;
+                  container.classList.remove('post-grid-modern');
+                  container.classList.add('post-list-mobile-modern');
+                } else {
+                  container.style.cssText = `display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;`;
+                  container.classList.add('post-grid-modern');
+                  container.classList.remove('post-list-mobile-modern');
+                }
+              });
+              
+              // 如果当前是搜索模式且有搜索结果，重新渲染
+              if (window.searchFirstMode && window.searchFirstMode.currentMode === 'results') {
+                const resultsList = document.getElementById('results-list');
+                if (resultsList && window.searchFirstMode.filteredPapers && window.searchFirstMode.filteredPapers.length > 0) {
+                  // 保存当前查询和模式
+                  const currentQuery = window.searchFirstMode.currentQuery;
+                  
+                  // 强制重新渲染所有结果项（根据新的窗口大小）
+                  // 直接调用 renderGroupedResults，而不是 showSearchResults，避免重复设置状态
+                  console.log('[collection-search-first] 窗口大小变化，重新渲染搜索结果', {
+                    currentIsMobile,
+                    filteredPapersCount: window.searchFirstMode.filteredPapers.length
+                  });
+                  
+                  // 清空现有结果
+                  resultsList.innerHTML = '';
+                  resultsList.style.display = 'block';
+                  resultsList.style.gridTemplateColumns = 'none';
+                  resultsList.className = 'results-list-grouped';
+                  
+                  // 重新渲染（这会调用 createResultItem，根据新的窗口大小创建正确的元素）
+                  window.searchFirstMode.renderGroupedResults(resultsList);
+                  
+                  // 确保新创建的容器样式正确（在 renderGroupedResults 之后）
+                  setTimeout(() => {
+                    document.querySelectorAll('.category-papers-list').forEach(container => {
+                      if (!currentIsMobile) {
+                        // 桌面端：确保使用网格布局
+                        container.style.cssText = `display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;`;
+                        container.classList.add('post-grid-modern');
+                        container.classList.remove('post-list-mobile-modern');
+                      } else {
+                        // 移动端：确保使用列表布局
+                        container.style.cssText = `display: block; gap: 0;`;
+                        container.classList.remove('post-grid-modern');
+                        container.classList.add('post-list-mobile-modern');
+                      }
+                    });
+                    
+                    // 批量更新收藏状态
+                    window.searchFirstMode.batchUpdateFavoriteStatus();
+                    
+                    console.log('[collection-search-first] 重新渲染完成', {
+                      currentIsMobile,
+                      containers: document.querySelectorAll('.category-papers-list').length,
+                      cards: document.querySelectorAll('.post-card-modern').length,
+                      listItems: document.querySelectorAll('.post-list-item-mobile').length
+                    });
+                  }, 100);
+                }
+              }
+              
+              // 如果当前是浏览模式，重新渲染分类浏览
+              if (window.searchFirstMode && window.searchFirstMode.currentMode === 'browse') {
+                const browseResults = document.getElementById('browse-results');
+                if (browseResults && window.searchFirstMode.filteredPapers && window.searchFirstMode.filteredPapers.length > 0) {
+                  console.log('[collection-search-first] 窗口大小变化，重新渲染分类浏览', {
+                    currentIsMobile,
+                    filteredPapersCount: window.searchFirstMode.filteredPapers.length
+                  });
+                  
+                  // 重新应用分类过滤（这会重新渲染结果）
+                  setTimeout(() => {
+                    window.searchFirstMode.applyCategoryFilter();
+                  }, 100);
+                }
+              }
+            }
+          }, 300);
+        };
+        
+        window.addEventListener('resize', window._collectionResizeHandler);
+      }
 
       // 添加论文卡片
       papers.forEach(paper => {
@@ -2828,23 +2952,22 @@ if (typeof window.SearchFirstMode === 'undefined') {
       }
     }
     
+    // 检测移动端
+    const isMobile = window.innerWidth <= 768;
+    
     // 高亮标题和摘要中的关键词（支持模糊匹配和精确匹配）
     const highlightedTitle = this.highlightText(paper.title || '', this.currentQuery, this.currentMatchMode);
     const highlightedExcerpt = this.highlightText(paper.excerpt || '', this.currentQuery, this.currentMatchMode);
     
-    item.innerHTML = `
-      <a href="${paperUrl}" class="post-card-link-modern">
-        <div class="post-card-thumb-modern">
-          <img src="${thumb}" 
-               alt="thumbnail" 
-               loading="lazy" 
-               onerror="this.onerror=null; this.src='${window.PC_THUMB_FALLBACK || '/assets/images/fallback-paper.svg'}';" />
-        </div>
-        <div class="post-card-body-modern">
-          <div class="post-card-meta-modern">
-            <span class="post-meta-modern">${displayDate || '-'}</span>
-            <div class="post-card-meta-right">
-              ${tag ? `<span class="post-card-tag-modern${tagClass}">${tag}</span>` : ''}
+    if (isMobile) {
+      // 移动端：列表样式
+      item.className = 'post-list-item-mobile';
+      item.innerHTML = `
+        <div class="post-list-item-mobile-content">
+          <div class="post-list-item-mobile-meta">
+            <span class="post-list-item-mobile-date">${displayDate || '-'}</span>
+            <div class="post-list-item-mobile-right">
+              ${tag ? `<span class="post-list-item-mobile-tag${tagClass}">${tag}</span>` : ''}
               <button class="card-favorite-btn"
                       data-post-url="${paperUrl}"
                       onclick="event.stopPropagation(); event.preventDefault(); handleCardFavoriteClick('${paperUrl.replace(/'/g, "\\'")}', this);"
@@ -2854,11 +2977,42 @@ if (typeof window.SearchFirstMode === 'undefined') {
               </button>
             </div>
           </div>
-          <h3 class="post-card-title-modern">${highlightedTitle}</h3>
-          <p class="post-card-excerpt-modern">${highlightedExcerpt}</p>
+          <a href="${paperUrl}" class="post-list-item-mobile-link">
+            <h3 class="post-list-item-mobile-title">${highlightedTitle}</h3>
+          </a>
         </div>
-      </a>
-    `;
+      `;
+    } else {
+      // 桌面端：卡片样式
+      item.className = 'post-card-modern';
+      item.innerHTML = `
+        <a href="${paperUrl}" class="post-card-link-modern">
+          <div class="post-card-thumb-modern">
+            <img src="${thumb}" 
+                 alt="thumbnail" 
+                 loading="lazy" 
+                 onerror="this.onerror=null; this.src='${window.PC_THUMB_FALLBACK || '/assets/images/fallback-paper.svg'}';" />
+          </div>
+          <div class="post-card-body-modern">
+            <div class="post-card-meta-modern">
+              <span class="post-meta-modern">${displayDate || '-'}</span>
+              <div class="post-card-meta-right">
+                ${tag ? `<span class="post-card-tag-modern${tagClass}">${tag}</span>` : ''}
+                <button class="card-favorite-btn"
+                        data-post-url="${paperUrl}"
+                        onclick="event.stopPropagation(); event.preventDefault(); handleCardFavoriteClick('${paperUrl.replace(/'/g, "\\'")}', this);"
+                        title="收藏这篇文章">
+                  <span class="favorite-icon">☆</span>
+                  <span class="favorite-count" data-post-url="${paperUrl}">0</span>
+                </button>
+              </div>
+            </div>
+            <h3 class="post-card-title-modern">${highlightedTitle}</h3>
+            <p class="post-card-excerpt-modern">${highlightedExcerpt}</p>
+          </div>
+        </a>
+      `;
+    }
 
     // 收藏按钮状态将在批量检查时更新，这里不单独检查以提高性能
 

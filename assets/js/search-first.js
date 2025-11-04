@@ -14,12 +14,24 @@
   function chooseTag(p){ var candidates=[].concat(p.tags||[]); if(!candidates.length && p.categories && p.categories.length) candidates.push(p.categories[p.categories.length-1]); var tag=(candidates[0]||'').toString(); if(!tag && p.categories && p.categories.join(' ').toLowerCase().indexOf('arxiv')!==-1) tag='arXiv'; return tag; }
   function arxivClass(tag){return (tag||'').toLowerCase().indexOf('arxiv')!==-1 ? ' tag-arxiv' : '';}
   function performLocalSearch(query, all){var q=(query||'').trim().toLowerCase();if(!q)return[];var t=q.split(/\s+/).filter(Boolean);return(all||[]).filter(function(p){var h=(p.title+' '+p.excerpt+' '+(p.tags||[]).join(' ')+' '+(p.categories||[]).join(' ')).toLowerCase();return t.every(function(x){return h.indexOf(x)!==-1;});});}
+  function isMobileDevice(){return window.innerWidth<=768;}
   function renderResults(items){var box=qs('#results-list'),count=qs('#results-count'),sec=qs('#search-results');if(!box||!count||!sec){log('missing results container', {box:!!box,count:!!count,sec:!!sec});return;}
-    // 强制网格可见
-    box.classList.add('post-grid-modern');
-    box.style.display='grid';
-    box.style.gridTemplateColumns='repeat(auto-fill, minmax(300px, 1fr))';
-    box.style.gap='20px';
+    var isMobile=isMobileDevice();
+    if(isMobile){
+      // 移动端：列表样式
+      box.classList.remove('post-grid-modern');
+      box.classList.add('post-list-mobile-modern');
+      box.style.display='block';
+      box.style.gridTemplateColumns='none';
+      box.style.gap='0';
+    }else{
+      // 桌面端：卡片样式
+      box.classList.add('post-grid-modern');
+      box.classList.remove('post-list-mobile-modern');
+      box.style.display='grid';
+      box.style.gridTemplateColumns='repeat(auto-fill, minmax(300px, 1fr))';
+      box.style.gap='20px';
+    }
     box.innerHTML='';
 
     // 添加收藏按钮样式（如果还没有添加）
@@ -104,12 +116,45 @@
     sec.classList.add('show');
     sec.style.display='block';
     if(!items||!items.length){box.innerHTML='<div style="text-align:center;padding:40px;color:#6b7280"><h3>未找到相关论文</h3><p>尝试使用不同的关键词或浏览分类</p></div>';log('rendered empty');return;}
-    items.forEach(function(p){var d=document.createElement('div');d.className='post-card-modern';var thumb=getThumb(p.url);var tag=chooseTag(p);var escapedUrl=(p.url||'#').replace(/'/g,"\\'");d.innerHTML='\n<a href="'+(p.url||'#')+'" class="post-card-link-modern">\n  <div class="post-card-thumb-modern">\n    <img src="'+thumb+'" alt="thumb" loading="lazy" />\n  </div>\n  <div class="post-card-body-modern">\n    <div class="post-card-meta-modern">\n      <span class="post-meta-modern">'+new Date().toLocaleDateString()+'</span>\n      <div class="post-card-meta-right">\n        '+(tag?('<span class="post-card-tag-modern'+arxivClass(tag)+'">'+tag+'</span>'):'')+'\n        <button class="card-favorite-btn"\n                data-post-url="'+(p.url||'#')+'"\n                onclick="event.stopPropagation(); event.preventDefault(); handleCardFavoriteClick(\''+escapedUrl+'\', this);"\n                title="收藏这篇文章">\n          <span class="favorite-icon">☆</span>\n          <span class="favorite-count" data-post-url="'+(p.url||'#')+'">0</span>\n        </button>\n      </div>\n    </div>\n    <h3 class="post-card-title-modern">'+(p.title||'')+'</h3>\n    <p class="post-card-excerpt-modern">'+(p.excerpt||'')+'</p>\n  </div>\n</a>\n';
-
-    // 收藏按钮状态将在批量检查时更新，这里不单独检查以提高性能
-    
-    box.appendChild(d);});
+    items.forEach(function(p){var d=document.createElement('div');var tag=chooseTag(p);var escapedUrl=(p.url||'#').replace(/'/g,"\\'");var displayDate=p.date?new Date(p.date).toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'}):new Date().toLocaleDateString();
+      if(isMobile){
+        // 移动端：列表样式
+        d.className='post-list-item-mobile';
+        d.innerHTML='\n<div class="post-list-item-mobile-content">\n  <div class="post-list-item-mobile-meta">\n    <span class="post-list-item-mobile-date">'+displayDate+'</span>\n    <div class="post-list-item-mobile-right">\n      '+(tag?('<span class="post-list-item-mobile-tag'+arxivClass(tag)+'">'+tag+'</span>'):'')+'\n      <button class="card-favorite-btn"\n              data-post-url="'+(p.url||'#')+'"\n              onclick="event.stopPropagation(); event.preventDefault(); handleCardFavoriteClick(\''+escapedUrl+'\', this);"\n              title="收藏这篇文章">\n        <span class="favorite-icon">☆</span>\n        <span class="favorite-count" data-post-url="'+(p.url||'#')+'">0</span>\n      </button>\n    </div>\n  </div>\n  <a href="'+(p.url||'#')+'" class="post-list-item-mobile-link">\n    <h3 class="post-list-item-mobile-title">'+(p.title||'')+'</h3>\n  </a>\n</div>\n';
+      }else{
+        // 桌面端：卡片样式
+        d.className='post-card-modern';
+        var thumb=getThumb(p.url);
+        d.innerHTML='\n<a href="'+(p.url||'#')+'" class="post-card-link-modern">\n  <div class="post-card-thumb-modern">\n    <img src="'+thumb+'" alt="thumb" loading="lazy" />\n  </div>\n  <div class="post-card-body-modern">\n    <div class="post-card-meta-modern">\n      <span class="post-meta-modern">'+displayDate+'</span>\n      <div class="post-card-meta-right">\n        '+(tag?('<span class="post-card-tag-modern'+arxivClass(tag)+'">'+tag+'</span>'):'')+'\n        <button class="card-favorite-btn"\n                data-post-url="'+(p.url||'#')+'"\n                onclick="event.stopPropagation(); event.preventDefault(); handleCardFavoriteClick(\''+escapedUrl+'\', this);"\n                title="收藏这篇文章">\n          <span class="favorite-icon">☆</span>\n          <span class="favorite-count" data-post-url="'+(p.url||'#')+'">0</span>\n        </button>\n      </div>\n    </div>\n    <h3 class="post-card-title-modern">'+(p.title||'')+'</h3>\n    <p class="post-card-excerpt-modern">'+(p.excerpt||'')+'</p>\n  </div>\n</a>\n';
+      }
+      box.appendChild(d);
+    });
     log('rendered cards:', box.childElementCount);
+    
+    // 保存当前items到全局，以便resize时重新渲染
+    window._currentSearchResults = items;
+    window._currentIsMobile = isMobile;
+    
+    // 监听窗口大小变化，重新渲染以适应移动端/桌面端切换
+    let resizeTimer;
+    function handleResize() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function() {
+        var currentlyMobile = isMobileDevice();
+        var box2 = qs('#results-list');
+        if (currentlyMobile !== window._currentIsMobile && window._currentSearchResults && window._currentSearchResults.length > 0 && box2) {
+          // 屏幕尺寸改变，重新渲染
+          renderResults(window._currentSearchResults);
+        }
+      }, 300);
+    }
+    
+    // 移除旧的resize监听器（如果存在）
+    if (window._searchResultsResizeHandler) {
+      window.removeEventListener('resize', window._searchResultsResizeHandler);
+    }
+    window.addEventListener('resize', handleResize);
+    window._searchResultsResizeHandler = handleResize;
     
     // 批量检查收藏状态（已登录用户）
     if (window.favoritesService && window.SimpleAuth && window.SimpleAuth.isLoggedIn()) {
