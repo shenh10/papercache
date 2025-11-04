@@ -338,27 +338,6 @@
     console.log('SimpleAuth: 开始OAuth登录，提供商:', provider);
 
     try {
-      // 检查是否已有session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      // 如果已有session，且用户想要重新登录（可能是切换账号），先登出
-      // 这样可以确保会重定向到OAuth提供商页面
-      if (session?.user) {
-        console.log('SimpleAuth: 检测到已有session，先登出以确保OAuth流程正常');
-        try {
-          await supabase.auth.signOut();
-          // 清除本地状态
-          AuthState.user = null;
-          window._simpleAuthUser = null;
-          console.log('SimpleAuth: 已登出，准备重新OAuth登录');
-          // 等待一小段时间，确保登出完成
-          await new Promise(resolve => setTimeout(resolve, 100));
-        } catch (logoutError) {
-          console.warn('SimpleAuth: 登出失败，继续OAuth流程', logoutError);
-          // 即使登出失败，也继续尝试OAuth登录
-        }
-      }
-
       // 构建重定向URL，包含baseurl
       const baseurl = window.PC_BASEURL || '';
       const currentPath = window.location.pathname;
@@ -385,7 +364,8 @@
 
       console.log('SimpleAuth: OAuth重定向URL:', redirectTo);
 
-      const { data, error } = await supabase.auth.signInWithOAuth({
+      // 先尝试OAuth登录（不登出），看看是否会返回重定向URL
+      let { data, error } = await supabase.auth.signInWithOAuth({
         provider: provider, // 'github' 或 'google'
         options: {
           redirectTo: redirectTo,
@@ -407,10 +387,53 @@
         // 手动重定向到OAuth提供商页面
         window.location.href = data.url;
         return { success: true, data };
+      }
+
+      // 如果没有URL，可能是Supabase认为已经登录了（已有相同provider的session）
+      // 这时需要先登出，然后重新尝试OAuth登录
+      console.warn('SimpleAuth: OAuth登录返回数据中没有URL，可能已有相同provider的session');
+      
+      // 检查是否已有session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        console.log('SimpleAuth: 检测到已有session，先登出以允许切换账号');
+        try {
+          await supabase.auth.signOut();
+          // 清除本地状态
+          AuthState.user = null;
+          window._simpleAuthUser = null;
+          console.log('SimpleAuth: 已登出，重新尝试OAuth登录');
+          // 等待一小段时间，确保登出完成
+          await new Promise(resolve => setTimeout(resolve, 200));
+          
+          // 重新尝试OAuth登录
+          ({ data, error } = await supabase.auth.signInWithOAuth({
+            provider: provider,
+            options: {
+              redirectTo: redirectTo,
+              skipBrowserRedirect: false,
+            }
+          }));
+
+          if (error) {
+            console.error('SimpleAuth: 重新OAuth登录失败', error.message);
+            throw error;
+          }
+
+          if (data?.url) {
+            console.log('SimpleAuth: 重新OAuth登录成功，重定向到:', data.url);
+            window.location.href = data.url;
+            return { success: true, data };
+          } else {
+            throw new Error('OAuth登录流程异常，无法获取重定向URL');
+          }
+        } catch (logoutError) {
+          console.error('SimpleAuth: 登出并重新登录失败', logoutError);
+          throw new Error('无法完成OAuth登录，请先手动登出后重试');
+        }
       } else {
-        // 如果没有URL，可能是Supabase认为已经登录了，但我们期望重定向
-        console.warn('SimpleAuth: OAuth登录返回数据中没有URL，可能已有session');
-        throw new Error('OAuth登录流程异常，请先登出后重试');
+        // 没有session但也没有URL，这是异常情况
+        throw new Error('OAuth登录流程异常，无法获取重定向URL');
       }
 
     } catch (error) {
