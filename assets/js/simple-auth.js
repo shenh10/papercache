@@ -23,10 +23,9 @@
   const profileCache = new Map();
   const PROFILE_CACHE_TTL = 60000;
 
-  // 登录日志去重：记录最近记录过登录日志的用户和时间戳
-  // 5分钟内同一个用户只记录一次登录日志
-  const loginLogDedupe = new Map(); // userId -> timestamp
-  const LOGIN_LOG_DEDUPE_TTL = 5 * 60 * 1000; // 5分钟
+  // 登录日志去重：记录当前正在处理的登录事件，避免SIGNED_IN和INITIAL_SESSION重复记录
+  // 使用Set存储正在处理的userId，处理完成后立即清除
+  const loginLogProcessing = new Set(); // userId
 
   // Supabase客户端
   let supabase = null;
@@ -266,20 +265,22 @@
   }
 
   /**
-   * 记录用户登录日志（带去重机制）
+   * 记录用户登录日志（带去重机制，避免SIGNED_IN和INITIAL_SESSION重复记录）
    */
   async function logUserLogin(userId) {
     if (!supabase || !userId) {
       return;
     }
 
-    // 去重检查：如果5分钟内已经记录过这个用户的登录日志，跳过
-    const lastLogTime = loginLogDedupe.get(userId);
-    const now = Date.now();
-    if (lastLogTime && (now - lastLogTime) < LOGIN_LOG_DEDUPE_TTL) {
-      console.log('SimpleAuth: 跳过重复的登录日志（5分钟内已记录）', userId);
+    // 去重检查：如果这个用户正在处理登录日志，跳过
+    // 这样可以避免SIGNED_IN和INITIAL_SESSION事件同时触发时重复记录
+    if (loginLogProcessing.has(userId)) {
+      console.log('SimpleAuth: 跳过重复的登录日志（正在处理中）', userId);
       return;
     }
+
+    // 标记为正在处理
+    loginLogProcessing.add(userId);
 
     try {
       // 获取IP地址（如果有第三方服务）
@@ -308,12 +309,16 @@
       if (error) {
         console.warn('SimpleAuth: 记录登录日志失败', error);
       } else {
-        // 记录成功，更新去重缓存
-        loginLogDedupe.set(userId, now);
         console.log('SimpleAuth: ✅ 登录日志已记录');
       }
     } catch (error) {
       console.warn('SimpleAuth: 记录登录日志异常', error);
+    } finally {
+      // 处理完成，清除标记（使用setTimeout确保异步操作完成）
+      // 延迟一小段时间再清除，防止同一事件流的快速重复调用
+      setTimeout(() => {
+        loginLogProcessing.delete(userId);
+      }, 1000); // 1秒后清除标记
     }
   }
 
