@@ -174,9 +174,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 授予函数执行权限
 GRANT EXECUTE ON FUNCTION public.get_login_logs_count(DATE, DATE) TO authenticated;
-
--- 授予函数执行权限
-GRANT EXECUTE ON FUNCTION public.get_login_logs_with_email(INTEGER, INTEGER) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_login_logs_with_email(INTEGER, INTEGER, DATE, DATE) TO authenticated;
 
 -- ============================================
 -- 获取用户列表（带用户邮箱）
@@ -215,6 +213,23 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 授予函数执行权限
 GRANT EXECUTE ON FUNCTION public.get_users_with_email(INTEGER, INTEGER) TO authenticated;
+
+-- 函数：获取用户总数（用于分页）
+CREATE OR REPLACE FUNCTION public.get_users_count()
+RETURNS INTEGER AS $$
+DECLARE
+  count_result INTEGER;
+BEGIN
+  SELECT COUNT(*)::INTEGER
+  INTO count_result
+  FROM public.profiles;
+  
+  RETURN COALESCE(count_result, 0);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 授予函数执行权限
+GRANT EXECUTE ON FUNCTION public.get_users_count() TO authenticated;
 
 -- ============================================
 -- 获取总登录记录数

@@ -65,6 +65,12 @@ permalink: /admin/index.html
       
       <!-- 用户列表 -->
       <div id="tab-users" class="admin-tab-content active">
+        <!-- 分页信息 -->
+        <div class="table-pagination-info">
+          <span id="users-pagination-info">共 0 条记录</span>
+        </div>
+        
+        <!-- 用户列表表格 -->
         <div class="admin-table-container">
           <table class="admin-table">
             <thead>
@@ -73,20 +79,34 @@ permalink: /admin/index.html
                 <th>邮箱</th>
                 <th>用户名</th>
                 <th>注册时间</th>
-                <th>操作</th>
               </tr>
             </thead>
             <tbody id="users-table-body">
               <tr>
-                <td colspan="5" class="table-loading">加载中...</td>
+                <td colspan="4" class="table-loading">加载中...</td>
               </tr>
             </tbody>
           </table>
+        </div>
+        
+        <!-- 分页控件 -->
+        <div class="table-pagination" id="users-pagination" style="display: none;">
+          <button id="users-prev-btn" class="pagination-btn" disabled>上一页</button>
+          <span class="pagination-info">
+            <span id="users-current-page">1</span> / <span id="users-total-pages">1</span>
+          </span>
+          <button id="users-next-btn" class="pagination-btn">下一页</button>
         </div>
       </div>
       
       <!-- 收藏统计 -->
       <div id="tab-favorites" class="admin-tab-content">
+        <!-- 分页信息 -->
+        <div class="table-pagination-info">
+          <span id="favorites-pagination-info">共 0 条记录</span>
+        </div>
+        
+        <!-- 收藏统计表格 -->
         <div class="admin-table-container">
           <table class="admin-table">
             <thead>
@@ -102,6 +122,15 @@ permalink: /admin/index.html
               </tr>
             </tbody>
           </table>
+        </div>
+        
+        <!-- 分页控件 -->
+        <div class="table-pagination" id="favorites-pagination" style="display: none;">
+          <button id="favorites-prev-btn" class="pagination-btn" disabled>上一页</button>
+          <span class="pagination-info">
+            <span id="favorites-current-page">1</span> / <span id="favorites-total-pages">1</span>
+          </span>
+          <button id="favorites-next-btn" class="pagination-btn">下一页</button>
         </div>
       </div>
       
@@ -364,7 +393,9 @@ permalink: /admin/index.html
   
   // 加载管理数据
   async function loadAdminData() {
-    // 初始化登录日志页面
+    // 初始化分页功能
+    initUsersPagination();
+    initFavoritesPagination();
     initLogsPage();
     
     await Promise.all([
@@ -543,6 +574,73 @@ permalink: /admin/index.html
     }
   }
   
+  // 用户列表分页状态
+  const usersPaginationState = {
+    currentPage: 1,
+    pageSize: 20,
+    totalCount: 0
+  };
+
+  // 初始化用户列表分页
+  function initUsersPagination() {
+    const prevBtn = document.getElementById('users-prev-btn');
+    const nextBtn = document.getElementById('users-next-btn');
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        if (usersPaginationState.currentPage > 1) {
+          usersPaginationState.currentPage--;
+          loadUsersTable();
+        }
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(usersPaginationState.totalCount / usersPaginationState.pageSize);
+        if (usersPaginationState.currentPage < totalPages) {
+          usersPaginationState.currentPage++;
+          loadUsersTable();
+        }
+      });
+    }
+  }
+
+  // 更新用户列表分页信息
+  function updateUsersPaginationInfo() {
+    const totalPages = Math.ceil(usersPaginationState.totalCount / usersPaginationState.pageSize);
+    const pagination = document.getElementById('users-pagination');
+    const paginationInfo = document.getElementById('users-pagination-info');
+    const currentPageEl = document.getElementById('users-current-page');
+    const totalPagesEl = document.getElementById('users-total-pages');
+    const prevBtn = document.getElementById('users-prev-btn');
+    const nextBtn = document.getElementById('users-next-btn');
+
+    if (paginationInfo) {
+      paginationInfo.textContent = `共 ${usersPaginationState.totalCount} 条记录`;
+    }
+
+    if (pagination) {
+      pagination.style.display = totalPages > 1 ? 'flex' : 'none';
+    }
+
+    if (currentPageEl) {
+      currentPageEl.textContent = usersPaginationState.currentPage;
+    }
+
+    if (totalPagesEl) {
+      totalPagesEl.textContent = totalPages || 1;
+    }
+
+    if (prevBtn) {
+      prevBtn.disabled = usersPaginationState.currentPage <= 1;
+    }
+
+    if (nextBtn) {
+      nextBtn.disabled = usersPaginationState.currentPage >= totalPages;
+    }
+  }
+
   // 加载用户列表
   async function loadUsersTable() {
     const tbody = document.getElementById('users-table-body');
@@ -550,61 +648,44 @@ permalink: /admin/index.html
 
     const supabase = getSupabase();
     if (!supabase) {
-      tbody.innerHTML = '<tr><td colspan="5" class="table-message">Supabase客户端未初始化</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" class="table-message">Supabase客户端未初始化</td></tr>';
       return;
     }
 
-    tbody.innerHTML = '<tr><td colspan="5" class="table-loading">加载中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="table-loading">加载中...</td></tr>';
 
     try {
+      const pageSize = usersPaginationState.pageSize;
+      const offset = (usersPaginationState.currentPage - 1) * pageSize;
+
+      // 先获取总数
+      const { data: countData, error: countError } = await supabase
+        .rpc('get_users_count');
+
+      if (countError) {
+        console.warn('[Admin] 获取用户总数失败:', countError);
+      } else {
+        usersPaginationState.totalCount = countData || 0;
+        updateUsersPaginationInfo();
+      }
+
       // 使用 RPC 函数获取用户列表（包含用户邮箱）
       const { data, error } = await supabase
         .rpc('get_users_with_email', {
-          p_limit: 100,
-          p_offset: 0
+          p_limit: pageSize,
+          p_offset: offset
         });
 
       if (error) {
         console.error('[Admin] 加载用户列表失败:', error);
         console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_users_with_email() 函数');
-        // 如果函数不存在，尝试直接查询（可能受RLS限制，且无法获取邮箱）
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('profiles')
-          .select('id, username, full_name, created_at, updated_at')
-          .order('created_at', { ascending: false })
-          .limit(100);
-        
-        if (fallbackError) {
-          tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败：' + fallbackError.message + '</td></tr>';
-          return;
-        }
-        
-        if (!fallbackData || fallbackData.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5" class="table-message">暂无用户数据</td></tr>';
-          return;
-        }
-        
-        // 使用fallback数据（只显示user_id）
-        let html = '';
-        for (const profile of fallbackData) {
-          const emailDisplay = profile.id.substring(0, 8) + '...';
-          const username = profile.username || '-';
-          const createdDate = profile.created_at ? new Date(profile.created_at).toLocaleDateString('zh-CN') : '-';
-
-          html += `<tr>
-            <td>${profile.id.substring(0, 8)}...</td>
-            <td>${emailDisplay}</td>
-            <td>${username}</td>
-            <td>${createdDate}</td>
-            <td>-</td>
-          </tr>`;
-        }
-        tbody.innerHTML = html;
+        tbody.innerHTML = '<tr><td colspan="4" class="table-message">加载失败：' + error.message + '</td></tr>';
         return;
       }
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="table-message">暂无用户数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="table-message">暂无用户数据</td></tr>';
+        updateUsersPaginationInfo();
         return;
       }
 
@@ -613,7 +694,6 @@ permalink: /admin/index.html
       for (const user of data) {
         const emailDisplay = user.user_email || '-';
         const username = user.username || '-';
-        const fullName = user.full_name || '-';
         const createdDate = user.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '-';
 
         html += `<tr>
@@ -621,16 +701,169 @@ permalink: /admin/index.html
           <td>${emailDisplay}</td>
           <td>${username}</td>
           <td>${createdDate}</td>
-          <td>-</td>
         </tr>`;
       }
       tbody.innerHTML = html;
+      updateUsersPaginationInfo();
     } catch (error) {
       console.error('[Admin] 加载用户列表异常:', error);
-      tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" class="table-message">加载失败</td></tr>';
     }
   }
   
+  // 收藏统计分页状态
+  const favoritesPaginationState = {
+    currentPage: 1,
+    pageSize: 20,
+    totalCount: 0,
+    allStats: [] // 缓存所有统计结果
+  };
+
+  // 初始化收藏统计分页
+  function initFavoritesPagination() {
+    const prevBtn = document.getElementById('favorites-prev-btn');
+    const nextBtn = document.getElementById('favorites-next-btn');
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        if (favoritesPaginationState.currentPage > 1) {
+          favoritesPaginationState.currentPage--;
+          renderFavoritesTable();
+        }
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        const totalPages = Math.ceil(favoritesPaginationState.totalCount / favoritesPaginationState.pageSize);
+        if (favoritesPaginationState.currentPage < totalPages) {
+          favoritesPaginationState.currentPage++;
+          renderFavoritesTable();
+        }
+      });
+    }
+  }
+
+  // 更新收藏统计分页信息
+  function updateFavoritesPaginationInfo() {
+    const totalPages = Math.ceil(favoritesPaginationState.totalCount / favoritesPaginationState.pageSize);
+    const pagination = document.getElementById('favorites-pagination');
+    const paginationInfo = document.getElementById('favorites-pagination-info');
+    const currentPageEl = document.getElementById('favorites-current-page');
+    const totalPagesEl = document.getElementById('favorites-total-pages');
+    const prevBtn = document.getElementById('favorites-prev-btn');
+    const nextBtn = document.getElementById('favorites-next-btn');
+
+    if (paginationInfo) {
+      paginationInfo.textContent = `共 ${favoritesPaginationState.totalCount} 条记录`;
+    }
+
+    if (pagination) {
+      pagination.style.display = totalPages > 1 ? 'flex' : 'none';
+    }
+
+    if (currentPageEl) {
+      currentPageEl.textContent = favoritesPaginationState.currentPage;
+    }
+
+    if (totalPagesEl) {
+      totalPagesEl.textContent = totalPages || 1;
+    }
+
+    if (prevBtn) {
+      prevBtn.disabled = favoritesPaginationState.currentPage <= 1;
+    }
+
+    if (nextBtn) {
+      nextBtn.disabled = favoritesPaginationState.currentPage >= totalPages;
+    }
+  }
+
+  // 渲染收藏统计表格（从缓存数据）
+  function renderFavoritesTable() {
+    const tbody = document.getElementById('favorites-table-body');
+    if (!tbody) return;
+
+    const pageSize = favoritesPaginationState.pageSize;
+    const offset = (favoritesPaginationState.currentPage - 1) * pageSize;
+    const pageData = favoritesPaginationState.allStats.slice(offset, offset + pageSize);
+
+    if (pageData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" class="table-message">暂无收藏数据</td></tr>';
+      return;
+    }
+
+    // 获取文章标题的辅助函数
+    function getPostTitle(postUrl) {
+      if (!postUrl) return '-';
+      
+      // 从 window.PAPERCACHE_POSTS 查找
+      if (window.PAPERCACHE_POSTS && Array.isArray(window.PAPERCACHE_POSTS)) {
+        const baseurl = window.PC_BASEURL || '';
+        const normalizeUrl = (u) => {
+          if (!u) return '';
+          let n = u;
+          if (baseurl && n.startsWith(baseurl)) {
+            n = n.substring(baseurl.length);
+          }
+          if (!n.startsWith('/')) n = '/' + n;
+          return n;
+        };
+        
+        const normalizedUrl = normalizeUrl(postUrl);
+        const matchedPost = window.PAPERCACHE_POSTS.find(p => {
+          const normalizedPUrl = normalizeUrl(p.url);
+          return normalizedPUrl === normalizedUrl || normalizedPUrl === postUrl || p.url === postUrl;
+        });
+        
+        if (matchedPost && matchedPost.title) {
+          return matchedPost.title;
+        }
+      }
+      
+      // 如果没找到，从URL提取
+      const segments = postUrl.split('/');
+      const lastSegment = segments[segments.length - 1];
+      if (lastSegment && lastSegment.includes('-')) {
+        const withoutExt = lastSegment.replace(/\.html?$/, '');
+        return withoutExt.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      }
+      
+      return postUrl.length > 50 ? postUrl.substring(0, 50) + '...' : postUrl;
+    }
+
+    // 生成完整的链接URL
+    function getFullUrl(postUrl) {
+      if (!postUrl) return '#';
+      const baseurl = window.PC_BASEURL || '';
+      if (postUrl.startsWith('http')) return postUrl;
+      if (baseurl && !postUrl.startsWith(baseurl)) {
+        return baseurl + (postUrl.startsWith('/') ? postUrl : '/' + postUrl);
+      }
+      return postUrl.startsWith('/') ? postUrl : '/' + postUrl;
+    }
+
+    let html = '';
+    pageData.forEach((stat) => {
+      const date = new Date(stat.firstFavorited).toLocaleDateString('zh-CN');
+      const title = getPostTitle(stat.url);
+      const fullUrl = getFullUrl(stat.url);
+      
+      html += `<tr>
+        <td>
+          <a href="${fullUrl}" target="_blank" class="admin-link" title="${stat.url}">
+            ${title}
+          </a>
+          <div class="admin-url-hint">${stat.url.length > 60 ? stat.url.substring(0, 60) + '...' : stat.url}</div>
+        </td>
+        <td>${stat.count}</td>
+        <td>${date}</td>
+      </tr>`;
+    });
+    tbody.innerHTML = html;
+    updateFavoritesPaginationInfo();
+  }
+
   // 加载收藏统计表
   async function loadFavoritesTable() {
     const tbody = document.getElementById('favorites-table-body');
@@ -659,6 +892,9 @@ permalink: /admin/index.html
 
       if (!data || data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="3" class="table-message">暂无收藏数据</td></tr>';
+        favoritesPaginationState.totalCount = 0;
+        favoritesPaginationState.allStats = [];
+        updateFavoritesPaginationInfo();
         return;
       }
 
@@ -680,77 +916,15 @@ permalink: /admin/index.html
       // 转换为数组并按收藏数排序
       const sortedStats = Object.entries(favoriteStats)
         .map(([url, stats]) => ({ url, ...stats }))
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 50); // 只显示前50个
+        .sort((a, b) => b.count - a.count);
 
-      // 获取文章标题的辅助函数
-      function getPostTitle(postUrl) {
-        if (!postUrl) return '-';
-        
-        // 从 window.PAPERCACHE_POSTS 查找
-        if (window.PAPERCACHE_POSTS && Array.isArray(window.PAPERCACHE_POSTS)) {
-          const baseurl = window.PC_BASEURL || '';
-          const normalizeUrl = (u) => {
-            if (!u) return '';
-            let n = u;
-            if (baseurl && n.startsWith(baseurl)) {
-              n = n.substring(baseurl.length);
-            }
-            if (!n.startsWith('/')) n = '/' + n;
-            return n;
-          };
-          
-          const normalizedUrl = normalizeUrl(postUrl);
-          const matchedPost = window.PAPERCACHE_POSTS.find(p => {
-            const normalizedPUrl = normalizeUrl(p.url);
-            return normalizedPUrl === normalizedUrl || normalizedPUrl === postUrl || p.url === postUrl;
-          });
-          
-          if (matchedPost && matchedPost.title) {
-            return matchedPost.title;
-          }
-        }
-        
-        // 如果没找到，从URL提取
-        const segments = postUrl.split('/');
-        const lastSegment = segments[segments.length - 1];
-        if (lastSegment && lastSegment.includes('-')) {
-          const withoutExt = lastSegment.replace(/\.html?$/, '');
-          return withoutExt.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-        }
-        
-        return postUrl.length > 50 ? postUrl.substring(0, 50) + '...' : postUrl;
-      }
+      // 缓存所有数据
+      favoritesPaginationState.allStats = sortedStats;
+      favoritesPaginationState.totalCount = sortedStats.length;
+      favoritesPaginationState.currentPage = 1; // 重置到第一页
 
-      // 生成完整的链接URL
-      function getFullUrl(postUrl) {
-        if (!postUrl) return '#';
-        const baseurl = window.PC_BASEURL || '';
-        if (postUrl.startsWith('http')) return postUrl;
-        if (baseurl && !postUrl.startsWith(baseurl)) {
-          return baseurl + (postUrl.startsWith('/') ? postUrl : '/' + postUrl);
-        }
-        return postUrl.startsWith('/') ? postUrl : '/' + postUrl;
-      }
-
-      let html = '';
-      sortedStats.forEach((stat, index) => {
-        const date = new Date(stat.firstFavorited).toLocaleDateString('zh-CN');
-        const title = getPostTitle(stat.url);
-        const fullUrl = getFullUrl(stat.url);
-        
-        html += `<tr>
-          <td>
-            <a href="${fullUrl}" target="_blank" class="admin-link" title="${stat.url}">
-              ${title}
-            </a>
-            <div class="admin-url-hint">${stat.url.length > 60 ? stat.url.substring(0, 60) + '...' : stat.url}</div>
-          </td>
-          <td>${stat.count}</td>
-          <td>${date}</td>
-        </tr>`;
-      });
-      tbody.innerHTML = html;
+      // 渲染第一页
+      renderFavoritesTable();
     } catch (error) {
       console.error('[Admin] 加载收藏统计异常:', error);
       tbody.innerHTML = '<tr><td colspan="3" class="table-message">加载失败</td></tr>';
@@ -959,15 +1133,27 @@ permalink: /admin/index.html
     });
     document.getElementById('tab-' + tabName).classList.add('active');
 
-    // 如果切换到分析标签页，加载数据
-    if (tabName === 'analytics' && window.AdminAnalytics) {
-      loadAnalyticsData();
+    // 如果切换到用户列表标签页，重置分页并加载数据
+    if (tabName === 'users') {
+      usersPaginationState.currentPage = 1;
+      loadUsersTable();
+    }
+
+    // 如果切换到收藏统计标签页，重置分页并加载数据
+    if (tabName === 'favorites') {
+      favoritesPaginationState.currentPage = 1;
+      loadFavoritesTable();
     }
 
     // 如果切换到登录日志标签页，初始化并加载数据
     if (tabName === 'logs') {
       initLogsPage();
       loadLogsTable();
+    }
+
+    // 如果切换到分析标签页，加载数据
+    if (tabName === 'analytics' && window.AdminAnalytics) {
+      loadAnalyticsData();
     }
   }
 
@@ -1440,6 +1626,32 @@ permalink: /admin/index.html
   }
 
   /* ============================================
+     通用分页样式
+     ============================================ */
+
+  .table-pagination-info {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    background: #f7fafc;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    color: #4a5568;
+    font-weight: 500;
+  }
+
+  .table-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  /* ============================================
      数据分析页面美化样式
      ============================================ */
   
@@ -1675,8 +1887,8 @@ permalink: /admin/index.html
 
   .logs-date-range input[type="date"]:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
 
   .logs-date-range span {
@@ -1686,7 +1898,7 @@ permalink: /admin/index.html
 
   .btn-primary {
     padding: 0.5rem 1.25rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
     color: white;
     border: none;
     border-radius: 6px;
@@ -1698,7 +1910,7 @@ permalink: /admin/index.html
 
   .btn-primary:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
   }
 
   .btn-primary:active {
@@ -1740,7 +1952,7 @@ permalink: /admin/index.html
   }
 
   .logs-table thead {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
     color: white;
   }
 
@@ -1772,7 +1984,7 @@ permalink: /admin/index.html
   }
 
   .logs-email {
-    color: #667eea;
+    color: #3b82f6;
     font-weight: 500;
   }
 
@@ -1811,7 +2023,7 @@ permalink: /admin/index.html
 
   .pagination-btn {
     padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
     color: white;
     border: none;
     border-radius: 6px;
@@ -1824,7 +2036,7 @@ permalink: /admin/index.html
 
   .pagination-btn:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
   }
 
   .pagination-btn:disabled {
