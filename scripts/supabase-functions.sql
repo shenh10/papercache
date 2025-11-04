@@ -189,6 +189,32 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 GRANT EXECUTE ON FUNCTION public.get_users_with_email(INTEGER, INTEGER) TO authenticated;
 
 -- ============================================
+-- 获取总登录记录数
+-- ============================================
+
+-- 函数：获取所有用户的总登录记录数，绕过 RLS 策略限制
+-- 用于管理员页面显示统计信息
+CREATE OR REPLACE FUNCTION public.get_total_login_logs_count()
+RETURNS INTEGER AS $$
+DECLARE
+  count_result INTEGER;
+BEGIN
+  SELECT COUNT(*)::INTEGER
+  INTO count_result
+  FROM public.login_logs;
+  
+  RETURN COALESCE(count_result, 0);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 给函数添加注释
+COMMENT ON FUNCTION public.get_total_login_logs_count() IS 
+'获取所有用户的总登录记录数，绕过RLS策略限制。用于管理员页面统计。返回：总登录记录数（整数）';
+
+-- 授予函数执行权限
+GRANT EXECUTE ON FUNCTION public.get_total_login_logs_count() TO authenticated;
+
+-- ============================================
 -- 获取收藏统计函数
 -- ============================================
 

@@ -483,6 +483,7 @@ permalink: /admin/index.html
   }
   
   // 加载登录日志统计
+  // 使用 SECURITY DEFINER 函数绕过 RLS 策略限制，获取所有用户的总登录记录数
   async function loadLoginLogsStats() {
     const statEl = document.getElementById('stat-total-logs');
     if (!statEl) return;
@@ -494,15 +495,19 @@ permalink: /admin/index.html
     }
 
     try {
-      const { count, error } = await supabase
-        .from('login_logs')
-        .select('*', { count: 'exact', head: true });
+      // 使用 RPC 函数统计总登录记录数（绕过 RLS 策略）
+      const { data, error } = await supabase
+        .rpc('get_total_login_logs_count');
 
       if (error) {
         console.warn('[Admin] 无法查询登录记录数:', error);
+        console.warn('[Admin] 错误详情:', error.message);
+        console.warn('[Admin] 提示：请确保已在 Supabase 中执行 get_total_login_logs_count() 函数');
         statEl.textContent = '-';
       } else {
-        statEl.textContent = count || 0;
+        const totalCount = data || 0;
+        statEl.textContent = totalCount;
+        console.log('[Admin] 总登录记录数:', totalCount);
       }
     } catch (error) {
       console.error('[Admin] 加载登录日志统计失败:', error);
