@@ -236,12 +236,12 @@
           console.warn('SimpleAuth: 记录登录日志失败', err);
         });
         notifyStateChange();
-      } else       if (event === 'SIGNED_OUT') {
+      } else if (event === 'SIGNED_OUT') {
         AuthState.user = null;
         window._simpleAuthUser = null;
         profileCache.clear();
-        // 清除登录日志去重缓存（用户登出后，下次登录应该重新记录）
-        loginLogDedupe.clear();
+        // 清除登录日志处理标记（用户登出后，下次登录应该重新记录）
+        loginLogProcessing.clear();
         notifyStateChange();
       }
       // 其他事件（如 PASSWORD_RECOVERY）暂不处理
