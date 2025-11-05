@@ -446,6 +446,38 @@
       }
     }
 
+    // 如果没有URL hash但有OAuth登录标记，检查session中的provider信息来确认
+    // 这种情况发生在：OAuth重定向后，URL hash已被清除，但标记还在
+    if (!urlHash.includes('access_token') && oauthAttempt) {
+      const userToCheck = user || AuthState.user;
+      const providerFromAttempt = oauthAttempt.split('_')[0];
+      const providerFromSession = userToCheck?.app_metadata?.provider;
+      
+      // 如果session中的provider与标记中的provider匹配，确认是OAuth登录
+      if (providerFromSession && (providerFromSession === 'github' || providerFromSession === 'google')) {
+        // 优先使用session中的provider（更准确）
+        const finalProvider = providerFromSession;
+        console.log(`SimpleAuth: 检测到${finalProvider} OAuth登录（URL hash已清除但标记存在）`, {
+          hasAccessToken: false,
+          hasOAuthAttempt: true,
+          providerFromAttempt,
+          providerFromSession: finalProvider,
+          userId: userToCheck?.id?.substring(0, 8) + '...'
+        });
+        return `${finalProvider}_oauth`;
+      } else if (providerFromAttempt === 'github' || providerFromAttempt === 'google') {
+        // 如果session中没有provider但标记中有，使用标记中的provider
+        console.log(`SimpleAuth: 检测到${providerFromAttempt} OAuth登录（使用标记中的provider）`, {
+          hasAccessToken: false,
+          hasOAuthAttempt: true,
+          providerFromAttempt,
+          providerFromSession: providerFromSession || 'null',
+          userId: userToCheck?.id?.substring(0, 8) + '...'
+        });
+        return `${providerFromAttempt}_oauth`;
+      }
+    }
+
     // 邮箱登录检测：localStorage中有邮箱登录标记
     const emailLoginAttempt = localStorage.getItem('simple_auth_email_login_attempt');
     if (emailLoginAttempt) {

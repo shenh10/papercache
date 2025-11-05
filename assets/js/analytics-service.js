@@ -199,7 +199,8 @@
     logClick(targetUrl, linkText) {
       logActivity({
         type: 'click',
-        target_url: targetUrl,
+        page_path: window.location.pathname, // 记录点击发生的页面路径
+        target_url: targetUrl, // 点击的目标URL
         metadata: {
           link_text: linkText
         }

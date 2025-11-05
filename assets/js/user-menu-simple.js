@@ -67,20 +67,18 @@
           // 从数据库的 admins 表检查管理员权限
           const checkAdminStatus = async () => {
             try {
-              // 检查是否有 Supabase 客户端
-              if (window.supabase || (window.SimpleAuth && window.SimpleAuth.getSupabase)) {
-                const supabase = window.supabase || window.SimpleAuth.getSupabase();
-                if (supabase) {
-                  const { data: isAdmin, error } = await supabase
-                    .rpc('check_user_is_admin', {
-                      p_user_id: finalUser.id
-                    });
+              // 获取 Supabase 客户端
+              const supabase = window.getSupabaseClient?.();
+              if (supabase && supabase.rpc) {
+                const { data: isAdmin, error } = await supabase
+                  .rpc('check_user_is_admin', {
+                    p_user_id: finalUser.id
+                  });
 
-                  if (!error && isAdmin) {
-                    adminLink.style.display = 'flex';
-                    console.log('UserMenu: 管理员已登录，显示统计分析菜单');
-                    return;
-                  }
+                if (!error && isAdmin) {
+                  adminLink.style.display = 'flex';
+                  console.log('UserMenu: 管理员已登录，显示统计分析菜单');
+                  return;
                 }
               }
             } catch (e) {
