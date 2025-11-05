@@ -65,11 +65,6 @@ permalink: /admin/index.html
       
       <!-- 用户列表 -->
       <div id="tab-users" class="admin-tab-content active">
-        <!-- 分页信息 -->
-        <div class="table-pagination-info">
-          <span id="users-pagination-info">共 0 条记录</span>
-        </div>
-        
         <!-- 用户列表表格 -->
         <div class="admin-table-container">
           <table class="admin-table">
@@ -92,22 +87,25 @@ permalink: /admin/index.html
         </div>
         
         <!-- 分页控件 -->
-        <div class="table-pagination" id="users-pagination" style="display: none;">
-          <button id="users-prev-btn" class="pagination-btn" disabled>上一页</button>
-          <span class="pagination-info">
-            <span id="users-current-page">1</span> / <span id="users-total-pages">1</span>
-          </span>
-          <button id="users-next-btn" class="pagination-btn">下一页</button>
+        <div id="users-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.75rem 0;">
+          <div style="color: #64748b; font-size: 0.9rem;">
+            <span id="users-pagination-info">共 0 条记录</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <button id="users-prev-btn" onclick="goToUsersPage('prev')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>上一页</button>
+            <div style="display: flex; align-items: center; gap: 0.25rem;">
+              <span style="color: #64748b; font-size: 0.9rem;">第</span>
+              <input type="number" id="users-page-input" min="1" value="1" style="width: 60px; padding: 0.4rem; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.9rem;" onkeypress="if(event.key === 'Enter') goToUsersPage('goto')">
+              <span style="color: #64748b; font-size: 0.9rem;">页，共 <span id="users-total-pages">1</span> 页</span>
+            </div>
+            <button id="users-go-btn" onclick="goToUsersPage('goto')" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">跳转</button>
+            <button id="users-next-btn" onclick="goToUsersPage('next')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>下一页</button>
+          </div>
         </div>
       </div>
       
       <!-- 收藏统计 -->
       <div id="tab-favorites" class="admin-tab-content">
-        <!-- 分页信息 -->
-        <div class="table-pagination-info">
-          <span id="favorites-pagination-info">共 0 条记录</span>
-        </div>
-        
         <!-- 收藏统计表格 -->
         <div class="admin-table-container">
           <table class="admin-table">
@@ -127,12 +125,20 @@ permalink: /admin/index.html
         </div>
         
         <!-- 分页控件 -->
-        <div class="table-pagination" id="favorites-pagination" style="display: none;">
-          <button id="favorites-prev-btn" class="pagination-btn" disabled>上一页</button>
-          <span class="pagination-info">
-            <span id="favorites-current-page">1</span> / <span id="favorites-total-pages">1</span>
-          </span>
-          <button id="favorites-next-btn" class="pagination-btn">下一页</button>
+        <div id="favorites-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.75rem 0;">
+          <div style="color: #64748b; font-size: 0.9rem;">
+            <span id="favorites-pagination-info">共 0 条记录</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <button id="favorites-prev-btn" onclick="goToFavoritesPage('prev')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>上一页</button>
+            <div style="display: flex; align-items: center; gap: 0.25rem;">
+              <span style="color: #64748b; font-size: 0.9rem;">第</span>
+              <input type="number" id="favorites-page-input" min="1" value="1" style="width: 60px; padding: 0.4rem; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.9rem;" onkeypress="if(event.key === 'Enter') goToFavoritesPage('goto')">
+              <span style="color: #64748b; font-size: 0.9rem;">页，共 <span id="favorites-total-pages">1</span> 页</span>
+            </div>
+            <button id="favorites-go-btn" onclick="goToFavoritesPage('goto')" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">跳转</button>
+            <button id="favorites-next-btn" onclick="goToFavoritesPage('next')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>下一页</button>
+          </div>
         </div>
       </div>
       
@@ -155,9 +161,6 @@ permalink: /admin/index.html
           <div class="logs-filter-actions">
             <button id="logs-query-btn" class="btn-primary">查询</button>
             <button id="logs-reset-btn" class="btn-secondary">重置</button>
-          </div>
-          <div class="logs-pagination-info">
-            <span id="logs-pagination-info">共 0 条记录</span>
           </div>
         </div>
         
@@ -182,12 +185,20 @@ permalink: /admin/index.html
         </div>
         
         <!-- 分页控件 -->
-        <div class="logs-pagination" id="logs-pagination" style="display: none;">
-          <button id="logs-prev-btn" class="pagination-btn" disabled>上一页</button>
-          <span class="pagination-info">
-            <span id="logs-current-page">1</span> / <span id="logs-total-pages">1</span>
-          </span>
-          <button id="logs-next-btn" class="pagination-btn">下一页</button>
+        <div id="logs-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.75rem 0;">
+          <div style="color: #64748b; font-size: 0.9rem;">
+            <span id="logs-pagination-info">共 0 条记录</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <button id="logs-prev-btn" onclick="goToLogsPage('prev')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>上一页</button>
+            <div style="display: flex; align-items: center; gap: 0.25rem;">
+              <span style="color: #64748b; font-size: 0.9rem;">第</span>
+              <input type="number" id="logs-page-input" min="1" value="1" style="width: 60px; padding: 0.4rem; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.9rem;" onkeypress="if(event.key === 'Enter') goToLogsPage('goto')">
+              <span style="color: #64748b; font-size: 0.9rem;">页，共 <span id="logs-total-pages">1</span> 页</span>
+            </div>
+            <button id="logs-go-btn" onclick="goToLogsPage('goto')" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">跳转</button>
+            <button id="logs-next-btn" onclick="goToLogsPage('next')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>下一页</button>
+          </div>
         </div>
       </div>
 
@@ -221,63 +232,21 @@ permalink: /admin/index.html
             <div id="dau-chart-container" class="analytics-chart-container">
               <div class="chart-loading">加载中...</div>
             </div>
+            <!-- 分页控件 -->
+            <div id="dau-chart-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.75rem 0;">
+              <div style="color: #64748b; font-size: 0.9rem;">
+                <span id="dau-chart-pagination-info">共 0 条记录</span>
           </div>
-
-          <!-- 综合活跃用户分析 -->
-          <div class="analytics-section analytics-section-card">
-            <h3 class="analytics-section-title">📊 综合活跃用户分析</h3>
-            <div class="analytics-stats-row">
-              <div class="analytics-stat-card">
-                <div class="analytics-stat-label">今日总活跃用户</div>
-                <div class="analytics-stat-value" id="comprehensive-total-active-today">-</div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <button id="dau-chart-prev" onclick="goToDAUChartPage('prev')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>上一页</button>
+                <div style="display: flex; align-items: center; gap: 0.25rem;">
+                  <span style="color: #64748b; font-size: 0.9rem;">第</span>
+                  <input type="number" id="dau-chart-page-input" min="1" value="1" style="width: 60px; padding: 0.4rem; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.9rem;" onkeypress="if(event.key === 'Enter') goToDAUChartPage('goto')">
+                  <span style="color: #64748b; font-size: 0.9rem;">页，共 <span id="dau-chart-total-pages">1</span> 页</span>
               </div>
-              <div class="analytics-stat-card">
-                <div class="analytics-stat-label">登录用户</div>
-                <div class="analytics-stat-value" id="comprehensive-login-users-today">-</div>
+                <button id="dau-chart-go" onclick="goToDAUChartPage('goto')" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">跳转</button>
+                <button id="dau-chart-next" onclick="goToDAUChartPage('next')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>下一页</button>
               </div>
-              <div class="analytics-stat-card">
-                <div class="analytics-stat-label">会话活跃用户</div>
-                <div class="analytics-stat-value" id="comprehensive-session-active-today">-</div>
-              </div>
-              <div class="analytics-stat-card">
-                <div class="analytics-stat-label">页面浏览用户</div>
-                <div class="analytics-stat-value" id="comprehensive-page-view-today">-</div>
-              </div>
-              <div class="analytics-stat-card">
-                <div class="analytics-stat-label">搜索用户</div>
-                <div class="analytics-stat-value" id="comprehensive-search-users-today">-</div>
-              </div>
-              <div class="analytics-stat-card">
-                <div class="analytics-stat-label">人均活动次数</div>
-                <div class="analytics-stat-value" id="comprehensive-avg-activities">-</div>
-              </div>
-            </div>
-            <div class="analytics-date-range">
-              <label>日期范围：</label>
-              <input type="date" id="comprehensive-start-date" value="">
-              <span> 至 </span>
-              <input type="date" id="comprehensive-end-date" value="">
-              <button id="comprehensive-query-btn" class="btn-primary">查询</button>
-            </div>
-            <div id="comprehensive-chart-container" class="analytics-chart-container">
-              <div class="chart-loading">加载中...</div>
-            </div>
-          </div>
-
-          <!-- 用户活跃度等级分布 -->
-          <div class="analytics-section analytics-section-card">
-            <h3 class="analytics-section-title">👥 用户活跃度等级分布</h3>
-            <div class="analytics-date-range">
-              <label>统计周期：</label>
-              <select id="activity-level-period">
-                <option value="7">最近7天</option>
-                <option value="30" selected>最近30天</option>
-                <option value="90">最近90天</option>
-              </select>
-              <button id="activity-level-query-btn" class="btn-primary">刷新</button>
-            </div>
-            <div id="activity-level-container" class="analytics-chart-container">
-              <div class="chart-loading">加载中...</div>
             </div>
           </div>
 
@@ -308,6 +277,22 @@ permalink: /admin/index.html
                   </tr>
                 </tbody>
               </table>
+            </div>
+            <!-- 分页控件 -->
+            <div id="popular-pages-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.75rem 0;">
+              <div style="color: #64748b; font-size: 0.9rem;">
+                <span id="popular-pages-pagination-info">共 0 条记录</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <button id="popular-pages-prev" onclick="goToPopularPagesPage('prev')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>上一页</button>
+                <div style="display: flex; align-items: center; gap: 0.25rem;">
+                  <span style="color: #64748b; font-size: 0.9rem;">第</span>
+                  <input type="number" id="popular-pages-page-input" min="1" value="1" style="width: 60px; padding: 0.4rem; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.9rem;" onkeypress="if(event.key === 'Enter') goToPopularPagesPage('goto')">
+                  <span style="color: #64748b; font-size: 0.9rem;">页，共 <span id="popular-pages-total-pages">1</span> 页</span>
+                </div>
+                <button id="popular-pages-go" onclick="goToPopularPagesPage('goto')" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">跳转</button>
+                <button id="popular-pages-next" onclick="goToPopularPagesPage('next')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>下一页</button>
+              </div>
             </div>
           </div>
 
@@ -361,6 +346,22 @@ permalink: /admin/index.html
                 </tbody>
               </table>
             </div>
+            <!-- 分页控件 -->
+            <div id="active-users-stats-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.75rem 0;">
+              <div style="color: #64748b; font-size: 0.9rem;">
+                <span id="active-users-stats-pagination-info">共 0 条记录</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <button id="active-users-stats-prev" onclick="goToActiveUsersStatsPage('prev')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>上一页</button>
+                <div style="display: flex; align-items: center; gap: 0.25rem;">
+                  <span style="color: #64748b; font-size: 0.9rem;">第</span>
+                  <input type="number" id="active-users-stats-page-input" min="1" value="1" style="width: 60px; padding: 0.4rem; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.9rem;" onkeypress="if(event.key === 'Enter') goToActiveUsersStatsPage('goto')">
+                  <span style="color: #64748b; font-size: 0.9rem;">页，共 <span id="active-users-stats-total-pages">1</span> 页</span>
+                </div>
+                <button id="active-users-stats-go" onclick="goToActiveUsersStatsPage('goto')" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">跳转</button>
+                <button id="active-users-stats-next" onclick="goToActiveUsersStatsPage('next')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>下一页</button>
+              </div>
+            </div>
             
             <!-- 活跃用户名单 -->
             <div style="margin-top: 2rem;">
@@ -378,9 +379,6 @@ permalink: /admin/index.html
                 </select>
                 <button id="active-users-list-query-btn" class="btn-primary" style="margin-left: 1rem;">查询</button>
               </div>
-              <div class="table-pagination-info" style="margin-bottom: 1rem;">
-                <span id="active-users-list-pagination-info">共 0 条记录</span>
-              </div>
               <div class="admin-table-container">
                 <table class="admin-table">
                   <thead>
@@ -395,7 +393,16 @@ permalink: /admin/index.html
                       <th>收藏</th>
                       <th>活跃天数</th>
                       <th>最后活动</th>
-                      <th>活跃度等级</th>
+                      <th>
+                        <div style="display: inline-flex; align-items: center; gap: 0.5rem;">
+                          <span>活跃度等级</span>
+                          <span class="activity-level-help-header" 
+                                style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: #e2e8f0; color: #64748b; font-size: 12px; cursor: help; font-weight: 600; line-height: 1; transition: all 0.2s ease;">
+                            ?
+                            <span class="activity-level-help-tooltip-header">超级活跃用户：总活动数 ≥ 50<br>活跃用户：总活动数 20-49<br>一般活跃用户：总活动数 5-19<br>低活跃用户：总活动数 1-4</span>
+                          </span>
+                        </div>
+                      </th>
                     </tr>
                   </thead>
                   <tbody id="active-users-list-body">
@@ -405,12 +412,21 @@ permalink: /admin/index.html
                   </tbody>
                 </table>
               </div>
-              <div class="table-pagination" id="active-users-list-pagination" style="display: none; margin-top: 1rem;">
-                <button id="active-users-list-prev-btn" class="pagination-btn" disabled>上一页</button>
-                <span class="pagination-info">
-                  <span id="active-users-list-current-page">1</span> / <span id="active-users-list-total-pages">1</span>
-                </span>
-                <button id="active-users-list-next-btn" class="pagination-btn">下一页</button>
+              <!-- 分页控件 -->
+              <div id="active-users-list-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.75rem 0;">
+                <div style="color: #64748b; font-size: 0.9rem;">
+                  <span id="active-users-list-pagination-info">共 0 条记录</span>
+              </div>
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <button id="active-users-list-prev-btn" onclick="goToActiveUsersListPage('prev')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>上一页</button>
+                  <div style="display: flex; align-items: center; gap: 0.25rem;">
+                    <span style="color: #64748b; font-size: 0.9rem;">第</span>
+                    <input type="number" id="active-users-list-page-input" min="1" value="1" style="width: 60px; padding: 0.4rem; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.9rem;" onkeypress="if(event.key === 'Enter') goToActiveUsersListPage('goto')">
+                    <span style="color: #64748b; font-size: 0.9rem;">页，共 <span id="active-users-list-total-pages">1</span> 页</span>
+                  </div>
+                  <button id="active-users-list-go-btn" onclick="goToActiveUsersListPage('goto')" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">跳转</button>
+                  <button id="active-users-list-next-btn" onclick="goToActiveUsersListPage('next')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>下一页</button>
+                </div>
               </div>
             </div>
           </div>
@@ -439,6 +455,172 @@ permalink: /admin/index.html
                   <tr>
                     <td colspan="4" class="table-loading">加载中...</td>
                   </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- 分页控件 -->
+            <div id="search-keywords-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.75rem 0;">
+              <div style="color: #64748b; font-size: 0.9rem;">
+                <span id="search-keywords-pagination-info">共 0 条记录</span>
+          </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <button id="search-keywords-prev" onclick="goToSearchKeywordsPage('prev')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>上一页</button>
+                <div style="display: flex; align-items: center; gap: 0.25rem;">
+                  <span style="color: #64748b; font-size: 0.9rem;">第</span>
+                  <input type="number" id="search-keywords-page-input" min="1" value="1" style="width: 60px; padding: 0.4rem; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.9rem;" onkeypress="if(event.key === 'Enter') goToSearchKeywordsPage('goto')">
+                  <span style="color: #64748b; font-size: 0.9rem;">页，共 <span id="search-keywords-total-pages">1</span> 页</span>
+                </div>
+                <button id="search-keywords-go" onclick="goToSearchKeywordsPage('goto')" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">跳转</button>
+                <button id="search-keywords-next" onclick="goToSearchKeywordsPage('next')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>下一页</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 用户详情模态框 -->
+  <div id="user-details-modal" class="admin-modal" style="display: none;">
+    <div class="admin-modal-content" style="max-width: 90%; max-height: 90vh; overflow-y: auto;">
+      <div class="admin-modal-header">
+        <h2 id="user-details-title">用户活动详情</h2>
+        <button class="admin-modal-close" onclick="closeUserDetails()">&times;</button>
+      </div>
+      <div class="admin-modal-body">
+        <div id="user-details-loading" style="text-align: center; padding: 2rem;">
+          <div class="loading-spinner"></div>
+          <p>加载中...</p>
+        </div>
+        <div id="user-details-content" style="display: none;">
+          <!-- 用户基本信息 -->
+          <div style="margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 2px solid #e5e7eb;">
+            <h3 style="margin-bottom: 1rem; color: #2d3748;">用户信息</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+              <div>
+                <strong>邮箱：</strong><span id="user-details-email"></span>
+              </div>
+              <div>
+                <strong>用户名：</strong><span id="user-details-username"></span>
+              </div>
+              <div>
+                <strong>用户ID：</strong><code id="user-details-id" style="font-size: 0.85em;"></code>
+              </div>
+            </div>
+          </div>
+
+          <!-- 活动统计 -->
+          <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: #2d3748;">活动统计</h3>
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>活动类型</th>
+                    <th>次数</th>
+                    <th>最后活动时间</th>
+                  </tr>
+                </thead>
+                <tbody id="user-details-stats">
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 收藏列表 -->
+          <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: #2d3748;">收藏列表</h3>
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>页面标题</th>
+                    <th>页面路径</th>
+                    <th>收藏时间</th>
+                  </tr>
+                </thead>
+                <tbody id="user-details-favorites">
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 页面浏览记录 -->
+          <div style="margin-bottom: 2rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h3 style="margin: 0; color: #2d3748;">页面浏览记录</h3>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <label style="font-size: 0.9rem; color: #64748b;">每页</label>
+                <select id="pageviews-limit" style="padding: 0.4rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem;">
+                  <option value="10" selected>10条</option>
+                  <option value="20">20条</option>
+                  <option value="50">50条</option>
+                  <option value="100">100条</option>
+                </select>
+                <button onclick="refreshPageviews()" class="btn-primary" style="padding: 0.4rem 1rem; font-size: 0.9rem;">刷新</button>
+              </div>
+            </div>
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>页面路径</th>
+                    <th>页面标题</th>
+                    <th>浏览时间</th>
+                  </tr>
+                </thead>
+                <tbody id="user-details-pageviews">
+                </tbody>
+              </table>
+            </div>
+            <!-- 分页控件 -->
+            <div id="pageviews-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.75rem 0;">
+              <div style="color: #64748b; font-size: 0.9rem;">
+                <span id="pageviews-pagination-info">加载中...</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <button id="pageviews-prev" onclick="goToPageviewsPage('prev')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>上一页</button>
+                <div style="display: flex; align-items: center; gap: 0.25rem;">
+                  <span style="color: #64748b; font-size: 0.9rem;">第</span>
+                  <input type="number" id="pageviews-page-input" min="1" value="1" style="width: 60px; padding: 0.4rem; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.9rem;" onkeypress="if(event.key === 'Enter') goToPageviewsPage('goto')">
+                  <span style="color: #64748b; font-size: 0.9rem;">页，共 <span id="pageviews-total-pages">1</span> 页</span>
+                </div>
+                <button id="pageviews-go" onclick="goToPageviewsPage('goto')" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">跳转</button>
+                <button id="pageviews-next" onclick="goToPageviewsPage('next')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>下一页</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 搜索记录 -->
+          <div style="margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1rem; color: #2d3748;">搜索记录</h3>
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>搜索关键词</th>
+                    <th>搜索时间</th>
+                  </tr>
+                </thead>
+                <tbody id="user-details-searches">
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 点击记录 -->
+          <div>
+            <h3 style="margin-bottom: 1rem; color: #2d3748;">点击记录</h3>
+            <div class="admin-table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>点击目标</th>
+                    <th>页面路径</th>
+                    <th>点击时间</th>
+                  </tr>
+                </thead>
+                <tbody id="user-details-clicks">
                 </tbody>
               </table>
             </div>
@@ -675,7 +857,7 @@ permalink: /admin/index.html
     initAnalyticsQueryButtons();
     
     await loadDAUStats();
-    await loadDAUChart();
+    await loadDAUChart(1);
     await loadPopularPages();
     await loadSearchKeywords();
     await loadActiveUsersStats();
@@ -785,36 +967,19 @@ permalink: /admin/index.html
     }
   }
   
-  // 用户列表分页状态
-  const usersPaginationState = {
+  // 用户列表分页状态（存储在window对象上，避免Turbolinks重复声明）
+  if (!window.usersPaginationState) {
+    window.usersPaginationState = {
     currentPage: 1,
-    pageSize: 20,
+      pageSize: 10,
     totalCount: 0
   };
+  }
+  const usersPaginationState = window.usersPaginationState;
 
-  // 初始化用户列表分页
+  // 初始化用户列表分页（不再需要，因为使用onclick）
   function initUsersPagination() {
-    const prevBtn = document.getElementById('users-prev-btn');
-    const nextBtn = document.getElementById('users-next-btn');
-
-    if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
-        if (usersPaginationState.currentPage > 1) {
-          usersPaginationState.currentPage--;
-          loadUsersTable();
-        }
-      });
-    }
-
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        const totalPages = Math.ceil(usersPaginationState.totalCount / usersPaginationState.pageSize);
-        if (usersPaginationState.currentPage < totalPages) {
-          usersPaginationState.currentPage++;
-          loadUsersTable();
-        }
-      });
-    }
+    // 分页按钮现在使用onclick，这里可以保留用于其他初始化
   }
 
   // 更新用户列表分页信息
@@ -822,33 +987,82 @@ permalink: /admin/index.html
     const totalPages = Math.ceil(usersPaginationState.totalCount / usersPaginationState.pageSize);
     const pagination = document.getElementById('users-pagination');
     const paginationInfo = document.getElementById('users-pagination-info');
-    const currentPageEl = document.getElementById('users-current-page');
-    const totalPagesEl = document.getElementById('users-total-pages');
+    const pageInput = document.getElementById('users-page-input');
+    const totalPagesSpan = document.getElementById('users-total-pages');
     const prevBtn = document.getElementById('users-prev-btn');
     const nextBtn = document.getElementById('users-next-btn');
 
+    const { currentPage, totalCount, pageSize } = usersPaginationState;
+    const start = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+    const end = Math.min(currentPage * pageSize, totalCount);
+
     if (paginationInfo) {
-      paginationInfo.textContent = `共 ${usersPaginationState.totalCount} 条记录`;
+      paginationInfo.textContent = `共 ${totalCount} 条记录，显示第 ${start}-${end} 条`;
     }
 
     if (pagination) {
-      pagination.style.display = totalPages > 1 ? 'flex' : 'none';
+      pagination.style.display = totalPages > 1 ? 'flex' : 'flex'; // 总是显示
     }
 
-    if (currentPageEl) {
-      currentPageEl.textContent = usersPaginationState.currentPage;
+    if (pageInput) {
+      pageInput.value = currentPage;
+      pageInput.max = totalPages;
     }
 
-    if (totalPagesEl) {
-      totalPagesEl.textContent = totalPages || 1;
+    if (totalPagesSpan) {
+      totalPagesSpan.textContent = totalPages || 1;
     }
 
     if (prevBtn) {
-      prevBtn.disabled = usersPaginationState.currentPage <= 1;
+      prevBtn.disabled = currentPage <= 1;
+      if (prevBtn.disabled) {
+        prevBtn.style.opacity = '0.5';
+        prevBtn.style.cursor = 'not-allowed';
+      } else {
+        prevBtn.style.opacity = '1';
+        prevBtn.style.cursor = 'pointer';
+      }
     }
 
     if (nextBtn) {
-      nextBtn.disabled = usersPaginationState.currentPage >= totalPages;
+      nextBtn.disabled = currentPage >= totalPages;
+      if (nextBtn.disabled) {
+        nextBtn.style.opacity = '0.5';
+        nextBtn.style.cursor = 'not-allowed';
+      } else {
+        nextBtn.style.opacity = '1';
+        nextBtn.style.cursor = 'pointer';
+      }
+    }
+  }
+
+  // 用户列表分页导航
+  function goToUsersPage(action) {
+    const { currentPage, pageSize, totalCount } = usersPaginationState;
+    const totalPages = Math.ceil(totalCount / pageSize);
+    let targetPage = currentPage;
+
+    if (action === 'prev') {
+      targetPage = Math.max(1, currentPage - 1);
+    } else if (action === 'next') {
+      targetPage = Math.min(totalPages, currentPage + 1);
+    } else if (action === 'goto') {
+      const pageInput = document.getElementById('users-page-input');
+      if (pageInput) {
+        const inputPage = parseInt(pageInput.value);
+        if (!isNaN(inputPage) && inputPage >= 1 && inputPage <= totalPages) {
+          targetPage = inputPage;
+        } else {
+          alert(`请输入有效的页码（1-${totalPages}）`);
+          pageInput.value = currentPage;
+          return;
+        }
+      }
+    }
+
+    if (targetPage !== currentPage) {
+      usersPaginationState.currentPage = targetPage;
+      loadUsersTable();
     }
   }
 
@@ -875,9 +1089,10 @@ permalink: /admin/index.html
 
       if (countError) {
         console.warn('[Admin] 获取用户总数失败:', countError);
+        // 如果获取总数失败，不更新totalCount，保持当前值
       } else {
         usersPaginationState.totalCount = countData || 0;
-        updateUsersPaginationInfo();
+        // 注意：这里不立即更新UI，等数据加载完成后再更新，避免显示不一致
       }
 
       // 获取当前用户ID（用于判断是否可以操作）
@@ -900,6 +1115,7 @@ permalink: /admin/index.html
 
       if (!data || data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="table-message">暂无用户数据</td></tr>';
+        // 确保totalCount已更新（如果获取总数失败，这里可能是0）
         updateUsersPaginationInfo();
         return;
       }
@@ -937,10 +1153,13 @@ permalink: /admin/index.html
         </tr>`;
       }
       tbody.innerHTML = html;
+      // 数据加载完成后更新分页信息（确保totalCount已正确设置）
       updateUsersPaginationInfo();
     } catch (error) {
       console.error('[Admin] 加载用户列表异常:', error);
       tbody.innerHTML = '<tr><td colspan="6" class="table-message">加载失败</td></tr>';
+      // 出错时也更新分页信息
+      updateUsersPaginationInfo();
     }
   }
 
@@ -1049,37 +1268,20 @@ permalink: /admin/index.html
     }
   }
   
-  // 收藏统计分页状态
-  const favoritesPaginationState = {
+  // 收藏统计分页状态（存储在window对象上，避免Turbolinks重复声明）
+  if (!window.favoritesPaginationState) {
+    window.favoritesPaginationState = {
     currentPage: 1,
-    pageSize: 20,
+      pageSize: 10,
     totalCount: 0,
     allStats: [] // 缓存所有统计结果
   };
+  }
+  const favoritesPaginationState = window.favoritesPaginationState;
 
-  // 初始化收藏统计分页
+  // 初始化收藏统计分页（不再需要，因为使用onclick）
   function initFavoritesPagination() {
-    const prevBtn = document.getElementById('favorites-prev-btn');
-    const nextBtn = document.getElementById('favorites-next-btn');
-
-    if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
-        if (favoritesPaginationState.currentPage > 1) {
-          favoritesPaginationState.currentPage--;
-          renderFavoritesTable();
-        }
-      });
-    }
-
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        const totalPages = Math.ceil(favoritesPaginationState.totalCount / favoritesPaginationState.pageSize);
-        if (favoritesPaginationState.currentPage < totalPages) {
-          favoritesPaginationState.currentPage++;
-          renderFavoritesTable();
-        }
-      });
-    }
+    // 分页按钮现在使用onclick，这里可以保留用于其他初始化
   }
 
   // 更新收藏统计分页信息
@@ -1087,33 +1289,82 @@ permalink: /admin/index.html
     const totalPages = Math.ceil(favoritesPaginationState.totalCount / favoritesPaginationState.pageSize);
     const pagination = document.getElementById('favorites-pagination');
     const paginationInfo = document.getElementById('favorites-pagination-info');
-    const currentPageEl = document.getElementById('favorites-current-page');
-    const totalPagesEl = document.getElementById('favorites-total-pages');
+    const pageInput = document.getElementById('favorites-page-input');
+    const totalPagesSpan = document.getElementById('favorites-total-pages');
     const prevBtn = document.getElementById('favorites-prev-btn');
     const nextBtn = document.getElementById('favorites-next-btn');
 
+    const { currentPage, totalCount, pageSize } = favoritesPaginationState;
+    const start = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+    const end = Math.min(currentPage * pageSize, totalCount);
+
     if (paginationInfo) {
-      paginationInfo.textContent = `共 ${favoritesPaginationState.totalCount} 条记录`;
+      paginationInfo.textContent = `共 ${totalCount} 条记录，显示第 ${start}-${end} 条`;
     }
 
     if (pagination) {
-      pagination.style.display = totalPages > 1 ? 'flex' : 'none';
+      pagination.style.display = totalPages > 1 ? 'flex' : 'flex'; // 总是显示
     }
 
-    if (currentPageEl) {
-      currentPageEl.textContent = favoritesPaginationState.currentPage;
+    if (pageInput) {
+      pageInput.value = currentPage;
+      pageInput.max = totalPages;
     }
 
-    if (totalPagesEl) {
-      totalPagesEl.textContent = totalPages || 1;
+    if (totalPagesSpan) {
+      totalPagesSpan.textContent = totalPages || 1;
     }
 
     if (prevBtn) {
-      prevBtn.disabled = favoritesPaginationState.currentPage <= 1;
+      prevBtn.disabled = currentPage <= 1;
+      if (prevBtn.disabled) {
+        prevBtn.style.opacity = '0.5';
+        prevBtn.style.cursor = 'not-allowed';
+      } else {
+        prevBtn.style.opacity = '1';
+        prevBtn.style.cursor = 'pointer';
+      }
     }
 
     if (nextBtn) {
-      nextBtn.disabled = favoritesPaginationState.currentPage >= totalPages;
+      nextBtn.disabled = currentPage >= totalPages;
+      if (nextBtn.disabled) {
+        nextBtn.style.opacity = '0.5';
+        nextBtn.style.cursor = 'not-allowed';
+      } else {
+        nextBtn.style.opacity = '1';
+        nextBtn.style.cursor = 'pointer';
+      }
+    }
+  }
+
+  // 收藏统计分页导航
+  function goToFavoritesPage(action) {
+    const { currentPage, pageSize, totalCount } = favoritesPaginationState;
+    const totalPages = Math.ceil(totalCount / pageSize);
+    let targetPage = currentPage;
+
+    if (action === 'prev') {
+      targetPage = Math.max(1, currentPage - 1);
+    } else if (action === 'next') {
+      targetPage = Math.min(totalPages, currentPage + 1);
+    } else if (action === 'goto') {
+      const pageInput = document.getElementById('favorites-page-input');
+      if (pageInput) {
+        const inputPage = parseInt(pageInput.value);
+        if (!isNaN(inputPage) && inputPage >= 1 && inputPage <= totalPages) {
+          targetPage = inputPage;
+        } else {
+          alert(`请输入有效的页码（1-${totalPages}）`);
+          pageInput.value = currentPage;
+          return;
+        }
+      }
+    }
+
+    if (targetPage !== currentPage) {
+      favoritesPaginationState.currentPage = targetPage;
+      renderFavoritesTable();
     }
   }
 
@@ -1249,22 +1500,29 @@ permalink: /admin/index.html
       favoritesPaginationState.currentPage = 1; // 重置到第一页
 
       // 渲染第一页
-      renderFavoritesTable();
+      renderFavoritesTable(); // renderFavoritesTable内部会调用updateFavoritesPaginationInfo
     } catch (error) {
       console.error('[Admin] 加载收藏统计异常:', error);
       tbody.innerHTML = '<tr><td colspan="3" class="table-message">加载失败</td></tr>';
+      // 出错时也更新分页信息
+      favoritesPaginationState.totalCount = 0;
+      favoritesPaginationState.allStats = [];
+      updateFavoritesPaginationInfo();
     }
   }
   
-  // 登录日志分页状态
-  const logsPaginationState = {
+  // 登录日志分页状态（存储在window对象上，避免Turbolinks重复声明）
+  if (!window.logsPaginationState) {
+    window.logsPaginationState = {
     currentPage: 1,
-    pageSize: 20,
+      pageSize: 10,
     totalCount: 0,
     startDate: null,
     endDate: null,
     userEmail: null
   };
+  }
+  const logsPaginationState = window.logsPaginationState;
 
   // 初始化登录日志页面
   function initLogsPage() {
@@ -1287,8 +1545,6 @@ permalink: /admin/index.html
     // 绑定查询按钮
     const queryBtn = document.getElementById('logs-query-btn');
     const resetBtn = document.getElementById('logs-reset-btn');
-    const prevBtn = document.getElementById('logs-prev-btn');
-    const nextBtn = document.getElementById('logs-next-btn');
 
     if (queryBtn) {
       queryBtn.addEventListener('click', () => {
@@ -1317,24 +1573,7 @@ permalink: /admin/index.html
       });
     }
 
-    if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
-        if (logsPaginationState.currentPage > 1) {
-          logsPaginationState.currentPage--;
-          loadLogsTable();
-        }
-      });
-    }
-
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        const totalPages = Math.ceil(logsPaginationState.totalCount / logsPaginationState.pageSize);
-        if (logsPaginationState.currentPage < totalPages) {
-          logsPaginationState.currentPage++;
-          loadLogsTable();
-        }
-      });
-    }
+    // 分页按钮现在使用onclick，不需要在这里绑定
   }
 
   // 加载登录日志表
@@ -1367,9 +1606,10 @@ permalink: /admin/index.html
 
       if (countError) {
         console.warn('[Admin] 获取登录日志总数失败:', countError);
+        // 如果获取总数失败，不更新totalCount，保持当前值
       } else {
         logsPaginationState.totalCount = countData || 0;
-        updateLogsPaginationInfo();
+        // 注意：这里不立即更新UI，等数据加载完成后再更新，避免显示不一致
       }
 
       // 使用 RPC 函数获取登录日志（包含用户邮箱）
@@ -1386,6 +1626,8 @@ permalink: /admin/index.html
         console.error('[Admin] 加载登录日志失败:', error);
         console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_login_logs_with_email() 函数');
         tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败：' + error.message + '</td></tr>';
+        // 确保totalCount已更新（如果获取总数失败，这里可能是0）
+        updateLogsPaginationInfo();
         return;
       }
 
@@ -1417,10 +1659,13 @@ permalink: /admin/index.html
         </tr>`;
       }
       tbody.innerHTML = html;
+      // 数据加载完成后更新分页信息（确保totalCount已正确设置）
       updateLogsPaginationInfo();
     } catch (error) {
       console.error('[Admin] 加载登录日志异常:', error);
       tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败</td></tr>';
+      // 出错时也更新分页信息
+      updateLogsPaginationInfo();
     }
   }
 
@@ -1429,33 +1674,82 @@ permalink: /admin/index.html
     const totalPages = Math.ceil(logsPaginationState.totalCount / logsPaginationState.pageSize);
     const pagination = document.getElementById('logs-pagination');
     const paginationInfo = document.getElementById('logs-pagination-info');
-    const currentPageEl = document.getElementById('logs-current-page');
-    const totalPagesEl = document.getElementById('logs-total-pages');
+    const pageInput = document.getElementById('logs-page-input');
+    const totalPagesSpan = document.getElementById('logs-total-pages');
     const prevBtn = document.getElementById('logs-prev-btn');
     const nextBtn = document.getElementById('logs-next-btn');
 
+    const { currentPage, totalCount, pageSize } = logsPaginationState;
+    const start = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+    const end = Math.min(currentPage * pageSize, totalCount);
+
     if (paginationInfo) {
-      paginationInfo.textContent = `共 ${logsPaginationState.totalCount} 条记录`;
+      paginationInfo.textContent = `共 ${totalCount} 条记录，显示第 ${start}-${end} 条`;
     }
 
     if (pagination) {
-      pagination.style.display = totalPages > 1 ? 'flex' : 'none';
+      pagination.style.display = totalPages > 1 ? 'flex' : 'flex'; // 总是显示
     }
 
-    if (currentPageEl) {
-      currentPageEl.textContent = logsPaginationState.currentPage;
+    if (pageInput) {
+      pageInput.value = currentPage;
+      pageInput.max = totalPages;
     }
 
-    if (totalPagesEl) {
-      totalPagesEl.textContent = totalPages || 1;
+    if (totalPagesSpan) {
+      totalPagesSpan.textContent = totalPages || 1;
     }
 
     if (prevBtn) {
-      prevBtn.disabled = logsPaginationState.currentPage <= 1;
+      prevBtn.disabled = currentPage <= 1;
+      if (prevBtn.disabled) {
+        prevBtn.style.opacity = '0.5';
+        prevBtn.style.cursor = 'not-allowed';
+      } else {
+        prevBtn.style.opacity = '1';
+        prevBtn.style.cursor = 'pointer';
+      }
     }
 
     if (nextBtn) {
-      nextBtn.disabled = logsPaginationState.currentPage >= totalPages;
+      nextBtn.disabled = currentPage >= totalPages;
+      if (nextBtn.disabled) {
+        nextBtn.style.opacity = '0.5';
+        nextBtn.style.cursor = 'not-allowed';
+      } else {
+        nextBtn.style.opacity = '1';
+        nextBtn.style.cursor = 'pointer';
+      }
+    }
+  }
+
+  // 登录日志分页导航
+  function goToLogsPage(action) {
+    const { currentPage, pageSize, totalCount } = logsPaginationState;
+    const totalPages = Math.ceil(totalCount / pageSize);
+    let targetPage = currentPage;
+
+    if (action === 'prev') {
+      targetPage = Math.max(1, currentPage - 1);
+    } else if (action === 'next') {
+      targetPage = Math.min(totalPages, currentPage + 1);
+    } else if (action === 'goto') {
+      const pageInput = document.getElementById('logs-page-input');
+      if (pageInput) {
+        const inputPage = parseInt(pageInput.value);
+        if (!isNaN(inputPage) && inputPage >= 1 && inputPage <= totalPages) {
+          targetPage = inputPage;
+        } else {
+          alert(`请输入有效的页码（1-${totalPages}）`);
+          pageInput.value = currentPage;
+          return;
+        }
+      }
+    }
+
+    if (targetPage !== currentPage) {
+      logsPaginationState.currentPage = targetPage;
+      loadLogsTable();
     }
   }
   
@@ -1507,7 +1801,8 @@ permalink: /admin/index.html
       dauQueryBtn.parentNode.replaceChild(newBtn, dauQueryBtn);
       newBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        loadDAUChart();
+        dauChartPagination.currentPage = 1; // 重置到第一页
+        loadDAUChart(1);
       });
     }
 
@@ -1518,7 +1813,8 @@ permalink: /admin/index.html
       popularQueryBtn.parentNode.replaceChild(newBtn, popularQueryBtn);
       newBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        loadPopularPages();
+        popularPagesPagination.currentPage = 1; // 重置到第一页
+        loadPopularPages(1);
       });
     }
 
@@ -1529,25 +1825,8 @@ permalink: /admin/index.html
       searchQueryBtn.parentNode.replaceChild(newBtn, searchQueryBtn);
       newBtn.addEventListener('click', (e) => {
         e.preventDefault();
-        loadSearchKeywords();
-      });
-    }
-
-    // 绑定综合活跃用户分析查询按钮
-    const comprehensiveQueryBtn = document.getElementById('comprehensive-query-btn');
-    if (comprehensiveQueryBtn) {
-      comprehensiveQueryBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        loadComprehensiveActiveUsersStats();
-      });
-    }
-
-    // 绑定用户活跃度等级分布查询按钮
-    const activityLevelQueryBtn = document.getElementById('activity-level-query-btn');
-    if (activityLevelQueryBtn) {
-      activityLevelQueryBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        loadActivityLevels();
+        searchKeywordsPagination.currentPage = 1; // 重置到第一页
+        loadSearchKeywords(1);
       });
     }
 
@@ -1558,6 +1837,7 @@ permalink: /admin/index.html
       activeUsersQueryBtn.parentNode.replaceChild(newBtn, activeUsersQueryBtn);
       newBtn.addEventListener('click', (e) => {
         e.preventDefault();
+        activeUsersStatsPagination.currentPage = 1; // 重置到第一页
         loadActiveUsersStats();
       });
     }
@@ -1616,8 +1896,22 @@ permalink: /admin/index.html
     }
   }
 
-  // 加载DAU图表
-  async function loadDAUChart() {
+  // DAU图表分页状态（存储在window对象上，避免Turbolinks重复声明）
+  if (!window.dauChartPagination) {
+    window.dauChartPagination = {
+      currentPage: 1,
+      totalPages: 1,
+      totalCount: 0,
+      limit: 10,
+      allData: [], // 缓存所有数据
+    cachedStartDate: null,
+    cachedEndDate: null
+    };
+  }
+  const dauChartPagination = window.dauChartPagination;
+
+  // 加载DAU图表（支持分页）
+  async function loadDAUChart(page = 1) {
     if (!window.AdminAnalytics) return;
 
     const container = document.getElementById('dau-chart-container');
@@ -1640,13 +1934,39 @@ permalink: /admin/index.html
     container.innerHTML = '<div class="chart-loading">加载中...</div>';
 
     try {
-      const data = await window.AdminAnalytics.getActiveUsersInRange(startDate, endDate);
-      console.log('[Admin] DAU图表数据:', data);
+      // 获取所有数据（客户端分页）
+      const allData = await window.AdminAnalytics.getActiveUsersInRange(startDate, endDate);
+      console.log('[Admin] DAU图表数据:', allData);
       
-      if (!data || data.length === 0) {
+      if (!allData || allData.length === 0) {
         container.innerHTML = '<div class="chart-message">暂无数据</div>';
+        window.dauChartPagination.currentPage = 1;
+        window.dauChartPagination.totalPages = 1;
+        window.dauChartPagination.totalCount = 0;
+        window.dauChartPagination.limit = 10;
+        window.dauChartPagination.allData = [];
+        window.dauChartPagination.cachedStartDate = null;
+        window.dauChartPagination.cachedEndDate = null;
+        updateDAUChartPaginationUI();
         return;
       }
+
+      // 缓存所有数据和日期范围
+      dauChartPagination.allData = allData;
+      dauChartPagination.cachedStartDate = startDate;
+      dauChartPagination.cachedEndDate = endDate;
+
+      // 客户端分页
+      const limit = dauChartPagination.limit;
+      const totalCount = allData.length;
+      const totalPages = Math.max(1, Math.ceil(totalCount / limit));
+      const offset = (page - 1) * limit;
+      const data = allData.slice(offset, offset + limit);
+
+      // 更新分页状态
+      dauChartPagination.currentPage = page;
+      dauChartPagination.totalPages = totalPages;
+      dauChartPagination.totalCount = totalCount;
 
       // 简单的文本表格展示（可以用图表库如Chart.js替代）
       let html = '<table class="analytics-chart-table"><thead><tr><th>日期</th><th>总用户</th><th>已登录</th><th>匿名</th></tr></thead><tbody>';
@@ -1660,14 +1980,124 @@ permalink: /admin/index.html
       });
       html += '</tbody></table>';
       container.innerHTML = html;
+      updateDAUChartPaginationUI();
     } catch (error) {
       console.error('[Admin] Failed to load DAU chart:', error);
       container.innerHTML = '<div class="chart-message">加载失败</div>';
+      updateDAUChartPaginationUI();
     }
   }
 
-  // 加载热门页面
-  async function loadPopularPages() {
+  // 更新DAU图表分页UI
+  function updateDAUChartPaginationUI() {
+    const paginationInfo = document.getElementById('dau-chart-pagination-info');
+    const totalPagesSpan = document.getElementById('dau-chart-total-pages');
+    const pageInput = document.getElementById('dau-chart-page-input');
+    const prevBtn = document.getElementById('dau-chart-prev');
+    const nextBtn = document.getElementById('dau-chart-next');
+
+    if (!paginationInfo || !totalPagesSpan || !pageInput || !prevBtn || !nextBtn) return;
+
+    const { currentPage, totalPages, totalCount, limit } = dauChartPagination;
+    const start = totalCount === 0 ? 0 : (currentPage - 1) * limit + 1;
+    const end = Math.min(currentPage * limit, totalCount);
+
+    paginationInfo.textContent = `共 ${totalCount} 条记录，显示第 ${start}-${end} 条`;
+    totalPagesSpan.textContent = totalPages;
+    pageInput.value = currentPage;
+    pageInput.max = totalPages;
+
+    prevBtn.disabled = currentPage <= 1;
+    nextBtn.disabled = currentPage >= totalPages;
+
+    if (prevBtn.disabled) {
+      prevBtn.style.opacity = '0.5';
+      prevBtn.style.cursor = 'not-allowed';
+    } else {
+      prevBtn.style.opacity = '1';
+      prevBtn.style.cursor = 'pointer';
+    }
+
+    if (nextBtn.disabled) {
+      nextBtn.style.opacity = '0.5';
+      nextBtn.style.cursor = 'not-allowed';
+    } else {
+      nextBtn.style.opacity = '1';
+      nextBtn.style.cursor = 'pointer';
+    }
+  }
+
+  // DAU图表分页导航
+  function goToDAUChartPage(action) {
+    const { currentPage, totalPages, allData, cachedStartDate, cachedEndDate, limit } = dauChartPagination;
+    let targetPage = currentPage;
+
+    if (action === 'prev') {
+      targetPage = Math.max(1, currentPage - 1);
+    } else if (action === 'next') {
+      targetPage = Math.min(totalPages, currentPage + 1);
+    } else if (action === 'goto') {
+      const pageInput = document.getElementById('dau-chart-page-input');
+      if (pageInput) {
+        const inputPage = parseInt(pageInput.value);
+        if (!isNaN(inputPage) && inputPage >= 1 && inputPage <= totalPages) {
+          targetPage = inputPage;
+        } else {
+          alert(`请输入有效的页码（1-${totalPages}）`);
+          pageInput.value = currentPage;
+          return;
+        }
+      }
+    }
+
+    if (targetPage !== currentPage) {
+      // 检查日期范围是否改变，如果没改变则使用缓存数据
+      const currentStartDate = document.getElementById('dau-start-date')?.value || null;
+      const currentEndDate = document.getElementById('dau-end-date')?.value || null;
+      
+      if (allData.length > 0 && 
+          currentStartDate === cachedStartDate && 
+          currentEndDate === cachedEndDate) {
+        // 使用缓存数据分页
+        const offset = (targetPage - 1) * limit;
+        const data = allData.slice(offset, offset + limit);
+        
+        const container = document.getElementById('dau-chart-container');
+        let html = '<table class="analytics-chart-table"><thead><tr><th>日期</th><th>总用户</th><th>已登录</th><th>匿名</th></tr></thead><tbody>';
+        data.forEach(row => {
+          html += `<tr>
+            <td>${window.AdminAnalytics.formatDate(row.date)}</td>
+            <td>${row.active_users}</td>
+            <td>${row.authenticated_users}</td>
+            <td>${row.anonymous_users}</td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+        
+        // 更新分页状态
+        dauChartPagination.currentPage = targetPage;
+        updateDAUChartPaginationUI();
+      } else {
+        // 日期范围改变，重新加载数据
+        loadDAUChart(targetPage);
+      }
+    }
+  }
+
+  // 热门页面分页状态（存储在window对象上，避免Turbolinks重复声明）
+  if (!window.popularPagesPagination) {
+    window.popularPagesPagination = {
+      currentPage: 1,
+      totalPages: 1,
+      totalCount: 0,
+      limit: 10
+    };
+  }
+  const popularPagesPagination = window.popularPagesPagination;
+
+  // 加载热门页面（支持分页）
+  async function loadPopularPages(page = 1) {
     if (!window.AdminAnalytics) return;
 
     const tbody = document.getElementById('popular-pages-body');
@@ -1679,7 +2109,31 @@ permalink: /admin/index.html
     tbody.innerHTML = '<tr><td colspan="5" class="table-loading">加载中...</td></tr>';
 
     try {
-      const data = await window.AdminAnalytics.getPopularPages(startDate, endDate, 20);
+      // 获取所有数据（AdminAnalytics可能不支持分页，需要客户端分页）
+      const allData = await window.AdminAnalytics.getPopularPages(startDate, endDate, 10000);
+      
+      if (!allData || allData.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="table-message">暂无数据</td></tr>';
+        window.popularPagesPagination.currentPage = 1;
+        window.popularPagesPagination.totalPages = 1;
+        window.popularPagesPagination.totalCount = 0;
+        window.popularPagesPagination.limit = 10;
+        updatePopularPagesPaginationUI();
+        return;
+      }
+
+      // 客户端分页
+      const limit = popularPagesPagination.limit;
+      const totalCount = allData.length;
+      const totalPages = Math.max(1, Math.ceil(totalCount / limit));
+      const offset = (page - 1) * limit;
+      const data = allData.slice(offset, offset + limit);
+
+      // 更新分页状态
+      window.popularPagesPagination.currentPage = page;
+      window.popularPagesPagination.totalPages = totalPages;
+      window.popularPagesPagination.totalCount = totalCount;
+      window.popularPagesPagination.limit = limit;
       
       if (!data || data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="table-message">暂无数据</td></tr>';
@@ -1734,9 +2188,10 @@ permalink: /admin/index.html
       data.forEach((row, index) => {
         const pageTitle = getPostTitle(row.page_path, row.page_title);
         const fullUrl = row.page_path ? getFullUrl(row.page_path) : '#';
+        const rank = offset + index + 1; // 全局排名
         
         html += `<tr>
-          <td>${index + 1}</td>
+          <td>${rank}</td>
           <td>
             ${row.page_path ? `<a href="${fullUrl}" target="_blank" class="admin-link" title="${row.page_path}">${pageTitle}</a>` : '-'}
             ${row.page_path ? `<div class="admin-url-hint">${row.page_path.length > 50 ? row.page_path.substring(0, 50) + '...' : row.page_path}</div>` : ''}
@@ -1747,175 +2202,79 @@ permalink: /admin/index.html
         </tr>`;
       });
       tbody.innerHTML = html;
+      updatePopularPagesPaginationUI();
     } catch (error) {
       console.error('[Admin] Failed to load popular pages:', error);
       tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败</td></tr>';
+      updatePopularPagesPaginationUI();
     }
   }
 
-  // 加载综合活跃用户分析
-  async function loadComprehensiveActiveUsersStats() {
-    const supabase = getSupabase();
-    if (!supabase) {
-      console.error('[Admin] Supabase客户端未初始化');
-      return;
-    }
+  // 更新热门页面分页UI
+  function updatePopularPagesPaginationUI() {
+    const paginationInfo = document.getElementById('popular-pages-pagination-info');
+    const totalPagesSpan = document.getElementById('popular-pages-total-pages');
+    const pageInput = document.getElementById('popular-pages-page-input');
+    const prevBtn = document.getElementById('popular-pages-prev');
+    const nextBtn = document.getElementById('popular-pages-next');
 
-    try {
-      const startDate = document.getElementById('comprehensive-start-date').value ||
-        new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const endDate = document.getElementById('comprehensive-end-date').value ||
-        new Date().toISOString().split('T')[0];
+    if (!paginationInfo || !totalPagesSpan || !pageInput || !prevBtn || !nextBtn) return;
 
-      if (!document.getElementById('comprehensive-start-date').value) {
-        document.getElementById('comprehensive-start-date').value = startDate;
-      }
-      if (!document.getElementById('comprehensive-end-date').value) {
-        document.getElementById('comprehensive-end-date').value = endDate;
-      }
+    const { currentPage, totalPages, totalCount, limit } = popularPagesPagination;
+    const start = totalCount === 0 ? 0 : (currentPage - 1) * limit + 1;
+    const end = Math.min(currentPage * limit, totalCount);
 
-      // 加载今日统计（使用综合统计函数）
-      const { data: todayStats, error: todayError } = await supabase
-        .rpc('get_comprehensive_active_users_stats_by_date', {
-          p_start_date: new Date().toISOString().split('T')[0],
-          p_end_date: new Date().toISOString().split('T')[0]
-        });
+    paginationInfo.textContent = `共 ${totalCount} 条记录，显示第 ${start}-${end} 条`;
+    totalPagesSpan.textContent = totalPages;
+    pageInput.value = currentPage;
+    pageInput.max = totalPages;
 
-      if (!todayError && todayStats && todayStats.length > 0) {
-        const stats = todayStats[0];
-        document.getElementById('comprehensive-total-active-today').textContent = stats.active_users || 0;
-        document.getElementById('comprehensive-login-users-today').textContent = stats.login_users || 0;
-        document.getElementById('comprehensive-session-active-today').textContent = stats.session_active_users || 0;
-        // 计算页面浏览用户和搜索用户（从总活动数中估算，或使用统计表数据）
-        document.getElementById('comprehensive-page-view-today').textContent = '-'; // 需要单独统计
-        document.getElementById('comprehensive-search-users-today').textContent = '-'; // 需要单独统计
-        document.getElementById('comprehensive-avg-activities').textContent = stats.avg_activities_per_user || 0;
+    // 更新按钮状态
+    prevBtn.disabled = currentPage <= 1;
+    nextBtn.disabled = currentPage >= totalPages;
+
+    if (prevBtn.disabled) {
+      prevBtn.style.opacity = '0.5';
+      prevBtn.style.cursor = 'not-allowed';
       } else {
-        document.getElementById('comprehensive-total-active-today').textContent = '0';
-        document.getElementById('comprehensive-login-users-today').textContent = '0';
-        document.getElementById('comprehensive-session-active-today').textContent = '0';
-        document.getElementById('comprehensive-page-view-today').textContent = '0';
-        document.getElementById('comprehensive-search-users-today').textContent = '0';
-        document.getElementById('comprehensive-avg-activities').textContent = '0';
-      }
+      prevBtn.style.opacity = '1';
+      prevBtn.style.cursor = 'pointer';
+    }
 
-      // 加载图表数据
-      const container = document.getElementById('comprehensive-chart-container');
-      container.innerHTML = '<div class="chart-loading">加载中...</div>';
-
-      const { data, error } = await supabase.rpc('get_comprehensive_active_users_stats_by_date', {
-        p_start_date: startDate,
-        p_end_date: endDate
-      });
-
-      if (error) {
-        container.innerHTML = '<div class="chart-message">加载失败：' + error.message + '</div>';
-        return;
-      }
-
-      if (!data || data.length === 0) {
-        container.innerHTML = '<div class="chart-message">暂无数据</div>';
-        return;
-      }
-
-      // 生成图表表格
-      let html = '<table class="analytics-chart-table"><thead><tr><th>日期</th><th>总活跃用户</th><th>登录用户</th><th>会话活跃用户</th><th>总活动数</th><th>登录次数</th><th>页面浏览</th><th>搜索次数</th></tr></thead><tbody>';
-      data.forEach(row => {
-        html += `<tr>
-          <td>${new Date(row.date).toLocaleDateString('zh-CN')}</td>
-          <td>${row.active_users}</td>
-          <td>${row.login_users}</td>
-          <td>${row.session_active_users}</td>
-          <td>${row.total_activities}</td>
-          <td>${row.login_count}</td>
-          <td>${row.page_view_count}</td>
-          <td>${row.search_count}</td>
-        </tr>`;
-      });
-      html += '</tbody></table>';
-      container.innerHTML = html;
-
-    } catch (error) {
-      console.error('[Admin] 加载综合活跃用户分析异常:', error);
-      document.getElementById('comprehensive-chart-container').innerHTML = '<div class="chart-message">加载失败</div>';
+    if (nextBtn.disabled) {
+      nextBtn.style.opacity = '0.5';
+      nextBtn.style.cursor = 'not-allowed';
+    } else {
+      nextBtn.style.opacity = '1';
+      nextBtn.style.cursor = 'pointer';
     }
   }
 
-  // 加载用户活跃度等级分布
-  async function loadActivityLevels() {
-    const supabase = getSupabase();
-    if (!supabase) return;
+  // 热门页面分页导航
+  function goToPopularPagesPage(action) {
+    const { currentPage, totalPages } = popularPagesPagination;
+    let targetPage = currentPage;
 
-    try {
-      const period = parseInt(document.getElementById('activity-level-period').value);
-      const startDate = new Date(Date.now() - period * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      const endDate = new Date().toISOString().split('T')[0];
-
-      // 使用 get_comprehensive_active_users_list 获取所有用户数据，然后在前端计算等级分布
-      const { data, error } = await supabase.rpc('get_comprehensive_active_users_list', {
-        p_start_date: startDate,
-        p_end_date: endDate,
-        p_limit: 10000, // 获取足够多的数据
-        p_offset: 0,
-        p_order_by: 'total_activities'
-      });
-
-      if (error) {
-        console.error('[Admin] 获取用户活跃度等级失败:', error);
-        document.getElementById('activity-level-container').innerHTML = '<div class="chart-message">加载失败</div>';
+    if (action === 'prev') {
+      targetPage = Math.max(1, currentPage - 1);
+    } else if (action === 'next') {
+      targetPage = Math.min(totalPages, currentPage + 1);
+    } else if (action === 'goto') {
+      const pageInput = document.getElementById('popular-pages-page-input');
+      if (pageInput) {
+        const inputPage = parseInt(pageInput.value);
+        if (!isNaN(inputPage) && inputPage >= 1 && inputPage <= totalPages) {
+          targetPage = inputPage;
+        } else {
+          alert(`请输入有效的页码（1-${totalPages}）`);
+          pageInput.value = currentPage;
         return;
       }
-
-      const container = document.getElementById('activity-level-container');
-
-      if (!data || data.length === 0) {
-        container.innerHTML = '<div class="chart-message">暂无数据</div>';
-        return;
       }
+    }
 
-      // 计算等级分布
-      const levelStats = {
-        '超级活跃用户': { count: 0, description: '总活动数 ≥ 50' },
-        '活跃用户': { count: 0, description: '总活动数 20-49' },
-        '一般活跃用户': { count: 0, description: '总活动数 5-19' },
-        '低活跃用户': { count: 0, description: '总活动数 1-4' }
-      };
-
-      data.forEach(user => {
-        const level = user.activity_level || '低活跃用户';
-        if (levelStats[level]) {
-          levelStats[level].count++;
-        }
-      });
-
-      const total = data.length;
-      const levelOrder = ['超级活跃用户', '活跃用户', '一般活跃用户', '低活跃用户'];
-
-      // 生成等级分布表格
-      let html = '<table class="analytics-chart-table"><thead><tr><th>活跃度等级</th><th>用户数</th><th>占比</th><th>描述</th></tr></thead><tbody>';
-      levelOrder.forEach(level => {
-        const stats = levelStats[level];
-        const percentage = total > 0 ? ((stats.count / total) * 100).toFixed(1) : '0.0';
-        const levelColor = {
-          '超级活跃用户': '#22c55e',
-          '活跃用户': '#3b82f6',
-          '一般活跃用户': '#f59e0b',
-          '低活跃用户': '#6b7280'
-        }[level] || '#6b7280';
-
-        html += `<tr>
-          <td><span style="color: ${levelColor}; font-weight: bold;">${level}</span></td>
-          <td>${stats.count}</td>
-          <td>${percentage}%</td>
-          <td>${stats.description}</td>
-        </tr>`;
-      });
-      html += '</tbody></table>';
-      container.innerHTML = html;
-
-    } catch (error) {
-      console.error('[Admin] 加载用户活跃度等级异常:', error);
-      document.getElementById('activity-level-container').innerHTML = '<div class="chart-message">加载失败</div>';
+    if (targetPage !== currentPage) {
+      loadPopularPages(targetPage);
     }
   }
 
@@ -1969,7 +2328,43 @@ permalink: /admin/index.html
         document.getElementById('active-users-30days').textContent = activeUsers30DaysResult.data !== null && activeUsers30DaysResult.data !== undefined ? activeUsers30DaysResult.data : 0;
       }
 
-      // 加载日期范围统计表（使用综合统计函数）
+      // 加载日期范围统计表（使用综合统计函数，支持分页）
+      await loadActiveUsersStatsTable(1);
+    } catch (error) {
+      console.error('[Admin] 加载活跃用户分析异常:', error);
+      document.getElementById('new-users-today').textContent = '错误';
+      document.getElementById('active-users-today').textContent = '错误';
+      document.getElementById('active-users-7days').textContent = '错误';
+      document.getElementById('active-users-30days').textContent = '错误';
+      const tbody = document.getElementById('active-users-body');
+      if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="9" class="table-message">加载失败</td></tr>';
+      }
+    }
+  }
+
+  // 活跃用户分析表格分页状态（存储在window对象上，避免Turbolinks重复声明）
+  if (!window.activeUsersStatsPagination) {
+    window.activeUsersStatsPagination = {
+      currentPage: 1,
+      totalPages: 1,
+      totalCount: 0,
+      limit: 10
+    };
+  }
+  const activeUsersStatsPagination = window.activeUsersStatsPagination;
+
+  // 加载活跃用户分析表格（支持分页）
+  async function loadActiveUsersStatsTable(page = 1) {
+    const supabase = getSupabase();
+    if (!supabase) {
+      const tbody = document.getElementById('active-users-body');
+      if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="9" class="table-message">Supabase客户端未初始化</td></tr>';
+      }
+      return;
+    }
+
       const tbody = document.getElementById('active-users-body');
       const startDate = document.getElementById('active-users-start-date').value || 
         new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -1985,6 +2380,7 @@ permalink: /admin/index.html
 
       tbody.innerHTML = '<tr><td colspan="9" class="table-loading">加载中...</td></tr>';
 
+    try {
       const { data, error } = await supabase
         .rpc('get_comprehensive_active_users_stats_by_date', {
           p_start_date: startDate,
@@ -1995,17 +2391,35 @@ permalink: /admin/index.html
         console.error('[Admin] 加载活跃用户统计失败:', error);
         console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_comprehensive_active_users_stats_by_date() 函数');
         tbody.innerHTML = '<tr><td colspan="9" class="table-message">加载失败：' + error.message + '</td></tr>';
+        updateActiveUsersStatsPaginationUI();
         return;
       }
 
       if (!data || data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="9" class="table-message">暂无数据</td></tr>';
+        window.activeUsersStatsPagination.currentPage = 1;
+        window.activeUsersStatsPagination.totalPages = 1;
+        window.activeUsersStatsPagination.totalCount = 0;
+        window.activeUsersStatsPagination.limit = 10;
+        updateActiveUsersStatsPaginationUI();
         return;
       }
 
+      // 客户端分页
+      const limit = activeUsersStatsPagination.limit;
+      const totalCount = data.length;
+      const totalPages = Math.max(1, Math.ceil(totalCount / limit));
+      const offset = (page - 1) * limit;
+      const paginatedData = data.slice(offset, offset + limit);
+
+      // 更新分页状态
+      window.activeUsersStatsPagination.currentPage = page;
+      window.activeUsersStatsPagination.totalPages = totalPages;
+      window.activeUsersStatsPagination.totalCount = totalCount;
+      window.activeUsersStatsPagination.limit = limit;
+
       let html = '';
-      let rank = 1;
-      for (const row of data) {
+      paginatedData.forEach((row) => {
         html += `<tr>
           <td>${new Date(row.date).toLocaleDateString('zh-CN')}</td>
           <td>${row.new_users || 0}</td>
@@ -2017,64 +2431,108 @@ permalink: /admin/index.html
           <td>${row.page_view_count || 0}</td>
           <td>${row.search_count || 0}</td>
         </tr>`;
-        rank++;
-      }
+      });
       tbody.innerHTML = html;
+      updateActiveUsersStatsPaginationUI();
     } catch (error) {
-      console.error('[Admin] 加载活跃用户分析异常:', error);
-      document.getElementById('new-users-today').textContent = '错误';
-      document.getElementById('active-users-today').textContent = '错误';
-      document.getElementById('active-users-7days').textContent = '错误';
-      document.getElementById('active-users-30days').textContent = '错误';
-      const tbody = document.getElementById('active-users-body');
-      if (tbody) {
+      console.error('[Admin] 加载活跃用户统计表格异常:', error);
         tbody.innerHTML = '<tr><td colspan="9" class="table-message">加载失败</td></tr>';
+      updateActiveUsersStatsPaginationUI();
+    }
+  }
+
+  // 更新活跃用户分析分页UI
+  function updateActiveUsersStatsPaginationUI() {
+    const paginationInfo = document.getElementById('active-users-stats-pagination-info');
+    const totalPagesSpan = document.getElementById('active-users-stats-total-pages');
+    const pageInput = document.getElementById('active-users-stats-page-input');
+    const prevBtn = document.getElementById('active-users-stats-prev');
+    const nextBtn = document.getElementById('active-users-stats-next');
+
+    if (!paginationInfo || !totalPagesSpan || !pageInput || !prevBtn || !nextBtn) return;
+
+    const { currentPage, totalPages, totalCount, limit } = activeUsersStatsPagination;
+    const start = totalCount === 0 ? 0 : (currentPage - 1) * limit + 1;
+    const end = Math.min(currentPage * limit, totalCount);
+
+    paginationInfo.textContent = `共 ${totalCount} 条记录，显示第 ${start}-${end} 条`;
+    totalPagesSpan.textContent = totalPages;
+    pageInput.value = currentPage;
+    pageInput.max = totalPages;
+
+    prevBtn.disabled = currentPage <= 1;
+    nextBtn.disabled = currentPage >= totalPages;
+
+    if (prevBtn.disabled) {
+      prevBtn.style.opacity = '0.5';
+      prevBtn.style.cursor = 'not-allowed';
+    } else {
+      prevBtn.style.opacity = '1';
+      prevBtn.style.cursor = 'pointer';
+    }
+
+    if (nextBtn.disabled) {
+      nextBtn.style.opacity = '0.5';
+      nextBtn.style.cursor = 'not-allowed';
+    } else {
+      nextBtn.style.opacity = '1';
+      nextBtn.style.cursor = 'pointer';
+    }
+  }
+
+  // 活跃用户分析分页导航
+  function goToActiveUsersStatsPage(action) {
+    const { currentPage, totalPages } = activeUsersStatsPagination;
+    let targetPage = currentPage;
+
+    if (action === 'prev') {
+      targetPage = Math.max(1, currentPage - 1);
+    } else if (action === 'next') {
+      targetPage = Math.min(totalPages, currentPage + 1);
+    } else if (action === 'goto') {
+      const pageInput = document.getElementById('active-users-stats-page-input');
+      if (pageInput) {
+        const inputPage = parseInt(pageInput.value);
+        if (!isNaN(inputPage) && inputPage >= 1 && inputPage <= totalPages) {
+          targetPage = inputPage;
+        } else {
+          alert(`请输入有效的页码（1-${totalPages}）`);
+          pageInput.value = currentPage;
+          return;
+        }
       }
+    }
+
+    if (targetPage !== currentPage) {
+      loadActiveUsersStatsTable(targetPage);
     }
   }
 
   // 活跃用户名单分页状态
-  const activeUsersListPaginationState = {
+  // 活跃用户名单分页状态（存储在window对象上，避免Turbolinks重复声明）
+  if (!window.activeUsersListPaginationState) {
+    window.activeUsersListPaginationState = {
     currentPage: 1,
-    pageSize: 20,
+      pageSize: 10,
     totalCount: 0,
     startDate: null,
     endDate: null,
     orderBy: 'total_activities'
   };
+  }
+  const activeUsersListPaginationState = window.activeUsersListPaginationState;
 
   // 初始化活跃用户名单分页
   function initActiveUsersListPagination() {
-    const prevBtn = document.getElementById('active-users-list-prev-btn');
-    const nextBtn = document.getElementById('active-users-list-next-btn');
     const queryBtn = document.getElementById('active-users-list-query-btn');
     const orderBySelect = document.getElementById('active-users-list-order-by');
-
-    if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
-        if (activeUsersListPaginationState.currentPage > 1) {
-          activeUsersListPaginationState.currentPage--;
-          loadActiveUsersList();
-        }
-      });
-    }
-
-    if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        const totalPages = Math.ceil(activeUsersListPaginationState.totalCount / activeUsersListPaginationState.pageSize);
-        if (activeUsersListPaginationState.currentPage < totalPages) {
-          activeUsersListPaginationState.currentPage++;
-          loadActiveUsersList();
-        }
-      });
-    }
 
     if (queryBtn) {
       queryBtn.addEventListener('click', () => {
         activeUsersListPaginationState.currentPage = 1;
         const startDate = document.getElementById('active-users-list-start-date')?.value || null;
         const endDate = document.getElementById('active-users-list-end-date')?.value || null;
-        const orderBy = document.getElementById('active-users-list-order-by')?.value || 'login_count';
+        const orderBy = document.getElementById('active-users-list-order-by')?.value || 'total_activities';
         activeUsersListPaginationState.startDate = startDate;
         activeUsersListPaginationState.endDate = endDate;
         activeUsersListPaginationState.orderBy = orderBy;
@@ -2089,6 +2547,8 @@ permalink: /admin/index.html
         loadActiveUsersList();
       });
     }
+
+    // 分页按钮现在使用onclick，不需要在这里绑定
   }
 
   // 更新活跃用户名单分页信息
@@ -2096,33 +2556,82 @@ permalink: /admin/index.html
     const totalPages = Math.ceil(activeUsersListPaginationState.totalCount / activeUsersListPaginationState.pageSize);
     const pagination = document.getElementById('active-users-list-pagination');
     const paginationInfo = document.getElementById('active-users-list-pagination-info');
-    const currentPageEl = document.getElementById('active-users-list-current-page');
-    const totalPagesEl = document.getElementById('active-users-list-total-pages');
+    const pageInput = document.getElementById('active-users-list-page-input');
+    const totalPagesSpan = document.getElementById('active-users-list-total-pages');
     const prevBtn = document.getElementById('active-users-list-prev-btn');
     const nextBtn = document.getElementById('active-users-list-next-btn');
 
+    const { currentPage, totalCount, pageSize } = activeUsersListPaginationState;
+    const start = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+    const end = Math.min(currentPage * pageSize, totalCount);
+
     if (paginationInfo) {
-      paginationInfo.textContent = `共 ${activeUsersListPaginationState.totalCount} 条记录`;
+      paginationInfo.textContent = `共 ${totalCount} 条记录，显示第 ${start}-${end} 条`;
     }
 
     if (pagination) {
-      pagination.style.display = totalPages > 1 ? 'flex' : 'none';
+      pagination.style.display = totalPages > 1 ? 'flex' : 'flex'; // 总是显示
     }
 
-    if (currentPageEl) {
-      currentPageEl.textContent = activeUsersListPaginationState.currentPage;
+    if (pageInput) {
+      pageInput.value = currentPage;
+      pageInput.max = totalPages;
     }
 
-    if (totalPagesEl) {
-      totalPagesEl.textContent = totalPages || 1;
+    if (totalPagesSpan) {
+      totalPagesSpan.textContent = totalPages || 1;
     }
 
     if (prevBtn) {
-      prevBtn.disabled = activeUsersListPaginationState.currentPage <= 1;
+      prevBtn.disabled = currentPage <= 1;
+      if (prevBtn.disabled) {
+        prevBtn.style.opacity = '0.5';
+        prevBtn.style.cursor = 'not-allowed';
+      } else {
+        prevBtn.style.opacity = '1';
+        prevBtn.style.cursor = 'pointer';
+      }
     }
 
     if (nextBtn) {
-      nextBtn.disabled = activeUsersListPaginationState.currentPage >= totalPages;
+      nextBtn.disabled = currentPage >= totalPages;
+      if (nextBtn.disabled) {
+        nextBtn.style.opacity = '0.5';
+        nextBtn.style.cursor = 'not-allowed';
+      } else {
+        nextBtn.style.opacity = '1';
+        nextBtn.style.cursor = 'pointer';
+      }
+    }
+  }
+
+  // 活跃用户名单分页导航
+  function goToActiveUsersListPage(action) {
+    const { currentPage, pageSize, totalCount } = activeUsersListPaginationState;
+    const totalPages = Math.ceil(totalCount / pageSize);
+    let targetPage = currentPage;
+
+    if (action === 'prev') {
+      targetPage = Math.max(1, currentPage - 1);
+    } else if (action === 'next') {
+      targetPage = Math.min(totalPages, currentPage + 1);
+    } else if (action === 'goto') {
+      const pageInput = document.getElementById('active-users-list-page-input');
+      if (pageInput) {
+        const inputPage = parseInt(pageInput.value);
+        if (!isNaN(inputPage) && inputPage >= 1 && inputPage <= totalPages) {
+          targetPage = inputPage;
+        } else {
+          alert(`请输入有效的页码（1-${totalPages}）`);
+          pageInput.value = currentPage;
+          return;
+        }
+      }
+    }
+
+    if (targetPage !== currentPage) {
+      activeUsersListPaginationState.currentPage = targetPage;
+      loadActiveUsersList();
     }
   }
 
@@ -2169,9 +2678,10 @@ permalink: /admin/index.html
 
       if (countError) {
         console.warn('[Admin] 获取活跃用户名单总数失败:', countError);
+        // 如果获取总数失败，不更新totalCount，保持当前值
       } else {
         activeUsersListPaginationState.totalCount = countData || 0;
-        updateActiveUsersListPaginationInfo();
+        // 注意：这里不立即更新UI，等数据加载完成后再更新，避免显示不一致
       }
 
       // 获取活跃用户名单（使用综合统计函数）
@@ -2190,6 +2700,8 @@ permalink: /admin/index.html
         console.error('[Admin] 加载活跃用户名单失败:', error);
         console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_comprehensive_active_users_list() 函数');
         tbody.innerHTML = '<tr><td colspan="11" class="table-message">加载失败：' + error.message + '</td></tr>';
+        // 确保totalCount已更新（如果获取总数失败，这里可能是0）
+        updateActiveUsersListPaginationInfo();
         return;
       }
 
@@ -2214,17 +2726,22 @@ permalink: /admin/index.html
         const lastActivity = user.last_activity_at ? new Date(user.last_activity_at).toLocaleString('zh-CN') : '-';
         const activityLevel = user.activity_level || '-';
         
-        // 活跃度等级颜色
-        const levelColor = {
-          '超级活跃用户': '#22c55e',
-          '活跃用户': '#3b82f6',
-          '一般活跃用户': '#f59e0b',
-          '低活跃用户': '#6b7280'
-        }[activityLevel] || '#6b7280';
+        // 活跃度等级颜色和说明
+        const levelInfo = {
+          '超级活跃用户': { color: '#22c55e', description: '总活动数 ≥ 50' },
+          '活跃用户': { color: '#3b82f6', description: '总活动数 20-49' },
+          '一般活跃用户': { color: '#f59e0b', description: '总活动数 5-19' },
+          '低活跃用户': { color: '#6b7280', description: '总活动数 1-4' }
+        };
+        const levelData = levelInfo[activityLevel] || { color: '#6b7280', description: '未知等级' };
+        const userId = user.user_id || user.id;
+        
+        // 创建用户详情链接（使用邮箱或用户名）
+        const userLink = userId ? `<a href="javascript:void(0)" onclick="viewUserDetails('${userId}', '${email}', '${username}')" style="color: #3b82f6; text-decoration: none; cursor: pointer;">${email}</a>` : email;
 
         html += `<tr>
           <td>${rank}</td>
-          <td class="logs-email">${email}</td>
+          <td class="logs-email">${userLink}</td>
           <td>${username}</td>
           <td><strong>${totalActivities}</strong></td>
           <td>${loginCount}</td>
@@ -2233,19 +2750,522 @@ permalink: /admin/index.html
           <td>${favoriteCount}</td>
           <td>${activeDays}</td>
           <td class="logs-time">${lastActivity}</td>
-          <td><span style="color: ${levelColor}; font-weight: bold;">${activityLevel}</span></td>
+          <td>
+            <span style="color: ${levelData.color}; font-weight: bold;">
+              ${activityLevel}
+            </span>
+          </td>
         </tr>`;
       });
       tbody.innerHTML = html;
       updateActiveUsersListPaginationInfo();
+      
+      // 重新初始化tooltip（因为表格是动态生成的）
+      setTimeout(initActivityLevelTooltips, 100);
     } catch (error) {
       console.error('[Admin] 加载活跃用户名单异常:', error);
       tbody.innerHTML = '<tr><td colspan="11" class="table-message">加载失败</td></tr>';
+      // 出错时也更新分页信息
+      updateActiveUsersListPaginationInfo();
     }
   }
 
+  // 页面浏览记录分页状态（存储在window对象上，避免Turbolinks重复声明）
+  if (!window.pageviewsPagination) {
+    window.pageviewsPagination = {
+      currentPage: 1,
+      totalPages: 1,
+      totalCount: 0,
+      limit: 10
+    };
+  }
+  const pageviewsPagination = window.pageviewsPagination;
+
+  // 当前正在查看的用户ID（存储在window对象上，避免Turbolinks重复声明）
+  if (window.currentViewingUserId === undefined) {
+    window.currentViewingUserId = null;
+  }
+  // 注意：使用window.currentViewingUserId直接访问，因为需要重新赋值
+
+  // 查看用户详情
+  async function viewUserDetails(userId, email, username) {
+    const modal = document.getElementById('user-details-modal');
+    const loading = document.getElementById('user-details-loading');
+    const content = document.getElementById('user-details-content');
+    
+    if (!modal || !loading || !content) {
+      console.error('[Admin] 用户详情模态框元素未找到');
+      return;
+    }
+
+    // 设置当前查看的用户ID
+    window.currentViewingUserId = userId;
+    
+    // 重置分页状态
+    window.pageviewsPagination.currentPage = 1;
+    window.pageviewsPagination.totalPages = 1;
+    window.pageviewsPagination.totalCount = 0;
+    window.pageviewsPagination.limit = 50;
+
+    // 显示模态框
+    modal.style.display = 'flex';
+    loading.style.display = 'block';
+    content.style.display = 'none';
+
+    // 设置基本信息
+    document.getElementById('user-details-title').textContent = `用户活动详情 - ${email || username || userId}`;
+    document.getElementById('user-details-email').textContent = email || '-';
+    document.getElementById('user-details-username').textContent = username || '-';
+    document.getElementById('user-details-id').textContent = userId || '-';
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      loading.innerHTML = '<p style="color: #ef4444;">Supabase客户端未初始化</p>';
+      return;
+    }
+
+    try {
+      // 获取用户的所有活动数据
+      const startDate = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const endDate = new Date().toISOString().split('T')[0];
+      
+      // 注意：页面浏览记录不再在初始化时加载，而是按需加载
+      const [statsResult, loginLogsResult, favoritesResult, searchesResult, clicksResult] = await Promise.all([
+        // 活动统计 - 使用get_comprehensive_active_users_list获取该用户的统计
+        supabase.rpc('get_comprehensive_active_users_list', {
+          p_start_date: startDate,
+          p_end_date: endDate,
+          p_limit: 10000,
+          p_offset: 0,
+          p_order_by: 'total_activities'
+        }).then(r => {
+          if (r.data && r.data.length > 0) {
+            const user = r.data.find(u => (u.user_id === userId || u.id === userId));
+            return { data: user, error: null };
+          }
+          return { data: null, error: r.error };
+        }),
+        // 登录记录（用于获取最后登录时间）
+        supabase.from('login_logs')
+          .select('login_at')
+          .eq('user_id', userId)
+          .order('login_at', { ascending: false })
+          .limit(1)
+          .single(),
+        // 收藏列表（注意：字段名是post_url，不是url）
+        supabase.from('favorites')
+          .select('post_url, created_at')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(100),
+        // 搜索记录（注意：使用search_query字段，而不是page_path）
+        supabase.from('user_activity_logs')
+          .select('search_query, page_path, created_at')
+          .eq('user_id', userId)
+          .eq('activity_type', 'search')
+          .order('created_at', { ascending: false })
+          .limit(100),
+        // 点击记录（注意：点击记录应该显示target_url，而不是page_path）
+        supabase.from('user_activity_logs')
+          .select('target_url, page_path, created_at')
+          .eq('user_id', userId)
+          .eq('activity_type', 'click')
+          .order('created_at', { ascending: false })
+          .limit(100)
+      ]);
+
+      // 处理活动统计
+      const statsTbody = document.getElementById('user-details-stats');
+      if (statsResult.error || !statsResult.data) {
+        statsTbody.innerHTML = '<tr><td colspan="3" class="table-message">无法加载统计数据</td></tr>';
+      } else {
+        const user = statsResult.data;
+        const lastLoginTime = (loginLogsResult && !loginLogsResult.error && loginLogsResult.data) ? loginLogsResult.data.login_at : null;
+        // 获取页面浏览记录的最后时间（需要通过单独的查询获取，因为不再在初始化时加载）
+        const pageViewsLastTimeResult = await supabase
+          .from('user_activity_logs')
+          .select('created_at')
+          .eq('user_id', userId)
+          .eq('activity_type', 'page_view')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        const pageViewsLastTime = pageViewsLastTimeResult.data?.created_at || null;
+        
+        const stats = [
+          { type: '登录', count: user.login_count || 0, lastTime: lastLoginTime },
+          { type: '页面浏览', count: user.page_view_count || 0, lastTime: pageViewsLastTime },
+          { type: '搜索', count: user.search_count || 0, lastTime: searchesResult.data && searchesResult.data.length > 0 ? searchesResult.data[0].created_at : null },
+          { type: '收藏', count: user.favorite_count || 0, lastTime: favoritesResult.data && favoritesResult.data.length > 0 ? favoritesResult.data[0].created_at : null },
+          { type: '点击', count: user.click_count || 0, lastTime: clicksResult.data && clicksResult.data.length > 0 ? clicksResult.data[0].created_at : null },
+          { type: '总活动数', count: user.total_activities || 0, lastTime: user.last_activity_at }
+        ];
+        statsTbody.innerHTML = stats.map(s => `
+          <tr>
+            <td>${s.type}</td>
+            <td><strong>${s.count}</strong></td>
+            <td class="logs-time">${s.lastTime ? new Date(s.lastTime).toLocaleString('zh-CN') : '-'}</td>
+          </tr>
+        `).join('');
+      }
+
+      // 处理收藏列表
+      const favoritesTbody = document.getElementById('user-details-favorites');
+      if (favoritesResult.error) {
+        console.error('[Admin] 加载收藏列表失败:', favoritesResult.error);
+        console.error('[Admin] 错误详情:', favoritesResult.error.message, favoritesResult.error.code, favoritesResult.error.details, favoritesResult.error.hint);
+        favoritesTbody.innerHTML = `<tr><td colspan="3" class="table-message">无法加载收藏列表：${favoritesResult.error.message || '未知错误'}</td></tr>`;
+      } else if (!favoritesResult.data || favoritesResult.data.length === 0) {
+        favoritesTbody.innerHTML = '<tr><td colspan="3" class="table-message">暂无收藏记录</td></tr>';
+      } else {
+        favoritesTbody.innerHTML = favoritesResult.data.map(fav => {
+          // 注意：字段名是post_url，不是url
+          const url = fav.post_url || fav.url || '';
+          const title = getPageTitle(url) || url;
+          return `
+            <tr>
+              <td>${title}</td>
+              <td><code style="font-size: 0.85em;">${url}</code></td>
+              <td class="logs-time">${new Date(fav.created_at).toLocaleString('zh-CN')}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 页面浏览记录按需加载：初始显示默认数量（10条），从第一页开始
+      // 用户可以通过下拉菜单选择不同的数量，然后点击刷新或改变选择时自动加载
+      const initialPageviewsLimit = parseInt(document.getElementById('pageviews-limit')?.value || '10');
+      await loadPageviews(userId, initialPageviewsLimit, 1);
+      
+      // 初始化下拉菜单的事件监听器
+      initPageviewsLimitSelector();
+
+      // 处理搜索记录
+      const searchesTbody = document.getElementById('user-details-searches');
+      if (searchesResult.error) {
+        searchesTbody.innerHTML = '<tr><td colspan="2" class="table-message">无法加载搜索记录</td></tr>';
+      } else if (!searchesResult.data || searchesResult.data.length === 0) {
+        searchesTbody.innerHTML = '<tr><td colspan="2" class="table-message">暂无搜索记录</td></tr>';
+      } else {
+        searchesTbody.innerHTML = searchesResult.data.map(search => {
+          // 优先使用search_query字段，如果没有则从page_path提取
+          const keyword = search.search_query || (() => {
+            const url = search.page_path || '';
+            const queryMatch = url.match(/[?&]q=([^&]+)/);
+            return queryMatch ? decodeURIComponent(queryMatch[1]) : url;
+          })();
+          return `
+            <tr>
+              <td><strong>${keyword || '-'}</strong></td>
+              <td class="logs-time">${new Date(search.created_at).toLocaleString('zh-CN')}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 处理点击记录
+      const clicksTbody = document.getElementById('user-details-clicks');
+      if (clicksResult.error) {
+        console.error('[Admin] 加载点击记录失败:', clicksResult.error);
+        clicksTbody.innerHTML = `<tr><td colspan="3" class="table-message">无法加载点击记录：${clicksResult.error.message || '未知错误'}</td></tr>`;
+      } else if (!clicksResult.data || clicksResult.data.length === 0) {
+        clicksTbody.innerHTML = '<tr><td colspan="3" class="table-message">暂无点击记录</td></tr>';
+      } else {
+        clicksTbody.innerHTML = clicksResult.data.map(click => {
+          // 点击记录显示target_url（点击的目标），page_path是点击发生的页面
+          const targetUrl = click.target_url || click.page_path || '';
+          const pagePath = click.page_path || '';
+          const title = getPageTitle(targetUrl) || targetUrl;
+          return `
+            <tr>
+              <td>${title}</td>
+              <td><code style="font-size: 0.85em;">${pagePath}</code></td>
+              <td class="logs-time">${new Date(click.created_at).toLocaleString('zh-CN')}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 显示内容
+      loading.style.display = 'none';
+      content.style.display = 'block';
+
+    } catch (error) {
+      console.error('[Admin] 加载用户详情失败:', error);
+      loading.innerHTML = `<p style="color: #ef4444;">加载失败：${error.message}</p>`;
+    }
+  }
+
+  // 关闭用户详情模态框
+  function closeUserDetails() {
+    const modal = document.getElementById('user-details-modal');
+    if (modal) {
+      modal.style.display = 'none';
+      window.currentViewingUserId = null;
+      // 重置分页状态
+      window.pageviewsPagination.currentPage = 1;
+      window.pageviewsPagination.totalPages = 1;
+      window.pageviewsPagination.totalCount = 0;
+      window.pageviewsPagination.limit = 10;
+    }
+  }
+
+  // 加载页面浏览记录（支持分页）
+  async function loadPageviews(userId, limit = 10, page = 1) {
+    const pageviewsTbody = document.getElementById('user-details-pageviews');
+    if (!pageviewsTbody) return;
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      pageviewsTbody.innerHTML = '<tr><td colspan="3" class="table-message">Supabase客户端未初始化</td></tr>';
+      return;
+    }
+
+    pageviewsTbody.innerHTML = '<tr><td colspan="3" class="table-loading">加载中...</td></tr>';
+
+    try {
+      const offset = (page - 1) * limit;
+      
+      // 先获取总数
+      const { count, error: countError } = await supabase
+        .from('user_activity_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('activity_type', 'page_view');
+
+      if (countError) {
+        console.error('[Admin] 获取页面浏览记录总数失败:', countError);
+      }
+
+      const totalCount = count || 0;
+      const totalPages = Math.max(1, Math.ceil(totalCount / limit));
+      
+      // 更新分页状态
+      window.pageviewsPagination.currentPage = page;
+      window.pageviewsPagination.totalPages = totalPages;
+      window.pageviewsPagination.totalCount = totalCount;
+      window.pageviewsPagination.limit = limit;
+
+      // 获取当前页的数据
+      const { data, error } = await supabase
+        .from('user_activity_logs')
+        .select('page_path, created_at')
+        .eq('user_id', userId)
+        .eq('activity_type', 'page_view')
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) {
+        console.error('[Admin] 加载页面浏览记录失败:', error);
+        pageviewsTbody.innerHTML = `<tr><td colspan="3" class="table-message">无法加载页面浏览记录：${error.message || '未知错误'}</td></tr>`;
+        updatePageviewsPaginationUI();
+      } else if (!data || data.length === 0) {
+        pageviewsTbody.innerHTML = '<tr><td colspan="3" class="table-message">暂无页面浏览记录</td></tr>';
+        updatePageviewsPaginationUI();
+      } else {
+        pageviewsTbody.innerHTML = data.map(pv => {
+          const url = pv.page_path || '';
+          const title = getPageTitle(url) || url;
+          return `
+            <tr>
+              <td><code style="font-size: 0.85em;">${url}</code></td>
+              <td>${title}</td>
+              <td class="logs-time">${new Date(pv.created_at).toLocaleString('zh-CN')}</td>
+            </tr>
+          `;
+        }).join('');
+        updatePageviewsPaginationUI();
+      }
+    } catch (error) {
+      console.error('[Admin] 加载页面浏览记录异常:', error);
+      pageviewsTbody.innerHTML = '<tr><td colspan="3" class="table-message">加载失败</td></tr>';
+      updatePageviewsPaginationUI();
+    }
+  }
+
+  // 更新分页UI
+  function updatePageviewsPaginationUI() {
+    const paginationInfo = document.getElementById('pageviews-pagination-info');
+    const totalPagesSpan = document.getElementById('pageviews-total-pages');
+    const pageInput = document.getElementById('pageviews-page-input');
+    const prevBtn = document.getElementById('pageviews-prev');
+    const nextBtn = document.getElementById('pageviews-next');
+
+    if (!paginationInfo || !totalPagesSpan || !pageInput || !prevBtn || !nextBtn) return;
+
+    const { currentPage, totalPages, totalCount, limit } = pageviewsPagination;
+    const start = totalCount === 0 ? 0 : (currentPage - 1) * limit + 1;
+    const end = Math.min(currentPage * limit, totalCount);
+
+    paginationInfo.textContent = `共 ${totalCount} 条记录，显示第 ${start}-${end} 条`;
+    totalPagesSpan.textContent = totalPages;
+    pageInput.value = currentPage;
+    pageInput.max = totalPages;
+
+    // 更新按钮状态
+    prevBtn.disabled = currentPage <= 1;
+    nextBtn.disabled = currentPage >= totalPages;
+
+    // 更新按钮样式
+    if (prevBtn.disabled) {
+      prevBtn.style.opacity = '0.5';
+      prevBtn.style.cursor = 'not-allowed';
+    } else {
+      prevBtn.style.opacity = '1';
+      prevBtn.style.cursor = 'pointer';
+    }
+
+    if (nextBtn.disabled) {
+      nextBtn.style.opacity = '0.5';
+      nextBtn.style.cursor = 'not-allowed';
+    } else {
+      nextBtn.style.opacity = '1';
+      nextBtn.style.cursor = 'pointer';
+    }
+  }
+
+  // 分页导航
+  function goToPageviewsPage(action) {
+    if (!window.currentViewingUserId) return;
+
+    const { currentPage, totalPages, limit } = pageviewsPagination;
+    let targetPage = currentPage;
+
+    if (action === 'prev') {
+      targetPage = Math.max(1, currentPage - 1);
+    } else if (action === 'next') {
+      targetPage = Math.min(totalPages, currentPage + 1);
+    } else if (action === 'goto') {
+      const pageInput = document.getElementById('pageviews-page-input');
+      if (pageInput) {
+        const inputPage = parseInt(pageInput.value);
+        if (!isNaN(inputPage) && inputPage >= 1 && inputPage <= totalPages) {
+          targetPage = inputPage;
+        } else {
+          alert(`请输入有效的页码（1-${totalPages}）`);
+          pageInput.value = currentPage; // 恢复原值
+          return;
+        }
+      }
+    }
+
+    if (targetPage !== currentPage) {
+      loadPageviews(window.currentViewingUserId, limit, targetPage);
+    }
+  }
+
+  // 刷新页面浏览记录（使用当前页码）
+  async function refreshPageviews() {
+    if (!window.currentViewingUserId) {
+      console.warn('[Admin] 没有正在查看的用户');
+      return;
+    }
+    const limit = parseInt(document.getElementById('pageviews-limit')?.value || '10');
+    const currentPage = pageviewsPagination.currentPage || 1;
+    await loadPageviews(window.currentViewingUserId, limit, currentPage);
+  }
+
+  // 初始化页面浏览记录的下拉菜单事件监听
+  function initPageviewsLimitSelector() {
+    const pageviewsLimitSelect = document.getElementById('pageviews-limit');
+    if (pageviewsLimitSelect) {
+      // 移除之前的事件监听器（如果存在）
+      const newSelect = pageviewsLimitSelect.cloneNode(true);
+      pageviewsLimitSelect.parentNode.replaceChild(newSelect, pageviewsLimitSelect);
+      
+      // 添加change事件监听器：当选择改变时自动加载数据（重置到第一页）
+      newSelect.addEventListener('change', function() {
+        if (window.currentViewingUserId) {
+          const limit = parseInt(this.value || '10');
+          // 改变每页条数时，重置到第一页
+          loadPageviews(window.currentViewingUserId, limit, 1);
+        }
+      });
+    }
+  }
+
+  // 获取页面标题（从预加载的数据中查找）
+  function getPageTitle(url) {
+    if (!window.PAPERCACHE_POSTS || !url) return null;
+    const post = window.PAPERCACHE_POSTS.find(p => p.url === url || url.includes(p.url));
+    return post ? post.title : null;
+  }
+
+  // 点击模态框外部关闭
+  document.addEventListener('click', function(event) {
+    const modal = document.getElementById('user-details-modal');
+    if (modal && event.target === modal) {
+      closeUserDetails();
+    }
+  });
+
+  // 初始化活跃度等级帮助提示的tooltip定位
+  function initActivityLevelTooltips() {
+    const helpIcons = document.querySelectorAll('.activity-level-help-header');
+    helpIcons.forEach(icon => {
+      icon.addEventListener('mouseenter', function(e) {
+        const tooltip = this.querySelector('.activity-level-help-tooltip-header');
+        if (!tooltip) return;
+        
+        // 计算tooltip位置（使用fixed定位，相对于视口）
+        const rect = this.getBoundingClientRect();
+        const tooltipWidth = tooltip.offsetWidth || 280;
+        const tooltipHeight = tooltip.offsetHeight || 100;
+        
+        // 水平居中
+        let left = rect.left + rect.width / 2;
+        
+        // 确保tooltip不会超出视口
+        if (left - tooltipWidth / 2 < 10) {
+          left = tooltipWidth / 2 + 10;
+        } else if (left + tooltipWidth / 2 > window.innerWidth - 10) {
+          left = window.innerWidth - tooltipWidth / 2 - 10;
+        }
+        
+        // 垂直位置：在图标上方
+        let top = rect.top - tooltipHeight - 12;
+        
+        // 如果上方空间不足，显示在下方
+        if (top < 10) {
+          top = rect.bottom + 12;
+          tooltip.style.transform = 'translateX(-50%)';
+          tooltip.style.top = top + 'px';
+          // 调整箭头方向
+          tooltip.style.setProperty('--arrow-direction', 'bottom');
+        } else {
+          tooltip.style.top = top + 'px';
+          tooltip.style.setProperty('--arrow-direction', 'top');
+        }
+        
+        tooltip.style.left = left + 'px';
+      });
+    });
+  }
+
+  // 页面加载时初始化tooltip
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initActivityLevelTooltips);
+  } else {
+    initActivityLevelTooltips();
+  }
+
+  // Turbolinks页面加载时也初始化
+  document.addEventListener('turbolinks:load', initActivityLevelTooltips);
+
   // 加载搜索热词
-  async function loadSearchKeywords() {
+  // 搜索热词分页状态（存储在window对象上，避免Turbolinks重复声明）
+  if (!window.searchKeywordsPagination) {
+    window.searchKeywordsPagination = {
+      currentPage: 1,
+      totalPages: 1,
+      totalCount: 0,
+      limit: 10
+    };
+  }
+  const searchKeywordsPagination = window.searchKeywordsPagination;
+
+  async function loadSearchKeywords(page = 1) {
     if (!window.AdminAnalytics) return;
 
     const tbody = document.getElementById('search-keywords-body');
@@ -2257,26 +3277,115 @@ permalink: /admin/index.html
     tbody.innerHTML = '<tr><td colspan="4" class="table-loading">加载中...</td></tr>';
 
     try {
-      const data = await window.AdminAnalytics.getSearchKeywords(startDate, endDate, 20);
+      // 获取所有数据（客户端分页）
+      const allData = await window.AdminAnalytics.getSearchKeywords(startDate, endDate, 10000);
       
-      if (!data || data.length === 0) {
+      if (!allData || allData.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" class="table-message">暂无数据</td></tr>';
+        window.searchKeywordsPagination.currentPage = 1;
+        window.searchKeywordsPagination.totalPages = 1;
+        window.searchKeywordsPagination.totalCount = 0;
+        window.searchKeywordsPagination.limit = 10;
+        updateSearchKeywordsPaginationUI();
         return;
       }
 
+      // 客户端分页
+      const limit = searchKeywordsPagination.limit;
+      const totalCount = allData.length;
+      const totalPages = Math.max(1, Math.ceil(totalCount / limit));
+      const offset = (page - 1) * limit;
+      const data = allData.slice(offset, offset + limit);
+
+      // 更新分页状态
+      window.searchKeywordsPagination.currentPage = page;
+      window.searchKeywordsPagination.totalPages = totalPages;
+      window.searchKeywordsPagination.totalCount = totalCount;
+      window.searchKeywordsPagination.limit = limit;
+
       let html = '';
       data.forEach((row, index) => {
+        const rank = offset + index + 1; // 全局排名
         html += `<tr>
-          <td>${index + 1}</td>
+          <td>${rank}</td>
           <td>${row.search_query}</td>
           <td>${row.search_count}</td>
           <td>${row.unique_searchers}</td>
         </tr>`;
       });
       tbody.innerHTML = html;
+      updateSearchKeywordsPaginationUI();
     } catch (error) {
       console.error('[Admin] Failed to load search keywords:', error);
       tbody.innerHTML = '<tr><td colspan="4" class="table-message">加载失败</td></tr>';
+      updateSearchKeywordsPaginationUI();
+    }
+  }
+
+  // 更新搜索热词分页UI
+  function updateSearchKeywordsPaginationUI() {
+    const paginationInfo = document.getElementById('search-keywords-pagination-info');
+    const totalPagesSpan = document.getElementById('search-keywords-total-pages');
+    const pageInput = document.getElementById('search-keywords-page-input');
+    const prevBtn = document.getElementById('search-keywords-prev');
+    const nextBtn = document.getElementById('search-keywords-next');
+
+    if (!paginationInfo || !totalPagesSpan || !pageInput || !prevBtn || !nextBtn) return;
+
+    const { currentPage, totalPages, totalCount, limit } = searchKeywordsPagination;
+    const start = totalCount === 0 ? 0 : (currentPage - 1) * limit + 1;
+    const end = Math.min(currentPage * limit, totalCount);
+
+    paginationInfo.textContent = `共 ${totalCount} 条记录，显示第 ${start}-${end} 条`;
+    totalPagesSpan.textContent = totalPages;
+    pageInput.value = currentPage;
+    pageInput.max = totalPages;
+
+    prevBtn.disabled = currentPage <= 1;
+    nextBtn.disabled = currentPage >= totalPages;
+
+    if (prevBtn.disabled) {
+      prevBtn.style.opacity = '0.5';
+      prevBtn.style.cursor = 'not-allowed';
+    } else {
+      prevBtn.style.opacity = '1';
+      prevBtn.style.cursor = 'pointer';
+    }
+
+    if (nextBtn.disabled) {
+      nextBtn.style.opacity = '0.5';
+      nextBtn.style.cursor = 'not-allowed';
+    } else {
+      nextBtn.style.opacity = '1';
+      nextBtn.style.cursor = 'pointer';
+    }
+  }
+
+  // 搜索热词分页导航
+  function goToSearchKeywordsPage(action) {
+    const { currentPage, totalPages } = searchKeywordsPagination;
+    let targetPage = currentPage;
+
+    if (action === 'prev') {
+      targetPage = Math.max(1, currentPage - 1);
+    } else if (action === 'next') {
+      targetPage = Math.min(totalPages, currentPage + 1);
+    } else if (action === 'goto') {
+      const pageInput = document.getElementById('search-keywords-page-input');
+      if (pageInput) {
+        const inputPage = parseInt(pageInput.value);
+        if (!isNaN(inputPage) && inputPage >= 1 && inputPage <= totalPages) {
+          targetPage = inputPage;
+        } else {
+          alert(`请输入有效的页码（1-${totalPages}）`);
+          pageInput.value = currentPage;
+          return;
+        }
+      }
+    }
+
+    if (targetPage !== currentPage) {
+      loadSearchKeywords(targetPage);
     }
   }
   
@@ -3137,6 +4246,155 @@ permalink: /admin/index.html
       width: 100%;
     }
   }
+  /* ============================================
+     用户详情模态框样式
+     ============================================ */
+
+  .admin-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10000;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  .admin-modal[style*="flex"] {
+    display: flex !important;
+  }
+
+  .admin-modal-content {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    padding: 0;
+    width: 90%;
+    max-width: 1200px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    z-index: 1;
+    animation: modalFadeIn 0.3s ease;
+    margin: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+  }
+
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.9) translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .admin-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 2px solid #e5e7eb;
+  }
+
+  .admin-modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d3748;
+  }
+
+  .admin-modal-close {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: #718096;
+    cursor: pointer;
+    padding: 0.5rem;
+    line-height: 1;
+    transition: color 0.2s;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+  }
+
+  .admin-modal-close:hover {
+    color: #2d3748;
+    background: #f7fafc;
+  }
+
+  .admin-modal-body {
+    padding: 2rem;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  /* ============================================
+     活跃度等级帮助提示样式
+     ============================================ */
+
+  .activity-level-help-header {
+    position: relative;
+  }
+
+  .activity-level-help-header:hover {
+    background: #3b82f6 !important;
+    color: white !important;
+    transform: scale(1.1);
+  }
+
+  .activity-level-help-tooltip-header {
+    position: fixed;
+    padding: 0.75rem 1rem;
+    background: #1f2937;
+    color: white;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    white-space: normal;
+    z-index: 100000;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    max-width: 280px;
+    min-width: 200px;
+    text-align: left;
+    transform: translateX(-50%);
+    margin-left: 0;
+    left: 0;
+    top: 0;
+  }
+
+  .activity-level-help-tooltip-header::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: #1f2937;
+  }
+
+  .activity-level-help-header:hover .activity-level-help-tooltip-header {
+    opacity: 1;
+    visibility: visible;
+  }
+
   </style>
   {%- else -%}
   <div class="admin-disabled">

@@ -34,9 +34,10 @@ BEGIN
     FROM click_stats c
     FULL OUTER JOIN favorite_stats f ON c.url = f.url
     WHERE (COALESCE(c.clicks, 0) + COALESCE(f.favs, 0)) > 0
-    ORDER BY (COALESCE(c.clicks, 0) + COALESCE(f.favs, 0)) DESC, 
-             COALESCE(c.clicks, 0) DESC, 
-             COALESCE(f.favs, 0) DESC
+    -- 按总排序（点击量+收藏量）降序排列，数值大的在前
+    ORDER BY result_total DESC, 
+             result_clicks DESC, 
+             result_favs DESC
     LIMIT limit_count
   LOOP
     post_url := result_record.result_url;

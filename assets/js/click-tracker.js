@@ -127,6 +127,7 @@
           });
           
           // 同时构建URL映射，以支持原始URL（带baseurl）的查找
+          // 注意：不修改sortedUrls的顺序，保持SQL返回的排序
           const container = document.getElementById('popular-posts-list');
           if (container) {
             const items = Array.from(container.querySelectorAll('.post-item[data-post-url]'));
@@ -134,15 +135,11 @@
               const originalUrl = item.getAttribute('data-post-url');
               if (originalUrl) {
                 const normalized = normalizeUrl(originalUrl);
-                // 如果原始URL不在结果中，但规范化URL在，则添加映射
+                // 如果原始URL不在结果中，但规范化URL在，则添加映射（仅用于查找，不修改排序）
                 if (!(originalUrl in clicksResult) && normalized in clicksResult) {
                   clicksResult[originalUrl] = clicksResult[normalized];
                   favoritesResult[originalUrl] = favoritesResult[normalized];
-                  // 如果规范化URL在排序列表中，也添加原始URL到排序列表（但保持原顺序）
-                  const index = sortedUrls.indexOf(normalized);
-                  if (index !== -1) {
-                    sortedUrls.splice(index, 0, originalUrl);
-                  }
+                  // 不插入到sortedUrls中，保持SQL返回的排序顺序
                 }
               }
             });
@@ -387,6 +384,20 @@
   function trackClick(postUrl) {
     // 直接加入队列，由批处理系统统一处理
     enqueueClick(postUrl);
+    
+    // 同时记录到用户活动日志（用于用户活动统计）
+    // 注意：异步调用，不阻塞主流程
+    if (window.AnalyticsService && typeof window.AnalyticsService.logClick === 'function') {
+      try {
+        window.AnalyticsService.logClick(postUrl);
+        console.log('[ClickTracker] 已记录点击到用户活动日志:', postUrl);
+      } catch (error) {
+        console.warn('[ClickTracker] 记录点击到用户活动日志失败:', error);
+      }
+    } else {
+      console.warn('[ClickTracker] AnalyticsService 未加载，无法记录点击到用户活动日志');
+    }
+    
     return { success: true, queued: true };
   }
   
@@ -542,6 +553,16 @@
         
         console.log('[ClickTracker] 追踪点击:', url);
         
+        // 记录到用户活动日志（用于用户活动统计）
+        if (window.AnalyticsService && typeof window.AnalyticsService.logClick === 'function') {
+          try {
+            window.AnalyticsService.logClick(url);
+            console.log('[ClickTracker] 已记录点击到用户活动日志:', url);
+          } catch (error) {
+            console.warn('[ClickTracker] 记录点击到用户活动日志失败:', error);
+          }
+        }
+        
         // 立即尝试发送点击记录（使用 keepalive，不阻塞页面跳转）
         // 这是关键：在页面跳转前立即发送，确保点击被记录
         const sent = sendBeaconClick(url);
@@ -615,6 +636,7 @@
     const validItems = [];
     
     // 如果数据来自RPC函数且有排序列表，优先使用排序列表
+    // SQL函数已经按总排序（点击量+收藏量）降序排序，直接使用SQL返回的顺序
     if (fromRPC && sortedUrls && Array.isArray(sortedUrls)) {
       sortedUrls.forEach(url => {
         const normalized = normalizeUrl(url);
@@ -635,6 +657,19 @@
             item.style.display = 'none';
           }
         }
+      });
+      
+      // 按总排序（点击量+收藏量）降序排列
+      validItems.sort((a, b) => {
+        if (b.totalCount !== a.totalCount) {
+          return b.totalCount - a.totalCount;
+        }
+        if (b.clickCount !== a.clickCount) {
+          return b.clickCount - a.clickCount;
+        }
+        const titleA = a.item.getAttribute('data-post-title') || '';
+        const titleB = b.item.getAttribute('data-post-title') || '';
+        return titleA.localeCompare(titleB);
       });
     } else {
       // 旧方法：遍历所有items
@@ -666,15 +701,12 @@
       
       // 按总排序（点击量+收藏量，降序）
       validItems.sort((a, b) => {
-        // 首先按总排序
         if (b.totalCount !== a.totalCount) {
           return b.totalCount - a.totalCount;
         }
-        // 如果总排序相同，优先按点击量排序
         if (b.clickCount !== a.clickCount) {
           return b.clickCount - a.clickCount;
         }
-        // 如果点击量也相同，按标题排序（保持一致性）
         const titleA = a.item.getAttribute('data-post-title') || '';
         const titleB = b.item.getAttribute('data-post-title') || '';
         return titleA.localeCompare(titleB);
@@ -697,12 +729,20 @@
     
     // 重新插入排序后的项目（只显示前10个）
     const topItems = validItems.slice(0, 10);
-    topItems.forEach(({ item }) => {
-      // 移除loading类，显示项目
+    topItems.forEach(({ item }, index) => {
       item.classList.remove('popular-posts-loading');
       item.style.display = '';
       if (header) {
-        header.after(item);
+        if (index === 0) {
+          header.after(item);
+        } else {
+          const prevItem = topItems[index - 1].item;
+          if (prevItem && prevItem.parentNode) {
+            prevItem.after(item);
+          } else {
+            header.after(item);
+          }
+        }
       } else {
         container.appendChild(item);
       }

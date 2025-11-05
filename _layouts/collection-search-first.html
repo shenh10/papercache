@@ -1034,10 +1034,10 @@ layout: collection
         <!-- 搜索建议 -->
         <div class="search-suggestions show" id="search-suggestions">
           <div class="suggestion-item" data-query="Transformer">Transformer</div>
-          <div class="suggestion-item" data-query="GPU优化">GPU优化</div>
-          <div class="suggestion-item" data-query="分布式系统">分布式系统</div>
-          <div class="suggestion-item" data-query="注意力机制">注意力机制</div>
-          <div class="suggestion-item" data-query="性能优化">性能优化</div>
+          <div class="suggestion-item" data-query="Attention">Attention</div>
+          <div class="suggestion-item" data-query="GPU">GPU</div>
+          <div class="suggestion-item" data-query="Training">Training</div>
+          <div class="suggestion-item" data-query="Serving">Serving</div>
         </div>
       </div>
     </div>
@@ -1836,6 +1836,12 @@ if (typeof window.SearchFirstMode === 'undefined') {
         return;
       }
 
+      // 记录搜索活动（在所有搜索路径之前，确保无论API成功与否都会记录）
+      // 注意：只有非空查询才记录，纯tag过滤不算搜索
+      if (window.AnalyticsService && query && query.trim()) {
+        window.AnalyticsService.logSearch(query);
+      }
+
     // 优先调用后端API；失败时降级到前端本地匹配
     try {
       const controller = new AbortController();
@@ -1903,11 +1909,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
         console.log(`[collection-search-first] ✅ API 搜索成功，返回 ${apiResults.length} 条结果`);
         console.log(`[collection-search-first] API 查询: "${query}", 总匹配数: ${data.total || 0}`);
         console.log(`[collection-search-first] 匹配模式: ${data.matchMode || 'fuzzy'}, 搜索范围: ${(data.searchFields || []).join(', ')}`);
-        
-        // 记录搜索活动
-        if (window.AnalyticsService && query && query.trim()) {
-          window.AnalyticsService.logSearch(query);
-        }
         
         // 保存当前搜索查询和匹配模式，用于高亮显示
         this.currentQuery = query;
