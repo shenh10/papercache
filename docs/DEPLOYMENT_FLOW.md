@@ -265,3 +265,4 @@ vercel --prod
 - ✅ **Supabase 环境变量** 会自动注入，无需手动配置
 - ❌ **Supabase SQL 函数** 需要手动在 Dashboard 执行
 
+

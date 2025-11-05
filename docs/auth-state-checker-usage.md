@@ -139,3 +139,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 4. **易于维护**：只需在一个地方修改逻辑
 5. **类型安全**：提供清晰的API接口
 
+
