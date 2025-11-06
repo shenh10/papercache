@@ -23,9 +23,9 @@
    - 对于中小型论文库足够使用
 
 5. **简化部署**
-   - 不需要 Vercel Serverless Functions
    - 不需要维护 Lunr.js 索引
    - 减少构建时间
+   - 完全基于 Supabase，统一架构
 
 ### ⚠️ 挑战
 

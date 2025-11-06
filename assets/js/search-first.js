@@ -212,7 +212,7 @@
       return;
     }
     // 否则使用原来的搜索逻辑（作为降级）
-    var all=getAllPosts();var local=performLocalSearch(q,all);if(local.length===0){showResults(all.slice(0,10));} else {showResults(local);}try{fetch('/api/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q})}).then(function(r){if(!r.ok)throw new Error('bad status');return r.json();}).then(function(data){var arr=Array.isArray(data&&data.results)?data.results:[];if(arr.length){var mapped=arr.map(function(r){return{title:r.title||r.name||'Untitled',excerpt:r.excerpt||r.summary||'',url:r.url||r.link||'#',tags:r.tags||[],categories:r.categories||[]};});showResults(mapped);}}).catch(function(e){});}catch(e){} }
+    var all=getAllPosts();var local=performLocalSearch(q,all);if(local.length===0){showResults(all.slice(0,10));} else {showResults(local);} }
   function bind(){log('bind start');
     var btn=qs('#search-btn'); if(btn)btn.addEventListener('click',doSearch);
     qsa('.suggestion-item').forEach(function(el){ var q=el.getAttribute('data-query')||el.textContent||''; el.setAttribute('data-query', q); el.addEventListener('click', function(){ var input=qs('#main-search-input'); if(input) input.value=q; doSearch(); });});

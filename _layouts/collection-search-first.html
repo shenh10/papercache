@@ -1154,8 +1154,6 @@ window.RSS_SUBSCRIBE_URL = {{ '/feeds/index.html' | relative_url | jsonify }};
 
 // 注入 baseurl 用于路径处理
 window.PC_BASEURL = {{ site.baseurl | jsonify }};
-// 注入 API base URL（如果配置了）
-window.PC_API_BASE = {{ site.api_base_url | default: '' | jsonify }};
 // 注入缩略图映射与占位图
 window.PC_THUMBS = {{ site.data.thumbnails_by_path | jsonify }};
 window.PC_THUMB_FALLBACK = {{ '/assets/images/fallback-paper.svg' | relative_url | jsonify }};
@@ -1972,124 +1970,11 @@ if (typeof window.SearchFirstMode === 'undefined') {
             this.showSearchResults(query);
             return; // Supabase搜索成功，返回
           } else {
-            console.log('[search-first] Supabase 搜索无结果，降级到 Vercel API');
+            console.log('[search-first] Supabase 搜索无结果，降级到本地搜索');
           }
         } catch (supabaseError) {
-          console.warn('[search-first] Supabase 搜索失败，降级到 Vercel API:', supabaseError);
+          console.warn('[search-first] Supabase 搜索失败，降级到本地搜索:', supabaseError);
         }
-      }
-
-      // 优先级2: 降级到 Vercel API
-      try {
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 8000);
-        
-        // 构建API路径，考虑baseurl和本地开发环境
-        const baseurl = window.PC_BASEURL || '';
-        const apiBaseUrl = window.PC_API_BASE || '';
-        
-        // 本地开发时，如果当前端口是4000（Jekyll），API在3000端口（Vercel）
-        const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-        const isJekyllPort = window.location.port === '4000';
-        
-        let apiPath;
-        if (isLocalDev && isJekyllPort) {
-          // 本地开发：Jekyll在4000，Vercel在3000
-          apiPath = 'http://localhost:3000/api/search';
-        } else if (apiBaseUrl) {
-          // 生产环境：使用配置的 API base URL（Vercel）
-          // 如果配置了 api_base_url，说明静态站点和 API 在不同域名
-          apiPath = `${apiBaseUrl}/api/search`;
-        } else {
-          // Vercel 部署环境（静态站点和 API 在同一域名）
-          apiPath = baseurl ? `${baseurl}/api/search` : '/api/search';
-        }
-        
-        let searchFields = ['title', 'excerpt']; // 模糊匹配的默认值
-        
-        // 只有在精确匹配模式下才需要搜索范围
-        if (matchMode === 'exact') {
-          const searchFieldCheckboxes = document.querySelectorAll('input[name="search-field"]:checked');
-          searchFields = Array.from(searchFieldCheckboxes).map(cb => cb.value);
-          
-          // 确保至少选择一个搜索范围
-          if (searchFields.length === 0) {
-            alert('请至少选择一个搜索范围');
-            return;
-          }
-        }
-        
-        const resp = await fetch(apiPath, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            query,
-            filters: {
-              tags: this.selectedTags.length > 0 ? this.selectedTags : undefined
-            },
-            limit: 50,
-            matchMode: matchMode,
-            searchFields: searchFields
-          }),
-          signal: controller.signal
-        });
-        clearTimeout(timeout);
-
-        if (resp.ok) {
-          const data = await resp.json();
-          const apiResults = Array.isArray(data.results) ? data.results : [];
-          
-          
-          // 保存当前搜索查询和匹配模式，用于高亮显示
-          this.currentQuery = query;
-          this.currentMatchMode = data.matchMode || 'fuzzy';
-          
-          // 使用API结果（即使为空也是有效的搜索结果）
-          this.filteredPapers = apiResults.map(r => {
-            // 如果API返回的结果中没有categories，尝试从URL中提取
-            let categories = r.categories || [];
-            if (categories.length === 0 && r.url) {
-              // 从URL中提取分类路径
-              try {
-                const urlObj = new URL(r.url, window.location.origin);
-                let pathname = urlObj.pathname;
-                const baseurl = window.PC_BASEURL || '';
-                if (baseurl && baseurl !== '/' && pathname.startsWith(baseurl)) {
-                  pathname = pathname.substring(baseurl.length);
-                }
-                if (pathname.startsWith('/')) pathname = pathname.substring(1);
-                if (pathname.startsWith('papers/')) {
-                  const withoutPapers = pathname.substring(7);
-                  const parts = withoutPapers.split('/').filter(p => p);
-                  for (let i = 0; i < parts.length; i++) {
-                    const part = parts[i];
-                    if (/^\d{4}$/.test(part) || /^\d{2}$/.test(part) || part.includes('.')) {
-                      break;
-                    }
-                    categories.push(part);
-                  }
-                }
-              } catch (e) {
-                // 忽略URL解析错误
-              }
-            }
-            return {
-              title: r.title || r.name || 'Untitled',
-              excerpt: r.excerpt || r.summary || '',
-              url: r.url || r.link || '#',
-              tags: r.tags || [],
-              categories: categories,
-              date: r.date || r.dateStr || ''
-            };
-          });
-          this.showSearchResults(query);
-          return; // API成功返回，无论结果数量如何都使用API结果
-        } else {
-          // API返回非200状态
-        }
-        // API返回非200状态，静默降级到本地搜索（本地开发时API可能不可用）
-      } catch (e) {
-        // API调用失败，静默降级到本地搜索（本地开发时API可能不可用）
       }
 
     // 降级：在已加载的DOM中做简单包含匹配
