@@ -114,10 +114,12 @@ def load_collection_data() -> List[Dict]:
                     raw_excerpt = excerpts_data.get(url, '')
                     excerpt = raw_excerpt
                     if raw_excerpt and '主要贡献' in raw_excerpt:
-                        # 匹配"主要贡献"后面可以跟冒号、连接词等，然后是实际内容
-                        # 支持：主要贡献：、主要贡献如下：、主要贡献为：等格式
+                        # 匹配标题格式：可能的编号（A1、A3、1、2等）+ 空格 + "主要贡献"
+                        # 或者直接是"主要贡献"（没有编号）
+                        # 支持：A1 主要贡献：、主要贡献：、主要贡献如下：、主要贡献为：等格式
+                        # 同样匹配"背景知识"标题（可能有编号，也可能没有）
                         # 要求"背景知识"必须是完整的词（后面跟冒号、换行或结尾）
-                        pattern = r'主要贡献(?:如下|为)?[：:]\s*(.*?)(?=\s*背景知识[：:\n]|$)'
+                        pattern = r'(?:A\d+\s+|[0-9]+\s+)?主要贡献(?:如下|为)?[：:]\s*(.*?)(?=\s*(?:A\d+\s+|[0-9]+\s+)?背景知识[：:\n]|$)'
                         match = re.search(pattern, raw_excerpt, re.DOTALL)
                         
                         if match:
