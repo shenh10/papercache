@@ -59,7 +59,6 @@ exclude:
   - ".jekyll-cache/"
   - "Gemfile"
   - "Gemfile.lock"
-  - "04-slides.html"
   - "_slides/"
 
 # 增量构建配置（仅用于本地开发，生产环境通过清除缓存强制完全构建）
@@ -70,7 +69,7 @@ paginate: 20  # 每页显示的文章数量
 paginate_path: "/page:num/"  # 分页路径
 
 # 顶部导航仅展示指定页面
-# 注意：04-slides.html 仅在本地开发时显示（通过 _config_local.yml 添加）
+# 注意：04-slides.html 仅限管理员访问，不在导航中显示
 header_pages:
   - 01-index.markdown
   - 02-collection.html

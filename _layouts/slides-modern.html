@@ -2,6 +2,9 @@
 <html lang="{{ page.lang | default: site.lang | default: "en" }}">
 
   {%- include head.html -%}
+  
+  <!-- 禁止搜索引擎索引此页面（仅限管理员访问） -->
+  <meta name="robots" content="noindex, nofollow">
 
   <body class="layout-collection">
 
@@ -214,11 +217,93 @@
         gap: 10px;
       }
     }
+
+    /* 管理员权限检查样式 */
+    .admin-loading {
+      text-align: center;
+      padding: 4rem 2rem;
+      min-height: 50vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #e2e8f0;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .admin-unauthorized {
+      text-align: center;
+      padding: 4rem 2rem;
+      min-height: 50vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .unauthorized-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+    
+    .admin-unauthorized h2 {
+      font-size: 1.5rem;
+      color: #2d3748;
+      margin-bottom: 0.5rem;
+    }
+    
+    .admin-unauthorized p {
+      color: #718096;
+      margin-bottom: 1.5rem;
+    }
+    
+    .btn-primary {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
     </style>
 
     {%- include modern-header.html -%}
 
-    <div class="collection-page">
+    <!-- 管理员权限检查 -->
+    {%- if site.supabase and site.supabase.enabled and site.admin and site.admin.enabled -%}
+    <div id="slides-auth-check" class="admin-loading">
+      <div class="loading-spinner"></div>
+      <p>正在验证管理员权限...</p>
+    </div>
+    
+    <div id="slides-unauthorized" class="admin-unauthorized" style="display: none;">
+      <div class="unauthorized-icon">🔒</div>
+      <h2>访问受限</h2>
+      <p>此页面仅限管理员访问。</p>
+      <a href="{{ '/' | relative_url }}" class="btn-primary">返回首页</a>
+    </div>
+    {%- endif -%}
+
+    <div class="collection-page" id="slides-content" style="display: none;">
   <!-- 现代化英雄式头部 -->
   <div class="collection-hero">
     <div class="collection-hero-content">
@@ -303,6 +388,121 @@
 <script src="{{ '/assets/js/card-enhancements.js' | relative_url }}?v=3" defer></script>
 
 <script>
+// 管理员权限检查函数
+async function checkSlidesAdminAccess() {
+  const authCheck = document.getElementById('slides-auth-check');
+  const unauthorized = document.getElementById('slides-unauthorized');
+  const slidesContent = document.getElementById('slides-content');
+  
+  // 如果权限检查元素不存在，说明未启用管理员系统，直接显示内容
+  if (!authCheck || !unauthorized) {
+    if (slidesContent) {
+      slidesContent.style.display = 'block';
+    }
+    return true;
+  }
+  
+  // 显示权限检查加载状态
+  authCheck.style.display = 'block';
+  unauthorized.style.display = 'none';
+  if (slidesContent) {
+    slidesContent.style.display = 'none';
+  }
+  
+  // 等待 SimpleAuth 加载完成（最多等待 5 秒）
+  let waitCount = 0;
+  while (waitCount < 50 && !window.SimpleAuth) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    waitCount++;
+  }
+  
+  if (!window.SimpleAuth) {
+    console.error('[Slides] SimpleAuth 未加载');
+    authCheck.style.display = 'none';
+    unauthorized.style.display = 'block';
+    unauthorized.innerHTML = `
+      <div class="unauthorized-icon">🔒</div>
+      <h2>系统错误</h2>
+      <p>认证服务未加载，请刷新页面重试。</p>
+      <button onclick="location.reload()" class="btn-primary">刷新页面</button>
+    `;
+    return false;
+  }
+  
+  // 使用 SimpleAuth 获取当前用户
+  const user = window.SimpleAuth?.getCurrentUser();
+  
+  if (!user) {
+    authCheck.style.display = 'none';
+    unauthorized.style.display = 'block';
+    unauthorized.innerHTML = `
+      <div class="unauthorized-icon">🔒</div>
+      <h2>请先登录</h2>
+      <p>此页面仅限管理员访问，请先登录。</p>
+      <button onclick="window.openAuthModal('login')" class="btn-primary">立即登录</button>
+    `;
+    return false;
+  }
+  
+  // 检查是否是管理员（从数据库的 admins 表读取）
+  const supabase = window.getSupabaseClient?.();
+  if (!supabase) {
+    console.error('[Slides] Supabase客户端未初始化');
+    authCheck.style.display = 'none';
+    unauthorized.style.display = 'block';
+    unauthorized.innerHTML = `
+      <div class="unauthorized-icon">🔒</div>
+      <h2>系统错误</h2>
+      <p>Supabase客户端未初始化，请刷新页面重试。</p>
+      <button onclick="location.reload()" class="btn-primary">刷新页面</button>
+    `;
+    return false;
+  }
+
+  let isAdmin = false;
+  try {
+    const { data: adminCheckData, error: adminCheckError } = await supabase
+      .rpc('check_user_is_admin', {
+        p_user_id: user.id
+      });
+
+    if (adminCheckError) {
+      console.error('[Slides] 检查管理员权限失败:', adminCheckError);
+      // 如果函数不存在，尝试使用旧的配置文件方式（向后兼容）
+      const adminEmails = {{ site.admin.admin_emails | jsonify }};
+      isAdmin = adminEmails && adminEmails.includes(user.email);
+    } else {
+      isAdmin = adminCheckData || false;
+    }
+  } catch (error) {
+    console.error('[Slides] 检查管理员权限异常:', error);
+    // 降级到配置文件方式
+    const adminEmails = {{ site.admin.admin_emails | jsonify }};
+    isAdmin = adminEmails && adminEmails.includes(user.email);
+  }
+  
+  if (!isAdmin) {
+    authCheck.style.display = 'none';
+    unauthorized.style.display = 'block';
+    unauthorized.innerHTML = `
+      <div class="unauthorized-icon">🔒</div>
+      <h2>访问受限</h2>
+      <p>此页面仅限管理员访问。</p>
+      <a href="{{ '/' | relative_url }}" class="btn-primary">返回首页</a>
+    `;
+    return false;
+  }
+  
+  // 显示内容
+  authCheck.style.display = 'none';
+  unauthorized.style.display = 'none';
+  if (slidesContent) {
+    slidesContent.style.display = 'block';
+  }
+  
+  return true;
+}
+
 // 立即执行函数，减少FOUC
 (function() {
   // 立即显示基础内容，避免"计算中..."的闪烁
@@ -329,8 +529,15 @@
 })();
 
 document.addEventListener('DOMContentLoaded', function() {
-// 使用 requestAnimationFrame 确保DOM完全渲染后再执行
-  requestAnimationFrame(function() {
+  // 首先检查管理员权限
+  checkSlidesAdminAccess().then(hasAccess => {
+    if (!hasAccess) {
+      return; // 没有权限，不执行后续的统计和标签逻辑
+    }
+    
+    // 有权限，继续执行原有的逻辑
+    // 使用 requestAnimationFrame 确保DOM完全渲染后再执行
+    requestAnimationFrame(function() {
     // 计算演示文稿总数
     const postItems = document.querySelectorAll('.post-item[data-post-url]');
     const totalCount = postItems.length;
@@ -438,6 +645,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
     }
+    });
+  }).catch(error => {
+    console.error('[Slides] 权限检查失败:', error);
   });
 });
 </script>

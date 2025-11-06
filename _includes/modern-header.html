@@ -22,7 +22,7 @@
       <ul class="nav-menu">
         {% for page_path in site.header_pages %}
           {% assign page_obj = site.pages | where: "path", page_path | first %}
-          {% if page_obj %}
+          {% if page_obj and page_obj.path != "04-slides.html" %}
             <li class="nav-item">
               <a href="{{ page_obj.url | relative_url }}" 
                  class="nav-link {% if page.url == page_obj.url %}active{% endif %}">
@@ -31,6 +31,16 @@
             </li>
           {% endif %}
         {% endfor %}
+        <!-- 管理员专用：演示文稿合集（默认隐藏，JavaScript会根据管理员权限显示） -->
+        {% assign slides_page = site.pages | where: "path", "04-slides.html" | first %}
+        {% if slides_page %}
+        <li class="nav-item" id="nav-item-slides" style="display: none;">
+          <a href="{{ slides_page.url | relative_url }}" 
+             class="nav-link {% if page.url == slides_page.url %}active{% endif %}">
+            {{ slides_page.title }}
+          </a>
+        </li>
+        {% endif %}
       </ul>
       
       <!-- 用户菜单 -->
@@ -174,3 +184,107 @@
   document.addEventListener('turbolinks:load', initMobileMenu);
 })();
 </script>
+
+<!-- 管理员导航项显示控制 -->
+{%- if site.supabase and site.supabase.enabled and site.admin and site.admin.enabled -%}
+<script>
+(function() {
+  // 检查管理员权限并显示/隐藏演示文稿合集导航项
+  async function checkAdminForNav() {
+    const slidesNavItem = document.getElementById('nav-item-slides');
+    if (!slidesNavItem) {
+      return; // 如果导航项不存在，直接返回
+    }
+    
+    // 等待 SimpleAuth 加载完成（最多等待 5 秒）
+    let waitCount = 0;
+    while (waitCount < 50 && !window.SimpleAuth) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      waitCount++;
+    }
+    
+    if (!window.SimpleAuth) {
+      // SimpleAuth 未加载，隐藏导航项
+      slidesNavItem.style.display = 'none';
+      return;
+    }
+    
+    // 获取当前用户
+    const user = window.SimpleAuth?.getCurrentUser();
+    
+    if (!user) {
+      // 未登录，隐藏导航项
+      slidesNavItem.style.display = 'none';
+      return;
+    }
+    
+    // 检查是否是管理员
+    const supabase = window.getSupabaseClient?.();
+    if (!supabase) {
+      slidesNavItem.style.display = 'none';
+      return;
+    }
+    
+    let isAdmin = false;
+    try {
+      const { data: adminCheckData, error: adminCheckError } = await supabase
+        .rpc('check_user_is_admin', {
+          p_user_id: user.id
+        });
+
+      if (adminCheckError) {
+        // 降级到配置文件方式
+        const adminEmails = {{ site.admin.admin_emails | jsonify }};
+        isAdmin = adminEmails && adminEmails.includes(user.email);
+      } else {
+        isAdmin = adminCheckData || false;
+      }
+    } catch (error) {
+      // 降级到配置文件方式
+      const adminEmails = {{ site.admin.admin_emails | jsonify }};
+      isAdmin = adminEmails && adminEmails.includes(user.email);
+    }
+    
+    // 根据管理员状态显示/隐藏导航项
+    if (isAdmin) {
+      slidesNavItem.style.display = '';
+    } else {
+      slidesNavItem.style.display = 'none';
+    }
+  }
+  
+  // 监听认证状态变化
+  function initAdminNav() {
+    // 等待 SimpleAuth 加载
+    const waitForSimpleAuth = () => {
+      if (window.SimpleAuth) {
+        // 立即检查一次
+        checkAdminForNav();
+        
+        // 监听认证状态变化
+        if (window.SimpleAuth.onAuthChange) {
+          window.SimpleAuth.onAuthChange((user) => {
+            checkAdminForNav();
+          });
+        }
+      } else {
+        // SimpleAuth 还没加载，继续等待
+        setTimeout(waitForSimpleAuth, 100);
+      }
+    };
+    
+    waitForSimpleAuth();
+  }
+  
+  // 在DOM加载时初始化
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAdminNav);
+  } else {
+    initAdminNav();
+  }
+  
+  // 在Turbolinks页面加载时也初始化
+  document.addEventListener('turbolinks:load', initAdminNav);
+})();
+</script>
+{%- endif -%}

@@ -15,7 +15,6 @@ _data/thumbnails_by_path.yml
 
 # Slides (local development only)
 _slides/
-04-slides.html
 
 # Others
 .DS_Store

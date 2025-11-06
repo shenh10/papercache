@@ -8,7 +8,11 @@ import yaml
 import re
 import sys
 
-CONFIG_FILE = "_config.yml"
+# 获取脚本所在目录的父目录（项目根目录）
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
+
+CONFIG_FILE = os.path.join(PROJECT_ROOT, "_config.yml")
 
 def inject_supabase_config():
     # 读取环境变量
