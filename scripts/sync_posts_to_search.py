@@ -91,36 +91,71 @@ def load_collection_data() -> List[Dict]:
     
     papers = []
     
-    def extract_papers(node, categories=None):
+    def extract_papers(node, categories=None, category_name=None):
         """递归提取论文数据"""
         if categories is None:
             categories = []
         
-        # 添加当前节点的分类
+        # 添加当前节点的分类名
         current_categories = categories.copy()
-        if isinstance(node, dict) and 'name' in node:
-            current_categories.append(node['name'])
+        if category_name:
+            current_categories.append(category_name)
         
         # 处理当前节点的论文
         if isinstance(node, dict) and 'posts' in node:
             for post in node.get('posts', []):
                 url = normalize_url(post.get('url', ''))
                 if url:
+                    # 使用论文自带的 categories，如果没有则使用收集的分类
+                    paper_categories = post.get('categories', current_categories.copy())
+                    
+                    # 提取摘要：如果包含"主要贡献"，提取"主要贡献"后面的全部内容
+                    raw_excerpt = excerpts_data.get(url, '')
+                    excerpt = raw_excerpt
+                    if raw_excerpt and '主要贡献' in raw_excerpt:
+                        # 找到"主要贡献"的位置，提取后面的全部内容
+                        idx = raw_excerpt.find('主要贡献')
+                        if idx != -1:
+                            # 提取"主要贡献"后面的内容（去掉"主要贡献"这4个字）
+                            excerpt = raw_excerpt[idx + 4:].strip()
+                            # 如果后面还有冒号、中文冒号或连接词，也去掉
+                            if excerpt.startswith('：'):
+                                excerpt = excerpt[1:].strip()
+                            elif excerpt.startswith(':'):
+                                excerpt = excerpt[1:].strip()
+                            elif excerpt.startswith('如下：'):
+                                excerpt = excerpt[4:].strip()
+                            elif excerpt.startswith('如下'):
+                                excerpt = excerpt[2:].strip()
+                            elif excerpt.startswith('为：'):
+                                excerpt = excerpt[2:].strip()
+                            elif excerpt.startswith('为'):
+                                excerpt = excerpt[1:].strip()
+                    
                     papers.append({
                         'url': url,
                         'title': post.get('title', ''),
-                        'excerpt': excerpts_data.get(url, ''),
-                        'categories': current_categories.copy(),
+                        'excerpt': excerpt,  # 存储完整的摘要（已提取"主要贡献"后的内容）
+                        'categories': paper_categories,
                         'tag': post.get('tag', ''),
                         'date': extract_date_from_url(url) or post.get('date')
                     })
         
-        # 递归处理子节点
-        if isinstance(node, dict) and 'children' in node:
-            for child in node.get('children', []):
-                extract_papers(child, current_categories)
+        # 递归处理子节点（字典的 key 就是分类名）
+        if isinstance(node, dict):
+            # 先处理 posts（如果存在）
+            if 'posts' in node:
+                # 已经处理过了，跳过
+                pass
+            # 处理其他子节点（这些是分类）
+            for key, value in node.items():
+                if key != 'posts' and isinstance(value, dict):
+                    extract_papers(value, current_categories, key)
     
-    extract_papers(collection_data)
+    # 处理顶层分类（llm, mlsys, diffusions 等）
+    if isinstance(collection_data, dict):
+        for category_name, category_data in collection_data.items():
+            extract_papers(category_data, [], category_name)
     return papers
 
 def sync_posts_to_search():
@@ -133,12 +168,17 @@ def sync_posts_to_search():
         return
     
     print(f"📚 找到 {len(papers)} 篇论文")
+    print(f"🔄 开始同步，请稍候...")
     
     success_count = 0
     fail_count = 0
     
     for i, paper in enumerate(papers, 1):
         try:
+            # 显示进度（每10篇或每50篇）
+            if i == 1 or i % 10 == 0 or i == len(papers):
+                print(f"   📝 正在同步 {i}/{len(papers)}: {paper['title'][:50]}...")
+            
             result = call_supabase_rpc('upsert_post_search', {
                 'p_url': paper['url'],
                 'p_title': paper['title'],
@@ -159,6 +199,11 @@ def sync_posts_to_search():
         except Exception as e:
             fail_count += 1
             print(f"   ❌ 同步失败: {paper['url']} - {e}")
+        
+        # 添加小延迟，避免请求过快
+        if i % 10 == 0:
+            import time
+            time.sleep(0.1)
     
     print(f"\n✅ 同步完成:")
     print(f"   - 成功: {success_count} 篇")

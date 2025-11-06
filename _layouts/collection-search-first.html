@@ -2971,7 +2971,14 @@ if (typeof window.SearchFirstMode === 'undefined') {
     
     // 高亮标题和摘要中的关键词（支持模糊匹配和精确匹配）
     const highlightedTitle = this.highlightText(paper.title || '', this.currentQuery, this.currentMatchMode);
-    const highlightedExcerpt = this.highlightText(paper.excerpt || '', this.currentQuery, this.currentMatchMode);
+    
+    // 处理摘要：存储完整内容，显示时裁剪（最大240字符）
+    const fullExcerpt = paper.excerpt || '';
+    const maxExcerptLength = 240; // 最大显示长度
+    const displayExcerpt = fullExcerpt.length > maxExcerptLength 
+      ? fullExcerpt.substring(0, maxExcerptLength) + '...'
+      : fullExcerpt;
+    const highlightedExcerpt = this.highlightText(displayExcerpt, this.currentQuery, this.currentMatchMode);
     
     if (isMobile) {
       // 移动端：列表样式
