@@ -62,6 +62,8 @@
   <script src="{{ '/assets/js/simple-auth.js' | relative_url }}"></script>
   <!-- 加载收藏功能 -->
   <script src="{{ '/assets/js/favorites.js' | relative_url }}"></script>
+  <!-- 加载点赞功能 -->
+  <script src="{{ '/assets/js/likes.js' | relative_url }}"></script>
   <script src="{{ '/assets/js/click-stats.js' | relative_url }}"></script>
   <!-- 加载用户活动分析服务 -->
   <script src="{{ '/assets/js/analytics-service.js' | relative_url }}"></script>
@@ -189,7 +191,7 @@
   <!-- MathJax 3 Configuration - 移动端优化 -->
   {%- if page.mathjax != false -%}
   <!-- ES6 Polyfill for mobile browsers -->
-  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/core-js/3.38.1/minified.js"></script>
   
   <script>
     window.MathJax = {
@@ -207,12 +209,7 @@
       chtml: {
         scale: 1.0,
         minScale: 0.5,
-        maxScale: 2.0,
-        adaptiveCSS: true,
-        linebreaks: {
-          automatic: true,
-          width: 'container'
-        }
+        adaptiveCSS: true
       },
       // 移动端启动配置
       startup: {

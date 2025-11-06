@@ -1120,7 +1120,6 @@ layout: collection
 </div>
 
 <script>
-console.log('[collection-search-first] inline script loaded');
 // 注入 RSS 订阅中心 URL
 window.RSS_SUBSCRIBE_URL = {{ '/feeds/index.html' | relative_url | jsonify }};
 
@@ -1146,15 +1145,7 @@ window.RSS_SUBSCRIBE_URL = {{ '/feeds/index.html' | relative_url | jsonify }};
       }{%- if forloop.last == false -%},{%- endif -%}
     {%- endfor -%}
     ];
-    console.log('[collection-search-first] preload posts =', Array.isArray(window.PAPERCACHE_POSTS) ? window.PAPERCACHE_POSTS.length : 'N/A');
-    // 调试：检查第一个论文的日期字段
-    if (Array.isArray(window.PAPERCACHE_POSTS) && window.PAPERCACHE_POSTS.length > 0) {
-      console.log('[collection-search-first] Sample post data:', {
-        title: window.PAPERCACHE_POSTS[0].title,
-        date: window.PAPERCACHE_POSTS[0].date,
-        dateType: typeof window.PAPERCACHE_POSTS[0].date
-      });
-    }
+    // Sample post data loaded
   } catch (e) {
     console.error('[collection-search-first] preload failed', e);
     window.PAPERCACHE_POSTS = [];
@@ -1189,11 +1180,25 @@ if (typeof window.SearchFirstMode === 'undefined') {
   }
 
   async init() {
+    console.log('[collection-search-first] init() 开始');
     this.loadAllPapers();
+    console.log('[collection-search-first] 加载了', this.allPapers.length, '篇论文');
     this.bindEvents();
     this.setupAdvancedSearch();
     this.initTagFilters();
     this.showSuggestions();
+    
+    // 初始显示所有论文（如果用户没有进行搜索）
+    // 延迟执行，确保DOM已准备好
+    setTimeout(() => {
+      if (this.allPapers.length > 0 && !this.currentQuery) {
+        console.log('[collection-search-first] 初始显示所有论文');
+        // 显示所有论文
+        this.filteredPapers = this.allPapers;
+        // 使用showSearchResults显示结果，但不需要搜索查询
+        this.showSearchResults('', false);
+      }
+    }, 100);
   }
 
   setupAdvancedSearch() {
@@ -1271,7 +1276,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
 
     const container = document.getElementById('tag-filter-buttons');
     if (!container) {
-      console.warn('[collection-search-first] tag-filter-buttons container not found');
       return;
     }
 
@@ -1294,7 +1298,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
       container.appendChild(button);
     });
     
-    console.log(`[collection-search-first] 初始化了 ${sortedTags.length} 个tag过滤器`);
   }
 
   updateSelectedTags() {
@@ -1319,7 +1322,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
   }
 
   showTopVenuesBrowse() {
-    console.log('[collection-search-first] showTopVenuesBrowse called');
     this.currentMode = 'browse';
     
     // 隐藏其他区域
@@ -1445,7 +1447,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
     // 初始化选中tag列表
     this.selectedTopVenueTags = null;
     
-    console.log(`[collection-search-first] 渲染了 ${sortedTags.length} 个顶会顶刊tag筛选器`);
   }
 
   applyTopVenuesFilter() {
@@ -1647,7 +1648,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
     } else {
       this.allPapers = [];
     }
-    console.log(`已预载入 ${this.allPapers.length} 篇论文数据用于本地搜索`);
   }
 
   bindEvents() {
@@ -1688,7 +1688,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
     suggestions.forEach(suggestion => {
       suggestion.addEventListener('click', () => {
         const query = suggestion.getAttribute('data-query');
-        console.log('[collection-search-first] suggestion clicked:', query);
         const si = document.getElementById('main-search-input');
         if (si) si.value = query;
         if (typeof this.performSearch === 'function') this.performSearch();
@@ -1697,21 +1696,30 @@ if (typeof window.SearchFirstMode === 'undefined') {
 
     // 分类卡片（移除旧的事件监听器，重新绑定）
     const categoryCards = document.querySelectorAll('.category-card');
+    console.log('[collection-search-first] bindEvents: 找到', categoryCards.length, '个分类卡片');
     categoryCards.forEach(card => {
       // 克隆节点以移除旧的事件监听器
       const newCard = card.cloneNode(true);
       card.parentNode?.replaceChild(newCard, card);
       
-      newCard.addEventListener('click', (e) => {
+      // 保存this引用，确保在事件处理中能访问到类实例
+      const self = this;
+      newCard.addEventListener('click', function(e) {
         // 阻止事件冒泡和默认行为，确保不会被外部脚本拦截
         e.preventDefault();
         e.stopPropagation();
+        console.log('[collection-search-first] 分类卡片被点击:', newCard.getAttribute('data-special') || newCard.getAttribute('data-category'));
         
         // 检查是否是"顶会顶刊"卡片
         const isTopVenues = newCard.getAttribute('data-special') === 'top-venues';
         if (isTopVenues) {
           console.log('[collection-search-first] 顶会顶刊卡片被点击');
-          this.filterTopVenues();
+          if (self && self.filterTopVenues) {
+            console.log('[collection-search-first] 调用filterTopVenues');
+            self.filterTopVenues();
+          } else {
+            console.error('[collection-search-first] filterTopVenues方法不存在或self未定义', { self, hasFilterTopVenues: self && self.filterTopVenues });
+          }
           return;
         }
         
@@ -1719,7 +1727,12 @@ if (typeof window.SearchFirstMode === 'undefined') {
         const isPaperCategories = newCard.getAttribute('data-special') === 'paper-categories';
         if (isPaperCategories) {
           console.log('[collection-search-first] 论文分类卡片被点击');
-          this.showCategoryBrowse(null); // 显示所有分类浏览
+          if (self && self.showCategoryBrowse) {
+            console.log('[collection-search-first] 调用showCategoryBrowse(null)');
+            self.showCategoryBrowse(null); // 显示所有分类浏览
+          } else {
+            console.error('[collection-search-first] showCategoryBrowse方法不存在或self未定义');
+          }
           return;
         }
         
@@ -1727,14 +1740,20 @@ if (typeof window.SearchFirstMode === 'undefined') {
         const categoryName = newCard.getAttribute('data-category-name');
         const categorySlug = newCard.getAttribute('data-category');
         const category = categoryName || categorySlug;
-        console.log('[collection-search-first] Category card clicked:', category);
-        this.showCategoryBrowse(category);
+        console.log('[collection-search-first] 普通分类卡片被点击:', category);
+        if (self && self.showCategoryBrowse) {
+          self.showCategoryBrowse(category);
+        } else {
+          console.error('[collection-search-first] showCategoryBrowse方法不存在或self未定义');
+        }
       }, true); // 使用捕获阶段，确保优先处理
     });
 
     // 操作按钮（移除旧的事件监听器，重新绑定）
     const browseAllBtn = document.getElementById('browse-all-btn');
     const rssBtn = document.getElementById('rss-subscribe-btn');
+    
+    console.log('[collection-search-first] bindEvents: 浏览所有按钮', browseAllBtn ? '找到' : '未找到', 'RSS按钮', rssBtn ? '找到' : '未找到');
     
     if (browseAllBtn) {
       // 克隆节点以移除旧的事件监听器
@@ -1745,9 +1764,13 @@ if (typeof window.SearchFirstMode === 'undefined') {
         // 阻止事件冒泡和默认行为，确保不会被外部脚本拦截
         e.preventDefault();
         e.stopPropagation();
-        console.log('[collection-search-first] Browse all button clicked');
+        console.log('[collection-search-first] 浏览所有按钮被点击');
         // 显示分类浏览界面，从根开始显示所有一级分类
-        this.showCategoryBrowse();
+        if (this.showCategoryBrowse) {
+          this.showCategoryBrowse();
+        } else {
+          console.error('[collection-search-first] showCategoryBrowse方法不存在');
+        }
       }, true); // 使用捕获阶段，确保优先处理
     }
     
@@ -1756,11 +1779,52 @@ if (typeof window.SearchFirstMode === 'undefined') {
       const newRssBtn = rssBtn.cloneNode(true);
       rssBtn.parentNode?.replaceChild(newRssBtn, rssBtn);
       
-      newRssBtn.addEventListener('click', () => {
+      newRssBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[collection-search-first] RSS按钮被点击');
         // 跳转到RSS订阅中心页面
         const rssUrl = window.RSS_SUBSCRIBE_URL || '/feeds/index.html';
         window.location.href = rssUrl;
-      });
+      }, true);
+    }
+
+    // 使用事件委托处理卡片按钮点击（点赞和收藏）
+    // 这样可以避免在模板字符串中使用 onclick 导致的语法错误
+    // 使用 once 或者检查是否已绑定，避免重复绑定
+    if (!window._cardButtonHandlerBound) {
+      document.addEventListener('click', (e) => {
+        const button = e.target.closest('.card-like-btn, .card-favorite-btn');
+        if (!button) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const postUrl = button.getAttribute('data-post-url');
+        const action = button.getAttribute('data-action');
+        
+        if (!postUrl) return;
+        
+        if (action === 'like' && typeof handleCardLikeClick === 'function') {
+          handleCardLikeClick(postUrl, button);
+        } else if (action === 'favorite' && typeof handleCardFavoriteClick === 'function') {
+          handleCardFavoriteClick(postUrl, button);
+        }
+      }, true); // 使用捕获阶段，确保优先处理
+      window._cardButtonHandlerBound = true;
+    }
+
+    // 处理图片加载失败（使用事件委托，避免在模板字符串中使用 onerror）
+    if (!window._imageErrorHandlerBound) {
+      document.addEventListener('error', (e) => {
+        if (e.target.tagName === 'IMG' && e.target.hasAttribute('data-fallback')) {
+          const fallback = e.target.getAttribute('data-fallback');
+          if (fallback && e.target.src !== fallback) {
+            e.target.src = fallback;
+          }
+        }
+      }, true); // 使用捕获阶段，确保优先处理
+      window._imageErrorHandlerBound = true;
     }
 
     // 清空搜索
@@ -1811,11 +1875,9 @@ if (typeof window.SearchFirstMode === 'undefined') {
   }
 
   async performSearch(queryParam = null, allowEmptyQuery = false) {
-    console.log('[collection-search-first] performSearch called');
     
     // 防止重复搜索（如果在搜索中，直接返回）
     if (this._isSearching) {
-      console.log('[collection-search-first] 搜索正在进行中，忽略重复请求');
       return;
     }
     
@@ -1906,9 +1968,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
         const data = await resp.json();
         const apiResults = Array.isArray(data.results) ? data.results : [];
         
-        console.log(`[collection-search-first] ✅ API 搜索成功，返回 ${apiResults.length} 条结果`);
-        console.log(`[collection-search-first] API 查询: "${query}", 总匹配数: ${data.total || 0}`);
-        console.log(`[collection-search-first] 匹配模式: ${data.matchMode || 'fuzzy'}, 搜索范围: ${(data.searchFields || []).join(', ')}`);
         
         // 保存当前搜索查询和匹配模式，用于高亮显示
         this.currentQuery = query;
@@ -1956,16 +2015,13 @@ if (typeof window.SearchFirstMode === 'undefined') {
         return; // API成功返回，无论结果数量如何都使用API结果
       } else {
         // API返回非200状态
-        console.warn(`[collection-search-first] ⚠️ API 返回非200状态: ${resp.status}，降级到本地搜索`);
       }
       // API返回非200状态，静默降级到本地搜索（本地开发时API可能不可用）
     } catch (e) {
       // API调用失败，静默降级到本地搜索（本地开发时API可能不可用）
-      console.warn(`[collection-search-first] ⚠️ API 调用失败: ${e.message}，降级到本地搜索`);
     }
 
     // 降级：在已加载的DOM中做简单包含匹配
-    console.log(`[collection-search-first] 🔄 使用本地搜索（fallback），查询: "${query}"`);
     
     // 如果查询为空，只应用tag过滤
     if (!query || query.trim() === '') {
@@ -2085,19 +2141,34 @@ if (typeof window.SearchFirstMode === 'undefined') {
     this.hideSuggestions();
     
     // 隐藏其他区域（保留分类浏览时不隐藏）
-    document.querySelector('.quick-browse-section').style.display = 'none';
+    const quickSection = document.querySelector('.quick-browse-section');
+    if (quickSection) {
+      quickSection.style.display = 'none';
+    }
+    
     if (!keepBrowse) {
-      document.getElementById('category-browse').style.display = 'none';
+      const categoryBrowse = document.getElementById('category-browse');
+      if (categoryBrowse) {
+        categoryBrowse.style.display = 'none';
+        categoryBrowse.classList.remove('show');
+      }
     } else {
       const browseSection = document.getElementById('category-browse');
-      browseSection.classList.add('show');
-      browseSection.style.display = 'block';
+      if (browseSection) {
+        browseSection.classList.add('show');
+        browseSection.style.display = 'block';
+      }
     }
     
     // 显示搜索结果
     const resultsSection = document.getElementById('search-results');
     const resultsCount = document.getElementById('results-count');
     const resultsList = document.getElementById('results-list');
+    
+    if (!resultsSection || !resultsList) {
+      console.error('[collection-search-first] 搜索结果容器未找到');
+      return;
+    }
     
     resultsSection.classList.add('show');
     resultsSection.style.display = 'block';
@@ -2106,25 +2177,23 @@ if (typeof window.SearchFirstMode === 'undefined') {
       resultsCount.textContent = `${this.filteredPapers.length}篇`;
     }
     
-    if (resultsList) {
-      resultsList.innerHTML = '';
-      
-      if (this.filteredPapers.length === 0) {
-        resultsList.innerHTML = `
-          <div style="text-align: center; padding: 40px; color: #6b7280;">
-            <h3>未找到相关论文</h3>
-            <p>尝试使用不同的关键词或浏览分类</p>
-          </div>
-        `;
-      } else {
-        // 按分类分组显示，确保容器是块级显示，让分组垂直堆叠
-        resultsList.style.display = 'block';
-        resultsList.style.gridTemplateColumns = 'none';
-        resultsList.className = 'results-list-grouped';
-        this.renderGroupedResults(resultsList);
-        // 批量更新收藏状态
-        setTimeout(() => this.batchUpdateFavoriteStatus(), 100);
-      }
+    resultsList.innerHTML = '';
+    
+    if (this.filteredPapers.length === 0) {
+      resultsList.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: #6b7280;">
+          <h3>未找到相关论文</h3>
+          <p>尝试使用不同的关键词或浏览分类</p>
+        </div>
+      `;
+    } else {
+      // 按分类分组显示，确保容器是块级显示，让分组垂直堆叠
+      resultsList.style.display = 'block';
+      resultsList.style.gridTemplateColumns = 'none';
+      resultsList.className = 'results-list-grouped';
+      this.renderGroupedResults(resultsList);
+      // 批量更新收藏状态
+      setTimeout(() => this.batchUpdateFavoriteStatus(), 100);
     }
   }
 
@@ -2188,7 +2257,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
         
         return categories;
       } catch (e) {
-        console.warn('[collection-search-first] Failed to extract categories from URL:', url, e);
         return [];
       }
     };
@@ -2223,13 +2291,7 @@ if (typeof window.SearchFirstMode === 'undefined') {
       }
     });
 
-    // 调试：检查分组结果
-    console.log('[collection-search-first] Grouped categories:', Object.keys(groupedByCategory));
-    console.log('[collection-search-first] Sample paper data:', this.filteredPapers.slice(0, 3).map(p => ({
-      title: p.title,
-      url: p.url,
-      categories: p.categories
-    })));
+    // Grouped categories and sample data loaded
 
     // 按分类路径排序（按字母顺序）
     const sortedCategories = Object.keys(groupedByCategory).sort((a, b) => {
@@ -2384,11 +2446,7 @@ if (typeof window.SearchFirstMode === 'undefined') {
                   
                   // 强制重新渲染所有结果项（根据新的窗口大小）
                   // 直接调用 renderGroupedResults，而不是 showSearchResults，避免重复设置状态
-                  console.log('[collection-search-first] 窗口大小变化，重新渲染搜索结果', {
-                    currentIsMobile,
-                    filteredPapersCount: window.searchFirstMode.filteredPapers.length
-                  });
-                  
+
                   // 清空现有结果
                   resultsList.innerHTML = '';
                   resultsList.style.display = 'block';
@@ -2416,13 +2474,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
                     
                     // 批量更新收藏状态
                     window.searchFirstMode.batchUpdateFavoriteStatus();
-                    
-                    console.log('[collection-search-first] 重新渲染完成', {
-                      currentIsMobile,
-                      containers: document.querySelectorAll('.category-papers-list').length,
-                      cards: document.querySelectorAll('.post-card-modern').length,
-                      listItems: document.querySelectorAll('.post-list-item-mobile').length
-                    });
                   }, 100);
                 }
               }
@@ -2431,11 +2482,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
               if (window.searchFirstMode && window.searchFirstMode.currentMode === 'browse') {
                 const browseResults = document.getElementById('browse-results');
                 if (browseResults && window.searchFirstMode.filteredPapers && window.searchFirstMode.filteredPapers.length > 0) {
-                  console.log('[collection-search-first] 窗口大小变化，重新渲染分类浏览', {
-                    currentIsMobile,
-                    filteredPapersCount: window.searchFirstMode.filteredPapers.length
-                  });
-                  
                   // 重新应用分类过滤（这会重新渲染结果）
                   setTimeout(() => {
                     window.searchFirstMode.applyCategoryFilter();
@@ -2545,7 +2591,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
       
       // 调试：如果用户已登录但favoritesMap为空，输出警告
       if (postUrls.length > 0 && Object.keys(favoritesMap).length === 0 && isLoggedIn) {
-        console.warn('[collection-search-first] 未找到收藏记录，可能需要重新收藏文章');
       }
       
       let favoritedCount = 0;
@@ -2803,14 +2848,7 @@ if (typeof window.SearchFirstMode === 'undefined') {
         // 调试：记录匹配尝试（仅在开发环境）
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
           const matchedKey = uniqueCandidates.find(c => thumbs[c]);
-          if (!matchedKey) {
-            console.log('[getThumb] 未找到缩略图:', {
-              originalUrl: url,
-              normalizedPath: p,
-              candidates: uniqueCandidates.slice(0, 5),
-              availableKeys: Object.keys(thumbs).slice(0, 5)
-            });
-          }
+          // Thumbnail not found (only in development)
         }
         
         // 尝试匹配
@@ -2934,6 +2972,9 @@ if (typeof window.SearchFirstMode === 'undefined') {
     
     const displayDate = formatDate(paper.date);
     
+    // 转义所有可能包含特殊字符的内容
+    const escapedDisplayDate = (displayDate || '-').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    
     // 处理 URL：确保正确添加 baseurl，避免重复
     // 搜索 API 返回的 URL 格式为 /papers/llm/...（不包含 baseurl）
     let paperUrl = paper.url || '#';
@@ -2956,6 +2997,22 @@ if (typeof window.SearchFirstMode === 'undefined') {
     // 检测移动端
     const isMobile = window.innerWidth <= 768;
     
+    // 转义URL用于HTML属性（转义单引号和双引号，并进行HTML编码）
+    // 注意：不要转义冒号，因为URL中可能包含协议（http://, https://）
+    const escapedPaperUrl = paperUrl
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    
+    // 转义缩略图URL（如果包含特殊字符）
+    const escapedThumb = (thumb || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    
+    // 转义 fallback URL（避免在模板字符串中出现语法错误）
+    const fallbackUrl = window.PC_THUMB_FALLBACK || '/assets/images/fallback-paper.svg';
+    const escapedFallback = fallbackUrl.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    
     // 高亮标题和摘要中的关键词（支持模糊匹配和精确匹配）
     const highlightedTitle = this.highlightText(paper.title || '', this.currentQuery, this.currentMatchMode);
     const highlightedExcerpt = this.highlightText(paper.excerpt || '', this.currentQuery, this.currentMatchMode);
@@ -2966,19 +3023,26 @@ if (typeof window.SearchFirstMode === 'undefined') {
       item.innerHTML = `
         <div class="post-list-item-mobile-content">
           <div class="post-list-item-mobile-meta">
-            <span class="post-list-item-mobile-date">${displayDate || '-'}</span>
+            <span class="post-list-item-mobile-date">${escapedDisplayDate}</span>
             <div class="post-list-item-mobile-right">
               ${tag ? `<span class="post-list-item-mobile-tag${tagClass}">${tag}</span>` : ''}
+              <button class="card-like-btn"
+                      data-post-url="${escapedPaperUrl}"
+                      data-action="like"
+                      title="点赞这篇文章">
+                <span class="like-icon">🤍</span>
+                <span class="like-count" data-post-url="${escapedPaperUrl}">0</span>
+              </button>
               <button class="card-favorite-btn"
-                      data-post-url="${paperUrl}"
-                      onclick="event.stopPropagation(); event.preventDefault(); handleCardFavoriteClick('${paperUrl.replace(/'/g, "\\'")}', this);"
+                      data-post-url="${escapedPaperUrl}"
+                      data-action="favorite"
                       title="收藏这篇文章">
                 <span class="favorite-icon">☆</span>
-                <span class="favorite-count" data-post-url="${paperUrl}">0</span>
+                <span class="favorite-count" data-post-url="${escapedPaperUrl}">0</span>
               </button>
             </div>
           </div>
-          <a href="${paperUrl}" class="post-list-item-mobile-link">
+          <a href="${escapedPaperUrl}" class="post-list-item-mobile-link">
             <h3 class="post-list-item-mobile-title">${highlightedTitle}</h3>
           </a>
         </div>
@@ -2987,24 +3051,31 @@ if (typeof window.SearchFirstMode === 'undefined') {
       // 桌面端：卡片样式
       item.className = 'post-card-modern';
       item.innerHTML = `
-        <a href="${paperUrl}" class="post-card-link-modern">
+        <a href="${escapedPaperUrl}" class="post-card-link-modern">
           <div class="post-card-thumb-modern">
-            <img src="${thumb}" 
+            <img src="${escapedThumb}" 
                  alt="thumbnail" 
                  loading="lazy" 
-                 onerror="this.onerror=null; this.src='${window.PC_THUMB_FALLBACK || '/assets/images/fallback-paper.svg'}';" />
+                 data-fallback="${escapedFallback}" />
           </div>
           <div class="post-card-body-modern">
             <div class="post-card-meta-modern">
-              <span class="post-meta-modern">${displayDate || '-'}</span>
+              <span class="post-meta-modern">${escapedDisplayDate}</span>
               <div class="post-card-meta-right">
                 ${tag ? `<span class="post-card-tag-modern${tagClass}">${tag}</span>` : ''}
+                <button class="card-like-btn"
+                        data-post-url="${escapedPaperUrl}"
+                        data-action="like"
+                        title="点赞这篇文章">
+                  <span class="like-icon">🤍</span>
+                  <span class="like-count" data-post-url="${escapedPaperUrl}">0</span>
+                </button>
                 <button class="card-favorite-btn"
-                        data-post-url="${paperUrl}"
-                        onclick="event.stopPropagation(); event.preventDefault(); handleCardFavoriteClick('${paperUrl.replace(/'/g, "\\'")}', this);"
+                        data-post-url="${escapedPaperUrl}"
+                        data-action="favorite"
                         title="收藏这篇文章">
                   <span class="favorite-icon">☆</span>
-                  <span class="favorite-count" data-post-url="${paperUrl}">0</span>
+                  <span class="favorite-count" data-post-url="${escapedPaperUrl}">0</span>
                 </button>
               </div>
             </div>
@@ -3537,9 +3608,37 @@ document.addEventListener('turbolinks:load', () => {
 <!-- 独立脚本，确保在PJAX/局部刷新下也能绑定事件 -->
 <script src="{{ '/assets/js/search-first.js' | relative_url }}" defer></script>
 
+<!-- 处理 CSS 预加载（使用事件委托，避免内联 onload） -->
+<script>
+(function() {
+  function handleCSSPreload() {
+    document.querySelectorAll('link[data-load-as-stylesheet="true"]').forEach(function(link) {
+      link.addEventListener('load', function() {
+        this.rel = 'stylesheet';
+        this.removeAttribute('data-load-as-stylesheet');
+      });
+      // 如果已经加载完成，立即处理
+      if (link.sheet) {
+        link.rel = 'stylesheet';
+        link.removeAttribute('data-load-as-stylesheet');
+      }
+    });
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', handleCSSPreload);
+  } else {
+    handleCSSPreload();
+  }
+  
+  // Turbolinks 页面加载时也处理
+  document.addEventListener('turbolinks:load', handleCSSPreload);
+})();
+</script>
+
 <!-- 引入卡片样式，确保搜索结果使用与原页面一致的风格 -->
-<link rel="preload" href="{{ '/assets/css/post-preview.css' | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<link rel="preload" href="{{ '/assets/css/modern-collection.css' | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" href="{{ '/assets/css/post-preview.css' | relative_url }}" as="style" data-load-as-stylesheet="true">
+<link rel="preload" href="{{ '/assets/css/modern-collection.css' | relative_url }}" as="style" data-load-as-stylesheet="true">
 <noscript>
   <link rel="stylesheet" href="{{ '/assets/css/post-preview.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/assets/css/modern-collection.css' | relative_url }}">
@@ -3561,6 +3660,77 @@ document.addEventListener('turbolinks:load', () => {
   gap: 0.5rem;
   margin-left: auto;
   flex-shrink: 0;
+}
+
+/* 卡片中的点赞按钮样式 */
+.card-like-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0 0.25rem;
+  min-width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.card-like-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  transform: scale(1.1);
+}
+
+.card-like-btn:active {
+  transform: scale(0.95);
+}
+
+.card-like-btn.liked {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.card-like-btn.liked:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.like-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.card-like-btn:hover .like-icon {
+  transform: scale(1.1);
+}
+
+.card-like-btn.liked .like-icon {
+  color: #ef4444;
+}
+
+.card-like-btn:active .like-icon {
+  animation: heartPulse 0.4s ease;
+}
+
+/* 点赞数显示 */
+.card-like-btn .like-count {
+  font-size: 0.75rem;
+  line-height: 1;
+  color: #9ca3af;
+  margin-left: 0.1rem;
+}
+
+.card-like-btn.liked .like-count {
+  color: #ef4444;
+}
+
+@keyframes heartPulse {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.3); }
+  50% { transform: scale(1.1); }
+  75% { transform: scale(1.2); }
 }
 
 /* 卡片中的收藏按钮样式 */

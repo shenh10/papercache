@@ -157,7 +157,14 @@ permalink: /account/favorites.html
   // 全局变量：存储所有收藏和当前显示列表
   let allFavorites = [];
   let currentDisplayedFavorites = [];
-  let currentSortMode = 'date-desc'; // 'date-desc', 'date-asc', 'title-asc', 'title-desc'
+  let currentSortMode = 'date-desc'; // 'date-desc', 'date-asc', 'published-desc', 'published-asc', 'title-asc', 'title-desc'
+  let isReadSectionCollapsed = false; // 已读论文是否折叠
+  let isUnreadSectionCollapsed = false; // 未读论文是否折叠
+  
+  // 分页配置
+  const ITEMS_PER_PAGE = 10; // 每页显示10条
+  let unreadCurrentPage = 1;
+  let readCurrentPage = 1;
 
   // 渲染收藏列表
   async function renderFavoritesList(favorites) {
@@ -191,23 +198,33 @@ permalink: /account/favorites.html
       if (processedUrls.has(postUrl)) continue;
       processedUrls.add(postUrl);
 
-      // 获取论文标题（优先从预加载数据）
-      const title = await getPostTitle(postUrl);
+      // 获取论文元数据（标题和发表时间）
+      const postMetadata = await getPostMetadata(postUrl);
       
       processedFavorites.push({
         post_url: postUrl,
-        title: title,
+        title: postMetadata.title,
         created_at: fav.created_at,
-        favorite_id: fav.id || fav.favorite_id
+        published_date: postMetadata.published_date || null,
+        favorite_id: fav.id || fav.favorite_id,
+        is_read: fav.is_read === true || fav.is_read === 'true' || fav.is_read === 1,
+        read_at: fav.read_at || null
       });
     }
 
-    // 保存到全局变量
-    allFavorites = processedFavorites;
-    currentDisplayedFavorites = [...processedFavorites];
-    
-    // 应用排序和搜索
-    applySortAndFilter();
+      // 保存到全局变量
+      allFavorites = processedFavorites;
+      currentDisplayedFavorites = [...processedFavorites];
+      
+      console.log('[favorites.html] 已加载收藏列表:', {
+        total: allFavorites.length,
+        unread: allFavorites.filter(f => !f.is_read).length,
+        read: allFavorites.filter(f => f.is_read).length,
+        favorites: allFavorites.map(f => ({ url: f.post_url, is_read: f.is_read }))
+      });
+      
+      // 应用排序和搜索
+      applySortAndFilter();
   }
 
   // 应用排序和过滤
@@ -219,6 +236,14 @@ permalink: /account/favorites.html
     const searchInput = document.getElementById('favorites-search-input');
     const searchQuery = searchInput ? searchInput.value.trim().toLowerCase() : '';
 
+    // 如果搜索关键词改变，重置页码
+    const hadSearch = window.lastSearchQuery || '';
+    if (searchQuery !== hadSearch) {
+      unreadCurrentPage = 1;
+      readCurrentPage = 1;
+      window.lastSearchQuery = searchQuery;
+    }
+
     // 过滤
     let filtered = allFavorites;
     if (searchQuery) {
@@ -229,13 +254,37 @@ permalink: /account/favorites.html
       });
     }
 
-    // 排序
-    filtered.sort((a, b) => {
+    // 分离未读和已读
+    const unreadFavorites = filtered.filter(fav => !fav.is_read || fav.is_read === false);
+    const readFavorites = filtered.filter(fav => fav.is_read === true);
+    
+    console.log('[favorites.html] 应用排序和过滤:', {
+      filtered: filtered.length,
+      unread: unreadFavorites.length,
+      read: readFavorites.length,
+      unreadItems: unreadFavorites.map(f => ({ url: f.post_url, is_read: f.is_read })),
+      readItems: readFavorites.map(f => ({ url: f.post_url, is_read: f.is_read }))
+    });
+
+    // 分别排序未读和已读
+    const sortFn = (a, b) => {
       switch (currentSortMode) {
         case 'date-desc':
+          // 按加入收藏时间降序
           return new Date(b.created_at || 0) - new Date(a.created_at || 0);
         case 'date-asc':
+          // 按加入收藏时间升序
           return new Date(a.created_at || 0) - new Date(b.created_at || 0);
+        case 'published-desc':
+          // 按发表时间降序
+          const bPublished = b.published_date ? new Date(b.published_date) : new Date(0);
+          const aPublished = a.published_date ? new Date(a.published_date) : new Date(0);
+          return bPublished - aPublished;
+        case 'published-asc':
+          // 按发表时间升序
+          const aPub = a.published_date ? new Date(a.published_date) : new Date(0);
+          const bPub = b.published_date ? new Date(b.published_date) : new Date(0);
+          return aPub - bPub;
         case 'title-asc':
           return (a.title || '').localeCompare(b.title || '');
         case 'title-desc':
@@ -243,22 +292,30 @@ permalink: /account/favorites.html
         default:
           return 0;
       }
-    });
+    };
 
-    currentDisplayedFavorites = filtered;
+    unreadFavorites.sort(sortFn);
+    readFavorites.sort(sortFn);
+
+    // 未读在前，已读在后
+    currentDisplayedFavorites = [...unreadFavorites, ...readFavorites];
 
     // 更新计数
     const countEl = document.getElementById('favorites-count-text');
     if (countEl) {
-      countEl.textContent = searchQuery 
-        ? `共 ${filtered.length} 篇（搜索到 ${filtered.length} 篇）`
-        : `共 ${allFavorites.length} 篇`;
+      const unreadCount = unreadFavorites.length;
+      const readCount = readFavorites.length;
+      if (searchQuery) {
+        countEl.textContent = `共 ${filtered.length} 篇（未读 ${unreadCount}，已读 ${readCount}）`;
+      } else {
+        countEl.textContent = `共 ${allFavorites.length} 篇（未读 ${unreadCount}，已读 ${readCount}）`;
+      }
     }
 
     // 清空列表
     listEl.innerHTML = '';
 
-    if (filtered.length === 0) {
+    if (currentDisplayedFavorites.length === 0) {
       listEl.innerHTML = `
         <div class="no-results">
           <p>${searchQuery ? '没有找到匹配的收藏' : '暂无收藏'}</p>
@@ -267,68 +324,381 @@ permalink: /account/favorites.html
       return;
     }
 
-    // 渲染列表
-    filtered.forEach((fav, index) => {
-      // 获取baseurl并构建完整的URL
-      const baseurl = window.PC_BASEURL || '';
-      let postUrl = fav.post_url;
+    // 渲染未读部分（带分页）
+    if (unreadFavorites.length > 0) {
+      const unreadTotalPages = Math.ceil(unreadFavorites.length / ITEMS_PER_PAGE);
+      const unreadStartIndex = (unreadCurrentPage - 1) * ITEMS_PER_PAGE;
+      const unreadEndIndex = unreadStartIndex + ITEMS_PER_PAGE;
+      const unreadPageItems = unreadFavorites.slice(unreadStartIndex, unreadEndIndex);
       
-      // 确保URL包含baseurl前缀（数据库中存储的URL可能已经移除了baseurl）
-      if (baseurl && baseurl !== '/' && !postUrl.startsWith(baseurl)) {
-        // 确保postUrl以/开头
-        if (!postUrl.startsWith('/')) {
-          postUrl = '/' + postUrl;
-        }
-        postUrl = baseurl + postUrl;
-      } else if (!postUrl.startsWith('/')) {
-        // 如果没有baseurl，确保URL至少以/开头
-        postUrl = '/' + postUrl;
-      }
-      
-      // 用于显示的URL（包含baseurl）
-      const escapedPostUrl = postUrl.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-      // 用于checkbox标识的URL（原始URL，不包含baseurl，用于删除操作）
-      const escapedOriginalUrl = fav.post_url.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-      const escapedTitle = (fav.title || fav.post_url).replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      const createdDate = fav.created_at ? new Date(fav.created_at).toLocaleDateString('zh-CN') : '未知日期';
-
-      // 获取论文的类别和tag
-      const categories = getCategoriesFromUrl(fav.post_url);
-      const tag = getTagFromUrl(fav.post_url);
-
-      const item = document.createElement('div');
-      item.className = 'favorite-item';
-      item.dataset.postUrl = fav.post_url;
-      item.innerHTML = `
-        <div class="favorite-item-checkbox-wrapper">
-          <input type="checkbox" class="favorite-item-checkbox" id="fav-checkbox-${index}" data-post-url="${escapedOriginalUrl}" />
-          <label for="fav-checkbox-${index}" class="checkbox-label"></label>
+      const unreadSection = document.createElement('div');
+      unreadSection.className = `favorites-section unread-section ${isUnreadSectionCollapsed ? 'collapsed' : ''}`;
+      unreadSection.innerHTML = `
+        <div class="section-header" onclick="window.toggleUnreadSection(event)">
+          <h3 class="section-title">未读论文 (${unreadFavorites.length})</h3>
+          <span class="section-toggle-icon">${isUnreadSectionCollapsed ? '▶' : '▼'}</span>
         </div>
-        <a href="${escapedPostUrl}" class="favorite-item-link">
-          <div class="favorite-item-content">
-            <h3 class="favorite-item-title">${escapedTitle}</h3>
-            <div class="favorite-item-meta">
-              ${categories.length > 0 ? `<div class="favorite-item-categories">
-                <span class="categories-label">分类：</span>
-                <span class="categories-path">${categories.join(' › ')}</span>
-              </div>` : ''}
-              ${tag ? `<div class="favorite-item-tag-wrapper">
-                <span class="favorite-item-tag ${tag.toLowerCase() === 'arxiv' ? 'tag-arxiv' : ''}">${tag}</span>
-              </div>` : ''}
-              <div class="favorite-item-meta-row">
-                <span class="favorite-item-date">${createdDate}</span>
-              </div>
-            </div>
-          </div>
-        </a>
+        <div class="section-content" style="${isUnreadSectionCollapsed ? 'display: none;' : ''}">
       `;
-      listEl.appendChild(item);
-    });
-    
+      listEl.appendChild(unreadSection);
+      const unreadContent = unreadSection.querySelector('.section-content');
+
+      unreadPageItems.forEach((fav, index) => {
+        const item = createFavoriteItem(fav, unreadStartIndex + index, 'unread');
+        unreadContent.appendChild(item);
+      });
+
+      unreadSection.appendChild(unreadContent);
+      
+      // 添加分页控件
+      if (unreadTotalPages > 1) {
+        const pagination = createPagination('unread', unreadCurrentPage, unreadTotalPages, unreadFavorites.length);
+        unreadSection.appendChild(pagination);
+      }
+    }
+
+    // 渲染已读部分（带分页）
+    if (readFavorites.length > 0) {
+      const readTotalPages = Math.ceil(readFavorites.length / ITEMS_PER_PAGE);
+      const readStartIndex = (readCurrentPage - 1) * ITEMS_PER_PAGE;
+      const readEndIndex = readStartIndex + ITEMS_PER_PAGE;
+      const readPageItems = readFavorites.slice(readStartIndex, readEndIndex);
+      
+      const readSection = document.createElement('div');
+      readSection.className = `favorites-section read-section ${isReadSectionCollapsed ? 'collapsed' : ''}`;
+      readSection.innerHTML = `
+        <div class="section-header" onclick="window.toggleReadSection(event)">
+          <h3 class="section-title">已读论文 (${readFavorites.length})</h3>
+          <span class="section-toggle-icon">${isReadSectionCollapsed ? '▶' : '▼'}</span>
+        </div>
+        <div class="section-content" style="${isReadSectionCollapsed ? 'display: none;' : ''}">
+      `;
+      listEl.appendChild(readSection);
+      const readContent = readSection.querySelector('.section-content');
+
+      readPageItems.forEach((fav, index) => {
+        const item = createFavoriteItem(fav, readStartIndex + index, 'read');
+        readContent.appendChild(item);
+      });
+
+      readSection.appendChild(readContent);
+      
+      // 添加分页控件
+      if (readTotalPages > 1) {
+        const pagination = createPagination('read', readCurrentPage, readTotalPages, readFavorites.length);
+        readSection.appendChild(pagination);
+      }
+    }
+
     // 绑定复选框事件
     bindCheckboxEvents();
     updateSelectedCount();
   }
+
+  // 创建收藏项DOM元素
+  function createFavoriteItem(fav, index, sectionType) {
+    // 获取baseurl并构建完整的URL
+    const baseurl = window.PC_BASEURL || '';
+    let postUrl = fav.post_url;
+    
+    // 确保URL包含baseurl前缀（数据库中存储的URL可能已经移除了baseurl）
+    if (baseurl && baseurl !== '/' && !postUrl.startsWith(baseurl)) {
+      // 确保postUrl以/开头
+      if (!postUrl.startsWith('/')) {
+        postUrl = '/' + postUrl;
+      }
+      postUrl = baseurl + postUrl;
+    } else if (!postUrl.startsWith('/')) {
+      // 如果没有baseurl，确保URL至少以/开头
+      postUrl = '/' + postUrl;
+    }
+    
+    // 用于显示的URL（包含baseurl）
+    const escapedPostUrl = postUrl.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    // 用于checkbox标识的URL（原始URL，不包含baseurl，用于删除操作）
+    const escapedOriginalUrl = fav.post_url.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    const escapedTitle = (fav.title || fav.post_url).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const createdDate = fav.created_at ? new Date(fav.created_at).toLocaleDateString('zh-CN') : '未知日期';
+    const publishedDate = fav.published_date ? new Date(fav.published_date).toLocaleDateString('zh-CN') : null;
+    const readDate = fav.read_at ? new Date(fav.read_at).toLocaleDateString('zh-CN') : null;
+
+    // 获取论文的类别和tag
+    const categories = getCategoriesFromUrl(fav.post_url);
+    const tag = getTagFromUrl(fav.post_url);
+
+    const item = document.createElement('div');
+    item.className = `favorite-item ${sectionType === 'read' ? 'read-item' : 'unread-item'}`;
+    item.dataset.postUrl = fav.post_url;
+    item.innerHTML = `
+      <div class="favorite-item-checkbox-wrapper">
+        <input type="checkbox" class="favorite-item-checkbox" id="fav-checkbox-${index}" data-post-url="${escapedOriginalUrl}" />
+        <label for="fav-checkbox-${index}" class="checkbox-label"></label>
+      </div>
+      <a href="${escapedPostUrl}" class="favorite-item-link">
+        <div class="favorite-item-content">
+          <h3 class="favorite-item-title">
+            ${escapedTitle}
+            ${fav.is_read ? '<span class="read-badge">✓ 已读</span>' : ''}
+          </h3>
+          <div class="favorite-item-meta">
+            ${categories.length > 0 ? `<div class="favorite-item-categories">
+              <span class="categories-label">分类：</span>
+              <span class="categories-path">${categories.join(' › ')}</span>
+            </div>` : ''}
+            ${tag ? `<div class="favorite-item-tag-wrapper">
+              <span class="favorite-item-tag ${tag.toLowerCase() === 'arxiv' ? 'tag-arxiv' : ''}">${tag}</span>
+            </div>` : ''}
+            <div class="favorite-item-meta-row">
+              <span class="favorite-item-date">收藏于 ${createdDate}</span>
+              ${publishedDate ? `<span class="favorite-item-published-date">发表于 ${publishedDate}</span>` : ''}
+              ${readDate ? `<span class="favorite-item-read-date">已读于 ${readDate}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      </a>
+      <div class="favorite-item-actions">
+        <button class="read-status-btn ${fav.is_read ? 'mark-unread-btn' : 'mark-read-btn'}" 
+                onclick="toggleReadStatus('${escapedOriginalUrl}', event)" 
+                title="${fav.is_read ? '标记为未读' : '标记为已读'}">
+          ${fav.is_read ? '📖 已读' : '✓ 标记已读'}
+        </button>
+      </div>
+    `;
+    return item;
+  }
+
+  // 切换已读状态（全局函数，供onclick使用）
+  window.toggleReadStatus = async function(postUrl, event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    try {
+      console.log('[favorites] 切换已读状态，postUrl:', postUrl);
+      const result = await window.favoritesService?.toggleReadStatus(postUrl);
+      console.log('[favorites] 切换结果:', result);
+      
+      if (result?.success) {
+        console.log('[favorites.html] 标记已读成功，重新加载列表');
+        // 重新加载收藏列表
+        await loadFavorites();
+        console.log('[favorites.html] 列表重新加载完成');
+        showToast(result.is_read ? '已标记为已读' : '已标记为未读');
+        
+        // 更新折叠按钮状态
+        updateToggleReadSectionButton();
+      } else {
+        const errorMsg = result?.error || '操作失败';
+        console.error('[favorites] 切换已读状态失败:', errorMsg);
+        showToast(errorMsg);
+      }
+    } catch (error) {
+      console.error('切换已读状态失败:', error);
+      showToast('操作失败：' + (error.message || '未知错误'));
+    }
+  };
+  
+
+  // 切换未读部分折叠状态（全局函数，供onclick使用）
+  window.toggleUnreadSection = function(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    isUnreadSectionCollapsed = !isUnreadSectionCollapsed;
+    const unreadSection = document.querySelector('.unread-section');
+    
+    if (unreadSection) {
+      const content = unreadSection.querySelector('.section-content');
+      const toggleIcon = unreadSection.querySelector('.section-toggle-icon');
+      const pagination = unreadSection.querySelector('.pagination-wrapper');
+      
+      if (content) {
+        const newDisplay = isUnreadSectionCollapsed ? 'none' : 'flex';
+        content.style.display = newDisplay;
+      }
+      if (pagination) {
+        pagination.style.display = isUnreadSectionCollapsed ? 'none' : 'flex';
+      }
+      if (toggleIcon) {
+        toggleIcon.textContent = isUnreadSectionCollapsed ? '▶' : '▼';
+      }
+      
+      // 更新section的class
+      if (isUnreadSectionCollapsed) {
+        unreadSection.classList.add('collapsed');
+      } else {
+        unreadSection.classList.remove('collapsed');
+      }
+    }
+  };
+
+  // 切换已读部分折叠状态（全局函数，供onclick使用）
+  window.toggleReadSection = function(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    isReadSectionCollapsed = !isReadSectionCollapsed;
+    const readSection = document.querySelector('.read-section');
+    
+    if (readSection) {
+      const content = readSection.querySelector('.section-content');
+      const toggleIcon = readSection.querySelector('.section-toggle-icon');
+      const pagination = readSection.querySelector('.pagination-wrapper');
+      
+      if (content) {
+        const newDisplay = isReadSectionCollapsed ? 'none' : 'flex';
+        content.style.display = newDisplay;
+      }
+      if (pagination) {
+        pagination.style.display = isReadSectionCollapsed ? 'none' : 'flex';
+      }
+      if (toggleIcon) {
+        toggleIcon.textContent = isReadSectionCollapsed ? '▶' : '▼';
+      }
+      
+      // 更新section的class
+      if (isReadSectionCollapsed) {
+        readSection.classList.add('collapsed');
+      } else {
+        readSection.classList.remove('collapsed');
+      }
+    }
+  };
+  
+  // 创建分页控件
+  function createPagination(sectionType, currentPage, totalPages, totalItems) {
+    const pagination = document.createElement('div');
+    pagination.className = 'pagination-wrapper';
+    
+    const startItem = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+    const endItem = Math.min(currentPage * ITEMS_PER_PAGE, totalItems);
+    
+    pagination.innerHTML = `
+      <div class="pagination-info">
+        显示第 ${startItem}-${endItem} 条，共 ${totalItems} 条
+      </div>
+      <div class="pagination-controls">
+        <button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} 
+                onclick="goToPage('${sectionType}', ${currentPage - 1})">
+          上一页
+        </button>
+        <span class="pagination-pages">
+          ${Array.from({ length: totalPages }, (_, i) => i + 1)
+            .map(page => 
+              page === currentPage 
+                ? `<span class="pagination-page current">${page}</span>`
+                : `<span class="pagination-page" onclick="goToPage('${sectionType}', ${page})">${page}</span>`
+            ).join(' ')}
+        </span>
+        <button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} 
+                onclick="goToPage('${sectionType}', ${currentPage + 1})">
+          下一页
+        </button>
+      </div>
+    `;
+    
+    return pagination;
+  }
+  
+  // 跳转到指定页面
+  window.goToPage = function(sectionType, page) {
+    if (sectionType === 'unread') {
+      unreadCurrentPage = page;
+    } else if (sectionType === 'read') {
+      readCurrentPage = page;
+    }
+    
+    // 重新应用排序和过滤（这会重新渲染列表）
+    applySortAndFilter();
+    
+    // 滚动到对应部分
+    const section = document.querySelector(`.${sectionType}-section`);
+    if (section) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // 绑定工具栏事件
+  function bindFavoritesEvents() {
+    // 搜索输入框
+    const searchInput = document.getElementById('favorites-search-input');
+    if (searchInput) {
+      let searchTimeout;
+      searchInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          applySortAndFilter();
+        }, 300);
+      });
+    }
+
+    // 排序按钮
+    const sortBtn = document.getElementById('sort-btn');
+    if (sortBtn) {
+      sortBtn.addEventListener('click', toggleSort);
+    }
+
+    
+    // 全选复选框（在工具栏中，需要在页面加载时绑定）
+    const selectAllCheckbox = document.getElementById('select-all-checkbox');
+    if (selectAllCheckbox) {
+      // 检查是否已经绑定过事件（避免重复绑定）
+      if (!selectAllCheckbox.dataset.bound) {
+        selectAllCheckbox.dataset.bound = 'true';
+        
+        selectAllCheckbox.addEventListener('change', (e) => {
+          const isChecked = e.target.checked;
+          console.log('[favorites.html] 全选状态改变:', isChecked);
+          
+          // 获取所有可见的复选框（只选择当前页面显示的，排除被折叠的部分）
+          const visibleCheckboxes = Array.from(document.querySelectorAll('.favorite-item-checkbox')).filter(cb => {
+            // 检查复选框所在的section是否可见
+            const section = cb.closest('.favorites-section');
+            if (!section) return false;
+            
+            // 检查section是否被折叠
+            if (section.classList.contains('collapsed')) return false;
+            
+            // 检查section-content是否可见
+            const sectionContent = section.querySelector('.section-content');
+            if (sectionContent) {
+              const contentStyle = window.getComputedStyle(sectionContent);
+              if (contentStyle.display === 'none') return false;
+            }
+            
+            // 检查favorite-item是否可见
+            const item = cb.closest('.favorite-item');
+            if (item) {
+              const itemStyle = window.getComputedStyle(item);
+              if (itemStyle.display === 'none' || itemStyle.visibility === 'hidden') return false;
+            }
+            
+            return true;
+          });
+          
+          console.log('[favorites.html] 全选 - 找到可见复选框数量:', visibleCheckboxes.length, '总复选框数量:', document.querySelectorAll('.favorite-item-checkbox').length);
+          
+          visibleCheckboxes.forEach(cb => {
+            const wasChecked = cb.checked;
+            cb.checked = isChecked;
+            // 如果状态改变，触发change事件以确保单项复选框的事件也被触发
+            if (wasChecked !== isChecked) {
+              cb.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+          });
+          
+          updateSelectedCount();
+          updateBatchDeleteButton();
+        });
+      }
+    }
+  }
+
   
   // 从URL获取最终分类名称（如 "RL"、"MOE"）
   function getCategoriesFromUrl(url) {
@@ -477,9 +847,10 @@ permalink: /account/favorites.html
   }
 
   // 获取论文标题
-  async function getPostTitle(postUrl) {
+  // 获取论文元数据（标题和发表时间）
+  async function getPostMetadata(postUrl) {
     try {
-      // 1. 优先从预加载的论文数据中获取标题
+      // 1. 优先从预加载的论文数据中获取
       if (window.PAPERCACHE_POSTS && Array.isArray(window.PAPERCACHE_POSTS)) {
         // 规范化URL以便匹配
         const normalizeUrl = (url) => {
@@ -507,12 +878,16 @@ permalink: /account/favorites.html
                  p.url === postUrl;
         });
 
-        if (matchedPost && matchedPost.title) {
-          return matchedPost.title;
+        if (matchedPost) {
+          return {
+            title: matchedPost.title || postUrl,
+            published_date: matchedPost.date || matchedPost.published_date || null
+          };
         }
       }
 
       // 2. 如果预加载数据中没有，尝试从URL推断标题
+      let inferredTitle = postUrl;
       if (postUrl.includes('/')) {
         const segments = postUrl.split('/');
         const lastSegment = segments[segments.length - 1];
@@ -520,15 +895,29 @@ permalink: /account/favorites.html
           // 移除.html扩展名
           const withoutExt = lastSegment.replace(/\.html?$/, '');
           // 将kebab-case转换为标题格式
-          return withoutExt.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          inferredTitle = withoutExt.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         }
       }
 
-      // 3. 默认返回URL（不截断）
-      return postUrl;
+      // 3. 尝试从URL中提取日期（格式：/papers/.../2025/06/01/...）
+      let extractedDate = null;
+      const datePattern = /\/(\d{4})\/(\d{2})\/(\d{2})\//;
+      const dateMatch = postUrl.match(datePattern);
+      if (dateMatch) {
+        const [, year, month, day] = dateMatch;
+        extractedDate = `${year}-${month}-${day}`;
+      }
+
+      return {
+        title: inferredTitle,
+        published_date: extractedDate
+      };
     } catch (error) {
-      console.warn('获取论文标题失败:', error);
-      return postUrl;
+      console.warn('获取论文元数据失败:', error);
+      return {
+        title: postUrl,
+        published_date: null
+      };
     }
   }
   
@@ -584,32 +973,32 @@ permalink: /account/favorites.html
     // 单项复选框
     const checkboxes = document.querySelectorAll('.favorite-item-checkbox');
     checkboxes.forEach(checkbox => {
-      checkbox.addEventListener('change', () => {
+      // 移除旧的事件监听器（如果存在），避免重复绑定
+      const newCheckbox = checkbox.cloneNode(true);
+      checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+      
+      newCheckbox.addEventListener('change', () => {
         updateSelectedCount();
         updateBatchDeleteButton();
       });
     });
     
-    // 全选复选框
-    const selectAllCheckbox = document.getElementById('select-all-checkbox');
-    if (selectAllCheckbox) {
-      selectAllCheckbox.addEventListener('change', (e) => {
-        const isChecked = e.target.checked;
-        checkboxes.forEach(cb => {
-          cb.checked = isChecked;
-        });
-        updateSelectedCount();
-        updateBatchDeleteButton();
-      });
-    }
+    // 全选复选框已经在 bindFavoritesEvents() 中绑定，这里不需要重复绑定
     
     // 批量删除按钮
     const batchDeleteBtn = document.getElementById('batch-delete-btn');
     if (batchDeleteBtn) {
-      batchDeleteBtn.addEventListener('click', () => {
-        const selectedUrls = Array.from(checkboxes)
+      // 移除旧的事件监听器（如果存在），避免重复绑定
+      const newBatchDeleteBtn = batchDeleteBtn.cloneNode(true);
+      batchDeleteBtn.parentNode.replaceChild(newBatchDeleteBtn, batchDeleteBtn);
+      
+      newBatchDeleteBtn.addEventListener('click', () => {
+        const allCheckboxes = document.querySelectorAll('.favorite-item-checkbox');
+        const selectedUrls = Array.from(allCheckboxes)
           .filter(cb => cb.checked)
           .map(cb => cb.getAttribute('data-post-url'));
+        
+        console.log('[favorites.html] 批量删除，选中数量:', selectedUrls.length);
         
         if (selectedUrls.length > 0) {
           removeFavorite(selectedUrls);
@@ -692,7 +1081,7 @@ permalink: /account/favorites.html
 
   // 切换排序模式
   function toggleSort() {
-    const sortModes = ['date-desc', 'date-asc', 'title-asc', 'title-desc'];
+    const sortModes = ['date-desc', 'date-asc', 'published-desc', 'published-asc', 'title-asc', 'title-desc'];
     const currentIndex = sortModes.indexOf(currentSortMode);
     currentSortMode = sortModes[(currentIndex + 1) % sortModes.length];
     
@@ -700,8 +1089,10 @@ permalink: /account/favorites.html
     const sortBtn = document.getElementById('sort-btn');
     if (sortBtn) {
       const sortLabels = {
-        'date-desc': '📊 按日期降序',
-        'date-asc': '📊 按日期升序',
+        'date-desc': '📊 按收藏时间降序',
+        'date-asc': '📊 按收藏时间升序',
+        'published-desc': '📊 按发表时间降序',
+        'published-asc': '📊 按发表时间升序',
         'title-asc': '📊 按标题升序',
         'title-desc': '📊 按标题降序'
       };
@@ -711,29 +1102,29 @@ permalink: /account/favorites.html
     applySortAndFilter();
   }
 
-  // 绑定搜索和排序事件
-  function bindFavoritesEvents() {
-    // 搜索输入框
-    const searchInput = document.getElementById('favorites-search-input');
-    if (searchInput) {
-      let searchTimeout;
-      searchInput.addEventListener('input', (e) => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => {
-          applySortAndFilter();
-        }, 300);
-      });
-    }
-
-    // 排序按钮
-    const sortBtn = document.getElementById('sort-btn');
-    if (sortBtn) {
-      sortBtn.addEventListener('click', toggleSort);
-    }
-  }
   
   // 页面加载时获取收藏列表
   document.addEventListener('DOMContentLoaded', function() {
+    // 确保DOM元素存在
+    const loadingEl = document.getElementById('favorites-loading');
+    const listEl = document.getElementById('favorites-list');
+    const emptyEl = document.getElementById('favorites-empty');
+    const errorEl = document.getElementById('favorites-error');
+    
+    if (!loadingEl || !listEl || !emptyEl || !errorEl) {
+      console.warn('[favorites] DOM元素未就绪，延迟加载');
+      // 延迟重试
+      setTimeout(() => {
+        if (document.getElementById('favorites-loading')) {
+          // 重新尝试加载
+          if (window.SimpleAuth && window.favoritesService && window.getSupabaseClient) {
+            loadFavorites();
+          }
+        }
+      }, 200);
+      return;
+    }
+    
     // 等待认证服务和收藏服务加载完成
     // 先尝试立即加载，如果服务未就绪则等待
     if (window.SimpleAuth && window.favoritesService && window.getSupabaseClient) {
@@ -764,7 +1155,10 @@ permalink: /account/favorites.html
           if (loadingEl) loadingEl.style.display = 'none';
           if (errorEl) {
             errorEl.style.display = 'block';
-            document.getElementById('favorites-error-message').textContent = '请先登录';
+            const errorMsgEl = document.getElementById('favorites-error-message');
+            if (errorMsgEl) {
+              errorMsgEl.textContent = '请先登录';
+            }
           }
         }
       });
@@ -773,6 +1167,22 @@ permalink: /account/favorites.html
 
   // Turbolinks页面导航时的处理
   document.addEventListener('turbolinks:load', function() {
+    // 确保DOM元素存在
+    const loadingEl = document.getElementById('favorites-loading');
+    const listEl = document.getElementById('favorites-list');
+    const emptyEl = document.getElementById('favorites-empty');
+    const errorEl = document.getElementById('favorites-error');
+    
+    if (!loadingEl || !listEl || !emptyEl || !errorEl) {
+      // 如果DOM元素不存在，可能是页面结构不匹配，延迟重试
+      setTimeout(() => {
+        if (document.getElementById('favorites-loading')) {
+          loadFavorites();
+        }
+      }, 100);
+      return;
+    }
+    
     // 先尝试立即加载
     if (window.SimpleAuth && window.favoritesService && window.getSupabaseClient) {
       loadFavorites();
@@ -846,6 +1256,142 @@ permalink: /account/favorites.html
     gap: 1rem;
   }
   
+  /* 分类部分样式 */
+  .favorites-section {
+    margin-bottom: 2rem;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .read-section .section-header {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+  }
+
+  .section-header:hover {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin: 0;
+  }
+
+  .section-toggle-icon {
+    font-size: 0.9rem;
+    color: #718096;
+    transition: transform 0.2s;
+  }
+
+  .section-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .read-section.collapsed .section-content,
+  .unread-section.collapsed .section-content {
+    display: none !important;
+  }
+  
+  .read-section.collapsed .pagination-wrapper,
+  .unread-section.collapsed .pagination-wrapper {
+    display: none !important;
+  }
+  
+  /* 分页样式 */
+  .pagination-wrapper {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+  }
+  
+  .pagination-info {
+    font-size: 0.9rem;
+    color: #718096;
+  }
+  
+  .pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .pagination-btn {
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    color: #4a5568;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .pagination-btn:hover:not(:disabled) {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+  }
+  
+  .pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  .pagination-pages {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+  }
+  
+  .pagination-page {
+    min-width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.5rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: #4a5568;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .pagination-page:hover {
+    background: #e2e8f0;
+  }
+  
+  .pagination-page.current {
+    background: #667eea;
+    color: white;
+    font-weight: 600;
+    cursor: default;
+  }
+  
+  .pagination-page.current:hover {
+    background: #667eea;
+  }
+
   .favorite-item {
     display: flex;
     align-items: flex-start;
@@ -859,6 +1405,16 @@ permalink: /account/favorites.html
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     position: relative;
     overflow: visible;
+  }
+
+  .favorite-item.read-item {
+    border-left-color: #10b981;
+    opacity: 0.85;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+  }
+
+  .favorite-item.unread-item {
+    border-left-color: #fbbf24;
   }
   
   .favorite-item:hover {
@@ -913,6 +1469,18 @@ permalink: /account/favorites.html
 
   .favorite-item-link:hover {
     text-decoration: none;
+  }
+
+  .read-badge {
+    display: inline-block;
+    margin-left: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 12px;
+    vertical-align: middle;
   }
 
   .favorite-item-content {
@@ -1010,9 +1578,52 @@ permalink: /account/favorites.html
 
   .favorite-item-meta-row {
     display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.75rem;
     margin-top: 0.25rem;
+    align-items: center;
+  }
+  
+  .favorite-item-date {
+    font-size: 0.85rem;
+    color: #718096;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .favorite-item-date::before {
+    content: '📅';
+    font-size: 0.9rem;
+  }
+  
+  .favorite-item-published-date {
+    font-size: 0.85rem;
+    color: #4a5568;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  
+  .favorite-item-published-date::before {
+    content: '📄';
+    font-size: 0.9rem;
+  }
+
+  .favorite-item-read-date {
+    font-size: 0.85rem;
+    color: #10b981;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .favorite-item-read-date::before {
+    content: '✓';
+    font-size: 0.9rem;
+    font-weight: bold;
   }
 
   .favorite-item-url {
@@ -1029,17 +1640,49 @@ permalink: /account/favorites.html
     max-width: 100%;
   }
 
-  .favorite-item-date {
-    font-size: 0.85rem;
-    color: #718096;
+
+  .favorite-item-actions {
     display: flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.5rem;
+    flex-shrink: 0;
   }
 
-  .favorite-item-date::before {
-    content: '📅';
-    font-size: 0.9rem;
+  .read-status-btn {
+    padding: 0.5rem 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: white;
+    color: #4a5568;
+    white-space: nowrap;
+  }
+
+  .mark-read-btn {
+    border-color: #10b981;
+    color: #10b981;
+  }
+
+  .mark-read-btn:hover {
+    background: #10b981;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+
+  .mark-unread-btn {
+    border-color: #fbbf24;
+    color: #f59e0b;
+  }
+
+  .mark-unread-btn:hover {
+    background: #fbbf24;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
   }
   
   .favorites-empty {
@@ -1144,6 +1787,8 @@ permalink: /account/favorites.html
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-shrink: 0; /* 防止收缩 */
+    white-space: nowrap; /* 防止文字换行 */
   }
   
   .select-all-checkbox {
@@ -1151,6 +1796,7 @@ permalink: /account/favorites.html
     height: 18px;
     cursor: pointer;
     accent-color: #667eea;
+    flex-shrink: 0; /* 防止收缩 */
   }
   
   .select-all-label {
@@ -1159,6 +1805,8 @@ permalink: /account/favorites.html
     font-weight: 500;
     cursor: pointer;
     user-select: none;
+    white-space: nowrap; /* 防止文字换行 */
+    display: inline-block; /* 确保水平显示 */
   }
   
   .selected-count {

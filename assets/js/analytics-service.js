@@ -37,7 +37,6 @@
       return visitorId;
     } catch (e) {
       // 如果 localStorage 不可用（某些隐私模式），fallback 到 sessionStorage
-      console.warn('[Analytics] localStorage not available, falling back to sessionStorage');
       let sessionId = sessionStorage.getItem('pc_session_id');
       if (!sessionId) {
         sessionId = crypto.randomUUID ? crypto.randomUUID() : generateUUID();
@@ -123,7 +122,6 @@
     }
 
     if (!supabase) {
-      console.warn('[Analytics] Supabase client not available');
       return;
     }
 
@@ -221,6 +219,19 @@
     },
 
     /**
+     * 记录点赞行为
+     */
+    logLike(postUrl, isLiked) {
+      logActivity({
+        type: 'like',
+        target_url: postUrl,
+        metadata: {
+          action: isLiked ? 'add' : 'remove'
+        }
+      });
+    },
+
+    /**
      * 记录自定义活动
      */
     logCustom(type, data) {
@@ -245,6 +256,5 @@
     window.AnalyticsService.logPageView();
   });
 
-  console.log('[Analytics] 📊 用户活动追踪服务已加载');
 })();
 

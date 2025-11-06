@@ -31,7 +31,6 @@
       const currentUser = window.SimpleAuth?.getCurrentUser();
       const finalUser = user !== undefined ? user : currentUser;
       
-      console.log('UserMenu: 更新UI', finalUser?.email || '未登录');
 
       if (finalUser) {
         // 显示已登录菜单
@@ -77,12 +76,10 @@
 
                 if (!error && isAdmin) {
                   adminLink.style.display = 'flex';
-                  console.log('UserMenu: 管理员已登录，显示统计分析菜单');
                   return;
                 }
               }
             } catch (e) {
-              console.warn('UserMenu: 检查管理员权限失败，使用配置文件（向后兼容）', e);
             }
 
             // 降级：使用配置文件方式（向后兼容）
@@ -104,10 +101,8 @@
               const isAdmin = finalUser.email && adminEmails.includes(finalUser.email);
               adminLink.style.display = isAdmin ? 'flex' : 'none';
               if (isAdmin) {
-                console.log('UserMenu: 管理员已登录，显示统计分析菜单（配置文件方式）');
               }
             } catch (e) {
-              console.warn('UserMenu: 无法获取管理员信息', e);
               adminLink.style.display = 'none';
             }
           };
@@ -135,28 +130,23 @@
   function initUserMenu() {
     // 防止重复初始化
     if (window.userMenuInitialized) {
-      console.log('UserMenu: 已初始化，跳过重复初始化');
       return;
     }
 
-    console.log('UserMenu: 初始化');
     window.userMenuInitialized = true;
 
     // 等待SimpleAuth加载
     const waitForSimpleAuth = () => {
       if (window.SimpleAuth) {
-        console.log('UserMenu: SimpleAuth已加载，设置监听器');
 
         // 立即更新UI（如果有当前用户）
         const currentUser = window.SimpleAuth.getCurrentUser();
         if (currentUser) {
-          console.log('UserMenu: 立即更新UI', currentUser.email);
           updateUserMenu(currentUser);
         }
 
         // 监听认证状态变化
         window.SimpleAuth.onAuthChange((user) => {
-          console.log('UserMenu: 认证状态变化', user?.email || '未登录');
           updateUserMenu(user);
         });
 
@@ -269,18 +259,15 @@
     
     window.addEventListener('resize', resizeHandler);
 
-    console.log('UserMenu: 下拉菜单已初始化', isMobile ? '(移动端模式)' : '(桌面端模式)');
   }
 
   // 处理退出登录
   window.handleLogout = async function() {
     if (window.SimpleAuth) {
       try {
-        console.log('UserMenu: 开始退出登录...');
         await window.SimpleAuth.logout();
         // 注意：不需要手动调用updateUserMenu(null)，因为logout会触发SIGNED_OUT事件
         // SIGNED_OUT事件会自动调用updateUserState，进而通知UI更新
-        console.log('UserMenu: 退出登录完成');
       } catch (error) {
         console.error('UserMenu: 登出失败', error);
         // 如果登出失败，手动更新UI确保显示未登录状态
@@ -307,7 +294,6 @@
   document.addEventListener('turbolinks:load', function() {
     // 重新初始化主菜单逻辑（如果需要）
     if (!window.userMenuInitialized) {
-      console.log('UserMenu: Turbolinks页面加载，重新初始化');
       initUserMenu();
     } else {
       // 如果已经初始化，只在需要时更新UI（避免频繁更新）
@@ -321,6 +307,5 @@
     }
   });
 
-  console.log('UserMenu: 🚀 用户菜单组件已加载');
 
 })();

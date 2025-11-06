@@ -380,6 +380,120 @@ async function initCardEnhancements() {
   // 导出函数供外部调用
   window.batchCheckFavoritesForCards = batchCheckFavoritesForCards;
 
+  // 批量检查点赞状态函数（类似于收藏）
+  let isCheckingLikes = false;
+  
+  async function batchCheckLikesForCards() {
+    if (isCheckingLikes) {
+      console.log('📄 正在检查点赞状态，跳过重复调用');
+      return;
+    }
+
+    isCheckingLikes = true;
+
+    try {
+      const likeButtons = document.querySelectorAll('.card-like-btn, .like-btn');
+      if (likeButtons.length === 0) {
+        setTimeout(() => {
+          if (!isCheckingLikes) {
+            batchCheckLikesForCards();
+          }
+        }, 200);
+        return;
+      }
+
+      if (!window.likesService) {
+        console.log('📄 点赞服务未就绪，等待服务加载...');
+        likeButtons.forEach(btn => {
+          btn.style.visibility = 'hidden';
+        });
+
+        const checkServiceReady = setInterval(() => {
+          if (window.likesService) {
+            clearInterval(checkServiceReady);
+            likeButtons.forEach(btn => {
+              btn.style.visibility = 'visible';
+            });
+            if (!isCheckingLikes) {
+              batchCheckLikesForCards();
+            }
+          }
+        }, 100);
+
+        setTimeout(() => {
+          clearInterval(checkServiceReady);
+          likeButtons.forEach(btn => {
+            btn.style.visibility = 'visible';
+          });
+        }, 3000);
+        return;
+      }
+    
+      const isLoggedIn = window.SimpleAuth && window.SimpleAuth.isLoggedIn();
+
+      const postUrls = Array.from(likeButtons)
+        .map(btn => {
+          const url = btn.getAttribute('data-post-url') || btn.closest('[data-post-url]')?.getAttribute('data-post-url');
+          return url;
+        })
+        .filter(url => url && url !== '#');
+      
+      if (postUrls.length === 0) return;
+
+      let likesMap = {};
+      let countsMap = {};
+      
+      if (isLoggedIn) {
+        likesMap = await window.likesService.batchCheckLikes(postUrls) || {};
+      }
+      countsMap = await window.likesService.batchGetLikeCounts(postUrls) || {};
+
+      console.log('📄 批量检查点赞状态，共', postUrls.length, '篇文章，已登录:', isLoggedIn);
+
+      // 更新所有按钮状态
+      likeButtons.forEach(btn => {
+        const postUrl = btn.getAttribute('data-post-url') || btn.closest('[data-post-url]')?.getAttribute('data-post-url');
+        if (!postUrl || postUrl === '#') return;
+
+        const icon = btn.querySelector('.like-icon');
+        const countEl = btn.querySelector('.like-count');
+
+        // 更新点赞状态（仅已登录用户）
+        if (isLoggedIn && icon) {
+          const isLiked = likesMap[postUrl] || false;
+
+          if (isLiked) {
+            btn.classList.add('liked');
+            icon.textContent = '❤️';
+          } else {
+            btn.classList.remove('liked');
+            icon.textContent = '🤍';
+          }
+        }
+
+        // 更新点赞数（所有用户都能看到）
+        if (countEl) {
+          const count = countsMap[postUrl] || 0;
+          countEl.textContent = count > 0 ? count : '0';
+        }
+      });
+
+      console.log(`✅ 批量更新了 ${likeButtons.length} 个点赞按钮的状态（已登录: ${isLoggedIn}）`);
+    } catch (error) {
+      console.warn('批量检查点赞状态失败:', error);
+      setTimeout(() => {
+        if (!isCheckingLikes) {
+          batchCheckLikesForCards();
+        }
+      }, 1000);
+    } finally {
+      isCheckingLikes = false;
+    }
+  }
+  
+  // 导出函数供外部调用
+  window.batchCheckLikesForCards = batchCheckLikesForCards;
+
   // 简单的字符串相似度计算（用于验证标题匹配）
   function calculateSimilarity(str1, str2) {
     if (!str1 || !str2) return 0;
@@ -1053,7 +1167,7 @@ if (document.readyState === 'loading') {
   initCardEnhancements();
 }
 
-// 同时立即执行一次收藏状态预检查（如果可能）
+// 同时立即执行一次收藏和点赞状态预检查（如果可能）
 if (window.favoritesService && document.readyState !== 'loading') {
   Promise.resolve().then(() => {
     const favoriteButtons = document.querySelectorAll('.card-favorite-btn, .favorite-btn');
@@ -1063,13 +1177,25 @@ if (window.favoritesService && document.readyState !== 'loading') {
   });
 }
 
+if (window.likesService && document.readyState !== 'loading') {
+  Promise.resolve().then(() => {
+    const likeButtons = document.querySelectorAll('.card-like-btn, .like-btn');
+    if (likeButtons.length > 0) {
+      window.batchCheckLikesForCards?.();
+    }
+  });
+}
+
 // Turbolinks 页面加载时也初始化
 document.addEventListener('turbolinks:load', function() {
   console.log('📄 Turbolinks 页面加载，重新初始化卡片增强');
   initCardEnhancements();
-  // 立即执行收藏状态检查
+  // 立即执行收藏和点赞状态检查
   if (window.batchCheckFavoritesForCards) {
     window.batchCheckFavoritesForCards();
+  }
+  if (window.batchCheckLikesForCards) {
+    window.batchCheckLikesForCards();
   }
 });
 

@@ -35,17 +35,14 @@
    */
   async function init() {
     if (AuthState.isInitialized) {
-      console.log('SimpleAuth: 已初始化，跳过重复初始化');
       return;
     }
 
     if (AuthState.isLoading) {
-      console.log('SimpleAuth: 正在初始化中，等待完成...');
       return;
     }
 
     AuthState.isLoading = true;
-    console.log('SimpleAuth: 开始初始化...');
 
     try {
       // 获取Supabase客户端
@@ -57,7 +54,6 @@
       // 恢复已保存的状态（页面导航时）
       if (window._simpleAuthUser) {
         AuthState.user = window._simpleAuthUser;
-        console.log('SimpleAuth: 从全局状态恢复用户', AuthState.user.email);
       } else {
         // 首次初始化，检查session
         await checkSession();
@@ -67,7 +63,6 @@
       setupAuthListener();
 
       AuthState.isInitialized = true;
-      console.log('SimpleAuth: ✅ 初始化完成', AuthState.user?.email || '未登录');
 
     } catch (error) {
       console.error('SimpleAuth: 初始化失败', error);
@@ -89,7 +84,8 @@
       const hasType = hashParams.has('type');
       
       if (hasAccessToken) {
-        console.log('SimpleAuth: 检测到URL hash中有OAuth回调token', {
+        // 检测到URL hash中有OAuth回调token
+        console.log('OAuth回调检测到:', {
           hasAccessToken,
           hasType,
           type: hashParams.get('type')
@@ -99,15 +95,11 @@
       const { data: { session }, error } = await supabase.auth.getSession();
 
       if (error) {
-        console.warn('SimpleAuth: 获取session失败', error.message);
         return null;
       }
 
       if (session?.user) {
-        console.log('SimpleAuth: 发现有效session', session.user.email, {
-          provider: session.user.app_metadata?.provider,
-          hasUrlHash: hasAccessToken
-        });
+        // 发现有效session
 
         // 使用统一的用户状态更新函数
         // 注意：不通知状态变化，因为这只是初始化检查，不是真正的登录事件
@@ -121,7 +113,6 @@
         return session.user;
       }
 
-      console.log('SimpleAuth: 未发现有效session');
       return null;
     } catch (error) {
       console.error('SimpleAuth: 检查session异常', error);
@@ -138,14 +129,12 @@
     // 检查缓存
     const cached = profileCache.get(userId);
     if (cached && Date.now() - cached.timestamp < PROFILE_CACHE_TTL) {
-      console.log('SimpleAuth: 使用缓存的profile');
       AuthState.user.profile = cached.profile;
       notifyStateChange();
       return cached.profile;
     }
 
     try {
-      console.log('SimpleAuth: 加载用户profile...');
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -155,15 +144,12 @@
       if (error) {
         if (error.code === 'PGRST116') {
           // Profile不存在，创建默认的
-          console.log('SimpleAuth: profile不存在，创建默认profile');
           const defaultProfile = createDefaultProfile(userId);
           AuthState.user.profile = defaultProfile;
         } else {
-          console.warn('SimpleAuth: 查询profile失败', error.message);
           AuthState.user.profile = createDefaultProfile(userId);
         }
       } else {
-        console.log('SimpleAuth: ✅ profile加载成功');
         AuthState.user.profile = data;
       }
 
@@ -210,7 +196,6 @@
    */
   function setupAuthListener() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('SimpleAuth: 认证状态变化', event, session?.user?.email || '未登录');
 
       // 忽略 TOKEN_REFRESHED，避免重复通知
       // TOKEN_REFRESHED: token刷新不影响用户状态，不需要通知UI
@@ -226,7 +211,6 @@
           if (event === 'INITIAL_SESSION') {
             // 如果已经有用户且用户ID相同，说明是页面刷新等非登录行为，跳过
             if (AuthState.user && AuthState.user.id === session.user.id) {
-              console.log('SimpleAuth: INITIAL_SESSION - 已有相同用户，跳过处理（可能是页面刷新）');
               // 即使跳过处理，也要更新用户状态（但不记录登录日志）
               updateUserState(session.user, event);
               return;
@@ -238,7 +222,6 @@
             // 检查是否刚刚记录过登录日志（通过loginBehaviorTracker）
             const lastLogin = loginBehaviorTracker.get(session.user.id);
             if (lastLogin && (Date.now() - lastLogin.last_login_time) < 5000) {
-              console.log('SimpleAuth: SIGNED_IN - 刚刚已记录登录日志，跳过重复记录');
               // 更新用户状态但不记录日志
               updateUserState(session.user, event);
               return;
@@ -251,25 +234,16 @@
           if (loginMethod && shouldLogUserLogin(session.user.id, loginMethod)) {
             // 记录登录日志
             logUserLogin(session.user.id, loginMethod).catch(err => {
-              console.warn('SimpleAuth: 记录登录日志失败', err);
             });
             
             // 成功检测到登录方式后，清除标记（避免重复检测）
             if (loginMethod.endsWith('_oauth')) {
               localStorage.removeItem('simple_auth_oauth_login_attempt');
-              console.log(`SimpleAuth: 已清除OAuth登录标记（${loginMethod}）`);
             } else if (loginMethod === 'email_password') {
               localStorage.removeItem('simple_auth_email_login_attempt');
-              console.log(`SimpleAuth: 已清除邮箱登录标记（${loginMethod}）`);
             }
           } else if (!loginMethod) {
-            console.log(`SimpleAuth: 未检测到登录行为，跳过记录（${event}）`, {
-              hasUrlHash: window.location.hash.includes('access_token'),
-              hasOAuthAttempt: !!localStorage.getItem('simple_auth_oauth_login_attempt'),
-              hasEmailAttempt: !!localStorage.getItem('simple_auth_email_login_attempt'),
-              provider: session?.app_metadata?.provider,
-              userId: session.user.id.substring(0, 8) + '...'
-            });
+            // 未检测到登录行为，跳过记录
           }
 
           // 使用统一的用户状态更新函数
@@ -277,7 +251,6 @@
 
           // OAuth重定向回来后，清理URL hash中的认证信息
           if (event === 'INITIAL_SESSION' && window.location.hash.includes('access_token')) {
-            console.log('SimpleAuth: 清理URL hash中的认证信息');
             const cleanUrl = window.location.pathname + window.location.search;
             window.history.replaceState(null, '', cleanUrl);
           }
@@ -316,11 +289,7 @@
     AuthState.user = user;
     window._simpleAuthUser = user;
 
-    console.log(`SimpleAuth: 用户状态更新 (${eventType})`, {
-      previousUser: previousUser?.email || 'null',
-      currentUser: user?.email || 'null',
-      hasChanged: previousUser?.id !== user?.id
-    });
+    // 用户状态更新
 
     // 如果有新用户，加载profile
     if (user && previousUser?.id !== user?.id) {
@@ -362,7 +331,7 @@
       const timeDiff = now - lastLogin.last_login_time;
       // 如果5秒内有相同用户的相同登录方式，可能是重复触发（INITIAL_SESSION + SIGNED_IN），跳过
       if (timeDiff < 5000 && lastLogin.login_method === loginMethod) {
-        console.log(`SimpleAuth: 跳过重复登录行为（${loginMethod}，${timeDiff}ms内）`, {
+        console.log('[SimpleAuth] 检测到重复登录事件，跳过:', {
           userId: userId.substring(0, 8) + '...',
           loginMethod,
           timeDiff,
@@ -371,13 +340,6 @@
         return false;
       }
     }
-
-    console.log(`SimpleAuth: 检测到登录行为，应该记录（${loginMethod}）`, {
-      userId: userId.substring(0, 8) + '...',
-      loginMethod,
-      hasLastLogin: !!lastLogin,
-      timeSinceLastLogin: lastLogin ? (now - lastLogin.last_login_time) : 'N/A'
-    });
 
     // 记录登录行为（在记录日志之前就标记，避免重复）
     loginBehaviorTracker.set(userId, {
@@ -404,14 +366,13 @@
       const type = urlParams.get('type');
       if (type === 'recovery' || type === 'signup') {
         // 这是密码重置或注册，不是OAuth登录
-        console.log(`SimpleAuth: URL中有access_token但type是${type}，不是OAuth登录`);
       } else if (oauthAttempt) {
         // 有OAuth登录标记，确认是OAuth登录
         // 从标记中提取provider
         const provider = oauthAttempt.split('_')[0];
         // 注意：不要在这里清除标记，而是在成功记录登录日志后再清除
         // 这样可以避免在多次检测时丢失标记
-        console.log(`SimpleAuth: 检测到${provider} OAuth登录`, {
+        console.log('[SimpleAuth] OAuth登录检测到:', {
           hasAccessToken: true,
           hasOAuthAttempt: true,
           provider,
@@ -427,21 +388,8 @@
         const userToCheck = user || AuthState.user;
         const provider = userToCheck?.app_metadata?.provider;
         if (provider && (provider === 'github' || provider === 'google')) {
-          console.log(`SimpleAuth: 通过session检测到${provider} OAuth登录（标记已清除）`, {
-            hasAccessToken: true,
-            hasOAuthAttempt: false,
-            providerFromSession: provider,
-            userId: userToCheck?.id?.substring(0, 8) + '...'
-          });
           // 如果session中有provider信息，且URL中有access_token，很可能是OAuth登录
           return `${provider}_oauth`;
-        } else {
-          console.log(`SimpleAuth: URL中有access_token但没有OAuth标记，且session中没有provider信息`, {
-            hasAccessToken: true,
-            hasOAuthAttempt: false,
-            providerFromSession: provider,
-            hasUser: !!userToCheck
-          });
         }
       }
     }
@@ -457,23 +405,9 @@
       if (providerFromSession && (providerFromSession === 'github' || providerFromSession === 'google')) {
         // 优先使用session中的provider（更准确）
         const finalProvider = providerFromSession;
-        console.log(`SimpleAuth: 检测到${finalProvider} OAuth登录（URL hash已清除但标记存在）`, {
-          hasAccessToken: false,
-          hasOAuthAttempt: true,
-          providerFromAttempt,
-          providerFromSession: finalProvider,
-          userId: userToCheck?.id?.substring(0, 8) + '...'
-        });
         return `${finalProvider}_oauth`;
       } else if (providerFromAttempt === 'github' || providerFromAttempt === 'google') {
         // 如果session中没有provider但标记中有，使用标记中的provider
-        console.log(`SimpleAuth: 检测到${providerFromAttempt} OAuth登录（使用标记中的provider）`, {
-          hasAccessToken: false,
-          hasOAuthAttempt: true,
-          providerFromAttempt,
-          providerFromSession: providerFromSession || 'null',
-          userId: userToCheck?.id?.substring(0, 8) + '...'
-        });
         return `${providerFromAttempt}_oauth`;
       }
     }
@@ -483,10 +417,7 @@
     if (emailLoginAttempt) {
       // 注意：不要在这里清除标记，而是在成功记录登录日志后再清除
       // 这样可以避免在多次检测时丢失标记（INITIAL_SESSION 和 SIGNED_IN 可能都触发）
-      console.log('SimpleAuth: 检测到邮箱登录', {
-        hasEmailAttempt: true,
-        emailAttempt: emailLoginAttempt.substring(0, 20) + '...'
-      });
+      // 检测到邮箱登录
       return 'email_password';
     }
 
@@ -528,16 +459,9 @@
       });
 
       if (error) {
-        console.warn('SimpleAuth: 记录登录日志失败', error);
-      } else {
-        // 记录成功
-        console.log(`SimpleAuth: ✅ 登录日志已记录（${eventType}）`, {
-          userId: userId.substring(0, 8) + '...',
-          eventType
-        });
+        // 记录失败，静默处理
       }
     } catch (error) {
-      console.warn('SimpleAuth: 记录登录日志异常', error);
     }
   }
 
@@ -549,7 +473,6 @@
       throw new Error('认证系统未初始化');
     }
 
-    console.log('SimpleAuth: 开始邮箱登录...');
 
     // 标记这是邮箱登录行为，用于后续检测
     localStorage.setItem('simple_auth_email_login_attempt', Date.now().toString());
@@ -564,7 +487,6 @@
       throw error;
     }
 
-    console.log('SimpleAuth: ✅ 邮箱登录成功');
     return data;
   }
 
@@ -576,7 +498,6 @@
       throw new Error('认证系统未初始化');
     }
 
-    console.log('SimpleAuth: 开始OAuth登录，提供商:', provider);
 
     // 标记这是OAuth登录行为，用于后续检测
     localStorage.setItem('simple_auth_oauth_login_attempt', `${provider}_${Date.now()}`);
@@ -604,7 +525,6 @@
       // 因为OAuth重定向回来后，Supabase会在URL hash中添加认证token
       // 如果我们在redirectTo中包含这些参数，可能会导致冲突
       
-      console.log('SimpleAuth: OAuth重定向URL:', redirectTo);
 
       // 使用Supabase自动重定向进行OAuth登录
       let { data, error } = await supabase.auth.signInWithOAuth({
@@ -616,7 +536,6 @@
         }
       });
 
-      console.log('SimpleAuth: OAuth登录已启动，Supabase将自动处理重定向');
 
       if (error) {
         console.error('SimpleAuth: OAuth登录失败', error.message, error);
@@ -625,7 +544,6 @@
 
       // Supabase会自动处理重定向到OAuth提供商页面
       // 如果能执行到这里，说明没有自动重定向（可能是错误情况）
-      console.log('SimpleAuth: OAuth登录流程已完成');
 
     } catch (error) {
       console.error('SimpleAuth: OAuth登录异常', error);
@@ -641,7 +559,6 @@
       throw new Error('认证系统未初始化');
     }
 
-    console.log('SimpleAuth: 开始登出...');
 
     try {
       // 1. 调用Supabase登出
@@ -653,7 +570,6 @@
       }
 
       // 2. 清除本地认证状态
-      console.log('SimpleAuth: 清除本地认证状态...');
       updateUserState(null, 'LOGOUT');
 
       // 3. 清除profile缓存
@@ -668,23 +584,19 @@
       // 5. 清除localStorage中的认证数据（强制清除）
       try {
         localStorage.removeItem('supabase.auth.token');
-        console.log('SimpleAuth: 已清除localStorage中的认证token');
       } catch (e) {
-        console.warn('SimpleAuth: 清除localStorage失败', e);
       }
 
       // 6. 强制刷新认证状态（确保没有残留）
       setTimeout(async () => {
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          console.warn('SimpleAuth: 检测到残留session，强制清除');
           // 如果还有残留，再次尝试清除
           await supabase.auth.signOut();
           updateUserState(null, 'FORCE_LOGOUT');
         }
       }, 100);
 
-      console.log('SimpleAuth: ✅ 登出完成（所有状态已清除）');
 
     } catch (error) {
       console.error('SimpleAuth: 登出过程中发生错误', error);
@@ -732,7 +644,6 @@
       throw new Error('用户未登录');
     }
 
-    console.log('SimpleAuth: 更新用户profile...');
     const { data, error } = await supabase
       .from('profiles')
       .upsert({
@@ -748,7 +659,6 @@
       throw error;
     }
 
-    console.log('SimpleAuth: ✅ profile更新成功');
     AuthState.user.profile = data;
     window._simpleAuthUser = AuthState.user;
 
@@ -770,7 +680,6 @@
       throw new Error('认证系统未初始化');
     }
 
-    console.log('SimpleAuth: 开始更新密码...');
     
     // 检查是否有有效的session（重置密码时应该有session）
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
@@ -793,7 +702,6 @@
       throw error;
     }
 
-    console.log('SimpleAuth: ✅ 密码更新成功');
     return { success: true };
   }
 
@@ -836,11 +744,9 @@
       init();
     } else {
       // 页面导航时，通知UI组件更新
-      console.log('SimpleAuth: 页面导航，保持认证状态');
       notifyStateChange();
     }
   });
 
-  console.log('SimpleAuth: 🚀 认证系统已加载');
 
 })(window);

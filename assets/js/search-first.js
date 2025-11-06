@@ -318,6 +318,139 @@
     }
   };
 
+  // 处理卡片点赞按钮点击
+  window.handleCardLikeClick = async function(postUrl, button) {
+    if (!window.likesService) {
+      alert('点赞功能不可用，请刷新页面重试');
+      return;
+    }
+
+    // 检查用户登录状态
+    const isLoggedIn = window.SimpleAuth && window.SimpleAuth.isLoggedIn();
+    
+    if (!isLoggedIn) {
+      // 未登录，弹出登录窗口
+      if (window.openAuthModal) {
+        window.openAuthModal('login');
+      } else {
+        alert('请先登录后再点赞文章');
+      }
+      return;
+    }
+
+    // 已登录，切换点赞状态
+    const icon = button.querySelector('.like-icon');
+    if (!icon) {
+      console.error('Like icon not found');
+      return;
+    }
+
+    // 显示加载状态
+    button.disabled = true;
+
+    try {
+      const result = await window.likesService.toggleLike(postUrl);
+      
+      // 记录点赞活动
+      if (window.AnalyticsService && result.success) {
+        window.AnalyticsService.logLike(postUrl, result.liked);
+      }
+
+      if (result.success) {
+        // 更新UI
+        if (result.liked) {
+          button.classList.add('liked');
+          icon.textContent = '❤️';
+        } else {
+          button.classList.remove('liked');
+          icon.textContent = '🤍';
+        }
+        
+        // 更新点赞数
+        const countEl = button.querySelector('.like-count');
+        if (countEl && window.likesService) {
+          const countResult = await window.likesService.getPostLikeCount(postUrl);
+          if (countResult.success) {
+            countEl.textContent = countResult.count > 0 ? countResult.count : '0';
+          }
+        }
+        
+        // 显示点赞成功提示
+        if (result.liked) {
+          showLikeToast('已点赞');
+        } else {
+          showLikeToast('已取消点赞');
+        }
+
+        // 添加点击动画
+        button.classList.add('clicked');
+        setTimeout(() => {
+          button.classList.remove('clicked');
+        }, 600);
+      } else {
+        if (result.error === '请先登录') {
+          // 如果登录状态检查失败，弹出登录窗口
+          if (window.openAuthModal) {
+            window.openAuthModal('login');
+          } else {
+            alert('请先登录后再点赞文章');
+          }
+        } else {
+          alert('操作失败：' + (result.error || '未知错误'));
+        }
+      }
+    } catch (error) {
+      console.error('点赞操作失败:', error);
+      alert('点赞失败，请重试');
+    } finally {
+      button.disabled = false;
+    }
+  };
+
+  // 显示点赞提示消息
+  function showLikeToast(message) {
+    // 创建提示元素
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 10000;
+      font-size: 14px;
+      font-weight: 500;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+      white-space: nowrap;
+    `;
+    toast.textContent = message;
+
+    document.body.appendChild(toast);
+
+    // 显示动画
+    setTimeout(() => {
+      toast.style.opacity = '1';
+      toast.style.transform = 'translateX(-50%) translateY(0)';
+    }, 10);
+
+    // 自动隐藏
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateX(-50%) translateY(-20px)';
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 2000);
+  }
+
   // 显示收藏提示消息
   function showFavoriteToast(message) {
     // 创建提示元素

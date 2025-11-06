@@ -22,12 +22,10 @@
       if (stored) {
         clickQueue = JSON.parse(stored) || [];
         if (clickQueue.length > 0) {
-          console.log('[ClickTracker] 恢复队列，待处理:', clickQueue.length);
           scheduleFlush(); // 恢复后立即调度刷新
         }
       }
     } catch (e) {
-      console.warn('[ClickTracker] 恢复队列失败:', e);
       clickQueue = [];
     }
   }
@@ -37,7 +35,6 @@
     try {
       localStorage.setItem(BATCH_CONFIG.STORAGE_KEY, JSON.stringify(clickQueue));
     } catch (e) {
-      console.warn('[ClickTracker] 保存队列失败:', e);
     }
   }
   
@@ -153,7 +150,6 @@
           };
         }
       } catch (error) {
-        console.warn('ClickTracker: RPC方法失败，回退到批量查询方法', error);
         // 回退到旧方法
       }
     }
@@ -219,14 +215,12 @@
     const batch = clickQueue.splice(0, BATCH_CONFIG.BATCH_SIZE);
     saveQueue(); // 立即保存剩余队列
     
-    console.log('[ClickTracker] 开始批量刷新，数量:', batch.length);
     
     try {
       // 等待服务可用
       const service = await waitForClickStatsService();
       
       if (!service) {
-        console.warn('[ClickTracker] 服务不可用，重新加入队列');
         clickQueue.unshift(...batch); // 重新加入队列
         saveQueue();
         isFlushing = false;
@@ -268,7 +262,6 @@
       }
       
       const successCount = results.filter(r => r.status === 'fulfilled').length;
-      console.log('[ClickTracker] 批量刷新完成，成功:', successCount, '失败:', failed.length);
       
       // 如果成功刷新了，更新显示（仅当在首页时）
       if (successCount > 0 && document.getElementById('popular-posts-list')) {
@@ -308,7 +301,6 @@
   function sendBeaconClick(postUrl) {
     const normalizedUrl = normalizeUrl(postUrl);
     if (!normalizedUrl || normalizedUrl === '/') {
-      console.warn('[ClickTracker] sendBeaconClick: 无效URL:', postUrl);
       return false;
     }
     
@@ -318,7 +310,6 @@
       const supabaseKey = window.getSupabaseClient?.()?._anonKey || '';
       
       if (!supabaseUrl || !supabaseKey) {
-        console.warn('[ClickTracker] sendBeaconClick: Supabase客户端不可用');
         return false;
       }
       
@@ -336,18 +327,16 @@
         keepalive: true  // 关键：允许在页面卸载后继续发送
       }).then(response => {
         if (!response.ok) {
-          console.warn('[ClickTracker] sendBeaconClick: 请求失败:', response.status, normalizedUrl);
-        } else {
-          console.log('[ClickTracker] sendBeaconClick: 成功发送:', normalizedUrl);
+          // 请求失败，已加入队列重试
+          console.warn('[click-tracker] 点击统计请求失败:', response.status);
         }
       }).catch(err => {
-        console.warn('[ClickTracker] sendBeaconClick: 请求异常:', err, normalizedUrl);
         // 不在这里加入队列，因为调用者已经会加入队列
+        console.warn('[click-tracker] 点击统计请求异常:', err);
       });
       
       return true; // 表示已尝试发送
     } catch (e) {
-      console.warn('[ClickTracker] sendBeaconClick: 异常:', e, postUrl);
       return false;
     }
   }
@@ -356,7 +345,6 @@
   function enqueueClick(postUrl) {
     const normalizedUrl = normalizeUrl(postUrl);
     if (!normalizedUrl || normalizedUrl === '/') {
-      console.warn('[ClickTracker] 跳过无效URL:', postUrl);
       return;
     }
     
@@ -377,7 +365,6 @@
       scheduleFlush();
     }
     
-    console.log('[ClickTracker] 点击已加入队列:', normalizedUrl, '队列长度:', clickQueue.length);
   }
   
   // 记录文章点击（现代批处理版本 - 使用队列）
@@ -390,12 +377,11 @@
     if (window.AnalyticsService && typeof window.AnalyticsService.logClick === 'function') {
       try {
         window.AnalyticsService.logClick(postUrl);
-        console.log('[ClickTracker] 已记录点击到用户活动日志:', postUrl);
-      } catch (error) {
-        console.warn('[ClickTracker] 记录点击到用户活动日志失败:', error);
+            // 已记录到用户活动日志
+          } catch (error) {
+            // 记录失败，静默处理
       }
     } else {
-      console.warn('[ClickTracker] AnalyticsService 未加载，无法记录点击到用户活动日志');
     }
     
     return { success: true, queued: true };
@@ -456,7 +442,6 @@
     
     // 检查是否应该在这个页面启用点击追踪
     if (!shouldTrackClicksOnThisPage()) {
-      console.log('[ClickTracker] 当前页面不需要点击追踪，跳过初始化');
       return;
     }
     
@@ -470,7 +455,6 @@
     // 页面卸载前尝试发送剩余的点击
     window.addEventListener('beforeunload', () => {
       if (clickQueue.length > 0) {
-        console.log('[ClickTracker] 页面卸载，尝试发送剩余点击:', clickQueue.length);
         // 尝试使用 keepalive 发送所有待处理的点击
         clickQueue.forEach(item => {
           sendBeaconClick(item.url);
@@ -514,7 +498,6 @@
       return isArticleUrl && !isCategoryPage;
     });
     
-    console.log(`[ClickTracker] 找到 ${validPostLinks.length} 个文章链接（已过滤分类链接）`);
     
     validPostLinks.forEach(link => {
       // 跳过已经绑定过追踪的链接
@@ -551,15 +534,14 @@
           return; // 跳过分类页面和其他非文章链接
         }
         
-        console.log('[ClickTracker] 追踪点击:', url);
         
         // 记录到用户活动日志（用于用户活动统计）
         if (window.AnalyticsService && typeof window.AnalyticsService.logClick === 'function') {
           try {
             window.AnalyticsService.logClick(url);
-            console.log('[ClickTracker] 已记录点击到用户活动日志:', url);
+            // 已记录到用户活动日志
           } catch (error) {
-            console.warn('[ClickTracker] 记录点击到用户活动日志失败:', error);
+            // 记录失败，静默处理
           }
         }
         
@@ -572,7 +554,6 @@
         
         // 如果立即发送失败，尝试同步刷新队列（但不在页面跳转时阻塞）
         if (!sent) {
-          console.warn('[ClickTracker] 立即发送失败，使用队列:', url);
           // 不阻塞，让队列异步处理
         }
       }, { passive: true }); // 使用 passive 以提高性能

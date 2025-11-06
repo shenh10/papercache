@@ -46,7 +46,14 @@ CREATE POLICY "Users can insert own favorites"
   ON favorites FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
--- 策略3: 用户只能删除自己的收藏
+-- 策略3: 用户可以更新自己的收藏（包括 is_read 和 read_at 字段）
+DROP POLICY IF EXISTS "Users can update own favorites" ON favorites;
+CREATE POLICY "Users can update own favorites"
+  ON favorites FOR UPDATE
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+-- 策略4: 用户只能删除自己的收藏
 DROP POLICY IF EXISTS "Users can delete own favorites" ON favorites;
 CREATE POLICY "Users can delete own favorites"
   ON favorites FOR DELETE

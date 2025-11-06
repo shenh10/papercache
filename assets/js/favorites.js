@@ -192,7 +192,7 @@
 
         const { data, error } = await supabase
           .from('favorites')
-          .select('post_url, created_at')
+          .select('id, post_url, created_at, is_read, read_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
@@ -202,6 +202,235 @@
       } catch (error) {
         console.error('获取收藏列表失败:', error);
         return { success: false, error: error.message, favorites: [] };
+      }
+    }
+
+    // 标记论文为已读
+    async function markAsRead(postUrl) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          return { success: false, error: '请先登录' };
+        }
+
+        // 规范化URL，确保与存储格式一致
+        const normalizedUrl = normalizeUrl(postUrl);
+        if (!normalizedUrl || normalizedUrl === '/') {
+          return { success: false, error: '无效的URL' };
+        }
+
+        // 先检查记录是否存在
+        const { data: existingList, error: checkError } = await supabase
+          .from('favorites')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('post_url', normalizedUrl)
+          .limit(1);
+
+        if (checkError) throw checkError;
+
+        // 如果记录不存在，先创建收藏记录
+        if (!existingList || existingList.length === 0) {
+          const { data: newFavorite, error: addError } = await supabase
+            .from('favorites')
+            .insert({
+              user_id: user.id,
+              post_url: normalizedUrl,
+              is_read: true,
+              read_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+          if (addError) throw addError;
+          return { success: true, data: newFavorite };
+        }
+
+        // 记录存在，更新已读状态
+        const { data: updateData, error: updateError } = await supabase
+          .from('favorites')
+          .update({ 
+            is_read: true,
+            read_at: new Date().toISOString()
+          })
+          .eq('id', existingList[0].id)
+          .select()
+          .maybeSingle();
+
+        if (updateError) throw updateError;
+        
+        // 如果更新成功但没有返回数据，重新查询
+        if (!updateData) {
+          const { data: reloadData, error: reloadError } = await supabase
+            .from('favorites')
+            .select('*')
+            .eq('id', existingList[0].id)
+            .maybeSingle();
+          
+          if (reloadError) throw reloadError;
+          return { success: true, data: reloadData };
+        }
+
+        return { success: true, data: updateData };
+      } catch (error) {
+        console.error('标记已读失败:', error);
+        return { success: false, error: error.message };
+      }
+    }
+
+    // 标记论文为未读
+    async function markAsUnread(postUrl) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          return { success: false, error: '请先登录' };
+        }
+
+        // 规范化URL，确保与存储格式一致
+        const normalizedUrl = normalizeUrl(postUrl);
+        if (!normalizedUrl || normalizedUrl === '/') {
+          return { success: false, error: '无效的URL' };
+        }
+
+        // 先检查记录是否存在
+        const { data: existingList, error: checkError } = await supabase
+          .from('favorites')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('post_url', normalizedUrl)
+          .limit(1);
+
+        if (checkError) throw checkError;
+
+        // 如果记录不存在，返回错误（未读状态不需要创建记录）
+        if (!existingList || existingList.length === 0) {
+          return { success: false, error: '记录不存在，请先收藏该文章' };
+        }
+
+        // 记录存在，更新未读状态
+        const { data: updateData, error: updateError } = await supabase
+          .from('favorites')
+          .update({ 
+            is_read: false,
+            read_at: null
+          })
+          .eq('id', existingList[0].id)
+          .select()
+          .maybeSingle();
+
+        if (updateError) throw updateError;
+        
+        // 如果更新成功但没有返回数据，重新查询
+        if (!updateData) {
+          const { data: reloadData, error: reloadError } = await supabase
+            .from('favorites')
+            .select('*')
+            .eq('id', existingList[0].id)
+            .maybeSingle();
+          
+          if (reloadError) throw reloadError;
+          return { success: true, data: reloadData };
+        }
+
+        return { success: true, data: updateData };
+      } catch (error) {
+        console.error('标记未读失败:', error);
+        return { success: false, error: error.message };
+      }
+    }
+
+    // 切换已读状态
+    async function toggleReadStatus(postUrl) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          return { success: false, error: '请先登录' };
+        }
+
+        // 规范化URL，确保与存储格式一致
+        const normalizedUrl = normalizeUrl(postUrl);
+        if (!normalizedUrl || normalizedUrl === '/') {
+          return { success: false, error: '无效的URL' };
+        }
+
+        // 先获取当前状态（不使用 .single()，因为记录可能不存在）
+        const { data: currentDataList, error: fetchError } = await supabase
+          .from('favorites')
+          .select('id, is_read')
+          .eq('user_id', user.id)
+          .eq('post_url', normalizedUrl)
+          .limit(1);
+
+        if (fetchError) {
+          throw fetchError;
+        }
+
+        // 如果记录不存在，先创建收藏记录并设置为已读
+        if (!currentDataList || currentDataList.length === 0) {
+          // 先添加收藏
+          const { data: newFavorite, error: addError } = await supabase
+            .from('favorites')
+            .insert({
+              user_id: user.id,
+              post_url: normalizedUrl,
+              is_read: true,
+              read_at: new Date().toISOString()
+            })
+            .select()
+            .single();
+
+          if (addError) throw addError;
+
+          return { success: true, is_read: true, data: newFavorite };
+        }
+
+        // 记录存在，切换已读状态
+        const currentData = currentDataList[0];
+        const newIsRead = !(currentData?.is_read || false);
+
+        console.log('[favorites.js] 切换已读状态:', {
+          id: currentData.id,
+          currentIsRead: currentData.is_read,
+          newIsRead: newIsRead
+        });
+
+        // 使用 id 进行更新，避免 URL 编码问题
+        const { data: updateData, error: updateError } = await supabase
+          .from('favorites')
+          .update({ 
+            is_read: newIsRead,
+            read_at: newIsRead ? new Date().toISOString() : null
+          })
+          .eq('id', currentData.id)
+          .select()
+          .maybeSingle();
+
+        if (updateError) {
+          console.error('[favorites.js] 更新失败:', updateError);
+          throw updateError;
+        }
+        
+        // 如果更新成功但没有返回数据，重新查询
+        if (!updateData) {
+          console.log('[favorites.js] 更新成功但无返回数据，重新查询');
+          const { data: reloadData, error: reloadError } = await supabase
+            .from('favorites')
+            .select('*')
+            .eq('id', currentData.id)
+            .maybeSingle();
+          
+          if (reloadError) {
+            console.error('[favorites.js] 重新查询失败:', reloadError);
+            throw reloadError;
+          }
+          return { success: true, is_read: newIsRead, data: reloadData };
+        }
+
+        console.log('[favorites.js] 更新成功:', updateData);
+        return { success: true, is_read: newIsRead, data: updateData };
+      } catch (error) {
+        console.error('切换已读状态失败:', error);
+        return { success: false, error: error.message };
       }
     }
 
@@ -670,7 +899,10 @@
       getPostFavoriteCount,
       batchCheckFavorites,
       batchGetFavoriteCounts,
-      batchGetFavoritesWithStatus  // 新增：组合查询函数
+      batchGetFavoritesWithStatus,  // 新增：组合查询函数
+      markAsRead,                   // 新增：标记已读
+      markAsUnread,                 // 新增：标记未读
+      toggleReadStatus              // 新增：切换已读状态
     };
   }
 })();

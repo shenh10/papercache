@@ -47,6 +47,14 @@ permalink: /admin/index.html
         </div>
         
         <div class="stat-card">
+          <div class="stat-icon">❤️</div>
+          <div class="stat-content">
+            <div class="stat-value" id="stat-total-likes">-</div>
+            <div class="stat-label">总点赞数</div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
           <div class="stat-icon">📊</div>
           <div class="stat-content">
             <div class="stat-value" id="stat-total-logs">-</div>
@@ -59,6 +67,7 @@ permalink: /admin/index.html
       <div class="admin-tabs">
         <button class="admin-tab active" onclick="switchTab('users')">用户列表</button>
         <button class="admin-tab" onclick="switchTab('favorites')">收藏统计</button>
+        <button class="admin-tab" onclick="switchTab('likes')">点赞统计</button>
         <button class="admin-tab" onclick="switchTab('logs')">登录日志</button>
         <button class="admin-tab" onclick="switchTab('analytics')">数据分析</button>
       </div>
@@ -138,6 +147,44 @@ permalink: /admin/index.html
             </div>
             <button id="favorites-go-btn" onclick="goToFavoritesPage('goto')" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">跳转</button>
             <button id="favorites-next-btn" onclick="goToFavoritesPage('next')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>下一页</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 点赞统计 -->
+      <div id="tab-likes" class="admin-tab-content">
+        <!-- 点赞统计表格 -->
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>文章标题</th>
+                <th>点赞数</th>
+                <th>最早点赞</th>
+              </tr>
+            </thead>
+            <tbody id="likes-table-body">
+              <tr>
+                <td colspan="3" class="table-loading">加载中...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- 分页控件 -->
+        <div id="likes-pagination" style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding: 0.75rem 0;">
+          <div style="color: #64748b; font-size: 0.9rem;">
+            <span id="likes-pagination-info">共 0 条记录</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <button id="likes-prev-btn" onclick="goToLikesPage('prev')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>上一页</button>
+            <div style="display: flex; align-items: center; gap: 0.25rem;">
+              <span style="color: #64748b; font-size: 0.9rem;">第</span>
+              <input type="number" id="likes-page-input" min="1" value="1" style="width: 60px; padding: 0.4rem; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; font-size: 0.9rem;" onkeypress="if(event.key === 'Enter') goToLikesPage('goto')">
+              <span style="color: #64748b; font-size: 0.9rem;">页，共 <span id="likes-total-pages">1</span> 页</span>
+            </div>
+            <button id="likes-go-btn" onclick="goToLikesPage('goto')" class="btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;">跳转</button>
+            <button id="likes-next-btn" onclick="goToLikesPage('next')" class="btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;" disabled>下一页</button>
           </div>
         </div>
       </div>
@@ -654,7 +701,6 @@ permalink: /admin/index.html
           }{%- if forloop.last == false -%},{%- endif -%}
         {%- endfor -%}
         ];
-        console.log('[Admin] 预加载论文数据:', window.PAPERCACHE_POSTS.length, '篇');
       }
     } catch (e) {
       console.error('[Admin] 预加载论文数据失败', e);
@@ -664,7 +710,6 @@ permalink: /admin/index.html
 
   // 检查管理员权限
   async function checkAdminAccess() {
-    console.log('[Admin] 开始检查管理员权限');
     const authCheck = document.getElementById('admin-auth-check');
     const unauthorized = document.getElementById('admin-unauthorized');
     const adminPanel = document.getElementById('admin-panel');
@@ -694,14 +739,10 @@ permalink: /admin/index.html
       return false;
     }
     
-    console.log('[Admin] SimpleAuth 已加载，获取当前用户');
-    
     // 使用 SimpleAuth 获取当前用户
     const user = window.SimpleAuth?.getCurrentUser();
-    console.log('[Admin] 当前用户:', user?.email || '未登录');
     
     if (!user) {
-      console.log('[Admin] 用户未登录');
       authCheck.style.display = 'none';
       unauthorized.style.display = 'block';
       unauthorized.innerHTML = `
@@ -740,7 +781,6 @@ permalink: /admin/index.html
         // 如果函数不存在，尝试使用旧的配置文件方式（向后兼容）
         const adminEmails = {{ site.admin.admin_emails | jsonify }};
         isAdmin = adminEmails && adminEmails.includes(user.email);
-        console.warn('[Admin] 使用配置文件检查管理员权限（向后兼容）');
       } else {
         isAdmin = adminCheckData || false;
       }
@@ -749,14 +789,9 @@ permalink: /admin/index.html
       // 降级到配置文件方式
       const adminEmails = {{ site.admin.admin_emails | jsonify }};
       isAdmin = adminEmails && adminEmails.includes(user.email);
-      console.warn('[Admin] 使用配置文件检查管理员权限（向后兼容）');
     }
-
-    console.log('[Admin] 用户邮箱:', user.email);
-    console.log('[Admin] 是否是管理员:', isAdmin);
     
     if (!isAdmin) {
-      console.log('[Admin] 用户不是管理员');
       authCheck.style.display = 'none';
       unauthorized.style.display = 'block';
       unauthorized.innerHTML = `
@@ -768,14 +803,12 @@ permalink: /admin/index.html
       return false;
     }
     
-    console.log('[Admin] ✅ 权限验证通过，显示管理面板');
     
     // 显示管理面板
     authCheck.style.display = 'none';
     adminPanel.style.display = 'block';
     
     // 加载数据
-    console.log('[Admin] 开始加载管理数据');
     loadAdminData();
     
     return true;
@@ -792,9 +825,11 @@ permalink: /admin/index.html
     await Promise.all([
       loadUserStats(),
       loadFavoritesStats(),
+      loadLikesStats(),
       loadLoginLogsStats(),
       loadUsersTable(),
       loadFavoritesTable(),
+      loadLikesTable(),
       loadLogsTable(),
       loadAnalyticsData()
     ]);
@@ -890,7 +925,6 @@ permalink: /admin/index.html
         .select('*', { count: 'exact', head: true });
 
       if (error) {
-        console.warn('[Admin] 无法查询用户数:', error);
         statEl.textContent = '-';
       } else {
         statEl.textContent = count || 0;
@@ -919,17 +953,43 @@ permalink: /admin/index.html
         .rpc('get_total_favorites_count');
 
       if (error) {
-        console.warn('[Admin] 无法查询收藏数:', error);
-        console.warn('[Admin] 错误详情:', error.message);
-        console.warn('[Admin] 提示：请确保已在 Supabase 中执行 get_total_favorites_count() 函数');
+        // 错误已在catch块中处理
         statEl.textContent = '-';
       } else {
         const totalCount = data || 0;
         statEl.textContent = totalCount;
-        console.log('[Admin] 总收藏数:', totalCount);
       }
     } catch (error) {
       console.error('[Admin] 加载收藏统计失败:', error);
+      statEl.textContent = '错误';
+    }
+  }
+  
+  // 加载点赞统计
+  // 使用 SECURITY DEFINER 函数绕过 RLS 策略限制，获取所有用户的总点赞数
+  async function loadLikesStats() {
+    const statEl = document.getElementById('stat-total-likes');
+    if (!statEl) return;
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      statEl.textContent = '未初始化';
+      return;
+    }
+
+    try {
+      // 使用 RPC 函数统计总点赞数（绕过 RLS 策略）
+      const { data, error } = await supabase
+        .rpc('get_total_likes_count');
+
+      if (error) {
+        statEl.textContent = '-';
+      } else {
+        const totalCount = data || 0;
+        statEl.textContent = totalCount;
+      }
+    } catch (error) {
+      console.error('[Admin] 加载点赞统计失败:', error);
       statEl.textContent = '错误';
     }
   }
@@ -952,14 +1012,11 @@ permalink: /admin/index.html
         .rpc('get_total_login_logs_count');
 
       if (error) {
-        console.warn('[Admin] 无法查询登录记录数:', error);
-        console.warn('[Admin] 错误详情:', error.message);
-        console.warn('[Admin] 提示：请确保已在 Supabase 中执行 get_total_login_logs_count() 函数');
+        // 错误已在catch块中处理
         statEl.textContent = '-';
       } else {
         const totalCount = data || 0;
         statEl.textContent = totalCount;
-        console.log('[Admin] 总登录记录数:', totalCount);
       }
     } catch (error) {
       console.error('[Admin] 加载登录日志统计失败:', error);
@@ -1088,7 +1145,6 @@ permalink: /admin/index.html
         .rpc('get_users_count');
 
       if (countError) {
-        console.warn('[Admin] 获取用户总数失败:', countError);
         // 如果获取总数失败，不更新totalCount，保持当前值
       } else {
         usersPaginationState.totalCount = countData || 0;
@@ -1108,7 +1164,6 @@ permalink: /admin/index.html
 
       if (error) {
         console.error('[Admin] 加载用户列表失败:', error);
-        console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_users_with_admin_status() 函数');
         tbody.innerHTML = '<tr><td colspan="6" class="table-message">加载失败：' + error.message + '</td></tr>';
         return;
       }
@@ -1474,7 +1529,6 @@ permalink: /admin/index.html
 
       if (error) {
         console.error('[Admin] 加载收藏统计失败:', error);
-        console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_favorites_stats_by_post() 函数');
         tbody.innerHTML = '<tr><td colspan="3" class="table-message">加载失败：' + error.message + '</td></tr>';
         return;
       }
@@ -1508,6 +1562,180 @@ permalink: /admin/index.html
       favoritesPaginationState.totalCount = 0;
       favoritesPaginationState.allStats = [];
       updateFavoritesPaginationInfo();
+    }
+  }
+  
+  // 点赞统计分页状态（存储在window对象上，避免Turbolinks重复声明）
+  if (!window.likesPaginationState) {
+    window.likesPaginationState = {
+      currentPage: 1,
+      pageSize: 20,
+      totalCount: 0,
+      allStats: []
+    };
+  }
+  const likesPaginationState = window.likesPaginationState;
+
+  // 更新点赞统计分页信息
+  function updateLikesPaginationInfo() {
+    const totalPages = Math.ceil(likesPaginationState.totalCount / likesPaginationState.pageSize);
+    const infoEl = document.getElementById('likes-pagination-info');
+    const totalPagesEl = document.getElementById('likes-total-pages');
+    const pageInput = document.getElementById('likes-page-input');
+    const prevBtn = document.getElementById('likes-prev-btn');
+    const nextBtn = document.getElementById('likes-next-btn');
+
+    if (infoEl) {
+      infoEl.textContent = `共 ${likesPaginationState.totalCount} 条记录`;
+    }
+    if (totalPagesEl) {
+      totalPagesEl.textContent = totalPages || 1;
+    }
+    if (pageInput) {
+      pageInput.value = likesPaginationState.currentPage;
+      pageInput.max = totalPages || 1;
+    }
+
+    // 更新上一页/下一页按钮状态
+    if (prevBtn) {
+      if (likesPaginationState.currentPage <= 1) {
+        prevBtn.disabled = true;
+        prevBtn.style.opacity = '0.5';
+        prevBtn.style.cursor = 'not-allowed';
+      } else {
+        prevBtn.disabled = false;
+        prevBtn.style.opacity = '1';
+        prevBtn.style.cursor = 'pointer';
+      }
+    }
+    if (nextBtn) {
+      if (likesPaginationState.currentPage >= totalPages) {
+        nextBtn.disabled = true;
+        nextBtn.style.opacity = '0.5';
+        nextBtn.style.cursor = 'not-allowed';
+      } else {
+        nextBtn.disabled = false;
+        nextBtn.style.opacity = '1';
+        nextBtn.style.cursor = 'pointer';
+      }
+    }
+  }
+
+  // 点赞统计分页导航
+  function goToLikesPage(action) {
+    const { currentPage, pageSize, totalCount } = likesPaginationState;
+    const totalPages = Math.ceil(totalCount / pageSize);
+    let targetPage = currentPage;
+
+    if (action === 'prev') {
+      targetPage = Math.max(1, currentPage - 1);
+    } else if (action === 'next') {
+      targetPage = Math.min(totalPages, currentPage + 1);
+    } else if (action === 'goto') {
+      const pageInput = document.getElementById('likes-page-input');
+      if (pageInput) {
+        const inputPage = parseInt(pageInput.value);
+        if (!isNaN(inputPage) && inputPage >= 1 && inputPage <= totalPages) {
+          targetPage = inputPage;
+        } else {
+          alert(`请输入有效的页码（1-${totalPages}）`);
+          pageInput.value = currentPage;
+          return;
+        }
+      }
+    }
+
+    if (targetPage !== currentPage) {
+      likesPaginationState.currentPage = targetPage;
+      renderLikesTable();
+    }
+  }
+
+  // 渲染点赞统计表（分页）
+  function renderLikesTable() {
+    const tbody = document.getElementById('likes-table-body');
+    if (!tbody) return;
+
+    const { currentPage, pageSize, allStats } = likesPaginationState;
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const pageData = allStats.slice(startIndex, endIndex);
+
+    if (pageData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" class="table-message">暂无数据</td></tr>';
+      updateLikesPaginationInfo();
+      return;
+    }
+
+    let html = '';
+    pageData.forEach(stat => {
+      const date = stat.firstLiked ? new Date(stat.firstLiked).toLocaleDateString('zh-CN') : '-';
+      html += `
+      <tr>
+        <td>
+          <a href="${stat.url}" target="_blank" class="admin-url-link">${stat.url}</a>
+          <div class="admin-url-hint">${stat.url.length > 60 ? stat.url.substring(0, 60) + '...' : stat.url}</div>
+        </td>
+        <td>${stat.count}</td>
+        <td>${date}</td>
+      </tr>`;
+    });
+    tbody.innerHTML = html;
+    updateLikesPaginationInfo();
+  }
+
+  // 加载点赞统计表
+  async function loadLikesTable() {
+    const tbody = document.getElementById('likes-table-body');
+    if (!tbody) return;
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      tbody.innerHTML = '<tr><td colspan="3" class="table-message">Supabase客户端未初始化</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '<tr><td colspan="3" class="table-loading">加载中...</td></tr>';
+
+    try {
+      // 使用 RPC 函数获取点赞统计（绕过 RLS 策略）
+      const { data, error } = await supabase
+        .rpc('get_likes_stats_by_post');
+
+      if (error) {
+        console.error('[Admin] 加载点赞统计失败:', error);
+        tbody.innerHTML = '<tr><td colspan="3" class="table-message">加载失败：' + error.message + '</td></tr>';
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="table-message">暂无点赞数据</td></tr>';
+        likesPaginationState.totalCount = 0;
+        likesPaginationState.allStats = [];
+        updateLikesPaginationInfo();
+        return;
+      }
+
+      // 转换数据格式以匹配渲染函数
+      const sortedStats = data.map(item => ({
+        url: item.post_url,
+        count: item.like_count,
+        firstLiked: item.first_liked
+      }));
+
+      // 缓存所有数据
+      likesPaginationState.allStats = sortedStats;
+      likesPaginationState.totalCount = sortedStats.length;
+      likesPaginationState.currentPage = 1; // 重置到第一页
+
+      // 渲染第一页
+      renderLikesTable();
+    } catch (error) {
+      console.error('[Admin] 加载点赞统计异常:', error);
+      tbody.innerHTML = '<tr><td colspan="3" class="table-message">加载失败</td></tr>';
+      likesPaginationState.totalCount = 0;
+      likesPaginationState.allStats = [];
+      updateLikesPaginationInfo();
     }
   }
   
@@ -1605,7 +1833,6 @@ permalink: /admin/index.html
         });
 
       if (countError) {
-        console.warn('[Admin] 获取登录日志总数失败:', countError);
         // 如果获取总数失败，不更新totalCount，保持当前值
       } else {
         logsPaginationState.totalCount = countData || 0;
@@ -1624,7 +1851,6 @@ permalink: /admin/index.html
 
       if (error) {
         console.error('[Admin] 加载登录日志失败:', error);
-        console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_login_logs_with_email() 函数');
         tbody.innerHTML = '<tr><td colspan="5" class="table-message">加载失败：' + error.message + '</td></tr>';
         // 确保totalCount已更新（如果获取总数失败，这里可能是0）
         updateLogsPaginationInfo();
@@ -1766,6 +1992,11 @@ permalink: /admin/index.html
       content.classList.remove('active');
     });
     document.getElementById('tab-' + tabName).classList.add('active');
+    
+    // 如果切换到点赞统计标签页，加载点赞统计表
+    if (tabName === 'likes') {
+      loadLikesTable();
+    }
 
     // 如果切换到用户列表标签页，重置分页并加载数据
     if (tabName === 'users') {
@@ -1863,24 +2094,17 @@ permalink: /admin/index.html
     try {
       // 今日DAU（使用本地日期，注意时区）
       const today = new Date().toISOString().split('T')[0];
-      console.log('[Admin] 查询今日DAU（UTC日期）:', today);
-      console.log('[Admin] 本地时间:', new Date().toLocaleString('zh-CN'));
       const todayDAU = await window.AdminAnalytics.getDailyActiveUsers(today);
-      console.log('[Admin] 今日DAU结果:', todayDAU);
       document.getElementById('dau-today').textContent = todayDAU !== null && todayDAU !== undefined ? todayDAU : 0;
 
       // 昨日DAU
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      console.log('[Admin] 查询昨日DAU:', yesterday);
       const yesterdayDAU = await window.AdminAnalytics.getDailyActiveUsers(yesterday);
-      console.log('[Admin] 昨日DAU结果:', yesterdayDAU);
       document.getElementById('dau-yesterday').textContent = yesterdayDAU !== null && yesterdayDAU !== undefined ? yesterdayDAU : 0;
 
       // 7日均值
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      console.log('[Admin] 查询7日DAU范围:', sevenDaysAgo, '到', today);
       const dauData = await window.AdminAnalytics.getActiveUsersInRange(sevenDaysAgo, today);
-      console.log('[Admin] 7日DAU数据:', dauData);
       if (dauData && Array.isArray(dauData) && dauData.length > 0) {
         const avg = Math.round(dauData.reduce((sum, d) => sum + (d.active_users || 0), 0) / dauData.length);
         document.getElementById('dau-7days-avg').textContent = avg;
@@ -1889,7 +2113,6 @@ permalink: /admin/index.html
       }
     } catch (error) {
       console.error('[Admin] Failed to load DAU stats:', error);
-      console.error('[Admin] Error details:', error.message, error.stack);
       document.getElementById('dau-today').textContent = '错误';
       document.getElementById('dau-yesterday').textContent = '错误';
       document.getElementById('dau-7days-avg').textContent = '错误';
@@ -1930,13 +2153,11 @@ permalink: /admin/index.html
       document.getElementById('dau-end-date').value = endDate;
     }
 
-    console.log('[Admin] 查询DAU图表，日期范围:', startDate, '到', endDate);
     container.innerHTML = '<div class="chart-loading">加载中...</div>';
 
     try {
       // 获取所有数据（客户端分页）
       const allData = await window.AdminAnalytics.getActiveUsersInRange(startDate, endDate);
-      console.log('[Admin] DAU图表数据:', allData);
       
       if (!allData || allData.length === 0) {
         container.innerHTML = '<div class="chart-message">暂无数据</div>';
@@ -2389,7 +2610,6 @@ permalink: /admin/index.html
 
       if (error) {
         console.error('[Admin] 加载活跃用户统计失败:', error);
-        console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_comprehensive_active_users_stats_by_date() 函数');
         tbody.innerHTML = '<tr><td colspan="9" class="table-message">加载失败：' + error.message + '</td></tr>';
         updateActiveUsersStatsPaginationUI();
         return;
@@ -2677,7 +2897,6 @@ permalink: /admin/index.html
         });
 
       if (countError) {
-        console.warn('[Admin] 获取活跃用户名单总数失败:', countError);
         // 如果获取总数失败，不更新totalCount，保持当前值
       } else {
         activeUsersListPaginationState.totalCount = countData || 0;
@@ -2698,7 +2917,6 @@ permalink: /admin/index.html
 
       if (error) {
         console.error('[Admin] 加载活跃用户名单失败:', error);
-        console.warn('[Admin] 提示：如果函数不存在，请在 Supabase 中执行 get_comprehensive_active_users_list() 函数');
         tbody.innerHTML = '<tr><td colspan="11" class="table-message">加载失败：' + error.message + '</td></tr>';
         // 确保totalCount已更新（如果获取总数失败，这里可能是0）
         updateActiveUsersListPaginationInfo();
@@ -3158,7 +3376,6 @@ permalink: /admin/index.html
   // 刷新页面浏览记录（使用当前页码）
   async function refreshPageviews() {
     if (!window.currentViewingUserId) {
-      console.warn('[Admin] 没有正在查看的用户');
       return;
     }
     const limit = parseInt(document.getElementById('pageviews-limit')?.value || '10');
@@ -3391,7 +3608,6 @@ permalink: /admin/index.html
   
   // 页面加载时检查权限
   function initAdminPage() {
-    console.log('[Admin] 初始化管理页面');
     // 使用 setTimeout 确保所有脚本都已加载
     setTimeout(() => {
       checkAdminAccess().catch(error => {
