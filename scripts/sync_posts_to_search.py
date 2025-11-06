@@ -109,16 +109,24 @@ def load_collection_data() -> List[Dict]:
                     # 使用论文自带的 categories，如果没有则使用收集的分类
                     paper_categories = post.get('categories', current_categories.copy())
                     
-                    # 提取摘要：如果包含"主要贡献"，提取"主要贡献"后面的全部内容
+                    # 提取摘要：提取"主要贡献"到"背景知识"之间的完整内容
                     raw_excerpt = excerpts_data.get(url, '')
                     excerpt = raw_excerpt
                     if raw_excerpt and '主要贡献' in raw_excerpt:
-                        # 找到"主要贡献"的位置，提取后面的全部内容
-                        idx = raw_excerpt.find('主要贡献')
-                        if idx != -1:
-                            # 提取"主要贡献"后面的内容（去掉"主要贡献"这4个字）
-                            excerpt = raw_excerpt[idx + 4:].strip()
-                            # 如果后面还有冒号、中文冒号或连接词，也去掉
+                        # 找到"主要贡献"的位置
+                        idx_start = raw_excerpt.find('主要贡献')
+                        if idx_start != -1:
+                            # 找到"背景知识"的位置（如果存在）
+                            idx_end = raw_excerpt.find('背景知识', idx_start + 4)
+                            
+                            if idx_end != -1:
+                                # 提取"主要贡献"到"背景知识"之间的内容
+                                excerpt = raw_excerpt[idx_start + 4:idx_end].strip()
+                            else:
+                                # 如果没有"背景知识"，提取"主要贡献"后面的全部内容
+                                excerpt = raw_excerpt[idx_start + 4:].strip()
+                            
+                            # 清理开头：去掉冒号、中文冒号或连接词
                             if excerpt.startswith('：'):
                                 excerpt = excerpt[1:].strip()
                             elif excerpt.startswith(':'):
@@ -131,6 +139,9 @@ def load_collection_data() -> List[Dict]:
                                 excerpt = excerpt[2:].strip()
                             elif excerpt.startswith('为'):
                                 excerpt = excerpt[1:].strip()
+                            
+                            # 清理结尾：去掉可能的换行、空格等
+                            excerpt = excerpt.rstrip()
                     
                     papers.append({
                         'url': url,
