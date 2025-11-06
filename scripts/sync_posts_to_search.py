@@ -8,6 +8,7 @@ import os
 import sys
 import json
 import yaml
+import re
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Optional, Set
@@ -113,32 +114,14 @@ def load_collection_data() -> List[Dict]:
                     raw_excerpt = excerpts_data.get(url, '')
                     excerpt = raw_excerpt
                     if raw_excerpt and '主要贡献' in raw_excerpt:
-                        # 找到"主要贡献"的位置
-                        idx_start = raw_excerpt.find('主要贡献')
-                        if idx_start != -1:
-                            # 找到"背景知识"的位置（如果存在）
-                            idx_end = raw_excerpt.find('背景知识', idx_start + 4)
-                            
-                            if idx_end != -1:
-                                # 提取"主要贡献"到"背景知识"之间的内容
-                                excerpt = raw_excerpt[idx_start + 4:idx_end].strip()
-                            else:
-                                # 如果没有"背景知识"，提取"主要贡献"后面的全部内容
-                                excerpt = raw_excerpt[idx_start + 4:].strip()
-                            
-                            # 清理开头：去掉冒号、中文冒号或连接词
-                            if excerpt.startswith('：'):
-                                excerpt = excerpt[1:].strip()
-                            elif excerpt.startswith(':'):
-                                excerpt = excerpt[1:].strip()
-                            elif excerpt.startswith('如下：'):
-                                excerpt = excerpt[4:].strip()
-                            elif excerpt.startswith('如下'):
-                                excerpt = excerpt[2:].strip()
-                            elif excerpt.startswith('为：'):
-                                excerpt = excerpt[2:].strip()
-                            elif excerpt.startswith('为'):
-                                excerpt = excerpt[1:].strip()
+                        # 匹配"主要贡献"后面可以跟冒号、连接词等，然后是实际内容
+                        # 支持：主要贡献：、主要贡献如下：、主要贡献为：等格式
+                        pattern = r'主要贡献(?:如下|为)?[：:]\s*(.*?)(?=背景知识|$)'
+                        match = re.search(pattern, raw_excerpt, re.DOTALL)
+                        
+                        if match:
+                            # 提取匹配的内容
+                            excerpt = match.group(1).strip()
                             
                             # 清理结尾：去掉可能的换行、空格等
                             excerpt = excerpt.rstrip()
