@@ -111,6 +111,28 @@
     return initSupabase();
   };
 
+  // 同时导出到 window.supabaseClient（兼容性）
+  // 监听初始化完成事件
+  function setSupabaseClient() {
+    const client = window.getSupabaseClient();
+    if (client) {
+      window.supabaseClient = client;
+    }
+  }
+  
+  // 延迟设置，确保初始化完成
+  setTimeout(setSupabaseClient, 100);
+  
+  // 如果 DOM 已经加载，立即尝试设置
+  if (document.readyState === 'complete' || document.readyState === 'interactive') {
+    setTimeout(setSupabaseClient, 500);
+  }
+  
+  // 监听 DOMContentLoaded 事件
+  document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(setSupabaseClient, 300);
+  });
+
   // 页面加载完成后初始化
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initSupabase);

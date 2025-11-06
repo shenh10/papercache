@@ -8,12 +8,21 @@
 
   // 等待 Supabase 客户端初始化
   function initSupabaseSearchService() {
-    if (!window.supabaseClient) {
+    // 尝试多种方式获取 Supabase 客户端
+    let supabase = null;
+    
+    if (window.supabaseClient) {
+      supabase = window.supabaseClient;
+    } else if (window._supabaseClientInstance) {
+      supabase = window._supabaseClientInstance;
+    } else if (window.getSupabaseClient && typeof window.getSupabaseClient === 'function') {
+      supabase = window.getSupabaseClient();
+    }
+    
+    if (!supabase) {
       console.warn('[supabase-search] Supabase 客户端未初始化，搜索功能不可用');
       return null;
     }
-
-    const supabase = window.supabaseClient;
 
     /**
      * 搜索论文（模糊搜索，支持中文）
@@ -144,17 +153,36 @@
   function waitForSupabase() {
     return new Promise((resolve) => {
       let attempts = 0;
-      const maxAttempts = 50; // 最多等待5秒
+      const maxAttempts = 100; // 最多等待10秒
+
+      // 检查 Supabase 客户端是否可用
+      function checkSupabaseClient() {
+        if (window.supabaseClient || 
+            window._supabaseClientInstance || 
+            (window.getSupabaseClient && window.getSupabaseClient())) {
+          return true;
+        }
+        return false;
+      }
 
       const checkInterval = setInterval(() => {
         attempts++;
-        if (window.supabaseClient) {
+        
+        // 尝试获取客户端
+        if (checkSupabaseClient()) {
           clearInterval(checkInterval);
           const service = initSupabaseSearchService();
           resolve(service);
         } else if (attempts >= maxAttempts) {
           clearInterval(checkInterval);
-          console.warn('[supabase-search] Supabase 客户端初始化超时');
+          console.warn('[supabase-search] Supabase 客户端初始化超时（尝试了', attempts, '次）');
+          console.warn('[supabase-search] 检查配置:', {
+            hasSupabaseClient: !!window.supabaseClient,
+            hasSupabaseInstance: !!window._supabaseClientInstance,
+            hasGetSupabaseClient: typeof window.getSupabaseClient === 'function',
+            hasSiteConfig: !!window.siteConfig,
+            hasSupabaseConfig: !!(window.siteConfig && window.siteConfig.supabase)
+          });
           resolve(null);
         }
       }, 100);
@@ -162,14 +190,30 @@
   }
 
   // 初始化服务
-  waitForSupabase().then(service => {
-    if (service) {
-      window.SupabaseSearchService = service;
-      console.log('[supabase-search] ✅ Supabase 搜索服务已初始化');
-    } else {
-      console.warn('[supabase-search] ⚠️  Supabase 搜索服务初始化失败');
-    }
-  });
+  function initializeService() {
+    waitForSupabase().then(service => {
+      if (service) {
+        window.SupabaseSearchService = service;
+        console.log('[supabase-search] ✅ Supabase 搜索服务已初始化');
+      } else {
+        console.warn('[supabase-search] ⚠️  Supabase 搜索服务初始化失败');
+        // 即使初始化失败，也设置一个空对象，避免后续调用出错
+        window.SupabaseSearchService = {
+          searchPapers: async () => ({ success: false, error: 'Supabase 未初始化', results: [] }),
+          getPostInfo: async () => null,
+          batchGetPostInfo: async () => []
+        };
+      }
+    });
+  }
+
+  // 如果 DOM 已加载，立即初始化
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeService);
+  } else {
+    // DOM 已加载，延迟一点确保其他脚本已运行
+    setTimeout(initializeService, 200);
+  }
 
 })();
 
