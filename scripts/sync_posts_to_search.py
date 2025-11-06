@@ -17,13 +17,9 @@ from typing import Dict, List, Optional, Set
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-# 从环境变量获取 Supabase 配置
+# 从环境变量获取 Supabase 配置（仅在需要同步时检查）
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
-
-if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
-    print("❌ 错误: 请设置 SUPABASE_URL 和 SUPABASE_SERVICE_KEY 环境变量")
-    sys.exit(1)
 
 import requests
 
@@ -156,8 +152,150 @@ def load_collection_data() -> List[Dict]:
             extract_papers(category_data, [], category_name)
     return papers
 
+def export_extracted_excerpts(output_file='extracted_excerpts.json'):
+    """导出提取的摘要结果到文件"""
+    print("📝 开始提取摘要数据...")
+    
+    # 直接加载原始数据，不应用提取逻辑
+    collection_path = PROJECT_ROOT / "_data" / "collection_structure.yml"
+    excerpts_path = PROJECT_ROOT / "assets" / "data" / "excerpts.json"
+    
+    if not collection_path.exists():
+        print(f"❌ 错误: {collection_path} 不存在")
+        return
+    
+    if not excerpts_path.exists():
+        print(f"⚠️  警告: {excerpts_path} 不存在")
+        excerpts_data = {}
+    else:
+        with open(excerpts_path, 'r', encoding='utf-8') as f:
+            excerpts_data = json.load(f)
+    
+    with open(collection_path, 'r', encoding='utf-8') as f:
+        collection_data = yaml.safe_load(f)
+    
+    papers = []
+    
+    def extract_papers(node, categories=None, category_name=None):
+        if categories is None:
+            categories = []
+        current_categories = categories.copy()
+        if category_name:
+            current_categories.append(category_name)
+        if isinstance(node, dict) and 'posts' in node:
+            for post in node.get('posts', []):
+                url = normalize_url(post.get('url', ''))
+                if url:
+                    paper_categories = post.get('categories', current_categories.copy())
+                    papers.append({
+                        'url': url,
+                        'title': post.get('title', ''),
+                        'categories': paper_categories,
+                        'tag': post.get('tag', ''),
+                        'date': extract_date_from_url(url) or post.get('date')
+                    })
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key != 'posts' and isinstance(value, dict):
+                    extract_papers(value, current_categories, key)
+    
+    if isinstance(collection_data, dict):
+        for category_name, category_data in collection_data.items():
+            extract_papers(category_data, [], category_name)
+    
+    if not papers:
+        print("❌ 错误: 没有找到论文数据")
+        return
+    
+    print(f"📚 找到 {len(papers)} 篇论文")
+    
+    # 统计信息
+    stats = {
+        'total': len(papers),
+        'has_contribution_marker': 0,
+        'has_background_marker': 0,
+        'has_method_marker': 0,
+        'extracted_from_contribution': 0,
+        'full_excerpt': 0
+    }
+    
+    # 准备导出数据
+    export_data = []
+    
+    for paper in papers:
+        # 从原始 excerpts_data 读取原始摘要
+        raw_excerpt = excerpts_data.get(paper['url'], '')
+        extracted_excerpt = raw_excerpt  # 默认使用原始摘要
+        
+        # 检查是否有"主要贡献"标记
+        if '主要贡献' in raw_excerpt:
+            stats['has_contribution_marker'] += 1
+            
+            # 尝试提取
+            pattern = r'(?:A\d+\s+|[0-9]+\s+)?主要贡献(?:如下|为)?[：:]\s*(.*?)(?=\s*(?:A\d+\s+|[0-9]+\s+)?(?:背景知识|方法细节)[：:\n]|$)'
+            match = re.search(pattern, raw_excerpt, re.DOTALL)
+            if match:
+                extracted_excerpt = match.group(1).strip().rstrip()
+                stats['extracted_from_contribution'] += 1
+                
+                # 检查结束标记（在原始摘要中查找）
+                if '背景知识' in raw_excerpt:
+                    stats['has_background_marker'] += 1
+                elif '方法细节' in raw_excerpt:
+                    stats['has_method_marker'] += 1
+        else:
+            stats['full_excerpt'] += 1
+        
+        export_data.append({
+            'url': paper['url'],
+            'title': paper['title'],
+            'raw_excerpt': raw_excerpt,
+            'extracted_excerpt': extracted_excerpt,
+            'excerpt_length': len(raw_excerpt),
+            'extracted_length': len(extracted_excerpt),
+            'is_extracted': extracted_excerpt != raw_excerpt
+        })
+    
+    # 保存到文件
+    output_path = PROJECT_ROOT / output_file
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump({
+            'stats': stats,
+            'papers': export_data
+        }, f, ensure_ascii=False, indent=2)
+    
+    print(f"\n✅ 导出完成:")
+    print(f"   - 文件: {output_path}")
+    print(f"   - 总论文数: {stats['total']} 篇")
+    print(f"   - 包含\"主要贡献\"标记: {stats['has_contribution_marker']} 篇")
+    print(f"   - 成功提取: {stats['extracted_from_contribution']} 篇")
+    print(f"   - 包含\"背景知识\"标记: {stats['has_background_marker']} 篇")
+    print(f"   - 包含\"方法细节\"标记: {stats['has_method_marker']} 篇")
+    print(f"   - 使用完整摘要: {stats['full_excerpt']} 篇")
+    
+    # 显示一些示例
+    print(f"\n📋 示例（前5篇包含\"主要贡献\"的论文）:")
+    count = 0
+    for paper_data in export_data:
+        if paper_data['is_extracted']:
+            count += 1
+            print(f"\n示例 {count}:")
+            print(f"  URL: {paper_data['url'][:60]}...")
+            print(f"  标题: {paper_data['title'][:50]}...")
+            print(f"  原始摘要长度: {paper_data['excerpt_length']}")
+            print(f"  提取后长度: {paper_data['extracted_length']}")
+            print(f"  原始摘要: {paper_data['raw_excerpt'][:100]}...")
+            print(f"  提取后: {paper_data['extracted_excerpt'][:100]}...")
+            if count >= 5:
+                break
+
 def sync_posts_to_search():
     """同步论文数据到搜索表"""
+    # 检查环境变量
+    if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
+        print("❌ 错误: 请设置 SUPABASE_URL 和 SUPABASE_SERVICE_KEY 环境变量")
+        sys.exit(1)
+    
     print("🚀 开始同步论文数据到 Supabase posts_search 表...")
     
     papers = load_collection_data()
@@ -209,5 +347,10 @@ def sync_posts_to_search():
     print(f"   - 总计: {len(papers)} 篇")
 
 if __name__ == "__main__":
-    sync_posts_to_search()
+    import sys
+    # 如果命令行参数包含 --export，则导出到文件
+    if '--export' in sys.argv or len(sys.argv) > 1 and sys.argv[1] == 'export':
+        export_extracted_excerpts()
+    else:
+        sync_posts_to_search()
 
