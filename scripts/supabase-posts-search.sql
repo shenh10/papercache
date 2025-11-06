@@ -187,9 +187,17 @@ BEGIN
         array_to_string(ps.categories, ' ') LIKE '%' || LOWER(p_query) || '%'
       )
   )
-  SELECT * FROM scored_posts
-  WHERE match_score > 0 OR (p_query IS NULL OR p_query = '')
-  ORDER BY match_score DESC, published_date DESC NULLS LAST
+  SELECT 
+    scored_posts.post_url,
+    scored_posts.title,
+    scored_posts.excerpt,
+    scored_posts.categories,
+    scored_posts.tag,
+    scored_posts.published_date,
+    scored_posts.match_score
+  FROM scored_posts
+  WHERE scored_posts.match_score > 0 OR (p_query IS NULL OR p_query = '')
+  ORDER BY scored_posts.match_score DESC, scored_posts.published_date DESC NULLS LAST
   LIMIT p_limit;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
