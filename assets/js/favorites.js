@@ -13,18 +13,45 @@
   const supabase = getSupabaseClient();
   
   if (!supabase) {
-    console.warn('Supabase客户端未初始化，等待初始化...');
-    // 更快速地等待客户端初始化，最多等待500ms
+    // 等待客户端初始化，最多等待5秒（50次检查）
     let waitCount = 0;
+    const maxWait = 50;
     const checkInterval = setInterval(() => {
       waitCount++;
       const client = getSupabaseClient();
       if (client) {
         clearInterval(checkInterval);
         initFavoritesService(client);
-      } else if (waitCount > 5) { // 减少到500ms
+      } else if (waitCount >= maxWait) {
         clearInterval(checkInterval);
-        console.error('Supabase客户端初始化超时，收藏功能不可用');
+        // 即使超时，也尝试延迟初始化（可能客户端稍后可用）
+        setTimeout(() => {
+          const delayedClient = getSupabaseClient();
+          if (delayedClient) {
+            initFavoritesService(delayedClient);
+          } else {
+            // 如果延迟初始化也失败，创建一个占位服务，避免页面报错
+            // 这样至少 window.favoritesService 会存在
+            if (!window.favoritesService) {
+              initFavoritesService(null); // 传入 null，让函数内部处理
+            }
+            // 继续在后台尝试获取客户端（最多再尝试30秒）
+            let retryCount = 0;
+            const maxRetries = 300; // 30秒
+            const retryInterval = setInterval(() => {
+              retryCount++;
+              const retryClient = getSupabaseClient();
+              if (retryClient) {
+                clearInterval(retryInterval);
+                console.log('[favorites.js] Supabase 客户端已可用，重新初始化服务');
+                initFavoritesService(retryClient);
+              } else if (retryCount >= maxRetries) {
+                clearInterval(retryInterval);
+                console.warn('[favorites.js] 后台重试超时，服务将保持为占位模式');
+              }
+            }, 100);
+          }
+        }, 2000);
       }
     }, 100);
     return;
@@ -33,6 +60,26 @@
   initFavoritesService(supabase);
   
   function initFavoritesService(supabase) {
+    // 如果 supabase 为 null，创建一个占位服务，避免页面报错
+    if (!supabase) {
+      console.warn('[favorites.js] Supabase 客户端未初始化，创建占位服务');
+      window.favoritesService = {
+        favoritePost: async () => ({ success: false, error: 'Supabase 客户端未初始化' }),
+        unfavoritePost: async () => ({ success: false, error: 'Supabase 客户端未初始化' }),
+        toggleFavorite: async () => ({ success: false, error: 'Supabase 客户端未初始化' }),
+        isPostFavorited: async () => false,
+        getUserFavorites: async () => ({ success: false, error: 'Supabase 客户端未初始化', favorites: [] }),
+        getPostFavoriteCount: async () => ({ success: false, error: 'Supabase 客户端未初始化', count: 0 }),
+        batchCheckFavorites: async () => ({}),
+        batchGetFavoriteCounts: async () => ({}),
+        batchGetFavoritesWithStatus: async () => ({ counts: {}, userFavorited: {} }),
+        markAsRead: async () => ({ success: false, error: 'Supabase 客户端未初始化' }),
+        markAsUnread: async () => ({ success: false, error: 'Supabase 客户端未初始化' }),
+        toggleReadStatus: async () => ({ success: false, error: 'Supabase 客户端未初始化' })
+      };
+      return;
+    }
+
     // ============================================
     // URL规范化函数（统一使用）
     // ============================================
@@ -182,25 +229,42 @@
       }
     }
 
-    // 获取用户所有收藏
+    // 获取用户所有收藏（优化：添加性能监控）
     async function getUserFavorites() {
+      const startTime = performance.now();
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           return { success: false, error: '请先登录', favorites: [] };
         }
 
+        const queryStartTime = performance.now();
         const { data, error } = await supabase
           .from('favorites')
           .select('id, post_url, created_at, is_read, read_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
+        const queryTime = performance.now() - queryStartTime;
+        
         if (error) throw error;
+
+        const totalTime = performance.now() - startTime;
+        const count = data?.length || 0;
+        
+        // 如果查询时间超过500ms，输出警告（帮助识别性能问题）
+        if (queryTime > 500) {
+          console.warn(`[favorites.js] getUserFavorites 查询较慢: ${queryTime.toFixed(2)}ms, 返回 ${count} 条记录`);
+          console.warn('[favorites.js] 建议：检查数据库索引，确保已创建 idx_favorites_user_created_at 复合索引');
+        } else if (count > 0) {
+          // 正常情况也记录一下，方便调试
+          console.log(`[favorites.js] getUserFavorites 完成: ${queryTime.toFixed(2)}ms, ${count} 条记录`);
+        }
 
         return { success: true, favorites: data || [] };
       } catch (error) {
-        console.error('获取收藏列表失败:', error);
+        const totalTime = performance.now() - startTime;
+        console.error(`[favorites.js] 获取收藏列表失败 (耗时 ${totalTime.toFixed(2)}ms):`, error);
         return { success: false, error: error.message, favorites: [] };
       }
     }
@@ -388,12 +452,6 @@
         const currentData = currentDataList[0];
         const newIsRead = !(currentData?.is_read || false);
 
-        console.log('[favorites.js] 切换已读状态:', {
-          id: currentData.id,
-          currentIsRead: currentData.is_read,
-          newIsRead: newIsRead
-        });
-
         // 使用 id 进行更新，避免 URL 编码问题
         const { data: updateData, error: updateError } = await supabase
           .from('favorites')
@@ -412,7 +470,6 @@
         
         // 如果更新成功但没有返回数据，重新查询
         if (!updateData) {
-          console.log('[favorites.js] 更新成功但无返回数据，重新查询');
           const { data: reloadData, error: reloadError } = await supabase
             .from('favorites')
             .select('*')
@@ -426,7 +483,6 @@
           return { success: true, is_read: newIsRead, data: reloadData };
         }
 
-        console.log('[favorites.js] 更新成功:', updateData);
         return { success: true, is_read: newIsRead, data: updateData };
       } catch (error) {
         console.error('切换已读状态失败:', error);

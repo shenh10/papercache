@@ -59,13 +59,31 @@ permalink: /account/favorites.html
   </div>
 
   <script>
-  // 等待服务加载完成（优化：减少等待时间，增加检查频率）
-  async function waitForServices(maxWait = 3000) {
+  // 等待服务加载完成（优化：减少等待时间，更快的检查频率）
+  async function waitForServices(maxWait = 2000) {
     const startTime = Date.now();
-    let lastCheckTime = startTime;
     
+    // 检查 Supabase 配置是否可用
+    const supabaseConfig = window.siteConfig?.supabase;
+    const hasSupabaseConfig = supabaseConfig && typeof supabaseConfig === 'object' && supabaseConfig.url && supabaseConfig.anon_key;
+    
+    // 先快速检查一次（可能服务已经加载完成）
+    const hasSimpleAuth = !!window.SimpleAuth;
+    const hasFavoritesService = !!window.favoritesService;
+    const hasGetSupabaseClient = typeof window.getSupabaseClient === 'function';
+    
+    if (hasSimpleAuth && hasFavoritesService && hasGetSupabaseClient) {
+      const supabase = window.getSupabaseClient();
+      if (supabase) {
+        return true;
+      } else if (!hasSupabaseConfig) {
+        console.warn('[Favorites] Supabase 配置缺失，无法初始化客户端');
+        return false;
+      }
+    }
+    
+    // 如果服务未就绪，等待（使用更短的检查间隔以提高响应速度）
     while ((Date.now() - startTime) < maxWait) {
-      // 检查所有必需的服务
       const hasSimpleAuth = !!window.SimpleAuth;
       const hasFavoritesService = !!window.favoritesService;
       const hasGetSupabaseClient = typeof window.getSupabaseClient === 'function';
@@ -73,36 +91,41 @@ permalink: /account/favorites.html
       if (hasSimpleAuth && hasFavoritesService && hasGetSupabaseClient) {
         const supabase = window.getSupabaseClient();
         if (supabase) {
-          console.log('[Favorites] 所有服务已就绪，耗时:', Date.now() - startTime, 'ms');
           return true;
+        } else if (!hasSupabaseConfig) {
+          console.warn('[Favorites] Supabase 配置缺失，无法初始化客户端');
+          return false;
         }
       }
       
-      // 每500ms输出一次等待状态（避免日志过多）
-      const now = Date.now();
-      if (now - lastCheckTime > 500) {
-        console.log('[Favorites] 等待服务加载...', {
-          SimpleAuth: hasSimpleAuth,
-          favoritesService: hasFavoritesService,
-          getSupabaseClient: hasGetSupabaseClient,
-          已等待: Math.round((now - startTime) / 1000) + '秒'
-        });
-        lastCheckTime = now;
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // 使用更短的等待间隔（50ms），提高响应速度
+      await new Promise(resolve => setTimeout(resolve, 50));
     }
     
     console.warn('[Favorites] 服务加载超时', {
       SimpleAuth: !!window.SimpleAuth,
       favoritesService: !!window.favoritesService,
-      getSupabaseClient: typeof window.getSupabaseClient === 'function'
+      getSupabaseClient: typeof window.getSupabaseClient === 'function',
+      hasSupabaseConfig: hasSupabaseConfig
     });
     return false;
   }
   
-  // 加载收藏列表
-  async function loadFavorites() {
+  // 加载收藏列表（优化：防止重复加载）
+  async function loadFavorites(force = false) {
+    // 防止重复加载：如果正在加载中，直接返回
+    const now = Date.now();
+    if (isLoadingFavorites && !force) {
+      console.log('[Favorites] 正在加载中，跳过重复请求');
+      return;
+    }
+    
+    // 如果距离上次加载时间太短，且不是强制刷新，则跳过
+    if (!force && (now - lastLoadTime) < MIN_LOAD_INTERVAL) {
+      console.log('[Favorites] 距离上次加载时间太短，跳过重复请求');
+      return;
+    }
+    
     const loadingEl = document.getElementById('favorites-loading');
     const listEl = document.getElementById('favorites-list');
     const emptyEl = document.getElementById('favorites-empty');
@@ -112,6 +135,10 @@ permalink: /account/favorites.html
       console.error('必要的DOM元素未找到');
       return;
     }
+    
+    // 设置加载标记
+    isLoadingFavorites = true;
+    lastLoadTime = now;
     
     // 显示加载状态
     loadingEl.style.display = 'block';
@@ -125,7 +152,19 @@ permalink: /account/favorites.html
       if (!servicesReady) {
         loadingEl.style.display = 'none';
         errorEl.style.display = 'block';
-        document.getElementById('favorites-error-message').textContent = '服务加载超时，请刷新页面重试';
+        
+        // 检查 Supabase 配置是否缺失
+        const supabaseConfig = window.siteConfig?.supabase;
+        const hasSupabaseConfig = supabaseConfig && supabaseConfig.url && supabaseConfig.anon_key;
+        
+        const errorMsgEl = document.getElementById('favorites-error-message');
+        if (errorMsgEl) {
+          if (!hasSupabaseConfig) {
+            errorMsgEl.textContent = '⚠️ Supabase 配置未找到，无法加载收藏列表。请检查配置文件。';
+          } else {
+            errorMsgEl.textContent = '服务加载超时，请刷新页面重试';
+          }
+        }
         return;
       }
       
@@ -133,7 +172,8 @@ permalink: /account/favorites.html
       if (!window.SimpleAuth) {
         loadingEl.style.display = 'none';
         errorEl.style.display = 'block';
-        document.getElementById('favorites-error-message').textContent = '认证服务未加载';
+        const errorMsgEl = document.getElementById('favorites-error-message');
+        if (errorMsgEl) errorMsgEl.textContent = '认证服务未加载';
         return;
       }
 
@@ -141,7 +181,8 @@ permalink: /account/favorites.html
       if (!user) {
         loadingEl.style.display = 'none';
         errorEl.style.display = 'block';
-        document.getElementById('favorites-error-message').textContent = '请先登录';
+        const errorMsgEl = document.getElementById('favorites-error-message');
+        if (errorMsgEl) errorMsgEl.textContent = '请先登录';
         return;
       }
       
@@ -149,11 +190,11 @@ permalink: /account/favorites.html
       if (!window.favoritesService) {
         loadingEl.style.display = 'none';
         errorEl.style.display = 'block';
-        document.getElementById('favorites-error-message').textContent = '收藏服务未加载';
+        const errorMsgEl = document.getElementById('favorites-error-message');
+        if (errorMsgEl) errorMsgEl.textContent = '收藏服务未加载';
         return;
       }
       
-      console.log('[Favorites] 开始获取收藏列表...');
       // 添加超时处理（10秒）
       const result = await Promise.race([
         window.favoritesService.getUserFavorites(),
@@ -166,7 +207,8 @@ permalink: /account/favorites.html
       
       if (!result || !result.success) {
         errorEl.style.display = 'block';
-        document.getElementById('favorites-error-message').textContent = result?.error || '加载失败';
+        const errorMsgEl = document.getElementById('favorites-error-message');
+        if (errorMsgEl) errorMsgEl.textContent = result?.error || '加载失败';
         return;
       }
       
@@ -184,7 +226,13 @@ permalink: /account/favorites.html
       console.error('加载收藏列表出错:', error);
       loadingEl.style.display = 'none';
       errorEl.style.display = 'block';
-      document.getElementById('favorites-error-message').textContent = '加载出错：' + (error.message || '未知错误');
+      const errorMsgEl = document.getElementById('favorites-error-message');
+      if (errorMsgEl) {
+        errorMsgEl.textContent = '加载出错：' + (error.message || '未知错误');
+      }
+    } finally {
+      // 清除加载标记
+      isLoadingFavorites = false;
     }
   }
   
@@ -199,6 +247,11 @@ permalink: /account/favorites.html
   const ITEMS_PER_PAGE = 10; // 每页显示10条
   let unreadCurrentPage = 1;
   let readCurrentPage = 1;
+  
+  // 防止重复加载的标记
+  let isLoadingFavorites = false;
+  let lastLoadTime = 0;
+  const MIN_LOAD_INTERVAL = 1000; // 最小加载间隔：1秒
 
   // 渲染收藏列表
   async function renderFavoritesList(favorites) {
@@ -224,41 +277,46 @@ permalink: /account/favorites.html
     // 创建处理后的收藏列表，获取真实标题
     const processedFavorites = [];
     const processedUrls = new Set();
-
+    
+    // 先收集所有需要处理的收藏项
+    const favoritesToProcess = [];
     for (const fav of favorites) {
       const postUrl = String(fav.post_url || '');
 
       // 跳过重复的URL
       if (processedUrls.has(postUrl)) continue;
       processedUrls.add(postUrl);
-
-      // 获取论文元数据（标题和发表时间）
-      const postMetadata = await getPostMetadata(postUrl);
       
-      processedFavorites.push({
+      favoritesToProcess.push({
         post_url: postUrl,
-        title: postMetadata.title,
-        created_at: fav.created_at,
-        published_date: postMetadata.published_date || null,
-        favorite_id: fav.id || fav.favorite_id,
-        is_read: fav.is_read === true || fav.is_read === 'true' || fav.is_read === 1,
-        read_at: fav.read_at || null
+        favorite_data: fav
+      });
+    }
+    
+    // 批量获取所有论文元数据（同步批量处理，提高性能）
+    const postUrls = favoritesToProcess.map(item => item.post_url);
+    const metadataMap = batchGetPostMetadata(postUrls);
+    
+    // 构建处理后的收藏列表
+    for (const item of favoritesToProcess) {
+      const metadata = metadataMap[item.post_url] || { title: item.post_url, published_date: null };
+      processedFavorites.push({
+        post_url: item.post_url,
+        title: metadata.title,
+        created_at: item.favorite_data.created_at,
+        published_date: metadata.published_date || null,
+        favorite_id: item.favorite_data.id || item.favorite_data.favorite_id,
+        is_read: item.favorite_data.is_read === true || item.favorite_data.is_read === 'true' || item.favorite_data.is_read === 1,
+        read_at: item.favorite_data.read_at || null
       });
     }
 
-      // 保存到全局变量
-      allFavorites = processedFavorites;
-      currentDisplayedFavorites = [...processedFavorites];
-      
-      console.log('[favorites.html] 已加载收藏列表:', {
-        total: allFavorites.length,
-        unread: allFavorites.filter(f => !f.is_read).length,
-        read: allFavorites.filter(f => f.is_read).length,
-        favorites: allFavorites.map(f => ({ url: f.post_url, is_read: f.is_read }))
-      });
-      
-      // 应用排序和搜索
-      applySortAndFilter();
+    // 保存到全局变量
+    allFavorites = processedFavorites;
+    currentDisplayedFavorites = [...processedFavorites];
+    
+    // 应用排序和搜索
+    applySortAndFilter();
   }
 
   // 应用排序和过滤
@@ -291,14 +349,6 @@ permalink: /account/favorites.html
     // 分离未读和已读
     const unreadFavorites = filtered.filter(fav => !fav.is_read || fav.is_read === false);
     const readFavorites = filtered.filter(fav => fav.is_read === true);
-    
-    console.log('[favorites.html] 应用排序和过滤:', {
-      filtered: filtered.length,
-      unread: unreadFavorites.length,
-      read: readFavorites.length,
-      unreadItems: unreadFavorites.map(f => ({ url: f.post_url, is_read: f.is_read })),
-      readItems: readFavorites.map(f => ({ url: f.post_url, is_read: f.is_read }))
-    });
 
     // 分别排序未读和已读
     const sortFn = (a, b) => {
@@ -509,15 +559,11 @@ permalink: /account/favorites.html
     }
 
     try {
-      console.log('[favorites] 切换已读状态，postUrl:', postUrl);
       const result = await window.favoritesService?.toggleReadStatus(postUrl);
-      console.log('[favorites] 切换结果:', result);
       
       if (result?.success) {
-        console.log('[favorites.html] 标记已读成功，重新加载列表');
         // 重新加载收藏列表
         await loadFavorites();
-        console.log('[favorites.html] 列表重新加载完成');
         showToast(result.is_read ? '已标记为已读' : '已标记为未读');
         
         // 更新折叠按钮状态
@@ -687,7 +733,6 @@ permalink: /account/favorites.html
         
         selectAllCheckbox.addEventListener('change', (e) => {
           const isChecked = e.target.checked;
-          console.log('[favorites.html] 全选状态改变:', isChecked);
           
           // 获取所有可见的复选框（只选择当前页面显示的，排除被折叠的部分）
           const visibleCheckboxes = Array.from(document.querySelectorAll('.favorite-item-checkbox')).filter(cb => {
@@ -715,7 +760,6 @@ permalink: /account/favorites.html
             return true;
           });
           
-          console.log('[favorites.html] 全选 - 找到可见复选框数量:', visibleCheckboxes.length, '总复选框数量:', document.querySelectorAll('.favorite-item-checkbox').length);
           
           visibleCheckboxes.forEach(cb => {
             const wasChecked = cb.checked;
@@ -880,79 +924,94 @@ permalink: /account/favorites.html
     return 'arXiv';
   }
 
-  // 获取论文标题
-  // 获取论文元数据（标题和发表时间）
-  async function getPostMetadata(postUrl) {
-    try {
-      // 1. 优先从预加载的论文数据中获取
-      if (window.PAPERCACHE_POSTS && Array.isArray(window.PAPERCACHE_POSTS)) {
-        // 规范化URL以便匹配
-        const normalizeUrl = (url) => {
-          if (!url) return '';
-          // 移除baseurl
-          let normalized = url;
-          const baseurl = window.PC_BASEURL || '';
-          if (baseurl && normalized.startsWith(baseurl)) {
-            normalized = normalized.substring(baseurl.length);
-          }
-          // 确保以/开头
-          if (!normalized.startsWith('/')) {
-            normalized = '/' + normalized;
-          }
-          return normalized;
-        };
-
+  // 规范化URL的辅助函数（提取为公共函数，避免重复定义）
+  function normalizeUrlForMetadata(url) {
+    if (!url) return '';
+    // 移除baseurl
+    let normalized = url;
+    const baseurl = window.PC_BASEURL || '';
+    if (baseurl && normalized.startsWith(baseurl)) {
+      normalized = normalized.substring(baseurl.length);
+    }
+    // 确保以/开头
+    if (!normalized.startsWith('/')) {
+      normalized = '/' + normalized;
+    }
+    return normalized;
+  }
+  
+  // 批量获取论文元数据（优化性能）
+  function batchGetPostMetadata(postUrls) {
+    const metadataMap = {};
+    const normalizeUrl = normalizeUrlForMetadata;
+    
+    // 构建URL到论文的映射（一次性构建，避免重复查找）
+    const postsMap = new Map();
+    if (window.PAPERCACHE_POSTS && Array.isArray(window.PAPERCACHE_POSTS)) {
+      window.PAPERCACHE_POSTS.forEach(post => {
+        const normalizedPUrl = normalizeUrl(post.url);
+        postsMap.set(normalizedPUrl, post);
+        postsMap.set(post.url, post);
+      });
+    }
+    
+    // 批量处理所有URL
+    postUrls.forEach(postUrl => {
+      try {
         const normalizedPostUrl = normalizeUrl(postUrl);
         
-        // 查找匹配的论文
-        const matchedPost = window.PAPERCACHE_POSTS.find(p => {
-          const normalizedPUrl = normalizeUrl(p.url);
-          return normalizedPUrl === normalizedPostUrl || 
-                 normalizedPUrl === postUrl ||
-                 p.url === postUrl;
-        });
-
+        // 1. 优先从预加载的论文数据中获取
+        const matchedPost = postsMap.get(normalizedPostUrl) || postsMap.get(postUrl);
+        
         if (matchedPost) {
-          return {
+          metadataMap[postUrl] = {
             title: matchedPost.title || postUrl,
             published_date: matchedPost.date || matchedPost.published_date || null
           };
+          return;
         }
-      }
 
-      // 2. 如果预加载数据中没有，尝试从URL推断标题
-      let inferredTitle = postUrl;
-      if (postUrl.includes('/')) {
-        const segments = postUrl.split('/');
-        const lastSegment = segments[segments.length - 1];
-        if (lastSegment && lastSegment.includes('-')) {
-          // 移除.html扩展名
-          const withoutExt = lastSegment.replace(/\.html?$/, '');
-          // 将kebab-case转换为标题格式
-          inferredTitle = withoutExt.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        // 2. 如果预加载数据中没有，尝试从URL推断标题
+        let inferredTitle = postUrl;
+        if (postUrl.includes('/')) {
+          const segments = postUrl.split('/');
+          const lastSegment = segments[segments.length - 1];
+          if (lastSegment && lastSegment.includes('-')) {
+            // 移除.html扩展名
+            const withoutExt = lastSegment.replace(/\.html?$/, '');
+            // 将kebab-case转换为标题格式
+            inferredTitle = withoutExt.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          }
         }
-      }
 
-      // 3. 尝试从URL中提取日期（格式：/papers/.../2025/06/01/...）
-      let extractedDate = null;
-      const datePattern = /\/(\d{4})\/(\d{2})\/(\d{2})\//;
-      const dateMatch = postUrl.match(datePattern);
-      if (dateMatch) {
-        const [, year, month, day] = dateMatch;
-        extractedDate = `${year}-${month}-${day}`;
-      }
+        // 3. 尝试从URL中提取日期（格式：/papers/.../2025/06/01/...）
+        let extractedDate = null;
+        const datePattern = /\/(\d{4})\/(\d{2})\/(\d{2})\//;
+        const dateMatch = postUrl.match(datePattern);
+        if (dateMatch) {
+          const [, year, month, day] = dateMatch;
+          extractedDate = `${year}-${month}-${day}`;
+        }
 
-      return {
-        title: inferredTitle,
-        published_date: extractedDate
-      };
-    } catch (error) {
-      console.warn('获取论文元数据失败:', error);
-      return {
-        title: postUrl,
-        published_date: null
-      };
-    }
+        metadataMap[postUrl] = {
+          title: inferredTitle,
+          published_date: extractedDate
+        };
+      } catch (error) {
+        metadataMap[postUrl] = {
+          title: postUrl,
+          published_date: null
+        };
+      }
+    });
+    
+    return metadataMap;
+  }
+  
+  // 获取单个论文元数据（保持向后兼容）
+  async function getPostMetadata(postUrl) {
+    const metadataMap = batchGetPostMetadata([postUrl]);
+    return metadataMap[postUrl] || { title: postUrl, published_date: null };
   }
   
   // 移除收藏（单个或批量）
@@ -1032,7 +1091,6 @@ permalink: /account/favorites.html
           .filter(cb => cb.checked)
           .map(cb => cb.getAttribute('data-post-url'));
         
-        console.log('[favorites.html] 批量删除，选中数量:', selectedUrls.length);
         
         if (selectedUrls.length > 0) {
           removeFavorite(selectedUrls);
@@ -1162,29 +1220,19 @@ permalink: /account/favorites.html
     // 等待认证服务和收藏服务加载完成
     // 先尝试立即加载，如果服务未就绪则等待
     if (window.SimpleAuth && window.favoritesService && window.getSupabaseClient) {
-      console.log('[Favorites] 服务已就绪，立即加载');
       loadFavorites();
     } else {
-      console.log('[Favorites] 服务未就绪，等待加载...');
-      // 等待最多3秒（30次检查）
+      // 等待最多5秒（50次检查），确保 defer 脚本有时间执行
       let waitCount = 0;
-      const maxWait = 30;
+      const maxWait = 50;
       const checkInterval = setInterval(() => {
         waitCount++;
         
-        // 每5次检查输出一次状态
-        if (waitCount % 5 === 0) {
-          console.log('[Favorites] 等待服务加载中...', {
-            已等待: waitCount * 100 + 'ms',
-            SimpleAuth: !!window.SimpleAuth,
-            favoritesService: !!window.favoritesService,
-            getSupabaseClient: typeof window.getSupabaseClient === 'function'
-          });
-        }
+        // 每5次检查输出一次状态（已移除日志）
+        // 等待服务加载中...
         
         if (window.SimpleAuth && window.favoritesService && window.getSupabaseClient) {
           clearInterval(checkInterval);
-          console.log('[Favorites] 服务已就绪，开始加载收藏列表');
           loadFavorites();
         } else if (waitCount >= maxWait) {
           clearInterval(checkInterval);
@@ -1198,7 +1246,8 @@ permalink: /account/favorites.html
     if (window.SimpleAuth) {
       window.SimpleAuth.onAuthChange((user) => {
         if (user) {
-          loadFavorites();
+          // 认证状态变化时强制刷新
+          loadFavorites(true);
         } else {
           const loadingEl = document.getElementById('favorites-loading');
           const errorEl = document.getElementById('favorites-error');
@@ -1210,6 +1259,8 @@ permalink: /account/favorites.html
               errorMsgEl.textContent = '请先登录';
             }
           }
+          // 清除加载标记
+          isLoadingFavorites = false;
         }
       });
     }
@@ -1237,14 +1288,15 @@ permalink: /account/favorites.html
     if (window.SimpleAuth && window.favoritesService && window.getSupabaseClient) {
       loadFavorites();
     } else {
-      // 等待服务加载
+      // 等待服务加载（最多5秒）
       let waitCount = 0;
+      const maxWait = 50;
       const checkInterval = setInterval(() => {
         waitCount++;
         if (window.SimpleAuth && window.favoritesService && window.getSupabaseClient) {
           clearInterval(checkInterval);
           loadFavorites();
-        } else if (waitCount > 30) {
+        } else if (waitCount >= maxWait) {
           clearInterval(checkInterval);
           loadFavorites();
         }
