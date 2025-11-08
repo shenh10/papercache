@@ -1184,14 +1184,27 @@ if (typeof window.SearchFirstMode === 'undefined') {
     this.initTagFilters();
     this.showSuggestions();
     
-    // 初始显示所有论文（如果用户没有进行搜索）
-    // 延迟执行，确保DOM已准备好
+    // 确保初始状态显示快速浏览区域，隐藏搜索结果区域
     setTimeout(() => {
-      if (this.allPapers.length > 0 && !this.currentQuery) {
-        // 显示所有论文
-        this.filteredPapers = this.allPapers;
-        // 使用showSearchResults显示结果，但不需要搜索查询
-        this.showSearchResults('', false);
+      const quickSection = document.querySelector('.quick-browse-section');
+      const resultsSection = document.getElementById('search-results');
+      const categoryBrowse = document.getElementById('category-browse');
+      
+      // 显示快速浏览区域
+      if (quickSection) {
+        quickSection.style.display = 'block';
+      }
+      
+      // 隐藏搜索结果区域
+      if (resultsSection) {
+        resultsSection.style.display = 'none';
+        resultsSection.classList.remove('show');
+      }
+      
+      // 隐藏分类浏览区域
+      if (categoryBrowse) {
+        categoryBrowse.style.display = 'none';
+        categoryBrowse.classList.remove('show');
       }
     }, 100);
   }
