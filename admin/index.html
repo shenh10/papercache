@@ -1168,11 +1168,29 @@ permalink: /admin/index.html
         return;
       }
 
+      // 调试：检查返回的数据结构
+      if (data && data.length > 0) {
+        console.log('[Admin] 用户数据示例:', data[0]);
+        console.log('[Admin] 是否包含 is_super_admin 字段:', 'is_super_admin' in (data[0] || {}));
+      }
+
       if (!data || data.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" class="table-message">暂无用户数据</td></tr>';
         // 确保totalCount已更新（如果获取总数失败，这里可能是0）
         updateUsersPaginationInfo();
         return;
+      }
+
+      // 检查当前用户是否为超管
+      let currentUserIsSuperAdmin = false;
+      try {
+        const { data: superAdminCheck, error: superAdminError } = await supabase
+          .rpc('is_super_admin', { check_user_id: currentUserId });
+        if (!superAdminError && superAdminCheck) {
+          currentUserIsSuperAdmin = true;
+        }
+      } catch (e) {
+        console.warn('[Admin] 检查超管状态失败:', e);
       }
 
       // 显示完整的用户列表（包含用户邮箱和管理员状态）
@@ -1182,18 +1200,54 @@ permalink: /admin/index.html
         const username = user.username || '-';
         const createdDate = user.created_at ? new Date(user.created_at).toLocaleDateString('zh-CN') : '-';
         const isAdmin = user.is_admin || false;
+        const isSuperAdmin = user.is_super_admin || false;
         const isCurrentUser = user.id === currentUserId;
-        const adminBadge = isAdmin ? '<span class="admin-badge">管理员</span>' : '<span class="user-badge">普通用户</span>';
         
-        const deleteBtn = isCurrentUser 
-          ? '<button class="btn-delete" disabled title="不能删除自己">删除</button>'
-          : `<button class="btn-delete" onclick="handleDeleteUser('${user.id}', '${emailDisplay}')">删除</button>`;
+        // 调试：输出 thushenhan@gmail.com 的状态
+        if (emailDisplay === 'thushenhan@gmail.com') {
+          console.log('[Admin] thushenhan@gmail.com 状态:', {
+            isAdmin,
+            isSuperAdmin,
+            rawData: user
+          });
+        }
         
-        const adminBtn = isCurrentUser
-          ? '<button class="btn-admin" disabled title="不能操作自己">-</button>'
-          : isAdmin
-          ? `<button class="btn-admin btn-remove-admin" onclick="handleRemoveAdmin('${user.id}', '${emailDisplay}')">移除管理员</button>`
-          : `<button class="btn-admin btn-add-admin" onclick="handleAddAdmin('${user.id}', '${emailDisplay}')">设为管理员</button>`;
+        // 显示管理员标识（超管显示特殊标识）
+        const adminBadge = isSuperAdmin 
+          ? '<span class="admin-badge super-admin-badge">超管</span>' 
+          : isAdmin 
+          ? '<span class="admin-badge">管理员</span>' 
+          : '<span class="user-badge">普通用户</span>';
+        
+        // 删除按钮：不能删除自己，不能删除超管（除非当前用户也是超管）
+        let deleteBtn = '';
+        if (isCurrentUser) {
+          deleteBtn = '<button class="btn-delete" disabled title="不能删除自己">删除</button>';
+        } else if (isSuperAdmin && !currentUserIsSuperAdmin) {
+          // 目标用户是超管，但当前用户不是超管，不能删除
+          deleteBtn = '<button class="btn-delete" disabled title="不能删除超管">删除</button>';
+        } else {
+          // 可以删除（当前用户是超管，或者目标用户不是超管）
+          deleteBtn = `<button class="btn-delete" onclick="handleDeleteUser('${user.id}', '${emailDisplay}')">删除</button>`;
+        }
+        
+        // 只有超管可以添加/移除管理员，且不能移除超管
+        let adminBtn = '';
+        if (isCurrentUser) {
+          adminBtn = '<button class="btn-admin" disabled title="不能操作自己">-</button>';
+        } else if (!currentUserIsSuperAdmin) {
+          // 当前用户不是超管，不能操作
+          adminBtn = '<button class="btn-admin" disabled title="只有超管可以管理管理员">-</button>';
+        } else if (isSuperAdmin) {
+          // 目标用户是超管，不能移除
+          adminBtn = '<button class="btn-admin" disabled title="不能移除超管">移除管理员</button>';
+        } else if (isAdmin) {
+          // 目标用户是普通管理员，可以移除
+          adminBtn = `<button class="btn-admin btn-remove-admin" onclick="handleRemoveAdmin('${user.id}', '${emailDisplay}')">移除管理员</button>`;
+        } else {
+          // 目标用户不是管理员，可以添加
+          adminBtn = `<button class="btn-admin btn-add-admin" onclick="handleAddAdmin('${user.id}', '${emailDisplay}')">设为管理员</button>`;
+        }
 
         html += `<tr>
           <td>${user.id.substring(0, 8)}...</td>
@@ -1488,20 +1542,46 @@ permalink: /admin/index.html
     }
 
     let html = '';
-    pageData.forEach((stat) => {
+    const startRank = (favoritesPaginationState.currentPage - 1) * favoritesPaginationState.pageSize + 1;
+    pageData.forEach((stat, index) => {
+      const rank = startRank + index;
       const date = new Date(stat.firstFavorited).toLocaleDateString('zh-CN');
       const title = getPostTitle(stat.url);
       const fullUrl = getFullUrl(stat.url);
       
-      html += `<tr>
+      // 排名徽章样式
+      let rankBadge = '';
+      if (rank === 1) {
+        rankBadge = '<span class="rank-badge rank-gold">🥇</span>';
+      } else if (rank === 2) {
+        rankBadge = '<span class="rank-badge rank-silver">🥈</span>';
+      } else if (rank === 3) {
+        rankBadge = '<span class="rank-badge rank-bronze">🥉</span>';
+      } else {
+        rankBadge = `<span class="rank-badge rank-normal">#${rank}</span>`;
+      }
+      
+      html += `<tr class="favorites-row">
         <td>
-          <a href="${fullUrl}" target="_blank" class="admin-link" title="${stat.url}">
-            ${title}
-          </a>
-          <div class="admin-url-hint">${stat.url.length > 60 ? stat.url.substring(0, 60) + '...' : stat.url}</div>
+          <div class="favorites-item-content">
+            ${rankBadge}
+            <div class="favorites-item-info">
+              <a href="${fullUrl}" target="_blank" class="favorites-title-link" title="${stat.url}">
+                ${title}
+              </a>
+              <div class="favorites-url-hint">${stat.url.length > 60 ? stat.url.substring(0, 60) + '...' : stat.url}</div>
+            </div>
+          </div>
         </td>
-        <td>${stat.count}</td>
-        <td>${date}</td>
+        <td>
+          <span class="count-badge favorites-count">
+            <span class="count-icon">⭐</span>
+            <span class="count-number">${stat.count}</span>
+          </span>
+        </td>
+        <td>
+          <span class="date-badge">${date}</span>
+        </td>
       </tr>`;
     });
     tbody.innerHTML = html;
@@ -1668,16 +1748,90 @@ permalink: /admin/index.html
     }
 
     let html = '';
-    pageData.forEach(stat => {
+    const startRank = (likesPaginationState.currentPage - 1) * likesPaginationState.pageSize + 1;
+    pageData.forEach((stat, index) => {
+      const rank = startRank + index;
       const date = stat.firstLiked ? new Date(stat.firstLiked).toLocaleDateString('zh-CN') : '-';
+      
+      // 获取文章标题
+      function getPostTitle(postUrl) {
+        if (!postUrl) return '-';
+        if (window.PAPERCACHE_POSTS && Array.isArray(window.PAPERCACHE_POSTS)) {
+          const baseurl = window.PC_BASEURL || '';
+          const normalizeUrl = (u) => {
+            if (!u) return '';
+            let n = u;
+            if (baseurl && n.startsWith(baseurl)) {
+              n = n.substring(baseurl.length);
+            }
+            if (!n.startsWith('/')) n = '/' + n;
+            return n;
+          };
+          const normalizedUrl = normalizeUrl(postUrl);
+          const matchedPost = window.PAPERCACHE_POSTS.find(p => {
+            const normalizedPUrl = normalizeUrl(p.url);
+            return normalizedPUrl === normalizedUrl || normalizedPUrl === postUrl || p.url === postUrl;
+          });
+          if (matchedPost && matchedPost.title) {
+            return matchedPost.title;
+          }
+        }
+        const segments = postUrl.split('/');
+        const lastSegment = segments[segments.length - 1];
+        if (lastSegment && lastSegment.includes('-')) {
+          const withoutExt = lastSegment.replace(/\.html?$/, '');
+          return withoutExt.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+        return postUrl.length > 50 ? postUrl.substring(0, 50) + '...' : postUrl;
+      }
+      
+      function getFullUrl(postUrl) {
+        if (!postUrl) return '#';
+        const baseurl = window.PC_BASEURL || '';
+        if (postUrl.startsWith('http')) return postUrl;
+        if (baseurl && !postUrl.startsWith(baseurl)) {
+          return baseurl + (postUrl.startsWith('/') ? postUrl : '/' + postUrl);
+        }
+        return postUrl.startsWith('/') ? postUrl : '/' + postUrl;
+      }
+      
+      const title = getPostTitle(stat.url);
+      const fullUrl = getFullUrl(stat.url);
+      
+      // 排名徽章样式
+      let rankBadge = '';
+      if (rank === 1) {
+        rankBadge = '<span class="rank-badge rank-gold">🥇</span>';
+      } else if (rank === 2) {
+        rankBadge = '<span class="rank-badge rank-silver">🥈</span>';
+      } else if (rank === 3) {
+        rankBadge = '<span class="rank-badge rank-bronze">🥉</span>';
+      } else {
+        rankBadge = `<span class="rank-badge rank-normal">#${rank}</span>`;
+      }
+      
       html += `
-      <tr>
+      <tr class="likes-row">
         <td>
-          <a href="${stat.url}" target="_blank" class="admin-url-link">${stat.url}</a>
-          <div class="admin-url-hint">${stat.url.length > 60 ? stat.url.substring(0, 60) + '...' : stat.url}</div>
+          <div class="likes-item-content">
+            ${rankBadge}
+            <div class="likes-item-info">
+              <a href="${fullUrl}" target="_blank" class="likes-title-link" title="${stat.url}">
+                ${title}
+              </a>
+              <div class="likes-url-hint">${stat.url.length > 60 ? stat.url.substring(0, 60) + '...' : stat.url}</div>
+            </div>
+          </div>
         </td>
-        <td>${stat.count}</td>
-        <td>${date}</td>
+        <td>
+          <span class="count-badge likes-count">
+            <span class="count-icon">❤️</span>
+            <span class="count-number">${stat.count}</span>
+          </span>
+        </td>
+        <td>
+          <span class="date-badge">${date}</span>
+        </td>
       </tr>`;
     });
     tbody.innerHTML = html;
@@ -3881,6 +4035,21 @@ permalink: /admin/index.html
     letter-spacing: 0.5px;
   }
 
+  .super-admin-badge {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.9) 0%, rgba(245, 158, 11, 0.9) 100%) !important;
+    box-shadow: 0 2px 6px rgba(251, 191, 36, 0.3) !important;
+    animation: superAdminPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes superAdminPulse {
+    0%, 100% {
+      box-shadow: 0 2px 6px rgba(251, 191, 36, 0.3);
+    }
+    50% {
+      box-shadow: 0 2px 10px rgba(251, 191, 36, 0.5);
+    }
+  }
+
   .user-badge {
     display: inline-block;
     padding: 0.25rem 0.75rem;
@@ -4129,6 +4298,181 @@ permalink: /admin/index.html
     color: #a0aec0;
     margin-top: 0.25rem;
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  }
+
+  /* ============================================
+     收藏和点赞列表美化样式
+     ============================================ */
+
+  /* 排名徽章 */
+  .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+  }
+
+  .rank-gold {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    color: white;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+  }
+
+  .rank-silver {
+    background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+    color: #374151;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 8px rgba(209, 213, 219, 0.3);
+  }
+
+  .rank-bronze {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: white;
+    font-size: 1.2rem;
+    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+  }
+
+  .rank-normal {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    color: #6b7280;
+    font-size: 0.85rem;
+  }
+
+  /* 收藏/点赞项内容 */
+  .favorites-item-content,
+  .likes-item-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .favorites-item-info,
+  .likes-item-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* 标题链接 */
+  .favorites-title-link,
+  .likes-title-link {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1e40af;
+    text-decoration: none;
+    margin-bottom: 0.25rem;
+    transition: all 0.2s;
+    line-height: 1.4;
+  }
+
+  .favorites-title-link:hover,
+  .likes-title-link:hover {
+    color: #3b82f6;
+    text-decoration: underline;
+  }
+
+  /* URL提示 */
+  .favorites-url-hint,
+  .likes-url-hint {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 0.25rem;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 数量徽章 */
+  .count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+  }
+
+  .favorites-count {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+    color: #d97706;
+    border: 1px solid rgba(251, 191, 36, 0.2);
+  }
+
+  .favorites-count:hover {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(251, 191, 36, 0.2);
+  }
+
+  .likes-count {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+  }
+
+  .likes-count:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+  }
+
+  .count-icon {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .count-number {
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  /* 日期徽章 */
+  .date-badge {
+    display: inline-block;
+    padding: 0.4rem 0.7rem;
+    background: #f3f4f6;
+    color: #6b7280;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  /* 表格行悬停效果 */
+  .favorites-row:hover,
+  .likes-row:hover {
+    background: linear-gradient(90deg, rgba(251, 191, 36, 0.03) 0%, rgba(245, 158, 11, 0.03) 100%) !important;
+    transform: translateX(2px);
+    transition: all 0.2s ease;
+  }
+
+  .likes-row:hover {
+    background: linear-gradient(90deg, rgba(239, 68, 68, 0.03) 0%, rgba(220, 38, 38, 0.03) 100%) !important;
+  }
+
+  /* 表格列宽优化 */
+  .admin-table tbody td:first-child {
+    width: 50%;
+    min-width: 300px;
+  }
+
+  .admin-table tbody td:nth-child(2) {
+    width: 20%;
+    text-align: center;
+  }
+
+  .admin-table tbody td:nth-child(3) {
+    width: 30%;
+    text-align: center;
   }
 
   /* ============================================

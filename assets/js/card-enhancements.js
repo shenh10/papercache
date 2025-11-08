@@ -4,8 +4,28 @@ console.log('🚀 card-enhancements.js 脚本已加载');
 let excerptsMapping = null;
 let thumbnailsMapping = null;
 
+// 收藏按钮重试计数器（全局变量，用于跨页面重置）
+let favoriteButtonRetryCount = 0;
+const MAX_FAVORITE_BUTTON_RETRIES = 5; // 最多重试5次（1秒）
+
+// 防抖机制：避免短时间内重复调用收藏状态检查
+let favoriteCheckDebounceTimer = null;
+let lastFavoriteCheckTime = 0;
+const FAVORITE_CHECK_DEBOUNCE_MS = 2000; // 2秒内只执行一次
+let authChangeListenerRegistered = false; // 标记是否已注册认证状态监听器
+
 // 初始化函数
 async function initCardEnhancements() {
+  // 首先检查是否是演示文稿页面（不需要收藏按钮）
+  const isSlidesPage = document.body.hasAttribute('data-slides-page') || 
+                      window.location.pathname.includes('/slides') ||
+                      (document.querySelector('.collection-page') && window.location.pathname.includes('/slides'));
+  
+  if (isSlidesPage) {
+    console.log('📄 演示文稿页面，跳过卡片增强功能');
+    return;
+  }
+  
   console.log('📄 DOM 已加载，开始处理卡片');
   
   // 尝试加载预生成的摘要映射和缩略图映射
@@ -22,9 +42,15 @@ async function initCardEnhancements() {
     
     if (excerptsResponse.ok) {
       excerptsMapping = await excerptsResponse.json();
-      console.log('✅ 预生成摘要映射加载成功，包含', Object.keys(excerptsMapping).length, '个文章');
+      const excerptCount = Object.keys(excerptsMapping).length;
+      console.log('✅ 预生成摘要映射加载成功，包含', excerptCount, '个文章');
+      if (excerptCount > 0) {
+        const sampleKeys = Object.keys(excerptsMapping).slice(0, 3);
+        console.log('🔍 摘要映射示例键:', sampleKeys);
+      }
     } else {
-      console.log('⚠️ 预生成摘要映射不存在，将使用动态生成');
+      console.log('⚠️ 预生成摘要映射不存在或加载失败 (状态码:', excerptsResponse.status, ')，将使用动态生成');
+      console.log('🔍 尝试加载的路径:', excerptsPath);
       excerptsMapping = {};
     }
     
@@ -58,12 +84,16 @@ async function initCardEnhancements() {
           }
         }
       }
-      console.log('✅ 预生成缩略图映射加载成功，包含', Object.keys(thumbnailsMapping).length, '个缩略图');
+      const thumbCount = Object.keys(thumbnailsMapping).length;
+      console.log('✅ 预生成缩略图映射加载成功，包含', thumbCount, '个缩略图');
       // 调试：显示前几个映射条目
-      const sampleKeys = Object.keys(thumbnailsMapping).slice(0, 3);
-      console.log('🔍 缩略图映射示例:', sampleKeys.map(key => `${key} -> ${thumbnailsMapping[key]}`));
+      if (thumbCount > 0) {
+        const sampleKeys = Object.keys(thumbnailsMapping).slice(0, 3);
+        console.log('🔍 缩略图映射示例:', sampleKeys.map(key => `${key} -> ${thumbnailsMapping[key]}`));
+      }
     } else {
-      console.log('⚠️ 预生成缩略图映射不存在，将使用动态生成');
+      console.log('⚠️ 预生成缩略图映射不存在或加载失败 (状态码:', thumbnailsResponse.status, ')，将使用动态生成');
+      console.log('🔍 尝试加载的路径:', thumbnailsPath);
       thumbnailsMapping = {};
     }
   } catch (error) {
@@ -132,9 +162,17 @@ async function initCardEnhancements() {
     if (!linkEl) return;
     
     const postUrl = linkEl.getAttribute('href');
+    // 规范化 URL：去掉 baseurl 前缀（如果存在）
     let lookupUrl = postUrl;
-    if (postUrl.startsWith('/papercache/papers/')) {
+    const baseurl = window.PC_BASEURL || '';
+    if (baseurl && baseurl !== '/' && postUrl.startsWith(baseurl)) {
+      lookupUrl = postUrl.substring(baseurl.length);
+    } else if (postUrl.startsWith('/papercache/')) {
       lookupUrl = postUrl.replace('/papercache', '');
+    }
+    // 确保 lookupUrl 以 / 开头
+    if (!lookupUrl.startsWith('/')) {
+      lookupUrl = '/' + lookupUrl;
     }
     
     const hasPregenThumb = thumbnailsMapping && thumbnailsMapping[lookupUrl];
@@ -179,16 +217,35 @@ async function initCardEnhancements() {
     console.log(`📊 内容统计: 预生成摘要 ${pregenExcerptCount} 个, 预生成缩略图 ${pregenThumbCount} 个, 动态生成 ${dynamicCount} 个`);
   }, 3000);
 
-  // 批量检查收藏状态（已登录用户）
-  // 使用微任务确保在DOM渲染前执行
-  Promise.resolve().then(() => {
+  // 批量检查收藏状态（已登录用户）- 带防抖的包装函数
+  function debouncedBatchCheckFavorites() {
+    const now = Date.now();
+    const timeSinceLastCheck = now - lastFavoriteCheckTime;
+    
+    // 如果距离上次检查不到防抖时间，延迟执行
+    if (timeSinceLastCheck < FAVORITE_CHECK_DEBOUNCE_MS) {
+      const remainingTime = FAVORITE_CHECK_DEBOUNCE_MS - timeSinceLastCheck;
+      if (favoriteCheckDebounceTimer) {
+        clearTimeout(favoriteCheckDebounceTimer);
+      }
+      favoriteCheckDebounceTimer = setTimeout(() => {
+        lastFavoriteCheckTime = Date.now();
+        batchCheckFavoritesForCards();
+      }, remainingTime);
+      return;
+    }
+    
+    // 立即执行
+    lastFavoriteCheckTime = now;
     batchCheckFavoritesForCards();
-  });
+  }
   
   // 添加防抖标记，避免重复检查
   let isCheckingFavorites = false;
 
   // 如果页面有动态加载内容，使用MutationObserver监听DOM变化（只监听新增元素）
+  // 使用节流机制，避免过于频繁触发
+  let mutationObserverThrottle = null;
   const observer = new MutationObserver((mutations) => {
     // 检查是否有新增的收藏按钮
     const hasNewFavoriteButtons = mutations.some(mutation =>
@@ -204,13 +261,15 @@ async function initCardEnhancements() {
     );
 
     if (hasNewFavoriteButtons && !isCheckingFavorites) {
-      // 较短的防抖时间，避免明显延迟
-      clearTimeout(window.favoriteCheckTimeout);
-      window.favoriteCheckTimeout = setTimeout(() => {
+      // 节流：500ms 内最多触发一次
+      if (mutationObserverThrottle) {
+        clearTimeout(mutationObserverThrottle);
+      }
+      mutationObserverThrottle = setTimeout(() => {
         if (!isCheckingFavorites) {
-          batchCheckFavoritesForCards();
+          debouncedBatchCheckFavorites();
         }
-      }, 300); // 减少到300ms
+      }, 500);
     }
   });
 
@@ -221,13 +280,19 @@ async function initCardEnhancements() {
     attributes: false // 不监听属性变化以减少触发
   });
   
-  // 监听用户登录状态变化
-  if (window.SimpleAuth && typeof window.SimpleAuth.onAuthChange === 'function') {
+  // 监听用户登录状态变化（只注册一次，避免重复注册）
+  if (!authChangeListenerRegistered && window.SimpleAuth && typeof window.SimpleAuth.onAuthChange === 'function') {
+    authChangeListenerRegistered = true;
     window.SimpleAuth.onAuthChange(() => {
       console.log('用户登录状态变化，重新检查收藏状态');
-      setTimeout(batchCheckFavoritesForCards, 500);
+      debouncedBatchCheckFavorites();
     });
   }
+  
+  // 初始检查（延迟执行，确保DOM已渲染）
+  setTimeout(() => {
+    debouncedBatchCheckFavorites();
+  }, 500);
 
   // 简易图片灯箱（点击缩略图放大预览）
   setupLightbox();
@@ -243,17 +308,43 @@ async function initCardEnhancements() {
     isCheckingFavorites = true;
 
     try {
+      // 首先检查是否是演示文稿页面（不需要收藏按钮）
+      // 在函数开始时就检查，避免不必要的重试
+      const isSlidesPage = document.body.hasAttribute('data-slides-page') || 
+                          window.location.pathname.includes('/slides') ||
+                          (document.querySelector('.collection-page') && window.location.pathname.includes('/slides'));
+      
+      if (isSlidesPage) {
+        // 演示文稿页面不需要收藏按钮，直接返回
+        isCheckingFavorites = false;
+        favoriteButtonRetryCount = 0; // 重置计数器
+        return;
+      }
+      
       // 如果收藏服务还未就绪，先只显示收藏数（如果可能）
       const favoriteButtons = document.querySelectorAll('.card-favorite-btn, .favorite-btn');
       if (favoriteButtons.length === 0) {
+        // 如果重试次数超过限制，停止重试
+        if (favoriteButtonRetryCount >= MAX_FAVORITE_BUTTON_RETRIES) {
+          console.log('📄 未找到收藏按钮，已达到最大重试次数，停止重试');
+          isCheckingFavorites = false;
+          favoriteButtonRetryCount = 0; // 重置计数器
+          return;
+        }
+        
         // 如果没有按钮，可能卡片还未渲染，快速重试一次
-        console.log('📄 未找到收藏按钮，200ms后重试');
+        favoriteButtonRetryCount++;
+        console.log(`📄 未找到收藏按钮，200ms后重试 (${favoriteButtonRetryCount}/${MAX_FAVORITE_BUTTON_RETRIES})`);
         setTimeout(() => {
-          if (!isCheckingFavorites) {
-            batchCheckFavoritesForCards();
-          }
+          isCheckingFavorites = false; // 重置标记，允许重试
+          batchCheckFavoritesForCards();
         }, 200);
         return;
+      }
+      
+      // 找到按钮，重置重试计数器
+      if (favoriteButtonRetryCount > 0) {
+        favoriteButtonRetryCount = 0;
       }
 
       // 如果收藏服务未就绪，等待服务就绪但不显示任何状态
@@ -296,73 +387,71 @@ async function initCardEnhancements() {
     
     // SimpleAuth 可能不存在，但不需要等待（未登录用户也可以显示收藏数）
     const isLoggedIn = window.SimpleAuth && window.SimpleAuth.isLoggedIn();
+    
+    // 收集所有URL
+    const postUrls = Array.from(favoriteButtons)
+      .map(btn => {
+        const url = btn.getAttribute('data-post-url') || btn.closest('[data-post-url]')?.getAttribute('data-post-url');
+        return url;
+      })
+      .filter(url => url && url !== '#');
+    
+    if (postUrls.length === 0) return;
 
-    {
-      
-      // 收集所有URL
-      const postUrls = Array.from(favoriteButtons)
-        .map(btn => {
-          const url = btn.getAttribute('data-post-url') || btn.closest('[data-post-url]')?.getAttribute('data-post-url');
-          return url;
-        })
-        .filter(url => url && url !== '#');
-      
-      if (postUrls.length === 0) return;
+    // 使用组合查询函数（一次查询获取收藏数和用户收藏状态，最高效）
+    let favoritesMap = {};
+    let countsMap = {};
+    
+    if (window.favoritesService.batchGetFavoritesWithStatus) {
+      // 使用新的组合查询函数（数据库端统计，一次查询获取所有数据）
+      const result = await window.favoritesService.batchGetFavoritesWithStatus(postUrls);
+      countsMap = result.counts || {};
+      favoritesMap = isLoggedIn ? (result.userFavorited || {}) : {};
+    } else {
+      // 降级方案：分别查询（向后兼容）
+      const [favoritesResult, countsResult] = await Promise.all([
+        isLoggedIn
+          ? window.favoritesService.batchCheckFavorites(postUrls)
+          : Promise.resolve({}),
+        window.favoritesService.batchGetFavoriteCounts(postUrls)
+      ]);
+      favoritesMap = favoritesResult;
+      countsMap = countsResult;
+    }
 
-      // 使用组合查询函数（一次查询获取收藏数和用户收藏状态，最高效）
-      let favoritesMap = {};
-      let countsMap = {};
-      
-      if (window.favoritesService.batchGetFavoritesWithStatus) {
-        // 使用新的组合查询函数（数据库端统计，一次查询获取所有数据）
-        const result = await window.favoritesService.batchGetFavoritesWithStatus(postUrls);
-        countsMap = result.counts || {};
-        favoritesMap = isLoggedIn ? (result.userFavorited || {}) : {};
-      } else {
-        // 降级方案：分别查询（向后兼容）
-        const [favoritesResult, countsResult] = await Promise.all([
-          isLoggedIn
-            ? window.favoritesService.batchCheckFavorites(postUrls)
-            : Promise.resolve({}),
-          window.favoritesService.batchGetFavoriteCounts(postUrls)
-        ]);
-        favoritesMap = favoritesResult;
-        countsMap = countsResult;
+    console.log('📄 批量检查收藏状态，共', postUrls.length, '篇文章，已登录:', isLoggedIn);
+
+    // 更新所有按钮状态
+    favoriteButtons.forEach(btn => {
+      const postUrl = btn.getAttribute('data-post-url') || btn.closest('[data-post-url]')?.getAttribute('data-post-url');
+      if (!postUrl || postUrl === '#') return;
+
+      const icon = btn.querySelector('.favorite-icon');
+      const countEl = btn.querySelector('.favorite-count');
+
+      // 更新收藏状态（仅已登录用户）
+      if (isLoggedIn && icon) {
+        const isFavorited = favoritesMap[postUrl] || false;
+
+        if (isFavorited) {
+          btn.classList.add('favorited');
+          icon.textContent = '★';
+          icon.style.color = '#fbbf24';
+        } else {
+          btn.classList.remove('favorited');
+          icon.textContent = '☆';
+          icon.style.color = '#9ca3af';
+        }
       }
 
-      console.log('📄 批量检查收藏状态，共', postUrls.length, '篇文章，已登录:', isLoggedIn);
+      // 更新收藏数（所有用户都能看到）
+      if (countEl) {
+        const count = countsMap[postUrl] || 0;
+        countEl.textContent = count > 0 ? count : '0';
+      }
+    });
 
-      // 更新所有按钮状态
-      favoriteButtons.forEach(btn => {
-        const postUrl = btn.getAttribute('data-post-url') || btn.closest('[data-post-url]')?.getAttribute('data-post-url');
-        if (!postUrl || postUrl === '#') return;
-
-        const icon = btn.querySelector('.favorite-icon');
-        const countEl = btn.querySelector('.favorite-count');
-
-        // 更新收藏状态（仅已登录用户）
-        if (isLoggedIn && icon) {
-          const isFavorited = favoritesMap[postUrl] || false;
-
-          if (isFavorited) {
-            btn.classList.add('favorited');
-            icon.textContent = '★';
-            icon.style.color = '#fbbf24';
-          } else {
-            btn.classList.remove('favorited');
-            icon.textContent = '☆';
-            icon.style.color = '#9ca3af';
-          }
-        }
-
-        // 更新收藏数（所有用户都能看到）
-        if (countEl) {
-          const count = countsMap[postUrl] || 0;
-          countEl.textContent = count > 0 ? count : '0';
-        }
-      });
-
-      console.log(`✅ 批量更新了 ${favoriteButtons.length} 个收藏按钮的状态（已登录: ${isLoggedIn}）`);
+    console.log(`✅ 批量更新了 ${favoriteButtons.length} 个收藏按钮的状态（已登录: ${isLoggedIn}）`);
     } catch (error) {
       console.warn('批量检查收藏状态失败:', error);
       // 快速重试一次，如果还失败就放弃
@@ -544,9 +633,17 @@ async function initCardEnhancements() {
     });
     
     // 检查是否可以使用预生成的缩略图和摘要
+    // 规范化 URL：去掉 baseurl 前缀（如果存在）
     let lookupUrl = postUrl;
-    if (postUrl.startsWith('/papercache/papers/')) {
+    const baseurl = window.PC_BASEURL || '';
+    if (baseurl && baseurl !== '/' && postUrl.startsWith(baseurl)) {
+      lookupUrl = postUrl.substring(baseurl.length);
+    } else if (postUrl.startsWith('/papercache/')) {
       lookupUrl = postUrl.replace('/papercache', '');
+    }
+    // 确保 lookupUrl 以 / 开头
+    if (!lookupUrl.startsWith('/')) {
+      lookupUrl = '/' + lookupUrl;
     }
     
     const hasPregenThumb = thumbnailsMapping && thumbnailsMapping[lookupUrl];
@@ -636,7 +733,7 @@ async function initCardEnhancements() {
       
       const excerpt = document.createElement('p');
       excerpt.className = (card.classList.contains('post-card-modern') ? 'post-card-excerpt-modern' : 'post-card-excerpt');
-      excerpt.textContent = truncate(excerptsMapping[lookupUrl], 80);
+      excerpt.textContent = truncate(excerptsMapping[lookupUrl], 100);
       body.appendChild(excerpt);
       usedPregenExcerpt = true;
       pregenExcerptCount++;
@@ -809,7 +906,7 @@ async function initCardEnhancements() {
           // 根据卡片类型使用不同的CSS类
           const isModern = card.classList.contains('post-card-modern');
           para.className = isModern ? 'post-card-excerpt-modern' : 'post-card-excerpt';
-          para.textContent = truncate(excerptText, 80);
+          para.textContent = truncate(excerptText, 100);
           body.appendChild(para);
           console.log(`✅ 为卡片添加了摘要: ${truncate(excerptText, 50)}...`);
         } else {
@@ -1189,13 +1286,31 @@ if (window.likesService && document.readyState !== 'loading') {
 // Turbolinks 页面加载时也初始化
 document.addEventListener('turbolinks:load', function() {
   console.log('📄 Turbolinks 页面加载，重新初始化卡片增强');
-  initCardEnhancements();
-  // 立即执行收藏和点赞状态检查
-  if (window.batchCheckFavoritesForCards) {
-    window.batchCheckFavoritesForCards();
+  // 重置重试计数器和防抖时间
+  favoriteButtonRetryCount = 0;
+  lastFavoriteCheckTime = 0;
+  if (favoriteCheckDebounceTimer) {
+    clearTimeout(favoriteCheckDebounceTimer);
+    favoriteCheckDebounceTimer = null;
   }
-  if (window.batchCheckLikesForCards) {
-    window.batchCheckLikesForCards();
+  // 重置认证监听器标记，允许在新页面重新注册
+  authChangeListenerRegistered = false;
+  initCardEnhancements();
+  // 延迟执行收藏和点赞状态检查，避免与初始化冲突
+  // 但先检查是否是演示文稿页面
+  const isSlidesPage = document.body.hasAttribute('data-slides-page') || 
+                      window.location.pathname.includes('/slides') ||
+                      (document.querySelector('.collection-page') && window.location.pathname.includes('/slides'));
+  
+  if (!isSlidesPage) {
+    setTimeout(() => {
+      if (window.batchCheckFavoritesForCards) {
+        window.batchCheckFavoritesForCards();
+      }
+      if (window.batchCheckLikesForCards) {
+        window.batchCheckLikesForCards();
+      }
+    }, 1000);
   }
 });
 

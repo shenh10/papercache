@@ -59,18 +59,45 @@ permalink: /account/favorites.html
   </div>
 
   <script>
-  // 等待服务加载完成
-  async function waitForServices(maxWait = 5000) {
+  // 等待服务加载完成（优化：减少等待时间，增加检查频率）
+  async function waitForServices(maxWait = 3000) {
     const startTime = Date.now();
+    let lastCheckTime = startTime;
+    
     while ((Date.now() - startTime) < maxWait) {
-      if (window.SimpleAuth && window.favoritesService && window.getSupabaseClient) {
+      // 检查所有必需的服务
+      const hasSimpleAuth = !!window.SimpleAuth;
+      const hasFavoritesService = !!window.favoritesService;
+      const hasGetSupabaseClient = typeof window.getSupabaseClient === 'function';
+      
+      if (hasSimpleAuth && hasFavoritesService && hasGetSupabaseClient) {
         const supabase = window.getSupabaseClient();
         if (supabase) {
+          console.log('[Favorites] 所有服务已就绪，耗时:', Date.now() - startTime, 'ms');
           return true;
         }
       }
+      
+      // 每500ms输出一次等待状态（避免日志过多）
+      const now = Date.now();
+      if (now - lastCheckTime > 500) {
+        console.log('[Favorites] 等待服务加载...', {
+          SimpleAuth: hasSimpleAuth,
+          favoritesService: hasFavoritesService,
+          getSupabaseClient: hasGetSupabaseClient,
+          已等待: Math.round((now - startTime) / 1000) + '秒'
+        });
+        lastCheckTime = now;
+      }
+      
       await new Promise(resolve => setTimeout(resolve, 100));
     }
+    
+    console.warn('[Favorites] 服务加载超时', {
+      SimpleAuth: !!window.SimpleAuth,
+      favoritesService: !!window.favoritesService,
+      getSupabaseClient: typeof window.getSupabaseClient === 'function'
+    });
     return false;
   }
   
@@ -126,7 +153,14 @@ permalink: /account/favorites.html
         return;
       }
       
-      const result = await window.favoritesService.getUserFavorites();
+      console.log('[Favorites] 开始获取收藏列表...');
+      // 添加超时处理（10秒）
+      const result = await Promise.race([
+        window.favoritesService.getUserFavorites(),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('获取收藏列表超时，请检查网络连接')), 10000)
+        )
+      ]);
       
       loadingEl.style.display = 'none';
       
@@ -1128,17 +1162,33 @@ permalink: /account/favorites.html
     // 等待认证服务和收藏服务加载完成
     // 先尝试立即加载，如果服务未就绪则等待
     if (window.SimpleAuth && window.favoritesService && window.getSupabaseClient) {
+      console.log('[Favorites] 服务已就绪，立即加载');
       loadFavorites();
     } else {
-      // 等待最多3秒
+      console.log('[Favorites] 服务未就绪，等待加载...');
+      // 等待最多3秒（30次检查）
       let waitCount = 0;
+      const maxWait = 30;
       const checkInterval = setInterval(() => {
         waitCount++;
+        
+        // 每5次检查输出一次状态
+        if (waitCount % 5 === 0) {
+          console.log('[Favorites] 等待服务加载中...', {
+            已等待: waitCount * 100 + 'ms',
+            SimpleAuth: !!window.SimpleAuth,
+            favoritesService: !!window.favoritesService,
+            getSupabaseClient: typeof window.getSupabaseClient === 'function'
+          });
+        }
+        
         if (window.SimpleAuth && window.favoritesService && window.getSupabaseClient) {
           clearInterval(checkInterval);
+          console.log('[Favorites] 服务已就绪，开始加载收藏列表');
           loadFavorites();
-        } else if (waitCount > 30) {
+        } else if (waitCount >= maxWait) {
           clearInterval(checkInterval);
+          console.warn('[Favorites] 等待超时，尝试加载（可能失败）');
           loadFavorites(); // 即使服务未就绪也尝试加载，让 loadFavorites 处理错误
         }
       }, 100);

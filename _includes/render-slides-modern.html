@@ -67,7 +67,13 @@
                   {%- endif -%}
                 </div>
                 <div class="post-card-title-modern">{{ p.title | escape }}</div>
-                {%- assign exc = p.excerpt | default: p.description | default: p.summary -%}
+                {%- comment -%} 优先使用预生成的摘要映射，如果没有则使用 front matter 中的摘要 {%- endcomment -%}
+                {%- assign excerpt_from_data = site.data.excerpts[p.url] -%}
+                {%- if excerpt_from_data -%}
+                  {%- assign exc = excerpt_from_data -%}
+                {%- else -%}
+                  {%- assign exc = p.excerpt | default: p.description | default: p.summary -%}
+                {%- endif -%}
                 {%- if exc -%}
                 <p class="post-card-excerpt-modern">{{ exc | strip_html | truncate: 160 }}</p>
                 {%- endif -%}

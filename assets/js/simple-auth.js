@@ -232,16 +232,16 @@
           // 注意：需要传入session.user以便检测provider信息
           const loginMethod = detectLoginMethod(session.user);
           if (loginMethod && shouldLogUserLogin(session.user.id, loginMethod)) {
-            // 记录登录日志
-            logUserLogin(session.user.id, loginMethod).catch(err => {
-            });
-            
-            // 成功检测到登录方式后，清除标记（避免重复检测）
+            // 立即清除标记，避免SIGNED_IN事件再次检测到（在记录日志之前就清除）
             if (loginMethod.endsWith('_oauth')) {
               localStorage.removeItem('simple_auth_oauth_login_attempt');
             } else if (loginMethod === 'email_password') {
               localStorage.removeItem('simple_auth_email_login_attempt');
             }
+            
+            // 记录登录日志
+            logUserLogin(session.user.id, loginMethod).catch(err => {
+            });
           } else if (!loginMethod) {
             // 未检测到登录行为，跳过记录
           }
@@ -326,15 +326,15 @@
     const lastLogin = loginBehaviorTracker.get(userId);
 
     // 检查是否是重复的登录行为（防止短时间内重复记录）
-    // 注意：缩短时间窗口到5秒，因为INITIAL_SESSION和SIGNED_IN可能在几秒内都触发
+    // 注意：缩短时间窗口到10秒，因为INITIAL_SESSION和SIGNED_IN可能在几秒内都触发
     if (lastLogin) {
       const timeDiff = now - lastLogin.last_login_time;
-      // 如果5秒内有相同用户的相同登录方式，可能是重复触发（INITIAL_SESSION + SIGNED_IN），跳过
-      if (timeDiff < 5000 && lastLogin.login_method === loginMethod) {
+      // 如果10秒内有相同用户的相同登录方式，可能是重复触发（INITIAL_SESSION + SIGNED_IN），跳过
+      if (timeDiff < 10000 && lastLogin.login_method === loginMethod) {
         console.log('[SimpleAuth] 检测到重复登录事件，跳过:', {
           userId: userId.substring(0, 8) + '...',
           loginMethod,
-          timeDiff,
+          timeDiff: Math.round(timeDiff / 1000) + '秒',
           lastLoginTime: new Date(lastLogin.last_login_time).toISOString()
         });
         return false;
@@ -342,10 +342,18 @@
     }
 
     // 记录登录行为（在记录日志之前就标记，避免重复）
+    // 注意：必须在检查通过后立即更新，确保后续的SIGNED_IN事件能被正确过滤
     loginBehaviorTracker.set(userId, {
       last_login_time: now,
       login_method: loginMethod
     });
+    
+    console.log('[SimpleAuth] 准备记录登录日志:', {
+      userId: userId.substring(0, 8) + '...',
+      loginMethod,
+      timestamp: new Date(now).toISOString()
+    });
+    
     return true;
   }
 
@@ -731,17 +739,42 @@
     cleanup
   };
 
-  // 自动初始化
+  // 自动初始化（等待Supabase客户端就绪）
+  function waitAndInit() {
+    // 检查Supabase客户端是否可用
+    if (window.getSupabaseClient && window.getSupabaseClient()) {
+      init();
+    } else if (window.supabaseLoadFailed) {
+      // SDK加载失败，不再等待
+      console.warn('SimpleAuth: Supabase SDK加载失败，认证系统将不可用');
+    } else {
+      // 继续等待（最多等待5秒）
+      let waitCount = 0;
+      const maxWait = 50;
+      const checkInterval = setInterval(() => {
+        waitCount++;
+        if (window.getSupabaseClient && window.getSupabaseClient()) {
+          clearInterval(checkInterval);
+          init();
+        } else if (window.supabaseLoadFailed || waitCount >= maxWait) {
+          clearInterval(checkInterval);
+          console.warn('SimpleAuth: Supabase客户端初始化超时，认证系统将不可用');
+        }
+      }, 100);
+    }
+  }
+  
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', waitAndInit);
   } else {
-    init();
+    // 延迟一点执行，确保其他脚本已加载
+    setTimeout(waitAndInit, 100);
   }
 
   // Turbolinks页面导航时重新绑定事件
   document.addEventListener('turbolinks:load', () => {
     if (!AuthState.isInitialized) {
-      init();
+      waitAndInit();
     } else {
       // 页面导航时，通知UI组件更新
       notifyStateChange();

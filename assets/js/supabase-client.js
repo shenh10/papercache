@@ -66,10 +66,21 @@
       return null;
     }
 
-    // 动态加载Supabase SDK（如果未加载）
+    // 检查Supabase SDK是否已加载
     if (typeof window.supabase === 'undefined') {
-      console.error('Supabase SDK未加载，请确保已引入 @supabase/supabase-js');
-      return null;
+      // 如果标记为加载失败，直接返回null，不阻塞
+      if (window.supabaseLoadFailed) {
+        console.warn('Supabase SDK加载失败，用户系统功能将不可用');
+        return null;
+      }
+      // SDK还未加载，设置延迟初始化（不阻塞当前执行）
+      console.log('Supabase SDK未加载，将在后台等待加载完成');
+      setTimeout(function() {
+        if (typeof window.supabase !== 'undefined' && !supabaseClient) {
+          initSupabase();
+        }
+      }, 500);
+      return null; // 立即返回，不阻塞页面加载
     }
 
     try {

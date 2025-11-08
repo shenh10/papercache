@@ -1,10 +1,24 @@
 console.log('🎯 card-hover-preview.js 脚本已加载');
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 跳过演示文稿页面
+  if (document.body.hasAttribute('data-slides-page') || 
+      document.querySelector('.collection-page') && window.location.pathname.includes('/slides')) {
+    console.log('📄 演示文稿页面，跳过 hover 预览效果');
+    return;
+  }
+  
   console.log('📄 DOM 已加载，开始设置 hover 预览');
   
+  // 排除演示文稿页面的卡片
   const cards = Array.from(document.querySelectorAll('.post-item.post-card, .post-item.post-card-modern'))
-    .filter(card => card.querySelector('.post-card-link, .post-card-link-modern'));
+    .filter(card => {
+      // 跳过演示文稿页面的卡片
+      if (card.closest('.collection-page')) {
+        return false;
+      }
+      return card.querySelector('.post-card-link, .post-card-link-modern');
+    });
   
   console.log(`🔍 找到 ${cards.length} 个文章卡片，开始设置 hover 效果`);
   

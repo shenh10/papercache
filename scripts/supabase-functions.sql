@@ -486,6 +486,8 @@ CREATE OR REPLACE FUNCTION public.delete_user_data(p_user_id UUID)
 RETURNS BOOLEAN AS $$
 DECLARE
   current_admin_id UUID;
+  target_is_super_admin BOOLEAN;
+  current_is_super_admin BOOLEAN;
 BEGIN
   -- 检查当前用户是否为管理员
   current_admin_id := auth.uid();
@@ -496,6 +498,26 @@ BEGIN
   -- 不能删除自己
   IF p_user_id = current_admin_id THEN
     RAISE EXCEPTION 'Cannot delete yourself';
+  END IF;
+
+  -- 检查目标用户是否为超管
+  SELECT COALESCE(is_super_admin, FALSE) INTO target_is_super_admin
+  FROM public.admins
+  WHERE user_id = p_user_id;
+
+  -- 检查当前用户是否为超管
+  SELECT COALESCE(is_super_admin, FALSE) INTO current_is_super_admin
+  FROM public.admins
+  WHERE user_id = current_admin_id;
+
+  -- 超管不能被删除（除非是超管自己删除自己，但也不能删除自己）
+  IF target_is_super_admin = TRUE THEN
+    RAISE EXCEPTION 'Cannot delete super admin';
+  END IF;
+
+  -- 只有超管可以删除其他用户（普通管理员不能删除用户）
+  IF current_is_super_admin = FALSE THEN
+    RAISE EXCEPTION 'Only super admin can delete users';
   END IF;
 
   -- 检查目标用户是否存在

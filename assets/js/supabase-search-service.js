@@ -40,9 +40,14 @@
 
       try {
         // 选择使用全文搜索还是模糊搜索
-        const functionName = matchMode === 'fulltext' 
-          ? 'search_posts_fulltext' 
-          : 'search_posts_fuzzy';
+        // 优先使用优化后的函数（如果存在），否则回退到原函数
+        let functionName;
+        if (matchMode === 'fulltext') {
+          functionName = 'search_posts_fulltext';
+        } else {
+          // 尝试使用优化后的函数，如果不存在则使用原函数
+          functionName = 'search_posts_fuzzy_optimized';
+        }
 
         const params = {
           p_query: query || '',
@@ -51,12 +56,46 @@
           p_limit: limit
         };
 
+        const startTime = performance.now();
         console.log('[supabase-search] 搜索请求:', { query, functionName, params });
 
         const { data, error } = await supabase.rpc(functionName, params);
+        
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+        console.log(`[supabase-search] 搜索耗时: ${duration.toFixed(2)}ms`);
 
         if (error) {
           console.error('[supabase-search] 搜索失败:', error);
+          
+          // 如果优化函数不存在，尝试使用原函数（向后兼容）
+          if (functionName === 'search_posts_fuzzy_optimized' && error.code === '42883') {
+            console.log('[supabase-search] 优化函数不存在，回退到原函数');
+            functionName = 'search_posts_fuzzy';
+            const retryStartTime = performance.now();
+            const { data: retryData, error: retryError } = await supabase.rpc(functionName, params);
+            const retryEndTime = performance.now();
+            const retryDuration = retryEndTime - retryStartTime;
+            console.log(`[supabase-search] 回退搜索耗时: ${retryDuration.toFixed(2)}ms`);
+            
+            if (retryError) {
+              throw retryError;
+            }
+            
+            const results = (retryData || []).map((item, index) => ({
+              ref: item.post_url,
+              score: item.relevance || item.match_score || (1.0 - index * 0.01)
+            }));
+            
+            return {
+              success: true,
+              query,
+              total: results.length,
+              results: results,
+              data: retryData
+            };
+          }
+          
           throw error;
         }
 

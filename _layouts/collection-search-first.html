@@ -1130,9 +1130,9 @@ window.RSS_SUBSCRIBE_URL = {{ '/feeds/index.html' | relative_url | jsonify }};
     {%- for post in site.posts -%}
       {%- assign excerpt_data = site.data.excerpts[post.url] -%}
       {%- if excerpt_data -%}
-        {%- assign final_excerpt = excerpt_data | truncate: 240 -%}
+        {%- assign final_excerpt = excerpt_data | truncate: 100 -%}
       {%- else -%}
-        {%- assign exc = post.excerpt | default: post.description | default: post.summary | default: post.content | strip_html | strip_newlines | truncate: 240 -%}
+        {%- assign exc = post.excerpt | default: post.description | default: post.summary | default: post.content | strip_html | strip_newlines | truncate: 100 -%}
         {%- assign final_excerpt = exc -%}
       {%- endif -%}
       {
@@ -1881,18 +1881,25 @@ if (typeof window.SearchFirstMode === 'undefined') {
     
     this._isSearching = true;
     
+    // 显示加载状态
+    this.showSearchLoading();
+    
     try {
       const searchInput = document.getElementById('main-search-input');
       const query = queryParam !== null ? queryParam : (searchInput ? searchInput.value.trim() : '');
       
       // 如果有选中的tag，允许空查询；否则需要至少2个字符
       if (!allowEmptyQuery && query.length < 2 && this.selectedTags.length === 0) {
+        this.hideSearchLoading();
         alert('请输入至少2个字符进行搜索，或选择标签进行过滤');
+        this._isSearching = false;
         return;
       }
       
       // 如果查询为空且没有选中的tag，直接返回
       if (query.length === 0 && this.selectedTags.length === 0) {
+        this.hideSearchLoading();
+        this._isSearching = false;
         return;
       }
 
@@ -2087,9 +2094,65 @@ if (typeof window.SearchFirstMode === 'undefined') {
     // 本地搜索结果已就绪
     this.showSearchResults(query);
     } finally {
-      // 确保无论成功还是失败，都重置搜索状态
+      // 确保无论成功还是失败，都重置搜索状态和隐藏加载状态
       this._isSearching = false;
+      this.hideSearchLoading();
     }
+  }
+  
+  // 显示搜索加载状态
+  showSearchLoading() {
+    const resultsSection = document.getElementById('search-results');
+    const resultsList = document.getElementById('results-list');
+    const resultsCount = document.getElementById('results-count');
+    
+    if (resultsSection) {
+      resultsSection.classList.add('show');
+      resultsSection.style.display = 'block';
+    }
+    
+    if (resultsList) {
+      resultsList.innerHTML = `
+        <div class="search-loading" style="
+          text-align: center;
+          padding: 60px 20px;
+          color: #6b7280;
+        ">
+          <div style="
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 20px;
+          "></div>
+          <p style="margin: 0; font-size: 1.1em;">正在搜索中...</p>
+        </div>
+      `;
+      
+      // 添加旋转动画样式（如果还没有）
+      if (!document.getElementById('search-loading-styles')) {
+        const style = document.createElement('style');
+        style.id = 'search-loading-styles';
+        style.textContent = `
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    }
+    
+    if (resultsCount) {
+      resultsCount.textContent = '搜索中...';
+    }
+  }
+  
+  // 隐藏搜索加载状态
+  hideSearchLoading() {
+    // 加载状态会在 showSearchResults 中被替换，这里不需要额外操作
   }
 
   showSearchResults(query, keepBrowse = false) {
@@ -2147,9 +2210,17 @@ if (typeof window.SearchFirstMode === 'undefined') {
       resultsList.style.display = 'block';
       resultsList.style.gridTemplateColumns = 'none';
       resultsList.className = 'results-list-grouped';
-      this.renderGroupedResults(resultsList);
-      // 批量更新收藏状态
-      setTimeout(() => this.batchUpdateFavoriteStatus(), 100);
+      // 使用 requestAnimationFrame 分批渲染，避免阻塞UI
+      this.renderGroupedResultsAsync(resultsList);
+      // 延迟批量更新收藏和点赞状态，避免阻塞渲染
+      setTimeout(() => {
+        if (window.batchCheckFavoritesForCards) {
+          window.batchCheckFavoritesForCards();
+        }
+        if (window.batchCheckLikesForCards) {
+          window.batchCheckLikesForCards();
+        }
+      }, 500);
     }
   }
 
@@ -2158,7 +2229,243 @@ if (typeof window.SearchFirstMode === 'undefined') {
     this.showCategoryBrowse();
   }
 
-  // 按分类分组渲染搜索结果
+  // 异步分批渲染搜索结果（优化性能）
+  renderGroupedResultsAsync(container) {
+    if (!container || !this.filteredPapers || this.filteredPapers.length === 0) {
+      return;
+    }
+    
+    // 先清空容器
+    container.innerHTML = '';
+    
+    // 准备数据（与 renderGroupedResults 相同的逻辑）
+    const groupedData = this.prepareGroupedResultsData();
+    
+    if (!groupedData || groupedData.length === 0) {
+      return;
+    }
+    
+    // 使用 DocumentFragment 批量插入
+    const fragment = document.createDocumentFragment();
+    let currentIndex = 0;
+    const BATCH_SIZE = 10; // 每批渲染10个分类组
+    
+    const renderBatch = () => {
+      const endIndex = Math.min(currentIndex + BATCH_SIZE, groupedData.length);
+      
+      for (let i = currentIndex; i < endIndex; i++) {
+        const { categoryPath, papers, count } = groupedData[i];
+        const categoryGroup = this.createCategoryGroup(categoryPath, papers, count);
+        fragment.appendChild(categoryGroup);
+      }
+      
+      // 批量插入到DOM
+      if (fragment.children.length > 0) {
+        container.appendChild(fragment);
+      }
+      
+      currentIndex = endIndex;
+      
+      // 如果还有数据，继续下一批
+      if (currentIndex < groupedData.length) {
+        requestAnimationFrame(renderBatch);
+      }
+    };
+    
+    // 开始渲染
+    requestAnimationFrame(renderBatch);
+  }
+  
+  // 准备分组数据（提取公共逻辑）
+  prepareGroupedResultsData() {
+    if (!this.filteredPapers || this.filteredPapers.length === 0) {
+      return [];
+    }
+    
+    // 从URL中提取分类路径的辅助函数
+    const extractCategoriesFromUrl = (url) => {
+      if (!url) return [];
+      try {
+        const urlObj = new URL(url, window.location.origin);
+        let pathname = urlObj.pathname;
+        
+        const baseurl = window.PC_BASEURL || '';
+        if (baseurl && baseurl !== '/' && pathname.startsWith(baseurl)) {
+          pathname = pathname.substring(baseurl.length);
+        }
+        
+        if (pathname.startsWith('/')) {
+          pathname = pathname.substring(1);
+        }
+        
+        if (!pathname.startsWith('papers/')) {
+          return [];
+        }
+        
+        const withoutPapers = pathname.substring(7);
+        const parts = withoutPapers.split('/').filter(p => p);
+        
+        const categories = [];
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          if (/^\d{4}$/.test(part) || /^\d{2}$/.test(part)) {
+            break;
+          }
+          if (part.includes('.')) {
+            break;
+          }
+          categories.push(part);
+        }
+        
+        return categories;
+      } catch (e) {
+        return [];
+      }
+    };
+    
+    // 按分类路径分组论文
+    const groupedByCategory = {};
+    
+    this.filteredPapers.forEach(paper => {
+      let categories = Array.isArray(paper.categories) ? paper.categories : [];
+      
+      if (categories.length === 0 && paper.url) {
+        categories = extractCategoriesFromUrl(paper.url);
+      }
+      
+      if (categories.length === 0) {
+        const key = '未分类';
+        if (!groupedByCategory[key]) {
+          groupedByCategory[key] = [];
+        }
+        groupedByCategory[key].push(paper);
+      } else {
+        const categoryPath = categories.join('/');
+        if (!groupedByCategory[categoryPath]) {
+          groupedByCategory[categoryPath] = [];
+        }
+        groupedByCategory[categoryPath].push(paper);
+      }
+    });
+    
+    // 按分类路径排序
+    const sortedCategories = Object.keys(groupedByCategory).sort((a, b) => {
+      if (a === '未分类') return 1;
+      if (b === '未分类') return -1;
+      return a.localeCompare(b);
+    });
+    
+    // 转换为数组格式
+    return sortedCategories.map(categoryPath => ({
+      categoryPath,
+      papers: groupedByCategory[categoryPath],
+      count: groupedByCategory[categoryPath].length
+    }));
+  }
+  
+  // 创建分类组DOM元素（提取公共逻辑）
+  createCategoryGroup(categoryPath, papers, count) {
+    // 创建分类组容器
+    const categoryGroup = document.createElement('div');
+    categoryGroup.className = 'search-category-group';
+    categoryGroup.style.cssText = `
+      margin-bottom: 40px;
+      width: 100%;
+      display: block;
+      clear: both;
+    `;
+
+    // 分类标题
+    const categoryHeader = document.createElement('div');
+    categoryHeader.className = 'category-group-header';
+    categoryHeader.style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding: 15px 20px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);
+      border-left: 4px solid #667eea;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    `;
+    
+    const categoryTitle = document.createElement('h3');
+    categoryTitle.style.cssText = `
+      margin: 0;
+      font-size: 1.2em;
+      font-weight: 600;
+      color: #2d3748;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    `;
+    categoryTitle.innerHTML = `
+      <span>📁</span>
+      <span>${categoryPath.replace(/\//g, ' › ')}</span>
+      <span class="category-count-badge">(${count})</span>
+    `;
+    
+    // 让分类标题可点击
+    if (categoryPath !== '未分类') {
+      categoryHeader.style.cursor = 'pointer';
+      categoryHeader.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const categoryParts = categoryPath.split('/');
+        this.currentCategoryPath = categoryParts;
+        const firstCategory = categoryParts[0];
+        this.showCategoryBrowse(firstCategory);
+        setTimeout(() => {
+          this.renderCategoryTree();
+          this.applyCategoryFilter();
+        }, 100);
+      });
+      categoryHeader.addEventListener('mouseenter', () => {
+        categoryHeader.style.background = 'linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)';
+        categoryHeader.style.transform = 'translateX(4px)';
+      });
+      categoryHeader.addEventListener('mouseleave', () => {
+        categoryHeader.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%)';
+        categoryHeader.style.transform = 'translateX(0)';
+      });
+    }
+    
+    categoryHeader.appendChild(categoryTitle);
+    categoryGroup.appendChild(categoryHeader);
+
+    // 论文列表容器
+    const papersContainer = document.createElement('div');
+    papersContainer.className = 'category-papers-list';
+    
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      papersContainer.style.cssText = `display: block; gap: 0;`;
+      papersContainer.classList.add('post-list-mobile-modern');
+    } else {
+      papersContainer.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+      `;
+      papersContainer.classList.add('post-grid-modern');
+    }
+    
+    // 渲染论文卡片（使用 DocumentFragment 批量插入）
+    const papersFragment = document.createDocumentFragment();
+    papers.forEach(paper => {
+      const card = this.createResultItem(paper);
+      if (card) {
+        papersFragment.appendChild(card);
+      }
+    });
+    papersContainer.appendChild(papersFragment);
+    
+    categoryGroup.appendChild(papersContainer);
+    return categoryGroup;
+  }
+  
+  // 按分类分组渲染搜索结果（保留原方法作为备用）
   renderGroupedResults(container) {
     if (!container || !this.filteredPapers || this.filteredPapers.length === 0) {
       return;
@@ -2428,8 +2735,13 @@ if (typeof window.SearchFirstMode === 'undefined') {
                       }
                     });
                     
-                    // 批量更新收藏状态
+                    // 批量更新收藏和点赞状态
                     window.searchFirstMode.batchUpdateFavoriteStatus();
+                    if (window.batchCheckLikesForCards) {
+                      setTimeout(() => {
+                        window.batchCheckLikesForCards();
+                      }, 200);
+                    }
                   }, 100);
                 }
               }
@@ -2461,8 +2773,14 @@ if (typeof window.SearchFirstMode === 'undefined') {
       container.appendChild(categoryGroup);
     });
     
-    // 批量检查收藏状态
+    // 批量检查收藏和点赞状态
     this.batchUpdateFavoriteStatus();
+    // 也更新点赞状态（如果函数存在）
+    if (window.batchCheckLikesForCards) {
+      setTimeout(() => {
+        window.batchCheckLikesForCards();
+      }, 600); // 稍微延迟，避免与收藏检查冲突
+    }
   }
   
   // 批量更新收藏状态
@@ -2972,9 +3290,9 @@ if (typeof window.SearchFirstMode === 'undefined') {
     // 高亮标题和摘要中的关键词（支持模糊匹配和精确匹配）
     const highlightedTitle = this.highlightText(paper.title || '', this.currentQuery, this.currentMatchMode);
     
-    // 处理摘要：存储完整内容，显示时裁剪（最大240字符）
+    // 处理摘要：存储完整内容，显示时裁剪（最大100字符，让卡片更紧凑）
     const fullExcerpt = paper.excerpt || '';
-    const maxExcerptLength = 240; // 最大显示长度
+    const maxExcerptLength = 100; // 最大显示长度（减少以保持卡片宽度）
     const displayExcerpt = fullExcerpt.length > maxExcerptLength 
       ? fullExcerpt.substring(0, maxExcerptLength) + '...'
       : fullExcerpt;
