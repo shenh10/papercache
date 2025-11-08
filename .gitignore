@@ -32,3 +32,15 @@ _data/
 vendor/
 .bundle/
 .vercel
+
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Node.js dependencies
+node_modules/
+
+# Backup directories
+bkp/
+backup/
