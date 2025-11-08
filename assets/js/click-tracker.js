@@ -100,13 +100,22 @@
   
   // 从 Supabase 获取点击数据和收藏数据（高效方法：使用RPC函数）
   async function loadClickData() {
+    // 检查 Supabase 配置是否可用
+    const supabaseConfig = window.siteConfig?.supabase;
+    const hasSupabaseConfig = supabaseConfig && supabaseConfig.url && supabaseConfig.anon_key;
+    
+    if (!hasSupabaseConfig) {
+      console.warn('[ClickTracker] Supabase 配置未找到，无法加载数据');
+      return { clicks: {}, favorites: {}, likes: {} };
+    }
+    
     const clickService = await waitForClickStatsService();
     
     // 优先使用高效的RPC函数直接获取排序后的Top N文章
     if (clickService && clickService.getTopPostsByEngagement) {
       try {
-        // 获取Top N文章（按点击量+收藏量总和排序）
-        // 注意：这里返回的数据结构是数组，包含 post_url, click_count, favorite_count, total_count
+        // 获取Top N文章（包含点击量、收藏量、点赞数）
+        // 注意：这里返回的数据结构是数组，包含 post_url, click_count, favorite_count, like_count, total_count
         const topPosts = await clickService.getTopPostsByEngagement(15); // 获取15个，前端再筛选前10个
         
         if (Array.isArray(topPosts) && topPosts.length > 0) {
@@ -116,10 +125,12 @@
           // 保存排序顺序（URL数组），以便前端按此顺序排列
           const sortedUrls = [];
           
+          const likesResult = {}; // 添加点赞数映射
           topPosts.forEach(post => {
             const url = post.post_url;
             clicksResult[url] = post.click_count || 0;
             favoritesResult[url] = post.favorite_count || 0;
+            likesResult[url] = post.like_count || 0; // 添加点赞数
             sortedUrls.push(url);
           });
           
@@ -136,6 +147,7 @@
                 if (!(originalUrl in clicksResult) && normalized in clicksResult) {
                   clicksResult[originalUrl] = clicksResult[normalized];
                   favoritesResult[originalUrl] = favoritesResult[normalized];
+                  likesResult[originalUrl] = likesResult[normalized] || 0; // 添加点赞数映射
                   // 不插入到sortedUrls中，保持SQL返回的排序顺序
                 }
               }
@@ -145,6 +157,7 @@
           return { 
             clicks: clicksResult, 
             favorites: favoritesResult,
+            likes: likesResult, // 添加点赞数映射
             sortedUrls: sortedUrls, // 标记这是来自RPC函数的排序结果
             fromRPC: true // 标记数据来源，便于前端优化
           };
@@ -156,11 +169,12 @@
     
     // 回退方案：使用批量查询（旧方法）
     const favoriteService = await waitForFavoritesService();
+    const likesService = window.likesService; // 获取点赞服务
     
     // 获取所有需要显示的文章 URL
     const container = document.getElementById('popular-posts-list');
     if (!container) {
-      return { clicks: {}, favorites: {} };
+      return { clicks: {}, favorites: {}, likes: {} };
     }
     
     const items = Array.from(container.querySelectorAll('.post-item[data-post-url]'));
@@ -168,32 +182,35 @@
     const originalUrls = items.map(item => item.getAttribute('data-post-url')).filter(url => url);
     
     if (originalUrls.length === 0) {
-      return { clicks: {}, favorites: {} };
+      return { clicks: {}, favorites: {}, likes: {} };
     }
     
     try {
-      // 并行获取点击量和收藏量
+      // 并行获取点击量、收藏量和点赞数
       // 注意：传递给服务的应该是原始URL，服务内部会进行规范化
       // 但 clickStatsService.batchGetClickCounts 可能需要规范化URL，所以我们也传递规范化URL
       const normalizedUrls = originalUrls.map(url => normalizeUrl(url)).filter(url => url && url !== '/');
-      const [clicksMap, favoritesMap] = await Promise.all([
+      const [clicksMap, favoritesMap, likesMap] = await Promise.all([
         clickService ? clickService.batchGetClickCounts(normalizedUrls) : Promise.resolve({}),
-        favoriteService ? favoriteService.batchGetFavoriteCounts(originalUrls) : Promise.resolve({})
+        favoriteService ? favoriteService.batchGetFavoriteCounts(originalUrls) : Promise.resolve({}),
+        likesService && likesService.batchGetLikeCounts ? likesService.batchGetLikeCounts(originalUrls) : Promise.resolve({})
       ]);
       
       // 将结果映射回原始URL（因为服务可能返回规范化URL作为键）
       const clicksResult = {};
       const favoritesResult = {};
+      const likesResult = {};
       originalUrls.forEach(originalUrl => {
         const normalized = normalizeUrl(originalUrl);
         clicksResult[originalUrl] = clicksMap[normalized] || clicksMap[originalUrl] || 0;
         favoritesResult[originalUrl] = favoritesMap[originalUrl] || favoritesMap[normalized] || 0;
+        likesResult[originalUrl] = likesMap[originalUrl] || likesMap[normalized] || 0;
       });
       
-      return { clicks: clicksResult, favorites: favoritesResult };
+      return { clicks: clicksResult, favorites: favoritesResult, likes: likesResult };
     } catch (error) {
       console.error('ClickTracker: Failed to load data', error);
-      return { clicks: {}, favorites: {} };
+      return { clicks: {}, favorites: {}, likes: {} };
     }
   }
   
@@ -578,9 +595,10 @@
     const container = document.getElementById('popular-posts-list');
     if (!container) return;
     
-    // data 可能是旧格式（只有 clicks 对象）或新格式（{ clicks: {}, favorites: {}, sortedUrls: [], fromRPC: true }）
+    // data 可能是旧格式（只有 clicks 对象）或新格式（{ clicks: {}, favorites: {}, likes: {}, sortedUrls: [], fromRPC: true }）
     let clicks = {};
     let favorites = {};
+    let likes = {}; // 添加点赞数映射
     let sortedUrls = null;
     let fromRPC = false;
     
@@ -589,16 +607,21 @@
         // 新格式
         clicks = data.clicks || {};
         favorites = data.favorites || {};
+        likes = data.likes || {}; // 添加点赞数
         sortedUrls = data.sortedUrls || null;
         fromRPC = data.fromRPC || false;
       } else {
         // 旧格式（向后兼容）
         clicks = data || {};
         favorites = {};
+        likes = {};
         sortedUrls = null;
         fromRPC = false;
       }
     }
+    
+    // 获取当前选择的排序方式（默认点赞数）
+    const currentSort = window.popularPostsSortMode || 'likes';
     
     const items = Array.from(container.querySelectorAll('.post-item[data-post-url]'));
     
@@ -613,85 +636,132 @@
       }
     });
     
-    // 更新显示并过滤掉点击量和收藏量都为0的项目
+    // 更新显示并过滤掉所有指标都为0的项目
     const validItems = [];
     
-    // 如果数据来自RPC函数且有排序列表，优先使用排序列表
-    // SQL函数已经按总排序（点击量+收藏量）降序排序，直接使用SQL返回的顺序
-    if (fromRPC && sortedUrls && Array.isArray(sortedUrls)) {
-      sortedUrls.forEach(url => {
-        const normalized = normalizeUrl(url);
-        const item = urlToItemMap.get(url) || urlToItemMap.get(normalized);
-        if (item) {
-          const clickCount = clicks[url] || clicks[normalized] || 0;
-          const favoriteCount = favorites[url] || favorites[normalized] || 0;
-          const totalCount = clickCount + favoriteCount;
-          
-          const dateEl = item.querySelector('.post-date-popular');
-          if (dateEl) {
-            dateEl.textContent = `${clickCount}/${favoriteCount}`;
-          }
-          
-          if (totalCount > 0) {
-            validItems.push({ item, clickCount, favoriteCount, totalCount, url: normalized });
-          } else {
-            item.style.display = 'none';
-          }
-        }
-      });
+    // 遍历所有items，收集数据
+    items.forEach(item => {
+      let url = item.getAttribute('data-post-url');
+      const originalUrl = url;
+      // 规范化 URL 以确保匹配
+      url = normalizeUrl(url);
       
-      // 按总排序（点击量+收藏量）降序排列
-      validItems.sort((a, b) => {
-        if (b.totalCount !== a.totalCount) {
-          return b.totalCount - a.totalCount;
-        }
-        if (b.clickCount !== a.clickCount) {
-          return b.clickCount - a.clickCount;
-        }
-        const titleA = a.item.getAttribute('data-post-title') || '';
-        const titleB = b.item.getAttribute('data-post-title') || '';
-        return titleA.localeCompare(titleB);
-      });
-    } else {
-      // 旧方法：遍历所有items
-      items.forEach(item => {
-        let url = item.getAttribute('data-post-url');
-        const originalUrl = url;
-        // 规范化 URL 以确保匹配
-        url = normalizeUrl(url);
-        
-        // 获取点击量和收藏量
-        const clickCount = clicks[url] || clicks[originalUrl] || 0;
-        const favoriteCount = favorites[url] || favorites[originalUrl] || 0;
-        const totalCount = clickCount + favoriteCount;
-        
-        const dateEl = item.querySelector('.post-date-popular');
-        if (dateEl) {
-          // 显示格式：点击量/收藏量
-          dateEl.textContent = `${clickCount}/${favoriteCount}`;
-        }
-        
-        // 只保留点击量和收藏量至少有一个大于0的项目
-        if (totalCount > 0) {
-          validItems.push({ item, clickCount, favoriteCount, totalCount, url });
-        } else {
-          // 隐藏点击量和收藏量都为0的项目
-          item.style.display = 'none';
-        }
-      });
+      // 获取点击量、收藏量和点赞数
+      const clickCount = clicks[url] || clicks[originalUrl] || 0;
+      const favoriteCount = favorites[url] || favorites[originalUrl] || 0;
+      const likeCount = likes[url] || likes[originalUrl] || 0;
       
-      // 按总排序（点击量+收藏量，降序）
-      validItems.sort((a, b) => {
-        if (b.totalCount !== a.totalCount) {
-          return b.totalCount - a.totalCount;
-        }
-        if (b.clickCount !== a.clickCount) {
-          return b.clickCount - a.clickCount;
-        }
-        const titleA = a.item.getAttribute('data-post-title') || '';
-        const titleB = b.item.getAttribute('data-post-title') || '';
-        return titleA.localeCompare(titleB);
-      });
+      // 根据当前排序方式确定显示值和排序值
+      let displayValue = 0;
+      let sortValue = 0;
+      let displayText = '';
+      
+      if (currentSort === 'likes') {
+        displayValue = likeCount;
+        sortValue = likeCount;
+        displayText = likeCount.toString();
+      } else if (currentSort === 'clicks') {
+        displayValue = clickCount;
+        sortValue = clickCount;
+        displayText = clickCount.toString();
+      } else if (currentSort === 'favorites') {
+        displayValue = favoriteCount;
+        sortValue = favoriteCount;
+        displayText = favoriteCount.toString();
+      }
+      
+      const dateEl = item.querySelector('.post-date-popular');
+      if (dateEl) {
+        dateEl.textContent = displayText;
+      }
+      
+      // 只保留当前排序指标大于0的项目
+      if (sortValue > 0) {
+        validItems.push({ 
+          item, 
+          clickCount, 
+          favoriteCount, 
+          likeCount,
+          displayValue,
+          sortValue,
+          url 
+        });
+      } else {
+        // 隐藏当前排序指标为0的项目
+        item.style.display = 'none';
+      }
+    });
+    
+    // 按当前选择的排序方式降序排列
+    validItems.sort((a, b) => {
+      if (b.sortValue !== a.sortValue) {
+        return b.sortValue - a.sortValue;
+      }
+      // 如果主排序值相同，按点赞数、点击量、收藏数依次排序
+      if (b.likeCount !== a.likeCount) {
+        return b.likeCount - a.likeCount;
+      }
+      if (b.clickCount !== a.clickCount) {
+        return b.clickCount - a.clickCount;
+      }
+      if (b.favoriteCount !== a.favoriteCount) {
+        return b.favoriteCount - a.favoriteCount;
+      }
+      const titleA = a.item.getAttribute('data-post-title') || '';
+      const titleB = b.item.getAttribute('data-post-title') || '';
+      return titleA.localeCompare(titleB);
+    });
+    
+    // 检查是否有有效数据
+    const hasValidData = validItems.length > 0 || 
+      Object.keys(clicks).length > 0 || 
+      Object.keys(favorites).length > 0 || 
+      Object.keys(likes).length > 0;
+    
+    // 检查 Supabase 配置是否可用
+    const supabaseConfig = window.siteConfig?.supabase;
+    const hasSupabaseConfig = supabaseConfig && supabaseConfig.url && supabaseConfig.anon_key;
+    
+    // 如果没有有效数据且 Supabase 配置缺失，显示提示信息
+    if (!hasValidData && !hasSupabaseConfig) {
+      const existingMessage = container.querySelector('.popular-posts-error-message');
+      if (!existingMessage) {
+        const errorMessage = document.createElement('div');
+        errorMessage.className = 'popular-posts-error-message';
+        errorMessage.style.cssText = 'padding: 20px; text-align: center; color: #666; font-size: 14px;';
+        errorMessage.innerHTML = '⚠️ Supabase 配置未找到，无法加载数据。请检查配置文件。';
+        container.appendChild(errorMessage);
+      }
+      // 隐藏所有项目
+      items.forEach(item => item.style.display = 'none');
+      return;
+    }
+    
+    // 移除错误提示（如果有）
+    const existingMessage = container.querySelector('.popular-posts-error-message');
+    if (existingMessage) {
+      existingMessage.remove();
+    }
+    
+    // 如果没有有效数据但有配置，显示加载中或空数据提示
+    if (validItems.length === 0 && hasSupabaseConfig) {
+      const existingEmptyMessage = container.querySelector('.popular-posts-empty-message');
+      if (!existingEmptyMessage) {
+        const emptyMessage = document.createElement('div');
+        emptyMessage.className = 'popular-posts-empty-message';
+        emptyMessage.style.cssText = 'padding: 20px; text-align: center; color: #999; font-size: 14px;';
+        emptyMessage.innerHTML = '📊 暂无数据，请稍后再试。';
+        container.appendChild(emptyMessage);
+      }
+      // 隐藏所有项目
+      items.forEach(item => item.style.display = 'none');
+      return;
+    }
+    
+    // 移除空数据提示（如果有）
+    const existingEmptyMessage = container.querySelector('.popular-posts-empty-message');
+    if (existingEmptyMessage) {
+      existingEmptyMessage.remove();
     }
     
     // 重新插入到容器中（保持表头在顶部）
@@ -735,13 +805,79 @@
     }
   }
   
+  // 初始化排序按钮事件
+  function initSortButtons() {
+    const sortButtons = document.querySelectorAll('.popular-sort-controls .sort-btn');
+    const headerLabel = document.getElementById('popular-header-label');
+    
+    // 设置默认排序方式为点赞数
+    if (!window.popularPostsSortMode) {
+      window.popularPostsSortMode = 'likes';
+    }
+    
+    sortButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const sortMode = this.getAttribute('data-sort');
+        
+        // 更新按钮状态
+        sortButtons.forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        
+        // 更新排序模式
+        window.popularPostsSortMode = sortMode;
+        
+        // 更新表头标签
+        if (headerLabel) {
+          if (sortMode === 'likes') {
+            headerLabel.textContent = '点赞数';
+          } else if (sortMode === 'clicks') {
+            headerLabel.textContent = '点击量';
+          } else if (sortMode === 'favorites') {
+            headerLabel.textContent = '收藏数';
+          }
+        }
+        
+        // 重新加载数据并更新显示
+        loadClickData().then(data => {
+          if (data) {
+            updatePopularPosts(data);
+          }
+        });
+      });
+    });
+    
+    // 设置默认按钮为激活状态
+    const defaultBtn = document.querySelector(`.popular-sort-controls .sort-btn[data-sort="${window.popularPostsSortMode}"]`);
+    if (defaultBtn) {
+      defaultBtn.classList.add('active');
+    }
+  }
+  
+  // 在DOM加载后初始化排序按钮
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSortButtons);
+  } else {
+    initSortButtons();
+  }
+  
+  // Turbolinks 页面加载时也初始化
+  document.addEventListener('turbolinks:load', initSortButtons);
+  
   // 导出给其他脚本使用
   window.papercacheClickTracker = {
     trackClick,
     loadClickData,
     updatePopularPosts,
     flushQueue,  // 暴露刷新函数，允许手动触发
-    getQueueSize: () => clickQueue.length  // 获取队列大小（用于调试）
+    getQueueSize: () => clickQueue.length,  // 获取队列大小（用于调试）
+    setSortMode: (mode) => { // 允许外部设置排序模式
+      window.popularPostsSortMode = mode;
+      loadClickData().then(data => {
+        if (data) {
+          updatePopularPosts(data);
+        }
+      });
+    }
   };
 })();
 

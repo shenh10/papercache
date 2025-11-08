@@ -261,8 +261,8 @@ elif s["tool"] == "www": // .. do something
 <p>约束生成，即在满足用户指定条件时停止LLM生成，对于终止否则会很长的LLM响应很有用，同样可以使用输出捕获来实现。例如，LMQL【索引9，LMQL Chat: Scripted chatbot development, 2023】通过声明式语法暴露此功能，例如提示脚本<code>"Give your answer here: [y]"</code>，其中<code>len(TOKENS(y)) &lt; 25</code>在Python解释器捕获的生成输出长度超过25个token时终止。</p>
 <p><strong>结构化输出</strong>。一个相关的功能是结构化输出，其中LLM的输出被约束为用户指定的类型和格式，例如两位数。为了实现此功能，前端将约束转录为提示短语，例如“以两位数形式给出答案”，然后根据LLM的响应，通过logit掩码【索引107，Efficient guided generation for large language models, 2023】、token重采样或重新提示来强制执行约束。结构化输出可以扩展到支持模板完成，其目标是提示LLM填写一个模板，例如JSON模式。由于每个模板项都是一个结构化输出，可以通过简单地为每个项提示LLM来填写模板。或者，可以提示LLM一次性填写模板，但此策略可能需要多轮重新提示，直到LLM生成完全遵守模板的输出，特别是因为模板本身必须完整地出现在生成的响应中。逐项提示还允许交错提示和解码，以利用快速预填充来加速推理，尤其是在支持持久化缓存的运行时上。<br/>
 *   <strong>示例2 (约束模板生成):</strong></p>
-<div class="codehilite"><pre><span></span><code>Write a summary of Bruno Mars, the singer:
-{ "name": "[STRING_VALUE]", "age": [INT_VALUE], "top_songs": [[ "[STRING_VALUE]", "[STRING_VALUE]" ]] }
+<div class="codehilite"><pre><span></span><code>Write a summary of Bruno Mars, the singer:   
+{{ "name": "[STRING_VALUE]", "age": [INT_VALUE], "top_songs": [[ "[STRING_VALUE]", "[STRING_VALUE]" ]] }}
 </code></pre></div>
 <div class="codehilite"><pre><span></span><code>上面是一个LMQL程序。大写括号项指定了类型约束。给定此程序，LMQL将其解析为提示并协调执行以及输出捕获。为了说明预填充和解码交错技术，下面是LMQL提交的第一个提示：`Write a summary of Bruno Mars, the singer: { "name": "`。在LLM输出`Bruno Mars`后，LMQL提交第二个提示：`Write a summary of Bruno Mars, the singer: { "name": "Bruno Mars", "age": "`，其中先前的输出（红色显示）直接包含在提示中。由于大部分提示与第一个提示重叠，运行时可以利用共享缓存条目来加速预填充。此过程重复直到模板被填满。
 </code></pre></div>

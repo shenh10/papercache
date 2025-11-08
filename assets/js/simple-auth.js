@@ -85,11 +85,7 @@
       
       if (hasAccessToken) {
         // 检测到URL hash中有OAuth回调token
-        console.log('OAuth回调检测到:', {
-          hasAccessToken,
-          hasType,
-          type: hashParams.get('type')
-        });
+        // OAuth回调处理由Supabase自动完成
       }
       
       const { data: { session }, error } = await supabase.auth.getSession();
@@ -331,12 +327,7 @@
       const timeDiff = now - lastLogin.last_login_time;
       // 如果10秒内有相同用户的相同登录方式，可能是重复触发（INITIAL_SESSION + SIGNED_IN），跳过
       if (timeDiff < 10000 && lastLogin.login_method === loginMethod) {
-        console.log('[SimpleAuth] 检测到重复登录事件，跳过:', {
-          userId: userId.substring(0, 8) + '...',
-          loginMethod,
-          timeDiff: Math.round(timeDiff / 1000) + '秒',
-          lastLoginTime: new Date(lastLogin.last_login_time).toISOString()
-        });
+        // 检测到重复登录事件，跳过记录
         return false;
       }
     }
@@ -346,12 +337,6 @@
     loginBehaviorTracker.set(userId, {
       last_login_time: now,
       login_method: loginMethod
-    });
-    
-    console.log('[SimpleAuth] 准备记录登录日志:', {
-      userId: userId.substring(0, 8) + '...',
-      loginMethod,
-      timestamp: new Date(now).toISOString()
     });
     
     return true;
@@ -380,12 +365,6 @@
         const provider = oauthAttempt.split('_')[0];
         // 注意：不要在这里清除标记，而是在成功记录登录日志后再清除
         // 这样可以避免在多次检测时丢失标记
-        console.log('[SimpleAuth] OAuth登录检测到:', {
-          hasAccessToken: true,
-          hasOAuthAttempt: true,
-          provider,
-          oauthAttempt: oauthAttempt.substring(0, 20) + '...'
-        });
         return `${provider}_oauth`;
       } else {
         // URL中有access_token但没有OAuth标记，可能是：
@@ -738,6 +717,9 @@
     updatePassword,
     cleanup
   };
+  
+  // 标记 SimpleAuth 已加载
+  window.SimpleAuthLoaded = true;
 
   // 自动初始化（等待Supabase客户端就绪）
   function waitAndInit() {

@@ -1,4 +1,3 @@
-console.log('🚀 card-enhancements.js 脚本已加载');
 
 // 全局摘要映射和缩略图映射
 let excerptsMapping = null;
@@ -22,11 +21,8 @@ async function initCardEnhancements() {
                       (document.querySelector('.collection-page') && window.location.pathname.includes('/slides'));
   
   if (isSlidesPage) {
-    console.log('📄 演示文稿页面，跳过卡片增强功能');
     return;
   }
-  
-  console.log('📄 DOM 已加载，开始处理卡片');
   
   // 尝试加载预生成的摘要映射和缩略图映射
   // 使用相对路径，兼容本地开发和生产环境
@@ -42,15 +38,7 @@ async function initCardEnhancements() {
     
     if (excerptsResponse.ok) {
       excerptsMapping = await excerptsResponse.json();
-      const excerptCount = Object.keys(excerptsMapping).length;
-      console.log('✅ 预生成摘要映射加载成功，包含', excerptCount, '个文章');
-      if (excerptCount > 0) {
-        const sampleKeys = Object.keys(excerptsMapping).slice(0, 3);
-        console.log('🔍 摘要映射示例键:', sampleKeys);
-      }
     } else {
-      console.log('⚠️ 预生成摘要映射不存在或加载失败 (状态码:', excerptsResponse.status, ')，将使用动态生成');
-      console.log('🔍 尝试加载的路径:', excerptsPath);
       excerptsMapping = {};
     }
     
@@ -84,28 +72,16 @@ async function initCardEnhancements() {
           }
         }
       }
-      const thumbCount = Object.keys(thumbnailsMapping).length;
-      console.log('✅ 预生成缩略图映射加载成功，包含', thumbCount, '个缩略图');
-      // 调试：显示前几个映射条目
-      if (thumbCount > 0) {
-        const sampleKeys = Object.keys(thumbnailsMapping).slice(0, 3);
-        console.log('🔍 缩略图映射示例:', sampleKeys.map(key => `${key} -> ${thumbnailsMapping[key]}`));
-      }
     } else {
-      console.log('⚠️ 预生成缩略图映射不存在或加载失败 (状态码:', thumbnailsResponse.status, ')，将使用动态生成');
-      console.log('🔍 尝试加载的路径:', thumbnailsPath);
       thumbnailsMapping = {};
     }
   } catch (error) {
-    console.log('⚠️ 预生成映射加载失败，将使用动态生成');
     excerptsMapping = {};
     thumbnailsMapping = {};
   }
   
   const cards = Array.from(document.querySelectorAll('.post-item.post-card, .post-item.post-card-modern'))
     .filter(card => card.querySelector('.post-card-link, .post-card-link-modern'));
-  
-  console.log(`🔍 找到 ${cards.length} 个文章卡片`);
 
   // 统计预生成内容使用情况
   let pregenExcerptCount = 0;
@@ -212,10 +188,6 @@ async function initCardEnhancements() {
     });
   }, 1000);
   
-  // 显示统计信息
-  setTimeout(() => {
-    console.log(`📊 内容统计: 预生成摘要 ${pregenExcerptCount} 个, 预生成缩略图 ${pregenThumbCount} 个, 动态生成 ${dynamicCount} 个`);
-  }, 3000);
 
   // 批量检查收藏状态（已登录用户）- 带防抖的包装函数
   function debouncedBatchCheckFavorites() {
@@ -284,7 +256,6 @@ async function initCardEnhancements() {
   if (!authChangeListenerRegistered && window.SimpleAuth && typeof window.SimpleAuth.onAuthChange === 'function') {
     authChangeListenerRegistered = true;
     window.SimpleAuth.onAuthChange(() => {
-      console.log('用户登录状态变化，重新检查收藏状态');
       debouncedBatchCheckFavorites();
     });
   }
@@ -301,7 +272,6 @@ async function initCardEnhancements() {
   async function batchCheckFavoritesForCards() {
     // 防止重复检查
     if (isCheckingFavorites) {
-      console.log('📄 正在检查收藏状态，跳过重复调用');
       return;
     }
 
@@ -326,7 +296,6 @@ async function initCardEnhancements() {
       if (favoriteButtons.length === 0) {
         // 如果重试次数超过限制，停止重试
         if (favoriteButtonRetryCount >= MAX_FAVORITE_BUTTON_RETRIES) {
-          console.log('📄 未找到收藏按钮，已达到最大重试次数，停止重试');
           isCheckingFavorites = false;
           favoriteButtonRetryCount = 0; // 重置计数器
           return;
@@ -334,7 +303,6 @@ async function initCardEnhancements() {
         
         // 如果没有按钮，可能卡片还未渲染，快速重试一次
         favoriteButtonRetryCount++;
-        console.log(`📄 未找到收藏按钮，200ms后重试 (${favoriteButtonRetryCount}/${MAX_FAVORITE_BUTTON_RETRIES})`);
         setTimeout(() => {
           isCheckingFavorites = false; // 重置标记，允许重试
           batchCheckFavoritesForCards();
@@ -349,8 +317,6 @@ async function initCardEnhancements() {
 
       // 如果收藏服务未就绪，等待服务就绪但不显示任何状态
       if (!window.favoritesService) {
-        console.log('📄 收藏服务未就绪，等待服务加载...');
-
         // 隐藏收藏按钮直到状态确定，避免闪烁
         favoriteButtons.forEach(btn => {
           btn.style.visibility = 'hidden';
@@ -360,7 +326,6 @@ async function initCardEnhancements() {
         const checkServiceReady = setInterval(() => {
           if (window.favoritesService) {
             clearInterval(checkServiceReady);
-            console.log('📄 收藏服务已就绪，立即更新收藏状态');
 
             // 恢复按钮可见性并执行检查
             favoriteButtons.forEach(btn => {
@@ -419,7 +384,6 @@ async function initCardEnhancements() {
       countsMap = countsResult;
     }
 
-    console.log('📄 批量检查收藏状态，共', postUrls.length, '篇文章，已登录:', isLoggedIn);
 
     // 更新所有按钮状态
     favoriteButtons.forEach(btn => {
@@ -451,7 +415,6 @@ async function initCardEnhancements() {
       }
     });
 
-    console.log(`✅ 批量更新了 ${favoriteButtons.length} 个收藏按钮的状态（已登录: ${isLoggedIn}）`);
     } catch (error) {
       console.warn('批量检查收藏状态失败:', error);
       // 快速重试一次，如果还失败就放弃
@@ -474,7 +437,6 @@ async function initCardEnhancements() {
   
   async function batchCheckLikesForCards() {
     if (isCheckingLikes) {
-      console.log('📄 正在检查点赞状态，跳过重复调用');
       return;
     }
 
@@ -492,7 +454,6 @@ async function initCardEnhancements() {
       }
 
       if (!window.likesService) {
-        console.log('📄 点赞服务未就绪，等待服务加载...');
         likeButtons.forEach(btn => {
           btn.style.visibility = 'hidden';
         });
@@ -537,7 +498,6 @@ async function initCardEnhancements() {
       }
       countsMap = await window.likesService.batchGetLikeCounts(postUrls) || {};
 
-      console.log('📄 批量检查点赞状态，共', postUrls.length, '篇文章，已登录:', isLoggedIn);
 
       // 更新所有按钮状态
       likeButtons.forEach(btn => {
@@ -567,7 +527,6 @@ async function initCardEnhancements() {
         }
       });
 
-      console.log(`✅ 批量更新了 ${likeButtons.length} 个点赞按钮的状态（已登录: ${isLoggedIn}）`);
     } catch (error) {
       console.warn('批量检查点赞状态失败:', error);
       setTimeout(() => {
@@ -625,12 +584,6 @@ async function initCardEnhancements() {
     const titleEl = card.querySelector('.post-card-title, .post-card-title-modern');
     const expectedTitle = titleEl ? titleEl.textContent.trim() : '';
     
-    // 记录处理的卡片信息用于调试
-    console.log('[card-enhancements] 开始增强卡片:', {
-      url: postUrl,
-      title: expectedTitle.substring(0, 50),
-      cardIndex: Array.from(card.parentElement?.children || []).indexOf(card)
-    });
     
     // 检查是否可以使用预生成的缩略图和摘要
     // 规范化 URL：去掉 baseurl 前缀（如果存在）
@@ -649,23 +602,6 @@ async function initCardEnhancements() {
     const hasPregenThumb = thumbnailsMapping && thumbnailsMapping[lookupUrl];
     const hasPregenExcerpt = excerptsMapping && excerptsMapping[lookupUrl];
     
-    // 调试缩略图匹配
-    if (hasPregenThumb) {
-      console.log('🖼️ 找到预生成缩略图:', lookupUrl, '->', thumbnailsMapping[lookupUrl]);
-    } else {
-      console.log('❌ 未找到预生成缩略图:', lookupUrl);
-      // 调试：显示所有可用的键，帮助诊断匹配问题
-      const availableKeys = Object.keys(thumbnailsMapping || {});
-      console.log('🔍 可用的缩略图键数量:', availableKeys.length);
-      if (availableKeys.length > 0) {
-        console.log('🔍 前3个可用键:', availableKeys.slice(0, 3));
-        // 检查是否有相似的键
-        const similarKeys = availableKeys.filter(key => key.includes(lookupUrl.split('/').pop()));
-        if (similarKeys.length > 0) {
-          console.log('🔍 找到相似键:', similarKeys.slice(0, 3));
-        }
-      }
-    }
     
     // 检查是否可以使用预生成内容
     let usedPregenThumb = false;
@@ -675,16 +611,8 @@ async function initCardEnhancements() {
     const hasExistingThumb = !!card.querySelector('.post-card-thumb, .post-card-thumb-modern');
     const hasServerRenderedThumb = hasExistingThumb && card.querySelector('.post-card-thumb img, .post-card-thumb-modern img');
     
-    console.log('🔍 缩略图检查:', { 
-      hasPregenThumb, 
-      hasExistingThumb, 
-      hasServerRenderedThumb,
-      skipThumb: hasServerRenderedThumb 
-    });
-    
     // 如果服务器端已经渲染了缩略图，跳过客户端处理
     if (hasServerRenderedThumb) {
-      console.log('✅ 服务器端已渲染缩略图，跳过客户端处理');
       usedPregenThumb = true; // 标记为已使用预生成缩略图
       pregenThumbCount++;
     } else if (hasPregenThumb) {
@@ -711,7 +639,6 @@ async function initCardEnhancements() {
       body.parentNode.insertBefore(thumb, body);
       usedPregenThumb = true;
       pregenThumbCount++;
-      console.log('🖼️ 客户端添加预生成缩略图，URL:', postUrl);
     }
     
     // 2) 使用预生成摘要
@@ -737,18 +664,11 @@ async function initCardEnhancements() {
       body.appendChild(excerpt);
       usedPregenExcerpt = true;
       pregenExcerptCount++;
-      console.log('✅ 使用预生成摘要，URL:', postUrl, '摘要:', truncate(excerptsMapping[lookupUrl], 50) + '...');
     }
     
     // 如果缩略图和摘要都有预生成版本，完全跳过fetch
     if (usedPregenThumb && usedPregenExcerpt) {
-      console.log('🚀 使用预生成缩略图和摘要，跳过fetch');
       return;
-    }
-    
-    // 如果只有部分预生成内容，仍然需要fetch来补充缺失的内容
-    if (usedPregenThumb || usedPregenExcerpt) {
-      console.log('🚀 部分使用预生成内容，仍需fetch补充');
     }
     
     // 否则，回退到原来的fetch方式
@@ -802,17 +722,13 @@ async function initCardEnhancements() {
         if (imgSrc) {
           // 检查是否是兜底图片（data URL）
           if (imgSrc.startsWith('data:')) {
-            console.log('🖼️ 使用ASCII艺术字兜底图片');
             // 直接使用兜底图片
             thumb.innerHTML = `<img loading="lazy" src="${imgSrc}" alt="PaperCache ASCII Art" style="width: 100%; height: 160px; object-fit: contain;">`;
           } else {
-            console.log('🖼️ 使用真实图片:', imgSrc.substring(0, 50) + '...');
             // 使用真实图片
             const resolvedImg = new URL(imgSrc, new URL(postUrl, location.origin)).href;
             thumb.innerHTML = `<img loading="lazy" src="${resolvedImg}" alt="thumbnail" style="width: 100%; height: 160px; object-fit: cover;">`;
           }
-        } else {
-          console.log('❌ 没有找到任何图片');
         }
         body.parentNode.insertBefore(thumb, body);
       }
@@ -828,19 +744,11 @@ async function initCardEnhancements() {
           lookupUrl = postUrl.replace('/papercache', '');
         }
 
-        // 静默处理URL匹配
-        
-        if (!excerptsMapping || !excerptsMapping[lookupUrl]) {
-          console.log('🔍 预生成摘要不存在，开始动态提取，文章URL:', postUrl);
-        }
-
         if (excerptsMapping && excerptsMapping[lookupUrl]) {
           excerptText = excerptsMapping[lookupUrl];
           pregenCount++;
-          console.log('✅ 使用预生成摘要:', excerptText.substring(0, 50) + '...');
         } else {
           // 如果没有预生成摘要，则动态提取
-          console.log('🔍 预生成摘要不存在，开始动态提取，文章URL:', postUrl);
           
           // 再次验证URL和卡片结构（在提取摘要前）
           const currentPostUrl = linkEl.getAttribute('href');
@@ -859,18 +767,15 @@ async function initCardEnhancements() {
 
           if (postContent) {
             const headingNodes = Array.from(postContent.querySelectorAll('h1,h2,h3,h4,h5,h6'));
-            console.log('🔍 找到', headingNodes.length, '个标题元素');
             
             const a1 = headingNodes.find(h => /(A1\s*)?主要贡献/.test(h.textContent.trim()));
             if (a1) {
-              console.log('✅ 找到A1主要贡献段落');
               // 找到 A1 后的首个段落或列表
               let cur = a1.nextElementSibling;
               while (cur) {
                 if (cur.tagName === 'P') {
                   excerptText = cur.textContent.trim();
                   dynamicCount++;
-                  console.log('✅ 从A1段落提取到摘要:', excerptText.substring(0, 50) + '...');
                   break;
                 }
                 if (cur.tagName === 'UL' || cur.tagName === 'OL') {
@@ -878,18 +783,13 @@ async function initCardEnhancements() {
                   if (li) {
                     excerptText = li.textContent.trim();
                     dynamicCount++;
-                    console.log('✅ 从A1列表提取到摘要:', excerptText.substring(0, 50) + '...');
                     break;
                   }
                 }
                 // 跳过空元素
                 cur = cur.nextElementSibling;
               }
-            } else {
-              console.log('❌ 没有找到A1主要贡献段落');
             }
-          } else {
-            console.log('❌ 没有找到.post-content元素');
           }
 
           if (!excerptText) {
@@ -908,9 +808,6 @@ async function initCardEnhancements() {
           para.className = isModern ? 'post-card-excerpt-modern' : 'post-card-excerpt';
           para.textContent = truncate(excerptText, 100);
           body.appendChild(para);
-          console.log(`✅ 为卡片添加了摘要: ${truncate(excerptText, 50)}...`);
-        } else {
-          console.log('❌ 无法提取摘要文本');
         }
       }
 
@@ -1070,20 +967,13 @@ async function initCardEnhancements() {
       
       // 检查src是否可用（不支持相对路径）
       if (!isUsableSrc(src)) {
-        console.log(`跳过第${i+1}个figure: src不可用（相对路径）`);
         continue;
       }
-      
-      console.log(`检查第${i+1}个figure:`, {
-        imgSrc: src.substring(0, 50) + '...',
-        annotation: annotation
-      });
       
       // 如果figure包含alt/annotation：annotation如果以"图/figure/fig"开头，可行，选中返回
       if (annotation && patternFigureStart.test(annotation)) {
         // 3. 排除一些非法图片：如果figure annotation包含表/公式字段的图片不选择
         if (!containsTableOrFormula(annotation)) {
-          console.log('✓ 匹配成功！通过annotation');
           return src;
         }
       }
@@ -1091,16 +981,10 @@ async function initCardEnhancements() {
       // 如果figure的annotation为空，则检查最近的邻居节点
       if (!annotation || annotation.trim() === '') {
         const neighborText = getNearestNeighborText(fig);
-        if (neighborText) {
-          console.log(`第${i+1}个figure的最近邻居文本:`, neighborText.substring(0, 50));
-        }
         if (neighborText && patternFigureStart.test(neighborText)) {
           // 3. 排除一些非法图片：如果邻居文本包含表/公式字段的图片不选择
           if (!containsTableOrFormula(neighborText)) {
-            console.log('✓ 匹配成功！通过最近邻居文本');
             return src;
-          } else {
-            console.log('✗ 被表/公式/算法字段过滤掉');
           }
         }
       }
@@ -1122,7 +1006,6 @@ async function initCardEnhancements() {
         const title = pImg.getAttribute('title') || '';
         const hint = (alt + ' ' + title).trim();
         if (!containsTableOrFormula(hint) && isUsableSrc(src)) {
-          console.log('✓ 通过段落本身找到图片:', src.substring(0, 50) + '...');
           return src;
         }
       }
@@ -1141,7 +1024,6 @@ async function initCardEnhancements() {
               const title = figImg.getAttribute('title') || '';
               const hint = (alt + ' ' + title);
               if (!containsTableOrFormula(hint) && isUsableSrc(src)) {
-                console.log('✓ 通过段落回溯找到figure中的图片:', src.substring(0, 50) + '...');
                 return src;
               }
             }
@@ -1154,7 +1036,6 @@ async function initCardEnhancements() {
             const title = cand.getAttribute('title') || '';
             const hint = (alt + ' ' + title);
             if (!containsTableOrFormula(hint) && isUsableSrc(src)) {
-              console.log('✓ 通过段落回溯找到图片:', src.substring(0, 50) + '...');
               return src;
             }
           }
@@ -1177,19 +1058,16 @@ async function initCardEnhancements() {
       
       // 排除包含表/公式字段的图片
       if (!containsTableOrFormula(allText)) {
-        console.log('✓ 兜底：返回第一个不含表/公式的图片');
         return src;
       }
     }
     
     // 6. 如果还是不能，返回一个打印ASCII PaperCache的图片
-    console.log('⚠️ 所有规则都未匹配，使用ASCII兜底图片');
     return createASCIIPaperCacheImage();
   }
 
   // 创建ASCII PaperCache图片的函数
   function createASCIIPaperCacheImage() {
-    console.log('🎨 生成PaperCache ASCII艺术字兜底图片');
     
     // 纯ASCII风格，包含完整的PaperCache ASCII艺术字
     const svg = `
@@ -1219,7 +1097,6 @@ async function initCardEnhancements() {
     const base64 = btoa(unescape(encodeURIComponent(svg.trim())));
     const dataUrl = `data:image/svg+xml;charset=utf-8;base64,${base64}`;
     
-    console.log('✅ ASCII艺术字生成完成，长度:', dataUrl.length);
     return dataUrl;
   }
 
@@ -1285,7 +1162,6 @@ if (window.likesService && document.readyState !== 'loading') {
 
 // Turbolinks 页面加载时也初始化
 document.addEventListener('turbolinks:load', function() {
-  console.log('📄 Turbolinks 页面加载，重新初始化卡片增强');
   // 重置重试计数器和防抖时间
   favoriteButtonRetryCount = 0;
   lastFavoriteCheckTime = 0;

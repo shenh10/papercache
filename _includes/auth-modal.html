@@ -320,30 +320,44 @@ function showAuthLoading(show) {
 
 // 登录处理函数
 async function handleGitHubLogin() {
-  console.log('[AuthModal] handleGitHubLogin 被调用');
   showAuthLoading(true);
   showAuthError(''); // 清除之前的错误
 
   try {
-    console.log('[AuthModal] 检查 SimpleAuth 是否可用...');
+    // 等待 SimpleAuth 初始化（最多等待3秒）
     if (!window.SimpleAuth) {
-      console.error('[AuthModal] SimpleAuth 未初始化');
-      throw new Error('认证系统未初始化，请刷新页面重试');
+      let waitCount = 0;
+      const maxWait = 30;
+      while (!window.SimpleAuth && waitCount < maxWait) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        waitCount++;
+      }
+      
+      if (!window.SimpleAuth) {
+        showAuthLoading(false);
+        showAuthError('认证服务未加载，请刷新页面重试', false);
+        return;
+      }
     }
-
-    console.log('[AuthModal] 开始GitHub登录...');
-    console.log('[AuthModal] 调用 SimpleAuth.signInWithOAuth("github")');
+    
+    // 确保 SimpleAuth 已初始化
+    if (window.SimpleAuth && typeof window.SimpleAuth.init === 'function') {
+      try {
+        await window.SimpleAuth.init();
+      } catch (initError) {
+        showAuthLoading(false);
+        showAuthError('认证服务初始化失败，请检查配置', false);
+        return;
+      }
+    }
 
     // 调用SimpleAuth的OAuth登录方法
     // Supabase会自动处理重定向到GitHub授权页面
     await window.SimpleAuth.signInWithOAuth('github');
 
     // 理论上不会执行到这里，因为Supabase会自动重定向
-    console.log('[AuthModal] OAuth登录调用完成');
 
   } catch (error) {
-    console.error('[AuthModal] GitHub登录失败:', error);
-    console.error('[AuthModal] 错误详情:', error.stack);
     showAuthLoading(false);
     showAuthError('GitHub登录失败：' + (error.message || '未知错误'), false);
   }
@@ -388,22 +402,87 @@ async function handleEmailLogin(event) {
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
 
+    // 等待 SimpleAuth 初始化（最多等待5秒）
     if (!window.SimpleAuth) {
-      showAuthLoading(false);
-      showAuthError('认证服务未加载，请刷新页面重试', false);
-      return;
+      let waitCount = 0;
+      const maxWait = 50;
+      while (!window.SimpleAuth && waitCount < maxWait) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        waitCount++;
+      }
+      
+      if (!window.SimpleAuth) {
+        showAuthLoading(false);
+        // 检查 Supabase 配置和客户端状态
+        const supabaseConfig = window.siteConfig?.supabase;
+        const hasSupabaseConfig = supabaseConfig && typeof supabaseConfig === 'object' && supabaseConfig.url && supabaseConfig.anon_key;
+        const supabaseClient = window.getSupabaseClient?.();
+        const supabaseLoadFailed = window.supabaseLoadFailed;
+        
+        // 输出调试信息到控制台
+        console.error('[AuthModal] SimpleAuth 未加载', {
+          hasSimpleAuth: !!window.SimpleAuth,
+          hasSupabaseConfig,
+          hasSupabaseClient: !!supabaseClient,
+          supabaseLoadFailed,
+          waitCount: maxWait
+        });
+        
+        if (supabaseLoadFailed) {
+          showAuthError('Supabase SDK 加载失败，请检查网络连接或刷新页面重试', false);
+        } else if (!hasSupabaseConfig) {
+          showAuthError('Supabase 配置未找到，无法登录。请检查配置文件。', false);
+        } else if (!supabaseClient) {
+          showAuthError('Supabase 客户端未初始化，请稍候再试或刷新页面', false);
+        } else {
+          showAuthError('认证服务未加载（simple-auth.js 可能未加载），请刷新页面重试', false);
+        }
+        return;
+      }
+    }
+    
+    // 确保 SimpleAuth 已初始化（init 方法内部会检查是否已初始化）
+    if (window.SimpleAuth && typeof window.SimpleAuth.init === 'function') {
+      try {
+        // 先检查并等待 Supabase 客户端初始化（最多等待2秒）
+        let supabase = window.getSupabaseClient?.();
+        if (!supabase) {
+          let waitCount = 0;
+          const maxWait = 20;
+          while (!supabase && waitCount < maxWait) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            supabase = window.getSupabaseClient?.();
+            if (supabase) {
+              break;
+            }
+            waitCount++;
+          }
+        }
+        
+        // 如果 Supabase 客户端仍然不可用，尝试初始化 SimpleAuth（它可能会等待）
+        await window.SimpleAuth.init();
+      } catch (initError) {
+        // 初始化失败，可能是 Supabase 配置问题
+        showAuthLoading(false);
+        const supabaseConfig = window.siteConfig?.supabase;
+        const hasSupabaseConfig = supabaseConfig && supabaseConfig.url && supabaseConfig.anon_key;
+        if (!hasSupabaseConfig) {
+          showAuthError('Supabase 配置未找到，无法登录。请检查配置文件。', false);
+        } else {
+          showAuthError('认证服务初始化失败：' + (initError.message || '未知错误'), false);
+        }
+        return;
+      }
     }
 
     // 设置认证状态监听器（用于自动关闭模态框）
     setupAuthModalCloseListener();
 
     // 执行登录
-    console.log('开始登录:', email);
     const result = await window.SimpleAuth.login(email, password);
 
     // 处理登录结果
     try {
-      console.log('登录成功');
       showAuthLoading(false);
       showAuthError(''); // 成功时清除错误提示
 
@@ -412,7 +491,6 @@ async function handleEmailLogin(event) {
       setTimeout(() => {
         const modal = document.getElementById('auth-modal');
         if (modal && modal.style.display !== 'none') {
-          console.log('手动关闭模态框（登录成功）');
           closeAuthModal();
         }
       }, 500);
@@ -439,16 +517,29 @@ async function handleEmailLogin(event) {
 async function handleEmailRegister(event) {
   event.preventDefault();
   showAuthLoading(true);
+  showAuthError(''); // 清除之前的错误
 
   const username = document.getElementById('register-username').value;
   const email = document.getElementById('register-email').value;
   const password = document.getElementById('register-password').value;
 
   try {
-    // 使用Supabase直接注册
-    const supabase = window.getSupabaseClient();
+    // 等待 Supabase 客户端初始化（最多等待3秒）
+    let supabase = window.getSupabaseClient?.();
     if (!supabase) {
-      throw new Error('数据库服务未加载');
+      let waitCount = 0;
+      const maxWait = 30;
+      while (!supabase && waitCount < maxWait) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        supabase = window.getSupabaseClient?.();
+        waitCount++;
+      }
+    }
+    
+    if (!supabase) {
+      showAuthLoading(false);
+      showAuthError('数据库服务未加载，请刷新页面重试', false);
+      return;
     }
 
     const { data, error } = await supabase.auth.signUp({

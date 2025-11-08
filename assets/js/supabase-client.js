@@ -74,7 +74,6 @@
         return null;
       }
       // SDK还未加载，设置延迟初始化（不阻塞当前执行）
-      console.log('Supabase SDK未加载，将在后台等待加载完成');
       setTimeout(function() {
         if (typeof window.supabase !== 'undefined' && !supabaseClient) {
           initSupabase();
@@ -101,7 +100,6 @@
       window._supabaseClientInstance = supabaseClient;
 
       isInitializing = false;
-      console.log('Supabase客户端初始化成功（单例模式）');
       return supabaseClient;
     } catch (error) {
       isInitializing = false;

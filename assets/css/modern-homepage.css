@@ -587,6 +587,62 @@
   padding-left: 0.5rem;
 }
 
+/* 最多关注排序控件 */
+.popular-sort-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 1.5rem;
+  background: rgba(59, 130, 246, 0.05);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 6px;
+  background: white;
+  color: #64748b;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.sort-btn:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #3b82f6;
+  transform: translateY(-1px);
+}
+
+.sort-btn.active {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9) 0%, rgba(16, 185, 129, 0.9) 100%);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: white;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.sort-btn.active:hover {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 1) 0%, rgba(16, 185, 129, 1) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(59, 130, 246, 0.4);
+}
+
+.sort-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.sort-label {
+  font-size: 0.85rem;
+}
+
 .latest-posts-panel::before {
   content: '';
   position: absolute;

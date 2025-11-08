@@ -1178,9 +1178,7 @@ if (typeof window.SearchFirstMode === 'undefined') {
   }
 
   async init() {
-    console.log('[collection-search-first] init() 开始');
     this.loadAllPapers();
-    console.log('[collection-search-first] 加载了', this.allPapers.length, '篇论文');
     this.bindEvents();
     this.setupAdvancedSearch();
     this.initTagFilters();
@@ -1190,7 +1188,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
     // 延迟执行，确保DOM已准备好
     setTimeout(() => {
       if (this.allPapers.length > 0 && !this.currentQuery) {
-        console.log('[collection-search-first] 初始显示所有论文');
         // 显示所有论文
         this.filteredPapers = this.allPapers;
         // 使用showSearchResults显示结果，但不需要搜索查询
@@ -1694,7 +1691,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
 
     // 分类卡片（移除旧的事件监听器，重新绑定）
     const categoryCards = document.querySelectorAll('.category-card');
-    console.log('[collection-search-first] bindEvents: 找到', categoryCards.length, '个分类卡片');
     categoryCards.forEach(card => {
       // 克隆节点以移除旧的事件监听器
       const newCard = card.cloneNode(true);
@@ -1706,14 +1702,11 @@ if (typeof window.SearchFirstMode === 'undefined') {
         // 阻止事件冒泡和默认行为，确保不会被外部脚本拦截
         e.preventDefault();
         e.stopPropagation();
-        console.log('[collection-search-first] 分类卡片被点击:', newCard.getAttribute('data-special') || newCard.getAttribute('data-category'));
         
         // 检查是否是"顶会顶刊"卡片
         const isTopVenues = newCard.getAttribute('data-special') === 'top-venues';
         if (isTopVenues) {
-          console.log('[collection-search-first] 顶会顶刊卡片被点击');
           if (self && self.filterTopVenues) {
-            console.log('[collection-search-first] 调用filterTopVenues');
             self.filterTopVenues();
           } else {
             console.error('[collection-search-first] filterTopVenues方法不存在或self未定义', { self, hasFilterTopVenues: self && self.filterTopVenues });
@@ -1724,9 +1717,7 @@ if (typeof window.SearchFirstMode === 'undefined') {
         // 检查是否是"论文分类"卡片
         const isPaperCategories = newCard.getAttribute('data-special') === 'paper-categories';
         if (isPaperCategories) {
-          console.log('[collection-search-first] 论文分类卡片被点击');
           if (self && self.showCategoryBrowse) {
-            console.log('[collection-search-first] 调用showCategoryBrowse(null)');
             self.showCategoryBrowse(null); // 显示所有分类浏览
           } else {
             console.error('[collection-search-first] showCategoryBrowse方法不存在或self未定义');
@@ -1738,7 +1729,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
         const categoryName = newCard.getAttribute('data-category-name');
         const categorySlug = newCard.getAttribute('data-category');
         const category = categoryName || categorySlug;
-        console.log('[collection-search-first] 普通分类卡片被点击:', category);
         if (self && self.showCategoryBrowse) {
           self.showCategoryBrowse(category);
         } else {
@@ -1751,7 +1741,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
     const browseAllBtn = document.getElementById('browse-all-btn');
     const rssBtn = document.getElementById('rss-subscribe-btn');
     
-    console.log('[collection-search-first] bindEvents: 浏览所有按钮', browseAllBtn ? '找到' : '未找到', 'RSS按钮', rssBtn ? '找到' : '未找到');
     
     if (browseAllBtn) {
       // 克隆节点以移除旧的事件监听器
@@ -1762,7 +1751,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
         // 阻止事件冒泡和默认行为，确保不会被外部脚本拦截
         e.preventDefault();
         e.stopPropagation();
-        console.log('[collection-search-first] 浏览所有按钮被点击');
         // 显示分类浏览界面，从根开始显示所有一级分类
         if (this.showCategoryBrowse) {
           this.showCategoryBrowse();
@@ -1780,7 +1768,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
       newRssBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('[collection-search-first] RSS按钮被点击');
         // 跳转到RSS订阅中心页面
         const rssUrl = window.RSS_SUBSCRIBE_URL || '/feeds/index.html';
         window.location.href = rssUrl;
@@ -1916,7 +1903,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
       // 优先级1: 尝试使用 Supabase 搜索
       if (window.SupabaseSearchService && typeof window.SupabaseSearchService.searchPapers === 'function') {
         try {
-          console.log('[search-first] 尝试使用 Supabase 搜索');
           
           // 构建搜索选项
           const searchOptions = {
@@ -1929,7 +1915,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
           const supabaseResult = await window.SupabaseSearchService.searchPapers(query, searchOptions);
           
           if (supabaseResult && supabaseResult.success && supabaseResult.data && supabaseResult.data.length > 0) {
-            console.log('[search-first] Supabase 搜索成功，找到', supabaseResult.data.length, '篇论文');
             
             // 保存当前搜索查询和匹配模式
             this.currentQuery = query;
@@ -1977,7 +1962,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
             this.showSearchResults(query);
             return; // Supabase搜索成功，返回
           } else {
-            console.log('[search-first] Supabase 搜索无结果，降级到本地搜索');
           }
         } catch (supabaseError) {
           console.warn('[search-first] Supabase 搜索失败，降级到本地搜索:', supabaseError);
@@ -2211,16 +2195,17 @@ if (typeof window.SearchFirstMode === 'undefined') {
       resultsList.style.gridTemplateColumns = 'none';
       resultsList.className = 'results-list-grouped';
       // 使用 requestAnimationFrame 分批渲染，避免阻塞UI
-      this.renderGroupedResultsAsync(resultsList);
-      // 延迟批量更新收藏和点赞状态，避免阻塞渲染
-      setTimeout(() => {
-        if (window.batchCheckFavoritesForCards) {
-          window.batchCheckFavoritesForCards();
-        }
-        if (window.batchCheckLikesForCards) {
-          window.batchCheckLikesForCards();
-        }
-      }, 500);
+      this.renderGroupedResultsAsync(resultsList, () => {
+        // 渲染完成后，延迟批量更新收藏和点赞状态
+        setTimeout(() => {
+          if (window.batchCheckFavoritesForCards) {
+            window.batchCheckFavoritesForCards();
+          }
+          if (window.batchCheckLikesForCards) {
+            window.batchCheckLikesForCards();
+          }
+        }, 300);
+      });
     }
   }
 
@@ -2230,8 +2215,9 @@ if (typeof window.SearchFirstMode === 'undefined') {
   }
 
   // 异步分批渲染搜索结果（优化性能）
-  renderGroupedResultsAsync(container) {
+  renderGroupedResultsAsync(container, onComplete) {
     if (!container || !this.filteredPapers || this.filteredPapers.length === 0) {
+      if (onComplete) onComplete();
       return;
     }
     
@@ -2242,6 +2228,7 @@ if (typeof window.SearchFirstMode === 'undefined') {
     const groupedData = this.prepareGroupedResultsData();
     
     if (!groupedData || groupedData.length === 0) {
+      if (onComplete) onComplete();
       return;
     }
     
@@ -2269,6 +2256,14 @@ if (typeof window.SearchFirstMode === 'undefined') {
       // 如果还有数据，继续下一批
       if (currentIndex < groupedData.length) {
         requestAnimationFrame(renderBatch);
+      } else {
+        // 渲染完成，调用回调
+        if (onComplete) {
+          // 使用 setTimeout 确保 DOM 已完全更新
+          setTimeout(() => {
+            onComplete();
+          }, 50);
+        }
       }
     };
     
@@ -3373,7 +3368,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
   }
 
   showCategoryBrowse(categoryId = null) {
-    console.log('[collection-search-first] showCategoryBrowse called with categoryId:', categoryId);
     this.currentMode = 'browse';
     
     // 隐藏其他区域（包括快速浏览区域的分类卡片）
@@ -3391,7 +3385,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
     }
     browseSection.classList.add('show');
     browseSection.style.display = 'block';
-    console.log('[collection-search-first] Category browse section shown');
     
     // 更新标题和控件（确保从顶会顶刊浏览切换回来时标题正确）
     const browseHeader = browseSection.querySelector('.browse-header h2');
@@ -3412,18 +3405,15 @@ if (typeof window.SearchFirstMode === 'undefined') {
         console.error('[collection-search-first] PC_COLLECTION not available:', collection);
       }
       const topLevelKeys = Object.keys(collection || {}).filter(k => k !== 'posts');
-      console.log('[collection-search-first] Top level keys:', topLevelKeys);
       // 尝试匹配 slug 或原始名称
       let matchedKey = topLevelKeys.find(k => {
         const slug = k.toLowerCase().replace(/\s+/g, '-');
         return slug === categoryId || k.toLowerCase() === categoryId.toLowerCase();
       });
       this.currentCategoryPath = matchedKey ? [matchedKey] : [categoryId];
-      console.log('[collection-search-first] Matched key:', matchedKey, 'Final path:', this.currentCategoryPath);
     } else {
       // 从根开始显示所有一级分类
       this.currentCategoryPath = [];
-      console.log('[collection-search-first] Starting from root, path:', this.currentCategoryPath);
     }
     // 渲染多级分类树（基于当前路径）并应用过滤
     this.renderCategoryTree();
@@ -3501,7 +3491,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
             e.stopPropagation();
             // 设置路径为点击的面包屑项对应的路径
             const targetPath = acc.slice(0, idx + 1);
-            console.log('[collection-search-first] Breadcrumb clicked, path:', targetPath);
             this.currentCategoryPath = targetPath;
             // 重新渲染分类树（不传参数，使用 currentCategoryPath）
             this.renderCategoryTree();
@@ -3558,7 +3547,6 @@ if (typeof window.SearchFirstMode === 'undefined') {
               ? this.currentCategoryPath.slice() 
               : startPath;
             this.currentCategoryPath = currentPath.concat(k);
-            console.log('[collection-search-first] Category clicked, new path:', this.currentCategoryPath);
             // 深一层重新渲染与过滤（基于 currentCategoryPath）
             this.renderCategoryTree();
             this.applyCategoryFilter();
@@ -3710,8 +3698,13 @@ if (typeof window.SearchFirstMode === 'undefined') {
         resultsList.style.gridTemplateColumns = 'none';
         resultsList.className = 'results-list-grouped';
         this.renderGroupedResults(resultsList);
-        // 批量更新收藏状态
-        setTimeout(() => this.batchUpdateFavoriteStatus(), 100);
+        // 批量更新收藏和点赞状态
+        setTimeout(() => {
+          this.batchUpdateFavoriteStatus();
+          if (window.batchCheckLikesForCards) {
+            window.batchCheckLikesForCards();
+          }
+        }, 100);
       }
     }
   }
@@ -3754,19 +3747,15 @@ if (typeof window.SearchFirstMode === 'undefined') {
 
 // 自动初始化 - 防止重复初始化
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('[collection-search-first] DOMContentLoaded');
   try {
     // 防止重复创建实例
     if (!window.searchFirstMode) {
       window.searchFirstMode = new window.SearchFirstMode();
-      console.log('[collection-search-first] SearchFirstMode instance created');
     } else {
-      console.log('[collection-search-first] SearchFirstMode instance already exists, skipping creation');
     }
     // 全局兜底函数，避免事件绑定被外部脚本阻断
     window.__pc_search = function() {
       try {
-        console.log('[collection-search-first] __pc_search()');
         if (window.searchFirstMode) {
           window.searchFirstMode.performSearch();
         }
@@ -3774,7 +3763,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     window.__pc_fill = function(q) {
       try {
-        console.log('[collection-search-first] __pc_fill()', q);
         var si = document.getElementById('main-search-input');
         if (si) si.value = q || '';
         if (window.searchFirstMode) {
@@ -3844,11 +3832,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Turbolinks页面导航时的处理
 document.addEventListener('turbolinks:load', () => {
-  console.log('[collection-search-first] Turbolinks load');
   try {
     // 如果实例已存在，需要重新绑定事件（因为Turbolinks替换了DOM）
     if (window.searchFirstMode) {
-      console.log('[collection-search-first] SearchFirstMode instance exists, rebinding events');
       // 重新绑定事件（因为DOM被Turbolinks替换了）
       window.searchFirstMode.bindEvents();
       // 重新初始化其他需要重新运行的功能
@@ -3864,7 +3850,6 @@ document.addEventListener('turbolinks:load', () => {
     } else {
       // 创建新实例
       window.searchFirstMode = new window.SearchFirstMode();
-      console.log('[collection-search-first] SearchFirstMode instance created on Turbolinks navigation');
       
       // 延迟触发批量更新收藏状态
       setTimeout(() => {

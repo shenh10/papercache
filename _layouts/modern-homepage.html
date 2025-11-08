@@ -725,18 +725,32 @@ layout: default
         <div class="latest-posts-panel">
           <h3 class="panel-title">
             🔥 最多关注
-            <span class="info-icon" data-tooltip="根据点击量和收藏量总和排序的最受欢迎论文">?</span>
+            <span class="info-icon" data-tooltip="根据点击量、收藏数或点赞数排序的最受欢迎论文">?</span>
           </h3>
+          <div class="popular-sort-controls">
+            <button class="sort-btn active" data-sort="likes" title="按点赞数排序">
+              <span class="sort-icon">❤️</span>
+              <span class="sort-label">点赞数</span>
+            </button>
+            <button class="sort-btn" data-sort="clicks" title="按点击量排序">
+              <span class="sort-icon">👆</span>
+              <span class="sort-label">点击量</span>
+            </button>
+            <button class="sort-btn" data-sort="favorites" title="按收藏数排序">
+              <span class="sort-icon">⭐</span>
+              <span class="sort-label">收藏数</span>
+            </button>
+          </div>
           <div class="latest-posts-list" id="popular-posts-list">
-            {%- comment -%} 初始按日期排序，JavaScript会根据点击量重新排序 {%- endcomment -%}
+            {%- comment -%} 初始按日期排序，JavaScript会根据选择的指标重新排序 {%- endcomment -%}
             {%- assign sorted_by_date = site.posts | sort: 'date' | reverse -%}
             {%- assign initial_posts = sorted_by_date | limit: 15 -%}
             <div class="post-list-header post-list-header-popular">
-              <span class="header-label">点击/收藏</span>
+              <span class="header-label" id="popular-header-label">点赞数</span>
             </div>
             {% for post in initial_posts %}
             <div class="post-item popular-posts-loading" data-post-url="{{ post.url }}" data-post-title="{{ post.title | escape }}" style="display: none;">
-              <span class="post-date post-date-popular">0/0</span>
+              <span class="post-date post-date-popular">0</span>
               {%- if post.categories.size > 0 -%}
                 {%- assign subcategory = post.categories | last -%}
                 <span class="post-subcategory post-subcategory-popular">{{ subcategory }}</span>

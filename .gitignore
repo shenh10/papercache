@@ -44,3 +44,4 @@ node_modules/
 # Backup directories
 bkp/
 backup/
+_posts/
