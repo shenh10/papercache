@@ -2,6 +2,9 @@
 <html lang="{{ page.lang | default: site.lang | default: "en" }}">
 
   {%- include head.html -%}
+  
+  <!-- 禁止搜索引擎索引此页面（仅限管理员访问） -->
+  <meta name="robots" content="noindex, nofollow">
 
   <body class="layout-collection">
 
@@ -214,11 +217,277 @@
         gap: 10px;
       }
     }
+
+    /* 管理员权限检查样式 */
+    .admin-loading {
+      text-align: center;
+      padding: 4rem 2rem;
+      min-height: 50vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #e2e8f0;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .admin-unauthorized {
+      text-align: center;
+      padding: 4rem 2rem;
+      min-height: 50vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .unauthorized-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+    }
+    
+    .admin-unauthorized h2 {
+      font-size: 1.5rem;
+      color: #2d3748;
+      margin-bottom: 0.5rem;
+    }
+    
+    .admin-unauthorized p {
+      color: #718096;
+      margin-bottom: 1.5rem;
+    }
+    
+    .btn-primary {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+    
+    /* 演示文稿列表样式（美化版） */
+    .collection-page .post-list-with-tags {
+      display: block !important;
+      list-style: none !important;
+      padding: 0 !important;
+      margin: 20px 0 !important;
+    }
+    
+    .collection-page .post-item {
+      display: flex !important;
+      align-items: flex-start !important;
+      padding: 20px 24px !important;
+      margin-bottom: 0 !important;
+      background: white !important;
+      border: 1px solid #e5e7eb !important;
+      border-bottom: 2px solid #d1d5db !important;
+      border-radius: 12px !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+      transition: all 0.2s ease !important;
+      position: relative !important;
+    }
+    
+    .collection-page .post-item:not(:last-child) {
+      margin-bottom: 16px !important;
+    }
+    
+    .collection-page .post-item:last-child {
+      border-bottom: 1px solid #e5e7eb !important;
+    }
+    
+    .collection-page .post-item::before {
+      content: '' !important;
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      bottom: 0 !important;
+      width: 4px !important;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      border-radius: 12px 0 0 12px !important;
+      opacity: 0 !important;
+      transition: opacity 0.2s ease !important;
+    }
+    
+    .collection-page .post-item:hover {
+      background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+      border-color: #cbd5e1 !important;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1) !important;
+      transform: translateX(4px) !important;
+    }
+    
+    .collection-page .post-item:hover::before {
+      opacity: 1 !important;
+    }
+    
+    /* 禁用卡片样式，改为列表样式 */
+    .collection-page .post-card-modern {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: flex-start !important;
+      gap: 20px !important;
+      padding: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      min-height: auto !important;
+      width: 100% !important;
+    }
+    
+    .collection-page .post-card-modern::before {
+      display: none !important;
+    }
+    
+    .collection-page .post-card-modern:hover {
+      transform: none !important;
+      box-shadow: none !important;
+      background: transparent !important;
+      border: none !important;
+    }
+    
+    /* 隐藏缩略图 */
+    .collection-page .post-card-thumb-modern {
+      display: none !important;
+    }
+    
+    /* 链接样式 */
+    .collection-page .post-card-link-modern {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: flex-start !important;
+      gap: 20px !important;
+      width: 100% !important;
+      text-decoration: none !important;
+      color: inherit !important;
+    }
+    
+    /* 内容区域 */
+    .collection-page .post-card-body-modern {
+      flex: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 10px !important;
+      padding: 0 !important;
+      min-width: 0 !important;
+    }
+    
+    /* 标题样式 */
+    .collection-page .post-card-title-modern {
+      font-size: 1.1em !important;
+      font-weight: 600 !important;
+      color: #1f2937 !important;
+      margin: 0 !important;
+      line-height: 1.5 !important;
+      transition: color 0.2s ease !important;
+    }
+    
+    .collection-page .post-item:hover .post-card-title-modern {
+      color: #667eea !important;
+    }
+    
+    /* 元数据样式 */
+    .collection-page .post-card-meta-modern {
+      display: flex !important;
+      align-items: center !important;
+      gap: 12px !important;
+      margin: 0 !important;
+      flex-wrap: wrap !important;
+    }
+    
+    .collection-page .post-meta-modern {
+      font-size: 0.85em !important;
+      color: #6b7280 !important;
+      font-weight: 500 !important;
+      background: #f1f5f9 !important;
+      padding: 4px 10px !important;
+      border-radius: 6px !important;
+    }
+    
+    /* 标签样式优化 */
+    .collection-page .post-card-tag-modern {
+      font-size: 0.75em !important;
+      padding: 4px 12px !important;
+      border-radius: 8px !important;
+      font-weight: 600 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    /* 摘要样式 */
+    .collection-page .post-card-excerpt-modern {
+      font-size: 0.9em !important;
+      color: #6b7280 !important;
+      line-height: 1.6 !important;
+      margin: 0 !important;
+      display: -webkit-box !important;
+      -webkit-line-clamp: 2 !important;
+      -webkit-box-orient: vertical !important;
+      overflow: hidden !important;
+    }
+    
+    /* 禁用网格布局 */
+    .collection-page .post-grid-modern {
+      display: block !important;
+      grid-template-columns: none !important;
+      gap: 0 !important;
+    }
+    
+    /* 响应式优化 */
+    @media (max-width: 768px) {
+      .collection-page .post-item {
+        padding: 16px !important;
+        margin-bottom: 10px !important;
+      }
+      
+      .collection-page .post-card-title-modern {
+        font-size: 1em !important;
+      }
+      
+      .collection-page .post-card-excerpt-modern {
+        -webkit-line-clamp: 1 !important;
+      }
+    }
     </style>
 
     {%- include modern-header.html -%}
 
-    <div class="collection-page">
+    <!-- 管理员权限检查 -->
+    {%- if site.supabase and site.supabase.enabled and site.admin and site.admin.enabled -%}
+    <div id="slides-auth-check" class="admin-loading">
+      <div class="loading-spinner"></div>
+      <p>正在验证管理员权限...</p>
+    </div>
+    
+    <div id="slides-unauthorized" class="admin-unauthorized" style="display: none;">
+      <div class="unauthorized-icon">🔒</div>
+      <h2>访问受限</h2>
+      <p>此页面仅限管理员访问。</p>
+      <a href="{{ '/' | relative_url }}" class="btn-primary">返回首页</a>
+    </div>
+    {%- endif -%}
+
+    <div class="collection-page" id="slides-content" style="display: none;">
   <!-- 现代化英雄式头部 -->
   <div class="collection-hero">
     <div class="collection-hero-content">
@@ -299,10 +568,148 @@
   <link rel="stylesheet" href="{{ '/assets/css/post-preview.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/assets/css/modern-collection.css' | relative_url }}">
 </noscript>
-<script src="{{ '/assets/js/post-preview.js' | relative_url }}" defer></script>
+<!-- 演示文稿页面不使用预览和hover效果 -->
 <script src="{{ '/assets/js/card-enhancements.js' | relative_url }}?v=3" defer></script>
+<script>
+// 禁用演示文稿页面的hover预览效果
+document.addEventListener('DOMContentLoaded', function() {
+  // 标记演示文稿页面，让card-hover-preview.js跳过
+  document.body.setAttribute('data-slides-page', 'true');
+  
+  // 如果card-hover-preview已经加载，移除演示文稿卡片的hover效果
+  setTimeout(function() {
+    const slidesCards = document.querySelectorAll('.collection-page .post-item.post-card-modern');
+    slidesCards.forEach(card => {
+      // 移除可能存在的hover事件监听器
+      card.style.pointerEvents = 'auto';
+      // 确保没有hover效果
+      const link = card.querySelector('.post-card-link-modern');
+      if (link) {
+        link.style.textDecoration = 'none';
+        link.style.color = 'inherit';
+      }
+    });
+  }, 500);
+});
+</script>
 
 <script>
+// 管理员权限检查函数
+async function checkSlidesAdminAccess() {
+  const authCheck = document.getElementById('slides-auth-check');
+  const unauthorized = document.getElementById('slides-unauthorized');
+  const slidesContent = document.getElementById('slides-content');
+  
+  // 如果权限检查元素不存在，说明未启用管理员系统，直接显示内容
+  if (!authCheck || !unauthorized) {
+    if (slidesContent) {
+      slidesContent.style.display = 'block';
+    }
+    return true;
+  }
+  
+  // 显示权限检查加载状态
+  authCheck.style.display = 'block';
+  unauthorized.style.display = 'none';
+  if (slidesContent) {
+    slidesContent.style.display = 'none';
+  }
+  
+  // 等待 SimpleAuth 加载完成（最多等待 3 秒，减少等待时间）
+  let waitCount = 0;
+  const maxWait = 30; // 减少到30次（3秒）
+  while (waitCount < maxWait && !window.SimpleAuth) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    waitCount++;
+  }
+  
+  if (!window.SimpleAuth) {
+    console.error('[Slides] SimpleAuth 未加载');
+    authCheck.style.display = 'none';
+    unauthorized.style.display = 'block';
+    unauthorized.innerHTML = `
+      <div class="unauthorized-icon">🔒</div>
+      <h2>系统错误</h2>
+      <p>认证服务未加载，请刷新页面重试。</p>
+      <button onclick="location.reload()" class="btn-primary">刷新页面</button>
+    `;
+    return false;
+  }
+  
+  // 使用 SimpleAuth 获取当前用户
+  const user = window.SimpleAuth?.getCurrentUser();
+  
+  if (!user) {
+    authCheck.style.display = 'none';
+    unauthorized.style.display = 'block';
+    unauthorized.innerHTML = `
+      <div class="unauthorized-icon">🔒</div>
+      <h2>请先登录</h2>
+      <p>此页面仅限管理员访问，请先登录。</p>
+      <button onclick="window.openAuthModal('login')" class="btn-primary">立即登录</button>
+    `;
+    return false;
+  }
+  
+  // 检查是否是管理员（从数据库的 admins 表读取）
+  const supabase = window.getSupabaseClient?.();
+  if (!supabase) {
+    console.error('[Slides] Supabase客户端未初始化');
+    authCheck.style.display = 'none';
+    unauthorized.style.display = 'block';
+    unauthorized.innerHTML = `
+      <div class="unauthorized-icon">🔒</div>
+      <h2>系统错误</h2>
+      <p>Supabase客户端未初始化，请刷新页面重试。</p>
+      <button onclick="location.reload()" class="btn-primary">刷新页面</button>
+    `;
+    return false;
+  }
+
+  let isAdmin = false;
+  try {
+    const { data: adminCheckData, error: adminCheckError } = await supabase
+      .rpc('check_user_is_admin', {
+        p_user_id: user.id
+      });
+
+    if (adminCheckError) {
+      console.error('[Slides] 检查管理员权限失败:', adminCheckError);
+      // 如果函数不存在，尝试使用旧的配置文件方式（向后兼容）
+      const adminEmails = {{ site.admin.admin_emails | jsonify }};
+      isAdmin = adminEmails && adminEmails.includes(user.email);
+    } else {
+      isAdmin = adminCheckData || false;
+    }
+  } catch (error) {
+    console.error('[Slides] 检查管理员权限异常:', error);
+    // 降级到配置文件方式
+    const adminEmails = {{ site.admin.admin_emails | jsonify }};
+    isAdmin = adminEmails && adminEmails.includes(user.email);
+  }
+  
+  if (!isAdmin) {
+    authCheck.style.display = 'none';
+    unauthorized.style.display = 'block';
+    unauthorized.innerHTML = `
+      <div class="unauthorized-icon">🔒</div>
+      <h2>访问受限</h2>
+      <p>此页面仅限管理员访问。</p>
+      <a href="{{ '/' | relative_url }}" class="btn-primary">返回首页</a>
+    `;
+    return false;
+  }
+  
+  // 显示内容
+  authCheck.style.display = 'none';
+  unauthorized.style.display = 'none';
+  if (slidesContent) {
+    slidesContent.style.display = 'block';
+  }
+  
+  return true;
+}
+
 // 立即执行函数，减少FOUC
 (function() {
   // 立即显示基础内容，避免"计算中..."的闪烁
@@ -328,8 +735,18 @@
   }
 })();
 
-document.addEventListener('DOMContentLoaded', function() {
-// 使用 requestAnimationFrame 确保DOM完全渲染后再执行
+// 初始化统计和标签逻辑的函数（防止重复初始化）
+let slidesStatsInitialized = false;
+let slidesTagFilterInitialized = false;
+
+function initSlidesStatsAndTags() {
+  // 防止重复初始化
+  if (slidesStatsInitialized) {
+    console.log('[Slides] 统计和标签已初始化，跳过重复初始化');
+    return;
+  }
+  
+  // 使用 requestAnimationFrame 确保DOM完全渲染后再执行
   requestAnimationFrame(function() {
     // 计算演示文稿总数
     const postItems = document.querySelectorAll('.post-item[data-post-url]');
@@ -380,15 +797,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // 生成现代化标签按钮
     const container = document.getElementById('slides-tag-buttons-container-modern');
     if (container) {
+      // 清空容器，防止重复添加
+      container.innerHTML = '';
+      
       const sortedTags = Array.from(tagMap.entries()).sort((a, b) => b[1] - a[1]);
       
       // 使用 DocumentFragment 提高性能
       const fragment = document.createDocumentFragment();
       
+      // 标准化标签格式的函数（与筛选函数保持一致）
+      function normalizeTagForButton(tag) {
+        if (!tag) return '';
+        return tag.trim().toLowerCase().replace(/[ -]/g, '_');
+      }
+      
       sortedTags.forEach(([tag, count]) => {
         const button = document.createElement('button');
         button.className = 'tag-btn-modern';
-        button.setAttribute('data-tag', tag.toLowerCase().replace(/[ -]/g, '_'));
+        // 使用与筛选函数相同的标准化逻辑
+        button.setAttribute('data-tag', normalizeTagForButton(tag));
         button.innerHTML = `
           <span>${tag}</span>
           <span class="tag-btn-count">(${count})</span>
@@ -399,47 +826,197 @@ document.addEventListener('DOMContentLoaded', function() {
       container.appendChild(fragment);
       container.classList.add('loaded');
       
-      // 添加现代化标签过滤功能
-      const tagButtons = container.querySelectorAll('.tag-btn-modern');
-      tagButtons.forEach(button => {
-        button.addEventListener('click', function() {
-          const selectedTag = this.getAttribute('data-tag');
+      // 筛选函数
+      function filterSlidesByTag(selectedTag) {
+        // 每次筛选时重新获取所有演示文稿项，确保获取最新的DOM
+        const allPostItems = document.querySelectorAll('.post-item[data-post-url]');
+        
+        console.log('[Slides] 筛选标签:', selectedTag, '找到', allPostItems.length, '个演示文稿');
+        
+        // 标准化标签格式的函数
+        function normalizeTag(tag) {
+          if (!tag) return '';
+          return tag.trim().toLowerCase().replace(/[ -]/g, '_');
+        }
+        
+        let visibleCount = 0;
+        const selectedTagNormalized = normalizeTag(selectedTag);
+        
+        allPostItems.forEach((item, index) => {
+          const tagElement = item.querySelector('.subcategory-tag');
+          const itemTagRaw = tagElement ? tagElement.textContent : '';
+          const itemTag = normalizeTag(itemTagRaw);
+          
+          // 调试前几个项目
+          if (index < 3) {
+            console.log('[Slides] 项目', index, '原始标签:', itemTagRaw, '标准化:', itemTag, '匹配:', selectedTagNormalized);
+          }
+          
+          if (selectedTag === 'all' || itemTag === selectedTagNormalized) {
+            // 显示项目：使用 setProperty 设置 !important 确保覆盖CSS（列表样式使用 flex）
+            item.style.setProperty('display', 'flex', 'important');
+            item.removeAttribute('hidden');
+            visibleCount++;
+          } else {
+            // 隐藏项目：使用 setProperty 设置 !important 确保覆盖CSS
+            item.style.setProperty('display', 'none', 'important');
+            item.setAttribute('hidden', '');
+          }
+        });
+        
+        console.log('[Slides] 筛选后显示', visibleCount, '个演示文稿 (选中标签:', selectedTagNormalized, ')');
+        
+        // 更新分类标题显示
+        updateCategoryVisibility();
+      }
+      
+      // 为所有标签按钮（包括"全部"按钮）绑定事件
+      // 使用事件委托，这样更可靠，也能处理动态添加的按钮
+      const tagButtonsContainer = container.parentElement; // .tag-buttons-modern
+      if (tagButtonsContainer && !slidesTagFilterInitialized) {
+        console.log('[Slides] 绑定标签筛选事件，容器:', tagButtonsContainer);
+        
+        // 使用事件委托，避免重复绑定
+        tagButtonsContainer.addEventListener('click', function(e) {
+          console.log('[Slides] 标签按钮被点击，target:', e.target);
+          
+          const button = e.target.closest('.tag-btn-modern');
+          if (!button) {
+            console.log('[Slides] 未找到标签按钮元素');
+            return;
+          }
+          
+          const selectedTag = button.getAttribute('data-tag');
+          console.log('[Slides] 选中的标签:', selectedTag);
+          
+          if (!selectedTag) {
+            console.warn('[Slides] 标签按钮没有 data-tag 属性');
+            return;
+          }
           
           // 更新按钮状态
-          tagButtons.forEach(btn => btn.classList.remove('active'));
-          this.classList.add('active');
+          const allTagButtons = tagButtonsContainer.querySelectorAll('.tag-btn-modern');
+          allTagButtons.forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
           
-          // 过滤演示文稿
-          postItems.forEach(item => {
-            const tagElement = item.querySelector('.subcategory-tag');
-            const itemTag = tagElement ? tagElement.textContent.trim().toLowerCase().replace(/[ -]/g, '_') : '';
-            
-            if (selectedTag === 'all' || itemTag === selectedTag) {
-              item.style.display = '';
-            } else {
-              item.style.display = 'none';
-            }
-          });
+          console.log('[Slides] 开始执行筛选，标签:', selectedTag);
           
-          // 更新分类标题显示
-          updateCategoryVisibility();
+          // 执行筛选
+          filterSlidesByTag(selectedTag);
         });
-      });
+        
+        slidesTagFilterInitialized = true;
+        console.log('[Slides] 标签筛选事件绑定完成');
+      }
     }
     
     function updateCategoryVisibility() {
       const nodes = document.querySelectorAll('details.main-category-modern');
       nodes.forEach(node => {
-        const visiblePosts = node.querySelectorAll('.post-item:not([style*="display: none"])');
-        if (visiblePosts.length === 0) {
+        // 检查可见的演示文稿（避免使用 getComputedStyle，直接检查内联样式和属性）
+        const allPosts = node.querySelectorAll('.post-item[data-post-url]');
+        let visibleCount = 0;
+        
+        allPosts.forEach(post => {
+          // 只检查内联样式和属性，避免强制重排
+          const isHidden = post.hasAttribute('hidden') || 
+                          post.style.display === 'none';
+          if (!isHidden) {
+            visibleCount++;
+          }
+        });
+        
+        if (visibleCount === 0) {
           node.open = false;
         } else {
           node.open = true;
         }
       });
     }
+    
+    // 标记为已初始化
+    slidesStatsInitialized = true;
   });
-});
+}
+
+// 执行权限检查并初始化
+function performSlidesAccessCheck() {
+  // 首先检查管理员权限
+  checkSlidesAdminAccess().then(hasAccess => {
+    if (!hasAccess) {
+      // 没有权限，但需要监听认证状态变化
+      // 等待 SimpleAuth 加载后注册监听器
+      const waitForSimpleAuth = () => {
+        if (window.SimpleAuth) {
+          // 监听认证状态变化，当用户登录时自动重新检查权限
+          if (window.SimpleAuth.onAuthChange) {
+            window.SimpleAuth.onAuthChange((user) => {
+              console.log('[Slides] 认证状态变化，重新检查管理员权限');
+              checkSlidesAdminAccess().then(newHasAccess => {
+                if (newHasAccess) {
+                  // 权限检查通过，初始化统计和标签逻辑
+                  initSlidesStatsAndTags();
+                }
+              });
+            });
+          }
+        } else {
+          // SimpleAuth 还没加载，继续等待
+          setTimeout(waitForSimpleAuth, 100);
+        }
+      };
+      waitForSimpleAuth();
+      return; // 没有权限，不执行后续的统计和标签逻辑
+    }
+    
+    // 有权限，初始化统计和标签逻辑
+    initSlidesStatsAndTags();
+  }).catch(error => {
+    console.error('[Slides] 权限检查失败:', error);
+  });
+}
+
+// 尝试立即检查（如果 SimpleAuth 已加载）
+if (document.readyState === 'loading') {
+  // DOM 还在加载，等待 DOMContentLoaded
+  document.addEventListener('DOMContentLoaded', performSlidesAccessCheck);
+} else {
+  // DOM 已加载，立即执行
+  performSlidesAccessCheck();
+}
+
+// 如果 SimpleAuth 在页面加载后才初始化，也要检查（优化：减少检查频率和次数）
+(function() {
+  let checkCount = 0;
+  const maxChecks = 10; // 最多等待2秒（减少等待时间）
+  let hasChecked = false; // 防止重复检查
+  
+  function checkWhenSimpleAuthReady() {
+    // 如果已经检查过，不再重复检查
+    if (hasChecked) return;
+    
+    if (window.SimpleAuth && window.SimpleAuth.getCurrentUser()) {
+      // SimpleAuth 已就绪且有用户，但可能权限检查还没执行，确保执行一次
+      const slidesContent = document.getElementById('slides-content');
+      if (slidesContent && slidesContent.style.display === 'none') {
+        // 内容还没显示，可能是权限检查还没完成，重新检查
+        hasChecked = true;
+        performSlidesAccessCheck();
+        return; // 已执行，停止检查
+      }
+    }
+    // 继续等待（减少检查频率，从200ms改为500ms）
+    if (checkCount < maxChecks) {
+      checkCount++;
+      setTimeout(checkWhenSimpleAuthReady, 500);
+    } else {
+      hasChecked = true; // 超时后标记为已检查，避免继续执行
+    }
+  }
+  
+  // 延迟启动，避免与主检查冲突
+  setTimeout(checkWhenSimpleAuthReady, 500);
+})();
 </script>
 
     </div>

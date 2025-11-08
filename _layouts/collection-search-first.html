@@ -17,17 +17,30 @@ layout: collection
   margin-left: 0 !important;
 }
 
-/* 搜索区域 - 保持英雄式设计风格 */
+/* 搜索区域 - Geek风格英雄式设计 */
 .search-hero {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background:
+    linear-gradient(135deg,
+      rgba(15, 23, 42, 0.98) 0%,
+      rgba(30, 41, 59, 0.98) 30%,
+      rgba(51, 65, 85, 0.98) 60%,
+      rgba(71, 85, 105, 0.98) 100%
+    ),
+    linear-gradient(45deg,
+      rgba(59, 130, 246, 0.08) 0%,
+      rgba(16, 185, 129, 0.08) 30%,
+      rgba(99, 102, 241, 0.06) 60%,
+      rgba(6, 182, 212, 0.08) 100%
+    );
   color: white;
-  padding: 60px 0;
+  padding: 80px 0;
   margin: -2em -15px 3em -15px;
   position: relative;
   overflow: hidden;
   text-align: center;
 }
 
+/* Geek风格网格背景 */
 .search-hero::before {
   content: '';
   position: absolute;
@@ -35,8 +48,38 @@ layout: collection
   left: 0;
   right: 0;
   bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="0.5" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-  opacity: 0.3;
+  background-image:
+    linear-gradient(rgba(59, 130, 246, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.08) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: grid-move 20s linear infinite;
+}
+
+/* 霓虹光晕效果 */
+.search-hero::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at center,
+    rgba(59, 130, 246, 0.08) 0%,
+    rgba(16, 185, 129, 0.04) 25%,
+    transparent 50%
+  );
+  animation: neon-pulse 4s ease-in-out infinite alternate;
+}
+
+@keyframes grid-move {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(50px, 50px); }
+}
+
+@keyframes neon-pulse {
+  0% { opacity: 0.3; transform: scale(1); }
+  100% { opacity: 0.6; transform: scale(1.1); }
 }
 
 .search-hero-content {
@@ -48,18 +91,35 @@ layout: collection
 }
 
 .search-hero h1 {
-  font-size: 3.5em;
-  font-weight: 700;
+  font-size: 4em;
+  font-weight: 800;
   margin: 0 0 20px 0;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  text-shadow:
+    0 0 20px rgba(59, 130, 246, 0.4),
+    0 0 40px rgba(16, 185, 129, 0.2),
+    0 2px 4px rgba(0,0,0,0.3);
   letter-spacing: -0.02em;
+  line-height: 1.1;
+  background: linear-gradient(135deg, #ffffff 0%, #dbeafe 40%, #d1fae5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: title-glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes title-glow {
+  0% { filter: brightness(1); }
+  100% { filter: brightness(1.2); }
 }
 
 .search-hero-subtitle {
-  font-size: 1.3em;
-  opacity: 0.9;
+  font-size: 1.4em;
+  opacity: 0.95;
   margin-bottom: 40px;
-  font-weight: 300;
+  font-weight: 400;
+  line-height: 1.6;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+  color: rgba(255, 255, 255, 0.95);
 }
 
 /* 搜索输入区域 */
@@ -95,7 +155,7 @@ layout: collection
 }
 
 #search-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(16, 185, 129, 0.8));
   border: none;
   border-radius: 0 12px 12px 0;
   padding: 0 18px;
@@ -103,10 +163,15 @@ layout: collection
   font-size: 1em;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
-#search-btn:hover { opacity: 0.9; }
+#search-btn:hover {
+  opacity: 0.9;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(16, 185, 129, 0.9));
+  transform: translateY(-1px);
+}
 
 /* 搜索选项 */
 .search-options {
@@ -283,11 +348,11 @@ layout: collection
 }
 
 .tag-filter-btn.active {
-  background: rgba(102, 126, 234, 0.4);
-  border-color: rgba(102, 126, 234, 0.6);
+  background: rgba(59, 130, 246, 0.4);
+  border-color: rgba(59, 130, 246, 0.6);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
 .tag-count {
@@ -310,11 +375,11 @@ layout: collection
 }
 
 .category-browse-section .tag-filter-btn.active {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.9), rgba(118, 75, 162, 0.9));
-  border-color: rgba(102, 126, 234, 1);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(16, 185, 129, 0.9));
+  border-color: rgba(59, 130, 246, 1);
   color: #fff;
   font-weight: 600;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 .category-browse-section .tag-filter-btn .tag-count {
@@ -384,7 +449,7 @@ layout: collection
   padding: 40px;
   margin: 2em 0;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.1);
   position: relative;
   overflow: hidden;
 }
@@ -396,7 +461,7 @@ layout: collection
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+  background: linear-gradient(90deg, #3b82f6, #10b981, #06b6d4);
 }
 
 .quick-browse-section h2 {
@@ -441,7 +506,7 @@ layout: collection
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  background: linear-gradient(90deg, #3b82f6, #10b981);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -452,9 +517,9 @@ layout: collection
 
 .category-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15);
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
-  border-color: rgba(102, 126, 234, 0.2);
+  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.15);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
+  border-color: rgba(59, 130, 246, 0.2);
 }
 
 .category-card h3 {
@@ -468,7 +533,7 @@ layout: collection
 }
 
 .category-card .count {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #3b82f6, #10b981);
   color: white;
   padding: 4px 12px;
   border-radius: 12px;
@@ -507,24 +572,24 @@ layout: collection
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #3b82f6, #10b981);
   color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
 .btn-secondary {
   background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
+  color: #3b82f6;
+  border: 2px solid #3b82f6;
 }
 
 .btn-secondary:hover {
-  background: #667eea;
+  background: #3b82f6;
   color: white;
   transform: translateY(-2px);
 }
@@ -625,8 +690,8 @@ layout: collection
 
 /* 浏览结果列表使用网格布局 */
 .category-browse-section #browse-results-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  display: block; /* 改为block，因为renderGroupedResults会创建自己的grid容器 */
+  /* grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); */ /* 由renderGroupedResults内部处理 */
   gap: 20px;
   margin-top: 20px;
 }
@@ -677,9 +742,9 @@ layout: collection
 }
 
 .back-to-search-btn {
-  background: rgba(102, 126, 234, 0.1);
-  border: 1px solid rgba(102, 126, 234, 0.2);
-  color: #667eea;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
   padding: 10px 20px;
   border-radius: 25px;
   font-size: 0.9em;
@@ -688,7 +753,7 @@ layout: collection
 }
 
 .back-to-search-btn:hover {
-  background: rgba(102, 126, 234, 0.2);
+  background: rgba(59, 130, 246, 0.2);
   transform: translateY(-1px);
 }
 
@@ -700,32 +765,32 @@ layout: collection
   padding: 12px 18px;
   margin: 8px 8px 8px 0;
   border-radius: 12px;
-  border: 2px solid rgba(102, 126, 234, 0.2);
-  color: #4256d0;
-  background: linear-gradient(135deg, #f5f7ff, #f0f4ff);
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  color: #1e40af;
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
   cursor: pointer;
   font-size: 1em;
   font-weight: 500;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
 }
-.cat-chip:hover { 
-  background: linear-gradient(135deg, #edf0ff, #e0e7ff); 
+.cat-chip:hover {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-  border-color: rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.4);
 }
 .cat-chip:active {
   transform: translateY(0);
 }
-.cat-chip .count { 
-  background: linear-gradient(135deg, #667eea, #764ba2); 
-  color: #fff; 
-  padding: 4px 10px; 
-  border-radius: 10px; 
+.cat-chip .count {
+  background: linear-gradient(135deg, #3b82f6, #10b981);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 10px;
   font-size: 0.85em;
   font-weight: 600;
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 .cat-breadcrumb { 
   display: flex; 
@@ -969,10 +1034,10 @@ layout: collection
         <!-- 搜索建议 -->
         <div class="search-suggestions show" id="search-suggestions">
           <div class="suggestion-item" data-query="Transformer">Transformer</div>
-          <div class="suggestion-item" data-query="GPU优化">GPU优化</div>
-          <div class="suggestion-item" data-query="分布式系统">分布式系统</div>
-          <div class="suggestion-item" data-query="注意力机制">注意力机制</div>
-          <div class="suggestion-item" data-query="性能优化">性能优化</div>
+          <div class="suggestion-item" data-query="Attention">Attention</div>
+          <div class="suggestion-item" data-query="GPU">GPU</div>
+          <div class="suggestion-item" data-query="Training">Training</div>
+          <div class="suggestion-item" data-query="Serving">Serving</div>
         </div>
       </div>
     </div>
@@ -1045,7 +1110,7 @@ layout: collection
           <span style="font-size: 1.2em;">📄</span>
           <span>匹配的论文</span>
         </h3>
-        <span class="results-count" id="browse-results-count" style="background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 0.9em; font-weight: 600; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">0篇</span>
+        <span class="results-count" id="browse-results-count" style="background: linear-gradient(135deg, #3b82f6, #10b981); color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 0.9em; font-weight: 600; box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);">0篇</span>
       </div>
       <div class="results-list" id="browse-results-list">
         <!-- 论文列表将在这里显示 -->
@@ -1055,7 +1120,6 @@ layout: collection
 </div>
 
 <script>
-console.log('[collection-search-first] inline script loaded');
 // 注入 RSS 订阅中心 URL
 window.RSS_SUBSCRIBE_URL = {{ '/feeds/index.html' | relative_url | jsonify }};
 
@@ -1066,9 +1130,9 @@ window.RSS_SUBSCRIBE_URL = {{ '/feeds/index.html' | relative_url | jsonify }};
     {%- for post in site.posts -%}
       {%- assign excerpt_data = site.data.excerpts[post.url] -%}
       {%- if excerpt_data -%}
-        {%- assign final_excerpt = excerpt_data | truncate: 240 -%}
+        {%- assign final_excerpt = excerpt_data | truncate: 100 -%}
       {%- else -%}
-        {%- assign exc = post.excerpt | default: post.description | default: post.summary | default: post.content | strip_html | strip_newlines | truncate: 240 -%}
+        {%- assign exc = post.excerpt | default: post.description | default: post.summary | default: post.content | strip_html | strip_newlines | truncate: 100 -%}
         {%- assign final_excerpt = exc -%}
       {%- endif -%}
       {
@@ -1081,15 +1145,7 @@ window.RSS_SUBSCRIBE_URL = {{ '/feeds/index.html' | relative_url | jsonify }};
       }{%- if forloop.last == false -%},{%- endif -%}
     {%- endfor -%}
     ];
-    console.log('[collection-search-first] preload posts =', Array.isArray(window.PAPERCACHE_POSTS) ? window.PAPERCACHE_POSTS.length : 'N/A');
-    // 调试：检查第一个论文的日期字段
-    if (Array.isArray(window.PAPERCACHE_POSTS) && window.PAPERCACHE_POSTS.length > 0) {
-      console.log('[collection-search-first] Sample post data:', {
-        title: window.PAPERCACHE_POSTS[0].title,
-        date: window.PAPERCACHE_POSTS[0].date,
-        dateType: typeof window.PAPERCACHE_POSTS[0].date
-      });
-    }
+    // Sample post data loaded
   } catch (e) {
     console.error('[collection-search-first] preload failed', e);
     window.PAPERCACHE_POSTS = [];
@@ -1098,16 +1154,15 @@ window.RSS_SUBSCRIBE_URL = {{ '/feeds/index.html' | relative_url | jsonify }};
 
 // 注入 baseurl 用于路径处理
 window.PC_BASEURL = {{ site.baseurl | jsonify }};
-// 注入 API base URL（如果配置了）
-window.PC_API_BASE = {{ site.api_base_url | default: '' | jsonify }};
 // 注入缩略图映射与占位图
 window.PC_THUMBS = {{ site.data.thumbnails_by_path | jsonify }};
 window.PC_THUMB_FALLBACK = {{ '/assets/images/fallback-paper.svg' | relative_url | jsonify }};
 // 注入分类结构用于多级分类浏览
 window.PC_COLLECTION = {{ site.data.collection_structure | jsonify }};
 
-// 搜索优先模式管理
-class SearchFirstMode {
+// 搜索优先模式管理 - 防止重复声明
+if (typeof window.SearchFirstMode === 'undefined') {
+  window.SearchFirstMode = class SearchFirstMode {
   constructor() {
     this.allPapers = [];
     this.filteredPapers = [];
@@ -1128,6 +1183,17 @@ class SearchFirstMode {
     this.setupAdvancedSearch();
     this.initTagFilters();
     this.showSuggestions();
+    
+    // 初始显示所有论文（如果用户没有进行搜索）
+    // 延迟执行，确保DOM已准备好
+    setTimeout(() => {
+      if (this.allPapers.length > 0 && !this.currentQuery) {
+        // 显示所有论文
+        this.filteredPapers = this.allPapers;
+        // 使用showSearchResults显示结果，但不需要搜索查询
+        this.showSearchResults('', false);
+      }
+    }, 100);
   }
 
   setupAdvancedSearch() {
@@ -1205,7 +1271,6 @@ class SearchFirstMode {
 
     const container = document.getElementById('tag-filter-buttons');
     if (!container) {
-      console.warn('[collection-search-first] tag-filter-buttons container not found');
       return;
     }
 
@@ -1228,7 +1293,6 @@ class SearchFirstMode {
       container.appendChild(button);
     });
     
-    console.log(`[collection-search-first] 初始化了 ${sortedTags.length} 个tag过滤器`);
   }
 
   updateSelectedTags() {
@@ -1253,7 +1317,6 @@ class SearchFirstMode {
   }
 
   showTopVenuesBrowse() {
-    console.log('[collection-search-first] showTopVenuesBrowse called');
     this.currentMode = 'browse';
     
     // 隐藏其他区域
@@ -1379,7 +1442,6 @@ class SearchFirstMode {
     // 初始化选中tag列表
     this.selectedTopVenueTags = null;
     
-    console.log(`[collection-search-first] 渲染了 ${sortedTags.length} 个顶会顶刊tag筛选器`);
   }
 
   applyTopVenuesFilter() {
@@ -1401,23 +1463,70 @@ class SearchFirstMode {
           if (selectedTags && Array.isArray(selectedTags) && selectedTags.length > 0) {
             // 匹配选中的tag列表中的任意一个
             if (selectedTags.includes(paperTag)) {
+              // 尝试从PAPERCACHE_POSTS获取excerpt
+              let excerpt = '';
+              if (window.PAPERCACHE_POSTS && Array.isArray(window.PAPERCACHE_POSTS)) {
+                const baseurl = window.PC_BASEURL || '';
+                const normalizeUrl = (url) => {
+                  if (!url) return '';
+                  let n = url;
+                  if (baseurl && baseurl !== '/' && n.startsWith(baseurl)) {
+                    n = n.substring(baseurl.length);
+                  }
+                  if (!n.startsWith('/')) n = '/' + n;
+                  return n;
+                };
+                const postNormalizedUrl = normalizeUrl(post.url);
+                const matchedPost = window.PAPERCACHE_POSTS.find(p => {
+                  const pNormalizedUrl = normalizeUrl(p.url);
+                  return pNormalizedUrl === postNormalizedUrl;
+                });
+                if (matchedPost) {
+                  excerpt = matchedPost.excerpt || '';
+                }
+              }
+              // 如果PAPERCACHE_POSTS中没有，尝试从site.data.excerpts获取（需要在渲染时处理）
               results.push({
                 title: post.title,
                 url: post.url,
                 date: post.date,
                 categories: post.categories || [],
-                tag: paperTag
+                tag: paperTag,
+                excerpt: excerpt
               });
             }
           } else {
             // 显示所有非arXiv的tag
             if (paperTag && paperTag !== '' && paperTag !== 'arXiv') {
+              // 尝试从PAPERCACHE_POSTS获取excerpt
+              let excerpt = '';
+              if (window.PAPERCACHE_POSTS && Array.isArray(window.PAPERCACHE_POSTS)) {
+                const baseurl = window.PC_BASEURL || '';
+                const normalizeUrl = (url) => {
+                  if (!url) return '';
+                  let n = url;
+                  if (baseurl && baseurl !== '/' && n.startsWith(baseurl)) {
+                    n = n.substring(baseurl.length);
+                  }
+                  if (!n.startsWith('/')) n = '/' + n;
+                  return n;
+                };
+                const postNormalizedUrl = normalizeUrl(post.url);
+                const matchedPost = window.PAPERCACHE_POSTS.find(p => {
+                  const pNormalizedUrl = normalizeUrl(p.url);
+                  return pNormalizedUrl === postNormalizedUrl;
+                });
+                if (matchedPost) {
+                  excerpt = matchedPost.excerpt || '';
+                }
+              }
               results.push({
                 title: post.title,
                 url: post.url,
                 date: post.date,
                 categories: post.categories || [],
-                tag: paperTag
+                tag: paperTag,
+                excerpt: excerpt
               });
             }
           }
@@ -1464,10 +1573,17 @@ class SearchFirstMode {
       return;
     }
     
-    papers.forEach(paper => {
-      const item = this.createResultItem(paper);
-      resultsList.appendChild(item);
-    });
+    // 保存论文到 filteredPapers，以便使用 renderGroupedResults
+    this.filteredPapers = papers;
+    
+    // 使用分类分组显示（与默认搜索结果保持一致）
+    resultsList.style.display = 'block';
+    resultsList.style.gridTemplateColumns = 'none';
+    resultsList.className = 'results-list-grouped';
+    this.renderGroupedResults(resultsList);
+    
+    // 批量更新收藏状态
+    setTimeout(() => this.batchUpdateFavoriteStatus(), 100);
   }
 
   getTagFromPaper(url) {
@@ -1527,7 +1643,6 @@ class SearchFirstMode {
     } else {
       this.allPapers = [];
     }
-    console.log(`已预载入 ${this.allPapers.length} 篇论文数据用于本地搜索`);
   }
 
   bindEvents() {
@@ -1548,9 +1663,19 @@ class SearchFirstMode {
     }
     
     if (searchBtn) {
-      searchBtn.addEventListener('click', () => {
+      // 移除旧的事件监听器（通过克隆节点）
+      const newSearchBtn = searchBtn.cloneNode(true);
+      searchBtn.parentNode?.replaceChild(newSearchBtn, searchBtn);
+      
+      // 重新绑定事件
+      newSearchBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         this.performSearch();
       });
+      
+      // 更新引用
+      this.searchBtn = newSearchBtn;
     }
 
     // 搜索建议
@@ -1558,73 +1683,143 @@ class SearchFirstMode {
     suggestions.forEach(suggestion => {
       suggestion.addEventListener('click', () => {
         const query = suggestion.getAttribute('data-query');
-        console.log('[collection-search-first] suggestion clicked:', query);
         const si = document.getElementById('main-search-input');
         if (si) si.value = query;
         if (typeof this.performSearch === 'function') this.performSearch();
       });
     });
 
-    // 分类卡片
+    // 分类卡片（移除旧的事件监听器，重新绑定）
     const categoryCards = document.querySelectorAll('.category-card');
     categoryCards.forEach(card => {
-      card.addEventListener('click', (e) => {
+      // 克隆节点以移除旧的事件监听器
+      const newCard = card.cloneNode(true);
+      card.parentNode?.replaceChild(newCard, card);
+      
+      // 保存this引用，确保在事件处理中能访问到类实例
+      const self = this;
+      newCard.addEventListener('click', function(e) {
         // 阻止事件冒泡和默认行为，确保不会被外部脚本拦截
         e.preventDefault();
         e.stopPropagation();
         
         // 检查是否是"顶会顶刊"卡片
-        const isTopVenues = card.getAttribute('data-special') === 'top-venues';
+        const isTopVenues = newCard.getAttribute('data-special') === 'top-venues';
         if (isTopVenues) {
-          console.log('[collection-search-first] 顶会顶刊卡片被点击');
-          this.filterTopVenues();
+          if (self && self.filterTopVenues) {
+            self.filterTopVenues();
+          } else {
+            console.error('[collection-search-first] filterTopVenues方法不存在或self未定义', { self, hasFilterTopVenues: self && self.filterTopVenues });
+          }
           return;
         }
         
         // 检查是否是"论文分类"卡片
-        const isPaperCategories = card.getAttribute('data-special') === 'paper-categories';
+        const isPaperCategories = newCard.getAttribute('data-special') === 'paper-categories';
         if (isPaperCategories) {
-          console.log('[collection-search-first] 论文分类卡片被点击');
-          this.showCategoryBrowse(null); // 显示所有分类浏览
+          if (self && self.showCategoryBrowse) {
+            self.showCategoryBrowse(null); // 显示所有分类浏览
+          } else {
+            console.error('[collection-search-first] showCategoryBrowse方法不存在或self未定义');
+          }
           return;
         }
         
         // 优先使用原始分类名称，如果没有则使用slug
-        const categoryName = card.getAttribute('data-category-name');
-        const categorySlug = card.getAttribute('data-category');
+        const categoryName = newCard.getAttribute('data-category-name');
+        const categorySlug = newCard.getAttribute('data-category');
         const category = categoryName || categorySlug;
-        console.log('[collection-search-first] Category card clicked:', category);
-        this.showCategoryBrowse(category);
+        if (self && self.showCategoryBrowse) {
+          self.showCategoryBrowse(category);
+        } else {
+          console.error('[collection-search-first] showCategoryBrowse方法不存在或self未定义');
+        }
       }, true); // 使用捕获阶段，确保优先处理
     });
 
-    // 操作按钮
+    // 操作按钮（移除旧的事件监听器，重新绑定）
     const browseAllBtn = document.getElementById('browse-all-btn');
     const rssBtn = document.getElementById('rss-subscribe-btn');
     
+    
     if (browseAllBtn) {
-      browseAllBtn.addEventListener('click', (e) => {
+      // 克隆节点以移除旧的事件监听器
+      const newBrowseAllBtn = browseAllBtn.cloneNode(true);
+      browseAllBtn.parentNode?.replaceChild(newBrowseAllBtn, browseAllBtn);
+      
+      newBrowseAllBtn.addEventListener('click', (e) => {
         // 阻止事件冒泡和默认行为，确保不会被外部脚本拦截
         e.preventDefault();
         e.stopPropagation();
-        console.log('[collection-search-first] Browse all button clicked');
         // 显示分类浏览界面，从根开始显示所有一级分类
-        this.showCategoryBrowse();
+        if (this.showCategoryBrowse) {
+          this.showCategoryBrowse();
+        } else {
+          console.error('[collection-search-first] showCategoryBrowse方法不存在');
+        }
       }, true); // 使用捕获阶段，确保优先处理
     }
     
     if (rssBtn) {
-      rssBtn.addEventListener('click', () => {
+      // 克隆节点以移除旧的事件监听器
+      const newRssBtn = rssBtn.cloneNode(true);
+      rssBtn.parentNode?.replaceChild(newRssBtn, rssBtn);
+      
+      newRssBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         // 跳转到RSS订阅中心页面
         const rssUrl = window.RSS_SUBSCRIBE_URL || '/feeds/index.html';
         window.location.href = rssUrl;
-      });
+      }, true);
+    }
+
+    // 使用事件委托处理卡片按钮点击（点赞和收藏）
+    // 这样可以避免在模板字符串中使用 onclick 导致的语法错误
+    // 使用 once 或者检查是否已绑定，避免重复绑定
+    if (!window._cardButtonHandlerBound) {
+      document.addEventListener('click', (e) => {
+        const button = e.target.closest('.card-like-btn, .card-favorite-btn');
+        if (!button) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const postUrl = button.getAttribute('data-post-url');
+        const action = button.getAttribute('data-action');
+        
+        if (!postUrl) return;
+        
+        if (action === 'like' && typeof handleCardLikeClick === 'function') {
+          handleCardLikeClick(postUrl, button);
+        } else if (action === 'favorite' && typeof handleCardFavoriteClick === 'function') {
+          handleCardFavoriteClick(postUrl, button);
+        }
+      }, true); // 使用捕获阶段，确保优先处理
+      window._cardButtonHandlerBound = true;
+    }
+
+    // 处理图片加载失败（使用事件委托，避免在模板字符串中使用 onerror）
+    if (!window._imageErrorHandlerBound) {
+      document.addEventListener('error', (e) => {
+        if (e.target.tagName === 'IMG' && e.target.hasAttribute('data-fallback')) {
+          const fallback = e.target.getAttribute('data-fallback');
+          if (fallback && e.target.src !== fallback) {
+            e.target.src = fallback;
+          }
+        }
+      }, true); // 使用捕获阶段，确保优先处理
+      window._imageErrorHandlerBound = true;
     }
 
     // 清空搜索
     const clearSearchBtn = document.getElementById('clear-search-btn');
     if (clearSearchBtn) {
-      clearSearchBtn.addEventListener('click', () => {
+      // 克隆节点以移除旧的事件监听器
+      const newClearSearchBtn = clearSearchBtn.cloneNode(true);
+      clearSearchBtn.parentNode?.replaceChild(newClearSearchBtn, clearSearchBtn);
+      
+      newClearSearchBtn.addEventListener('click', () => {
         this.clearSearch();
       });
     }
@@ -1632,7 +1827,11 @@ class SearchFirstMode {
     // 返回搜索
     const backToSearchBtn = document.getElementById('back-to-search-btn');
     if (backToSearchBtn) {
-      backToSearchBtn.addEventListener('click', () => {
+      // 克隆节点以移除旧的事件监听器
+      const newBackToSearchBtn = backToSearchBtn.cloneNode(true);
+      backToSearchBtn.parentNode?.replaceChild(newBackToSearchBtn, backToSearchBtn);
+      
+      newBackToSearchBtn.addEventListener('click', () => {
         this.showSearchMode();
       });
     }
@@ -1661,145 +1860,115 @@ class SearchFirstMode {
   }
 
   async performSearch(queryParam = null, allowEmptyQuery = false) {
-    console.log('[collection-search-first] performSearch called');
-    const searchInput = document.getElementById('main-search-input');
-    const query = queryParam !== null ? queryParam : (searchInput ? searchInput.value.trim() : '');
     
-    // 如果有选中的tag，允许空查询；否则需要至少2个字符
-    if (!allowEmptyQuery && query.length < 2 && this.selectedTags.length === 0) {
-      alert('请输入至少2个字符进行搜索，或选择标签进行过滤');
+    // 防止重复搜索（如果在搜索中，直接返回）
+    if (this._isSearching) {
       return;
     }
     
-    // 如果查询为空且没有选中的tag，直接返回
-    if (query.length === 0 && this.selectedTags.length === 0) {
-      return;
-    }
-
-    // 优先调用后端API；失败时降级到前端本地匹配
+    this._isSearching = true;
+    
+    // 显示加载状态
+    this.showSearchLoading();
+    
     try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8000);
+      const searchInput = document.getElementById('main-search-input');
+      const query = queryParam !== null ? queryParam : (searchInput ? searchInput.value.trim() : '');
       
-      // 构建API路径，考虑baseurl和本地开发环境
-      const baseurl = window.PC_BASEURL || '';
-      const apiBaseUrl = window.PC_API_BASE || '';
-      
-      // 本地开发时，如果当前端口是4000（Jekyll），API在3000端口（Vercel）
-      const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-      const isJekyllPort = window.location.port === '4000';
-      
-      let apiPath;
-      if (isLocalDev && isJekyllPort) {
-        // 本地开发：Jekyll在4000，Vercel在3000
-        apiPath = 'http://localhost:3000/api/search';
-      } else if (apiBaseUrl) {
-        // 生产环境：使用配置的 API base URL（Vercel）
-        // 如果配置了 api_base_url，说明静态站点和 API 在不同域名
-        apiPath = `${apiBaseUrl}/api/search`;
-      } else {
-        // Vercel 部署环境（静态站点和 API 在同一域名）
-        apiPath = baseurl ? `${baseurl}/api/search` : '/api/search';
+      // 如果有选中的tag，允许空查询；否则需要至少2个字符
+      if (!allowEmptyQuery && query.length < 2 && this.selectedTags.length === 0) {
+        this.hideSearchLoading();
+        alert('请输入至少2个字符进行搜索，或选择标签进行过滤');
+        this._isSearching = false;
+        return;
       }
       
+      // 如果查询为空且没有选中的tag，直接返回
+      if (query.length === 0 && this.selectedTags.length === 0) {
+        this.hideSearchLoading();
+        this._isSearching = false;
+        return;
+      }
+
+      // 记录搜索活动（在所有搜索路径之前，确保无论API成功与否都会记录）
+      // 注意：只有非空查询才记录，纯tag过滤不算搜索
+      if (window.AnalyticsService && query && query.trim()) {
+        window.AnalyticsService.logSearch(query);
+      }
+
       // 获取匹配模式和搜索范围
       const matchModeRadio = document.querySelector('input[name="match-mode"]:checked');
       const matchMode = matchModeRadio ? matchModeRadio.value : 'fuzzy';
-      
-      let searchFields = ['title', 'excerpt']; // 模糊匹配的默认值
-      
-      // 只有在精确匹配模式下才需要搜索范围
-      if (matchMode === 'exact') {
-        const searchFieldCheckboxes = document.querySelectorAll('input[name="search-field"]:checked');
-        searchFields = Array.from(searchFieldCheckboxes).map(cb => cb.value);
-        
-        // 确保至少选择一个搜索范围
-        if (searchFields.length === 0) {
-          alert('请至少选择一个搜索范围');
-          return;
-        }
-      }
-      
-      const resp = await fetch(apiPath, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          query,
-          filters: {
-            tags: this.selectedTags.length > 0 ? this.selectedTags : undefined
-          },
-          limit: 50,
-          matchMode: matchMode,
-          searchFields: searchFields
-        }),
-        signal: controller.signal
-      });
-      clearTimeout(timeout);
 
-      if (resp.ok) {
-        const data = await resp.json();
-        const apiResults = Array.isArray(data.results) ? data.results : [];
-        
-        console.log(`[collection-search-first] ✅ API 搜索成功，返回 ${apiResults.length} 条结果`);
-        console.log(`[collection-search-first] API 查询: "${query}", 总匹配数: ${data.total || 0}`);
-        console.log(`[collection-search-first] 匹配模式: ${data.matchMode || 'fuzzy'}, 搜索范围: ${(data.searchFields || []).join(', ')}`);
-        
-        // 保存当前搜索查询和匹配模式，用于高亮显示
-        this.currentQuery = query;
-        this.currentMatchMode = data.matchMode || 'fuzzy';
-        
-        // 使用API结果（即使为空也是有效的搜索结果）
-        this.filteredPapers = apiResults.map(r => {
-          // 如果API返回的结果中没有categories，尝试从URL中提取
-          let categories = r.categories || [];
-          if (categories.length === 0 && r.url) {
-            // 从URL中提取分类路径
-            try {
-              const urlObj = new URL(r.url, window.location.origin);
-              let pathname = urlObj.pathname;
-              const baseurl = window.PC_BASEURL || '';
-              if (baseurl && baseurl !== '/' && pathname.startsWith(baseurl)) {
-                pathname = pathname.substring(baseurl.length);
-              }
-              if (pathname.startsWith('/')) pathname = pathname.substring(1);
-              if (pathname.startsWith('papers/')) {
-                const withoutPapers = pathname.substring(7);
-                const parts = withoutPapers.split('/').filter(p => p);
-                for (let i = 0; i < parts.length; i++) {
-                  const part = parts[i];
-                  if (/^\d{4}$/.test(part) || /^\d{2}$/.test(part) || part.includes('.')) {
-                    break;
+      // 优先级1: 尝试使用 Supabase 搜索
+      if (window.SupabaseSearchService && typeof window.SupabaseSearchService.searchPapers === 'function') {
+        try {
+          
+          // 构建搜索选项
+          const searchOptions = {
+            tag: this.selectedTags.length > 0 ? this.selectedTags[0] : null, // 只支持单个tag
+            categories: null, // 暂时不支持分类过滤
+            limit: 50,
+            matchMode: matchMode // 'fuzzy' 或 'fulltext'
+          };
+
+          const supabaseResult = await window.SupabaseSearchService.searchPapers(query, searchOptions);
+          
+          if (supabaseResult && supabaseResult.success && supabaseResult.data && supabaseResult.data.length > 0) {
+            
+            // 保存当前搜索查询和匹配模式
+            this.currentQuery = query;
+            this.currentMatchMode = matchMode;
+            
+            // 转换 Supabase 返回的数据格式
+            this.filteredPapers = supabaseResult.data.map(item => {
+              // 从URL中提取分类路径
+              let categories = item.categories || [];
+              if (categories.length === 0 && item.post_url) {
+                try {
+                  const urlObj = new URL(item.post_url, window.location.origin);
+                  let pathname = urlObj.pathname;
+                  const baseurl = window.PC_BASEURL || '';
+                  if (baseurl && baseurl !== '/' && pathname.startsWith(baseurl)) {
+                    pathname = pathname.substring(baseurl.length);
                   }
-                  categories.push(part);
+                  if (pathname.startsWith('/')) pathname = pathname.substring(1);
+                  if (pathname.startsWith('papers/')) {
+                    const withoutPapers = pathname.substring(7);
+                    const parts = withoutPapers.split('/').filter(p => p);
+                    for (let i = 0; i < parts.length; i++) {
+                      const part = parts[i];
+                      if (/^\d{4}$/.test(part) || /^\d{2}$/.test(part) || part.includes('.')) {
+                        break;
+                      }
+                      categories.push(part);
+                    }
+                  }
+                } catch (e) {
+                  // 忽略URL解析错误
                 }
               }
-            } catch (e) {
-              // 忽略URL解析错误
-            }
+              
+              return {
+                title: item.title || 'Untitled',
+                excerpt: item.excerpt || '',
+                url: item.post_url || '#',
+                tags: item.tag ? [item.tag] : [],
+                categories: categories,
+                date: item.published_date || ''
+              };
+            });
+            
+            this.showSearchResults(query);
+            return; // Supabase搜索成功，返回
+          } else {
           }
-          return {
-            title: r.title || r.name || 'Untitled',
-            excerpt: r.excerpt || r.summary || '',
-            url: r.url || r.link || '#',
-            tags: r.tags || [],
-            categories: categories,
-            date: r.date || r.dateStr || ''
-          };
-        });
-        this.showSearchResults(query);
-        return; // API成功返回，无论结果数量如何都使用API结果
-      } else {
-        // API返回非200状态
-        console.warn(`[collection-search-first] ⚠️ API 返回非200状态: ${resp.status}，降级到本地搜索`);
+        } catch (supabaseError) {
+          console.warn('[search-first] Supabase 搜索失败，降级到本地搜索:', supabaseError);
+        }
       }
-      // API返回非200状态，静默降级到本地搜索（本地开发时API可能不可用）
-    } catch (e) {
-      // API调用失败，静默降级到本地搜索（本地开发时API可能不可用）
-      console.warn(`[collection-search-first] ⚠️ API 调用失败: ${e.message}，降级到本地搜索`);
-    }
 
     // 降级：在已加载的DOM中做简单包含匹配
-    console.log(`[collection-search-first] 🔄 使用本地搜索（fallback），查询: "${query}"`);
     
     // 如果查询为空，只应用tag过滤
     if (!query || query.trim() === '') {
@@ -1857,25 +2026,117 @@ class SearchFirstMode {
     // 去重
     const uniqueTokens = [...new Set(expandedTokens)];
     
-    this.filteredPapers = this.allPapers.filter(paper => {
-      // 首先应用tag过滤
-      if (this.selectedTags.length > 0) {
-        const paperTag = this.getTagFromPaper(paper.url) || 'arXiv';
-        if (!this.selectedTags.includes(paperTag)) {
-          return false;
+    // 使用 map + filter + sort 来保留优先级和匹配信息
+    const scoredPapers = this.allPapers
+      .map(paper => {
+        // 首先应用tag过滤
+        if (this.selectedTags.length > 0) {
+          const paperTag = this.getTagFromPaper(paper.url) || 'arXiv';
+          if (!this.selectedTags.includes(paperTag)) {
+            return null;
+          }
         }
-      }
-      
-      // 然后应用关键词搜索
-      const hay = `${paper.title} ${paper.excerpt} ${paper.tags.join(' ')} ${paper.categories.join(' ')}`.toLowerCase();
-      // 使用扩展后的关键词进行匹配，至少匹配一个关键词即可
-      return uniqueTokens.some(t => hay.includes(t));
-    });
+        
+        // 然后应用关键词搜索（智能匹配：优先短语，其次AND，最后部分匹配）
+        const hay = `${paper.title} ${paper.excerpt} ${paper.tags.join(' ')} ${paper.categories.join(' ')}`.toLowerCase();
+        
+        // 1. 优先尝试短语匹配（整个查询作为短语）
+        const queryPhrase = q.trim();
+        if (hay.includes(queryPhrase)) {
+          return { paper, match: true, priority: 1, score: 100 }; // 最高优先级
+        }
+        
+        // 2. 如果短语匹配失败，尝试AND匹配（所有关键词都必须存在）
+        const matchedTokens = tokens.filter(token => hay.includes(token));
+        if (matchedTokens.length === tokens.length && tokens.length > 0) {
+          return { paper, match: true, priority: 2, score: 80 + matchedTokens.length }; // 第二优先级
+        }
+        
+        // 3. 如果AND匹配失败，尝试部分匹配（匹配至少一半的关键词）
+        if (matchedTokens.length >= Math.ceil(tokens.length / 2) && tokens.length > 1) {
+          return { paper, match: true, priority: 3, score: 50 + matchedTokens.length * 10 }; // 第三优先级，至少匹配一半
+        }
+        
+        // 不再使用纯OR匹配，避免返回过多无关结果
+        return null;
+      })
+      .filter(item => item !== null)
+      .sort((a, b) => {
+        // 先按优先级排序，再按匹配分数排序
+        if (a.priority !== b.priority) {
+          return a.priority - b.priority;
+        }
+        return b.score - a.score;
+      })
+      .slice(0, 50) // 限制最多返回50个结果
+      .map(item => item.paper); // 只返回论文对象
+    
+    this.filteredPapers = scoredPapers;
     // 保存当前搜索查询和匹配模式（本地搜索默认为模糊匹配）
     this.currentQuery = query;
     this.currentMatchMode = 'fuzzy';
     // 本地搜索结果已就绪
     this.showSearchResults(query);
+    } finally {
+      // 确保无论成功还是失败，都重置搜索状态和隐藏加载状态
+      this._isSearching = false;
+      this.hideSearchLoading();
+    }
+  }
+  
+  // 显示搜索加载状态
+  showSearchLoading() {
+    const resultsSection = document.getElementById('search-results');
+    const resultsList = document.getElementById('results-list');
+    const resultsCount = document.getElementById('results-count');
+    
+    if (resultsSection) {
+      resultsSection.classList.add('show');
+      resultsSection.style.display = 'block';
+    }
+    
+    if (resultsList) {
+      resultsList.innerHTML = `
+        <div class="search-loading" style="
+          text-align: center;
+          padding: 60px 20px;
+          color: #6b7280;
+        ">
+          <div style="
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e5e7eb;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 20px;
+          "></div>
+          <p style="margin: 0; font-size: 1.1em;">正在搜索中...</p>
+        </div>
+      `;
+      
+      // 添加旋转动画样式（如果还没有）
+      if (!document.getElementById('search-loading-styles')) {
+        const style = document.createElement('style');
+        style.id = 'search-loading-styles';
+        style.textContent = `
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    }
+    
+    if (resultsCount) {
+      resultsCount.textContent = '搜索中...';
+    }
+  }
+  
+  // 隐藏搜索加载状态
+  hideSearchLoading() {
+    // 加载状态会在 showSearchResults 中被替换，这里不需要额外操作
   }
 
   showSearchResults(query, keepBrowse = false) {
@@ -1883,19 +2144,34 @@ class SearchFirstMode {
     this.hideSuggestions();
     
     // 隐藏其他区域（保留分类浏览时不隐藏）
-    document.querySelector('.quick-browse-section').style.display = 'none';
+    const quickSection = document.querySelector('.quick-browse-section');
+    if (quickSection) {
+      quickSection.style.display = 'none';
+    }
+    
     if (!keepBrowse) {
-      document.getElementById('category-browse').style.display = 'none';
+      const categoryBrowse = document.getElementById('category-browse');
+      if (categoryBrowse) {
+        categoryBrowse.style.display = 'none';
+        categoryBrowse.classList.remove('show');
+      }
     } else {
       const browseSection = document.getElementById('category-browse');
-      browseSection.classList.add('show');
-      browseSection.style.display = 'block';
+      if (browseSection) {
+        browseSection.classList.add('show');
+        browseSection.style.display = 'block';
+      }
     }
     
     // 显示搜索结果
     const resultsSection = document.getElementById('search-results');
     const resultsCount = document.getElementById('results-count');
     const resultsList = document.getElementById('results-list');
+    
+    if (!resultsSection || !resultsList) {
+      console.error('[collection-search-first] 搜索结果容器未找到');
+      return;
+    }
     
     resultsSection.classList.add('show');
     resultsSection.style.display = 'block';
@@ -1904,23 +2180,32 @@ class SearchFirstMode {
       resultsCount.textContent = `${this.filteredPapers.length}篇`;
     }
     
-    if (resultsList) {
-      resultsList.innerHTML = '';
-      
-      if (this.filteredPapers.length === 0) {
-        resultsList.innerHTML = `
-          <div style="text-align: center; padding: 40px; color: #6b7280;">
-            <h3>未找到相关论文</h3>
-            <p>尝试使用不同的关键词或浏览分类</p>
-          </div>
-        `;
-      } else {
-        // 按分类分组显示，确保容器是块级显示，让分组垂直堆叠
-        resultsList.style.display = 'block';
-        resultsList.style.gridTemplateColumns = 'none';
-        resultsList.className = 'results-list-grouped';
-        this.renderGroupedResults(resultsList);
-      }
+    resultsList.innerHTML = '';
+    
+    if (this.filteredPapers.length === 0) {
+      resultsList.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: #6b7280;">
+          <h3>未找到相关论文</h3>
+          <p>尝试使用不同的关键词或浏览分类</p>
+        </div>
+      `;
+    } else {
+      // 按分类分组显示，确保容器是块级显示，让分组垂直堆叠
+      resultsList.style.display = 'block';
+      resultsList.style.gridTemplateColumns = 'none';
+      resultsList.className = 'results-list-grouped';
+      // 使用 requestAnimationFrame 分批渲染，避免阻塞UI
+      this.renderGroupedResultsAsync(resultsList, () => {
+        // 渲染完成后，延迟批量更新收藏和点赞状态
+        setTimeout(() => {
+          if (window.batchCheckFavoritesForCards) {
+            window.batchCheckFavoritesForCards();
+          }
+          if (window.batchCheckLikesForCards) {
+            window.batchCheckLikesForCards();
+          }
+        }, 300);
+      });
     }
   }
 
@@ -1929,7 +2214,253 @@ class SearchFirstMode {
     this.showCategoryBrowse();
   }
 
-  // 按分类分组渲染搜索结果
+  // 异步分批渲染搜索结果（优化性能）
+  renderGroupedResultsAsync(container, onComplete) {
+    if (!container || !this.filteredPapers || this.filteredPapers.length === 0) {
+      if (onComplete) onComplete();
+      return;
+    }
+    
+    // 先清空容器
+    container.innerHTML = '';
+    
+    // 准备数据（与 renderGroupedResults 相同的逻辑）
+    const groupedData = this.prepareGroupedResultsData();
+    
+    if (!groupedData || groupedData.length === 0) {
+      if (onComplete) onComplete();
+      return;
+    }
+    
+    // 使用 DocumentFragment 批量插入
+    const fragment = document.createDocumentFragment();
+    let currentIndex = 0;
+    const BATCH_SIZE = 10; // 每批渲染10个分类组
+    
+    const renderBatch = () => {
+      const endIndex = Math.min(currentIndex + BATCH_SIZE, groupedData.length);
+      
+      for (let i = currentIndex; i < endIndex; i++) {
+        const { categoryPath, papers, count } = groupedData[i];
+        const categoryGroup = this.createCategoryGroup(categoryPath, papers, count);
+        fragment.appendChild(categoryGroup);
+      }
+      
+      // 批量插入到DOM
+      if (fragment.children.length > 0) {
+        container.appendChild(fragment);
+      }
+      
+      currentIndex = endIndex;
+      
+      // 如果还有数据，继续下一批
+      if (currentIndex < groupedData.length) {
+        requestAnimationFrame(renderBatch);
+      } else {
+        // 渲染完成，调用回调
+        if (onComplete) {
+          // 使用 setTimeout 确保 DOM 已完全更新
+          setTimeout(() => {
+            onComplete();
+          }, 50);
+        }
+      }
+    };
+    
+    // 开始渲染
+    requestAnimationFrame(renderBatch);
+  }
+  
+  // 准备分组数据（提取公共逻辑）
+  prepareGroupedResultsData() {
+    if (!this.filteredPapers || this.filteredPapers.length === 0) {
+      return [];
+    }
+    
+    // 从URL中提取分类路径的辅助函数
+    const extractCategoriesFromUrl = (url) => {
+      if (!url) return [];
+      try {
+        const urlObj = new URL(url, window.location.origin);
+        let pathname = urlObj.pathname;
+        
+        const baseurl = window.PC_BASEURL || '';
+        if (baseurl && baseurl !== '/' && pathname.startsWith(baseurl)) {
+          pathname = pathname.substring(baseurl.length);
+        }
+        
+        if (pathname.startsWith('/')) {
+          pathname = pathname.substring(1);
+        }
+        
+        if (!pathname.startsWith('papers/')) {
+          return [];
+        }
+        
+        const withoutPapers = pathname.substring(7);
+        const parts = withoutPapers.split('/').filter(p => p);
+        
+        const categories = [];
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          if (/^\d{4}$/.test(part) || /^\d{2}$/.test(part)) {
+            break;
+          }
+          if (part.includes('.')) {
+            break;
+          }
+          categories.push(part);
+        }
+        
+        return categories;
+      } catch (e) {
+        return [];
+      }
+    };
+    
+    // 按分类路径分组论文
+    const groupedByCategory = {};
+    
+    this.filteredPapers.forEach(paper => {
+      let categories = Array.isArray(paper.categories) ? paper.categories : [];
+      
+      if (categories.length === 0 && paper.url) {
+        categories = extractCategoriesFromUrl(paper.url);
+      }
+      
+      if (categories.length === 0) {
+        const key = '未分类';
+        if (!groupedByCategory[key]) {
+          groupedByCategory[key] = [];
+        }
+        groupedByCategory[key].push(paper);
+      } else {
+        const categoryPath = categories.join('/');
+        if (!groupedByCategory[categoryPath]) {
+          groupedByCategory[categoryPath] = [];
+        }
+        groupedByCategory[categoryPath].push(paper);
+      }
+    });
+    
+    // 按分类路径排序
+    const sortedCategories = Object.keys(groupedByCategory).sort((a, b) => {
+      if (a === '未分类') return 1;
+      if (b === '未分类') return -1;
+      return a.localeCompare(b);
+    });
+    
+    // 转换为数组格式
+    return sortedCategories.map(categoryPath => ({
+      categoryPath,
+      papers: groupedByCategory[categoryPath],
+      count: groupedByCategory[categoryPath].length
+    }));
+  }
+  
+  // 创建分类组DOM元素（提取公共逻辑）
+  createCategoryGroup(categoryPath, papers, count) {
+    // 创建分类组容器
+    const categoryGroup = document.createElement('div');
+    categoryGroup.className = 'search-category-group';
+    categoryGroup.style.cssText = `
+      margin-bottom: 40px;
+      width: 100%;
+      display: block;
+      clear: both;
+    `;
+
+    // 分类标题
+    const categoryHeader = document.createElement('div');
+    categoryHeader.className = 'category-group-header';
+    categoryHeader.style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      padding: 15px 20px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);
+      border-left: 4px solid #667eea;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+    `;
+    
+    const categoryTitle = document.createElement('h3');
+    categoryTitle.style.cssText = `
+      margin: 0;
+      font-size: 1.2em;
+      font-weight: 600;
+      color: #2d3748;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    `;
+    categoryTitle.innerHTML = `
+      <span>📁</span>
+      <span>${categoryPath.replace(/\//g, ' › ')}</span>
+      <span class="category-count-badge">(${count})</span>
+    `;
+    
+    // 让分类标题可点击
+    if (categoryPath !== '未分类') {
+      categoryHeader.style.cursor = 'pointer';
+      categoryHeader.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const categoryParts = categoryPath.split('/');
+        this.currentCategoryPath = categoryParts;
+        const firstCategory = categoryParts[0];
+        this.showCategoryBrowse(firstCategory);
+        setTimeout(() => {
+          this.renderCategoryTree();
+          this.applyCategoryFilter();
+        }, 100);
+      });
+      categoryHeader.addEventListener('mouseenter', () => {
+        categoryHeader.style.background = 'linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)';
+        categoryHeader.style.transform = 'translateX(4px)';
+      });
+      categoryHeader.addEventListener('mouseleave', () => {
+        categoryHeader.style.background = 'linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%)';
+        categoryHeader.style.transform = 'translateX(0)';
+      });
+    }
+    
+    categoryHeader.appendChild(categoryTitle);
+    categoryGroup.appendChild(categoryHeader);
+
+    // 论文列表容器
+    const papersContainer = document.createElement('div');
+    papersContainer.className = 'category-papers-list';
+    
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      papersContainer.style.cssText = `display: block; gap: 0;`;
+      papersContainer.classList.add('post-list-mobile-modern');
+    } else {
+      papersContainer.style.cssText = `
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+      `;
+      papersContainer.classList.add('post-grid-modern');
+    }
+    
+    // 渲染论文卡片（使用 DocumentFragment 批量插入）
+    const papersFragment = document.createDocumentFragment();
+    papers.forEach(paper => {
+      const card = this.createResultItem(paper);
+      if (card) {
+        papersFragment.appendChild(card);
+      }
+    });
+    papersContainer.appendChild(papersFragment);
+    
+    categoryGroup.appendChild(papersContainer);
+    return categoryGroup;
+  }
+  
+  // 按分类分组渲染搜索结果（保留原方法作为备用）
   renderGroupedResults(container) {
     if (!container || !this.filteredPapers || this.filteredPapers.length === 0) {
       return;
@@ -1984,7 +2515,6 @@ class SearchFirstMode {
         
         return categories;
       } catch (e) {
-        console.warn('[collection-search-first] Failed to extract categories from URL:', url, e);
         return [];
       }
     };
@@ -2019,13 +2549,7 @@ class SearchFirstMode {
       }
     });
 
-    // 调试：检查分组结果
-    console.log('[collection-search-first] Grouped categories:', Object.keys(groupedByCategory));
-    console.log('[collection-search-first] Sample paper data:', this.filteredPapers.slice(0, 3).map(p => ({
-      title: p.title,
-      url: p.url,
-      categories: p.categories
-    })));
+    // Grouped categories and sample data loaded
 
     // 按分类路径排序（按字母顺序）
     const sortedCategories = Object.keys(groupedByCategory).sort((a, b) => {
@@ -2115,11 +2639,124 @@ class SearchFirstMode {
       // 论文列表容器
       const papersContainer = document.createElement('div');
       papersContainer.className = 'category-papers-list';
-      papersContainer.style.cssText = `
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 20px;
-      `;
+      
+      // 根据窗口大小设置样式的函数
+      const updatePapersContainerStyle = () => {
+        const isMobile = window.innerWidth <= 768;
+        if (isMobile) {
+          // 移动端：列表样式
+          papersContainer.style.cssText = `
+            display: block;
+            gap: 0;
+          `;
+          // 为移动端添加列表类
+          papersContainer.classList.remove('post-grid-modern');
+          papersContainer.classList.add('post-list-mobile-modern');
+        } else {
+          // 桌面端：网格样式
+          papersContainer.style.cssText = `
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+          `;
+          // 为桌面端添加网格类
+          papersContainer.classList.add('post-grid-modern');
+          papersContainer.classList.remove('post-list-mobile-modern');
+        }
+      };
+      
+      // 初始设置样式
+      updatePapersContainerStyle();
+      
+      // 监听窗口大小变化（全局单例）
+      if (!window._collectionResizeHandler) {
+        let lastIsMobile = window.innerWidth <= 768;
+        let resizeTimer;
+        
+        window._collectionResizeHandler = () => {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => {
+            const currentIsMobile = window.innerWidth <= 768;
+            
+            // 如果移动端/桌面端状态发生变化，重新渲染
+            if (currentIsMobile !== lastIsMobile) {
+              lastIsMobile = currentIsMobile;
+              
+              // 重新设置所有 papersContainer 的样式
+              document.querySelectorAll('.category-papers-list').forEach(container => {
+                if (currentIsMobile) {
+                  container.style.cssText = `display: block; gap: 0;`;
+                  container.classList.remove('post-grid-modern');
+                  container.classList.add('post-list-mobile-modern');
+                } else {
+                  container.style.cssText = `display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;`;
+                  container.classList.add('post-grid-modern');
+                  container.classList.remove('post-list-mobile-modern');
+                }
+              });
+              
+              // 如果当前是搜索模式且有搜索结果，重新渲染
+              if (window.searchFirstMode && window.searchFirstMode.currentMode === 'results') {
+                const resultsList = document.getElementById('results-list');
+                if (resultsList && window.searchFirstMode.filteredPapers && window.searchFirstMode.filteredPapers.length > 0) {
+                  // 保存当前查询和模式
+                  const currentQuery = window.searchFirstMode.currentQuery;
+                  
+                  // 强制重新渲染所有结果项（根据新的窗口大小）
+                  // 直接调用 renderGroupedResults，而不是 showSearchResults，避免重复设置状态
+
+                  // 清空现有结果
+                  resultsList.innerHTML = '';
+                  resultsList.style.display = 'block';
+                  resultsList.style.gridTemplateColumns = 'none';
+                  resultsList.className = 'results-list-grouped';
+                  
+                  // 重新渲染（这会调用 createResultItem，根据新的窗口大小创建正确的元素）
+                  window.searchFirstMode.renderGroupedResults(resultsList);
+                  
+                  // 确保新创建的容器样式正确（在 renderGroupedResults 之后）
+                  setTimeout(() => {
+                    document.querySelectorAll('.category-papers-list').forEach(container => {
+                      if (!currentIsMobile) {
+                        // 桌面端：确保使用网格布局
+                        container.style.cssText = `display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;`;
+                        container.classList.add('post-grid-modern');
+                        container.classList.remove('post-list-mobile-modern');
+                      } else {
+                        // 移动端：确保使用列表布局
+                        container.style.cssText = `display: block; gap: 0;`;
+                        container.classList.remove('post-grid-modern');
+                        container.classList.add('post-list-mobile-modern');
+                      }
+                    });
+                    
+                    // 批量更新收藏和点赞状态
+                    window.searchFirstMode.batchUpdateFavoriteStatus();
+                    if (window.batchCheckLikesForCards) {
+                      setTimeout(() => {
+                        window.batchCheckLikesForCards();
+                      }, 200);
+                    }
+                  }, 100);
+                }
+              }
+              
+              // 如果当前是浏览模式，重新渲染分类浏览
+              if (window.searchFirstMode && window.searchFirstMode.currentMode === 'browse') {
+                const browseResults = document.getElementById('browse-results');
+                if (browseResults && window.searchFirstMode.filteredPapers && window.searchFirstMode.filteredPapers.length > 0) {
+                  // 重新应用分类过滤（这会重新渲染结果）
+                  setTimeout(() => {
+                    window.searchFirstMode.applyCategoryFilter();
+                  }, 100);
+                }
+              }
+            }
+          }, 300);
+        };
+        
+        window.addEventListener('resize', window._collectionResizeHandler);
+      }
 
       // 添加论文卡片
       papers.forEach(paper => {
@@ -2130,6 +2767,147 @@ class SearchFirstMode {
       categoryGroup.appendChild(papersContainer);
       container.appendChild(categoryGroup);
     });
+    
+    // 批量检查收藏和点赞状态
+    this.batchUpdateFavoriteStatus();
+    // 也更新点赞状态（如果函数存在）
+    if (window.batchCheckLikesForCards) {
+      setTimeout(() => {
+        window.batchCheckLikesForCards();
+      }, 600); // 稍微延迟，避免与收藏检查冲突
+    }
+  }
+  
+  // 批量更新收藏状态
+  async batchUpdateFavoriteStatus(retryCount = 0) {
+    const MAX_RETRIES = 3; // 最多重试3次
+    
+    // 如果超过重试上限，停止尝试
+    if (retryCount > MAX_RETRIES) {
+      return;
+    }
+    
+    // 等待服务加载
+    let waitCount = 0;
+    const maxWait = 50; // 5秒
+    while (!window.favoritesService && waitCount < maxWait) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      waitCount++;
+    }
+    
+    if (!window.favoritesService) {
+      if (retryCount < MAX_RETRIES) {
+        setTimeout(() => this.batchUpdateFavoriteStatus(retryCount + 1), 1000);
+      }
+      return;
+    }
+    
+    try {
+      // 收集所有卡片的URL
+      const allCards = document.querySelectorAll('.card-favorite-btn');
+      
+      // 如果没有卡片，只在确实应该有卡片的页面（搜索结果页、分类浏览页等）才重试
+      if (allCards.length === 0) {
+        // 检查是否在应该有卡片的页面
+        const hasResultsContainer = document.getElementById('search-results') || 
+                                   document.getElementById('browse-results') ||
+                                   document.querySelector('.category-browse-section.show');
+        
+        if (hasResultsContainer && retryCount < MAX_RETRIES) {
+          setTimeout(() => this.batchUpdateFavoriteStatus(retryCount + 1), 500);
+        }
+        return;
+      }
+      
+      // 构建URL到按钮的映射，确保能正确匹配
+      const urlToButtonMap = new Map();
+      const postUrls = [];
+      
+      Array.from(allCards).forEach(btn => {
+        const url = btn.getAttribute('data-post-url');
+        if (url && url !== '#') {
+          postUrls.push(url);
+          urlToButtonMap.set(url, btn);
+        }
+      });
+      
+      if (postUrls.length === 0) {
+        return;
+      }
+      
+      const isLoggedIn = window.SimpleAuth && window.SimpleAuth.isLoggedIn();
+      
+      // 使用组合查询函数（一次查询获取收藏数和用户收藏状态，最高效）
+      let favoritesMap = {};
+      let countsMap = {};
+      
+      if (window.favoritesService.batchGetFavoritesWithStatus) {
+        // 使用新的组合查询函数（数据库端统计，一次查询获取所有数据）
+        const result = await window.favoritesService.batchGetFavoritesWithStatus(postUrls);
+        countsMap = result.counts || {};
+        favoritesMap = isLoggedIn ? (result.userFavorited || {}) : {};
+      } else {
+        // 降级方案：分别查询（向后兼容）
+        const [favoritesResult, countsResult] = await Promise.all([
+          isLoggedIn 
+            ? window.favoritesService.batchCheckFavorites(postUrls) 
+            : Promise.resolve({}),
+          window.favoritesService.batchGetFavoriteCounts(postUrls)
+        ]);
+        favoritesMap = favoritesResult;
+        countsMap = countsResult;
+      }
+      
+      // 调试：如果用户已登录但favoritesMap为空，输出警告
+      if (postUrls.length > 0 && Object.keys(favoritesMap).length === 0 && isLoggedIn) {
+      }
+      
+      let favoritedCount = 0;
+      
+      // 更新所有卡片的状态
+      postUrls.forEach(postUrl => {
+        const btn = urlToButtonMap.get(postUrl);
+        if (!btn) return;
+        
+        const icon = btn.querySelector('.favorite-icon');
+        const countEl = btn.querySelector('.favorite-count');
+        
+        if (!icon) return;
+        
+        // 更新收藏状态（仅已登录用户）
+        if (isLoggedIn) {
+          const isFavorited = favoritesMap[postUrl] === true;
+          
+          if (isFavorited) {
+            btn.classList.add('favorited');
+            icon.textContent = '★';
+            icon.style.color = '#fbbf24';
+            favoritedCount++;
+          } else {
+            btn.classList.remove('favorited');
+            icon.textContent = '☆';
+            icon.style.color = '#9ca3af';
+          }
+        } else {
+          // 未登录用户，确保图标是空心的
+          btn.classList.remove('favorited');
+          icon.textContent = '☆';
+          icon.style.color = '#9ca3af';
+        }
+        
+        // 更新收藏数（所有用户都能看到）
+        if (countEl) {
+          const count = countsMap[postUrl] || 0;
+          countEl.textContent = count > 0 ? count : '0';
+        }
+      });
+    } catch (error) {
+      console.error('[collection-search-first] 批量更新收藏状态失败:', error);
+      // 失败后重试一次（不超过最大重试次数）
+      if (retryCount < MAX_RETRIES) {
+        setTimeout(() => this.batchUpdateFavoriteStatus(retryCount + 1), 2000);
+      }
+    }
   }
 
   // 高亮函数：在不修改原文的情况下对关键词进行高亮
@@ -2164,31 +2942,37 @@ class SearchFirstMode {
       keywords.unshift(queryTrimmed); // 优先匹配整个查询词
     }
     
-    // 收集所有匹配的位置
+    // 收集所有匹配的位置（单词级匹配，使用单词边界避免部分匹配）
     const matches = [];
     
     for (const keyword of keywords) {
       const keywordLower = keyword.toLowerCase();
       let startIndex = 0;
       
-      // 找到所有匹配的位置（大小写不敏感）
-      while ((startIndex = textLower.indexOf(keywordLower, startIndex)) !== -1) {
+      // 使用正则表达式进行单词级匹配（更准确）
+      // 转义特殊字符，并使用单词边界
+      const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const wordBoundaryRegex = new RegExp(`\\b${escapedKeyword}\\b`, 'gi');
+      
+      let match;
+      while ((match = wordBoundaryRegex.exec(text)) !== null) {
+        startIndex = match.index;
+        const endIndex = startIndex + keyword.length;
+        
         // 检查是否已经在这个位置有匹配（避免重复）
         const isOverlap = matches.some(m => 
           (startIndex >= m.start && startIndex < m.end) ||
-          (startIndex + keyword.length > m.start && startIndex + keyword.length <= m.end) ||
-          (startIndex < m.start && startIndex + keyword.length > m.end)
+          (endIndex > m.start && endIndex <= m.end) ||
+          (startIndex < m.start && endIndex > m.end)
         );
         
         if (!isOverlap) {
           matches.push({
             start: startIndex,
-            end: startIndex + keyword.length,
+            end: endIndex,
             keyword: keyword
           });
         }
-        
-        startIndex += keyword.length;
       }
     }
     
@@ -2262,9 +3046,12 @@ class SearchFirstMode {
         try {
           if (!p) return p;
           if (!p.startsWith('/')) p = '/' + p;
-          const seg = p.split('/');
-          if (seg.length > 2) {
-            return '/' + seg.slice(2).join('/');
+          const baseurl = window.PC_BASEURL || '';
+          if (baseurl && baseurl !== '/' && baseurl !== '') {
+            const normalizedBase = baseurl.endsWith('/') ? baseurl.slice(0, -1) : baseurl;
+            if (p.startsWith(normalizedBase)) {
+              return p.substring(normalizedBase.length) || '/';
+            }
           }
           return p;
         } catch(e) {
@@ -2273,27 +3060,65 @@ class SearchFirstMode {
       };
       
       try {
-        const a = document.createElement('a');
-        a.href = url;
-        let p = a.pathname || url;
-        if (!p.startsWith('/')) p = '/' + p;
+        // 处理相对URL或绝对URL
+        let p = url;
+        if (url.startsWith('http://') || url.startsWith('https://')) {
+          const a = document.createElement('a');
+          a.href = url;
+          p = a.pathname;
+        } else {
+          // 相对URL或路径
+          p = url;
+        }
+        
+        // 确保路径以 / 开头
+        if (!p.startsWith('/')) {
+          p = '/' + p;
+        }
+        
+        // 移除 baseurl 前缀（如果存在），因为 thumbnails_by_path.yml 中的键不包含 baseurl
+        p = pathWithoutBase(p);
         
         // 生成所有可能的URL变体
         const candidates = [p];
-        candidates.push(pathWithoutBase(p));
         
+        // 移除尾部斜杠的变体
         if (p.endsWith('/')) {
-          candidates.push(p.replace(/\/$/, '/index.html'));
-          candidates.push(pathWithoutBase(p.replace(/\/$/, '/index.html')));
+          candidates.push(p.slice(0, -1));
+        } else {
+          candidates.push(p + '/');
         }
         
-        if (!/\.html?$/.test(p)) {
-          candidates.push(p + '.html');
-          candidates.push(pathWithoutBase(p + '.html'));
+        // 添加 index.html 变体
+        if (p.endsWith('/')) {
+          candidates.push(p + 'index.html');
+          candidates.push(p.slice(0, -1) + '.html');
+        } else {
+          candidates.push(p.replace(/\.html?$/, '/') + 'index.html');
+          if (!/\.html?$/.test(p)) {
+            candidates.push(p + '.html');
+          }
         }
+        
+        // 尝试添加 /papers/ 前缀（因为搜索 API 可能返回不带 /papers/ 的 URL）
+        const candidatesWithPapers = candidates.map(c => {
+          if (!c.startsWith('/papers/') && !c.startsWith('/slides/')) {
+            // 如果路径不是 /papers/ 或 /slides/ 开头，尝试添加 /papers/
+            return '/papers' + c;
+          }
+          return null;
+        }).filter(c => c !== null);
+        
+        candidates.push(...candidatesWithPapers);
         
         // 去重
         const uniqueCandidates = Array.from(new Set(candidates));
+        
+        // 调试：记录匹配尝试（仅在开发环境）
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          const matchedKey = uniqueCandidates.find(c => thumbs[c]);
+          // Thumbnail not found (only in development)
+        }
         
         // 尝试匹配
         for (const candidate of uniqueCandidates) {
@@ -2306,10 +3131,8 @@ class SearchFirstMode {
             }
             
             // 添加 baseurl 前缀（如果存在且URL中尚未包含）
-            // 注意：thumbPath 已经是绝对路径（以 / 开头）
             if (!thumbPath.startsWith('http')) {
               const baseurl = window.PC_BASEURL || '';
-              // 只在 baseurl 存在且不是根路径时添加，避免重复
               if (baseurl && baseurl !== '' && baseurl !== '/' && !thumbPath.startsWith(baseurl)) {
                 const normalizedBase = baseurl.endsWith('/') ? baseurl.slice(0, -1) : baseurl;
                 thumbPath = normalizedBase + thumbPath;
@@ -2319,37 +3142,8 @@ class SearchFirstMode {
             return thumbPath;
           }
         }
-        
-        // 如果直接匹配失败，尝试添加 /papers/ 前缀
-        // 因为 Jekyll 的 post.url 可能不包含 /papers/，但 thumbnails_by_path.yml 中的键都包含
-        for (const candidate of uniqueCandidates) {
-          // 如果候选路径不以 /papers/ 开头，尝试添加该前缀
-          if (!candidate.startsWith('/papers/')) {
-            const papersCandidate = '/papers' + candidate;
-            if (thumbs[papersCandidate]) {
-              let thumbPath = thumbs[papersCandidate];
-              
-              // 确保路径格式正确
-              if (!thumbPath.startsWith('/') && !thumbPath.startsWith('http')) {
-                thumbPath = '/' + thumbPath;
-              }
-              
-              // 添加 baseurl 前缀（如果存在且URL中尚未包含）
-              if (!thumbPath.startsWith('http')) {
-                const baseurl = window.PC_BASEURL || '';
-                // 只在 baseurl 存在且不是根路径时添加，避免重复
-                if (baseurl && baseurl !== '' && baseurl !== '/' && !thumbPath.startsWith(baseurl)) {
-                  const normalizedBase = baseurl.endsWith('/') ? baseurl.slice(0, -1) : baseurl;
-                  thumbPath = normalizedBase + thumbPath;
-                }
-              }
-              
-              return thumbPath;
-            }
-          }
-        }
       } catch(e) {
-        // URL normalization failed, use fallback
+        console.warn('[getThumb] URL normalization failed:', url, e);
       }
       
       return fallback;
@@ -2447,6 +3241,9 @@ class SearchFirstMode {
     
     const displayDate = formatDate(paper.date);
     
+    // 转义所有可能包含特殊字符的内容
+    const escapedDisplayDate = (displayDate || '-').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    
     // 处理 URL：确保正确添加 baseurl，避免重复
     // 搜索 API 返回的 URL 格式为 /papers/llm/...（不包含 baseurl）
     let paperUrl = paper.url || '#';
@@ -2466,30 +3263,111 @@ class SearchFirstMode {
       }
     }
     
+    // 检测移动端
+    const isMobile = window.innerWidth <= 768;
+    
+    // 转义URL用于HTML属性（转义单引号和双引号，并进行HTML编码）
+    // 注意：不要转义冒号，因为URL中可能包含协议（http://, https://）
+    const escapedPaperUrl = paperUrl
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    
+    // 转义缩略图URL（如果包含特殊字符）
+    const escapedThumb = (thumb || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    
+    // 转义 fallback URL（避免在模板字符串中出现语法错误）
+    const fallbackUrl = window.PC_THUMB_FALLBACK || '/assets/images/fallback-paper.svg';
+    const escapedFallback = fallbackUrl.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    
     // 高亮标题和摘要中的关键词（支持模糊匹配和精确匹配）
     const highlightedTitle = this.highlightText(paper.title || '', this.currentQuery, this.currentMatchMode);
-    const highlightedExcerpt = this.highlightText(paper.excerpt || '', this.currentQuery, this.currentMatchMode);
     
-    item.innerHTML = `
-      <a href="${paperUrl}" class="post-card-link-modern">
-        <div class="post-card-thumb-modern">
-          <img src="${thumb}" alt="thumbnail" loading="lazy" style="width: 100%; height: 100%; object-fit: cover;" />
-        </div>
-        <div class="post-card-body-modern">
-          <div class="post-card-meta-modern">
-            <span class="post-meta-modern">${displayDate || '-'}</span>
-            ${tag ? `<span class="post-card-tag-modern${tagClass}">${tag}</span>` : ''}
+    // 处理摘要：存储完整内容，显示时裁剪（最大100字符，让卡片更紧凑）
+    const fullExcerpt = paper.excerpt || '';
+    const maxExcerptLength = 100; // 最大显示长度（减少以保持卡片宽度）
+    const displayExcerpt = fullExcerpt.length > maxExcerptLength 
+      ? fullExcerpt.substring(0, maxExcerptLength) + '...'
+      : fullExcerpt;
+    const highlightedExcerpt = this.highlightText(displayExcerpt, this.currentQuery, this.currentMatchMode);
+    
+    if (isMobile) {
+      // 移动端：列表样式
+      item.className = 'post-list-item-mobile';
+      item.innerHTML = `
+        <div class="post-list-item-mobile-content">
+          <div class="post-list-item-mobile-meta">
+            <span class="post-list-item-mobile-date">${escapedDisplayDate}</span>
+            <div class="post-list-item-mobile-right">
+              ${tag ? `<span class="post-list-item-mobile-tag${tagClass}">${tag}</span>` : ''}
+              <button class="card-like-btn"
+                      data-post-url="${escapedPaperUrl}"
+                      data-action="like"
+                      title="点赞这篇文章">
+                <span class="like-icon">🤍</span>
+                <span class="like-count" data-post-url="${escapedPaperUrl}">0</span>
+              </button>
+              <button class="card-favorite-btn"
+                      data-post-url="${escapedPaperUrl}"
+                      data-action="favorite"
+                      title="收藏这篇文章">
+                <span class="favorite-icon">☆</span>
+                <span class="favorite-count" data-post-url="${escapedPaperUrl}">0</span>
+              </button>
+            </div>
           </div>
-          <h3 class="post-card-title-modern">${highlightedTitle}</h3>
-          <p class="post-card-excerpt-modern">${highlightedExcerpt}</p>
+          <a href="${escapedPaperUrl}" class="post-list-item-mobile-link">
+            <h3 class="post-list-item-mobile-title">${highlightedTitle}</h3>
+          </a>
         </div>
-      </a>
-    `;
+      `;
+    } else {
+      // 桌面端：卡片样式
+      item.className = 'post-card-modern';
+      item.innerHTML = `
+        <a href="${escapedPaperUrl}" class="post-card-link-modern">
+          <div class="post-card-thumb-modern">
+            <img src="${escapedThumb}" 
+                 alt="thumbnail" 
+                 loading="lazy" 
+                 data-fallback="${escapedFallback}" />
+          </div>
+          <div class="post-card-body-modern">
+            <div class="post-card-meta-modern">
+              <span class="post-meta-modern">${escapedDisplayDate}</span>
+              <div class="post-card-meta-right">
+                ${tag ? `<span class="post-card-tag-modern${tagClass}">${tag}</span>` : ''}
+                <button class="card-like-btn"
+                        data-post-url="${escapedPaperUrl}"
+                        data-action="like"
+                        title="点赞这篇文章">
+                  <span class="like-icon">🤍</span>
+                  <span class="like-count" data-post-url="${escapedPaperUrl}">0</span>
+                </button>
+                <button class="card-favorite-btn"
+                        data-post-url="${escapedPaperUrl}"
+                        data-action="favorite"
+                        title="收藏这篇文章">
+                  <span class="favorite-icon">☆</span>
+                  <span class="favorite-count" data-post-url="${escapedPaperUrl}">0</span>
+                </button>
+              </div>
+            </div>
+            <h3 class="post-card-title-modern">${highlightedTitle}</h3>
+            <p class="post-card-excerpt-modern">${highlightedExcerpt}</p>
+          </div>
+        </a>
+      `;
+    }
+
+    // 收藏按钮状态将在批量检查时更新，这里不单独检查以提高性能
+
     return item;
   }
 
   showCategoryBrowse(categoryId = null) {
-    console.log('[collection-search-first] showCategoryBrowse called with categoryId:', categoryId);
     this.currentMode = 'browse';
     
     // 隐藏其他区域（包括快速浏览区域的分类卡片）
@@ -2507,7 +3385,17 @@ class SearchFirstMode {
     }
     browseSection.classList.add('show');
     browseSection.style.display = 'block';
-    console.log('[collection-search-first] Category browse section shown');
+    
+    // 更新标题和控件（确保从顶会顶刊浏览切换回来时标题正确）
+    const browseHeader = browseSection.querySelector('.browse-header h2');
+    if (browseHeader) {
+      browseHeader.textContent = '📚 论文分类浏览';
+    }
+    
+    const browseSearchInput = document.getElementById('browse-search-input');
+    if (browseSearchInput) {
+      browseSearchInput.placeholder = '在分类中搜索...';
+    }
     
     // 若点击了顶层分类卡片，则设定路径；否则从根开始显示
     if (categoryId) {
@@ -2517,18 +3405,15 @@ class SearchFirstMode {
         console.error('[collection-search-first] PC_COLLECTION not available:', collection);
       }
       const topLevelKeys = Object.keys(collection || {}).filter(k => k !== 'posts');
-      console.log('[collection-search-first] Top level keys:', topLevelKeys);
       // 尝试匹配 slug 或原始名称
       let matchedKey = topLevelKeys.find(k => {
         const slug = k.toLowerCase().replace(/\s+/g, '-');
         return slug === categoryId || k.toLowerCase() === categoryId.toLowerCase();
       });
       this.currentCategoryPath = matchedKey ? [matchedKey] : [categoryId];
-      console.log('[collection-search-first] Matched key:', matchedKey, 'Final path:', this.currentCategoryPath);
     } else {
       // 从根开始显示所有一级分类
       this.currentCategoryPath = [];
-      console.log('[collection-search-first] Starting from root, path:', this.currentCategoryPath);
     }
     // 渲染多级分类树（基于当前路径）并应用过滤
     this.renderCategoryTree();
@@ -2606,7 +3491,6 @@ class SearchFirstMode {
             e.stopPropagation();
             // 设置路径为点击的面包屑项对应的路径
             const targetPath = acc.slice(0, idx + 1);
-            console.log('[collection-search-first] Breadcrumb clicked, path:', targetPath);
             this.currentCategoryPath = targetPath;
             // 重新渲染分类树（不传参数，使用 currentCategoryPath）
             this.renderCategoryTree();
@@ -2663,7 +3547,6 @@ class SearchFirstMode {
               ? this.currentCategoryPath.slice() 
               : startPath;
             this.currentCategoryPath = currentPath.concat(k);
-            console.log('[collection-search-first] Category clicked, new path:', this.currentCategoryPath);
             // 深一层重新渲染与过滤（基于 currentCategoryPath）
             this.renderCategoryTree();
             this.applyCategoryFilter();
@@ -2815,6 +3698,13 @@ class SearchFirstMode {
         resultsList.style.gridTemplateColumns = 'none';
         resultsList.className = 'results-list-grouped';
         this.renderGroupedResults(resultsList);
+        // 批量更新收藏和点赞状态
+        setTimeout(() => {
+          this.batchUpdateFavoriteStatus();
+          if (window.batchCheckLikesForCards) {
+            window.batchCheckLikesForCards();
+          }
+        }, 100);
       }
     }
   }
@@ -2852,17 +3742,20 @@ class SearchFirstMode {
       timeout = setTimeout(later, wait);
     };
   }
-}
+  }; // 关闭 window.SearchFirstMode = class
+} // 关闭 if (typeof window.SearchFirstMode === 'undefined')
 
-// 自动初始化
+// 自动初始化 - 防止重复初始化
 document.addEventListener('DOMContentLoaded', () => {
-  console.log('[collection-search-first] DOMContentLoaded');
   try {
-    window.searchFirstMode = new SearchFirstMode();
+    // 防止重复创建实例
+    if (!window.searchFirstMode) {
+      window.searchFirstMode = new window.SearchFirstMode();
+    } else {
+    }
     // 全局兜底函数，避免事件绑定被外部脚本阻断
     window.__pc_search = function() {
       try {
-        console.log('[collection-search-first] __pc_search()');
         if (window.searchFirstMode) {
           window.searchFirstMode.performSearch();
         }
@@ -2870,7 +3763,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     window.__pc_fill = function(q) {
       try {
-        console.log('[collection-search-first] __pc_fill()', q);
         var si = document.getElementById('main-search-input');
         if (si) si.value = q || '';
         if (window.searchFirstMode) {
@@ -2878,16 +3770,103 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } catch (e) { console.error(e); }
     };
+    // 搜索按钮事件绑定（避免重复绑定和事件冲突）
+    // 注意：bindEvents() 中已经绑定了搜索按钮，这里只作为兜底
+    // 不重复绑定，避免事件冲突
     const btn = document.getElementById('search-btn');
-    if (btn) {
-      btn.onclick = function() {
-        if (window.searchFirstMode) {
-          window.searchFirstMode.performSearch();
+    if (btn && window.searchFirstMode) {
+      // 移除之前可能存在的 onclick 绑定（避免覆盖 addEventListener）
+      btn.onclick = null;
+      // 如果 bindEvents 还未执行，添加一个兜底事件监听器
+      // 使用 once: true 避免重复绑定
+      const checkBind = () => {
+        if (window.searchFirstMode && btn) {
+          btn.addEventListener('click', function handler(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (window.searchFirstMode) {
+              window.searchFirstMode.performSearch();
+            }
+            // 执行一次后移除（避免与 bindEvents 中的绑定冲突）
+            btn.removeEventListener('click', handler);
+          }, { once: true });
         }
       };
+      // 延迟检查，确保 bindEvents 已执行
+      setTimeout(checkBind, 500);
     }
+    
+    // 页面初始加载时，检查并更新收藏状态（包括刷新后的情况）
+    // 使用多次尝试，确保DOM和服务都已就绪
+    const tryUpdateFavorites = (attempt = 0) => {
+      const maxAttempts = 5;
+      if (attempt >= maxAttempts) {
+        return;
+      }
+      
+      setTimeout(() => {
+        // 检查是否有收藏按钮
+        const hasCards = document.querySelectorAll('.card-favorite-btn').length > 0;
+        
+        if (window.searchFirstMode && typeof window.searchFirstMode.batchUpdateFavoriteStatus === 'function') {
+          window.searchFirstMode.batchUpdateFavoriteStatus();
+        }
+        
+        // 如果全局的批量检查函数存在，也调用它（用于静态渲染的卡片）
+        if (window.batchCheckFavoritesForCards) {
+          window.batchCheckFavoritesForCards();
+        }
+        
+        // 如果还没有卡片，继续尝试
+        if (!hasCards && attempt < maxAttempts - 1) {
+          tryUpdateFavorites(attempt + 1);
+        }
+      }, 1500 + attempt * 500); // 每次尝试增加延迟
+    };
+    
+    tryUpdateFavorites();
   } catch (e) {
     console.error('[collection-search-first] init failed:', e);
+  }
+});
+
+// Turbolinks页面导航时的处理
+document.addEventListener('turbolinks:load', () => {
+  try {
+    // 如果实例已存在，需要重新绑定事件（因为Turbolinks替换了DOM）
+    if (window.searchFirstMode) {
+      // 重新绑定事件（因为DOM被Turbolinks替换了）
+      window.searchFirstMode.bindEvents();
+      // 重新初始化其他需要重新运行的功能
+      window.searchFirstMode.setupAdvancedSearch();
+      window.searchFirstMode.initTagFilters();
+      
+      // 延迟触发批量更新收藏状态
+      setTimeout(() => {
+        if (window.searchFirstMode && typeof window.searchFirstMode.batchUpdateFavoriteStatus === 'function') {
+          window.searchFirstMode.batchUpdateFavoriteStatus();
+        }
+      }, 1000);
+    } else {
+      // 创建新实例
+      window.searchFirstMode = new window.SearchFirstMode();
+      
+      // 延迟触发批量更新收藏状态
+      setTimeout(() => {
+        if (window.searchFirstMode && typeof window.searchFirstMode.batchUpdateFavoriteStatus === 'function') {
+          window.searchFirstMode.batchUpdateFavoriteStatus();
+        }
+      }, 1500);
+    }
+    
+    // 如果全局的批量检查函数存在，也调用它（用于静态渲染的卡片）
+    setTimeout(() => {
+      if (window.batchCheckFavoritesForCards) {
+        window.batchCheckFavoritesForCards();
+      }
+    }, 1500);
+  } catch (e) {
+    console.error('[collection-search-first] Turbolinks init failed:', e);
   }
 });
 </script>
@@ -2895,11 +3874,220 @@ document.addEventListener('DOMContentLoaded', () => {
 <!-- 独立脚本，确保在PJAX/局部刷新下也能绑定事件 -->
 <script src="{{ '/assets/js/search-first.js' | relative_url }}" defer></script>
 
+<!-- 处理 CSS 预加载（使用事件委托，避免内联 onload） -->
+<script>
+(function() {
+  function handleCSSPreload() {
+    document.querySelectorAll('link[data-load-as-stylesheet="true"]').forEach(function(link) {
+      link.addEventListener('load', function() {
+        this.rel = 'stylesheet';
+        this.removeAttribute('data-load-as-stylesheet');
+      });
+      // 如果已经加载完成，立即处理
+      if (link.sheet) {
+        link.rel = 'stylesheet';
+        link.removeAttribute('data-load-as-stylesheet');
+      }
+    });
+  }
+  
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', handleCSSPreload);
+  } else {
+    handleCSSPreload();
+  }
+  
+  // Turbolinks 页面加载时也处理
+  document.addEventListener('turbolinks:load', handleCSSPreload);
+})();
+</script>
+
 <!-- 引入卡片样式，确保搜索结果使用与原页面一致的风格 -->
-<link rel="preload" href="{{ '/assets/css/post-preview.css' | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
-<link rel="preload" href="{{ '/assets/css/modern-collection.css' | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<link rel="preload" href="{{ '/assets/css/post-preview.css' | relative_url }}" as="style" data-load-as-stylesheet="true">
+<link rel="preload" href="{{ '/assets/css/modern-collection.css' | relative_url }}" as="style" data-load-as-stylesheet="true">
 <noscript>
   <link rel="stylesheet" href="{{ '/assets/css/post-preview.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/assets/css/modern-collection.css' | relative_url }}">
   </noscript>
+
+<style>
+/* 日期行中的tag和收藏按钮布局 */
+.post-card-meta-modern {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+}
+
+.post-card-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* 卡片中的点赞按钮样式 */
+.card-like-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0 0.25rem;
+  min-width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.card-like-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  transform: scale(1.1);
+}
+
+.card-like-btn:active {
+  transform: scale(0.95);
+}
+
+.card-like-btn.liked {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.card-like-btn.liked:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.like-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: all 0.2s ease;
+}
+
+.card-like-btn:hover .like-icon {
+  transform: scale(1.1);
+}
+
+.card-like-btn.liked .like-icon {
+  color: #ef4444;
+}
+
+.card-like-btn:active .like-icon {
+  animation: heartPulse 0.4s ease;
+}
+
+/* 点赞数显示 */
+.card-like-btn .like-count {
+  font-size: 0.75rem;
+  line-height: 1;
+  color: #9ca3af;
+  margin-left: 0.1rem;
+}
+
+.card-like-btn.liked .like-count {
+  color: #ef4444;
+}
+
+@keyframes heartPulse {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.3); }
+  50% { transform: scale(1.1); }
+  75% { transform: scale(1.2); }
+}
+
+/* 卡片中的收藏按钮样式 */
+.card-favorite-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0 0.25rem;
+  min-width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.card-favorite-btn:hover {
+  background: rgba(251, 191, 36, 0.1);
+  transform: scale(1.1);
+}
+
+.card-favorite-btn:active {
+  transform: scale(0.95);
+}
+
+.card-favorite-btn.favorited {
+  background: rgba(251, 191, 36, 0.1);
+}
+
+.card-favorite-btn.favorited:hover {
+  background: rgba(251, 191, 36, 0.15);
+}
+
+.favorite-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+  transition: all 0.2s ease;
+  color: #9ca3af;
+}
+
+.card-favorite-btn:hover .favorite-icon {
+  color: #fbbf24;
+  transform: scale(1.1);
+}
+
+.card-favorite-btn.favorited .favorite-icon {
+  color: #fbbf24;
+}
+
+.card-favorite-btn:active .favorite-icon {
+  animation: starPulse 0.4s ease;
+}
+
+/* 收藏数显示 */
+.card-favorite-btn .favorite-count {
+  font-size: 0.75rem;
+  line-height: 1;
+  color: #6b7280;
+  font-weight: 500;
+  margin-left: 0.125rem;
+  transition: color 0.2s ease;
+  min-width: 1.2em;
+  text-align: center;
+}
+
+.card-favorite-btn:hover .favorite-count {
+  color: #9ca3af;
+}
+
+.card-favorite-btn.favorited .favorite-count {
+  color: #fbbf24;
+}
+
+@keyframes starPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+
+/* 响应式优化 */
+@media (max-width: 768px) {
+  .card-favorite-btn {
+    width: 24px;
+    height: 24px;
+  }
+
+  .favorite-icon {
+    font-size: 1rem;
+  }
+}
+</style>
 

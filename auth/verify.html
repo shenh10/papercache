@@ -1,0 +1,196 @@
+---
+layout: default
+title: 邮箱验证
+permalink: /auth/verify.html
+---
+
+<div class="auth-verify-container">
+  <div class="auth-verify-content">
+    <h1>正在验证邮箱...</h1>
+    <p>请稍候，我们正在验证您的邮箱地址。</p>
+    <div class="auth-verify-spinner"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+  
+  // 检查并修复路径（如果访问的路径不包含baseurl，重定向到正确的路径）
+  (function() {
+    const baseurl = {{ site.baseurl | jsonify }} || '';
+    const currentPath = window.location.pathname;
+    const expectedPath = baseurl + '/auth/verify.html';
+    
+    // 如果当前路径不包含baseurl，且baseurl不为空，则重定向
+    if (baseurl && baseurl !== '/' && !currentPath.startsWith(baseurl)) {
+      const hash = window.location.hash || '';
+      window.location.replace(baseurl + '/auth/verify.html' + hash);
+      return;
+    }
+  })();
+  
+  // 等待Supabase客户端初始化
+  function checkSupabaseReady() {
+    if (window.getSupabaseClient && window.getSupabaseClient()) {
+      handleEmailVerification();
+    } else {
+      setTimeout(checkSupabaseReady, 100);
+    }
+  }
+  
+  function handleEmailVerification() {
+    const supabase = window.getSupabaseClient();
+    if (!supabase) {
+      showError('Supabase客户端未初始化');
+      return;
+    }
+    
+    // 检查URL hash中是否有认证token
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = hashParams.get('access_token');
+    const type = hashParams.get('type');
+    
+    if (!accessToken) {
+      // 如果没有token，可能是直接访问了这个页面
+      showError('未找到验证链接参数');
+      return;
+    }
+    
+    // 如果Supabase还没有自动处理，手动设置session
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('获取session失败:', error);
+        showError('验证失败: ' + error.message);
+        return;
+      }
+      
+      if (session) {
+        // 已经有session了，说明验证成功
+        showSuccess('邮箱验证成功！正在跳转...');
+        
+        // 清除URL hash并跳转
+        setTimeout(() => {
+          const baseUrl = window.location.pathname.startsWith('/papercache') 
+            ? '/papercache/' 
+            : '/';
+          window.location.href = baseUrl;
+        }, 1500);
+      } else {
+        // 等待Supabase自动处理hash（因为设置了detectSessionInUrl: true）
+        let checkCount = 0;
+        const checkInterval = setInterval(() => {
+          supabase.auth.getSession().then(({ data: { session } }) => {
+            checkCount++;
+            
+            if (session) {
+              clearInterval(checkInterval);
+              showSuccess('邮箱验证成功！正在跳转...');
+              setTimeout(() => {
+                const baseUrl = window.location.pathname.startsWith('/papercache') 
+                  ? '/papercache/' 
+                  : '/';
+                window.location.href = baseUrl;
+              }, 1500);
+            } else if (checkCount > 30) {
+              // 30秒后超时
+              clearInterval(checkInterval);
+              showError('验证超时，请重试');
+            }
+          });
+        }, 1000);
+      }
+    });
+    
+    // 监听认证状态变化
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        showSuccess('邮箱验证成功！正在跳转...');
+        setTimeout(() => {
+          const baseUrl = window.location.pathname.startsWith('/papercache') 
+            ? '/papercache/' 
+            : '/';
+          window.location.href = baseUrl;
+        }, 1500);
+      } else if (event === 'SIGNUP_CONFIRMED') {
+        showSuccess('邮箱验证成功！正在跳转...');
+        setTimeout(() => {
+          const baseUrl = window.location.pathname.startsWith('/papercache') 
+            ? '/papercache/' 
+            : '/';
+          window.location.href = baseUrl;
+        }, 1500);
+      }
+    });
+  }
+  
+  function showSuccess(message) {
+    const content = document.querySelector('.auth-verify-content');
+    if (content) {
+      content.innerHTML = `
+        <h1 style="color: #22c55e;">✓ 验证成功</h1>
+        <p>${message}</p>
+      `;
+    }
+  }
+  
+  function showError(message) {
+    const content = document.querySelector('.auth-verify-content');
+    if (content) {
+      content.innerHTML = `
+        <h1 style="color: #ef4444;">✗ 验证失败</h1>
+        <p>${message}</p>
+        <p><a href="javascript:void(0)" onclick="window.location.href=(window.location.pathname.startsWith('/papercache') ? '/papercache/' : '/')" style="color: #667eea; text-decoration: underline;">返回首页</a></p>
+      `;
+    }
+  }
+  
+  // 页面加载后开始检查
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', checkSupabaseReady);
+  } else {
+    checkSupabaseReady();
+  }
+})();
+</script>
+
+<style>
+.auth-verify-container {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.auth-verify-content {
+  text-align: center;
+  max-width: 400px;
+}
+
+.auth-verify-content h1 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+  color: #2d3748;
+}
+
+.auth-verify-content p {
+  color: #718096;
+  margin-bottom: 1.5rem;
+}
+
+.auth-verify-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+

@@ -76,7 +76,7 @@
 
 .read-full-btn {
   display: inline-block;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8) 0%, rgba(16, 185, 129, 0.8) 100%);
   color: white;
   text-decoration: none;
   padding: 10px 20px;
@@ -87,13 +87,13 @@
 
 .read-full-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .section-title {
   margin: 0 0 10px 0;
   font-size: 14px;
-  color: #667eea;
+  color: rgba(59, 130, 246, 0.9);
   font-weight: 600;
   border-bottom: 1px solid #e1e5e9;
   padding-bottom: 5px;
@@ -274,9 +274,9 @@
   background: linear-gradient(135deg, #10b981, #059669) !important;
 }
 
-/* 其他标签 - 蓝紫色渐变 */
+/* 其他标签 - 蓝青色渐变 */
 .post-card-tag-modern:not(.tag-arxiv) {
-  background: linear-gradient(135deg, #667eea, #764ba2) !important;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(16, 185, 129, 0.8)) !important;
 }
 
 /* ============ 缩略图与摘要 ============ */

@@ -6,12 +6,11 @@
 baseurl: "/papercache"
 url: "http://127.0.0.1:4000"
 
-# 本地开发时包含 slides 页面（生产环境不包含）
+# 顶部导航页面（04-slides.html 仅限管理员访问，不在导航中显示）
 header_pages:
   - 01-index.markdown
   - 02-collection.html
   - 03-about.markdown
-  - 04-slides.html
 
 # Collections 配置 - 仅在本地开发时启用 slides
 collections:
@@ -49,3 +48,12 @@ exclude:
   - node_modules/
   - .DS_Store
   # 注意：不排除 _slides/，让 Jekyll 在本地开发时处理
+
+# Supabase 配置 - 本地开发环境
+# 注意：此文件会被提交到 Git，请勿包含真实的密钥
+# 真实密钥存储在 .env.local 中（已在 .gitignore 中）
+# 使用脚本自动同步：./scripts/load-env-to-config.sh
+supabase:
+  url: ""  # 从 .env.local 的 SUPABASE_URL 自动同步（运行 load-env-to-config.sh）
+  anon_key: ""  # 从 .env.local 的 SUPABASE_ANON_KEY 自动同步（运行 load-env-to-config.sh）
+  enabled: true

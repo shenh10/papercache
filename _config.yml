@@ -10,6 +10,25 @@ rss_base_url: "https://shenh10.github.io/papercache"
 # 生产环境 API 应该指向 Vercel，因为 GitHub Pages 不支持动态 API
 api_base_url: "https://papercache.vercel.app"
 
+# Supabase 配置 - 用户管理系统
+# 注意：这些值应该从环境变量读取，不要在代码中硬编码
+# 在生产环境中，通过Vercel或GitHub Actions的环境变量设置
+supabase:
+  url: ""  # 从环境变量 SUPABASE_URL 读取
+  anon_key: ""  # 从环境变量 SUPABASE_ANON_KEY 读取
+  enabled: true  # 是否启用用户系统
+
+# 管理员配置
+admin:
+  enabled: true
+  # 注意：admin_emails 已废弃，现在使用数据库的 admins 表管理
+  # 保留此配置仅用于向后兼容（如果数据库函数不可用时降级使用）
+  # 推荐方式：通过管理后台或执行 supabase-init-admin.sql 初始化管理员
+  admin_emails:
+    - "thushenhan@gmail.com"  # 向后兼容：现有管理员邮箱（已废弃，建议删除）
+    # 添加更多管理员邮箱（每行一个）
+    # - "your-admin-email@example.com"
+
 author:
   name: shenh10
   email: thushenhan@gmail.com
@@ -40,7 +59,6 @@ exclude:
   - ".jekyll-cache/"
   - "Gemfile"
   - "Gemfile.lock"
-  - "04-slides.html"
   - "_slides/"
 
 # 增量构建配置（仅用于本地开发，生产环境通过清除缓存强制完全构建）
@@ -51,7 +69,7 @@ paginate: 20  # 每页显示的文章数量
 paginate_path: "/page:num/"  # 分页路径
 
 # 顶部导航仅展示指定页面
-# 注意：04-slides.html 仅在本地开发时显示（通过 _config_local.yml 添加）
+# 注意：04-slides.html 仅限管理员访问，不在导航中显示
 header_pages:
   - 01-index.markdown
   - 02-collection.html

@@ -22,7 +22,7 @@
       <ul class="nav-menu">
         {% for page_path in site.header_pages %}
           {% assign page_obj = site.pages | where: "path", page_path | first %}
-          {% if page_obj %}
+          {% if page_obj and page_obj.path != "04-slides.html" %}
             <li class="nav-item">
               <a href="{{ page_obj.url | relative_url }}" 
                  class="nav-link {% if page.url == page_obj.url %}active{% endif %}">
@@ -31,42 +31,260 @@
             </li>
           {% endif %}
         {% endfor %}
+        <!-- 管理员专用：演示文稿合集（默认隐藏，JavaScript会根据管理员权限显示） -->
+        {% assign slides_page = site.pages | where: "path", "04-slides.html" | first %}
+        {% if slides_page %}
+        <li class="nav-item" id="nav-item-slides" style="display: none;">
+          <a href="{{ slides_page.url | relative_url }}" 
+             class="nav-link {% if page.url == slides_page.url %}active{% endif %}">
+            {{ slides_page.title }}
+          </a>
+        </li>
+        {% endif %}
       </ul>
+      
+      <!-- 用户菜单 -->
+      {%- if site.supabase and site.supabase.enabled -%}
+      <div class="user-menu" id="user-menu">
+        <!-- 未登录状态（默认显示，JavaScript会控制） -->
+        <div class="user-menu-guest" id="user-menu-guest">
+          <button class="auth-btn-header" onclick="openAuthModal('login')">登录</button>
+        </div>
+        
+        <!-- 已登录状态（默认隐藏，JavaScript会控制） -->
+        <div class="user-menu-authenticated" id="user-menu-authenticated" style="display: none;">
+          <div class="user-avatar" id="user-avatar">
+            <img src="" alt="Avatar" id="user-avatar-img" style="display: none;">
+            <span id="user-avatar-text"></span>
+          </div>
+          <div class="user-dropdown" id="user-dropdown">
+            <div class="user-info">
+              <div class="user-name" id="user-name"></div>
+              <div class="user-email" id="user-email"></div>
+            </div>
+            <div class="user-dropdown-menu">
+              <a href="{{ '/account/favorites.html' | relative_url }}" class="user-menu-item">
+                <span class="user-menu-icon">⭐</span>
+                我的收藏
+              </a>
+              <a href="{{ '/account/profile.html' | relative_url }}" class="user-menu-item">
+                <span class="user-menu-icon">👤</span>
+                个人资料
+              </a>
+              {%- if site.admin and site.admin.enabled and site.admin.admin_emails -%}
+              <a href="{{ '/admin/index.html' | relative_url }}" class="user-menu-item user-menu-admin" id="user-menu-admin-link" style="display: none;">
+                <span class="user-menu-icon">📊</span>
+                统计分析
+              </a>
+              {%- endif -%}
+              <hr class="user-menu-divider">
+              <button class="user-menu-item user-menu-logout" onclick="handleLogout()">
+                <span class="user-menu-icon">🚪</span>
+                退出登录
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {%- endif -%}
     </nav>
   </div>
 </header>
 
 <!-- 样式文件 -->
 <link rel="stylesheet" href="{{ '/assets/css/modern-header.css' | relative_url }}">
+{%- if site.supabase and site.supabase.enabled -%}
+<link rel="stylesheet" href="{{ '/assets/css/auth.css' | relative_url }}">
+{%- endif -%}
 
 <!-- 移动端菜单交互脚本 -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
-  const mainNav = document.querySelector('.main-nav');
-  
-  if (mobileMenuToggle && mainNav) {
-    mobileMenuToggle.addEventListener('click', function() {
+(function() {
+  function initMobileMenu() {
+    const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+    const mainNav = document.querySelector('.main-nav');
+    
+    if (!mobileMenuToggle || !mainNav) {
+      return;
+    }
+    
+    // 移除旧的事件监听器（如果存在）
+    if (mobileMenuToggle._toggleHandler) {
+      mobileMenuToggle.removeEventListener('click', mobileMenuToggle._toggleHandler);
+      mobileMenuToggle._toggleHandler = null;
+    }
+    if (window._mobileMenuOutsideHandler) {
+      document.removeEventListener('click', window._mobileMenuOutsideHandler);
+      window._mobileMenuOutsideHandler = null;
+    }
+    
+    // 移动端菜单切换
+    const toggleHandler = function() {
       mobileMenuToggle.classList.toggle('active');
       mainNav.classList.toggle('active');
-    });
+    };
+    
+    mobileMenuToggle.addEventListener('click', toggleHandler);
+    mobileMenuToggle._toggleHandler = toggleHandler;
     
     // 点击导航链接后关闭菜单
     const navLinks = document.querySelectorAll('.nav-link');
     navLinks.forEach(link => {
-      link.addEventListener('click', function() {
+      // 移除旧的监听器
+      if (link._closeMenuHandler) {
+        link.removeEventListener('click', link._closeMenuHandler);
+      }
+      
+      const closeMenuHandler = function() {
         mobileMenuToggle.classList.remove('active');
         mainNav.classList.remove('active');
-      });
+      };
+      
+      link.addEventListener('click', closeMenuHandler);
+      link._closeMenuHandler = closeMenuHandler;
+    });
+    
+    // 点击用户菜单项后关闭菜单（移动端）
+    const userMenuItems = document.querySelectorAll('.user-menu-item, .auth-btn-header');
+    userMenuItems.forEach(item => {
+      // 移除旧的监听器
+      if (item._closeMenuHandler) {
+        item.removeEventListener('click', item._closeMenuHandler);
+      }
+      
+      const closeMenuHandler = function() {
+        mobileMenuToggle.classList.remove('active');
+        mainNav.classList.remove('active');
+      };
+      
+      item.addEventListener('click', closeMenuHandler);
+      item._closeMenuHandler = closeMenuHandler;
     });
     
     // 点击页面其他区域关闭菜单
-    document.addEventListener('click', function(e) {
+    const outsideClickHandler = function(e) {
       if (!mobileMenuToggle.contains(e.target) && !mainNav.contains(e.target)) {
         mobileMenuToggle.classList.remove('active');
         mainNav.classList.remove('active');
       }
-    });
+    };
+    
+    document.addEventListener('click', outsideClickHandler);
+    window._mobileMenuOutsideHandler = outsideClickHandler;
   }
-});
+  
+  // 在DOM加载时初始化
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMobileMenu);
+  } else {
+    initMobileMenu();
+  }
+  
+  // 在Turbolinks页面加载时也初始化
+  document.addEventListener('turbolinks:load', initMobileMenu);
+})();
 </script>
+
+<!-- 管理员导航项显示控制 -->
+{%- if site.supabase and site.supabase.enabled and site.admin and site.admin.enabled -%}
+<script>
+(function() {
+  // 检查管理员权限并显示/隐藏演示文稿合集导航项
+  async function checkAdminForNav() {
+    const slidesNavItem = document.getElementById('nav-item-slides');
+    if (!slidesNavItem) {
+      return; // 如果导航项不存在，直接返回
+    }
+    
+    // 等待 SimpleAuth 加载完成（最多等待 5 秒）
+    let waitCount = 0;
+    while (waitCount < 50 && !window.SimpleAuth) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      waitCount++;
+    }
+    
+    if (!window.SimpleAuth) {
+      // SimpleAuth 未加载，隐藏导航项
+      slidesNavItem.style.display = 'none';
+      return;
+    }
+    
+    // 获取当前用户
+    const user = window.SimpleAuth?.getCurrentUser();
+    
+    if (!user) {
+      // 未登录，隐藏导航项
+      slidesNavItem.style.display = 'none';
+      return;
+    }
+    
+    // 检查是否是管理员
+    const supabase = window.getSupabaseClient?.();
+    if (!supabase) {
+      slidesNavItem.style.display = 'none';
+      return;
+    }
+    
+    let isAdmin = false;
+    try {
+      const { data: adminCheckData, error: adminCheckError } = await supabase
+        .rpc('check_user_is_admin', {
+          p_user_id: user.id
+        });
+
+      if (adminCheckError) {
+        // 降级到配置文件方式
+        const adminEmails = {{ site.admin.admin_emails | jsonify }};
+        isAdmin = adminEmails && adminEmails.includes(user.email);
+      } else {
+        isAdmin = adminCheckData || false;
+      }
+    } catch (error) {
+      // 降级到配置文件方式
+      const adminEmails = {{ site.admin.admin_emails | jsonify }};
+      isAdmin = adminEmails && adminEmails.includes(user.email);
+    }
+    
+    // 根据管理员状态显示/隐藏导航项
+    if (isAdmin) {
+      slidesNavItem.style.display = '';
+    } else {
+      slidesNavItem.style.display = 'none';
+    }
+  }
+  
+  // 监听认证状态变化
+  function initAdminNav() {
+    // 等待 SimpleAuth 加载
+    const waitForSimpleAuth = () => {
+      if (window.SimpleAuth) {
+        // 立即检查一次
+        checkAdminForNav();
+        
+        // 监听认证状态变化
+        if (window.SimpleAuth.onAuthChange) {
+          window.SimpleAuth.onAuthChange((user) => {
+            checkAdminForNav();
+          });
+        }
+      } else {
+        // SimpleAuth 还没加载，继续等待
+        setTimeout(waitForSimpleAuth, 100);
+      }
+    };
+    
+    waitForSimpleAuth();
+  }
+  
+  // 在DOM加载时初始化
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAdminNav);
+  } else {
+    initAdminNav();
+  }
+  
+  // 在Turbolinks页面加载时也初始化
+  document.addEventListener('turbolinks:load', initAdminNav);
+})();
+</script>
+{%- endif -%}

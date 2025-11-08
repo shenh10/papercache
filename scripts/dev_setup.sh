@@ -26,6 +26,25 @@ if ! command -v bundle &> /dev/null; then
     exit 1
 fi
 
+# 加载 Supabase 配置
+echo "🔐 加载 Supabase 配置..."
+if [ -f "scripts/load-env-to-config.sh" ]; then
+    # 检查是否存在 .env.local 文件
+    if [ -f ".env.local" ]; then
+        bash scripts/load-env-to-config.sh
+        if [ $? -eq 0 ]; then
+            echo "✅ Supabase 配置已加载"
+        else
+            echo "⚠️  警告：Supabase 配置加载失败，将使用空配置"
+        fi
+    else
+        echo "⚠️  警告：未找到 .env.local 文件，Supabase 功能可能不可用"
+        echo "   提示：创建 .env.local 文件并添加 SUPABASE_URL 和 SUPABASE_ANON_KEY"
+    fi
+else
+    echo "⚠️  警告：找不到 scripts/load-env-to-config.sh"
+fi
+
 # 安装依赖
 echo "📦 安装 Jekyll 依赖..."
 bundle install
@@ -49,7 +68,7 @@ if [ -f "scripts/gen_thumbs.py" ]; then
         pip3 install Pillow PyYAML 2>/dev/null || echo "⚠️  警告：无法自动安装依赖，请手动安装: pip install Pillow PyYAML"
     fi
     
-    python3 scripts/gen_thumbs.py --size 320x200 --thumbnails-out assets/data --mapping-out _data
+    python3 scripts/gen_thumbs.py --size 960x600 --thumbnails-out assets/data --mapping-out _data
     
     # 检查映射文件是否生成
     if [ ! -f "_data/thumbnails_by_path.yml" ]; then

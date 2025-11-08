@@ -190,3 +190,13 @@
   }
 }
 </style>
+
+{%- if site.supabase and site.supabase.enabled -%}
+<!-- 登录/注册模态框 - 全局统一包含 -->
+{%- include auth-modal.html -%}
+
+<!-- 注意：以下脚本已被新的简化认证系统替代，已在head.html中加载 -->
+<!-- 认证状态检查模块 - 已被auth-state-checker-usage.md中的统一模块替代 -->
+<!-- 认证服务脚本 - 已被simple-auth.js替代 -->
+<!-- 用户菜单UI更新 - 已被user-menu-simple.js替代 -->
+{%- endif -%}

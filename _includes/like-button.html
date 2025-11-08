@@ -1,0 +1,223 @@
+<!-- 点赞按钮组件 -->
+{%- if site.supabase and site.supabase.enabled -%}
+<button class="like-btn" 
+        data-post-url="{{ page.url | relative_url }}"
+        id="like-btn-{{ page.url | slugify }}"
+        onclick="handleToggleLike('{{ page.url | relative_url }}')"
+        title="点赞这篇文章">
+  <span class="like-icon" id="like-icon-{{ page.url | slugify }}">❤️</span>
+  <span class="like-count" id="like-count-{{ page.url | slugify }}"></span>
+</button>
+
+<script>
+// 初始化点赞按钮状态
+document.addEventListener('DOMContentLoaded', async function() {
+  const postUrl = '{{ page.url | relative_url }}';
+  const btn = document.getElementById('like-btn-' + postUrl.replace(/[^a-z0-9]/gi, ''));
+  const icon = document.getElementById('like-icon-' + postUrl.replace(/[^a-z0-9]/gi, ''));
+  const countEl = document.getElementById('like-count-' + postUrl.replace(/[^a-z0-9]/gi, ''));
+  
+  if (!btn || !window.likesService) return;
+  
+  // 检查点赞状态
+  const isLiked = await window.likesService.isPostLiked(postUrl);
+  updateLikeButtonUI(btn, icon, isLiked);
+  
+  // 获取点赞数
+  const countResult = await window.likesService.getPostLikeCount(postUrl);
+  if (countResult.success && countEl) {
+    countEl.textContent = countResult.count > 0 ? `(${countResult.count})` : '';
+  }
+});
+
+// 更新点赞按钮UI
+function updateLikeButtonUI(btn, icon, isLiked) {
+  if (isLiked) {
+    btn.classList.add('liked');
+    if (icon) icon.textContent = '❤️';
+  } else {
+    btn.classList.remove('liked');
+    if (icon) icon.textContent = '🤍';
+  }
+}
+
+// 处理点赞/取消点赞
+window.handleToggleLike = async function(postUrl) {
+  if (!window.likesService) {
+    alert('点赞功能不可用，请刷新页面重试');
+    return;
+  }
+  
+  const btnId = 'like-btn-' + postUrl.replace(/[^a-z0-9]/gi, '');
+  const btn = document.getElementById(btnId);
+  const icon = document.getElementById('like-icon-' + postUrl.replace(/[^a-z0-9]/gi, ''));
+  const countEl = document.getElementById('like-count-' + postUrl.replace(/[^a-z0-9]/gi, ''));
+  
+  if (!btn) return;
+  
+  // 显示加载状态
+  btn.disabled = true;
+  btn.classList.add('loading');
+  
+  // 切换点赞状态
+  const result = await window.likesService.toggleLike(postUrl);
+  btn.disabled = false;
+  btn.classList.remove('loading');
+  
+  // 记录点赞活动
+  if (window.AnalyticsService && result.success) {
+    window.AnalyticsService.logLike(postUrl, result.liked);
+  }
+  
+  if (result.success) {
+    updateLikeButtonUI(btn, icon, result.liked);
+
+    // 更新点赞数
+    if (countEl) {
+      const countResult = await window.likesService.getPostLikeCount(postUrl);
+      if (countResult.success) {
+        countEl.textContent = countResult.count > 0 ? `(${countResult.count})` : '';
+      }
+    }
+
+    // 显示反馈动画
+    btn.classList.add('clicked');
+    setTimeout(() => {
+      btn.classList.remove('clicked');
+    }, 600);
+
+    // 显示成功提示
+    showLikeSuccessMessage(result.liked);
+  } else {
+    if (result.error === '请先登录') {
+      if (window.openAuthModal) {
+        window.openAuthModal('login');
+      }
+    } else {
+      alert('操作失败：' + (result.error || '未知错误'));
+    }
+  }
+};
+
+// 显示点赞成功提示
+function showLikeSuccessMessage(liked) {
+  const message = liked ? '已点赞' : '已取消点赞';
+
+  // 创建提示元素
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    white-space: nowrap;
+  `;
+  toast.textContent = message;
+
+  document.body.appendChild(toast);
+
+  // 显示动画
+  setTimeout(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+  }, 10);
+
+  // 自动隐藏
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(-20px)';
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 300);
+  }, 2000);
+}
+</script>
+
+<style>
+.like-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.like-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.like-btn.liked {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.like-btn.loading {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.like-btn.clicked {
+  transform: scale(1.1);
+}
+
+.like-icon {
+  font-size: 1.2rem;
+  transition: transform 0.2s ease;
+}
+
+.like-btn.liked .like-icon {
+  animation: heartBeat 0.6s ease;
+}
+
+.like-btn:not(.liked):hover .like-icon {
+  transform: scale(1.1);
+}
+
+.like-btn.clicked .like-icon {
+  animation: heartPulse 0.6s ease;
+}
+
+@keyframes heartPulse {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.3); }
+  50% { transform: scale(1.1); }
+  75% { transform: scale(1.2); }
+}
+
+@keyframes heartBeat {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.2); }
+  50% { transform: scale(1); }
+  75% { transform: scale(1.1); }
+}
+
+.like-count {
+  font-size: 0.8rem;
+  color: #718096;
+  margin-left: 0.25rem;
+}
+
+.like-btn.liked .like-count {
+  color: #ef4444;
+}
+</style>
+{%- endif -%}
+

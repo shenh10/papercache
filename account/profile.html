@@ -1,0 +1,561 @@
+---
+layout: default
+title: 个人资料
+permalink: /account/profile.html
+---
+
+<div class="account-page">
+  <div class="account-header">
+    <h1>个人资料</h1>
+    <p class="account-subtitle">管理你的账户信息</p>
+  </div>
+
+  {%- if site.supabase and site.supabase.enabled -%}
+  <div id="profile-container" class="profile-container">
+    <div id="profile-loading" class="profile-loading">
+      <div class="loading-spinner"></div>
+      <p>加载中...</p>
+    </div>
+    
+    <div id="profile-content" class="profile-content" style="display: none;">
+      <!-- 用户基本信息 -->
+      <div class="profile-section">
+        <h2 class="profile-section-title">基本信息</h2>
+        <div class="profile-info-grid">
+          <div class="profile-info-item">
+            <label>用户名</label>
+            <input type="text" id="profile-username" class="profile-input" placeholder="用户名">
+          </div>
+          <div class="profile-info-item">
+            <label>邮箱</label>
+            <input type="email" id="profile-email" class="profile-input" disabled>
+          </div>
+          <div class="profile-info-item">
+            <label>全名</label>
+            <input type="text" id="profile-fullname" class="profile-input" placeholder="全名（可选）">
+          </div>
+          <div class="profile-info-item">
+            <label>个人简介</label>
+            <textarea id="profile-bio" class="profile-textarea" placeholder="介绍一下自己（可选）" rows="4"></textarea>
+          </div>
+        </div>
+        <button id="profile-save-btn" class="btn-primary" onclick="saveProfile()">保存更改</button>
+      </div>
+
+      <!-- 账户统计 -->
+      <div class="profile-section">
+        <h2 class="profile-section-title">账户统计</h2>
+        <div class="profile-stats-grid">
+          <div class="profile-stat-item">
+            <div class="stat-value" id="stat-favorites">-</div>
+            <div class="stat-label">收藏数</div>
+          </div>
+          <div class="profile-stat-item">
+            <div class="stat-value" id="stat-joined">-</div>
+            <div class="stat-label">注册时间</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="profile-error" class="profile-error" style="display: none;">
+      <p id="profile-error-message"></p>
+      <button onclick="loadProfile()" class="btn-retry">重试</button>
+    </div>
+  </div>
+
+  <script>
+  // 加载个人资料
+  async function loadProfile() {
+    const loadingEl = document.getElementById('profile-loading');
+    const contentEl = document.getElementById('profile-content');
+    const errorEl = document.getElementById('profile-error');
+    
+    if (!loadingEl || !contentEl || !errorEl) {
+      console.error('必要的DOM元素未找到');
+      return;
+    }
+    
+    // 显示加载状态
+    loadingEl.style.display = 'block';
+    contentEl.style.display = 'none';
+    errorEl.style.display = 'none';
+    
+    try {
+      // 等待SimpleAuth系统加载完成
+      let waitCount = 0;
+      while (waitCount < 50 && (!window.SimpleAuth || !window.getSupabaseClient)) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        waitCount++;
+      }
+
+      if (!window.SimpleAuth) {
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        document.getElementById('profile-error-message').textContent = '认证服务未加载';
+        return;
+      }
+
+      console.log('个人资料页面：使用SimpleAuth系统检查登录状态');
+
+      // 获取当前用户
+      let user = window.SimpleAuth.getCurrentUser();
+
+      if (!user) {
+        console.warn('个人资料页面：未检测到登录用户');
+        loadingEl.style.display = 'none';
+        errorEl.style.display = 'block';
+        document.getElementById('profile-error-message').textContent = '请先登录';
+        return;
+      }
+      
+      console.log('个人资料页面：用户已登录，开始加载资料', user.email);
+      
+      // 加载用户资料（确保profile不为null或undefined）
+      const profile = user.profile || {};
+      
+      // 填充表单（确保所有DOM元素存在）
+      try {
+        const usernameEl = document.getElementById('profile-username');
+        const emailEl = document.getElementById('profile-email');
+        const fullnameEl = document.getElementById('profile-fullname');
+        const bioEl = document.getElementById('profile-bio');
+        
+        if (usernameEl) {
+          usernameEl.value = profile.username || user.user_metadata?.username || user.email?.split('@')[0] || '';
+        }
+        if (emailEl) {
+          emailEl.value = user.email || '';
+        }
+        if (fullnameEl) {
+          fullnameEl.value = profile.full_name || user.user_metadata?.full_name || '';
+        }
+        if (bioEl) {
+          bioEl.value = profile.bio || '';
+        }
+      } catch (formError) {
+        console.error('填充表单时出错:', formError);
+        throw formError; // 重新抛出，让外层catch处理
+      }
+      
+      // 加载统计数据
+      try {
+        // 等待favoritesService加载完成（最多等待5秒）
+        let favoritesServiceReady = false;
+        let waitCount = 0;
+        while (waitCount < 50 && !window.favoritesService) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          waitCount++;
+        }
+        
+        if (window.favoritesService) {
+          favoritesServiceReady = true;
+        }
+        
+        // 尝试加载收藏数（如果favoritesService可用）
+        if (favoritesServiceReady) {
+          try {
+            const favoritesResult = await Promise.race([
+              window.favoritesService.getUserFavorites(),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('获取收藏数超时')), 5000))
+            ]);
+
+            if (favoritesResult && favoritesResult.success) {
+              const favoritesEl = document.getElementById('stat-favorites');
+              if (favoritesEl) {
+                favoritesEl.textContent = favoritesResult.favorites?.length || 0;
+              }
+            } else {
+              // 如果返回结果但不成功，显示0
+              const favoritesEl = document.getElementById('stat-favorites');
+              if (favoritesEl) {
+                favoritesEl.textContent = 0;
+              }
+            }
+          } catch (favError) {
+            console.warn('获取收藏数失败:', favError);
+            const favoritesEl = document.getElementById('stat-favorites');
+            if (favoritesEl) {
+              favoritesEl.textContent = '-';
+            }
+          }
+        } else {
+          // favoritesService不可用，显示"-"
+          const favoritesEl = document.getElementById('stat-favorites');
+          if (favoritesEl) {
+            favoritesEl.textContent = '-';
+          }
+        }
+
+        // 显示注册时间
+        if (user.created_at) {
+          const joinDate = new Date(user.created_at);
+          const joinedEl = document.getElementById('stat-joined');
+          if (joinedEl) {
+            joinedEl.textContent = joinDate.toLocaleDateString('zh-CN');
+          }
+        } else {
+          // 如果没有created_at，显示"-"
+          const joinedEl = document.getElementById('stat-joined');
+          if (joinedEl) {
+            joinedEl.textContent = '-';
+          }
+        }
+      } catch (statsError) {
+        console.warn('加载统计数据时出错:', statsError);
+        // 统计信息加载失败不影响页面显示
+        const favoritesEl = document.getElementById('stat-favorites');
+        if (favoritesEl) {
+          favoritesEl.textContent = '-';
+        }
+        const joinedEl = document.getElementById('stat-joined');
+        if (joinedEl) {
+          joinedEl.textContent = '-';
+        }
+      }
+      
+      // 显示内容
+      loadingEl.style.display = 'none';
+      contentEl.style.display = 'block';
+    } catch (error) {
+      console.error('加载个人资料出错:', error);
+      loadingEl.style.display = 'none';
+      errorEl.style.display = 'block';
+      document.getElementById('profile-error-message').textContent = '加载出错：' + (error.message || '未知错误');
+    }
+  }
+  
+  // 保存个人资料
+  async function saveProfile() {
+    const saveBtn = document.getElementById('profile-save-btn');
+    const originalText = saveBtn.textContent;
+    
+    try {
+      saveBtn.disabled = true;
+      saveBtn.textContent = '保存中...';
+
+      if (!window.SimpleAuth) {
+        alert('认证服务未加载');
+        return;
+      }
+
+      const user = window.SimpleAuth.getCurrentUser();
+      if (!user) {
+        alert('请先登录');
+        return;
+      }
+      
+      const username = document.getElementById('profile-username').value.trim();
+      const fullName = document.getElementById('profile-fullname').value.trim();
+      const bio = document.getElementById('profile-bio').value.trim();
+      
+      if (!username) {
+        alert('用户名不能为空');
+        return;
+      }
+      
+      // 更新profile表
+      const updateData = {
+        username: username,
+        full_name: fullName || null,
+        bio: bio || null
+      };
+
+      // 使用SimpleAuth更新profile
+      await window.SimpleAuth.updateProfile(updateData);
+
+      alert('保存成功！');
+      // 重新加载资料
+      loadProfile();
+    } catch (error) {
+      console.error('保存个人资料失败:', error);
+      alert('保存失败：' + (error.message || '未知错误'));
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = originalText;
+    }
+  }
+  
+  // 使用SimpleAuth系统立即更新UI
+  // 这样可以避免先显示"请先登录"，然后再恢复登录状态
+  function initProfilePageWithSimpleAuth() {
+    if (window.SimpleAuth) {
+      // 立即更新UI（如果有全局状态）
+      const currentUser = window.SimpleAuth.getCurrentUser();
+      if (currentUser) {
+        console.log('个人资料页面：✅ 立即更新UI（使用SimpleAuth）', currentUser.email);
+        // 确保错误提示隐藏，显示加载状态
+        const errorEl = document.getElementById('profile-error');
+        const loadingEl = document.getElementById('profile-loading');
+        if (errorEl) errorEl.style.display = 'none';
+        if (loadingEl) loadingEl.style.display = 'block';
+        // 开始加载资料
+        loadProfile();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // 页面加载时获取个人资料
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('个人资料页面：DOMContentLoaded，使用SimpleAuth系统');
+
+    // 先尝试立即更新UI（避免显示"请先登录"闪烁）
+    if (initProfilePageWithSimpleAuth()) {
+      console.log('个人资料页面：已立即更新UI，注册认证状态监听器');
+      // 注册认证状态监听器
+      window.SimpleAuth.onAuthChange((user) => {
+        if (user) {
+          console.log('个人资料页面：认证状态变化，重新加载profile');
+          loadProfile();
+        }
+      });
+    } else {
+      // 立即更新失败，等待SimpleAuth加载完成
+      const waitForSimpleAuth = () => {
+        if (window.SimpleAuth) {
+          console.log('个人资料页面：SimpleAuth已加载，开始加载profile');
+          loadProfile();
+
+          // 监听认证状态变化
+          window.SimpleAuth.onAuthChange((user) => {
+            if (user) {
+              console.log('个人资料页面：认证状态变化，重新加载profile');
+              loadProfile();
+            }
+          });
+        } else {
+          // SimpleAuth还没加载，继续等待
+          setTimeout(waitForSimpleAuth, 100);
+        }
+      };
+
+      waitForSimpleAuth();
+    }
+  });
+
+  // Turbolinks页面导航时的处理
+  document.addEventListener('turbolinks:load', function() {
+    console.log('个人资料页面：Turbolinks页面加载，使用SimpleAuth系统');
+
+    // 先尝试立即更新UI
+    if (initProfilePageWithSimpleAuth()) {
+      console.log('个人资料页面：Turbolinks导航 - 已立即更新UI');
+    } else {
+      // 等待SimpleAuth加载完成
+      const waitForSimpleAuth = () => {
+        if (window.SimpleAuth) {
+          console.log('个人资料页面：Turbolinks - SimpleAuth已加载，开始加载profile');
+          loadProfile();
+        } else {
+          setTimeout(waitForSimpleAuth, 100);
+        }
+      };
+      waitForSimpleAuth();
+    }
+  });
+  </script>
+  
+  <style>
+  .account-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+  
+  .account-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+  
+  .account-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 0.5rem;
+  }
+  
+  .account-subtitle {
+    color: #718096;
+    font-size: 1.1rem;
+  }
+  
+  .profile-container {
+    min-height: 400px;
+  }
+  
+  .profile-loading {
+    text-align: center;
+    padding: 4rem 2rem;
+  }
+  
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #e2e8f0;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .profile-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .profile-section {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 2rem;
+  }
+  
+  .profile-section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  
+  .profile-info-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  @media (min-width: 768px) {
+    .profile-info-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  .profile-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .profile-info-item label {
+    font-weight: 600;
+    color: #4a5568;
+    font-size: 0.9rem;
+  }
+  
+  .profile-input,
+  .profile-textarea {
+    padding: 0.75rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.2s;
+  }
+  
+  .profile-input:focus,
+  .profile-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  
+  .profile-input:disabled {
+    background: #f7fafc;
+    color: #718096;
+    cursor: not-allowed;
+  }
+  
+  .profile-textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  .profile-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  .profile-stat-item {
+    text-align: center;
+    padding: 1.5rem;
+    background: #f7fafc;
+    border-radius: 8px;
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #3b82f6;
+    margin-bottom: 0.5rem;
+  }
+  
+  .stat-label {
+    color: #718096;
+    font-size: 0.9rem;
+  }
+  
+  .btn-primary {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+    color: white;
+    text-decoration: none;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1rem;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  }
+  
+  .btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  .profile-error {
+    text-align: center;
+    padding: 2rem;
+    background: #fed7d7;
+    color: #c53030;
+    border-radius: 8px;
+  }
+  
+  .btn-retry {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid #c53030;
+    color: #c53030;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .btn-retry:hover {
+    background: #c53030;
+    color: white;
+  }
+  </style>
+  {%- else -%}
+  <div class="account-disabled">
+    <p>用户系统未启用</p>
+  </div>
+  {%- endif -%}
+</div>
+
