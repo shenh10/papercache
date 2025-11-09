@@ -1933,47 +1933,89 @@ if (typeof window.SearchFirstMode === 'undefined') {
             this.currentQuery = query;
             this.currentMatchMode = matchMode;
             
-            // 转换 Supabase 返回的数据格式
-            this.filteredPapers = supabaseResult.data.map(item => {
-              // 从URL中提取分类路径
-              let categories = item.categories || [];
-              if (categories.length === 0 && item.post_url) {
-                try {
-                  const urlObj = new URL(item.post_url, window.location.origin);
-                  let pathname = urlObj.pathname;
-                  const baseurl = window.PC_BASEURL || '';
-                  if (baseurl && baseurl !== '/' && pathname.startsWith(baseurl)) {
-                    pathname = pathname.substring(baseurl.length);
-                  }
-                  if (pathname.startsWith('/')) pathname = pathname.substring(1);
-                  if (pathname.startsWith('papers/')) {
-                    const withoutPapers = pathname.substring(7);
-                    const parts = withoutPapers.split('/').filter(p => p);
-                    for (let i = 0; i < parts.length; i++) {
-                      const part = parts[i];
-                      if (/^\d{4}$/.test(part) || /^\d{2}$/.test(part) || part.includes('.')) {
-                        break;
-                      }
-                      categories.push(part);
-                    }
-                  }
-                } catch (e) {
-                  // 忽略URL解析错误
-                }
+            // 转换 Supabase 返回的数据格式，并过滤掉已删除的文章
+            const normalizeUrlForMatch = (url) => {
+              if (!url) return '';
+              let normalized = url.trim();
+              const baseurl = window.PC_BASEURL || '';
+              if (baseurl && baseurl !== '/' && normalized.startsWith(baseurl)) {
+                normalized = normalized.substring(baseurl.length);
               }
-              
-              return {
-                title: item.title || 'Untitled',
-                excerpt: item.excerpt || '',
-                url: item.post_url || '#',
-                tags: item.tag ? [item.tag] : [],
-                categories: categories,
-                date: item.published_date || ''
-              };
-            });
+              if (!normalized.startsWith('/')) {
+                normalized = '/' + normalized;
+              }
+              if (normalized.length > 1 && normalized.endsWith('/')) {
+                normalized = normalized.slice(0, -1);
+              }
+              return normalized;
+            };
             
-            this.showSearchResults(query);
-            return; // Supabase搜索成功，返回
+            // 构建有效的URL集合（从window.PAPERCACHE_POSTS获取）
+            const validUrls = new Set();
+            if (Array.isArray(window.PAPERCACHE_POSTS)) {
+              window.PAPERCACHE_POSTS.forEach(post => {
+                if (post.url) {
+                  validUrls.add(normalizeUrlForMatch(post.url));
+                }
+              });
+            }
+            
+            // 转换并过滤Supabase搜索结果
+            this.filteredPapers = supabaseResult.data
+              .map(item => {
+                // 从URL中提取分类路径
+                let categories = item.categories || [];
+                if (categories.length === 0 && item.post_url) {
+                  try {
+                    const urlObj = new URL(item.post_url, window.location.origin);
+                    let pathname = urlObj.pathname;
+                    const baseurl = window.PC_BASEURL || '';
+                    if (baseurl && baseurl !== '/' && pathname.startsWith(baseurl)) {
+                      pathname = pathname.substring(baseurl.length);
+                    }
+                    if (pathname.startsWith('/')) pathname = pathname.substring(1);
+                    if (pathname.startsWith('papers/')) {
+                      const withoutPapers = pathname.substring(7);
+                      const parts = withoutPapers.split('/').filter(p => p);
+                      for (let i = 0; i < parts.length; i++) {
+                        const part = parts[i];
+                        if (/^\d{4}$/.test(part) || /^\d{2}$/.test(part) || part.includes('.')) {
+                          break;
+                        }
+                        categories.push(part);
+                      }
+                    }
+                  } catch (e) {
+                    // 忽略URL解析错误
+                  }
+                }
+                
+                return {
+                  title: item.title || 'Untitled',
+                  excerpt: item.excerpt || '',
+                  url: item.post_url || '#',
+                  tags: item.tag ? [item.tag] : [],
+                  categories: categories,
+                  date: item.published_date || ''
+                };
+              })
+              .filter(paper => {
+                // 只保留在有效URL集合中的文章（确保文章未被删除）
+                if (!paper.url || paper.url === '#') {
+                  return false;
+                }
+                const normalizedUrl = normalizeUrlForMatch(paper.url);
+                return validUrls.has(normalizedUrl);
+              });
+            
+            // 如果过滤后没有结果，降级到本地搜索
+            if (this.filteredPapers.length === 0) {
+              console.log('[search-first] Supabase 搜索结果全部被过滤（可能是已删除的文章），降级到本地搜索');
+              // 继续执行本地搜索逻辑
+            } else {
+              this.showSearchResults(query);
+              return; // Supabase搜索成功，返回
+            }
           } else {
           }
         } catch (supabaseError) {
