@@ -182,17 +182,17 @@ def call_supabase_rpc(function_name: str, params: dict) -> dict:
     return response.json()
 
 
-def cleanup_supabase_records(valid_urls: Set[str]) -> dict:
+def cleanup_posts_search_records(valid_urls: Set[str]) -> dict:
     """
-    清理 Supabase 中的无效记录
+    清理 posts_search 表中的无效记录（用于搜索功能）
     
     返回清理结果统计
     """
     if not SUPABASE_URL or not SUPABASE_KEY:
         print("⚠️  警告: Supabase 配置未设置，跳过清理")
         return {
-            'favorites_deleted': 0,
-            'clicks_deleted': 0,
+            'deleted_count': 0,
+            'deleted_urls': [],
             'skipped': True
         }
     
@@ -202,12 +202,12 @@ def cleanup_supabase_records(valid_urls: Set[str]) -> dict:
     if not valid_urls_list:
         print("⚠️  警告: 没有有效文章 URL，跳过清理")
         return {
-            'favorites_deleted': 0,
-            'clicks_deleted': 0,
+            'deleted_count': 0,
+            'deleted_urls': [],
             'skipped': True
         }
     
-    print(f"🔄 开始清理 Supabase 无效记录...")
+    print(f"🔄 开始清理 posts_search 表中的无效记录...")
     print(f"   有效文章数量: {len(valid_urls_list)}")
     
     # ⚠️  安全检查：如果有效 URL 数量太少，可能是获取逻辑有问题，不执行清理
@@ -215,53 +215,44 @@ def cleanup_supabase_records(valid_urls: Set[str]) -> dict:
         print(f"⚠️  警告: 有效文章数量太少 ({len(valid_urls_list)})，可能是 URL 获取逻辑有问题")
         print("   跳过清理，避免误删数据")
         return {
-            'favorites_deleted': 0,
-            'clicks_deleted': 0,
+            'deleted_count': 0,
+            'deleted_urls': [],
             'skipped': True,
             'reason': 'valid_urls_too_few'
         }
     
     results = {
-        'favorites_deleted': 0,
-        'favorites_urls': [],
-        'clicks_deleted': 0,
-        'clicks_urls': [],
+        'deleted_count': 0,
+        'deleted_urls': [],
         'skipped': False
     }
     
     try:
-        # 调用批量清理函数
-        response = call_supabase_rpc('cleanup_all_invalid_records', {
+        # 调用清理函数（只清理 posts_search 表）
+        response = call_supabase_rpc('cleanup_invalid_posts_search', {
             'p_valid_urls': valid_urls_list
         })
         
         if response and len(response) > 0:
             result = response[0] if isinstance(response, list) else response
             
-            results['favorites_deleted'] = result.get('favorites_deleted', 0)
-            results['favorites_urls'] = result.get('favorites_urls', [])
-            results['clicks_deleted'] = result.get('clicks_deleted', 0)
-            results['clicks_urls'] = result.get('clicks_urls', [])
+            results['deleted_count'] = result.get('deleted_count', 0)
+            results['deleted_urls'] = result.get('deleted_urls', [])
             
             print(f"✅ 清理完成:")
-            print(f"   - 删除收藏记录: {results['favorites_deleted']} 条")
-            if results['favorites_urls'] and len(results['favorites_urls']) > 0:
-                print(f"   - 无效收藏 URL (前5个): {', '.join(results['favorites_urls'][:5])}")
-            
-            print(f"   - 删除点击统计: {results['clicks_deleted']} 条")
-            if results['clicks_urls'] and len(results['clicks_urls']) > 0:
-                print(f"   - 无效点击统计 URL (前5个): {', '.join(results['clicks_urls'][:5])}")
+            print(f"   - 删除搜索记录: {results['deleted_count']} 条")
+            if results['deleted_urls'] and len(results['deleted_urls']) > 0:
+                print(f"   - 无效搜索 URL (前5个): {', '.join(results['deleted_urls'][:5])}")
             
             # ⚠️  安全检查：如果删除数量超过阈值，可能是误删
-            total_deleted = results['favorites_deleted'] + results['clicks_deleted']
-            if total_deleted > 50:
-                print(f"\n⚠️  警告: 删除了大量记录 ({total_deleted} 条)，请检查 URL 匹配是否正确！")
+            if results['deleted_count'] > 50:
+                print(f"\n⚠️  警告: 删除了大量记录 ({results['deleted_count']} 条)，请检查 URL 匹配是否正确！")
                 print("   如果这是误删，请立即检查数据库备份或联系管理员")
         else:
             print("⚠️  警告: Supabase RPC 返回空结果")
     
     except Exception as e:
-        print(f"❌ 错误: 清理 Supabase 记录失败: {e}")
+        print(f"❌ 错误: 清理 posts_search 记录失败: {e}")
         # 不抛出异常，允许继续执行
         results['error'] = str(e)
     
@@ -288,10 +279,11 @@ def main():
     for i, url in enumerate(list(valid_urls)[:5]):
         print(f"   {i+1}. {url}")
     
-    # 2. 清理 Supabase 无效记录
-    print("\n🗑️  步骤 2: 清理 Supabase 无效记录...")
+    # 2. 清理 posts_search 表中的无效记录（只清理搜索表，不影响收藏和点击统计）
+    print("\n🗑️  步骤 2: 清理 posts_search 表中的无效记录...")
     print(f"   有效 URL 总数: {len(valid_urls)}")
-    results = cleanup_supabase_records(valid_urls)
+    print("   注意: 只清理搜索表，不会影响收藏和点击统计")
+    results = cleanup_posts_search_records(valid_urls)
     
     # 3. 输出总结
     print("\n" + "=" * 60)
@@ -300,23 +292,17 @@ def main():
     
     if not results.get('skipped', False):
         print(f"📊 清理统计:")
-        print(f"   - 收藏记录: {results['favorites_deleted']} 条已删除")
-        if results.get('favorites_urls') and len(results['favorites_urls']) > 0:
-            print(f"   - 被删除的收藏 URL 示例 (前3个):")
-            for url in results['favorites_urls'][:3]:
-                print(f"     * {url}")
-        print(f"   - 点击统计: {results['clicks_deleted']} 条已删除")
-        if results.get('clicks_urls') and len(results['clicks_urls']) > 0:
-            print(f"   - 被删除的点击统计 URL 示例 (前3个):")
-            for url in results['clicks_urls'][:3]:
+        print(f"   - 搜索记录: {results['deleted_count']} 条已删除")
+        if results.get('deleted_urls') and len(results['deleted_urls']) > 0:
+            print(f"   - 被删除的搜索 URL 示例 (前3个):")
+            for url in results['deleted_urls'][:3]:
                 print(f"     * {url}")
         
         # 如果删除数量很大，发出警告
-        total_deleted = results.get('favorites_deleted', 0) + results.get('clicks_deleted', 0)
-        if total_deleted > 100:
-            print(f"\n⚠️  警告: 删除了大量记录 ({total_deleted} 条)，请检查 URL 匹配是否正确！")
+        if results.get('deleted_count', 0) > 100:
+            print(f"\n⚠️  警告: 删除了大量记录 ({results['deleted_count']} 条)，请检查 URL 匹配是否正确！")
     else:
-        print("⚠️  跳过清理（Supabase 配置未设置）")
+        print("⚠️  跳过清理（Supabase 配置未设置或有效 URL 数量太少）")
     
     if results.get('error'):
         print(f"\n❌ 错误: {results['error']}")
