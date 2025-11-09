@@ -78,3 +78,4 @@ echo "  SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:0:20}..."
 
 
 
+

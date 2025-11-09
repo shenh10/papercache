@@ -79,3 +79,4 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- GRANT EXECUTE ON FUNCTION cleanup_all_invalid_records TO authenticated;
 
 
+

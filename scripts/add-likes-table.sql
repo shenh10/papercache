@@ -154,3 +154,4 @@ COMMENT ON FUNCTION batch_check_user_likes(UUID, TEXT[]) IS '批量检查用户�
 COMMENT ON FUNCTION get_total_likes_count() IS '获取所有用户的总点赞数，绕过RLS策略限制';
 COMMENT ON FUNCTION get_likes_stats_by_post() IS '获取点赞统计（按论文分组），用于管理员页面';
 
+

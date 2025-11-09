@@ -50,3 +50,4 @@ WHERE a.is_super_admin = TRUE;
 --   WHERE email = 'thushenhan@gmail.com'
 -- );
 
+

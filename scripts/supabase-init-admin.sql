@@ -44,3 +44,4 @@ JOIN auth.users au ON a.user_id = au.id;
 -- DROP POLICY IF EXISTS "Initial admin setup (temporary)" ON public.admins;
 
 
+

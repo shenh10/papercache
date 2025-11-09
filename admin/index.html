@@ -3927,12 +3927,47 @@ permalink: /admin/index.html
     background: white;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .admin-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: auto;
+    min-width: 600px;
+  }
+  
+  /* 根据表格列数设置不同的最小宽度 */
+  /* 5列的表格（如热门页面） */
+  .admin-table-container:has(#popular-pages-body) .admin-table {
+    min-width: 800px;
+  }
+  
+  /* 9列的表格（如活跃用户分析） */
+  .admin-table-container:has(#active-users-body) .admin-table {
+    min-width: 1200px;
+  }
+  
+  /* 11列的表格（如活跃用户名单） */
+  .admin-table-container:has(#active-users-list-body) .admin-table {
+    min-width: 1400px;
+  }
+  
+  /* 4列的表格（如搜索热词） */
+  .admin-table-container:has(#search-keywords-body) .admin-table {
+    min-width: 700px;
+  }
+  
+  /* 如果浏览器不支持 :has()，使用备用方案 */
+  @supports not selector(:has(*)) {
+    /* 通过父容器类名来识别 */
+    .admin-table-container .admin-table {
+      min-width: 800px;
+    }
   }
   
   .admin-table thead {
@@ -3945,12 +3980,76 @@ permalink: /admin/index.html
     font-weight: 600;
     color: #2d3748;
     border-bottom: 2px solid #e2e8f0;
+    white-space: nowrap;
   }
   
   .admin-table td {
     padding: 1rem;
     border-bottom: 1px solid #e2e8f0;
     color: #4a5568;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 0;
+  }
+  
+  /* 页面浏览记录表格特殊优化 */
+  #user-details-pageviews td:first-child,
+  #user-details-pageviews td:nth-child(2) {
+    max-width: none;
+    word-break: break-all;
+    white-space: normal;
+  }
+  
+  /* 数据分析页面表格优化 */
+  /* 热门页面表格 */
+  #popular-pages-body td:nth-child(2),
+  #popular-pages-body td:nth-child(3) {
+    max-width: none;
+    word-break: break-all;
+    white-space: normal;
+    min-width: 200px;
+  }
+  
+  /* 活跃用户分析表格 - 9列，需要优化 */
+  #active-users-body td {
+    white-space: nowrap;
+    font-size: 0.9rem;
+  }
+  
+  #active-users-body td:first-child {
+    white-space: normal;
+    min-width: 100px;
+  }
+  
+  /* 活跃用户名单表格 - 11列，需要特别优化 */
+  #active-users-list-body td {
+    white-space: nowrap;
+    font-size: 0.85rem;
+    padding: 0.75rem 0.5rem;
+  }
+  
+  #active-users-list-body td:nth-child(2),
+  #active-users-list-body td:nth-child(3) {
+    white-space: normal;
+    word-break: break-word;
+    min-width: 120px;
+    max-width: 150px;
+  }
+  
+  /* 搜索热词表格 */
+  #search-keywords-body td:nth-child(2) {
+    max-width: none;
+    word-break: break-word;
+    white-space: normal;
+    min-width: 150px;
+  }
+  
+  .admin-table td code {
+    word-break: break-all;
+    white-space: normal;
+    display: inline-block;
+    max-width: 100%;
   }
   
   .admin-table tr:hover {
@@ -4459,20 +4558,165 @@ permalink: /admin/index.html
     background: linear-gradient(90deg, rgba(239, 68, 68, 0.03) 0%, rgba(220, 38, 38, 0.03) 100%) !important;
   }
 
-  /* 表格列宽优化 */
+  /* 表格列宽优化 - 移除固定宽度，让表格自适应 */
   .admin-table tbody td:first-child {
-    width: 50%;
-    min-width: 300px;
+    min-width: 200px;
   }
-
+  
   .admin-table tbody td:nth-child(2) {
-    width: 20%;
+    min-width: 150px;
+  }
+  
+  .admin-table tbody td:nth-child(3) {
+    min-width: 120px;
+    white-space: nowrap;
+  }
+  
+  /* 页面浏览记录表格列宽优化 */
+  #user-details-pageviews td:first-child {
+    min-width: 250px;
+    max-width: 40%;
+  }
+  
+  #user-details-pageviews td:nth-child(2) {
+    min-width: 200px;
+    max-width: 40%;
+  }
+  
+  #user-details-pageviews td:nth-child(3) {
+    min-width: 150px;
+    max-width: 20%;
+    white-space: nowrap;
+  }
+  
+  /* 数据分析页面表格优化 */
+  /* 热门页面表格 */
+  #popular-pages-body td:first-child {
+    min-width: 60px;
+    max-width: 8%;
     text-align: center;
   }
-
-  .admin-table tbody td:nth-child(3) {
-    width: 30%;
+  
+  #popular-pages-body td:nth-child(2) {
+    min-width: 200px;
+    max-width: 35%;
+    word-break: break-all;
+  }
+  
+  #popular-pages-body td:nth-child(3) {
+    min-width: 180px;
+    max-width: 35%;
+    word-break: break-word;
+  }
+  
+  #popular-pages-body td:nth-child(4),
+  #popular-pages-body td:nth-child(5) {
+    min-width: 100px;
+    max-width: 11%;
     text-align: center;
+    white-space: nowrap;
+  }
+  
+  /* 活跃用户分析表格（9列） */
+  #active-users-body td {
+    min-width: 80px;
+    font-size: 0.9rem;
+  }
+  
+  #active-users-body td:first-child {
+    min-width: 100px;
+    max-width: 12%;
+    white-space: nowrap;
+  }
+  
+  #active-users-body td:nth-child(2),
+  #active-users-body td:nth-child(3),
+  #active-users-body td:nth-child(4),
+  #active-users-body td:nth-child(5) {
+    min-width: 90px;
+    max-width: 11%;
+    text-align: center;
+  }
+  
+  #active-users-body td:nth-child(6),
+  #active-users-body td:nth-child(7),
+  #active-users-body td:nth-child(8),
+  #active-users-body td:nth-child(9) {
+    min-width: 80px;
+    max-width: 10%;
+    text-align: center;
+  }
+  
+  /* 活跃用户名单表格（11列） */
+  #active-users-list-body td {
+    min-width: 70px;
+    font-size: 0.85rem;
+  }
+  
+  #active-users-list-body td:first-child {
+    min-width: 50px;
+    max-width: 5%;
+    text-align: center;
+  }
+  
+  #active-users-list-body td:nth-child(2) {
+    min-width: 150px;
+    max-width: 18%;
+    word-break: break-all;
+  }
+  
+  #active-users-list-body td:nth-child(3) {
+    min-width: 100px;
+    max-width: 12%;
+  }
+  
+  #active-users-list-body td:nth-child(4),
+  #active-users-list-body td:nth-child(5),
+  #active-users-list-body td:nth-child(6),
+  #active-users-list-body td:nth-child(7),
+  #active-users-list-body td:nth-child(8) {
+    min-width: 60px;
+    max-width: 8%;
+    text-align: center;
+  }
+  
+  #active-users-list-body td:nth-child(9) {
+    min-width: 80px;
+    max-width: 10%;
+    text-align: center;
+  }
+  
+  #active-users-list-body td:nth-child(10) {
+    min-width: 120px;
+    max-width: 15%;
+    white-space: nowrap;
+  }
+  
+  #active-users-list-body td:nth-child(11) {
+    min-width: 100px;
+    max-width: 12%;
+    text-align: center;
+  }
+  
+  /* 搜索热词表格 */
+  #search-keywords-body td:first-child {
+    min-width: 60px;
+    max-width: 10%;
+    text-align: center;
+  }
+  
+  #search-keywords-body td:nth-child(2) {
+    min-width: 200px;
+    max-width: 50%;
+    word-break: break-word;
+  }
+  
+  #search-keywords-body td:nth-child(3),
+  #search-keywords-body td:nth-child(4) {
+    min-width: 120px;
+    max-width: 20%;
+    text-align: center;
+    white-space: nowrap;
   }
 
   /* ============================================
@@ -4725,7 +4969,116 @@ permalink: /admin/index.html
   }
 
   /* 响应式设计 */
+  /* 移动端表格响应式优化 */
   @media (max-width: 768px) {
+    .admin-table-container {
+      border-radius: 8px;
+    }
+    
+    .admin-table {
+      min-width: 100%;
+      font-size: 0.9rem;
+    }
+    
+    .admin-table th,
+    .admin-table td {
+      padding: 0.75rem 0.5rem;
+      font-size: 0.85rem;
+    }
+    
+    /* 页面浏览记录表格在移动端的特殊优化 */
+    #user-details-pageviews td:first-child {
+      min-width: 200px;
+      max-width: 35%;
+      font-size: 0.8rem;
+    }
+    
+    #user-details-pageviews td:nth-child(2) {
+      min-width: 180px;
+      max-width: 45%;
+      font-size: 0.85rem;
+    }
+    
+    #user-details-pageviews td:nth-child(3) {
+      min-width: 120px;
+      max-width: 20%;
+      font-size: 0.8rem;
+    }
+    
+    /* 数据分析页面表格在移动端的优化 */
+    /* 热门页面表格 */
+    #popular-pages-body td {
+      font-size: 0.8rem;
+      padding: 0.6rem 0.4rem;
+    }
+    
+    #popular-pages-body td:nth-child(2),
+    #popular-pages-body td:nth-child(3) {
+      min-width: 150px;
+      font-size: 0.75rem;
+    }
+    
+    /* 活跃用户分析表格 - 9列，在移动端需要更小的字体 */
+    #active-users-body td {
+      font-size: 0.75rem;
+      padding: 0.5rem 0.3rem;
+      white-space: nowrap;
+    }
+    
+    #active-users-body th {
+      font-size: 0.8rem;
+      padding: 0.6rem 0.3rem;
+    }
+    
+    /* 活跃用户名单表格 - 11列，在移动端需要特别优化 */
+    #active-users-list-body td {
+      font-size: 0.7rem;
+      padding: 0.5rem 0.3rem;
+    }
+    
+    #active-users-list-body th {
+      font-size: 0.75rem;
+      padding: 0.6rem 0.3rem;
+    }
+    
+    #active-users-list-body td:nth-child(2),
+    #active-users-list-body td:nth-child(3) {
+      min-width: 100px;
+      max-width: 120px;
+      font-size: 0.7rem;
+    }
+    
+    /* 搜索热词表格 */
+    #search-keywords-body td {
+      font-size: 0.8rem;
+      padding: 0.6rem 0.4rem;
+    }
+    
+    #search-keywords-body td:nth-child(2) {
+      min-width: 120px;
+      font-size: 0.75rem;
+    }
+    
+    .admin-table td code {
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+    
+    /* 确保所有表格在移动端都有最小宽度，可以水平滚动 */
+    .admin-table {
+      min-width: 800px;
+    }
+    
+    /* 活跃用户分析表格需要更大的最小宽度 */
+    #active-users-body {
+      min-width: 1000px;
+    }
+    
+    /* 活跃用户名单表格需要更大的最小宽度 */
+    #active-users-list-body {
+      min-width: 1200px;
+    }
+    
     .analytics-section {
       padding: 1.5rem;
     }

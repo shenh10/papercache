@@ -59,7 +59,7 @@ exclude:
   - ".jekyll-cache/"
   - "Gemfile"
   - "Gemfile.lock"
-  - "_slides/"
+  # 注意：_slides/ 不再排除，以便在生产环境生成演示文稿
 
 # 增量构建配置（仅用于本地开发，生产环境通过清除缓存强制完全构建）
 incremental: false
@@ -105,7 +105,10 @@ google_analytics: "G-MWWFKJXJLN"
 busuanzi_analytics: true
 
 # Collections 配置
-# 注意：slides collection 仅在本地开发时启用（通过 _config_local.yml 添加）
+collections:
+  slides:
+    output: true
+    permalink: /slides/:categories/:year/:month/:day/:title.html
 
 # 默认设置
 defaults:
@@ -118,6 +121,15 @@ defaults:
       mathjax: true
       share: true
       permalink: /papers/:categories/:year/:month/:day/:title.html
+  - scope:
+      path: "_slides"
+      type: "slides"
+    values:
+      layout: "post"
+      comments: true
+      mathjax: true
+      share: true
+      permalink: /slides/:categories/:year/:month/:day/:title.html
   - scope:
       path: ""
       type: "pages"

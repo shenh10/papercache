@@ -65,3 +65,4 @@ FROM public.admins a
 JOIN auth.users au ON a.user_id = au.id
 WHERE a.is_super_admin = TRUE;
 
+

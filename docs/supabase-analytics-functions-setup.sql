@@ -69,3 +69,4 @@ GRANT EXECUTE ON FUNCTION get_popular_pages(DATE, DATE, INTEGER) TO anon, authen
 GRANT EXECUTE ON FUNCTION get_search_keywords(DATE, DATE, INTEGER) TO anon, authenticated;
 
 
+

@@ -154,13 +154,16 @@
             });
           }
           
-          return { 
+          const result = { 
             clicks: clicksResult, 
             favorites: favoritesResult,
             likes: likesResult, // 添加点赞数映射
             sortedUrls: sortedUrls, // 标记这是来自RPC函数的排序结果
             fromRPC: true // 标记数据来源，便于前端优化
           };
+          // 保存数据到全局，以便切换排序时使用
+          window.lastPopularPostsData = result;
+          return result;
         }
       } catch (error) {
         // 回退到旧方法
@@ -207,7 +210,10 @@
         likesResult[originalUrl] = likesMap[originalUrl] || likesMap[normalized] || 0;
       });
       
-      return { clicks: clicksResult, favorites: favoritesResult, likes: likesResult };
+      const result = { clicks: clicksResult, favorites: favoritesResult, likes: likesResult };
+      // 保存数据到全局，以便切换排序时使用
+      window.lastPopularPostsData = result;
+      return result;
     } catch (error) {
       console.error('ClickTracker: Failed to load data', error);
       return { clicks: {}, favorites: {}, likes: {} };
@@ -743,19 +749,39 @@
       existingMessage.remove();
     }
     
-    // 如果没有有效数据但有配置，显示加载中或空数据提示
+    // 如果没有有效数据但有配置，检查是否是因为切换排序方式导致暂时没有数据
+    // 只有在确认所有排序方式都没有数据时才显示提示
     if (validItems.length === 0 && hasSupabaseConfig) {
-      const existingEmptyMessage = container.querySelector('.popular-posts-empty-message');
-      if (!existingEmptyMessage) {
-        const emptyMessage = document.createElement('div');
-        emptyMessage.className = 'popular-posts-empty-message';
-        emptyMessage.style.cssText = 'padding: 20px; text-align: center; color: #999; font-size: 14px;';
-        emptyMessage.innerHTML = '📊 暂无数据，请稍后再试。';
-        container.appendChild(emptyMessage);
+      // 检查是否有任何数据（点击量、收藏量或点赞数）
+      const hasAnyData = Object.keys(clicks).length > 0 || 
+                        Object.keys(favorites).length > 0 || 
+                        Object.keys(likes).length > 0;
+      
+      // 如果确实没有任何数据，才显示提示
+      if (!hasAnyData) {
+        const existingEmptyMessage = container.querySelector('.popular-posts-empty-message');
+        if (!existingEmptyMessage) {
+          const emptyMessage = document.createElement('div');
+          emptyMessage.className = 'popular-posts-empty-message';
+          emptyMessage.style.cssText = 'padding: 20px; text-align: center; color: #999; font-size: 14px;';
+          emptyMessage.innerHTML = '📊 暂无数据，请稍后再试。';
+          container.appendChild(emptyMessage);
+        }
+        // 隐藏所有项目
+        items.forEach(item => item.style.display = 'none');
+        return;
+      } else {
+        // 有数据但当前排序方式没有匹配项，可能是URL匹配问题
+        // 不显示"暂无数据"，而是尝试显示其他排序方式的数据作为降级
+        console.warn('[ClickTracker] 当前排序方式无匹配项，但检测到其他数据存在');
+        // 移除空数据提示（如果有）
+        const existingEmptyMessage = container.querySelector('.popular-posts-empty-message');
+        if (existingEmptyMessage) {
+          existingEmptyMessage.remove();
+        }
+        // 继续执行，尝试显示所有可用的项目（不按当前排序方式过滤）
+        // 这样可以避免切换排序时出现"暂无数据"的闪烁
       }
-      // 隐藏所有项目
-      items.forEach(item => item.style.display = 'none');
-      return;
     }
     
     // 移除空数据提示（如果有）
@@ -838,9 +864,39 @@
         }
         
         // 重新加载数据并更新显示
+        // 先显示加载状态，避免显示"暂无数据"
+        const container = document.getElementById('popular-posts-list');
+        if (container) {
+          const existingEmptyMessage = container.querySelector('.popular-posts-empty-message');
+          if (existingEmptyMessage) {
+            existingEmptyMessage.remove();
+          }
+        }
+        
         loadClickData().then(data => {
           if (data) {
             updatePopularPosts(data);
+          } else {
+            // 如果数据加载失败，尝试使用缓存的数据重新排序
+            console.warn('[ClickTracker] 数据加载失败，尝试使用现有数据重新排序');
+            const container = document.getElementById('popular-posts-list');
+            if (container) {
+              const items = Array.from(container.querySelectorAll('.post-item[data-post-url]'));
+              if (items.length > 0) {
+                // 使用现有数据重新排序（可能数据已在前端）
+                updatePopularPosts(window.lastPopularPostsData || { clicks: {}, favorites: {}, likes: {} });
+              }
+            }
+          }
+        }).catch(error => {
+          console.error('[ClickTracker] 加载数据出错:', error);
+          // 即使出错，也尝试使用现有数据
+          const container = document.getElementById('popular-posts-list');
+          if (container) {
+            const items = Array.from(container.querySelectorAll('.post-item[data-post-url]'));
+            if (items.length > 0 && window.lastPopularPostsData) {
+              updatePopularPosts(window.lastPopularPostsData);
+            }
           }
         });
       });

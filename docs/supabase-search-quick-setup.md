@@ -143,3 +143,4 @@ SELECT * FROM search_posts_fuzzy('test', NULL, NULL, 10);
 
 如果有数据，应该返回结果。如果没有数据，先运行同步脚本。
 
+

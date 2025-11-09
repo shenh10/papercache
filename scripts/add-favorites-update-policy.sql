@@ -17,3 +17,4 @@ CREATE POLICY "Users can update own favorites"
 COMMENT ON POLICY "Users can update own favorites" ON favorites IS 
 '允许用户更新自己的收藏记录，包括 is_read 和 read_at 字段。';
 
+

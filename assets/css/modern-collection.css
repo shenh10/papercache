@@ -1168,6 +1168,8 @@
     display: block !important;
     padding: 0;
     margin: 0;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   /* 移动端列表容器：使用 block 布局 */
@@ -1175,15 +1177,30 @@
     display: block !important;
     grid-template-columns: none !important;
     gap: 0 !important;
+    width: 100%;
+    box-sizing: border-box;
+    max-width: 100%;
   }
   
   /* 移动端列表模式下，确保列表项显示，卡片隐藏 */
   .post-list-mobile-modern .post-list-item-mobile {
     display: block !important;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .post-list-mobile-modern .post-card-modern {
     display: none !important;
+  }
+  
+  /* 确保搜索结果列表容器也有正确的宽度 */
+  #results-list.post-list-mobile-modern,
+  .results-list.post-list-mobile-modern,
+  .category-papers-list.post-list-mobile-modern {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 }
 
@@ -1236,13 +1253,16 @@
 .post-list-item-mobile {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border: 1.5px solid #e2e8f0;
-  border-radius: 14px;
-  margin-bottom: 16px;
+  border-radius: 12px;
+  margin-bottom: 12px;
   padding: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   overflow: hidden;
   position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  /* 确保列表项占据完整宽度 */
 }
 
 .post-list-item-mobile::before {
@@ -1270,53 +1290,59 @@
 }
 
 .post-list-item-mobile-content {
-  padding: 16px 20px;
+  padding: 12px 14px;
   position: relative;
   background: transparent;
+  width: 100%;
+  box-sizing: border-box;
+  /* 确保内容区域占据完整宽度 */
 }
 
 .post-list-item-mobile-meta {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 6px;
+  margin-bottom: 8px;
   flex-wrap: nowrap;
+  width: 100%;
+  box-sizing: border-box;
+  /* 确保元数据区域占据完整宽度 */
 }
 
 .post-list-item-mobile-date {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #475569;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
   background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-  padding: 5px 12px;
-  border-radius: 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
   border: 1px solid #cbd5e1;
   letter-spacing: 0.02em;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .post-list-item-mobile-right {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
   margin-left: auto;
   flex-shrink: 0;
 }
 
 .post-list-item-mobile-tag {
-  font-size: 0.75rem;
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-weight: 700;
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
   display: inline-block;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   text-transform: uppercase;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .post-list-item-mobile-tag.tag-arxiv {
@@ -1335,21 +1361,30 @@
   text-decoration: none;
   color: inherit;
   display: block;
+  width: 100%;
+  /* 确保链接占据完整宽度 */
+  box-sizing: border-box;
 }
 
 .post-list-item-mobile-title {
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: #1e293b;
-  line-height: 1.6;
+  line-height: 1.5;
   margin: 0;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
   transition: all 0.2s ease;
   letter-spacing: -0.01em;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  width: 100%;
+  /* 确保标题占据完整宽度 */
+  box-sizing: border-box;
 }
 
 .post-list-item-mobile-link:hover .post-list-item-mobile-title {
@@ -1357,14 +1392,54 @@
   text-shadow: 0 1px 2px rgba(59, 130, 246, 0.1);
 }
 
-/* 移动端收藏按钮样式调整 */
+/* 移动端标题响应式优化 */
+@media (max-width: 480px) {
+  .post-list-item-mobile-title {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    -webkit-line-clamp: 4;
+  }
+  
+  .post-list-item-mobile-content {
+    padding: 10px 12px;
+  }
+  
+  .post-list-item-mobile-meta {
+    margin-bottom: 6px;
+  }
+}
+
+@media (max-width: 360px) {
+  .post-list-item-mobile-title {
+    font-size: 0.85rem;
+    line-height: 1.35;
+    -webkit-line-clamp: 5;
+  }
+  
+  .post-list-item-mobile-content {
+    padding: 8px 10px;
+  }
+}
+
+/* 移动端收藏和点赞按钮样式调整 */
 @media (max-width: 768px) {
-  .post-list-item-mobile .card-favorite-btn {
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
+  .post-list-item-mobile .card-favorite-btn,
+  .post-list-item-mobile .card-like-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background: rgba(251, 191, 36, 0.08);
     border: 1px solid rgba(251, 191, 36, 0.2);
+    border-radius: 6px;
+  }
+  
+  .post-list-item-mobile .card-like-btn {
+    background: rgba(239, 68, 68, 0.08);
+    border-color: rgba(239, 68, 68, 0.2);
   }
   
   .post-list-item-mobile .card-favorite-btn:hover {
@@ -1372,23 +1447,48 @@
     border-color: rgba(251, 191, 36, 0.4);
   }
   
+  .post-list-item-mobile .card-like-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+  }
+  
   .post-list-item-mobile .card-favorite-btn.favorited {
     background: rgba(251, 191, 36, 0.2);
     border-color: rgba(251, 191, 36, 0.5);
   }
   
-  .post-list-item-mobile .card-favorite-btn .favorite-icon {
-    font-size: 1.2rem;
+  .post-list-item-mobile .card-like-btn.liked {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.5);
   }
   
-  .post-list-item-mobile .card-favorite-btn .favorite-count {
-    font-size: 0.75rem;
-    margin-left: 3px;
+  .post-list-item-mobile .card-favorite-btn .favorite-icon,
+  .post-list-item-mobile .card-like-btn .like-icon {
+    font-size: 1rem;
+    line-height: 1;
+  }
+  
+  .post-list-item-mobile .card-favorite-btn .favorite-count,
+  .post-list-item-mobile .card-like-btn .like-count {
+    font-size: 0.7rem;
+    margin-left: 2px;
     font-weight: 600;
     color: #64748b;
+    line-height: 1;
   }
   
   .post-list-item-mobile .card-favorite-btn.favorited .favorite-count {
     color: #f59e0b;
+  }
+  
+  .post-list-item-mobile .card-like-btn.liked .like-count {
+    color: #ef4444;
+  }
+  
+  /* 确保按钮内容不换行 */
+  .post-list-item-mobile .card-favorite-btn,
+  .post-list-item-mobile .card-like-btn {
+    white-space: nowrap;
+    overflow: hidden;
   }
 }

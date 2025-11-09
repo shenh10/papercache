@@ -62,3 +62,4 @@ FROM pg_indexes
 WHERE tablename = 'favorites'
 ORDER BY pg_relation_size(indexname::regclass) DESC;
 
+

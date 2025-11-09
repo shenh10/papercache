@@ -118,3 +118,4 @@ COMMENT ON FUNCTION search_posts_fuzzy_optimized IS '优化后的模糊搜索函
 -- 5. 分析表以更新统计信息（帮助查询优化器选择最佳执行计划）
 ANALYZE posts_search;
 
+

@@ -18,3 +18,4 @@ CREATE INDEX IF NOT EXISTS idx_favorites_is_read ON favorites(user_id, is_read);
 COMMENT ON COLUMN favorites.is_read IS '标记论文是否已读，默认false（未读）';
 COMMENT ON COLUMN favorites.read_at IS '标记为已读的时间戳';
 
+
