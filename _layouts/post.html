@@ -83,14 +83,16 @@ layout: default
 
 /* 图片响应式样式 */
 .post-content img {
-  max-width: 100%;
-  height: auto;
+  max-width: 100% !important;
+  width: 100% !important;
+  height: auto !important;
   display: block;
   margin: 1.5rem auto;
   border-radius: 8px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
 }
 
 .post-content img:hover {
@@ -98,17 +100,61 @@ layout: default
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* 大屏幕最大宽度限制 */
-@media (min-width: 1200px) {
-  .post-content img {
-    max-width: min(100%, 1200px);
-  }
+/* SVG 响应式样式 */
+.post-content svg {
+  max-width: 100% !important;
+  width: 100% !important;
+  height: auto !important;
+  display: block;
+  margin: 1.5rem auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
 }
 
-/* figure 中的图片 */
-.post-content figure img {
-  max-width: 100%;
-  height: auto;
+.post-content svg:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* figure 容器响应式 */
+.post-content figure {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 1.5rem auto;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.post-content figure img,
+.post-content figure svg {
+  max-width: 100% !important;
+  width: 100% !important;
+  height: auto !important;
+}
+
+/* 图片容器响应式 */
+.post-content .image-figure,
+.post-content .figure-image {
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box;
+}
+
+/* 大屏幕最大宽度限制 */
+@media (min-width: 1200px) {
+  .post-content img,
+  .post-content svg {
+    max-width: min(100%, 1200px) !important;
+    width: auto !important;
+  }
+  
+  .post-content figure {
+    max-width: min(100%, 1200px) !important;
+    width: auto !important;
+  }
 }
 
 /* 图片点击放大功能 - Lightbox */
@@ -268,14 +314,33 @@ layout: default
     font-size: 0.95rem;
   }
   
-  .post-content img {
+  .post-content img,
+  .post-content svg {
     margin: 1rem auto;
     border-radius: 6px;
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
   }
   
-  .image-lightbox img {
-    max-width: 95%;
-    max-height: 95%;
+  .post-content figure {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 1rem auto;
+  }
+  
+  .post-content figure img,
+  .post-content figure svg {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+  
+  .image-lightbox img,
+  .image-lightbox svg {
+    max-width: 95% !important;
+    max-height: 95% !important;
+    width: auto !important;
   }
   
   .image-lightbox .lightbox-close {
@@ -301,20 +366,31 @@ layout: default
     const lightboxImg = lightbox.querySelector('img');
     const closeBtn = lightbox.querySelector('.lightbox-close');
     
-    // 为所有图片添加点击事件
-    const images = document.querySelectorAll('.post-content img');
-    images.forEach(img => {
-      // 跳过已经有点击事件的图片（如链接中的图片）
-      if (img.closest('a')) {
+    // 为所有图片和SVG添加点击事件
+    const images = document.querySelectorAll('.post-content img, .post-content svg');
+    images.forEach(element => {
+      // 跳过已经有点击事件的元素（如链接中的图片）
+      if (element.closest('a')) {
         return;
       }
       
-      img.style.cursor = 'pointer';
-      img.addEventListener('click', function(e) {
+      element.style.cursor = 'pointer';
+      element.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        lightboxImg.src = this.src;
-        lightboxImg.alt = this.alt || '';
+        
+        if (this.tagName === 'IMG') {
+          lightboxImg.src = this.src;
+          lightboxImg.alt = this.alt || '';
+        } else if (this.tagName === 'SVG') {
+          // 对于SVG，创建一个临时的img元素来显示
+          const svgData = new XMLSerializer().serializeToString(this);
+          const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+          const url = URL.createObjectURL(svgBlob);
+          lightboxImg.src = url;
+          lightboxImg.alt = this.getAttribute('aria-label') || this.getAttribute('title') || '';
+        }
+        
         lightbox.classList.add('active');
         document.body.style.overflow = 'hidden'; // 防止背景滚动
       });
