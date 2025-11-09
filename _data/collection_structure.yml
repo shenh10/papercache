@@ -103,6 +103,15 @@ llm:
           - inference
           - low_precision
           tag: mlsys24
+        - title: 'Ozaki Scheme II: A GEMM-oriented emulation of floating-point matrix
+            multiplication using an integer modular technique'
+          date: '2025-04-01'
+          url: /papers/llm/engineering/inference/low_precision/2025/04/01/ozaki-scheme-ii-a-gemm-oriented-emulation-of-floating-point-matrix-multiplication-using-an-integer-modular-technique.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - low_precision
         - title: OCP Microscaling Formats (MX) Specification
           date: '2023-09-01'
           url: /papers/llm/engineering/inference/low_precision/2023/09/01/ocp-microscaling-formats-mx-specification.html
@@ -214,6 +223,13 @@ llm:
           Decoding'
         date: '2025-07-01'
         url: /papers/llm/engineering/inference/2025/07/01/step-3-is-large-yet-affordable-model-system-co-design-for-cost-effective-decoding.html
+        categories:
+        - llm
+        - engineering
+        - inference
+      - title: 'When to Reason: Semantic Router for vLLM'
+        date: '2025-10-01'
+        url: /papers/llm/engineering/inference/2025/10/01/when-to-reason-semantic-router-for-vllm.html
         categories:
         - llm
         - engineering
@@ -339,13 +355,6 @@ llm:
         - llm
         - engineering
         - inference
-      - title: A Survey of LLM Inference Systems
-        date: '2025-06-01'
-        url: /papers/llm/engineering/inference/2025/06/01/a-survey-of-llm-inference-systems.html
-        categories:
-        - llm
-        - engineering
-        - inference
       - title: 'SGLang: Efficient Execution of Structured Language Model Programs'
         date: '2024-07-01'
         url: /papers/llm/engineering/inference/2024/07/01/sglang-efficient-execution-of-structured-language-model-programs.html
@@ -362,6 +371,13 @@ llm:
         - engineering
         - inference
         tag: sosp23
+      - title: Scaling LLM Test-Time Compute with Mobile NPU on Smartphones
+        date: '2025-09-01'
+        url: /papers/llm/engineering/inference/2025/09/01/scaling-llm-test-time-compute-with-mobile-npu-on-smartphones.html
+        categories:
+        - llm
+        - engineering
+        - inference
       speculative_decoding:
         posts:
         - title: Fast Inference from Transformers via Speculative Decoding
@@ -492,6 +508,14 @@ llm:
           - inference
           - kvcache
           tag: mlsys24
+        - title: 'Prism: Unleashing GPU Sharing for Cost-Efficient Multi-LLM Serving'
+          date: '2025-05-01'
+          url: /papers/llm/engineering/inference/kvcache/2025/05/01/prism-unleashing-gpu-sharing-for-cost-efficient-multi-llm-serving.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'Ecco: Improving Memory Bandwidth and Capacity for LLMs via Entropy-aware
             Cache Compression'
           date: '2025-05-01'
@@ -639,6 +663,289 @@ llm:
         - llm
         - engineering
         - attention
+    compiler:
+      posts:
+      - title: 'Pet: Optimizing Tensor Programs with Partially Equivalent Transformations
+          and Automated Corrections'
+        date: '2021-07-01'
+        url: /papers/llm/engineering/compiler/2021/07/01/pet-optimizing-tensor-programs-with-partially-equivalent-transformations-and-automated-corrections.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: osdi21
+      - title: 'LADDER: Enabling Efficient Low-Precision Deep Learning Computing through
+          Hardware-aware Tensor Transformation'
+        date: '2024-07-01'
+        url: /papers/llm/engineering/compiler/2024/07/01/ladder-enabling-efficient-low-precision-deep-learning-computing-through-hardware-aware-tensor-transformation.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: osdi24
+      - title: 'Felix: Optimizing Tensor Programs with Gradient Descent'
+        date: '2024-04-01'
+        url: /papers/llm/engineering/compiler/2024/04/01/felix-optimizing-tensor-programs-with-gradient-descent.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: asplos24
+      - title: Experiences Building an MLIR-based SYCL Compiler
+        date: '2023-12-01'
+        url: /papers/llm/engineering/compiler/2023/12/01/experiences-building-an-mlir-based-sycl-compiler.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: cgo23
+      - title: 'MagPy: Compiling Eager Mode DNN Programs by Monitoring Execution States'
+        date: '2024-07-01'
+        url: /papers/llm/engineering/compiler/2024/07/01/magpy-compiling-eager-mode-dnn-programs-by-monitoring-execution-states.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: atc24
+      - title: Enabling Tensor Language Model to Assist in Generating High-Performance
+          Tensor Programs for Deep Learning
+        date: '2024-07-01'
+        url: /papers/llm/engineering/compiler/2024/07/01/enabling-tensor-language-model-to-assist-in-generating-high-performance-tensor-programs-for-deep-learning.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: osdi24
+      - title: 'Hydride: A Retargetable and Extensible Synthesis-based Compiler for
+          Modern Hardware Architectures'
+        date: '2024-04-01'
+        url: /papers/llm/engineering/compiler/2024/04/01/hydride-a-retargetable-and-extensible-synthesis-based-compiler-for-modern-hardware-architectures.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: asplos24
+      - title: 'TensorIR: An Abstraction for Automatic Tensorized Program Optimization'
+        date: '2022-10-01'
+        url: /papers/llm/engineering/compiler/2022/10/01/tensorir-an-abstraction-for-automatic-tensorized-program-optimization.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: asplos23
+      - title: 'SIRIUS: HARVESTING WHOLE-PROGRAM OPTIMIZATION OPPORTUNITIESFOR DNNS'
+        date: '2023-05-01'
+        url: /papers/llm/engineering/compiler/2023/05/01/sirius-harvesting-whole-program-optimization-opportunitiesfor-dnns.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: mlsys23
+      - title: 'POWERFUSION: A Tensor Compiler with Explicit Data Movement Description
+          and Instruction-level Graph IR'
+        date: '2023-07-01'
+        url: /papers/llm/engineering/compiler/2023/07/01/powerfusion-a-tensor-compiler-with-explicit-data-movement-description-and-instruction-level-graph-ir.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+      - title: 'Graphene: An IR for Optimized Tensor Computations on GPUs'
+        date: '2023-03-01'
+        url: /papers/llm/engineering/compiler/2023/03/01/graphene-an-ir-for-optimized-tensor-computations-on-gpus.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: asplos23
+      - title: 'Hidet: Task-Mapping Programming Paradigm for Deep Learning Tensor
+          Programs'
+        date: '2022-10-01'
+        url: /papers/llm/engineering/compiler/2022/10/01/hidet-task-mapping-programming-paradigm-for-deep-learning-tensor-programs.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: asplos23
+      - title: Optimal Kernel Orchestration for Tensor Programs with Korch
+        date: '2024-01-01'
+        url: /papers/llm/engineering/compiler/2024/01/01/optimal-kernel-orchestration-for-tensor-programs-with-korch.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: asplos24
+      - title: 'PyTorch 2: Faster Machine Learning Through Dynamic Python Bytecode
+          Transformation and Graph Compilation'
+        date: '2024-04-01'
+        url: /papers/llm/engineering/compiler/2024/04/01/pytorch-2-faster-machine-learning-through-dynamic-python-bytecode-transformation-and-graph-compilation.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: asplos24
+      - title: 'TileLang: A Composable Tiled Programming Model for AI Systems'
+        date: '2025-04-01'
+        url: /papers/llm/engineering/compiler/2025/04/01/tilelang-a-composable-tiled-programming-model-for-ai-systems.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+      - title: 'EinNet: Optimizing Tensor Programs with Derivation-Based Transformations'
+        date: '2023-07-01'
+        url: /papers/llm/engineering/compiler/2023/07/01/einnet-optimizing-tensor-programs-with-derivation-based-transformations.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: osdi23
+      - title: 'UNIT: Unifying Tensorized Instruction Compilation'
+        date: '2021-01-01'
+        url: /papers/llm/engineering/compiler/2021/01/01/unit-unifying-tensorized-instruction-compilation.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: cgo21
+      - title: 'oneDNN Graph Compiler: A Hybrid Approach for High-Performance Deep
+          Learning Compilation'
+        date: '2023-01-01'
+        url: /papers/llm/engineering/compiler/2023/01/01/onednn-graph-compiler-a-hybrid-approach-for-high-performance-deep-learning-compilation.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: cgo24
+      - title: 'ACROBAT: OPTIMIZING AUTO-BATCHING OF DYNAMIC DEEP LEARNING AT COMPILE
+          TIME'
+        date: '2023-05-01'
+        url: /papers/llm/engineering/compiler/2023/05/01/acrobat-optimizing-auto-batching-of-dynamic-deep-learning-at-compile-time.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: mlsys24
+      - title: 'Tawa: Automatic Warp Specialization for Modern GPUs with Asynchronous
+          References'
+        date: '2025-10-01'
+        url: /papers/llm/engineering/compiler/2025/10/01/tawa-automatic-warp-specialization-for-modern-gpus-with-asynchronous-references.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+      - title: 'Roller: Fast and Efficient Tensor Compilation for Deep Learning'
+        date: '2022-07-01'
+        url: /papers/llm/engineering/compiler/2022/07/01/roller-fast-and-efficient-tensor-compilation-for-deep-learning.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: osdi22
+      - title: 'TileLink: Generating Efficient Compute-Communication Overlapping Kernels
+          using Tile-Centric Primitives'
+        date: '2025-04-01'
+        url: /papers/llm/engineering/compiler/2025/04/01/tilelink-generating-efficient-compute-communication-overlapping-kernels-using-tile-centric-primitives.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+      - title: 'PolyTOPS: Reconfigurable and Flexible Polyhedral Scheduler'
+        date: '2024-01-01'
+        url: /papers/llm/engineering/compiler/2024/01/01/polytops-reconfigurable-and-flexible-polyhedral-scheduler.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: cgo24
+      - title: 'FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION
+          KERNELS'
+        date: '2024-12-01'
+        url: /papers/llm/engineering/compiler/2024/12/01/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+      - title: 'BOLT: BRIDGING THE GAP BETWEEN AUTO-TUNERS AND HARDWARE-NATIVE PERFORMANCE'
+        date: '2021-10-01'
+        url: /papers/llm/engineering/compiler/2021/10/01/bolt-bridging-the-gap-between-auto-tuners-and-hardware-native-performance.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: mlsys22
+      - title: 'Ansor: Generating High-Performance Tensor Programs for Deep Learning'
+        date: '2020-11-01'
+        url: /papers/llm/engineering/compiler/2020/11/01/ansor-generating-high-performance-tensor-programs-for-deep-learning.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: osdi20
+      - title: 'FlashTensor: Optimizing Tensor Programs by Leveraging Fine-grained
+          Tensor Property'
+        date: '2025-05-01'
+        url: /papers/llm/engineering/compiler/2025/05/01/flashtensor-optimizing-tensor-programs-by-leveraging-fine-grained-tensor-property.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: ppopp25
+      - title: 'Mirage: A Multi-Level Superoptimizer for Tensor Programs'
+        date: '2025-06-01'
+        url: /papers/llm/engineering/compiler/2025/06/01/mirage-a-multi-level-superoptimizer-for-tensor-programs.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: osdi25
+      - title: 'TVM: An Automated End-to-End Optimizing Compiler for Deep Learning'
+        date: '2018-10-01'
+        url: /papers/llm/engineering/compiler/2018/10/01/tvm-an-automated-end-to-end-optimizing-compiler-for-deep-learning.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: osdi18
+      - title: 'FLUX: FAST SOFTWARE-BASED COMMUNICATION OVERLAP ON GPUS THROUGH KERNEL
+          FUSION'
+        date: '2024-10-01'
+        url: /papers/llm/engineering/compiler/2024/10/01/flux-fast-software-based-communication-overlap-on-gpus-through-kernel-fusion.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+      - title: 'Tensor Comprehensions: Framework-Agnostic High-Performance Machine
+          Learning Abstractions'
+        date: '2018-06-01'
+        url: /papers/llm/engineering/compiler/2018/06/01/tensor-comprehensions-framework-agnostic-high-performance-machine-learning-abstractions.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+      - title: 'MAGIS: Memory Optimization via Coordinated Graph Transformation and
+          Scheduling for DNN'
+        date: '2024-04-01'
+        url: /papers/llm/engineering/compiler/2024/04/01/magis-memory-optimization-via-coordinated-graph-transformation-and-scheduling-for-dnn.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: asplos24
+      - title: Optimizing Deep Learning Inference via Global Analysis and Tensor Expressions
+        date: '2024-04-01'
+        url: /papers/llm/engineering/compiler/2024/04/01/optimizing-deep-learning-inference-via-global-analysis-and-tensor-expressions.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: asplos24
+      - title: 'TLP: A Deep Learning-based Cost Model for Tensor Program Tuning'
+        date: '2022-11-01'
+        url: /papers/llm/engineering/compiler/2022/11/01/tlp-a-deep-learning-based-cost-model-for-tensor-program-tuning.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+        tag: asplos23
     train:
       posts:
       - title: 'ZeRO: Memory Optimizations Toward Training Trillion Parameter Models'
@@ -677,6 +984,14 @@ llm:
           A Survey'
         date: '2024-07-01'
         url: /papers/llm/engineering/train/2024/07/01/efficient-training-of-large-language-models-on-distributed-infrastructures-a-survey.html
+        categories:
+        - llm
+        - engineering
+        - train
+      - title: 'VeOmni: Scaling Any Modality Model Training with Model-Centric Distributed
+          Recipe Zoo'
+        date: '2025-08-01'
+        url: /papers/llm/engineering/train/2025/08/01/veomni-scaling-any-modality-model-training-with-model-centric-distributed-recipe-zoo.html
         categories:
         - llm
         - engineering
@@ -881,6 +1196,13 @@ llm:
         - engineering
         - train
         tag: atc25
+      - title: EFFICIENT LONG-CONTEXT LANGUAGE MODEL TRAINING BY Core Attention Disaggregation
+        date: '2025-10-01'
+        url: /papers/llm/engineering/train/2025/10/01/efficient-long-context-language-model-training-by-core-attention-disaggregation.html
+        categories:
+        - llm
+        - engineering
+        - train
       - title: 'ByteCheckpoint: A Unified Checkpointing System for Large Foundation
           Model Development'
         date: '2025-04-01'
@@ -1032,6 +1354,14 @@ llm:
         - engineering
         - moe
         tag: emnlp23
+      - title: 'Previewing UCCL-EP: Flexible and Efficient Expert Parallelism for
+          Cloud and Beyond'
+        date: '2025-10-01'
+        url: /papers/llm/engineering/moe/2025/10/01/previewing-uccl-ep-flexible-and-efficient-expert-parallelism-for-cloud-and-beyond.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: 'TUTEL: ADAPTIVE MIXTURE-OF-EXPERTS AT SCALE'
         date: '2022-06-01'
         url: /papers/llm/engineering/moe/2022/06/01/tutel-adaptive-mixture-of-experts-at-scale.html
@@ -1095,6 +1425,14 @@ llm:
         - engineering
         - moe
         tag: icml25
+      - title: 'Expert-as-a-Service: Towards Efficient, Scalable, and Robust Large-scale
+          MoE Serving'
+        date: '2025-09-01'
+        url: /papers/llm/engineering/moe/2025/09/01/expert-as-a-service-towards-efficient-scalable-and-robust-large-scale-moe-serving.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: AUXILIARY-LOSS-FREE LOAD BALANCING STRATEGY FOR MIXTURE-OF-EXPERTS
         date: '2024-08-01'
         url: /papers/llm/engineering/moe/2024/08/01/auxiliary-loss-free-load-balancing-strategy-for-mixture-of-experts.html
@@ -1227,64 +1565,6 @@ llm:
         - llm
         - engineering
         - rl
-    compiler:
-      posts:
-      - title: 'TileLang: A Composable Tiled Programming Model for AI Systems'
-        date: '2025-04-01'
-        url: /papers/llm/engineering/compiler/2025/04/01/tilelang-a-composable-tiled-programming-model-for-ai-systems.html
-        categories:
-        - llm
-        - engineering
-        - compiler
-      - title: 'TileLink: Generating Efficient Compute-Communication Overlapping Kernels
-          using Tile-Centric Primitives'
-        date: '2025-04-01'
-        url: /papers/llm/engineering/compiler/2025/04/01/tilelink-generating-efficient-compute-communication-overlapping-kernels-using-tile-centric-primitives.html
-        categories:
-        - llm
-        - engineering
-        - compiler
-      - title: 'FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION
-          KERNELS'
-        date: '2024-12-01'
-        url: /papers/llm/engineering/compiler/2024/12/01/flex-attention-a-programming-model-for-generating-optimized-attention-kernels.html
-        categories:
-        - llm
-        - engineering
-        - compiler
-      - title: 'FlashTensor: Optimizing Tensor Programs by Leveraging Fine-grained
-          Tensor Property'
-        date: '2025-05-01'
-        url: /papers/llm/engineering/compiler/2025/05/01/flashtensor-optimizing-tensor-programs-by-leveraging-fine-grained-tensor-property.html
-        categories:
-        - llm
-        - engineering
-        - compiler
-        tag: ppopp25
-      - title: 'Mirage: A Multi-Level Superoptimizer for Tensor Programs'
-        date: '2025-06-01'
-        url: /papers/llm/engineering/compiler/2025/06/01/mirage-a-multi-level-superoptimizer-for-tensor-programs.html
-        categories:
-        - llm
-        - engineering
-        - compiler
-        tag: osdi25
-      - title: 'TVM: An Automated End-to-End Optimizing Compiler for Deep Learning'
-        date: '2018-10-01'
-        url: /papers/llm/engineering/compiler/2018/10/01/tvm-an-automated-end-to-end-optimizing-compiler-for-deep-learning.html
-        categories:
-        - llm
-        - engineering
-        - compiler
-        tag: osdi18
-      - title: 'FLUX: FAST SOFTWARE-BASED COMMUNICATION OVERLAP ON GPUS THROUGH KERNEL
-          FUSION'
-        date: '2024-10-01'
-        url: /papers/llm/engineering/compiler/2024/10/01/flux-fast-software-based-communication-overlap-on-gpus-through-kernel-fusion.html
-        categories:
-        - llm
-        - engineering
-        - compiler
   algorithm:
     architecture:
       attention:
@@ -1568,9 +1848,23 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'DeepSeek-OCR: Contexts Optical Compression'
+        date: '2025-10-01'
+        url: /papers/llm/algorithm/models/2025/10/01/deepseek-ocr-contexts-optical-compression.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: dots.llm1 Technical Report
         date: '2025-06-01'
         url: /papers/llm/algorithm/models/2025/06/01/dotsllm1-technical-report.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'KIMI LINEAR: AN EXPRESSIVE, EFFICIENT ATTENTION ARCHITECTURE'
+        date: '2025-10-01'
+        url: /papers/llm/algorithm/models/2025/10/01/kimi-linear-an-expressive-efficient-attention-architecture.html
         categories:
         - llm
         - algorithm
@@ -1623,6 +1917,13 @@ llm:
           tokens of context'
         date: '2024-03-01'
         url: /papers/llm/algorithm/models/2024/03/01/gemini-15-unlocking-multimodal-understanding-across-millions-of-tokens-of-context.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: LongCat-Flash-Omni Technical Report
+        date: '2025-10-01'
+        url: /papers/llm/algorithm/models/2025/10/01/longcat-flash-omni-technical-report.html
         categories:
         - llm
         - algorithm
@@ -1986,14 +2287,6 @@ llm:
         - algorithm
         - agent
         tag: iclr23
-      - title: 'Tree of Thoughts: Deliberate Problem Solving with Large Language Models'
-        date: '2023-12-01'
-        url: /papers/llm/algorithm/agent/2023/12/01/tree-of-thoughts-deliberate-problem-solving-with-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-        tag: nips23
       - title: 'R1-Searcher: Incentivizing the Search Capability in LLMs via Reinforcement
           Learning'
         date: '2025-03-01'
@@ -2002,14 +2295,6 @@ llm:
         - llm
         - algorithm
         - agent
-      - title: 'REAC T: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS'
-        date: '2023-11-01'
-        url: /papers/llm/algorithm/agent/2023/11/01/reac-t-synergizing-reasoning-and-acting-in-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-        tag: iclr23
       - title: 'Search-R1: Training LLMs to Reason and Leverage Search Engines with
           Reinforcement Learning'
         date: '2025-03-01'
@@ -2223,6 +2508,12 @@ mlsys:
     - title: 'UB-Mesh: a Hierarchically Localized nD-FullMesh Datacenter Network Architecture'
       date: '2025-03-01'
       url: /papers/mlsys/networking/2025/03/01/ub-mesh-a-hierarchically-localized-nd-fullmesh-datacenter-network-architecture.html
+      categories:
+      - mlsys
+      - networking
+    - title: RDMA POINT-TO-POINT COMMUNICATION FOR LLM SYSTEMS
+      date: '2025-10-01'
+      url: /papers/mlsys/networking/2025/10/01/rdma-point-to-point-communication-for-llm-systems.html
       categories:
       - mlsys
       - networking
