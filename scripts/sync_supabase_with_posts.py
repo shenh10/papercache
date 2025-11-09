@@ -210,6 +210,17 @@ def cleanup_supabase_records(valid_urls: Set[str]) -> dict:
     print(f"🔄 开始清理 Supabase 无效记录...")
     print(f"   有效文章数量: {len(valid_urls_list)}")
     
+    # ⚠️  安全检查：如果有效 URL 数量太少，可能是获取逻辑有问题，不执行清理
+    if len(valid_urls_list) < 10:
+        print(f"⚠️  警告: 有效文章数量太少 ({len(valid_urls_list)})，可能是 URL 获取逻辑有问题")
+        print("   跳过清理，避免误删数据")
+        return {
+            'favorites_deleted': 0,
+            'clicks_deleted': 0,
+            'skipped': True,
+            'reason': 'valid_urls_too_few'
+        }
+    
     results = {
         'favorites_deleted': 0,
         'favorites_urls': [],
@@ -240,6 +251,12 @@ def cleanup_supabase_records(valid_urls: Set[str]) -> dict:
             print(f"   - 删除点击统计: {results['clicks_deleted']} 条")
             if results['clicks_urls'] and len(results['clicks_urls']) > 0:
                 print(f"   - 无效点击统计 URL (前5个): {', '.join(results['clicks_urls'][:5])}")
+            
+            # ⚠️  安全检查：如果删除数量超过阈值，可能是误删
+            total_deleted = results['favorites_deleted'] + results['clicks_deleted']
+            if total_deleted > 50:
+                print(f"\n⚠️  警告: 删除了大量记录 ({total_deleted} 条)，请检查 URL 匹配是否正确！")
+                print("   如果这是误删，请立即检查数据库备份或联系管理员")
         else:
             print("⚠️  警告: Supabase RPC 返回空结果")
     
