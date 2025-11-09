@@ -21,6 +21,7 @@ load_dotenv()
 # 项目根目录
 PROJECT_ROOT = Path(__file__).parent.parent
 POSTS_DIR = PROJECT_ROOT / "_posts"
+SLIDES_DIR = PROJECT_ROOT / "_slides"
 
 # Supabase 配置
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
@@ -71,51 +72,84 @@ def normalize_url(url: str) -> str:
 
 def get_all_post_urls() -> Set[str]:
     """
-    扫描 _posts/ 目录，提取所有文章的 URL
+    扫描 _posts/ 和 _slides/ 目录，提取所有文章的 URL
     
     返回规范化的 URL 集合
     """
     post_urls = set()
     
-    if not POSTS_DIR.exists():
-        print(f"❌ 错误: {POSTS_DIR} 目录不存在")
-        return post_urls
-    
     # 读取 Jekyll 配置
     load_jekyll_config()
     
-    # 扫描所有 .html 文件
-    for post_file in POSTS_DIR.rglob("*.html"):
-        try:
-            # 读取文件获取 front matter
-            with open(post_file, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
-            # 解析 front matter
-            if content.startswith('---'):
-                parts = content.split('---', 2)
-                if len(parts) >= 3:
-                    front_matter = yaml.safe_load(parts[1]) or {}
-                    
-                    # 获取 URL（优先使用 permalink，否则从文件路径计算）
-                    url = front_matter.get('permalink') or front_matter.get('url')
-                    
-                    if not url:
-                        # 从文件路径计算 URL
-                        # 文件路径: _posts/llm/algorithm/2024/01/01/article.html
-                        # 目标URL: /papers/llm/algorithm/2024/01/01/article.html
-                        relative_path = post_file.relative_to(POSTS_DIR)
-                        url = '/papers/' + str(relative_path).replace('\\', '/')
-                    
-                    # 规范化 URL
-                    normalized = normalize_url(url)
-                    if normalized:
-                        post_urls.add(normalized)
-        except Exception as e:
-            print(f"⚠️  警告: 无法处理文件 {post_file}: {e}")
-            continue
+    # 扫描 _posts/ 目录
+    if POSTS_DIR.exists():
+        for post_file in POSTS_DIR.rglob("*.html"):
+            try:
+                # 读取文件获取 front matter
+                with open(post_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # 解析 front matter
+                if content.startswith('---'):
+                    parts = content.split('---', 2)
+                    if len(parts) >= 3:
+                        front_matter = yaml.safe_load(parts[1]) or {}
+                        
+                        # 获取 URL（优先使用 permalink，否则从文件路径计算）
+                        url = front_matter.get('permalink') or front_matter.get('url')
+                        
+                        if not url:
+                            # 从文件路径计算 URL
+                            # 文件路径: _posts/llm/algorithm/2024/01/01/article.html
+                            # 目标URL: /papers/llm/algorithm/2024/01/01/article.html
+                            relative_path = post_file.relative_to(POSTS_DIR)
+                            url = '/papers/' + str(relative_path).replace('\\', '/')
+                        
+                        # 规范化 URL
+                        normalized = normalize_url(url)
+                        if normalized:
+                            post_urls.add(normalized)
+            except Exception as e:
+                print(f"⚠️  警告: 无法处理文件 {post_file}: {e}")
+                continue
+    else:
+        print(f"⚠️  警告: {POSTS_DIR} 目录不存在")
     
-    print(f"✅ 找到 {len(post_urls)} 篇有效文章")
+    # 扫描 _slides/ 目录
+    if SLIDES_DIR.exists():
+        for slide_file in SLIDES_DIR.rglob("*.html"):
+            try:
+                # 读取文件获取 front matter
+                with open(slide_file, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # 解析 front matter
+                if content.startswith('---'):
+                    parts = content.split('---', 2)
+                    if len(parts) >= 3:
+                        front_matter = yaml.safe_load(parts[1]) or {}
+                        
+                        # 获取 URL（优先使用 permalink，否则从文件路径计算）
+                        url = front_matter.get('permalink') or front_matter.get('url')
+                        
+                        if not url:
+                            # 从文件路径计算 URL
+                            # 文件路径: _slides/category/2024/01/01/slide.html
+                            # 目标URL: /slides/category/2024/01/01/slide.html
+                            relative_path = slide_file.relative_to(SLIDES_DIR)
+                            url = '/slides/' + str(relative_path).replace('\\', '/')
+                        
+                        # 规范化 URL
+                        normalized = normalize_url(url)
+                        if normalized:
+                            post_urls.add(normalized)
+            except Exception as e:
+                print(f"⚠️  警告: 无法处理文件 {slide_file}: {e}")
+                continue
+    else:
+        print(f"⚠️  警告: {SLIDES_DIR} 目录不存在（这是正常的，如果构建时 _slides 是从 deepnotes 同步的）")
+    
+    print(f"✅ 找到 {len(post_urls)} 篇有效文章（包含 papers 和 slides）")
     return post_urls
 
 
