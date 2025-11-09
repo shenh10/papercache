@@ -9,12 +9,13 @@ _site/
 # Temporary thumbnail cache (local development only)
 .thumb_tmp/
 
-# Generated thumbnails (should be generated in CI, not committed)
-assets/images/thumbs/
-_data/thumbnails_by_path.yml
+# Generated thumbnails (committed in CI, but ignore local temp files)
+# Note: assets/images/thumbs/ and _data/thumbnails_by_path.yml are committed by CI
+assets/images/thumbs/*.tmp
+assets/images/thumbs/.gitkeep
 
-# Slides (local development only)
-_slides/
+# Slides (committed in CI)
+# Note: _slides/ is committed by CI
 
 # Others
 .DS_Store
@@ -27,8 +28,20 @@ Gemfile.lock
 # Local config backups (may contain sensitive data)
 _config_local.yml.bak
 
-assets/data/
-_data/
+# Data files (committed in CI, but ignore local temp files)
+# Note: _data/collection_structure.yml, _data/slides_collection_structure.yml, 
+#       _data/thumbnails_by_path.yml are committed by CI
+_data/*.tmp
+_data/.gitkeep
+
+# Assets data (committed in CI, but ignore local temp files)
+# Note: assets/data/excerpts.json is committed by CI
+assets/data/*.tmp
+assets/data/.gitkeep
+
+# Posts (committed in CI)
+# Note: _posts/ is committed by CI
+
 vendor/
 .bundle/
 .vercel
@@ -44,4 +57,3 @@ node_modules/
 # Backup directories
 bkp/
 backup/
-_posts/
