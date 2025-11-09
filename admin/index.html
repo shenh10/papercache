@@ -4856,13 +4856,19 @@ permalink: /admin/index.html
   .logs-table-container {
     background: white;
     border-radius: 12px;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    box-sizing: border-box;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 
   .logs-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: auto;
+    min-width: 800px;
   }
 
   .logs-table thead {
@@ -4883,6 +4889,15 @@ permalink: /admin/index.html
     border-bottom: 1px solid #e2e8f0;
     color: #4a5568;
     font-size: 0.9rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  .logs-table td.logs-ua {
+    max-width: 300px;
+    word-break: break-all;
+    white-space: normal;
   }
 
   .logs-table tbody tr {
@@ -4966,6 +4981,37 @@ permalink: /admin/index.html
     font-weight: 500;
     min-width: 100px;
     text-align: center;
+  }
+
+  /* 分页控件自适应优化 */
+  [id$="-pagination"] {
+    width: 100%;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  [id$="-pagination"] > div:first-child {
+    flex: 1 1 auto;
+    min-width: 0;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    box-sizing: border-box;
+  }
+
+  [id$="-pagination"] > div:last-child {
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    box-sizing: border-box;
+  }
+
+  [id$="-pagination-info"] {
+    display: inline-block;
+    max-width: 100%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    box-sizing: border-box;
   }
 
   /* 响应式设计 */
@@ -5137,22 +5183,58 @@ permalink: /admin/index.html
       flex: 1;
     }
 
+    .logs-table-container {
+      border-radius: 8px;
+    }
+
     .logs-table {
       font-size: 0.85rem;
+      min-width: 100%;
     }
 
     .logs-table th,
     .logs-table td {
       padding: 0.75rem 0.5rem;
+      font-size: 0.8rem;
     }
 
-    .logs-ua {
-      max-width: 150px;
+    .logs-table td.logs-ua {
+      max-width: 200px;
+      font-size: 0.75rem;
     }
 
     .logs-pagination {
       flex-direction: column;
       gap: 0.75rem;
+    }
+
+    /* 移动端分页控件优化 */
+    [id$="-pagination"] {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+
+    [id$="-pagination"] > div:first-child {
+      width: 100%;
+      text-align: center;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    [id$="-pagination"] > div:last-child {
+      width: 100%;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    [id$="-pagination-info"] {
+      display: block;
+      width: 100%;
+      text-align: center;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+      box-sizing: border-box;
     }
 
     .pagination-btn {
