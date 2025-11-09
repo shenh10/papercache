@@ -138,9 +138,23 @@ jobs:
                 echo "=== 检查 slides 目录 ==="
                 if [ -d "_site/slides" ]; then
                   echo "✅ _site/slides 目录存在"
-                  echo "Slides 文件数量: $(find _site/slides -type f -name '*.html' | wc -l)"
-                  echo "前5个 slides 文件:"
-                  find _site/slides -type f -name '*.html' | head -5
+                  SLIDES_COUNT=$(find _site/slides -type f -name '*.html' ! -name 'index.html' | wc -l | tr -d ' ')
+                  echo "Slides 文件数量（排除index.html）: $SLIDES_COUNT"
+                  if [ "$SLIDES_COUNT" -eq "0" ]; then
+                    echo "⚠️  警告：没有找到任何 slides 页面文件！"
+                    echo "检查 _slides 源文件:"
+                    ls -la _slides/ | head -10
+                    echo ""
+                    echo "检查 _site/slides 目录结构:"
+                    find _site/slides -type d | head -10
+                    echo ""
+                    echo "所有 _site/slides 下的文件:"
+                    find _site/slides -type f | head -10
+                  else
+                    echo "✅ Slides 文件生成正常"
+                    echo "前10个 slides 文件:"
+                    find _site/slides -type f -name '*.html' ! -name 'index.html' | head -10
+                  fi
                 else
                   echo "❌ _site/slides 目录不存在！"
                   echo "检查 _slides 源文件:"
@@ -151,7 +165,8 @@ jobs:
                 echo "=== 检查 papers 目录 ==="
                 if [ -d "_site/papers" ]; then
                   echo "✅ _site/papers 目录存在"
-                  echo "Papers 文件数量: $(find _site/papers -type f -name '*.html' | wc -l)"
+                  PAPERS_COUNT=$(find _site/papers -type f -name '*.html' ! -name 'index.html' | wc -l | tr -d ' ')
+                  echo "Papers 文件数量（排除index.html）: $PAPERS_COUNT"
                 else
                   echo "⚠️  _site/papers 目录不存在"
                 fi
