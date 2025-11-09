@@ -771,16 +771,30 @@
         items.forEach(item => item.style.display = 'none');
         return;
       } else {
-        // 有数据但当前排序方式没有匹配项，可能是URL匹配问题
-        // 不显示"暂无数据"，而是尝试显示其他排序方式的数据作为降级
-        console.warn('[ClickTracker] 当前排序方式无匹配项，但检测到其他数据存在');
-        // 移除空数据提示（如果有）
+        // 有数据但当前排序方式没有匹配项
+        // 显示友好的提示信息，说明当前排序方式没有数据，建议尝试其他排序方式
         const existingEmptyMessage = container.querySelector('.popular-posts-empty-message');
-        if (existingEmptyMessage) {
-          existingEmptyMessage.remove();
+        if (!existingEmptyMessage) {
+          const emptyMessage = document.createElement('div');
+          emptyMessage.className = 'popular-posts-empty-message';
+          emptyMessage.style.cssText = 'padding: 20px; text-align: center; color: #999; font-size: 14px;';
+          
+          // 根据当前排序方式显示不同的提示
+          let sortName = '当前排序方式';
+          if (currentSort === 'favorites') {
+            sortName = '收藏数';
+          } else if (currentSort === 'clicks') {
+            sortName = '点击数';
+          } else if (currentSort === 'likes') {
+            sortName = '点赞数';
+          }
+          
+          emptyMessage.innerHTML = `📊 当前按"${sortName}"排序暂无数据，请尝试其他排序方式。`;
+          container.appendChild(emptyMessage);
         }
-        // 继续执行，尝试显示所有可用的项目（不按当前排序方式过滤）
-        // 这样可以避免切换排序时出现"暂无数据"的闪烁
+        // 隐藏所有项目
+        items.forEach(item => item.style.display = 'none');
+        return;
       }
     }
     
