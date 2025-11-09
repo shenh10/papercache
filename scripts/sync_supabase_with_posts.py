@@ -259,14 +259,21 @@ def main():
     
     # 1. 获取所有有效文章 URL
     print("\n📚 步骤 1: 扫描文章文件...")
+    print(f"   BaseURL: {BASEURL}")
     valid_urls = get_all_post_urls()
     
     if not valid_urls:
         print("❌ 错误: 没有找到任何文章，退出")
         sys.exit(1)
     
+    # 显示一些示例 URL 用于调试
+    print(f"\n📋 示例 URL (前5个):")
+    for i, url in enumerate(list(valid_urls)[:5]):
+        print(f"   {i+1}. {url}")
+    
     # 2. 清理 Supabase 无效记录
     print("\n🗑️  步骤 2: 清理 Supabase 无效记录...")
+    print(f"   有效 URL 总数: {len(valid_urls)}")
     results = cleanup_supabase_records(valid_urls)
     
     # 3. 输出总结
@@ -277,7 +284,20 @@ def main():
     if not results.get('skipped', False):
         print(f"📊 清理统计:")
         print(f"   - 收藏记录: {results['favorites_deleted']} 条已删除")
+        if results.get('favorites_urls') and len(results['favorites_urls']) > 0:
+            print(f"   - 被删除的收藏 URL 示例 (前3个):")
+            for url in results['favorites_urls'][:3]:
+                print(f"     * {url}")
         print(f"   - 点击统计: {results['clicks_deleted']} 条已删除")
+        if results.get('clicks_urls') and len(results['clicks_urls']) > 0:
+            print(f"   - 被删除的点击统计 URL 示例 (前3个):")
+            for url in results['clicks_urls'][:3]:
+                print(f"     * {url}")
+        
+        # 如果删除数量很大，发出警告
+        total_deleted = results.get('favorites_deleted', 0) + results.get('clicks_deleted', 0)
+        if total_deleted > 100:
+            print(f"\n⚠️  警告: 删除了大量记录 ({total_deleted} 条)，请检查 URL 匹配是否正确！")
     else:
         print("⚠️  跳过清理（Supabase 配置未设置）")
     
