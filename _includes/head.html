@@ -8,21 +8,27 @@
   <link rel="icon" type="image/png" href="{{ '/assets/images/favicon.png' | relative_url }}">
   <link rel="apple-touch-icon" href="{{ '/assets/images/apple-touch-icon.png' | relative_url }}">
   
-  <!-- 性能优化：预加载关键资源 -->
-  <link rel="preload" href="{{ "/assets/main.css" | relative_url }}" as="style">
-  <link rel="preload" href="{{ "/assets/css/modern-collection.css" | relative_url }}" as="style">
-  <link rel="preload" href="{{ "/assets/css/modern-header.css" | relative_url }}" as="style">
-  <link rel="preload" href="{{ "/assets/css/modern-homepage.css" | relative_url }}" as="style">
-  <link rel="preload" href="{{ "/assets/css/modern-about.css" | relative_url }}" as="style">
+  <!-- 性能优化：关键CSS立即加载，防止FOUC -->
+  <!-- 使用阻塞式加载，确保CSS在渲染前就绪 -->
+  <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}?v=1761019000">
+  <link rel="stylesheet" href="{{ "/assets/css/modern-collection.css" | relative_url }}?v=1761019000">
+  
+  <!-- 预加载其他非关键CSS（异步加载） -->
+  <link rel="preload" href="{{ "/assets/css/modern-header.css" | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="{{ "/assets/css/modern-header.css" | relative_url }}"></noscript>
+  
+  <link rel="preload" href="{{ "/assets/css/modern-homepage.css" | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="{{ "/assets/css/modern-homepage.css" | relative_url }}"></noscript>
+  
+  <link rel="preload" href="{{ "/assets/css/modern-about.css" | relative_url }}" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link rel="stylesheet" href="{{ "/assets/css/modern-about.css" | relative_url }}"></noscript>
+  
+  <!-- 预加载JavaScript（延迟加载） -->
   <link rel="preload" href="{{ "/assets/js/post-preview.js" | relative_url }}" as="script">
   <link rel="preload" href="{{ "/assets/js/card-enhancements.js" | relative_url }}" as="script">
   
   <!-- 缓存控制 -->
   <meta http-equiv="Cache-Control" content="public, max-age=31536000">
-  
-  <!-- SEO tags removed for compatibility -->
-    <link rel="stylesheet" href="{{ "/assets/main.css" | relative_url }}?v=1761019000">
-    <link rel="stylesheet" href="{{ "/assets/css/modern-collection.css" | relative_url }}?v=1761019000">
   <!-- RSS Feed 自动发现 -->
   <link rel="alternate" type="application/atom+xml" title="{{ site.title }} - 最新收录" href="{{ "/feed.xml" | relative_url }}" />
   <link rel="alternate" type="application/atom+xml" title="{{ site.title }} - 最新发表" href="{{ "/feeds/latest-published.xml" | relative_url }}" />
@@ -83,16 +89,197 @@
   <!-- 注入 baseurl 用于路径处理（所有页面都需要） -->
   <script>
     window.PC_BASEURL = {{ site.baseurl | jsonify }};
+    
+    // 防止FOUC：等待关键CSS加载完成后显示页面
+    (function() {
+      var cssLoadTimeout = null;
+      var cssLoadHandlers = [];
+      
+      function showPage() {
+        if (cssLoadTimeout) {
+          clearTimeout(cssLoadTimeout);
+          cssLoadTimeout = null;
+        }
+        document.documentElement.classList.add('css-loaded');
+      }
+      
+      function cleanupCSSHandlers() {
+        // 清理所有CSS加载事件监听器
+        cssLoadHandlers.forEach(function(handler) {
+          if (handler.link && handler.callback) {
+            handler.link.removeEventListener('load', handler.callback);
+            handler.link.removeEventListener('error', handler.callback);
+          }
+        });
+        cssLoadHandlers = [];
+      }
+      
+      function initFOUC() {
+        // 清理之前的监听器
+        cleanupCSSHandlers();
+        
+        // 检查CSS是否已加载
+        function checkCSSLoaded() {
+          var sheets = document.styleSheets;
+          var mainCSSLoaded = false;
+          var collectionCSSLoaded = false;
+          
+          for (var i = 0; i < sheets.length; i++) {
+            try {
+              var href = sheets[i].href || '';
+              if (href.indexOf('main.css') !== -1) {
+                mainCSSLoaded = true;
+              }
+              if (href.indexOf('modern-collection.css') !== -1) {
+                collectionCSSLoaded = true;
+              }
+            } catch (e) {
+              // 跨域样式表可能无法访问，忽略错误
+            }
+          }
+          
+          if (mainCSSLoaded && collectionCSSLoaded) {
+            showPage();
+            return true;
+          }
+          return false;
+        }
+        
+        // 立即检查一次（CSS可能已经加载）
+        if (checkCSSLoaded()) {
+          return;
+        }
+        
+        // 监听CSS加载事件
+        var cssLinks = document.querySelectorAll('link[rel="stylesheet"]');
+        var loadedCount = 0;
+        var totalCSS = cssLinks.length;
+        
+        if (totalCSS === 0) {
+          showPage();
+          return;
+        }
+        
+        cssLinks.forEach(function(link) {
+          if (link.sheet) {
+            loadedCount++;
+          } else {
+            var loadHandler = function() {
+              loadedCount++;
+              if (loadedCount >= totalCSS) {
+                showPage();
+              }
+            };
+            var errorHandler = function() {
+              loadedCount++;
+              if (loadedCount >= totalCSS) {
+                showPage();
+              }
+            };
+            
+            link.addEventListener('load', loadHandler);
+            link.addEventListener('error', errorHandler);
+            
+            // 保存处理器以便清理
+            cssLoadHandlers.push({
+              link: link,
+              callback: loadHandler
+            });
+            cssLoadHandlers.push({
+              link: link,
+              callback: errorHandler
+            });
+          }
+        });
+        
+        if (loadedCount >= totalCSS) {
+          showPage();
+          return;
+        }
+        
+        // 超时保护：如果3秒后CSS仍未加载，强制显示页面
+        cssLoadTimeout = setTimeout(showPage, 3000);
+        
+        // DOMContentLoaded时也检查一次
+        if (document.readyState === 'loading') {
+          var domReadyHandler = function() {
+            setTimeout(function() {
+              if (!document.documentElement.classList.contains('css-loaded')) {
+                showPage();
+              }
+            }, 50);
+            document.removeEventListener('DOMContentLoaded', domReadyHandler);
+          };
+          document.addEventListener('DOMContentLoaded', domReadyHandler);
+        } else {
+          setTimeout(function() {
+            if (!document.documentElement.classList.contains('css-loaded')) {
+              showPage();
+            }
+          }, 50);
+        }
+      }
+      
+      // 初始化
+      initFOUC();
+      
+      // Turbolinks支持：在页面加载和缓存时处理
+      if (typeof Turbolinks !== 'undefined') {
+        var turbolinksLoadHandler = function() {
+          // Turbolinks加载时，CSS通常已经缓存，立即显示
+          cleanupCSSHandlers();
+          setTimeout(showPage, 10);
+        };
+        
+        var turbolinksCacheHandler = function() {
+          // 缓存前清理状态
+          cleanupCSSHandlers();
+          if (cssLoadTimeout) {
+            clearTimeout(cssLoadTimeout);
+            cssLoadTimeout = null;
+          }
+        };
+        
+        document.addEventListener('turbolinks:load', turbolinksLoadHandler);
+        document.addEventListener('turbolinks:before-cache', turbolinksCacheHandler);
+      }
+    })();
   </script>
   
-  <!-- 防止FOUC的基础样式 -->
+  <!-- 防止FOUC的关键样式 - 内联在head中，确保立即生效 -->
   <style>
+    /* 关键：隐藏body直到CSS加载完成，防止FOUC */
+    html {
+      visibility: hidden;
+      opacity: 0;
+    }
+    html.css-loaded {
+      visibility: visible;
+      opacity: 1;
+      transition: opacity 0.2s ease-in;
+    }
+    
     /* 确保页面在CSS加载前有基础样式 */
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       line-height: 1.6;
       color: #333;
       background-color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+    
+    /* 关键布局样式 - 立即应用 */
+    .wrapper {
+      max-width: 100%;
+      padding: 0 20px;
+      margin: 0 auto;
+      box-sizing: border-box;
+    }
+    
+    .page-content {
+      min-height: 100vh;
+      box-sizing: border-box;
     }
     
     /* 隐藏可能闪烁的元素直到JavaScript加载完成 */
@@ -134,6 +321,13 @@
     
     .mobile-post-item::marker {
       display: none !important;
+    }
+    
+    /* 关键CSS加载完成后显示页面 */
+    @media (prefers-reduced-motion: no-preference) {
+      html.css-loaded {
+        transition: opacity 0.1s ease-in;
+      }
     }
     
     /* 移动端MathJax优化样式 */
@@ -280,8 +474,36 @@
         if (window.Turbolinks && window.Turbolinks.supported) {
           console.log('Turbolinks已启用，页面导航将使用AJAX加载');
           
+          // 存储事件处理器以便清理
+          var turbolinksHandlers = {
+            load: null,
+            beforeCache: null,
+            click: null,
+            requestEnd: null,
+            loadError: null
+          };
+          
+          // 清理函数
+          function cleanupTurbolinksHandlers() {
+            if (turbolinksHandlers.load) {
+              document.removeEventListener('turbolinks:load', turbolinksHandlers.load);
+            }
+            if (turbolinksHandlers.beforeCache) {
+              document.removeEventListener('turbolinks:before-cache', turbolinksHandlers.beforeCache);
+            }
+            if (turbolinksHandlers.click) {
+              document.removeEventListener('turbolinks:click', turbolinksHandlers.click);
+            }
+            if (turbolinksHandlers.requestEnd) {
+              document.removeEventListener('turbolinks:request-end', turbolinksHandlers.requestEnd);
+            }
+            if (turbolinksHandlers.loadError) {
+              document.removeEventListener('turbolinks:load', turbolinksHandlers.loadError);
+            }
+          }
+          
           // 监听Turbolinks的页面加载事件
-          document.addEventListener('turbolinks:load', function() {
+          turbolinksHandlers.load = function() {
             console.log('Turbolinks: 页面已加载（AJAX）');
 
             // 重新初始化需要重新运行的脚本（如果有）
@@ -309,17 +531,19 @@
             // 通过触发一个自定义事件来通知所有脚本重新初始化
             const reinitEvent = new CustomEvent('turbolinks:reinit');
             document.dispatchEvent(reinitEvent);
-          });
+          };
+          document.addEventListener('turbolinks:load', turbolinksHandlers.load);
           
           // 监听Turbolinks的缓存事件（可选，用于性能优化）
-          document.addEventListener('turbolinks:before-cache', function() {
+          turbolinksHandlers.beforeCache = function() {
             console.log('Turbolinks: 缓存当前页面');
+            // 清理页面特定的状态
             // 可以在这里清理一些页面特定的状态（如果有）
-          });
-        }
-        
-        // 配置Turbolinks不拦截某些链接（如果需要）
-        document.addEventListener('turbolinks:click', function(event) {
+          };
+          document.addEventListener('turbolinks:before-cache', turbolinksHandlers.beforeCache);
+          
+          // 配置Turbolinks不拦截某些链接（如果需要）
+          turbolinksHandlers.click = function(event) {
           // 获取实际点击的链接元素（可能是a标签或其子元素）
           var element = event.target;
           while (element && element.tagName !== 'A') {
@@ -370,13 +594,48 @@
           }
           
           // 其他情况让Turbolinks正常处理（返回undefined，Turbolinks会继续）
-        });
+        };
+        document.addEventListener('turbolinks:click', turbolinksHandlers.click);
         
-        // 重要：Turbolinks导航时禁用全局点击拦截，避免阻止按钮点击
-        // 只在Turbolinks加载时重新启用事件系统
-        document.addEventListener('turbolinks:before-cache', function() {
-          // 在缓存前清理状态，但不要阻止事件
-          console.log('Turbolinks: 准备缓存页面');
+        // 处理Turbolinks请求失败（404等错误）
+        turbolinksHandlers.requestEnd = function(event) {
+          try {
+            var xhr = event.data && event.data.xhr;
+            if (xhr && (xhr.status === 404 || xhr.status === 500 || xhr.status === 0)) {
+              console.warn('Turbolinks: 请求失败，状态码:', xhr.status, '，回退到完整页面刷新');
+              // 取消Turbolinks处理，使用完整页面刷新
+              event.preventDefault();
+              // 获取目标URL
+              var targetUrl = xhr.responseURL || (event.data && event.data.url);
+              if (targetUrl) {
+                window.location.href = targetUrl;
+              }
+            }
+          } catch (e) {
+            console.error('Turbolinks: request-end处理出错:', e);
+          }
+        };
+        document.addEventListener('turbolinks:request-end', turbolinksHandlers.requestEnd);
+        
+        // 监听Turbolinks加载错误
+        turbolinksHandlers.loadError = function(event) {
+          try {
+            // 检查页面是否包含404错误信息
+            var errorElements = document.querySelectorAll('.error-404, .not-found, [data-error="404"]');
+            if (errorElements.length > 0) {
+              console.warn('Turbolinks: 检测到404页面，回退到完整页面刷新');
+              // 使用完整页面刷新
+              window.location.reload();
+            }
+          } catch (e) {
+            console.error('Turbolinks: load错误处理出错:', e);
+          }
+        };
+        document.addEventListener('turbolinks:load', turbolinksHandlers.loadError);
+        
+        // 在页面卸载前清理所有事件监听器
+        window.addEventListener('beforeunload', function() {
+          cleanupTurbolinksHandlers();
         });
       }
       

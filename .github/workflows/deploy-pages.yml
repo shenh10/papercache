@@ -129,6 +129,33 @@ jobs:
               env:
                 JEKYLL_ENV: production
 
+            - name: 📊 Verify build output (check slides and papers)
+              run: |
+                echo "检查构建输出..."
+                echo "=== _site 目录结构 ==="
+                ls -la _site/ | head -20
+                echo ""
+                echo "=== 检查 slides 目录 ==="
+                if [ -d "_site/slides" ]; then
+                  echo "✅ _site/slides 目录存在"
+                  echo "Slides 文件数量: $(find _site/slides -type f -name '*.html' | wc -l)"
+                  echo "前5个 slides 文件:"
+                  find _site/slides -type f -name '*.html' | head -5
+                else
+                  echo "❌ _site/slides 目录不存在！"
+                  echo "检查 _slides 源文件:"
+                  ls -la _slides/ | head -10
+                  exit 1
+                fi
+                echo ""
+                echo "=== 检查 papers 目录 ==="
+                if [ -d "_site/papers" ]; then
+                  echo "✅ _site/papers 目录存在"
+                  echo "Papers 文件数量: $(find _site/papers -type f -name '*.html' | wc -l)"
+                else
+                  echo "⚠️  _site/papers 目录不存在"
+                fi
+
             - name: 🧹 Sync Supabase with posts (cleanup orphan records)
               run: |
                 if [ -n "${{ secrets.SUPABASE_URL }}" ] && [ -n "${{ secrets.SUPABASE_SERVICE_KEY }}" ]; then
