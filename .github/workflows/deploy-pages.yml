@@ -35,6 +35,33 @@ jobs:
             - name: 📥 Checkout
               uses: actions/checkout@v4
 
+            - name: 📥 Checkout deepnotes repository (for _slides sync)
+              uses: actions/checkout@v4
+              with:
+                  repository: shenh10/deepnotes
+                  token: ${{ secrets.GH_PAT }}
+                  path: deepnotes-temp
+                  fetch-depth: 0
+
+            - name: 🔄 Sync _slides from deepnotes (if needed)
+              run: |
+                  echo "检查是否需要同步 _slides..."
+                  # 检查 deepnotes 中是否有 _slides
+                  if [ -d "deepnotes-temp/jekyll_output/_slides" ] && [ "$(ls -A deepnotes-temp/jekyll_output/_slides 2>/dev/null)" ]; then
+                      echo "✅ 发现 deepnotes 中的 _slides，开始同步..."
+                      mkdir -p _slides
+                      cp -r deepnotes-temp/jekyll_output/_slides/* _slides/
+                      echo "✅ _slides 同步完成"
+                      
+                      # 显示同步的文件数量
+                      SLIDES_COUNT=$(find _slides -type f -name '*.html' | wc -l | tr -d ' ')
+                      echo "已同步 $SLIDES_COUNT 个 slides 文件"
+                  else
+                      echo "⚠️  deepnotes 中未找到 _slides，跳过同步"
+                  fi
+              
+              continue-on-error: true
+
             - name: 🐍 Setup Python
               uses: actions/setup-python@v4
               with:

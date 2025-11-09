@@ -14,8 +14,9 @@ _site/
 assets/images/thumbs/*.tmp
 assets/images/thumbs/.gitkeep
 
-# Slides (committed in CI)
-# Note: _slides/ is committed by CI
+# Slides (not committed to git, synced from deepnotes during build)
+# Note: _slides/ is synced from deepnotes in deploy-pages.yml, not committed to git
+_slides/
 
 # Others
 .DS_Store
