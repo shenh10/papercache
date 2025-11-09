@@ -81,6 +81,111 @@ layout: default
   color: #2d3748;
 }
 
+/* 图片响应式样式 */
+.post-content img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.5rem auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.post-content img:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* 大屏幕最大宽度限制 */
+@media (min-width: 1200px) {
+  .post-content img {
+    max-width: min(100%, 1200px);
+  }
+}
+
+/* figure 中的图片 */
+.post-content figure img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 图片点击放大功能 - Lightbox */
+.image-lightbox {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  animation: fadeIn 0.3s ease;
+}
+
+.image-lightbox.active {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-lightbox img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  cursor: default;
+  animation: zoomIn 0.3s ease;
+}
+
+.image-lightbox .lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  color: white;
+  font-size: 40px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 10000;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.image-lightbox .lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 .post-content h1,
 .post-content h2,
 .post-content h3,
@@ -162,5 +267,94 @@ layout: default
   .post-content {
     font-size: 0.95rem;
   }
+  
+  .post-content img {
+    margin: 1rem auto;
+    border-radius: 6px;
+  }
+  
+  .image-lightbox img {
+    max-width: 95%;
+    max-height: 95%;
+  }
+  
+  .image-lightbox .lightbox-close {
+    top: 10px;
+    right: 15px;
+    font-size: 30px;
+    width: 40px;
+    height: 40px;
+  }
 }
 </style>
+
+<script>
+(function() {
+  // 图片点击放大功能
+  function initImageLightbox() {
+    // 创建 lightbox 元素
+    const lightbox = document.createElement('div');
+    lightbox.className = 'image-lightbox';
+    lightbox.innerHTML = '<span class="lightbox-close">&times;</span><img src="" alt="">';
+    document.body.appendChild(lightbox);
+    
+    const lightboxImg = lightbox.querySelector('img');
+    const closeBtn = lightbox.querySelector('.lightbox-close');
+    
+    // 为所有图片添加点击事件
+    const images = document.querySelectorAll('.post-content img');
+    images.forEach(img => {
+      // 跳过已经有点击事件的图片（如链接中的图片）
+      if (img.closest('a')) {
+        return;
+      }
+      
+      img.style.cursor = 'pointer';
+      img.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        lightboxImg.src = this.src;
+        lightboxImg.alt = this.alt || '';
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden'; // 防止背景滚动
+      });
+    });
+    
+    // 关闭 lightbox
+    function closeLightbox() {
+      lightbox.classList.remove('active');
+      document.body.style.overflow = ''; // 恢复滚动
+    }
+    
+    closeBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      closeLightbox();
+    });
+    
+    lightbox.addEventListener('click', function(e) {
+      if (e.target === lightbox) {
+        closeLightbox();
+      }
+    });
+    
+    // ESC 键关闭
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+        closeLightbox();
+      }
+    });
+  }
+  
+  // 页面加载完成后初始化
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initImageLightbox);
+  } else {
+    initImageLightbox();
+  }
+  
+  // 支持 Turbolinks
+  if (typeof Turbolinks !== 'undefined') {
+    document.addEventListener('turbolinks:load', initImageLightbox);
+  }
+})();
+</script>
