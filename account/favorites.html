@@ -562,12 +562,9 @@ permalink: /account/favorites.html
       const result = await window.favoritesService?.toggleReadStatus(postUrl);
       
       if (result?.success) {
-        // 重新加载收藏列表
+        // 重新加载收藏列表（会自动更新section标题和折叠按钮状态）
         await loadFavorites();
         showToast(result.is_read ? '已标记为已读' : '已标记为未读');
-        
-        // 更新折叠按钮状态
-        updateToggleReadSectionButton();
       } else {
         const errorMsg = result?.error || '操作失败';
         console.error('[favorites] 切换已读状态失败:', errorMsg);
