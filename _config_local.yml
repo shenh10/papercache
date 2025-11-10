@@ -55,5 +55,5 @@ exclude:
 # 使用脚本自动同步：./scripts/load-env-to-config.sh
 supabase:
   url: ""  # 从 .env.local 的 SUPABASE_URL 自动同步（运行 load-env-to-config.sh）
-  anon_key: ""  # 从 .env.local 的 SUPABASE_ANON_KEY 自动同步（运行 load-env-to-config.sh）
+  anon_key: ""
   enabled: true
