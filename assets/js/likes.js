@@ -15,7 +15,7 @@
   if (!supabase) {
     console.warn('Supabase客户端未初始化，等待初始化...');
     let waitCount = 0;
-    const maxWait = 50; // 增加等待次数到50次（5秒）
+    const maxWait = 50; // 等待5秒（50次检查）
     const checkInterval = setInterval(() => {
       waitCount++;
       const client = getSupabaseClient();
@@ -24,11 +24,34 @@
         initLikesService(client);
       } else if (waitCount >= maxWait) {
         clearInterval(checkInterval);
-        console.error('Supabase客户端初始化超时，点赞功能不可用');
-        // 即使超时，也尝试初始化（可能Supabase配置未启用）
-        if (window.siteConfig && window.siteConfig.supabase && window.siteConfig.supabase.url) {
-          console.warn('检测到Supabase配置，但客户端未初始化。请检查Supabase SDK是否正常加载。');
-        }
+        // 即使超时，也尝试延迟初始化（可能客户端稍后可用）
+        setTimeout(() => {
+          const delayedClient = getSupabaseClient();
+          if (delayedClient) {
+            initLikesService(delayedClient);
+          } else {
+            // 如果延迟初始化也失败，创建一个占位服务，避免页面报错
+            // 这样至少 window.likesService 会存在
+            if (!window.likesService) {
+              initLikesService(null); // 传入 null，让函数内部处理
+            }
+            // 继续在后台尝试获取客户端（最多再尝试30秒）
+            let retryCount = 0;
+            const maxRetries = 300; // 30秒
+            const retryInterval = setInterval(() => {
+              retryCount++;
+              const retryClient = getSupabaseClient();
+              if (retryClient) {
+                clearInterval(retryInterval);
+                console.log('[likes.js] Supabase 客户端已可用，重新初始化服务');
+                initLikesService(retryClient);
+              } else if (retryCount >= maxRetries) {
+                clearInterval(retryInterval);
+                console.warn('[likes.js] 后台重试超时，服务将保持为占位模式');
+              }
+            }, 100);
+          }
+        }, 2000);
       }
     }, 100);
     return;
@@ -37,6 +60,21 @@
   initLikesService(supabase);
   
   function initLikesService(supabase) {
+    // 如果 supabase 为 null，创建一个占位服务，避免页面报错
+    if (!supabase) {
+      console.warn('[likes.js] Supabase 客户端未初始化，创建占位服务');
+      window.likesService = {
+        likePost: async () => ({ success: false, error: 'Supabase 客户端未初始化' }),
+        unlikePost: async () => ({ success: false, error: 'Supabase 客户端未初始化' }),
+        toggleLike: async () => ({ success: false, error: 'Supabase 客户端未初始化' }),
+        isPostLiked: async () => false,
+        getPostLikeCount: async () => ({ success: false, error: 'Supabase 客户端未初始化', count: 0 }),
+        batchCheckLikes: async () => ({}),
+        batchGetLikeCounts: async () => ({})
+      };
+      return;
+    }
+
     // ============================================
     // URL规范化函数（统一使用）
     // ============================================
