@@ -296,8 +296,8 @@ layout: default
 
 /* 图片响应式样式 */
 .post-content img {
-  max-width: 100% !important; /* 不超过容器宽度，也不超过原始尺寸 */
-  width: auto !important; /* 不强制宽度，保持原始尺寸 */
+  max-width: 100% !important; /* 不超过容器宽度 */
+  width: 100% !important; /* 移动端占满宽度 */
   height: auto !important; /* 保持长宽比 */
   display: block;
   margin: 1.5rem auto;
@@ -316,8 +316,8 @@ layout: default
 
 /* SVG 响应式样式 */
 .post-content svg {
-  max-width: 100% !important; /* 不超过容器宽度，也不超过原始尺寸 */
-  width: auto !important; /* 不强制宽度，保持原始尺寸 */
+  max-width: 100% !important; /* 不超过容器宽度 */
+  width: 100% !important; /* 移动端占满宽度 */
   height: auto !important; /* 保持长宽比 */
   display: block;
   margin: 1.5rem auto;
@@ -358,34 +358,37 @@ layout: default
   box-sizing: border-box;
 }
 
-/* 移动端：小屏幕时图片可以占满宽度（但不超过原始尺寸） */
-@media (max-width: 767px) {
-  .post-content img,
-  .post-content svg {
-    max-width: 100% !important; /* 小屏幕可以占满容器，但不超过原始尺寸 */
-    width: auto !important;
-  }
-}
-
-/* 大屏幕：图片保持原始尺寸，不超过容器宽度 */
+/* 大屏幕：限制图片最大显示宽度，但不超过原始分辨率 */
 @media (min-width: 768px) {
   .post-content img,
   .post-content svg {
-    max-width: 100% !important; /* 不超过容器宽度，也不超过原始尺寸 */
-    width: auto !important; /* 保持原始尺寸，不放大 */
+    max-width: min(100%, 800px) !important; /* 最大800px，但不超过容器和原始尺寸 */
+    width: auto !important; /* 不强制宽度，让图片自然显示 */
     height: auto !important; /* 确保保持长宽比 */
   }
   
   .post-content figure {
-    max-width: 100% !important;
+    max-width: min(100%, 800px) !important;
     width: auto !important;
   }
   
   .post-content figure img,
   .post-content figure svg {
-    max-width: 100% !important; /* 不超过容器和原始尺寸 */
-    width: auto !important; /* 不强制宽度 */
+    max-width: 100% !important; /* figure内的图片不超过figure容器 */
+    width: auto !important;
     height: auto !important; /* 确保保持长宽比 */
+  }
+}
+
+/* 超大屏幕：进一步限制最大宽度 */
+@media (min-width: 1400px) {
+  .post-content img,
+  .post-content svg {
+    max-width: min(100%, 900px) !important; /* 超大屏幕最大900px */
+  }
+  
+  .post-content figure {
+    max-width: min(100%, 900px) !important;
   }
 }
 
