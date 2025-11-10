@@ -296,9 +296,9 @@ layout: default
 
 /* 图片响应式样式 */
 .post-content img {
-  max-width: 100% !important;
-  width: 100% !important;
-  height: auto !important;
+  max-width: 100% !important; /* 不超过容器宽度，也不超过原始尺寸 */
+  width: auto !important; /* 不强制宽度，保持原始尺寸 */
+  height: auto !important; /* 保持长宽比 */
   display: block;
   margin: 1.5rem auto;
   border-radius: 8px;
@@ -316,9 +316,9 @@ layout: default
 
 /* SVG 响应式样式 */
 .post-content svg {
-  max-width: 100% !important;
-  width: 100% !important;
-  height: auto !important;
+  max-width: 100% !important; /* 不超过容器宽度，也不超过原始尺寸 */
+  width: auto !important; /* 不强制宽度，保持原始尺寸 */
+  height: auto !important; /* 保持长宽比 */
   display: block;
   margin: 1.5rem auto;
   border-radius: 8px;
@@ -358,37 +358,34 @@ layout: default
   box-sizing: border-box;
 }
 
-/* 大屏幕最大宽度限制 */
+/* 移动端：小屏幕时图片可以占满宽度（但不超过原始尺寸） */
+@media (max-width: 767px) {
+  .post-content img,
+  .post-content svg {
+    max-width: 100% !important; /* 小屏幕可以占满容器，但不超过原始尺寸 */
+    width: auto !important;
+  }
+}
+
+/* 大屏幕：图片保持原始尺寸，不超过容器宽度 */
 @media (min-width: 768px) {
   .post-content img,
   .post-content svg {
-    max-width: min(100%, 900px) !important;
-    width: auto !important;
+    max-width: 100% !important; /* 不超过容器宽度，也不超过原始尺寸 */
+    width: auto !important; /* 保持原始尺寸，不放大 */
     height: auto !important; /* 确保保持长宽比 */
   }
   
   .post-content figure {
-    max-width: min(100%, 900px) !important;
+    max-width: 100% !important;
     width: auto !important;
   }
   
   .post-content figure img,
   .post-content figure svg {
-    max-width: 100% !important;
-    width: 100% !important;
+    max-width: 100% !important; /* 不超过容器和原始尺寸 */
+    width: auto !important; /* 不强制宽度 */
     height: auto !important; /* 确保保持长宽比 */
-  }
-}
-
-/* 超大屏幕（进一步限制最大宽度） */
-@media (min-width: 1600px) {
-  .post-content img,
-  .post-content svg {
-    max-width: min(100%, 1000px) !important;
-  }
-  
-  .post-content figure {
-    max-width: min(100%, 1000px) !important;
   }
 }
 
