@@ -306,6 +306,7 @@ layout: default
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   box-sizing: border-box;
+  object-fit: contain; /* 保持长宽比 */
 }
 
 .post-content img:hover {
@@ -325,6 +326,7 @@ layout: default
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   box-sizing: border-box;
+  object-fit: contain; /* 保持长宽比 */
 }
 
 .post-content svg:hover {
@@ -357,16 +359,36 @@ layout: default
 }
 
 /* 大屏幕最大宽度限制 */
-@media (min-width: 1200px) {
+@media (min-width: 768px) {
   .post-content img,
   .post-content svg {
     max-width: min(100%, 1200px) !important;
     width: auto !important;
+    height: auto !important; /* 确保保持长宽比 */
   }
   
   .post-content figure {
     max-width: min(100%, 1200px) !important;
     width: auto !important;
+  }
+  
+  .post-content figure img,
+  .post-content figure svg {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important; /* 确保保持长宽比 */
+  }
+}
+
+/* 超大屏幕（可选：进一步限制最大宽度） */
+@media (min-width: 1600px) {
+  .post-content img,
+  .post-content svg {
+    max-width: min(100%, 1400px) !important;
+  }
+  
+  .post-content figure {
+    max-width: min(100%, 1400px) !important;
   }
 }
 
