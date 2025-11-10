@@ -2,6 +2,66 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  
+  <!-- Open Graph / 微信分享卡片 meta 标签 -->
+  {%- if page.title -%}
+  {%- assign og_url = page.url | prepend: site.baseurl | prepend: site.url -%}
+  <meta property="og:type" content="article" />
+  <meta property="og:title" content="{{ page.title | escape }}" />
+  <meta property="og:url" content="{{ og_url }}" />
+  {%- if page.excerpt -%}
+  <meta property="og:description" content="{{ page.excerpt | strip_html | strip_newlines | truncate: 160 }}" />
+  {%- else -%}
+  <meta property="og:description" content="来自 PaperCache 的精彩内容" />
+  {%- endif -%}
+  {%- if page.image -%}
+  {%- assign og_image = page.image | prepend: site.baseurl | prepend: site.url -%}
+  <meta property="og:image" content="{{ og_image }}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  {%- else -%}
+  {%- assign og_image = '/assets/images/logo.svg' | prepend: site.baseurl | prepend: site.url -%}
+  <meta property="og:image" content="{{ og_image }}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  {%- endif -%}
+  <meta property="og:site_name" content="{{ site.title | default: 'PaperCache' }}" />
+  <!-- 微信专用标签 -->
+  <meta property="weixin:title" content="{{ page.title | escape }}" />
+  {%- if page.excerpt -%}
+  <meta property="weixin:description" content="{{ page.excerpt | strip_html | strip_newlines | truncate: 160 }}" />
+  {%- else -%}
+  <meta property="weixin:description" content="来自 PaperCache 的精彩内容" />
+  {%- endif -%}
+  {%- if page.image -%}
+  <meta property="weixin:image" content="{{ og_image }}" />
+  {%- else -%}
+  <meta property="weixin:image" content="{{ og_image }}" />
+  {%- endif -%}
+  {%- endif -%}
+
+  <!-- 微信专用 meta 标签 -->
+  {%- if page.title -%}
+  <meta name="description" content="{%- if page.excerpt -%}{{ page.excerpt | strip_html | strip_newlines | truncate: 160 }}{%- else -%}来自 PaperCache 的精彩内容{%- endif -%}" />
+  <!-- 微信分享优化 -->
+  <meta name="weixin:tag" content="论文分享,学术研究,PaperCache" />
+  <meta name="weixin:timeline_title" content="{{ page.title | escape }}" />
+  <meta name="weixin:appmessage_title" content="{{ page.title | escape }}" />
+  {%- if page.excerpt -%}
+  <meta name="weixin:timeline_desc" content="{{ page.excerpt | strip_html | strip_newlines | truncate: 160 }}" />
+  <meta name="weixin:appmessage_desc" content="{{ page.excerpt | strip_html | strip_newlines | truncate: 160 }}" />
+  {%- else -%}
+  <meta name="weixin:timeline_desc" content="来自 PaperCache 的精彩内容" />
+  <meta name="weixin:appmessage_desc" content="来自 PaperCache 的精彩内容" />
+  {%- endif -%}
+  {%- if page.image -%}
+  <meta name="weixin:timeline_img" content="{{ og_image }}" />
+  <meta name="weixin:appmessage_img" content="{{ og_image }}" />
+  {%- else -%}
+  <meta name="weixin:timeline_img" content="{{ og_image }}" />
+  <meta name="weixin:appmessage_img" content="{{ og_image }}" />
+  {%- endif -%}
+  {%- endif -%}
 
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="{{ '/assets/images/favicon.svg' | relative_url }}">
@@ -84,6 +144,91 @@
   {%- if page.layout == 'admin' or page.url contains '/admin/' -%}
   <!-- 管理后台分析服务 -->
   <script src="{{ '/assets/js/admin-analytics.js' | relative_url }}"></script>
+  {%- endif -%}
+  
+  <!-- 微信JS-SDK - 仅在微信浏览器中加载 -->
+  {%- if site.wechat and site.wechat.enabled and site.wechat.app_id -%}
+  <script src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+  <script>
+    // 微信JS-SDK配置（在微信浏览器中初始化）
+    (function() {
+      if (!/MicroMessenger/i.test(navigator.userAgent)) {
+        // 非微信浏览器，不初始化
+        return;
+      }
+      
+      // 从后端获取签名配置
+      const currentUrl = window.location.href.split('#')[0];
+      
+      // 优先使用 Supabase Edge Function（如果配置了 Supabase）
+      const supabaseUrl = window.siteConfig && window.siteConfig.supabase && window.siteConfig.supabase.url;
+      const apiBaseUrl = window.siteConfig && window.siteConfig.api_base_url || '{{ site.api_base_url }}' || '';
+      
+      let signApiUrl;
+      
+      if (supabaseUrl) {
+        // 使用 Supabase Edge Function
+        signApiUrl = `${supabaseUrl}/functions/v1/wechat-jssdk-sign`;
+      } else if (apiBaseUrl) {
+        // 使用其他后端 API（如 Vercel Functions）
+        signApiUrl = `${apiBaseUrl}/api/wechat/jssdk-sign?url=${encodeURIComponent(currentUrl)}`;
+      } else {
+        console.warn('未配置后端API地址，微信JS-SDK将无法使用');
+        window.wechatJSSDKReady = false;
+        return;
+      }
+      
+      // 获取微信JS-SDK签名
+      const fetchOptions = supabaseUrl 
+        ? {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${window.siteConfig.supabase.anon_key || ''}`
+            },
+            body: JSON.stringify({ url: currentUrl })
+          }
+        : {};
+      
+      fetch(signApiUrl, fetchOptions)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success && data.config) {
+            // 配置微信JS-SDK
+            wx.config({
+              debug: false, // 生产环境关闭调试
+              appId: data.config.appId || '{{ site.wechat.app_id }}',
+              timestamp: data.config.timestamp,
+              nonceStr: data.config.nonceStr,
+              signature: data.config.signature,
+              jsApiList: [
+                'updateAppMessageShareData',  // 分享给朋友
+                'updateTimelineShareData'      // 分享到朋友圈
+              ]
+            });
+            
+            // JS-SDK就绪后的回调
+            wx.ready(function() {
+              console.log('微信JS-SDK初始化成功');
+              window.wechatJSSDKReady = true;
+            });
+            
+            // JS-SDK错误处理
+            wx.error(function(res) {
+              console.warn('微信JS-SDK配置失败:', res);
+              window.wechatJSSDKReady = false;
+            });
+          } else {
+            console.warn('获取微信JS-SDK签名失败:', data.error || '未知错误');
+            window.wechatJSSDKReady = false;
+          }
+        })
+        .catch(error => {
+          console.warn('请求微信JS-SDK签名失败:', error);
+          window.wechatJSSDKReady = false;
+        });
+    })();
+  </script>
   {%- endif -%}
   
   <!-- 注入 baseurl 用于路径处理（所有页面都需要） -->

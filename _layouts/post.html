@@ -21,6 +21,31 @@ layout: default
           {%- endfor -%}
         </span>
       {%- endif -%}
+      {%- if site.supabase and site.supabase.enabled -%}
+        <span class="post-meta-separator">•</span>
+        <span class="post-actions-inline">
+          <button class="card-like-btn post-meta-action-btn"
+                  data-post-url="{{ page.url | relative_url }}"
+                  onclick="event.stopPropagation(); handleCardLikeClick('{{ page.url | relative_url }}', this);"
+                  title="点赞这篇文章">
+            <span class="like-icon">🤍</span>
+            <span class="like-count" data-post-url="{{ page.url | relative_url }}">0</span>
+          </button>
+          <button class="card-favorite-btn post-meta-action-btn"
+                  data-post-url="{{ page.url | relative_url }}"
+                  onclick="event.stopPropagation(); handleCardFavoriteClick('{{ page.url | relative_url }}', this);"
+                  title="收藏这篇文章">
+            <span class="favorite-icon">☆</span>
+            <span class="favorite-count" data-post-url="{{ page.url | relative_url }}">0</span>
+          </button>
+        </span>
+      {%- endif -%}
+      {%- if page.share != false -%}
+        <span class="post-meta-separator">•</span>
+        <span class="post-share-inline">
+          {%- include share-button.html -%}
+        </span>
+      {%- endif -%}
     </p>
     </header>
 
@@ -31,6 +56,13 @@ layout: default
   <a class="u-url" href="{{ page.url | relative_url }}" hidden></a>
 </article>
 
+<!-- 返回顶部按钮 -->
+<button class="back-to-top" id="back-to-top" title="返回顶部">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M12 19V5M5 12l7-7 7 7"/>
+  </svg>
+</button>
+
 <style>
 .post-header {
   margin-bottom: 2rem;
@@ -39,11 +71,198 @@ layout: default
   text-align: center;
 }
 
+.post-meta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.post-meta-separator {
+  color: #718096;
+  margin: 0 0.25rem;
+}
+
+.post-share-inline {
+  display: inline-flex;
+  align-items: center;
+}
+
+.post-share-inline .share-btn {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  color: #718096;
+  box-shadow: none;
+  border: 1px solid transparent;
+}
+
+.post-share-inline .share-btn:hover {
+  background: #f3f4f6;
+  color: #3b82f6;
+  border-color: #e5e7eb;
+  transform: none;
+  box-shadow: none;
+}
+
+.post-share-inline .share-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.post-share-inline .share-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.post-share-inline .share-text {
+  display: none;
+}
+
+.post-actions-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.post-meta-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+  color: #718096;
+}
+
+.post-meta-action-btn:hover {
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+  transform: none;
+  box-shadow: none;
+}
+
+.post-meta-action-btn .like-icon,
+.post-meta-action-btn .favorite-icon {
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.post-meta-action-btn:hover .like-icon,
+.post-meta-action-btn:hover .favorite-icon {
+  transform: scale(1.1);
+}
+
+.post-meta-action-btn.liked .like-icon {
+  color: #ef4444;
+}
+
+.post-meta-action-btn.favorited .favorite-icon {
+  color: #fbbf24;
+}
+
+.post-meta-action-btn .like-count,
+.post-meta-action-btn .favorite-count {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-left: 0.1rem;
+}
+
+.post-meta-action-btn.liked .like-count {
+  color: #ef4444;
+}
+
+.post-meta-action-btn.favorited .favorite-count {
+  color: #f59e0b;
+}
+
+.post-meta-action-btn.loading {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.post-meta-action-btn.clicked {
+  transform: scale(1.05);
+}
+
 .post-actions {
-  margin-top: 1rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e2e8f0;
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* 返回顶部按钮 */
+.back-to-top {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+  transition: all 0.3s ease;
+  z-index: 999;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.back-to-top.show {
+  display: flex;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.back-to-top:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.5);
+}
+
+.back-to-top:active {
+  transform: translateY(-1px);
+}
+
+.back-to-top svg {
+  width: 24px;
+  height: 24px;
+}
+
+@media (max-width: 768px) {
+  .back-to-top {
+    bottom: 20px;
+    right: 20px;
+    width: 45px;
+    height: 45px;
+  }
+  
+  .back-to-top svg {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .post-meta {
+    gap: 0.25rem;
+  }
+  
+  .post-share-inline .share-btn {
+    padding: 0.2rem 0.4rem;
+  }
 }
 
 .post-title {
@@ -55,12 +274,6 @@ layout: default
   text-align: center;
 }
 
-.post-meta {
-  color: #718096;
-  font-size: 0.95rem;
-  margin: 0;
-  text-align: center;
-}
 
 .post-categories {
   margin-left: 0.5rem;
@@ -431,6 +644,361 @@ layout: default
   // 支持 Turbolinks
   if (typeof Turbolinks !== 'undefined') {
     document.addEventListener('turbolinks:load', initImageLightbox);
+  }
+})();
+</script>
+
+<script>
+// 返回顶部按钮功能
+(function() {
+  const backToTopBtn = document.getElementById('back-to-top');
+  if (!backToTopBtn) return;
+  
+  // 显示/隐藏按钮
+  function toggleBackToTop() {
+    if (window.pageYOffset > 300) {
+      backToTopBtn.classList.add('show');
+    } else {
+      backToTopBtn.classList.remove('show');
+    }
+  }
+  
+  // 返回顶部
+  backToTopBtn.addEventListener('click', function() {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  });
+  
+  // 监听滚动
+  window.addEventListener('scroll', toggleBackToTop);
+  toggleBackToTop(); // 初始检查
+  
+  // 支持 Turbolinks
+  if (typeof Turbolinks !== 'undefined') {
+    document.addEventListener('turbolinks:load', function() {
+      toggleBackToTop();
+    });
+  }
+})();
+</script>
+
+<script>
+// 定义收藏和点赞按钮的点击处理函数（与卡片保持一致）
+// 这些函数在 search-first.js 中定义，但 post 页面不加载该文件，所以在这里也定义一份
+if (typeof window.handleCardFavoriteClick === 'undefined') {
+  window.handleCardFavoriteClick = async function(postUrl, button) {
+    if (!window.favoritesService) {
+      alert('收藏功能不可用，请刷新页面重试');
+      return;
+    }
+
+    // 检查用户登录状态
+    const isLoggedIn = window.SimpleAuth && window.SimpleAuth.isLoggedIn();
+    
+    if (!isLoggedIn) {
+      // 未登录，弹出登录窗口
+      if (window.openAuthModal) {
+        window.openAuthModal('login');
+      } else {
+        alert('请先登录后再收藏文章');
+      }
+      return;
+    }
+
+    // 已登录，切换收藏状态
+    const icon = button.querySelector('.favorite-icon');
+    if (!icon) {
+      console.error('Favorite icon not found');
+      return;
+    }
+
+    // 显示加载状态
+    button.disabled = true;
+
+    try {
+      const result = await window.favoritesService.toggleFavorite(postUrl);
+      
+      // 记录收藏活动
+      if (window.AnalyticsService && result.success) {
+        window.AnalyticsService.logFavorite(postUrl, result.favorited);
+      }
+
+      if (result.success) {
+        // 更新UI
+        if (result.favorited) {
+          button.classList.add('favorited');
+          icon.textContent = '★';
+          icon.style.color = '#fbbf24';
+        } else {
+          button.classList.remove('favorited');
+          icon.textContent = '☆';
+          icon.style.color = '#9ca3af';
+        }
+        
+        // 更新收藏数
+        const countEl = button.querySelector('.favorite-count');
+        if (countEl && window.favoritesService) {
+          const countResult = await window.favoritesService.getPostFavoriteCount(postUrl);
+          if (countResult.success) {
+            countEl.textContent = countResult.count > 0 ? countResult.count : '0';
+          }
+        }
+        
+        // 显示收藏成功提示
+        const message = result.favorited ? '已添加到收藏' : '已取消收藏';
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px); background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%); color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; font-size: 14px; font-weight: 500; opacity: 0; transition: all 0.3s ease; pointer-events: none; white-space: nowrap;';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+          toast.style.opacity = '1';
+          toast.style.transform = 'translateX(-50%) translateY(0)';
+        }, 10);
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateX(-50%) translateY(-20px)';
+          setTimeout(() => {
+            if (toast.parentNode) {
+              toast.parentNode.removeChild(toast);
+            }
+          }, 300);
+        }, 2000);
+
+        // 添加点击动画
+        button.classList.add('clicked');
+        setTimeout(() => {
+          button.classList.remove('clicked');
+        }, 600);
+      } else {
+        if (result.error === '请先登录') {
+          // 如果登录状态检查失败，弹出登录窗口
+          if (window.openAuthModal) {
+            window.openAuthModal('login');
+          } else {
+            alert('请先登录后再收藏文章');
+          }
+        } else {
+          alert('操作失败：' + (result.error || '未知错误'));
+        }
+      }
+    } catch (error) {
+      console.error('收藏操作失败:', error);
+      alert('收藏失败，请重试');
+    } finally {
+      button.disabled = false;
+    }
+  };
+}
+
+if (typeof window.handleCardLikeClick === 'undefined') {
+  window.handleCardLikeClick = async function(postUrl, button) {
+    if (!window.likesService) {
+      alert('点赞功能不可用，请刷新页面重试');
+      return;
+    }
+
+    // 检查用户登录状态
+    const isLoggedIn = window.SimpleAuth && window.SimpleAuth.isLoggedIn();
+    
+    if (!isLoggedIn) {
+      // 未登录，弹出登录窗口
+      if (window.openAuthModal) {
+        window.openAuthModal('login');
+      } else {
+        alert('请先登录后再点赞文章');
+      }
+      return;
+    }
+
+    // 已登录，切换点赞状态
+    const icon = button.querySelector('.like-icon');
+    if (!icon) {
+      console.error('Like icon not found');
+      return;
+    }
+
+    // 显示加载状态
+    button.disabled = true;
+
+    try {
+      const result = await window.likesService.toggleLike(postUrl);
+      
+      // 记录点赞活动
+      if (window.AnalyticsService && result.success) {
+        window.AnalyticsService.logLike(postUrl, result.liked);
+      }
+
+      if (result.success) {
+        // 更新UI
+        if (result.liked) {
+          button.classList.add('liked');
+          icon.textContent = '❤️';
+        } else {
+          button.classList.remove('liked');
+          icon.textContent = '🤍';
+        }
+        
+        // 更新点赞数
+        const countEl = button.querySelector('.like-count');
+        if (countEl && window.likesService) {
+          const countResult = await window.likesService.getPostLikeCount(postUrl);
+          if (countResult.success) {
+            countEl.textContent = countResult.count > 0 ? countResult.count : '0';
+          }
+        }
+        
+        // 显示点赞成功提示
+        const message = result.liked ? '已点赞' : '已取消点赞';
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-20px); background: linear-gradient(135deg, #ef4444 0%, #f97316 100%); color: white; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000; font-size: 14px; font-weight: 500; opacity: 0; transition: all 0.3s ease; pointer-events: none; white-space: nowrap;';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+          toast.style.opacity = '1';
+          toast.style.transform = 'translateX(-50%) translateY(0)';
+        }, 10);
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateX(-50%) translateY(-20px)';
+          setTimeout(() => {
+            if (toast.parentNode) {
+              toast.parentNode.removeChild(toast);
+            }
+          }, 300);
+        }, 2000);
+
+        // 添加点击动画
+        button.classList.add('clicked');
+        setTimeout(() => {
+          button.classList.remove('clicked');
+        }, 600);
+      } else {
+        if (result.error === '请先登录') {
+          // 如果登录状态检查失败，弹出登录窗口
+          if (window.openAuthModal) {
+            window.openAuthModal('login');
+          } else {
+            alert('请先登录后再点赞文章');
+          }
+        } else {
+          alert('操作失败：' + (result.error || '未知错误'));
+        }
+      }
+    } catch (error) {
+      console.error('点赞操作失败:', error);
+      alert('点赞失败，请重试');
+    } finally {
+      button.disabled = false;
+    }
+  };
+}
+
+// 初始化论文页面的收藏和点赞按钮状态
+(function() {
+  function initPostActionButtons() {
+    // 检查是否有收藏和点赞按钮
+    const favoriteBtn = document.querySelector('.post-actions-inline .card-favorite-btn');
+    const likeBtn = document.querySelector('.post-actions-inline .card-like-btn');
+    
+    if (!favoriteBtn && !likeBtn) return;
+    
+    const postUrl = favoriteBtn ? favoriteBtn.getAttribute('data-post-url') : 
+                    likeBtn ? likeBtn.getAttribute('data-post-url') : null;
+    
+    if (!postUrl) return;
+    
+    // 初始化收藏按钮状态
+    if (favoriteBtn && window.favoritesService) {
+      (async function() {
+        try {
+          const isFavorited = await window.favoritesService.isPostFavorited(postUrl);
+          const favoriteIcon = favoriteBtn.querySelector('.favorite-icon');
+          if (favoriteIcon) {
+            if (isFavorited) {
+              favoriteBtn.classList.add('favorited');
+              favoriteIcon.textContent = '★';
+              favoriteIcon.style.color = '#fbbf24';
+            } else {
+              favoriteBtn.classList.remove('favorited');
+              favoriteIcon.textContent = '☆';
+              favoriteIcon.style.color = '#9ca3af';
+            }
+          }
+          
+          // 获取收藏数
+          const countEl = favoriteBtn.querySelector('.favorite-count');
+          if (countEl) {
+            const countResult = await window.favoritesService.getPostFavoriteCount(postUrl);
+            if (countResult.success) {
+              countEl.textContent = countResult.count > 0 ? countResult.count : '0';
+            }
+          }
+        } catch (error) {
+          console.error('初始化收藏按钮状态失败:', error);
+        }
+      })();
+    }
+    
+    // 初始化点赞按钮状态
+    if (likeBtn && window.likesService) {
+      (async function() {
+        try {
+          const isLiked = await window.likesService.isPostLiked(postUrl);
+          const likeIcon = likeBtn.querySelector('.like-icon');
+          if (likeIcon) {
+            if (isLiked) {
+              likeBtn.classList.add('liked');
+              likeIcon.textContent = '❤️';
+            } else {
+              likeBtn.classList.remove('liked');
+              likeIcon.textContent = '🤍';
+            }
+          }
+          
+          // 获取点赞数
+          const countEl = likeBtn.querySelector('.like-count');
+          if (countEl) {
+            const countResult = await window.likesService.getPostLikeCount(postUrl);
+            if (countResult.success) {
+              countEl.textContent = countResult.count > 0 ? countResult.count : '0';
+            }
+          }
+        } catch (error) {
+          console.error('初始化点赞按钮状态失败:', error);
+        }
+      })();
+    }
+  }
+  
+  // 页面加载完成后初始化
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPostActionButtons);
+  } else {
+    initPostActionButtons();
+  }
+  
+  // 支持 Turbolinks
+  if (typeof Turbolinks !== 'undefined') {
+    document.addEventListener('turbolinks:load', initPostActionButtons);
+  }
+  
+  // 等待服务加载完成后再初始化（延迟一点确保服务已就绪）
+  if (window.favoritesService && window.likesService) {
+    setTimeout(initPostActionButtons, 500);
+  } else {
+    // 如果服务还没加载，等待一下再试
+    let retries = 0;
+    const checkServices = setInterval(function() {
+      if ((window.favoritesService || !document.querySelector('.card-favorite-btn')) && 
+          (window.likesService || !document.querySelector('.card-like-btn'))) {
+        clearInterval(checkServices);
+        initPostActionButtons();
+      } else if (retries++ > 20) {
+        clearInterval(checkServices);
+      }
+    }, 200);
   }
 })();
 </script>
