@@ -346,16 +346,28 @@ layout: default
 .post-content figure img,
 .post-content figure svg {
   max-width: 100% !important;
-  width: 100% !important;
+  width: auto !important; /* 移动端也保持原始尺寸，不强制拉伸 */
   height: auto !important;
 }
 
 /* 图片容器响应式 */
-.post-content .image-figure,
+.post-content .image-figure {
+  max-width: 100% !important;
+  width: auto !important; /* 不强制宽度 */
+  box-sizing: border-box;
+  display: table; /* 保持居中 */
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .post-content .figure-image {
   max-width: 100% !important;
-  width: 100% !important;
+  width: auto !important; /* 不强制宽度，保持原始尺寸 */
+  height: auto !important; /* 保持长宽比 */
   box-sizing: border-box;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* 大屏幕：限制图片最大显示宽度，但不超过原始分辨率 */
@@ -367,15 +379,17 @@ layout: default
     height: auto !important; /* 确保保持长宽比 */
   }
   
-  .post-content figure {
+  .post-content figure,
+  .post-content .image-figure {
     max-width: min(100%, 800px) !important;
     width: auto !important;
   }
   
   .post-content figure img,
-  .post-content figure svg {
-    max-width: 100% !important; /* figure内的图片不超过figure容器 */
-    width: auto !important;
+  .post-content figure svg,
+  .post-content .figure-image {
+    max-width: min(100%, 800px) !important; /* 限制最大宽度 */
+    width: auto !important; /* 不强制宽度，保持原始尺寸 */
     height: auto !important; /* 确保保持长宽比 */
   }
 }
@@ -387,8 +401,15 @@ layout: default
     max-width: min(100%, 900px) !important; /* 超大屏幕最大900px */
   }
   
-  .post-content figure {
+  .post-content figure,
+  .post-content .image-figure {
     max-width: min(100%, 900px) !important;
+  }
+  
+  .post-content figure img,
+  .post-content figure svg,
+  .post-content .figure-image {
+    max-width: min(100%, 900px) !important; /* 超大屏幕最大900px */
   }
 }
 
@@ -553,21 +574,23 @@ layout: default
   .post-content svg {
     margin: 1rem auto;
     border-radius: 6px;
-    max-width: 100% !important;
-    width: 100% !important;
+    max-width: 100% !important; /* 不超过容器宽度和原始尺寸 */
+    width: auto !important; /* 不强制宽度，保持原始尺寸 */
     height: auto !important;
   }
   
-  .post-content figure {
+  .post-content figure,
+  .post-content .image-figure {
     max-width: 100% !important;
-    width: 100% !important;
+    width: auto !important; /* 不强制宽度 */
     margin: 1rem auto;
   }
   
   .post-content figure img,
-  .post-content figure svg {
-    max-width: 100% !important;
-    width: 100% !important;
+  .post-content figure svg,
+  .post-content .figure-image {
+    max-width: 100% !important; /* 不超过容器宽度和原始尺寸 */
+    width: auto !important; /* 不强制宽度，保持原始尺寸 */
     height: auto !important;
   }
   
