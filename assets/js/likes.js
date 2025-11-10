@@ -15,15 +15,20 @@
   if (!supabase) {
     console.warn('Supabase客户端未初始化，等待初始化...');
     let waitCount = 0;
+    const maxWait = 50; // 增加等待次数到50次（5秒）
     const checkInterval = setInterval(() => {
       waitCount++;
       const client = getSupabaseClient();
       if (client) {
         clearInterval(checkInterval);
         initLikesService(client);
-      } else if (waitCount > 5) {
+      } else if (waitCount >= maxWait) {
         clearInterval(checkInterval);
         console.error('Supabase客户端初始化超时，点赞功能不可用');
+        // 即使超时，也尝试初始化（可能Supabase配置未启用）
+        if (window.siteConfig && window.siteConfig.supabase && window.siteConfig.supabase.url) {
+          console.warn('检测到Supabase配置，但客户端未初始化。请检查Supabase SDK是否正常加载。');
+        }
       }
     }, 100);
     return;

@@ -126,10 +126,10 @@
   <script src="{{ '/assets/js/supabase-client.js' | relative_url }}" defer></script>
   <!-- 加载简化的认证系统（延迟加载，等待Supabase客户端就绪） -->
   <script src="{{ '/assets/js/simple-auth.js' | relative_url }}" defer></script>
-  <!-- 加载收藏功能 -->
-  <script src="{{ '/assets/js/favorites.js' | relative_url }}"></script>
-  <!-- 加载点赞功能 -->
-  <script src="{{ '/assets/js/likes.js' | relative_url }}"></script>
+  <!-- 加载收藏功能（延迟加载，等待Supabase客户端就绪） -->
+  <script src="{{ '/assets/js/favorites.js' | relative_url }}" defer></script>
+  <!-- 加载点赞功能（延迟加载，等待Supabase客户端就绪） -->
+  <script src="{{ '/assets/js/likes.js' | relative_url }}" defer></script>
   <!-- 加载Supabase搜索服务 -->
   <script src="{{ '/assets/js/supabase-search-service.js' | relative_url }}"></script>
   <script src="{{ '/assets/js/click-stats.js' | relative_url }}"></script>
