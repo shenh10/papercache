@@ -1,0 +1,615 @@
+<!-- 分享按钮组件 -->
+{%- if page.share != false -%}
+{%- assign page_slug = page.url | slugify -%}
+<button class="share-btn"
+        id="share-btn-{{ page_slug }}"
+        data-post-url="{{ page.url | relative_url }}"
+        data-post-title="{{ page.title | escape }}"
+        data-page-slug="{{ page_slug }}"
+        onclick="handleShareClick('{{ page.url | relative_url }}', '{{ page.title | escape }}', '{{ page_slug }}')"
+        title="分享这篇文章">
+  <span class="share-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+      <polyline points="16 6 12 2 8 6"></polyline>
+      <line x1="12" y1="2" x2="12" y2="15"></line>
+    </svg>
+  </span>
+</button>
+
+<script>
+(function() {
+  'use strict';
+
+  // 检测是否为移动设备
+  function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
+
+  // 检测是否为微信浏览器
+  function isWeChatBrowser() {
+    return /MicroMessenger/i.test(navigator.userAgent);
+  }
+
+  // 生成与 Jekyll slugify 一致的 slug
+  function generateSlug(str) {
+    let slug = str.replace(/^\//, '').replace(/\.html$/, '');
+    slug = slug.toLowerCase();
+    slug = slug.replace(/[^a-z0-9]+/g, '-');
+    slug = slug.replace(/^-+|-+$/g, '');
+    return slug;
+  }
+
+  // 获取完整URL
+  function getFullUrl(relativeUrl) {
+    if (relativeUrl.startsWith('http://') || relativeUrl.startsWith('https://')) {
+      return relativeUrl;
+    }
+    const origin = window.location.origin;
+    const baseUrl = origin + (relativeUrl.startsWith('/') ? '' : '/') + relativeUrl;
+    return baseUrl;
+  }
+
+  // 移动端尝试分享到微信（朋友圈或好友）
+  function tryOpenWeChatShare(postUrl, postTitle, shareType) {
+    const fullUrl = getFullUrl(postUrl);
+    const shareText = `${postTitle}\n${fullUrl}`;
+    
+    // 先复制链接到剪贴板
+    copyToClipboard(shareText).then(() => {
+      showToast('链接已复制');
+    }).catch(() => {});
+    
+    // 优先使用系统分享 API（用户可以选择微信）
+    if (navigator.share) {
+      navigator.share({
+        title: postTitle,
+        text: shareType === 'moments' ? `分享到朋友圈：${postTitle}` : `分享给好友：${postTitle}`,
+        url: fullUrl
+      }).then(() => {
+        showToast('分享成功');
+      }).catch((err) => {
+        if (err.name !== 'AbortError') {
+          // 用户取消分享不显示错误，其他错误则尝试直接打开微信
+          attemptOpenWeChat();
+        }
+      });
+    } else {
+      // 不支持系统分享，直接尝试打开微信
+      attemptOpenWeChat();
+    }
+  }
+
+  // 尝试打开微信app
+  function attemptOpenWeChat() {
+    let opened = false;
+    let startTime = Date.now();
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isIOS = /iphone|ipad|ipod/.test(userAgent);
+    const isAndroid = /android/.test(userAgent);
+
+    // 监听页面可见性变化
+    const visibilityChange = () => {
+      if (document.hidden) {
+        opened = true;
+        document.removeEventListener('visibilitychange', visibilityChange);
+      }
+    };
+    document.addEventListener('visibilitychange', visibilityChange);
+
+    showToast('正在打开微信...');
+
+    // iOS 和 Android 使用不同的方法
+    if (isIOS) {
+      // iOS: 使用 location.href 或 window.open
+      try {
+        // 方法1：直接跳转
+        window.location.href = 'weixin://';
+        opened = true;
+      } catch (e) {
+        try {
+          // 方法2：使用 window.open
+          window.open('weixin://', '_blank');
+          opened = true;
+        } catch (e2) {
+          // 方法3：使用 iframe
+          const iframe = document.createElement('iframe');
+          iframe.style.display = 'none';
+          iframe.style.width = '0';
+          iframe.style.height = '0';
+          iframe.src = 'weixin://';
+          document.body.appendChild(iframe);
+          opened = true;
+          
+          setTimeout(() => {
+            if (iframe.parentNode) {
+              document.body.removeChild(iframe);
+            }
+          }, 2000);
+        }
+      }
+    } else if (isAndroid) {
+      // Android: 使用 intent
+      try {
+        // 方法1：使用 intent URL
+        const intentUrl = 'intent://platformapi/startapp?saId=100000007#Intent;scheme=weixin;end';
+        window.location.href = intentUrl;
+        opened = true;
+      } catch (e) {
+        try {
+          // 方法2：直接跳转
+          window.location.href = 'weixin://';
+          opened = true;
+        } catch (e2) {
+          try {
+            // 方法3：使用 iframe
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.style.width = '0';
+            iframe.style.height = '0';
+            iframe.src = 'weixin://';
+            document.body.appendChild(iframe);
+            opened = true;
+            
+            setTimeout(() => {
+              if (iframe.parentNode) {
+                document.body.removeChild(iframe);
+              }
+            }, 2000);
+          } catch (e3) {
+            opened = false;
+          }
+        }
+      }
+    } else {
+      // 其他平台：尝试通用方法
+      try {
+        window.location.href = 'weixin://';
+        opened = true;
+      } catch (e) {
+        opened = false;
+      }
+    }
+
+    // 超时检测：如果2秒后页面仍然可见，说明可能跳转失败
+    setTimeout(() => {
+      document.removeEventListener('visibilitychange', visibilityChange);
+      
+      if (!opened || (!document.hidden && Date.now() - startTime > 2000)) {
+        // 跳转失败，显示二维码或提示
+        showToast('链接已复制，请手动打开微信分享');
+        // 可选：显示二维码弹窗
+        // showQRCodeShareModal(postUrl, postTitle, shareType);
+      } else if (opened) {
+        // 成功跳转
+        showToast('链接已复制，请在微信中粘贴分享');
+      }
+    }, 2000);
+  }
+
+  // 显示二维码分享弹窗（桌面端）
+  function showQRCodeShareModal(postUrl, postTitle, shareType) {
+    const fullUrl = getFullUrl(postUrl);
+    const isMoments = shareType === 'moments';
+    const title = isMoments ? '分享到微信朋友圈' : '分享给微信好友';
+
+    // 生成二维码
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(fullUrl)}`;
+
+    // 创建弹窗
+    const modal = document.createElement('div');
+    modal.id = 'qrcode-share-modal';
+    modal.className = 'share-panel';
+    modal.innerHTML = `
+      <div class="share-panel-overlay" onclick="this.parentElement.remove()"></div>
+      <div class="share-panel-content">
+        <div style="text-align: center; padding: 1rem;">
+          <h3 style="margin: 0 0 1rem 0; font-size: 1.2rem;">${title}</h3>
+          <p style="margin: 0 0 1rem 0; color: #666; font-size: 0.9rem;">
+            📱 使用微信扫描二维码，然后在微信中${isMoments ? '分享到朋友圈' : '发送给好友'}
+          </p>
+          <div style="display: flex; justify-content: center; margin: 1.5rem 0;">
+            <img src="${qrCodeUrl}" alt="分享二维码" style="width: 250px; height: 250px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" />
+          </div>
+          <div style="margin-top: 1rem;">
+            <p style="margin: 0 0 0.5rem 0; font-size: 0.85rem; color: #666;"><strong>或复制链接：</strong></p>
+            <div style="background: #f5f5f5; padding: 0.75rem; border-radius: 6px; font-size: 0.8rem; word-break: break-all; margin-bottom: 0.75rem;">${fullUrl}</div>
+            <button onclick="copyToClipboard('${fullUrl}').then(() => showToast('链接已复制')).catch(() => showToast('复制失败'));" 
+                    style="width: 100%; padding: 0.75rem; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 0.95rem; cursor: pointer;">
+              复制链接
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    setTimeout(() => {
+      modal.classList.add('show');
+    }, 10);
+  }
+
+  // 复制到剪贴板
+  function copyToClipboard(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(text);
+    } else {
+      return new Promise((resolve, reject) => {
+        const input = document.createElement('input');
+        input.value = text;
+        input.style.position = 'fixed';
+        input.style.opacity = '0';
+        input.style.left = '-9999px';
+        document.body.appendChild(input);
+        input.select();
+
+        try {
+          document.execCommand('copy');
+          resolve();
+        } catch (err) {
+          reject(err);
+        }
+
+        document.body.removeChild(input);
+      });
+    }
+  }
+
+  // 显示提示
+  function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'share-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+      toast.classList.add('show');
+    }, 10);
+
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    }, 2000);
+  }
+
+  // 分享到微信朋友圈
+  window.shareToWeChatMoments = function(postUrl, postTitle) {
+    const fullUrl = getFullUrl(postUrl);
+
+    if (isWeChatBrowser()) {
+      // 在微信浏览器中，如果有JS-SDK就使用，否则提示用户
+      if (window.wx && window.wx.updateTimelineShareData) {
+        // 确保JS-SDK已就绪
+        const shareData = {
+          title: postTitle,
+          link: fullUrl,
+          imgUrl: window.location.origin + (window.PC_BASEURL || '') + '/assets/images/logo.svg',
+          success: function() {
+            showToast('已分享到朋友圈');
+            closeSharePanel(generateSlug(postUrl));
+          },
+          cancel: function() {
+            showToast('取消分享');
+          },
+          fail: function(res) {
+            console.warn('分享失败:', res);
+            showToast('分享失败，请使用右上角菜单分享');
+          }
+        };
+        
+        // 如果JS-SDK已就绪，直接调用；否则等待就绪
+        if (window.wechatJSSDKReady) {
+          window.wx.updateTimelineShareData(shareData);
+        } else {
+          window.wx.ready(function() {
+            window.wx.updateTimelineShareData(shareData);
+          });
+        }
+      } else {
+        showToast('请点击右上角菜单选择"分享到朋友圈"');
+      }
+    } else if (isMobileDevice()) {
+      // 移动端非微信浏览器：尝试跳转到微信分享页面
+      tryOpenWeChatShare(postUrl, postTitle, 'moments');
+    } else {
+      // 桌面端：显示二维码
+      showQRCodeShareModal(postUrl, postTitle, 'moments');
+    }
+  };
+
+  // 分享给微信好友
+  window.shareToWeChatFriend = function(postUrl, postTitle) {
+    const fullUrl = getFullUrl(postUrl);
+
+    if (isWeChatBrowser()) {
+      // 在微信浏览器中，如果有JS-SDK就使用，否则提示用户
+      if (window.wx && window.wx.updateAppMessageShareData) {
+        // 确保JS-SDK已就绪
+        const shareData = {
+          title: postTitle,
+          desc: '来自 PaperCache 的精彩内容',
+          link: fullUrl,
+          imgUrl: window.location.origin + (window.PC_BASEURL || '') + '/assets/images/logo.svg',
+          success: function() {
+            showToast('已发送给好友');
+            closeSharePanel(generateSlug(postUrl));
+          },
+          cancel: function() {
+            showToast('取消分享');
+          },
+          fail: function(res) {
+            console.warn('分享失败:', res);
+            showToast('分享失败，请使用右上角菜单分享');
+          }
+        };
+        
+        // 如果JS-SDK已就绪，直接调用；否则等待就绪
+        if (window.wechatJSSDKReady) {
+          window.wx.updateAppMessageShareData(shareData);
+        } else {
+          window.wx.ready(function() {
+            window.wx.updateAppMessageShareData(shareData);
+          });
+        }
+      } else {
+        showToast('请点击右上角菜单选择"发送给朋友"');
+      }
+    } else if (isMobileDevice()) {
+      // 移动端非微信浏览器：尝试跳转到微信分享页面
+      tryOpenWeChatShare(postUrl, postTitle, 'friend');
+    } else {
+      // 桌面端：显示二维码
+      showQRCodeShareModal(postUrl, postTitle, 'friend');
+    }
+  };
+
+  // 复制链接
+  window.copyShareLink = function(postUrl, postTitle) {
+    const fullUrl = getFullUrl(postUrl);
+    const shareText = `${postTitle}\n${fullUrl}`;
+
+    copyToClipboard(shareText).then(() => {
+      showToast('链接已复制到剪贴板');
+    }).catch(() => {
+      showToast('复制失败，请手动复制');
+    });
+  };
+
+  // 关闭分享面板
+  window.closeSharePanel = function(slug) {
+    const actualSlug = slug || generateSlug(window.location.pathname);
+    const panel = document.getElementById('share-panel');
+    if (panel) {
+      panel.classList.remove('show');
+      setTimeout(() => {
+        if (panel.parentNode) {
+          panel.parentNode.removeChild(panel);
+        }
+        document.body.style.overflow = '';
+      }, 300);
+    }
+  };
+
+  // 处理分享按钮点击
+  window.handleShareClick = function(postUrl, postTitle, pageSlug) {
+    // 创建简单的分享面板
+    const existingPanel = document.getElementById('share-panel');
+    if (existingPanel) {
+      existingPanel.remove();
+      return;
+    }
+
+    const panel = document.createElement('div');
+    panel.id = 'share-panel';
+    panel.className = 'share-panel';
+    panel.innerHTML = `
+      <div class="share-panel-overlay" onclick="this.parentElement.remove()"></div>
+      <div class="share-panel-content">
+        <div class="share-options">
+          <button class="share-option" onclick="shareToWeChatMoments('${postUrl}', '${postTitle}'); this.parentElement.parentElement.parentElement.remove();">
+            <span class="share-option-icon">
+              <img src="${window.location.origin}${window.PC_BASEURL || ''}/assets/images/wechat_moments_logo.png" alt="朋友圈" />
+            </span>
+            <span class="share-option-text">朋友圈</span>
+          </button>
+          <button class="share-option" onclick="shareToWeChatFriend('${postUrl}', '${postTitle}'); this.parentElement.parentElement.parentElement.remove();">
+            <span class="share-option-icon">
+              <img src="${window.location.origin}${window.PC_BASEURL || ''}/assets/images/wechat_logo.png" alt="微信好友" />
+            </span>
+            <span class="share-option-text">微信好友</span>
+          </button>
+          <button class="share-option" onclick="copyShareLink('${postUrl}', '${postTitle}'); this.parentElement.parentElement.parentElement.remove();">
+            <span class="share-option-icon">📋</span>
+            <span class="share-option-text">复制链接</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(panel);
+    setTimeout(() => {
+      panel.classList.add('show');
+    }, 10);
+  };
+})();
+</script>
+
+<style>
+/* 分享按钮样式 */
+.share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.share-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.share-btn:active {
+  transform: translateY(0);
+}
+
+.share-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.share-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+}
+
+/* 分享面板样式 */
+.share-panel {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.share-panel.show {
+  display: block;
+  opacity: 1;
+}
+
+.share-panel-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.share-panel-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: white;
+  border-radius: 20px 20px 0 0;
+  padding: 1.5rem;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+
+.share-panel.show .share-panel-content {
+  transform: translateY(0);
+}
+
+.share-options {
+  display: flex;
+  gap: 1rem;
+}
+
+.share-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 80px;
+}
+
+.share-option:hover {
+  background: #f3f4f6;
+  border-color: #3b82f6;
+  transform: translateY(-2px);
+}
+
+.share-option-icon {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 0.5rem;
+}
+
+.share-option-icon img {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: #ffffff;
+}
+
+.share-option-text {
+  font-size: 0.8rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+/* 分享提示 */
+.share-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.9);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  z-index: 1001;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.share-toast.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+  .share-options {
+    justify-content: center;
+  }
+
+  .share-option {
+    min-width: 70px;
+    padding: 0.75rem;
+  }
+
+  .share-option-icon {
+    font-size: 1.3rem;
+  }
+
+  .share-option-text {
+    font-size: 0.75rem;
+  }
+}
+</style>
+{%- endif -%}

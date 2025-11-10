@@ -10,6 +10,13 @@ rss_base_url: "https://shenh10.github.io/papercache"
 # 生产环境 API 应该指向 Vercel，因为 GitHub Pages 不支持动态 API
 api_base_url: "https://papercache.vercel.app"
 
+# 微信配置 - 用于JS-SDK分享功能
+wechat:
+  enabled: false  # 是否启用微信JS-SDK
+  app_id: "wxae384785a8fe9884"  # 微信公众号AppID（从环境变量读取）
+  # 注意：timestamp、nonceStr、signature 需要从后端API获取
+  # 后端API: /api/wechat/jssdk-sign
+
 # Supabase 配置 - 用户管理系统
 # 注意：这些值应该从环境变量读取，不要在代码中硬编码
 # 在生产环境中，通过Vercel或GitHub Actions的环境变量设置

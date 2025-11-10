@@ -114,4 +114,4 @@ echo "📍 RSS Feed: http://127.0.0.1:4000/papercache/feed.xml"
 echo "🔄 使用 Ctrl+C 停止服务器"
 echo ""
 
-bundle exec jekyll serve --incremental --livereload --config _config.yml,_config_local.yml
+bundle exec jekyll serve --incremental --livereload --host 0.0.0.0 --config _config.yml,_config_local.yml
