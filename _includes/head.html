@@ -114,6 +114,12 @@
       url: "{{ site.supabase.url }}",
       anon_key: "{{ site.supabase.anon_key }}"
     };
+    {%- if site.wechat -%}
+    window.siteConfig.wechat = {
+      enabled: {{ site.wechat.enabled | default: false }},
+      app_id: "{{ site.wechat.app_id | default: '' }}"
+    };
+    {%- endif -%}
     {%- if site.admin and site.admin.enabled and site.admin.admin_emails -%}
     window.siteConfig.adminEmails = {{ site.admin.admin_emails | jsonify }};
     {%- endif -%}

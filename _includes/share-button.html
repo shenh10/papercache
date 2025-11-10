@@ -281,9 +281,10 @@
     const fullUrl = getFullUrl(postUrl);
 
     if (isWeChatBrowser()) {
-      // 在微信浏览器中，如果有JS-SDK就使用，否则提示用户
-      if (window.wx && window.wx.updateTimelineShareData) {
-        // 确保JS-SDK已就绪
+      // 在微信浏览器中，尝试使用JS-SDK
+      // 先检查 JS-SDK 是否正在加载或已加载
+      if (typeof window.wx !== 'undefined' && window.wx.updateTimelineShareData) {
+        // JS-SDK 已加载，使用它进行分享
         const shareData = {
           title: postTitle,
           link: fullUrl,
@@ -305,12 +306,45 @@
         if (window.wechatJSSDKReady) {
           window.wx.updateTimelineShareData(shareData);
         } else {
+          // 等待 JS-SDK 就绪（最多等待 3 秒）
+          let waitCount = 0;
+          const maxWait = 30;
+          const checkReady = setInterval(() => {
+            waitCount++;
+            if (window.wechatJSSDKReady) {
+              clearInterval(checkReady);
+              window.wx.updateTimelineShareData(shareData);
+            } else if (waitCount >= maxWait) {
+              clearInterval(checkReady);
+              showToast('JS-SDK初始化超时，请使用右上角菜单分享');
+            }
+          }, 100);
+          
+          // 同时使用 wx.ready 作为备用
           window.wx.ready(function() {
+            clearInterval(checkReady);
             window.wx.updateTimelineShareData(shareData);
           });
         }
       } else {
-        showToast('请点击右上角菜单选择"分享到朋友圈"');
+        // JS-SDK 未加载，可能是配置未启用或加载失败
+        // 检查是否应该加载 JS-SDK
+        const shouldHaveJSSDK = window.siteConfig && window.siteConfig.wechat && window.siteConfig.wechat.enabled;
+        if (shouldHaveJSSDK) {
+          // 应该加载但未加载，可能是加载中或失败
+          showToast('微信分享功能加载中，请稍候再试');
+          // 等待一下，如果 JS-SDK 加载完成，自动重试
+          setTimeout(() => {
+            if (window.wx && window.wx.updateTimelineShareData) {
+              window.shareToWeChatMoments(postUrl, postTitle);
+            } else {
+              showToast('请点击右上角菜单选择"分享到朋友圈"');
+            }
+          }, 2000);
+        } else {
+          // JS-SDK 未配置，提示用户使用系统分享
+          showToast('请点击右上角菜单选择"分享到朋友圈"');
+        }
       }
     } else if (isMobileDevice()) {
       // 移动端非微信浏览器：尝试跳转到微信分享页面
@@ -326,9 +360,10 @@
     const fullUrl = getFullUrl(postUrl);
 
     if (isWeChatBrowser()) {
-      // 在微信浏览器中，如果有JS-SDK就使用，否则提示用户
-      if (window.wx && window.wx.updateAppMessageShareData) {
-        // 确保JS-SDK已就绪
+      // 在微信浏览器中，尝试使用JS-SDK
+      // 先检查 JS-SDK 是否正在加载或已加载
+      if (typeof window.wx !== 'undefined' && window.wx.updateAppMessageShareData) {
+        // JS-SDK 已加载，使用它进行分享
         const shareData = {
           title: postTitle,
           desc: '来自 PaperCache 的精彩内容',
@@ -351,12 +386,45 @@
         if (window.wechatJSSDKReady) {
           window.wx.updateAppMessageShareData(shareData);
         } else {
+          // 等待 JS-SDK 就绪（最多等待 3 秒）
+          let waitCount = 0;
+          const maxWait = 30;
+          const checkReady = setInterval(() => {
+            waitCount++;
+            if (window.wechatJSSDKReady) {
+              clearInterval(checkReady);
+              window.wx.updateAppMessageShareData(shareData);
+            } else if (waitCount >= maxWait) {
+              clearInterval(checkReady);
+              showToast('JS-SDK初始化超时，请使用右上角菜单分享');
+            }
+          }, 100);
+          
+          // 同时使用 wx.ready 作为备用
           window.wx.ready(function() {
+            clearInterval(checkReady);
             window.wx.updateAppMessageShareData(shareData);
           });
         }
       } else {
-        showToast('请点击右上角菜单选择"发送给朋友"');
+        // JS-SDK 未加载，可能是配置未启用或加载失败
+        // 检查是否应该加载 JS-SDK
+        const shouldHaveJSSDK = window.siteConfig && window.siteConfig.wechat && window.siteConfig.wechat.enabled;
+        if (shouldHaveJSSDK) {
+          // 应该加载但未加载，可能是加载中或失败
+          showToast('微信分享功能加载中，请稍候再试');
+          // 等待一下，如果 JS-SDK 加载完成，自动重试
+          setTimeout(() => {
+            if (window.wx && window.wx.updateAppMessageShareData) {
+              window.shareToWeChatFriend(postUrl, postTitle);
+            } else {
+              showToast('请点击右上角菜单选择"发送给朋友"');
+            }
+          }, 2000);
+        } else {
+          // JS-SDK 未配置，提示用户使用系统分享
+          showToast('请点击右上角菜单选择"发送给朋友"');
+        }
       }
     } else if (isMobileDevice()) {
       // 移动端非微信浏览器：尝试跳转到微信分享页面
