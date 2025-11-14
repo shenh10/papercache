@@ -355,6 +355,13 @@ llm:
         - llm
         - engineering
         - inference
+      - title: A Survey of LLM Inference Systems
+        date: '2025-06-01'
+        url: /papers/llm/engineering/inference/2025/06/01/a-survey-of-llm-inference-systems.html
+        categories:
+        - llm
+        - engineering
+        - inference
       - title: 'SGLang: Efficient Execution of Structured Language Model Programs'
         date: '2024-07-01'
         url: /papers/llm/engineering/inference/2024/07/01/sglang-efficient-execution-of-structured-language-model-programs.html
@@ -2287,6 +2294,14 @@ llm:
         - algorithm
         - agent
         tag: iclr23
+      - title: 'Tree of Thoughts: Deliberate Problem Solving with Large Language Models'
+        date: '2023-12-01'
+        url: /papers/llm/algorithm/agent/2023/12/01/tree-of-thoughts-deliberate-problem-solving-with-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: nips23
       - title: 'R1-Searcher: Incentivizing the Search Capability in LLMs via Reinforcement
           Learning'
         date: '2025-03-01'
@@ -2295,6 +2310,14 @@ llm:
         - llm
         - algorithm
         - agent
+      - title: 'REAC T: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS'
+        date: '2023-11-01'
+        url: /papers/llm/algorithm/agent/2023/11/01/reac-t-synergizing-reasoning-and-acting-in-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: iclr23
       - title: 'Search-R1: Training LLMs to Reason and Leverage Search Engines with
           Reinforcement Learning'
         date: '2025-03-01'
