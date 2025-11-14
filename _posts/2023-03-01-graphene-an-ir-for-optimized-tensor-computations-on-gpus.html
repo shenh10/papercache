@@ -1,10 +1,10 @@
 ---
-added_date: '2025-11-07'
+added_date: '2025-11-14'
 author: shenh10
 categories:
-- llm
-- engineering
+- mlsys
 - compiler
+- tensor
 comments: true
 date: '2023-03-01'
 layout: post
@@ -14,9 +14,10 @@ title: 'Graphene: An IR for Optimized Tensor Computations on GPUs'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>Graphene: An IR for Optimized Tensor Computations on GPUs</h1>
 <p><strong>作者/机构</strong>: Bastian Hagedorn, Bin Fan, Hanfeng Chen, Cris Cecka, Michael Garland, Vinod Grover (均来自 NVIDIA)</p>
 <hr/>
 <h3>A1 主要贡献</h3>
@@ -207,5 +208,6 @@ title: 'Graphene: An IR for Optimized Tensor Computations on GPUs'
 <p>实验结果表明，Graphene 能够达到与手动调优的库实现相媲美的性能，因此能够表示当今已知的最快核函数。此外，Graphene 还能表示尚不存在库例程的融合计算，并能匹配或超越手动开发的核函数。当这些生成的核函数部署到真实的深度学习网络中时，取得了显著的加速效果。</p>
 <p><strong>未来展望</strong>：Graphene 为新颖的机器学习编译器研究奠定了基础，包括系统性地推导优化的张量计算，以及生成高性能、针对特定架构的 GPU 核函数。</p>
 </div>
-</body>
+
+
 </div>

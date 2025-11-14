@@ -13,9 +13,10 @@ title: Design Guidelines for High Performance RDMA Systems
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="design-guidelines-for-high-performance-rdma-systems">Design Guidelines for High Performance RDMA Systems</h1>
 <p><strong>作者/机构</strong>: Anuj Kalia, Carnegie Mellon University; Michael Kaminsky, Intel Labs; David G. Andersen, Carnegie Mellon University</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在为系统设计者提供一套设计指南，以帮助他们在RDMA（远程直接内存访问）的设计空间中做出最佳选择。尽管现代RDMA硬件性能强大，但如何选择和使用RDMA操作会显著影响最终性能。</p>
@@ -293,5 +294,6 @@ title: Design Guidelines for High Performance RDMA Systems
 <h3 id="a-wqe-by-mmiodoorbellpcie">附录 A. WQE-by-MMIO和Doorbell的PCIe使用情况</h3>
 <p>我们将doorbell的大小表示为d。使用WQE-by-MMIO方法从CPU传输到NIC的总数据量是 <code>Tbf = 10 * (⌈65/64⌉ * (64 + Pr))</code> 字节。通过缓存行填充，65字节的WQE在主机内存中被布局在128字节的槽位中；假设 <code>Crc = 128</code>，则 <code>Tdb = (d + Pr) + (10 * (128 + Pc))</code> 字节。我们忽略了PCIe链路层流量，因为它与事务层流量相比很小：通常假设每4-5个TLP有2个链路层数据包（1个流控制更新和1个确认，均为8字节）【9, Understanding Performance of PCI Express Systems】，使得链路层开销&lt;5%。代入d=8，得到 <code>Tbf = 1800</code>，<code>Tdb = 1534</code>。</p>
 </div>
-</body>
+
+
 </div>

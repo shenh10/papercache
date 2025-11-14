@@ -14,9 +14,10 @@ title: 'GPipe: Easy Scaling with Micro-Batch Pipeline Parallelism'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="gpipe-easy-scaling-with-micro-batch-pipeline-parallelism">GPipe: Easy Scaling with Micro-Batch Pipeline Parallelism</h1>
 <p><strong>作者/机构</strong>: Yanping Huang, Youlong Cheng, Ankur Bapna, Orhan Firat, Mia Xu Chen, Dehao Chen, HyoukJoong Lee, Jiquan Ngiam, Quoc V. Le, Yonghui Wu, Zhifeng Chen (Google)</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文的核心问题在于，扩大深度神经网络的容量是提升模型质量的有效方法，但这常常受限于单个加速器（如GPU或TPU）的内存，需要开发专用的算法或基础设施，而这些解决方案通常与特定架构绑定，难以迁移。为了解决这一挑战，研究的目标是设计一种高效、任务无关且易于使用的模型并行化方法。</p>
@@ -134,5 +135,6 @@ title: 'GPipe: Easy Scaling with Micro-Batch Pipeline Parallelism'
 <h2 id="a5_1">A5 结论</h2>
 <p>本文介绍了GPipe，一个用于训练巨型神经网络的可扩展模型并行库。我们提出并实现了一种新颖的批次分割流水线并行算法，该算法使用同步梯度更新，从而在实现高硬件利用率的同时保证了训练的稳定性。我们利用GPipe训练了大规模的卷积模型和基于Transformer的模型，并在图像分类和多语言机器翻译任务上展示了强大的实证结果。GPipe库具有三个关键特性：1) <strong>高效性</strong>：通过新颖的批次分割流水线算法，GPipe实现了几乎与设备数量成线性的加速比；2) <strong>灵活性</strong>：GPipe支持任何可以表示为层序列的深度网络；3) <strong>可靠性</strong>：GPipe采用同步梯度下降，确保无论分区数量多少，训练结果都保持一致。</p>
 </div>
-</body>
+
+
 </div>

@@ -13,9 +13,10 @@ title: Hardware Compute Partitioning on NVIDIA GPUs\*
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="hardware-compute-partitioning-on-nvidia-gpus">Hardware Compute Partitioning on NVIDIA GPUs*</h1>
 <p><strong>文章标题</strong>：NVIDIA GPU 上的硬件计算分区<br/>
 <strong>作者/机构</strong>：Joshua Bakita and James H. Anderson, Department of Computer Science, University of North Carolina at Chapel Hill</p>
 <h2 id="a1">A1 主要贡献</h2>
@@ -467,5 +468,6 @@ title: Hardware Compute Partitioning on NVIDIA GPUs\*
 <p>本文揭示了一种自 2013 年以来所有 NVIDIA GPU 都支持的计算核心空间分区新方法。我们开发的库 <code>libsmctrl</code> 使得分区变得简单，并暴露了如 TPC 到 GPC 映射等关键 GPU 细节。通过深入研究 NVIDIA GPU 硬件支持多个并行分区的能力，我们增强了分区的实用性。评估部分讨论了 GPU 调度硬件在某些情况下可能破坏分区边界或做出非最优调度决策的问题。与先前的工作相比，我们的方法更灵活、功能更强大，并通过案例研究证明了其在实际工作负载中的有效性。</p>
 <p>未来的工作希望将我们的方法扩展到不需要共享 CUDA 上下文的共存分区。我们还希望进一步研究 GPU 如何执行 CUDA 流排序、如何调度复制等其他引擎，以及 GPU 主机接口在获取命令时究竟如何选择队列。</p>
 </div>
-</body>
+
+
 </div>

@@ -14,9 +14,10 @@ title: Understanding Stragglers in Large Model Training Using What-if Analysis
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="understanding-stragglers-in-large-model-training-using-what-if-analysis">Understanding Stragglers in Large Model Training Using What-if Analysis</h1>
 <p>Jinkun Lin1, Ziheng Jiang2, Zuquan Song2, Sida Zhao2, Menghan Yu2, Zhanghan Wang1, Chenyuan Wang2, Zuocheng Shi4, Xiang Shi3, Wei Jia2, Zherui Liu2, Shuguang Wang2, Haibin Lin2,†, Xin Liu2, Aurojit Panda1, Jinyang Li1,†</p>
 <p>1New York University, 2ByteDance Seed, 3ByteDance, 4Zhejiang University</p>
 <p>†Corresponding authors</p>
@@ -124,5 +125,6 @@ title: Understanding Stragglers in Large Model Training Using What-if Analysis
 <p>LLM训练中的落后者。最近的研究开始探索LLM训练中的落后者。Malleus【24，Haoyang Li et al. Malleus: Stragglerresilient hybrid parallel training of large-scale models via malleable data and model parallelization. arXiv preprint arXiv:2410.13333, 2024】使用基于实时设备性能的动态并行调整缓解落后者的影响。MegaScale【21，Ziheng Jiang et al. MegaScale: Scaling large language model training to more than 10,000 GPUs. In 21st USENIX Symposium on Networked Systems Design and Implementation (NSDI 24), 2024】、Llama3【11，Abhimanyu Dubey et al. The llama 3 herd of models. arXiv preprint arXiv:2407.21783, 2024】和Imbue的报告【37，The Imbue Team. From bare metal to a 70b model: infrastructure set-up and scripts. <a href="https://imbue.com/research/70b-infrastructure/," rel="noopener noreferrer" target="_blank">https://imbue.com/research/70b-infrastructure/,</a> 2024】讨论LLM训练的基础设施挑战，并简要提及如何调试落后者，但未提供深入分析。与这些工作不同，我们专注于对落后者问题本身的详细和全面分析。</p>
 <p>FALCON【40，Tianyuan Wu et al. FALCON: Pinpointing and mitigating stragglers for large-scale hybrid-parallel training. arXiv preprint arXiv:2410.12588, 2024】呈现落后者的详细表征并引入几种缓解策略。我们的工作在几个方面不同。首先，我们分析专用集群上的作业，而FALCON的分析针对共享集群。设置差异导致不同结果：与FALCON不同，我们未看到由于资源争用导致的落后者。其次，FALCON对大作业（512到1024 GPU）的分析仅限于27个作业跟踪，而我们的分析规模更大：在我们分析的3079个跟踪中，562个作业使用≥512 GPU。只有几十个跟踪，FALCON依赖手动分析研究落后者和确定根本原因。相比之下，我们使用结合假设分析的半自动化方法和假设根本原因的手动验证。而且，FALCON的分析忽略影响大多数步骤而非仅小部分步骤的落后者。正如我们在§4.2所示，前者在我们的跟踪中更常见。</p>
 </div>
-</body>
+
+
 </div>

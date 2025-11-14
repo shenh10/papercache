@@ -15,9 +15,10 @@ title: 'DecDEC: A Systems Approach to Advancing Low-Bit LLM Quantization'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="decdec-a-systems-approach-to-advancing-low-bit-llm-quantization">DecDEC: A Systems Approach to Advancing Low-Bit LLM Quantization</h1>
 <p>Yeonhong Park, Jake Hyun, Hojoon Kim, and Jae W. Lee, Seoul National University</p>
 <h2 id="_1">主要贡献</h2>
 <p>本文针对大型语言模型（LLM）的量化问题，特别是低比特设置（如3比特和4比特精度）下模型质量下降的挑战，提出了一种推理方案DecDEC。该方案旨在改善低比特LLM的质量，同时保留量化的关键益处：GPU内存节省和延迟减少。核心问题是：在给定内存预算下，使用最佳努力配置的量化LLM，是否存在一种方法来恢复量化引起的质量损失？研究目标是利用外部CPU内存存储残差矩阵（全精度权重与量化权重之间的差异），并动态获取仅针对少量权重的残差，这些权重对应于激活异常值标记的显著通道，从而纠正这些通道中的量化错误。显著通道在每个解码步骤通过分析输入激活动态识别，以适应激活分布的动态性质，从而最大化错误补偿的有效性。创新点包括：对LLM推理中激活异常值的动态性质进行深入分析；提出DecDEC推理方案，通过动态识别显著通道并补偿其量化错误来增强量化LLM；引入DecDEC调优器，用于推荐满足目标延迟界限的系统参数；在五个不同消费级GPU上评估DecDEC，展示显著质量改进，同时内存和延迟开销最小。</p>
@@ -190,5 +191,6 @@ title: 'DecDEC: A Systems Approach to Advancing Low-Bit LLM Quantization'
 <p>致谢：本工作由韩国国家研究基金会（NRF）资助，韩国政府（MSIT）（RS-2024-00340008, RS-2024-00405857）。Jae W. Lee是通讯作者。 </p>
 <p>参考文献汇总：在方法细节中引用的文献包括[59]（Transformer）、[32][66]（批处理）、[28][69]（量化类型）、[10][34][37][49][64][65]（权重-激活量化）、[1]（GPU单元）、[31]（仅权重量化）、[23]（反量化）、[11][30][37]（QAT）、[9][12][17][19][31][33][36][57]（PTQ）、[8][14][15][58][61]（细粒度策略）、[6][10][25][27][33][36]（异常值）、[16]（Llama-3）、[47]（C4）、[21]（Pile）、[42][43]（CUDA）、[41][46]（PCIe）、[2]（Top-K）。这些引用在相应段落中描述为技术基础或比较，例如[36]用于AWQ量化，[23]用于基GEMV。</p>
 </div>
-</body>
+
+
 </div>

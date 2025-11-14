@@ -13,9 +13,10 @@ title: 'DAPO: An Open-Source LLM Reinforcement Learning System at Scale'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="dapo-an-open-source-llm-reinforcement-learning-system-at-scale">DAPO: An Open-Source LLM Reinforcement Learning System at Scale</h1>
 <p><strong>作者/机构：</strong> Qiying Yu (Project Lead), Zheng Zhang, Ruofei Zhu, Yufeng Yuan, Xiaochen Zuo, Yu Yue (Algorithm); Weinan Dai, Tiantian Fan, Gaohong Liu, Juncai Liu, Lingjun Liu, Xin Liu, Haibin Lin, Zhiqi Lin, Bole Ma, Guangming Sheng, Yuxuan Tong, Qiying Yu, Chi Zhang, Mofan Zhang, Ru Zhang, Wang Zhang, Hang Zhu, Jinhua Zhu (Infrastructure); Jiaze Chen, Jiangjie Chen, Chengyi Wang, Hongli Yu, Yuxuan Song, Xiangpeng Wei, Qiying Yu (Dataset); Hao Zhou, Jingjing Liu, Wei-Ying Ma, Ya-Qin Zhang, Lin Yan, Mu Qiao, Yonghui Wu, Mingxuan Wang (Supervision). 1ByteDance Seed, 2Institute for AI Industry Research (AIR), Tsinghua University, 3The University of Hong Kong, 4SIA-Lab of Tsinghua AIR and ByteDance Seed.</p>
 <h2 id="_1">主要贡献</h2>
 <p>论文的核心问题是大规模强化学习（RL）在大型语言模型（LLM）中的实际算法和关键技巧仍被隐藏，导致社区难以重现现有推理模型的训练结果，如OpenAI o1和DeepSeek R1的技术报告中未公开细节。研究目标是揭示大规模RL训练中的重大障碍，并开源一个可扩展的RL系统，包括算法、训练代码和数据集，以提供行业级别的RL结果并促进可重现性。创新点包括提出Decoupled Clip and Dynamic sAmpling Policy Optimization (DAPO)算法，以及四个关键技巧：Clip-Higher（促进系统多样性，避免熵崩溃）；Dynamic Sampling（提高训练效率和稳定性）；Token-Level Policy Gradient Loss（在长链式思考RL场景中关键）；Overlong Reward Shaping（减少奖励噪声，稳定训练）。这些技巧基于对朴素GRPO基线的分析，解决了熵崩溃、奖励噪声和训练不稳定性等问题。实验使用Qwen2.5-32B作为预训练模型，在AIME 2024上达到50分，优于DeepSeek-R1-Zero-Qwen-32B的47分，且仅使用50%的训练步数（如图1所示）。</p>
@@ -169,5 +170,6 @@ title: 'DAPO: An Open-Source LLM Reinforcement Learning System at Scale'
 <strong>另一个问题示例。</strong> 在Aimeville的900名居民中，有195人拥有钻石戒指，367人拥有高尔夫球杆套装，562人拥有花园铲。此外，每位居民都拥有一袋糖心糖。有437名居民正好拥有其中两样东西，234名居民正好拥有其中三样东西。找到拥有所有四样东西的Aimeville居民数量。<br/>
 <strong>响应。</strong> 逐步解决方案：1. 定义以下变量：让A是拥有钻石戒指的居民集合。让B是拥有高尔夫球杆套装的居民集合。让C是拥有花园铲的居民集合。让D是拥有一袋糖心糖的居民集合。由于所有900名居民都拥有一袋糖心糖，|D| = 900。让$a_i$表示正好拥有4项物品中i项的居民数量。让我们使用4个集合A, B, C, D的包含-排除原理。... $a_4 = -219 - 4 = 219 = 54.75$。由于a4（拥有所有四项物品的人数）必须是整数，我们当前的 Approach 需要在物品A, B, C, D的不同组合的组合计数方面重新考虑。而不是直接使用包含-排除原理，我们可以使用涉及拥有A, B, C物品组合的人数（排除每个人都拥有的D物品）的不同方法。让$x_i$是正好拥有A, B, C中i项物品的人数。然后，总数拥有A, B, C, D中正好k项物品的人数可以分解：...</p>
 </div>
-</body>
+
+
 </div>

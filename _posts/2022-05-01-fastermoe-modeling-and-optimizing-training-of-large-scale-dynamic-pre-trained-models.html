@@ -15,9 +15,10 @@ title: 'FasterMoE: Modeling and Optimizing Training of Large-Scale Dynamic Pre-T
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="fastermoe-modeling-and-optimizing-training-of-large-scale-dynamic-pre-trained-models">FasterMoE: Modeling and Optimizing Training of Large-Scale Dynamic Pre-Trained Models</h1>
 <p><strong>文章标题</strong>: FasterMoE: 建模与优化大规模动态预训练模型的训练<br/>
 <strong>作者</strong>: Jiaao He, Jidong Zhai, Tiago Antunes, Haojie Wang, Fuwen Luo, Shangfeng Shi, Qin Li<br/>
 <strong>机构</strong>: 清华大学</p>
@@ -331,5 +332,6 @@ python3<span class="w"> </span>setup.py<span class="w"> </span>install<span clas
 <strong>优化开关</strong>。此外，由于FasterMoE是基于FastMoE实现的，我们使用环境变量作为我们优化的开关。默认情况下，所有优化都关闭，其行为与原始FastMoE相同。<br/>
 <strong>可调参数</strong>。一些参数，如动态影分身中的通信带宽和智能调度中的组大小，是可调的。可以对它们进行调整，性能可能会有所不同。具体来说，动态影分身的公式位于<code>fastermoe/fmoe/transformer.py:34</code>。分组的粒度由环境变量<code>FMOE_FUSE_GRAN</code>控制。</p>
 </div>
-</body>
+
+
 </div>

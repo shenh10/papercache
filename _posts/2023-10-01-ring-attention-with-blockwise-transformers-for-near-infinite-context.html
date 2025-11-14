@@ -13,9 +13,10 @@ title: Ring Attention with Blockwise Transformers for Near-Infinite Context
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>Ring Attention with Blockwise Transformers for Near-Infinite Context</h1>
 <p><strong>作者/机构</strong>: Hao Liu, Matei Zaharia, Pieter Abbeel, UC Berkeley hao.liu@cs.berkeley.edu</p>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>: Transformer架构在处理长序列时面临严峻的内存挑战。其自注意力机制的内存成本与序列长度成二次方关系，导致难以扩展到长序列输入。此外，即使采用内存优化技术，存储每一层的输出激活值仍然是巨大的瓶셔颈，例如，处理一个包含1亿个token的序列，即使模型隐藏维度仅为1024，也需要超过1000GB的内存，这远超现代GPU和TPU不足100GB的高带宽内存（HBM）容量。</p>
@@ -235,5 +236,6 @@ title: Ring Attention with Blockwise Transformers for Near-Infinite Context
 </figure><br/>
 如图5所示，将小模型扩展到1M上下文大小会导致大约20-40倍的FLOPs，对于10M和100M token上下文大小则更多。然而，随着模型大小的增加，成本比率下降。例如，将170B模型从4K扩展到10M，每个数据集的FLOPs增加了162.6倍，尽管上下文大小长了3072倍。</p>
 </div>
-</body>
+
+
 </div>

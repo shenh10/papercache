@@ -13,9 +13,10 @@ title: 'Fast-dLLM: Training-free Acceleration of Diffusion LLM by Enabling KV Ca
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>Fast-dLLM: Training-free Acceleration of Diffusion LLM by Enabling KV Cache and Parallel Decoding</h1>
 <p><strong>Fast-dLLM：通过启用 KV 缓存和并行解码实现扩散大语言模型的免训练加速</strong></p>
 <p><strong>作者/机构</strong>: Chengyue Wu (香港大学, NVIDIA), Hao Zhang (NVIDIA), Shuchen Xue (独立研究员), Zhijian Liu (NVIDIA), Shizhe Diao (NVIDIA), Ligeng Zhu (NVIDIA), Ping Luo (香港大学), Song Han (NVIDIA, MIT), Enze Xie (NVIDIA)</p>
 <hr/>
@@ -462,5 +463,6 @@ $p(x_{0i}, x_{0j}|x_t) = p(x_{0i}|x_t) \cdot p(x_{0j}|x_t, x_{0i})$（或者对�
 <p>尽管LLaDA随着批量大小的增加其可扩展性有限——其吞吐量在批量大小为8后趋于平稳——这个限制是基于扩散的LLM固有的，它们本质上是计算密集型的。相比之下，LLaMA，一个自回归（AR）模型，从大批量中获益匪浅。随着批量大小的增加，LLaMA从内存密集型转为计算密集型，使其在更大的批量设置下能实现很高的绝对吞吐量。</p>
 <p>这些结果突显了PrefixCache在加速像LLaDA这样的计算密集型扩散模型方面的实际优势，尤其对于延迟关键和高吞吐量应用。此外，PrefixCache提供的可扩展性和效率缩小了基于扩散的LLM与像LLaMA这样的AR模型之间的差距，展示了其在规模化部署设置中的重要性。</p>
 </div>
-</body>
+
+
 </div>

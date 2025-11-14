@@ -13,9 +13,10 @@ title: 'AsyncFlow: An Asynchronous Streaming RL Framework for Efficient LLM Post
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="asyncflow-an-asynchronous-streaming-rl-framework-for-efficient-llm-post-training">AsyncFlow: An Asynchronous Streaming RL Framework for Efficient LLM Post-Training</h1>
 <p><strong>文章标题</strong>：AsyncFlow: An Asynchronous Streaming RL Framework for Efficient LLM Post-Training<br/>
 <strong>作者/机构</strong>：Zhenyu Han, Ansheng You, Haibo Wang, Kui Luo, Guang Yang, Wenqi Shi, Menglong Chen, Sicheng Zhang, Zeshun Lan, Chunshi Deng, Huazhong Ji, Wenjie Liu, Yu Huang, Yixiang Zhang, Chenyi Pan, Jing Wang, Xin Huang, Chunsheng Li, Jianping Wu (Huawei &amp; Individual Researcher)</p>
 <h2 id="a1">A1 主要贡献</h2>
@@ -244,5 +245,6 @@ AsyncFlow框架通过以下几个核心设计实现了上述目标：<br/>
 <p><strong>未来工作</strong>展望：我们认为在rollout系统设计中存在关键的优化机会。在保证生成响应足以支持下游任务的前提下，可以错开每个推理实例的参数更新时间，以消除响应生成过程中的同步障碍。这种方法不仅能减少暴露的转换时间，还能实现一种<strong>子步异步（sub-step asynchronization）工作流</strong>，使得actor rollout和actor update之间的陈旧度阈值低于一个训练步。</p>
 <p>总之，本研究为任务分离RL框架的设计提供了启示，证明了其在大规模后训练场景下的优越可扩展性和效率。</p>
 </div>
-</body>
+
+
 </div>

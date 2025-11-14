@@ -1,9 +1,10 @@
 ---
-added_date: '2025-09-20'
+added_date: '2025-11-14'
 author: shenh10
 categories:
 - mlsys
 - compiler
+- tensor
 comments: true
 date: '2025-01-01'
 layout: post
@@ -13,9 +14,10 @@ title: 'PipeThreader: Software-Defined Pipelining for Efficient DNN Execution'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="pipethreader-software-defined-pipelining-for-efficient-dnn-execution">PipeThreader: Software-Defined Pipelining for Efficient DNN Execution</h1>
 <p>Yu Cheng†∗ Lei Wang† Yining Shi† Yuqing Xia⋄ Lingxiao Ma⋄ Jilong Xue⋄ Yang Wang⋄ Zhiwen Mo‡⋄ Feiyang Chen¶⋄ Fan Yang⋄ Mao Yang⋄ Zhi Yang† †School of Computer Science, Peking University ⋄Microsoft Research ‡Imperial College London ¶Shanghai Jiao Tong University</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文提出PipeThreader，一个新的DNN编译器，旨在有效利用现代GPU中的异构专用硬件单元，如TensorCores和Tensor Memory Accelerators。通过将调度功能从硬件转移到软件，实现更高效和复杂的计算流水线，而无需大量手动努力。主要创新点包括：引入sTask-graph作为DNN计算抽象，用于表示细粒度任务和依赖；提出分层硬件抽象，捕捉专用单元的能力；以及新的调度原语（append、wait和propagate），支持软件定义的流水线。PipeThreader能为FlashAttention等已知DNN架构发现高效流水线调度，实现相当或更好的性能；同时为新兴模型如Mamba2揭示新型流水线方案，提供显著优于最先进手工优化的性能。代码开源于<a href="https://github.com/tile-ai/tilelang" rel="noopener noreferrer" target="_blank">https://github.com/tile-ai/tilelang</a>。</p>
@@ -259,5 +261,6 @@ title: 'PipeThreader: Software-Defined Pipelining for Efficient DNN Execution'
 <h2 id="a6">A6 附录</h2>
 <p>论文中无明确附录内容。</p>
 </div>
-</body>
+
+
 </div>

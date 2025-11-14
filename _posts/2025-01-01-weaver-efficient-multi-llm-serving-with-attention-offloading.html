@@ -14,9 +14,10 @@ title: 'Weaver: Efficient Multi-LLM Serving with Attention Offloading'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="weaver-efficient-multi-llm-serving-with-attention-offloading">Weaver: Efficient Multi-LLM Serving with Attention Offloading</h1>
 <p><strong>文章标题</strong>：Weaver: 通过注意力卸载实现高效的多LLM服务<br/>
 <strong>作者/机构</strong>：Shiwei Gao, Qing Wang, Shaoxun Zeng, Youyou Lu and Jiwu Shu∗, Tsinghua University</p>
 <h2 id="a1">A1 主要贡献</h2>
@@ -206,5 +207,6 @@ title: 'Weaver: Efficient Multi-LLM Serving with Attention Offloading'
 <h2 id="a5">A5 结论</h2>
 <p>本文提出了WEAVER，一个专为多LLM服务设计的系统。WEAVER引入了“工作负载编织”（workload weaving）机制，通过将热门模型的注意力算子卸载到正在运行冷门模型的GPU上，从而有效利用了冷门模型实例上未被充分利用的GPU内存，同时保持了较低的通信开销。为了解决卸载过程中可能出现的行头阻塞问题，WEAVER设计了<strong>GPU驱动的动态控制流</strong>和<strong>算子拆分</strong>两项关键技术。实验结果表明，WEAVER能够显著提升热门模型的吞吐量，同时对冷门模型的性能影响控制在可接受的范围内，证明了其在处理倾斜访问模式下的多LLM服务工作负载方面的有效性。</p>
 </div>
-</body>
+
+
 </div>

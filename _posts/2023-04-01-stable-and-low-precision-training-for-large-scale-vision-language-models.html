@@ -14,9 +14,10 @@ title: Stable and low-precision training for large-scale vision-language models
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="stable-and-low-precision-training-for-large-scale-vision-language-models">Stable and low-precision training for large-scale vision-language models</h1>
 <p><strong>文章标题</strong>: 稳定且低精度的大规模视觉语言模型训练<br/>
 <strong>作者/机构</strong>: Mitchell Wortsman<em>1, Tim Dettmers</em>1, Luke Zettlemoyer12, Ari Morcos†2, Ali Farhadi†1, Ludwig Schmidt†134</p>
 <hr/>
@@ -323,5 +324,6 @@ for t = 1 to T do
 <p><strong>E.2 实现注意事项</strong>。<br/>
 为了防止计算 $RMS_t$ 时出现除以零的问题，实际计算公式为 $RMS_t = \sqrt{E[g_t^2 / \text{maximum}(u_t, \epsilon^2)]}$，其中 $\epsilon$ 是 AdamW 的超参数（本文使用1e-6），maximum 是逐元素最大值操作。</p>
 </div>
-</body>
+
+
 </div>

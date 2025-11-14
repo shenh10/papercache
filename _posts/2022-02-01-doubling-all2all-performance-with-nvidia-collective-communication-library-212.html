@@ -12,9 +12,10 @@ title: Doubling all2all Performance with NVIDIA Collective Communication Library
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="doubling-all2all-performance-with-nvidia-collective-communication-library-212">Doubling all2all Performance with NVIDIA Collective Communication Library 2.12</h1>
 <ul>
 <li><strong>作者</strong>: Karthik Mandakolathur</li>
 <li><strong>机构</strong>: NVIDIA</li>
@@ -126,5 +127,6 @@ PXN解决的另一个问题是每个NIC附近只有一个GPU的拓扑情况。�
 <h2 id="a6">A6 结论</h2>
 <p>NCCL 2.12版本通过引入PXN功能，显著提升了<code>all2all</code>集合通信的性能。这项新功能优化了GPU与网络之间的数据流，特别是在大规模、多节点的分布式训练环境中，能够有效缓解网络瓶颈，提高通信效率。此外，PXN还增强了模型并行等场景下的灵活性和性能。作者鼓励用户下载并使用最新的NCCL版本，以获得这些性能改进。</p>
 </div>
-</body>
+
+
 </div>

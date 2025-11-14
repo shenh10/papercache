@@ -1,10 +1,10 @@
 ---
-added_date: '2025-11-07'
+added_date: '2025-11-14'
 author: shenh10
 categories:
-- llm
-- engineering
+- mlsys
 - compiler
+- tensor
 comments: true
 date: '2023-07-01'
 layout: post
@@ -14,9 +14,10 @@ title: 'POWERFUSION: A Tensor Compiler with Explicit Data Movement Description a
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>POWERFUSION: A Tensor Compiler with Explicit Data Movement Description and Instruction-level Graph IR</h1>
 <p><strong>作者/机构</strong>: Zixuan Ma, Haojie Wang, Jingze Xing, Liyan Zheng, Chen Zhang, Huanqi Cao Kezhao Huang, Shizhi Tang, Penghan Wang and Jidong Zhai (清华大学)</p>
 <h2>A1 主要贡献</h2>
 <p>深度神经网络（DNNs）在各领域应用广泛，为加速其计算，张量编译器应运而生。现有张量编译器主要关注计算效率优化，但随着加速器计算性能的增长远超内存性能，内存访问正成为关键瓶颈。当前张量编译器的中间表示（IR）缺乏对内存访问和数据依赖的直接描述，这给生成内存高效的代码带来了巨大挑战。</p>
@@ -185,5 +186,6 @@ title: 'POWERFUSION: A Tensor Compiler with Explicit Data Movement Description a
 <h2>A5 结论</h2>
 <p>本文提出了POWERFUSION，一个通过GIR来优化内存性能的编译器，GIR通过指令级图描述显式地表示数据移动模式和细粒度的数据依赖。通过设计基于GIR的优化策略和硬件抽象，我们能够在不同硬件上实现显著的加速效果。我们的评估结果表明，与当前性能最佳的框架相比，POWERFUSION分别取得了高达1.97倍、2.93倍和16.91倍的加速（平均分别为1.28倍、1.23倍和2.31倍）。</p>
 </div>
-</body>
+
+
 </div>

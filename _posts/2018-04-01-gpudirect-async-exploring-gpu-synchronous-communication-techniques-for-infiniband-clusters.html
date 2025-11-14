@@ -14,9 +14,10 @@ title: 'GPUDirect Async: Exploring GPU synchronous communication techniques for 
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="gpudirect-async-exploring-gpu-synchronous-communication-techniques-for-infiniband-clusters">GPUDirect Async: Exploring GPU synchronous communication techniques for InfiniBand clusters</h1>
 <p>E. Agostini *, D. Rossetti, S. Potluri</p>
 <p>NVIDIA, Santa Clara, CA, United States</p>
 <h2 id="_1">主要贡献</h2>
@@ -182,5 +183,6 @@ title: 'GPUDirect Async: Exploring GPU synchronous communication techniques for 
 <h2 id="_5">结论</h2>
 <p>GPUDirect Async是一种启用GPU和第三方设备直接控制路径的技术，已在CUDA 8.0中初步发布。InfiniBand网络支持以新实验OFED verbs（Mellanox OFED 4.0）、中层抽象库LibGDSync和样本消息传递库LibMP形式出现。本文呈现的应用在GitHub可用：HPGMG-FV CUDA Async[21]和CoMD-CUDA Async[8]。总结：GPUDirect Async允许多GPU加速应用的新通信模型；GPUDirect Async不一定更快，例如当GPU空闲时间大于通信时间时。CPU可以发布越多连续异步通信期，潜在性能增益越大。主要缺点：通信参数必须在GPU流发布前已知；如果GPU过载或空闲时间小于通信时间，性能可能实际下降。GPUDirect Async仍在开发中。我们正在评估其在其他领域的效能，例如与CUDA多进程服务（MPS）结合，当多个MPI进程共享单个GPU时。正在探索新优化，如在GPU内存分配InfiniBand元素、卸载集体。我们计划分析GPUDirect Async与GPUDirect RDMA的交互，解释如何克服内存一致性问题[19]。到目前为止，我们只使用了Mellanox硬件，因此将探索新类型连接。而且我们希望使用更多节点测试异步应用，以更好地评估其可扩展性。鉴于第3.2节提到的设计选择，我们预计最终会面临可扩展性问题，例如GPU必须轮询O(N) CQ。在某种意义上，我们已经在SA模型中面临轮询的限制。我们目前正在研究改进设计以放松当前约束。我们还计划探索将GPUDirect Async与现代NIC的高级硬件功能结合，如硬件标签匹配和MPI协议卸载。</p>
 </div>
-</body>
+
+
 </div>

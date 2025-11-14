@@ -15,9 +15,10 @@ title: 'GMI-DRL: Empowering Multi-GPU Deep Reinforcement Learning with GPU Spati
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="gmi-drl-empowering-multi-gpu-deep-reinforcement-learning-with-gpu-spatial-multiplexing">GMI-DRL: Empowering Multi-GPU Deep Reinforcement Learning with GPU Spatial Multiplexing</h1>
 <p><strong>作者/机构</strong>: Yuke Wang, Boyuan Feng, Zheng Wang, †Tong Geng, †Ang Li, and Yufei Ding (University of California, Santa Barbara); †Tong Geng, †Ang Li (Pacific Northwest National Laboratory)</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p><strong>核心问题</strong>: 深度强化学习（DRL）具有异构的计算工作负载（物理模拟 vs. GEMM-based神经网络操作）和交错执行的模式，这导致在现代强大的GPU平台上计算效率低下。如最先进的NVIDIA Isaac Gym在A100 GPU上进行PPO训练时，GPU的整体利用率持续低于50%（平均为32%）。此外，随着DRL应用变得更加复杂，需要大量的训练样本，这驱动了在多GPU平台上扩展DRL模拟和策略训练的需求。然而，现有的DRL工作要么只关注单GPU设置，要么简单地将单GPU设计扩展到多GPU平台，缺乏专门的分布式设计和优化，难以充分发挥多GPU系统的潜力。</p>
@@ -331,5 +332,6 @@ title: 'GMI-DRL: Empowering Multi-GPU Deep Reinforcement Learning with GPU Spati
 <h2 id="a5">A5 结论</h2>
 <p>本文提出了GMI-DRL，一个通过基于实例的GPU空间多路复用技术来加速GPU上DRL的系统性设计。它包括一个资源高效的GPU多路复用实例（GMI）的新颖设计、一个基于进程的GMI编程方案，以及一个用于实现高GPU利用率和系统吞吐量的自适应GMI管理策略。我们还为跨GMI构建了高效的通信支持，以满足DRL训练的各种通信需求。全面的实验证明，GMI-DRL在单GPU设置上优于最先进的Isaac Gym，在多GPU设置上优于其使用NCCL/Horovod的变体。</p>
 </div>
-</body>
+
+
 </div>

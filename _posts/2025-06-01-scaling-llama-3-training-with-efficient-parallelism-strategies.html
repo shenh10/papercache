@@ -14,9 +14,10 @@ title: Scaling Llama 3 Training with Efficient Parallelism Strategies
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="scaling-llama-3-training-with-efficient-parallelism-strategies">Scaling Llama 3 Training with Efficient Parallelism Strategies</h1>
 <p><strong>文章标题</strong>：利用高效并行策略扩展Llama 3训练<br/>
 <strong>作者/机构</strong>：Weiwei Chu∗, Xinfeng Xie∗, Jiecao Yu∗, Jie Wang∗, Amar Phanishayee, Chunqiang Tang, Yuchen Hao, Jianyu Huang, Mustafa Ozdal, Jun Wang, Vedanuj Goswami, Naman Goyal, Abhishek Kadian, Andrew Gu, Chris Cai, Feng Tian, Xiaodong Wang, Min Si, Pavan Balaji, Ching-Hsiang Chu, Jongsoo Park (Meta Platforms, Inc.)</p>
 <h2 id="a1">A1 主要贡献</h2>
@@ -271,5 +272,6 @@ title: Scaling Llama 3 Training with Efficient Parallelism Strategies
 *   <strong>确保稳健的网络性能</strong>：由于大规模并行中的细粒度同步，任意两个rank之间的网络降速（如拥塞或丢包）都会影响整个集群的性能。必须确保整个网络以一致的性能运行，没有瞬时降速。<br/>
 *   <strong>优先考虑能效</strong>：未来的LLM训练集群规模巨大，其瓶颈将是数据中心的总功率而非加速器数量。因此，加速器的每瓦性能（Perf/Watt）与绝对性能同等重要，甚至更重要。</p>
 </div>
-</body>
+
+
 </div>

@@ -13,9 +13,10 @@ title: 'EPS-MoE: Expert Pipeline Scheduler for Cost-Efficient MoE Inference'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="eps-moe-expert-pipeline-scheduler-for-cost-efficient-moe-inference">EPS-MoE: Expert Pipeline Scheduler for Cost-Efficient MoE Inference</h1>
 <p><strong>EPS-MoE：用于成本高效MoE推理的专家流水线调度器</strong><br/>
 作者/机构: Yulei Qian, Fengcun Li, Xiangyang Ji, Xiaoyu Zhao, Jianchao Tan, Kefeng Zhang, Xunliang Cai (美团)</p>
 <h2 id="a1">A1 主要贡献</h2>
@@ -310,5 +311,6 @@ Table 7: 基线与流水线的比较。<br/>
 <h2 id="a5">A5 结论</h2>
 <p>本文为不同类型的MoE模型设计了不同的并行方案，并实现了专家流水线调度器（Expert Pipeline Scheduler），以实现MoE模型中计算与通信的重叠。除了重叠策略，在特定令牌数下从GroupedGemm切换到DenseGemm也是提高吞吐量的一个重要特性。我们在DeepSeekV2、Mixtral 8x7B和Snowflake Arctic等不同类型的MoE模型上测试了我们的方法。实验结果证明了所提方案的有效性，并为进一步优化MoE推理提供了一种新途径。</p>
 </div>
-</body>
+
+
 </div>

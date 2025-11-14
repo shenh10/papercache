@@ -13,9 +13,10 @@ title: 'GQA: Training Generalized Multi-Query Transformer Models from Multi-Head
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="gqa-training-generalized-multi-query-transformer-models-from-multi-head-checkpoints">GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints</h1>
 <p><strong>作者/机构</strong>: Joshua Ainslie∗, James Lee-Thorp∗, Michiel de Jong∗ Yury Zemlyanskiy, Federico Lebrón, Sumit Sanghai (Google Research)</p>
 <h3 id="a1">A1 主要贡献</h3>
 <p>自回归解码器的推理过程是Transformer模型的一个严重瓶颈，主要因为在每个解码步骤都需要加载解码器权重以及所有的注意力键（keys）和值（values），这带来了巨大的内存带宽开销【Shazeer, 2019, Fast transformer decoding: One write-head is all you need, arXiv preprint】。多查询注意力（Multi-query attention, MQA）通过使用多个查询头（query heads）但共享单一的键和值头，可以显著减少加载键和值所带来的内存带宽。然而，MQA可能会导致模型质量下降和训练不稳定，并且为追求更快的推理速度而专门训练一个独立的模型在实践中可能并不可行。此外，尽管像PaLM【Chowdhery et al., 2022, Palm: Scaling language modeling with pathways】这样的一些语言模型已经采用了MQA，但许多公开可用的模型，如T5【Raffel et al., 2020, Exploring the limits of transfer learning with a unified text-to-text transformer, JMLR】和LLaMA【Touvron et al., 2023, Llama: Open and efficient foundation language models】，仍然使用多头注意力（Multi-head attention, MHA）。</p>
@@ -97,5 +98,6 @@ title: 'GQA: Training Generalized Multi-Query Transformer Models from Multi-Head
 <p><strong>MQA在微调中的不稳定性</strong>。我们发现多查询注意力（MQA）在微调期间可能导致训练不稳定，尤其是在与长输入任务结合时。我们从头开始训练了多个使用MQA的T5-Large模型。在每种情况下，预训练过程都遭受了频繁的损失尖峰（loss spikes），并且最终模型在对长输入任务进行微调时立即发散（diverged）。</p>
 <p><strong>增量训练的改善及GQA的稳定性</strong>。经过增量训练的MQA模型更为稳定，但仍然表现出高方差。因此，对于在不稳定任务上的MQA模型，我们报告了三次微调运行的平均性能。然而，经过增量训练的分组查询注意力（GQA）模型似乎是稳定的，所以我们没有进一步探究MQA不稳定的根本原因。</p>
 </div>
-</body>
+
+
 </div>

@@ -13,9 +13,10 @@ title: 'KIMI K2: OPEN AGENTIC INTELLIGENCE'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="kimi-k2-open-agentic-intelligence">KIMI K2: OPEN AGENTIC INTELLIGENCE</h1>
 <p><strong>作者/机构</strong>: Kimi Team</p>
 <hr/>
 <h2 id="a1">A1 主要贡献</h2>
@@ -387,5 +388,6 @@ title: 'KIMI K2: OPEN AGENTIC INTELLIGENCE'
 <p><strong>因PCIe饱和导致的两阶段流水线</strong> 在NVIDIA H800集群上，并发的H2D和广播会使共享的PCIe总线饱和，导致三阶段坍缩为顺序过程（图13b）。因此，我们采用了一个更简单的两阶段方案（图13c）：（1）所有设备执行一次同步的H2D传输；（2）广播和重载并行进行。</p>
 <p><strong>大规模场景下的优化</strong> 两阶段流水线会受限于多次同步的H2D复制操作。但在大规模设备上，模型会被分成小分片，整个参数集可以一次性装入H2D缓冲区，开销会消失。通过重叠H2D、广播和重载权重，我们可以获得高带宽，以将权重从训练引擎重新分片到所有推理引擎。</p>
 </div>
-</body>
+
+
 </div>

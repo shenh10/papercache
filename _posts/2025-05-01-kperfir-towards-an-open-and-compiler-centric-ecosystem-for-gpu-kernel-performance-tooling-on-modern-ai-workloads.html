@@ -1,9 +1,10 @@
 ---
-added_date: '2025-09-20'
+added_date: '2025-11-14'
 author: shenh10
 categories:
 - mlsys
 - compiler
+- tensor
 comments: true
 date: '2025-05-01'
 layout: post
@@ -14,9 +15,10 @@ title: 'KPerfIR: Towards an Open and Compiler-centric Ecosystem for GPU Kernel P
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="kperfir-towards-an-open-and-compiler-centric-ecosystem-for-gpu-kernel-performance-tooling-on-modern-ai-workloads">KPerfIR: Towards an Open and Compiler-centric Ecosystem for GPU Kernel Performance Tooling on Modern AI Workloads</h1>
 <p>Yue Guan1†, Yuanwei Fang2‡, Keren Zhou3,4, Corbin Robeck2‡, Manman Ren2‡, Zhongkai Yu1†, Yufei Ding1,2†, Adnan Aziz2‡ 1University of California, San Diego, 2Meta, 3George Mason University, 4OpenAI †{yueguan, zhy055, yufeiding}@ucsd.edu ‡{fywkevin, robeck, mren, adnanaziz}@meta.com kzhou6@gmu.edu</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本工作提出KPerfIR，一种新型的多级编译器中心基础设施，用于支持在现代GPU上针对现代人工智能（AI）工作负载的自定义、可扩展和可移植的性能分析工具开发。核心问题在于现有编译器难以超越手工调优实现（如cuBLAS、rocBLAS和CUTLASS），这是由于GPU架构的快速演进和新算子变体的不断出现，例如Nvidia Hopper架构的第5代Tensor Cores和Tensor Memory Accelerators，以及Flash-Attention-3（FA3）内核的复杂平铺和流水线技术。研究目标是桥接编译器和分析器之间的差距，通过将性能分析功能集成到编译器工作流中，实现作为编译器通路的分析功能，提供可编程和可重用的性能分析框架，从而获得对复杂优化挑战的细粒度洞察，如GPU上细粒度功能单元的执行重叠。创新点包括：将多级编译器IR仪器化融入分析工作流，使性能工具作为编译器通路组成；集成到Triton基础设施中，支持AMD和Nvidia平台；开发首个基于区域的GPU定时工具，提供内核内行为的洞察，并通过IR语义恢复仪器化引起的 inaccuracy。评估显示工具开销低（8.2%），测量准确（2%相对误差），并为复杂GPU内核内优化提供可行动洞察。</p>
@@ -146,5 +148,6 @@ title: 'KPerfIR: Towards an Open and Compiler-centric Ecosystem for GPU Kernel P
 <p><strong>托管</strong>。此artifact在<a href="https://github.com/ChandlerGuan/kperfir_artifact" rel="noopener noreferrer" target="_blank">https://github.com/ChandlerGuan/kperfir_artifact</a>开源，主分支和提交版本e45891d。</p>
 <p><strong>要求</strong>。Docker环境需要安装NVIDIA Container Toolkit的基于Linux系统。虽然KPerfIR项目设计为跨平台，但FA3内核的artifact评估需要Nvidia H100 GPU。</p>
 </div>
-</body>
+
+
 </div>

@@ -13,9 +13,10 @@ title: 'Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="mooncake-a-kvcache-centric-disaggregated-architecture-for-llm-serving">Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving</h1>
 <p><strong>作者/机构</strong>: Ruoyu Qin, Zheming Li, Weiran He (Moonshot AI); Mingxing Zhang, Yongwei Wu, Weimin Zheng (Tsinghua University); Xinran Xu (Moonshot AI)</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文介绍了Mooncake，一个为领先的LLM服务Kimi提供支持的服务平台。</p>
@@ -197,5 +198,6 @@ title: 'Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving'
 <p><strong>KVCache优化算法</strong>：作为一个正交方向，许多算法旨在减小KVCache的大小，这在两个重要方面对Mooncake有利：1）增加批处理大小以获得更好的利用率；2）提高KVCache缓存命中率以降低预填充成本。这是一个非常活跃的研究领域，包括压缩KVCache的不同方法【索引48-53】、通过各种指标选择重要token【索引54-60】、在不同层之间共享KVCache【索引61-63】或使用不使用KVCache的算子的混合架构【索引64-69】。</p>
 <p><strong>调度策略的演进</strong>：在调度方面，我们正在开发一种先进的策略，该策略考虑了不同的请求优先级和具有不同TTFT/TBT SLO的场景，旨在增强系统在多样化操作条件下的响应能力和效率。KVCache的有效管理，包括复制、迁移以及针对部分命中和过期场景的专门驱逐策略，对于优化缓存重用也至关重要。此外，我们计划动态平衡预填充和解码实例，并研究通过批处理导向的卸载任务来利用空闲资源的策略。这种方法将使我们能够在波动的工况下最大化资源利用率。</p>
 </div>
-</body>
+
+
 </div>

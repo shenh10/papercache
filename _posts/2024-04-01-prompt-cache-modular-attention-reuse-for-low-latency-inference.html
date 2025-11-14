@@ -15,9 +15,10 @@ title: 'PROMPT CACHE: MODULAR ATTENTION REUSE FOR LOW-LATENCY INFERENCE'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="prompt-cache-modular-attention-reuse-for-low-latency-inference">PROMPT CACHE: MODULAR ATTENTION REUSE FOR LOW-LATENCY INFERENCE</h1>
 <p><strong>作者/机构</strong>: In Gim, Guojun Chen, Seung-seob Lee, Nikhil Sarda, Anurag Khandelwal, Lin Zhong</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p><strong>核心问题</strong>: 大量大型语言模型（LLM）的提示（prompt）包含频繁重用的文本片段，例如系统消息、提示模板以及用于上下文的文档。这种重叠导致在推理过程中存在大量的冗余计算。</p>
@@ -194,5 +195,6 @@ title: 'PROMPT CACHE: MODULAR ATTENTION REUSE FOR LOW-LATENCY INFERENCE'
 <p>本文介绍了Prompt Cache，这是一种基于“注意力状态可以在LLM提示之间重用”这一洞见而设计的加速技术。Prompt Cache利用一个提示模式（prompt schema）来描绘这些可重用的文本片段，将它们组织成一种称为“提示模块”的模块化且位置连贯的结构。这使得LLM用户能够将这些模块无缝地集成到他们的提示中，从而以可忽略的延迟代价利用它们作为上下文。我们的基准数据集评估显示，在GPU上TTFT延迟降低高达8倍，在CPU上高达60倍。</p>
 <p>对于未来的工作，我们计划将Prompt Cache作为未来LLM服务系统的基础构建块。这样的系统可以配备优化的GPU缓存替换策略，以实现Prompt Cache所能达到的延迟下限。减少主机到设备内存开销的不同策略也可能是有益的，例如集成KV缓存中的压缩技术，或利用分组查询注意力。另一个有希望的探索方向是用于跨并发请求共享注意力状态的GPU原语，正如我们在§3.4中简要讨论的那样。这不仅可以减少TTFT延迟，还可以通过将更多请求打包到单个批次中来减少每个输出令牌的时间（TPOT）延迟。最后，Prompt Cache可以直接加速上下文内检索增强生成（RAG）方法，其中信息检索系统基本上充当提示模块的数据库。Prompt Cache对于实时问答和对话系统中的延迟敏感型RAG应用尤其有用。</p>
 </div>
-</body>
+
+
 </div>

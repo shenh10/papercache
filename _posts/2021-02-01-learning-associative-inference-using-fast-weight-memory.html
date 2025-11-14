@@ -16,9 +16,10 @@ title: LEARNING ASSOCIATIVE INFERENCE USING FAST WEIGHT MEMORY
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>LEARNING ASSOCIATIVE INFERENCE USING FAST WEIGHT MEMORY</h1>
 <p><strong>文章标题</strong>：使用快速权重记忆学习联想推理<br/>
 <strong>作者</strong>：Imanol Schlag, Tsendsuren Munkhdalai, Jurgen Schmidhuber<br/>
 <strong>机构</strong>：The Swiss AI Lab IDSIA / USI / SUPSI, Microsoft Research</p>
@@ -347,5 +348,6 @@ title: LEARNING ASSOCIATIVE INFERENCE USING FAST WEIGHT MEMORY
 <p><strong>计算成本与局限性</strong>。一个三阶记忆张量是构建组合式状态表示的一种计算成本高昂的方法。对于在 $\mathbb{R}^n$ 中的向量分量，仅张量积计算就具有 $O(n^3)$ 的空间和时间复杂度。出于实际原因，这迫使FWM相对于慢速神经网络保持较小，从而限制了可以同时维持的关联数量。先前的工作已经提出了以方差最优的方式对此类记忆张量进行近似的方法【Schlag et al., 2019, Enhancing the transformer with explicit relational encoding for math problem solving】。在E节的消融实验中，我们在catbAbI上显示，将键进行拼接会导致性能准确率下降约5%。我们还实验了较少的读取操作（较小的$N_r$），这也导致了性能下降（附录图7）。然而，进一步的改进可能不会来自规模扩大，而是来自更通用的符号操作。我们在附录的A节中从线性异联想记忆的角度讨论了FWM的容量和张量积的必要性。</p>
 <p><strong>与工作记忆的类比</strong>。最后，我们的快速权重记忆可以被认为是模型的原始“工作记忆”——类似于人脑中的工作记忆【Spalding et al., 2018, Ventromedial prefrontal cortex is necessary for normal associative inference and memory integration】。这一观点得到了最近工作的支持，该工作提出了一个基于此类高阶张量的人脑认知模型【Tresp &amp; Ma, 2017, The tensor memory hypothesis】。</p>
 </div>
-</body>
+
+
 </div>

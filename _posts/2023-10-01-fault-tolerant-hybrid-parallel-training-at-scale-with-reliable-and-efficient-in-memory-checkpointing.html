@@ -14,9 +14,10 @@ title: Fault-Tolerant Hybrid-Parallel Training at Scale with Reliable and Effici
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>Fault-Tolerant Hybrid-Parallel Training at Scale with Reliable and Efficient In-memory Checkpointing</h1>
 <p><strong>文章标题</strong>：大规模可靠且高效的内存检查点混合并行训练容错<br/>
 <strong>作者/机构</strong>：<br/>
 - Yuxin Wang (香港浸会大学)<br/>
@@ -338,5 +339,6 @@ $P_{ck-survive} = P_{sw}^N$<br/>
 <h2>A5 结论</h2>
 <p>在混合并行（HP）下训练大型模型（LM）需要大规模计算资源，这也凸显了处理容错问题的重要性。本文介绍了REFT，据我们所知，这是第一个用于基于HP的LM训练的内存检查点框架，其检查点开销极低甚至为零。REFT集成了一系列系统优化，以减少异步检查点快照和保护与模型训练之间的资源竞争。全面的评估表明，REFT极大地减少了参数快照和保护的开销，并允许进行迭代级别的快照。在发生故障时，它能从健康节点上的冗余参数或奇偶校验数据中高效地重建参数，从而最大限度地减少GPU工作损失。REFT已被集成到一个工业级LM训练平台中，有效提高了模型训练的容错能力和效率。</p>
 </div>
-</body>
+
+
 </div>

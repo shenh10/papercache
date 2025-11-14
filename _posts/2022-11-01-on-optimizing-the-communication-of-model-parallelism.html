@@ -14,9 +14,10 @@ title: ON OPTIMIZING THE COMMUNICATION OF MODEL PARALLELISM
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="on-optimizing-the-communication-of-model-parallelism">ON OPTIMIZING THE COMMUNICATION OF MODEL PARALLELISM</h1>
 <p><strong>文章标题</strong>：论模型并行通信的优化<br/>
 <strong>作者/机构</strong>：Yonghao Zhuang, Hexu Zhao, Lianmin Zheng, Zhuohan Li, Eric P. Xing, Qirong Ho, Joseph E. Gonzalez, Ion Stoica, Hao Zhang</p>
 <h2 id="a1">A1 主要贡献</h2>
@@ -226,5 +227,6 @@ title: ON OPTIMIZING THE COMMUNICATION OF MODEL PARALLELISM
 2.  <strong>创建单元任务</strong>：然后，对于每个切片，我们创建一个单元任务，其发送方是所有拥有该切片的发送设备，接收方是所有需要该切片的接收设备。</p>
 <p><strong>切片创建细节</strong>：为了创建切片，我们遍历张量的所有维度。每个维度d有一组切点，记为$Cut(d)$，初始值为$\{0, l_d\}$，其中$l_d$是维度d的长度。如果维度d在发送方网格上以k度分片，该维度被分成k个等大的副本，因此我们将$l_d/k, 2l_d/k, \dots$加入切点集$Cut_d$。同样的操作也适用于接收方维度的分片规范。最终，对于一个n维张量，我们得到n个对应的切点集。对于每个切点集$Cut_d = \{p_0, p_1, \dots, p_{c-1}\}$，我们创建对应的区间集$I_d = \{(p_0, p_1), (p_1, p_2), \dots, (p_{c-2}, p_{c-1})\}$。最终的切片集由所有张量维度的区间集的笛卡尔积表示，即$I_0 \times I_1 \times \dots \times I_{d-1}$。</p>
 </div>
-</body>
+
+
 </div>

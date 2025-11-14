@@ -15,9 +15,10 @@ title: 'LUT Tensor Core: A Software-Hardware Co-Design for LUT-Based Low-Bit LLM
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="lut-tensor-core-a-software-hardware-co-design-for-lut-based-low-bit-llm-inference">LUT Tensor Core: A Software-Hardware Co-Design for LUT-Based Low-Bit LLM Inference</h1>
 <p><strong>作者/机构</strong>: Zhiwen Mo (帝国理工学院 &amp; 微软研究院), Lei Wang (北京大学 &amp; 微软研究院), Jianyu Wei (中国科学技术大学 &amp; 微软研究院), Zhichen Zeng (华盛顿大学 &amp; 微软研究院), Shijie Cao (微软研究院), Lingxiao Ma (微软研究院), Naifeng Jing (上海交通大学), Ting Cao (微软研究院), Jilong Xue (微软研究院), Fan Yang (微软研究院), Mao Yang (微软研究院)</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文针对大规模语言模型（LLM）推理中资源密集的问题，提出了一种名为LUT Tensor Core的软硬件协同设计，旨在高效执行基于查找表（LUT）的混合精度矩阵乘法（mpGEMM），以加速低比特LLM的推理。</p>
@@ -312,5 +313,6 @@ title: 'LUT Tensor Core: A Software-Hardware Co-Design for LUT-Based Low-Bit LLM
 -   <strong>[62] Welder: Scheduling Deep Learning Memory Access via Tile-graph (Shi et al., OSDI 2023)</strong>: 被用于DFG转换和算子融合。作者将预计算操作实现为一个图优化过程，并利用Welder将该算子与前序算子融合，以减少内存开销。<br/>
 -   <strong>[84] ROLLER: Fast and efficient tensor compilation for deep learning (Zhu et al., OSDI 2022)</strong>: 被用于LUT-mpGEMM的调度。作者在Roller的rTile接口中注册了LMMA指令的形状和分块计算逻辑，以生成最优的调度配置。</p>
 </div>
-</body>
+
+
 </div>

@@ -14,9 +14,10 @@ title: 'Megatron-LM: Training Multi-Billion Parameter Language Models Using Mode
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="megatron-lm-training-multi-billion-parameter-language-models-using-model-parallelism">Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism</h1>
 <p><strong>文章标题</strong>: Megatron-LM: 使用模型并行化训练数十亿参数的语言模型<br/>
 <strong>作者/机构</strong>: Mohammad Shoeybi, Mostofa Patwary, Raul Puri, Patrick LeGresley, Jared Casper, Bryan Catanzaro (1: NVIDIA, 2: 斯坦福大学)</p>
 <h2 id="a1">A1 主要贡献</h2>
@@ -218,5 +219,6 @@ title: 'Megatron-LM: Training Multi-Billion Parameter Language Models Using Mode
 <h4 id="e2-lambada">E.2. LAMBADA完形填空准确率</h4>
 <p><strong>评估长期依赖能力</strong>。像LAMBADA这样的完形填空式数据集旨在衡量模型处理和理解长距离上下文的能力。该任务要求模型预测一段4-5句话的上下文中的最后一个词。我们的模型使用子词单元，因此在LAMBADA评估中，我们使用原始未处理的数据集，并要求模型预测构成目标单词的多个子词token。我们使用teacher forcing，并且只有当所有预测输出都正确时才认为答案正确。这种形式等同于原始的词级别预测任务。</p>
 </div>
-</body>
+
+
 </div>

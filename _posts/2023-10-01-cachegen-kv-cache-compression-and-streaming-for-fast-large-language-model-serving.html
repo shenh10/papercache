@@ -16,9 +16,10 @@ title: 'CacheGen: KV Cache Compression and Streaming for Fast Large Language Mod
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="cachegen-kv-cache-compression-and-streaming-for-fast-large-language-model-serving">CacheGen: KV Cache Compression and Streaming for Fast Large Language Model Serving</h1>
 <p><strong>文章标题与作者/机构</strong><br/>
 - <strong>标题</strong>: CacheGen: KV Cache Compression and Streaming for Fast Large Language Model Serving<br/>
 - <strong>作者/机构</strong>: Yuhan Liu, Hanchen Li, Yihua Cheng, Siddhant Ray, Yuyang Huang, Qizheng Zhang*, Kuntai Du, Jiayi Yao, Shan Lu†, Ganesh Ananthanarayanan†, Michael Maire, Henry Hoffmann, Ari Holtzman, Junchen Jiang University of Chicago †Microsoft *Stanford University</p>
@@ -286,5 +287,6 @@ title: 'CacheGen: KV Cache Compression and Streaming for Fast Large Language Mod
 <li><strong>经济性分析</strong>：对于一个8.5K令牌的上下文，在Llama-13B上使用CacheGen压缩不同版本大约需要5GB存储空间，每月在AWS上的存储成本为$0.05【索引6】。而每次从文本重新计算KV缓存的成本至少为$0.00085（仅输入）【索引4, 5, 11, 12】。如果每月有超过150个请求重用此上下文，CacheGen还能降低推理成本。此计算仅为粗略估计，突显了CacheGen的潜在经济效益。</li>
 </ul>
 </div>
-</body>
+
+
 </div>

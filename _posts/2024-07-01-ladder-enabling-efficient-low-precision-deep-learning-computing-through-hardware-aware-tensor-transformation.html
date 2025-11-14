@@ -1,10 +1,10 @@
 ---
-added_date: '2025-11-07'
+added_date: '2025-11-14'
 author: shenh10
 categories:
-- llm
-- engineering
+- mlsys
 - compiler
+- tensor
 comments: true
 date: '2024-07-01'
 layout: post
@@ -15,9 +15,10 @@ title: 'LADDER: Enabling Efficient Low-Precision Deep Learning Computing through
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>LADDER: Enabling Efficient Low-Precision Deep Learning Computing through Hardware-aware Tensor Transformation</h1>
 <p><strong>文章标题</strong>：LADDER: 通过硬件感知的张量变换实现高效的低精度深度学习计算<br/>
 <strong>作者/机构</strong>：Lei Wang†⋄∗, Lingxiao Ma⋄, Shijie Cao⋄, Quanlu Zhang⋄, Jilong Xue⋄, Yining Shi‡⋄∗, Ningxin Zheng⋄, Ziming Miao⋄, Fan Yang⋄, Ting Cao⋄, Yuqing Yang⋄, Mao Yang⋄ (中国科学院大学†, 北京大学‡, 微软研究院⋄)</p>
 <hr/>
@@ -166,8 +167,8 @@ Result: gret : scheduled tTile-graph
 35 gconn = ScheduleConnectedGraph(gconn, D);   
 36 return g;
 </code></pre></div>
-<div><pre><span></span><code>最初，该策略将图调度为子图（第33行）。每个子图表示一个计算流水线，它将`tTile`从最低内存层加载到核心，然后将结果存储回最低内存层。一个子图可以是一个`tTile-operator`或一组可以融合的`tTile-operator`。`ExtractConnectedGraph`可以利用现有的DNN编译器工作【索引13，Tvm: end-to-end optimization stack for deep learning，2018，arXiv；索引43，Welder: Scheduling deep learning memory access via tile-graph，2023，OSDI】。对于一个子图，它首先从硬件中推断出提示。具体来说，它首先选择合适的硬件配置（例如，计算核心）（第2行），偏好硬件支持的比特位最接近的`tType`。因为位数更多的数值类型通常需要更多的晶体管来实现硬件指令，并且通常性能较低。例如，在NVIDIA A100 GPU中，NF4类型可以转换为FP16或FP32进行处理，LADDER将选择FP16核心（312 TFlops）而不是FP32（19.5 TFlops）。然后，它通过比特对齐为每个硬件层找到对齐的粒度和形状，并配置提示（第1-11行）。以NVIDIA A100为例（图5(b)），`HintGranularity`是`ldmatrix`要求的16B，`HintShape`是`[4,8]`，其中内维是128B，与全局内存的32B事务和共享内存的128B事务对齐。然后，策略从顶层（即核心）到底层（即DRAM）逐层调度此子图（第25-29行）。在每一层，策略首先通过`ScheduleTiling`调度`tTile-operator`的分块并带有提示（第27行），然后调度`tTile`变换（第29行）。如果`ScheduleTiling`（第27行）调度的算子分块是`[4,8]`和16B的倍数，后续的`ScheduleTransform`可以使此调度与`tTile-device`对齐。此外，`ScheduleTiling`可以利用现有的张量编译器【索引13，Tvm: end-to-end optimization stack for deep learning，2018，arXiv；索引52，Ansor: Generating high-performance tensor programs for deep learning，2020，OSDI；索引57，Roller: Fast and efficient tensor compilation for deep learning，2022，OSDI】。在`ScheduleTransform`中，策略将检查形状和类型与`tTile-device`的对齐情况，并调度相应的变换来对齐`tTile`（第12-22行）。调度后可能会有一些候选方案，将对其进行性能评测并返回最佳方案（第30行）。
-</code></pre></div>
+<p>最初，该策略将图调度为子图（第33行）。每个子图表示一个计算流水线，它将`tTile`从最低内存层加载到核心，然后将结果存储回最低内存层。一个子图可以是一个`tTile-operator`或一组可以融合的`tTile-operator`。`ExtractConnectedGraph`可以利用现有的DNN编译器工作【索引13，Tvm: end-to-end optimization stack for deep learning，2018，arXiv；索引43，Welder: Scheduling deep learning memory access via tile-graph，2023，OSDI】。对于一个子图，它首先从硬件中推断出提示。具体来说，它首先选择合适的硬件配置（例如，计算核心）（第2行），偏好硬件支持的比特位最接近的`tType`。因为位数更多的数值类型通常需要更多的晶体管来实现硬件指令，并且通常性能较低。例如，在NVIDIA A100 GPU中，NF4类型可以转换为FP16或FP32进行处理，LADDER将选择FP16核心（312 TFlops）而不是FP32（19.5 TFlops）。然后，它通过比特对齐为每个硬件层找到对齐的粒度和形状，并配置提示（第1-11行）。以NVIDIA A100为例（图5(b)），`HintGranularity`是`ldmatrix`要求的16B，`HintShape`是`[4,8]`，其中内维是128B，与全局内存的32B事务和共享内存的128B事务对齐。然后，策略从顶层（即核心）到底层（即DRAM）逐层调度此子图（第25-29行）。在每一层，策略首先通过`ScheduleTiling`调度`tTile-operator`的分块并带有提示（第27行），然后调度`tTile`变换（第29行）。如果`ScheduleTiling`（第27行）调度的算子分块是`[4,8]`和16B的倍数，后续的`ScheduleTransform`可以使此调度与`tTile-device`对齐。此外，`ScheduleTiling`可以利用现有的张量编译器【索引13，Tvm: end-to-end optimization stack for deep learning，2018，arXiv；索引52，Ansor: Generating high-performance tensor programs for deep learning，2020，OSDI；索引57，Roller: Fast and efficient tensor compilation for deep learning，2022，OSDI】。在`ScheduleTransform`中，策略将检查形状和类型与`tTile-device`的对齐情况，并调度相应的变换来对齐`tTile`（第12-22行）。调度后可能会有一些候选方案，将对其进行性能评测并返回最佳方案（第30行）。
+</p>
 <ul>
 <li><strong>ScheduleMap</strong>：在调度<code>map</code>变换中的<code>map_func</code>是非平凡的。LADDER提出了一种推断<code>map_func</code>的方法，即将<code>tTile</code>中的元素按行主序映射到所需的事务大小。图5(e)展示了一个例子：在16B的粒度下，为了将L0中的<code>shape[16,2]</code>映射到L1中所需的<code>shape[8]</code>，元素按行主序被展平，得到<code>shape[4,8]</code>。<code>map</code>也可以支持其他的<code>map_func</code>。这种调度策略不保证最优。然而，如§5所示，这种调度策略已经可以超越最先进的技术，并能够在GPU上实现高效的低精度DNN计算。我们也希望，所提出的调度机制带来的这个优化空间可以被未来关于更先进调度策略的研究进一步探索。</li>
 </ul>
@@ -341,5 +342,6 @@ Result: gret : scheduled tTile-graph
 <h3>A5 结论</h3>
 <p>本文介绍了LADDER，这是首个旨在优化通用低精度计算在GPU等加速器上的深度学习编译器。LADDER通过暴露一个通用的类型系统（<code>tType</code>）和扩展的张量表达式，使用户能够轻松实现和表达深度学习中的新数据类型。它引入了一套新的张量调度原语，以促进计算流水线中张量存储、访问和类型转换等方面的优化。LADDER的分层、硬件感知的优化策略能够驾驭复杂的变换空间，展示了其系统性支持各种低比特精度自定义数据类型的能力。这在无需硬件修改的情况下，提升了现代加速器上DNN计算的性能。这项创新不仅赋能模型设计者探索数据类型优化，也为硬件供应商提供了一个灵活的解决方案来扩展对多样化精度格式的支持。</p>
 </div>
-</body>
+
+
 </div>

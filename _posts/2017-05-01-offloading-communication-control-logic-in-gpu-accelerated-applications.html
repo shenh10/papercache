@@ -12,9 +12,10 @@ title: Offloading communication control logic in GPU accelerated applications
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="offloading-communication-control-logic-in-gpu-accelerated-applications">Offloading communication control logic in GPU accelerated applications</h1>
 <p>Elena Agostini<br/>
 NVIDIA and National Research Council of Italy<br/>
 Santa Clara, CA, USA<br/>
@@ -191,5 +192,6 @@ Email: spotluri@nvidia.com  </p>
 <h2 id="_5">结论</h2>
 <p>GPUDirect Async是一种使GPU与第三方设备直接控制路径的技术，已随CUDA 8.0发布。InfiniBand网络对Async的支持以新实验OFED verbs集（Mellanox OFED 3.4加上[22，GPUDirect libmlx5. <a href="https://github.com/gpudirect/libmlx5]" rel="noopener noreferrer" target="_blank">https://github.com/gpudirect/libmlx5]</a>中的更新）和中层抽象库[23，GPUDirect libgdsync. <a href="https://github.com/gpudirect/libgdsync]" rel="noopener noreferrer" target="_blank">https://github.com/gpudirect/libgdsync]</a>的形式出现，作为BSD。GPUDirect Async仍在开发中：我们正在评估用例和新功能，如在GPU内存上分配InfiniBand元素（即CQ和QP），并测试与GPUDirect RDMA的交互。此外，我们希望使用更多节点测试异步应用以更好地评估其可扩展性，并扩展软件栈以使用不同于InfiniBand的网络协议。</p>
 </div>
-</body>
+
+
 </div>

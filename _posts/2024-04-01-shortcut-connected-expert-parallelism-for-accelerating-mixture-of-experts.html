@@ -14,9 +14,10 @@ title: Shortcut-connected Expert Parallelism for Accelerating Mixture of Experts
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="shortcut-connected-expert-parallelism-for-accelerating-mixture-of-experts">Shortcut-connected Expert Parallelism for Accelerating Mixture of Experts</h1>
 <p><strong>作者/机构</strong>: Weilin Cai, Juyong Jiang, Le Qin, Junwei Cui, Sunghun Kim, Jiayi Huang</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p><strong>核心问题</strong>: 专家并行（Expert Parallelism）是分配稀疏门控混合专家（MoE）模型计算负载的关键策略，但其固有的All-to-All通信会产生巨大开销，成为扩展MoE模型的主要瓶颈。现有优化方法（如分层All-to-All和流水线）虽然能部分缓解此问题，但仍受限于通信与计算操作之间的顺序依赖性。如下图所示，在分布式环境中，All-to-All通信开销可占总时间的50%左右。</p>
@@ -332,5 +333,6 @@ title: Shortcut-connected Expert Parallelism for Accelerating Mixture of Experts
 <figcaption class="figure-caption">图15. OLMoE中的中间表征相似性。</figcaption>
 </figure></p>
 </div>
-</body>
+
+
 </div>

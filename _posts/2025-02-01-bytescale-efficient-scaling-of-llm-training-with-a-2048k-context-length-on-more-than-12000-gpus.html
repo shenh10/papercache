@@ -14,9 +14,10 @@ title: 'ByteScale: Efficient Scaling of LLM Training with a 2048K Context Length
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>ByteScale: Efficient Scaling of LLM Training with a 2048K Context Length on More Than 12,000 GPUs</h1>
 <p><strong>作者/机构</strong>: Hao Ge (Peking University), Junda Feng (ByteDance Seed), Qi Huang (ByteDance Seed), Fangcheng Fu (Peking University), Xiaonan Nie (ByteDance Seed), Lei Zuo (ByteDance Seed), Haibin Lin (ByteDance Seed), Bin Cui (Peking University), Xin Liu (ByteDance Seed)</p>
 <h2>A1 主要贡献</h2>
 <p>本文针对大规模语言模型（LLM）长短序列混合训练场景，提出了一个名为 ByteScale 的高效、灵活且可扩展的训练框架。现有框架通常采用静态的通信网格（如二维网格）来组织设备，将数据并行（DP）和上下文并行（CP）视为正交的技术，但这导致在处理长度可变的序列时，出现冗余通信和计算不平衡的问题，从而降低了训练效率。</p>
@@ -305,5 +306,6 @@ title: 'ByteScale: Efficient Scaling of LLM Training with a 2048K Context Length
 <h2>A5 结论</h2>
 <p>本文提出了 ByteScale，一个为大规模长短序列混合训练设计的高效、灵活且可扩展的分布式 LLM 训练框架。通过开发的通信优化器消除了冗余通信，并通过平衡调度器缓解了计算不平衡。在超过 12,000 个 GPU 的生产集群上，对从 7B 到 141B 的模型和从 256K 到 2M 的上下文长度进行了评估，实验结果显示 ByteScale 相较于 MegaScale 实现了高达 7.89 倍的性能提升。</p>
 </div>
-</body>
+
+
 </div>

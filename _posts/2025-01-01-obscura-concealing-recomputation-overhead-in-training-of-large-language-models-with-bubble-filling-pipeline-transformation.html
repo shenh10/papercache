@@ -15,9 +15,10 @@ title: 'Obscura: Concealing Recomputation Overhead in Training of Large Language
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="obscura-concealing-recomputation-overhead-in-training-of-large-language-models-with-bubble-filling-pipeline-transformation">Obscura: Concealing Recomputation Overhead in Training of Large Language Models with Bubble-filling Pipeline Transformation</h1>
 <p><strong>作者/机构</strong>: Yuzhou Huang and Yapeng Jiang, Sun Yat-sen University; Zicong Hong, Hong Kong University of Science and Technology; Wuhui Chen, Sun Yat-sen University; Bin Wang and Weixi Zhu, Huawei Technologies; Yue Yu, Peng Cheng Laboratory; Zibin Zheng, Sun Yat-sen University</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决流水线并行训练大语言模型（LLM）时，早期阶段面临的内存瓶颈问题。虽然重计算（recomputation）可以缓解此问题，但会引入额外的计算开销。</p>
@@ -345,5 +346,6 @@ Figure 16: Llama-2 23B模型中的敏感性分析。</p>
 <h2 id="a5">A5 结论</h2>
 <p>本文提出了Obscura，一个计算高效的流水线训练系统。Obscura的核心创新在于引入了一种新颖的流水线转换，它能够利用现有的流水线气泡来有效隐藏重计算的成本。此外，系统还集成了依赖松弛、感知交换的重计算以及计算平衡等先进技术，这些技术协同工作，显著提升了训练的整体性能和资源利用率。实验证明，Obscura在训练各种规模的大语言模型时，相比现有方法具有明显的吞吐量优势。</p>
 </div>
-</body>
+
+
 </div>

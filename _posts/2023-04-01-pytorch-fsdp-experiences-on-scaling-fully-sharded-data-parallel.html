@@ -13,9 +13,10 @@ title: 'PyTorch FSDP: Experiences on Scaling Fully Sharded Data Parallel'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="pytorch-fsdp-experiences-on-scaling-fully-sharded-data-parallel">PyTorch FSDP: Experiences on Scaling Fully Sharded Data Parallel</h1>
 <p><strong>作者/机构</strong>: Yanli Zhao, Andrew Gu, Rohan Varma, Liang Luo, Chien-Chin Huang, Min Xu, Less Wright, Hamid Shojanazeri, Myle Ott, Sam Shleifer, Alban Desmaison, Can Balioglu, Pritam Damania, Bernard Nguyen, Geeta Chauhan, Yuchen Hao, Ajit Mathews, and Shen Li (Meta AI)</p>
 <h2 id="_1">主要贡献</h2>
 <p>本文介绍了PyTorch的完全分片数据并行（Fully Sharded Data Parallel, FSDP），这是一个用于大规模模型训练的工业级解决方案。FSDP旨在解决现有分布式训练方法在通用性、与框架核心功能的耦合性以及对社区创新友好性方面的挑战。其核心研究目标是提供一个与PyTorch核心组件（如Tensor实现、分发器系统和CUDA内存缓存分配器）紧密协同设计的原生解决方案，以实现非侵入式的用户体验和高训练效率。</p>
@@ -220,5 +221,6 @@ title: 'PyTorch FSDP: Experiences on Scaling Fully Sharded Data Parallel'
 <h2 id="_33">结论</h2>
 <p>本手稿阐述了截至PyTorch 2.0版本中FullyShardedDataParallel的底层原理、设计理念和实现。FSDP通过一系列先进技术实现了可用性和效率，包括延迟初始化、灵活的分片策略、通信重叠与预取，以及对通信集合操作的速率限制。所有这些技术都与其他关键的PyTorch组件紧密协同设计，以确保解决方案的健全性和鲁棒性。评估表明，FSDP能够支持大型语言模型和推荐模型，并具有近线性的可扩展性。</p>
 </div>
-</body>
+
+
 </div>

@@ -13,9 +13,10 @@ title: 'NetDIMM: Low-Latency Near-Memory Network Interface Architecture'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="netdimm-low-latency-near-memory-network-interface-architecture">NetDIMM: Low-Latency Near-Memory Network Interface Architecture</h1>
 <p><strong>文章标题</strong>：NetDIMM: 低延迟近内存网络接口架构<br/>
 <strong>作者/机构</strong>：Mohammad Alian, Nam Sung Kim, 伊利诺伊大学厄巴纳-香槟分校</p>
 <h2 id="a1">A1 主要贡献</h2>
@@ -179,5 +180,6 @@ end if
 <h2 id="a5">A5 结论</h2>
 <p>几十年来，横向扩展网络系统的设计重点是优化带宽。然而，随着超低延迟数据中心应用的出现，对低延迟网络的需求日益凸显。本文基于近内存处理概念，并利用NVDIMM-P协议的异步内存访问特性，设计并评估了一种名为NetDIMM的近内存NIC架构。NetDIMM将一个功能完备的NIC集成到支持内存内缓冲区克隆的DIMM缓冲设备中。我们开发了相应的支持逻辑和设备驱动，使近内存NIC可供主机处理器上的应用程序使用。通过为NetDIMM的本地内存空间实现新的内存区域和Linux内核API，我们显著减少了处理网络数据包时的数据移动量。与传统的PCIe NIC相比，NetDIMM在不牺牲网络带宽的情况下，可将网络延迟最多降低52.3%。</p>
 </div>
-</body>
+
+
 </div>

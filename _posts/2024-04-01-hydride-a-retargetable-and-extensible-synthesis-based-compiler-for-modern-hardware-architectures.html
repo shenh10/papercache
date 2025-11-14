@@ -1,10 +1,10 @@
 ---
-added_date: '2025-11-07'
+added_date: '2025-11-14'
 author: shenh10
 categories:
-- llm
-- engineering
+- mlsys
 - compiler
+- tensor
 comments: true
 date: '2024-04-01'
 layout: post
@@ -15,9 +15,10 @@ title: 'Hydride: A Retargetable and Extensible Synthesis-based Compiler for Mode
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>Hydride: A Retargetable and Extensible Synthesis-based Compiler for Modern Hardware Architectures</h1>
 <p><strong>文章标题</strong>：Hydride：一种面向现代硬件架构的可重定向、可扩展的基于综合的编译器<br/>
 <strong>作者/机构</strong>：<br/>
 Akash Kothari∗ (UIUC, USA)<br/>
@@ -247,5 +248,6 @@ Output: Program Sol s.t. ∀x .Sol (x) = Expr(x) ∧ C(Sol) is minimized.
 <p>本文提出了Hydride，一种新颖的全自动化编译器构建方法。该方法仅需一组硬件供应商发布的机器ISA伪代码规范，即可自动生成一个具有形式化语义的核心语言和机器无关的编译器IR。该IR语义可用于通过程序综合来实现高性能语言的编译器，取代了费力且脆弱的模式匹配规则。这种方法实现了高指令集覆盖率和高性能代码生成，即使对于大型、复杂的指令集也是如此。</p>
 <p>Hydride的方法可以使其他编译器基础设施受益。例如，我们目前正在MLIR中使用Hydride，从ISA规范中自动生成目标无关的方言（dialect）和低级的目标特定方言。这些方言类似于‘x86Vector’和‘ArmNeon’方言，但指令覆盖范围要好得多；此外，它还为目前不存在的Hexagon生成了一个方言。Hydride自动生成的形式化语义可用于通过综合自动生成从‘vector’和‘arith’方言到自动设计的方言的降低代码。目前MLIR中不存在这样的能力。</p>
 </div>
-</body>
+
+
 </div>

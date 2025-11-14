@@ -1,10 +1,10 @@
 ---
-added_date: '2025-11-07'
+added_date: '2025-11-14'
 author: shenh10
 categories:
-- llm
-- engineering
+- mlsys
 - compiler
+- tensor
 comments: true
 date: '2022-07-01'
 layout: post
@@ -14,9 +14,10 @@ title: 'Roller: Fast and Efficient Tensor Compilation for Deep Learning'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>Roller: Fast and Efficient Tensor Compilation for Deep Learning</h1>
 <ul>
 <li><strong>文章标题</strong>: ROLLER：面向深度学习的快速高效张量编译</li>
 <li><strong>作者/机构</strong>: Hongyu Zhu†⋄∗, Ruofan Wu‡⋄∗, Yijia Diao\$⋄∗, Shanbin Ke¶⋄∗, Haoyu Li§⋄∗, Chen Zhang£⋄∗, Jilong Xue⋄, Lingxiao Ma⋄, Yuqing Xia⋄, Wei Cui⋄, Fan Yang⋄, Mao Yang⋄, Lidong Zhou⋄, Asaf Cidon§, Gennady Pekhimenko†. (†多伦多大学, ‡中国人民大学, \$上海交通大学, ¶加州大学圣地亚哥分校, §哥伦比亚大学, £清华大学, ⋄微软研究院)</li>
@@ -250,5 +251,6 @@ title: 'Roller: Fast and Efficient Tensor Compilation for Deep Learning'
 <h2>A5 结论</h2>
 <p>ROLLER采用了一种非传统的深度学习编译器方法。它不依赖于昂贵的机器学习算法在巨大的搜索空间中寻找好的解决方案，而是使用一种基于递归构造的算法，利用新的<code>rTile</code>抽象来生成高效的内核。<code>rTile</code>将可选形状限制在与多种硬件特性对齐的范围内，数量远少于传统方法。构造出的程序可以通过微观性能模型进行评估，无需每次都在真实设备上运行。因此，ROLLER可以在数秒内编译出高性能内核，即使在不够成熟的加速器上也是如此。更重要的是，ROLLER为新的人工智能硬件供应商提供了一种独特且效率显著更高的方法来构建有竞争力的、特定于供应商的DNN库，从而弥合与市场领导者的生态系统差距，促进人工智能加速器的创新。</p>
 </div>
-</body>
+
+
 </div>

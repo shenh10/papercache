@@ -14,9 +14,10 @@ title: 'FlashMLA-ETAP: Efficient Transpose Attention Pipeline for Accelerating M
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="flashmla-etap-efficient-transpose-attention-pipeline-for-accelerating-mla-inference-on-nvidia-h20-gpus">FlashMLA-ETAP: Efficient Transpose Attention Pipeline for Accelerating MLA Inference on NVIDIA H20 GPUs</h1>
 <p><strong>文章标题</strong>: FlashMLA-ETAP: 用于加速NVIDIA H20 GPU上MLA推理的高效转置注意力流水线<br/>
 <strong>作者</strong>: Pengcuo Dege, Qiuming Luo, Rui Mao, Chang Kong<br/>
 <strong>机构</strong>: 腾讯 (Tencent), 深圳大学计算机与软件工程学院 (Shenzhen University), 深圳职业技术大学人工智能学院 (Shenzhen Polytechnic University)</p>
@@ -166,5 +167,6 @@ Require: 矩阵 Qi ∈ R^{Br×d} 和 K, V ∈ R^{N×d} 位于HBM, 键块大小�
 <p><strong>局限性</strong>: 本研究的评估仅限于NVIDIA H20 GPU、特定的自回归解码范式（每步前向传播生成一个token）以及特定的模型配置（16个头，576头维度，最高64K序列长度）。这可能限制了其在不同GPU、推理模式或更大模型上的普适性。</p>
 <p><strong>未来工作</strong>: 未来的研究应致力于通过实验验证ETAP在FlashAttention-3和FlashInfer中的集成效果，为其他基于Hopper架构的中端GPU进行优化，并探索更广泛的序列长度和配置，以增强其可扩展性和适用性。</p>
 </div>
-</body>
+
+
 </div>

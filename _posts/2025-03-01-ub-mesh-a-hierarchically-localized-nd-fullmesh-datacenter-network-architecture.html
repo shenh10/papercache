@@ -12,9 +12,10 @@ title: 'UB-Mesh: a Hierarchically Localized nD-FullMesh Datacenter Network Archi
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="ub-mesh-a-hierarchically-localized-nd-fullmesh-datacenter-network-architecture">UB-Mesh: a Hierarchically Localized nD-FullMesh Datacenter Network Architecture</h1>
 <p><strong>作者/机构</strong>: Heng Liao, Bingyang Liu, Xianping Chen, Zhigang Guo, Chuanning Cheng, Jianbing Wang, Xiangyu Chen, Peng Dong, Rui Meng, Wenjie Liu, Zhe Zhou*, Ziyang Zhang, Yuhang Gai, Cunle Qian, Yi Xiong, Zhongwu Cheng, Jing Xia, Yuli Ma, Xi Chen, Wenhua Du, Shizhong Xiao, Chungang Li, Yong Qin,Liudong Xiong, Zhou Yu, Lv Chen, Lei Chen, Buyun Wang, Pei Wu, Junen Gao,Xiaochu Li, Jian He, Shizhuan Yan, Bill McCOLL (Huawei)</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>随着大型语言模型（LLM）的持续扩展，其对计算能力和带宽的需求也随之升级。本文针对下一代AI数据中心面临的<strong>大规模（R1）、高带宽（R2）、成本效益（R3）和高可用性（R4）</strong>四大挑战，提出了一个名为UB-Mesh的新型AI数据中心网络架构。</p>
@@ -318,5 +319,6 @@ title: 'UB-Mesh: a Hierarchically Localized nD-FullMesh Datacenter Network Archi
 <p><strong>用于集合通信的协处理器</strong>。值得一提的是，在UB IO控制器中还有一个名为集合通信单元（Collective Communication Unit, CCU）的特殊协处理器，用于卸载集合通信任务。具体来说，CCU执行指令，主动从HBM读写数据，发起NPU间传输，并利用片上SRAM缓冲区执行在线数据归约。它消除了从应用程序内存缓冲区到通信缓冲区的冗余数据拷贝。这种设计有效地减轻了HBM带宽消耗，并通过基于校验位的细粒度同步机制保持了确定性的归约顺序。CCU还可以与计算核心无缝协作，以实现高效的计算-通信重叠。</p>
 <p><strong>对大规模专家模型的支持</strong>。除了密集的和常规的MoE模型，我们注意到人们正在积极探索包含海量专家的MoE模型【【6，DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts Language Model，2024，arXiv】，【7，DeepSeek-V3 Technical Report，2024，arXiv】】。这种设计通常需要大规模、细粒度的all-to-all通信。UB-Mesh能够通过多路径和分层的all-to-all优化（见5.1节）以及基于UB的Load/Store数据传输来高效支持此类海量专家模型。CCU还可以高效地卸载all-to-all操作，以节省宝贵的计算核心资源，正如在【【7，DeepSeek-V3 Technical Report，2024，arXiv】】中所预期的那样。</p>
 </div>
-</body>
+
+
 </div>

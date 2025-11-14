@@ -14,9 +14,10 @@ title: Enabling Efficient GPU Communication over Multiple NICs with FuseLink
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="enabling-efficient-gpu-communication-over-multiple-nics-with-fuselink">Enabling Efficient GPU Communication over Multiple NICs with FuseLink</h1>
 <p><strong>作者和机构：</strong> Zhenghang Ren, Yuxuan Li, Zilong Wang, Xinyang Huang, Wenxue Li, Kaiqiang Xu, Xudong Liao, Yijun Sun, Bowen Liu (Hong Kong University of Science and Technology); Han Tian (University of Science and Technology of China); Junxue Zhang (Hong Kong University of Science and Technology); Mingfei Wang (MetaX Integrated Circuits); Zhizhen Zhong (Massachusetts Institute of Technology); Guyue Liu (Peking University); Ying Zhang (Meta); Kai Chen (Hong Kong University of Science and Technology)</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>论文从引言中提取的核心问题是：在分布式机器学习任务中，GPU间通信效率对性能至关重要，但现有系统在处理不均衡通信流量时无法充分利用多个NIC，导致热点NIC成为瓶颈。具体而言，机器学习集群中每个服务器堆叠多个NIC以提升服务器间GPU通信带宽，但静态GPU-NIC绑定导致不均衡流量（如大语言模型服务、专家并行训练和推荐模型训练）下热点NIC拥塞，而其他NIC闲置。研究目标是设计一种框架，使任意机器学习负载能有效利用所有可用RDMA NIC进行数据传输，将多个NIC聚合为“FuseLink”以提升服务器间通信带宽，而无需调整并行策略或修改应用代码。</p>
@@ -229,5 +230,6 @@ title: Enabling Efficient GPU Communication over Multiple NICs with FuseLink
 </li>
 </ul>
 </div>
-</body>
+
+
 </div>

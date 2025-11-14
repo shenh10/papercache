@@ -13,9 +13,10 @@ title: Principles and Methodologies for Serial Performance Optimization
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="principles-and-methodologies-for-serial-performance-optimization">Principles and Methodologies for Serial Performance Optimization</h1>
 <p>Sujin Park, Mingyu Guan, Xiang Cheng, and Taesoo Kim, Georgia Institute of Technology</p>
 <h2 id="_1">主要贡献</h2>
 <p>本文针对计算机系统中顺序执行性能优化的长期挑战，提出了一种系统化的方法。核心问题是顺序任务的优化对整体性能至关重要，因为根据Amdahl定律，系统的最大加速潜力受顺序部分限制。尽管并行处理取得进展，但顺序瓶颈的优化仍是基础。本文的研究目标是定义顺序性能优化的结构化框架，包括三个原则（任务移除、更换和重排序）以及从中提炼的八种可操作方法论：批处理、缓存、预计算、延迟、放松、上下文化、硬件专化和分层。这些方法论通过对过去十年OSDI和SOSP论文的审查，证明其全面覆盖了观察到的顺序优化策略。创新点包括将这些方法论合成统一框架，将开放式优化挑战转化为结构化过程，并引入SysGPT，一个基于精选文献微调的GPT模型，用于提供上下文感知的性能建议。此外，通过文件存储系统和内核同步的案例研究，展示了框架的实际价值，并揭示了未利用的优化机会。</p>
@@ -137,5 +138,6 @@ title: Principles and Methodologies for Serial Performance Optimization
 <h2 id="_6">结论</h2>
 <p>顺序系统性能优化仍是系统研究中的基本但往往缺乏结构的任务。我们提出基于三个核心原则——移除、更换和重排序——的系统化框架，并将其提炼成过去十年系统文献中常用的八种可操作方法论。此分类澄清了优化机会空间，并提供关于性能的系统语言。在此基础上，我们引入SysGPT，一个微调LLM，训练用于提出根植于此方法论的策略。在未见论文上的评估中，SysGPT在定性和定量评估中显著优于GPT-4基线，展示了其生成针对真实系统性能问题的针对性、可操作建议的优越能力。未来工作可扩展到协调感知技术和自动化优化管道。</p>
 </div>
-</body>
+
+
 </div>

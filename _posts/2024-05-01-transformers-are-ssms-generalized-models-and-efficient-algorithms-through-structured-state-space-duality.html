@@ -16,9 +16,10 @@ title: 'Transformers are SSMs: Generalized Models and Efficient Algorithms Throu
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>Transformers are SSMs: Generalized Models and Efficient Algorithms Through Structured State Space Duality</h1>
 <p><strong>标题</strong>：Transformer即SSM：通过结构化状态空间对偶性实现的广义模型和高效算法<br/>
 <strong>作者</strong>：Tri Dao, Albert Gu<br/>
 <strong>机构</strong>：普林斯顿大学计算机科学系，卡内基梅隆大学机器学习系</p>
@@ -598,5 +599,6 @@ $O = AV \text{ (T, P)}$<br/>
 *   <strong>证明思路</strong>：将自回归定义(23)重排并向量化，可以表示为$Ly=Dx$，其中L是一个(k+1)-带状下三角矩阵。因此$M=L^{-1}D$。由于(k+1)-带状矩阵是(k+1)-半可分的，根据闭包性质，其逆M至多是(k+2)-半可分的（更紧的界是k+1）。最后，根据定理3.5，这表明M是一个阶为k+1的状态空间模型。<br/>
 <strong>结论</strong>：高效的自回归注意力就是半可分SMA。</p>
 </div>
-</body>
+
+
 </div>

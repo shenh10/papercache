@@ -12,9 +12,10 @@ title: Serving Large Language Models on Huawei CloudMatrix384
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="serving-large-language-models-on-huawei-cloudmatrix384">Serving Large Language Models on Huawei CloudMatrix384</h1>
 <p><strong>作者/机构</strong>: Pengfei Zuo, Huimin Lin, Junbo Deng, Nan Zou, Xingkun Yang, Yingyu Diao, Weifeng Gao, Ke Xu, Zhangyu Chen, Shirui Lu, Zhao Qiu, Peiyang Li, Xianyu Chang, Zhengzhong Yu, Fangzheng Miao, Jia Zheng, Ying Li, Yuan Feng, Bei Wang, Zaijian Zong, Mosong Zhou, Wenli Zhou, Houjiang Chen*, Xingyu Liao*, Yipeng Li*, Wenxiao Zhang*, Ping Zhu*, Yinggang Wang*, Chuanjie Xiao*, Depeng Liang*, Dong Cao*, Juncheng Liu*, Yongqiang Yang, Xiaolong Bai, Yi Li, Huaguo Xie, Huatao Wu, Zhibin Yu, Lv Chen, Hu Liu, Yujun Ding, Haipei Zhu, Jing Xia, Yi Xiong, Zhou YuB, Heng LiaoB<br/>
 (Huawei *SiliconFlow)</p>
 <h2 id="a1">A1 主要贡献</h2>
@@ -500,5 +501,6 @@ LLM的快速发展，如DeepSeek-R1、LLaMA-4和Qwen-3，参数量已达数千�
 <p>我们使用DeepSeek-R1模型的广泛评估表明，CloudMatrix-Infer实现了卓越的吞吐量，预填充阶段每个NPU达到6,688 tokens/s，解码阶段每个NPU达到1,943 tokens/s，同时始终保持低于50ms的低延迟。其计算效率在预填充和解码阶段分别达到4.45 tokens/s/TFLOPS和1.29 tokens/s/TFLOPS，均超过了SGLang在NVIDIA H100和DeepSeek在H800上已发布的效率。此外，INT8量化策略在众多基准测试中保持了与DeepSeek官方API相当的准确性。</p>
 <p>展望未来，进一步增强CloudMatrix384的方向包括：统一VPC和RDMA网络平面，扩展到更大的超级节点配置，以及追求更深度的CPU资源分解和池化。此外，更细粒度的组件级分解和自适应部署策略为实现AI数据中心基础设施更大的灵活性、效率和可扩展性提供了有希望的途径。这些发现共同验证了华为CloudMatrix作为一个高效、可扩展且性能优化的平台，为部署大规模AI工作负载设定了基准。</p>
 </div>
-</body>
+
+
 </div>

@@ -16,9 +16,10 @@ title: 'AWQ: ACTIVATION-AWARE WEIGHT QUANTIZATION FOR ON-DEVICE LLM COMPRESSION 
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="awq-activation-aware-weight-quantization-for-on-device-llm-compression-and-acceleration">AWQ: ACTIVATION-AWARE WEIGHT QUANTIZATION FOR ON-DEVICE LLM COMPRESSION AND ACCELERATION</h1>
 <p><strong>文章标题</strong>: AWQ: 面向设备端大语言模型压缩和加速的激活感知权重方法<br/>
 <strong>作者/机构</strong>: Ji Lin, Jiaming Tang, Haotian Tang, Shang Yang, Wei-Ming Chen, Wei-Chen Wang, Guangxuan Xiao, Xingyu Dang, Chuang Gan, Song Han (来自多个机构，包括MIT等)</p>
 <h2 id="a1">A1 主要贡献</h2>
@@ -276,5 +277,6 @@ title: 'AWQ: ACTIVATION-AWARE WEIGHT QUANTIZATION FOR ON-DEVICE LLM COMPRESSION 
 <h2 id="a5">A5 结论</h2>
 <p>本文提出了激活感知权重量化（AWQ），一种简单而有效的低比特纯权重量化LLM压缩方法。该方法基于LLM中权重重要性不均等的观察，通过逐通道缩放来减小显著权重的量化损失。由于AWQ不依赖于对校准集的过拟合，它能很好地保留LLM在不同领域和模态上的泛化能力，其性能在语言建模任务上超越了现有工作，并成功应用于指令微调模型和多模态模型。此外，配套的TinyChat推理系统将AWQ的理论内存节省转化为了实际的性能提升，在桌面和移动GPU上相比FP16实现取得了3.2-3.3倍的实测加速，极大地推动了LLM在边缘设备上的部署和普及。</p>
 </div>
-</body>
+
+
 </div>

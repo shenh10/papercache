@@ -12,9 +12,10 @@ title: RDMA POINT-TO-POINT COMMUNICATION FOR LLM SYSTEMS
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>RDMA POINT-TO-POINT COMMUNICATION FOR LLM SYSTEMS</h1>
 <p><strong>作者/机构</strong>: Nandor Licker, Kevin Hu, Vladimir Zaytsev, Lequn Chen</p>
 <hr/>
 <h3><strong>A1 主要贡献（总结）</strong></h3>
@@ -384,5 +385,6 @@ trait TransferEngine {
 <p>现有的用于LLM系统的RDMA解决方案存在供应商锁定问题，尤其是在AWS EFA等定制云硬件上缺乏可行的实现。本文提出的TransferEngine通过识别异构RDMA硬件间的共同功能（可靠但无序的交付）来解决这一问题。通过在底层协议之上构建一个不依赖排序保证的可靠抽象层，我们透明地将支持扩展到多种RDMA NIC，特别是EFA和ConnectX。</p>
 <p>我们通过三个生产系统展示了这种方法的有效性：用于解耦式推理的KvCache传输、为万亿参数模型实现1.3秒更新的RL权重更新，以及在ConnectX-7上实现业界领先延迟并在AWS EFA上首次实现可行性能的MoE调度/合并。TransferEngine为现代LLM架构提供了可移植的点对点通信能力，在补充集体通信库的同时，避免了供应商锁定，尤其适用于云原生部署。</p>
 </div>
-</body>
+
+
 </div>

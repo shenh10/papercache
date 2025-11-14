@@ -1,10 +1,10 @@
 ---
-added_date: '2025-11-07'
+added_date: '2025-11-14'
 author: shenh10
 categories:
-- llm
-- engineering
+- mlsys
 - compiler
+- tensor
 comments: true
 date: '2020-11-01'
 layout: post
@@ -14,9 +14,10 @@ title: 'Ansor: Generating High-Performance Tensor Programs for Deep Learning'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>Ansor: Generating High-Performance Tensor Programs for Deep Learning</h1>
 <ul>
 <li><strong>文章标题</strong>: Ansor：为深度学习生成高性能张量程序</li>
 <li><strong>作者/机构</strong>: Lianmin Zheng (UC Berkeley), Chengfan Jia (Alibaba Group), Minmin Sun (Alibaba Group), Zhao Wu (Alibaba Group), Cody Hao Yu (Amazon Web Services, Inc), Ameer Haj-Ali (UC Berkeley), Yida Wang (Amazon Web Services), Jun Yang (Alibaba Group), Danyang Zhuo (UC Berkeley and Duke University), Koushik Sen (UC Berkeley), Joseph E. Gonzalez (UC Berkeley), Ion Stoica (UC Berkeley)</li>
@@ -247,5 +248,6 @@ $$ \frac{\partial f}{\partial t_i} \approx \frac{\partial f}{\partial g_i} \left
 <h2>结论</h2>
 <p>本文提出了Ansor，一个为深度神经网络生成高性能张量程序的自动化搜索框架。通过高效地探索一个大型搜索空间并优先处理性能瓶颈，Ansor找到了现有方法搜索空间之外的高性能程序。Ansor在多种神经网络和硬件平台上，其性能优于现有的手动库和基于搜索的框架，最高可达3.8倍。通过自动搜索更好的程序，我们希望Ansor能帮助弥合计算能力日益增长的需求与有限硬件性能之间的差距。Ansor已被集成到Apache TVM开源项目中。</p>
 </div>
-</body>
+
+
 </div>

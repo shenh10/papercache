@@ -15,9 +15,10 @@ title: 'DistTrain: Addressing Model and Data Heterogeneity with Disaggregated Tr
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="disttrain-addressing-model-and-data-heterogeneity-with-disaggregated-training-for-multimodal-large-language-models">DistTrain: Addressing Model and Data Heterogeneity with Disaggregated Training for Multimodal Large Language Models</h1>
 <p><strong>作者/机构</strong>: Zili Zhang∗, Yinmin Zhong∗, Ranchen Ming†, Hanpeng Hu†, Jianjian Sun†, Zheng Ge†, Yibo Zhu†, Xin Jin∗<br/>
 (*北京大学 †StepFun)</p>
 <h2 id="a1">A1 主要贡献</h2>
@@ -171,5 +172,6 @@ title: 'DistTrain: Addressing Model and Data Heterogeneity with Disaggregated Tr
 <h4 id="62-inter-microbatch-reordering">6.2 微批次间重排 (Inter-microbatch Reordering)</h4>
 <p><strong>问题分析</strong>。第二个子问题是微批次间掉队者。数据异构性导致模态编码器和生成器中不同微批次的计算时间不同，掉队者微批次会通过产生大的流水线气泡来延长训练时间。在1F1B流水线方案（如图12所示）中，总迭代时间主要由流水线气泡和模态编码器第一个PP阶段的计算时间决定。我们抽象出一个创新概念——流水线间隔（pipeline intervals）。如图12所示，这些间隔通常由前向传播填充，但最后的$p-1$个间隔除外。掉队者微批次会延长这些间隔或增加未填充区域（即气泡）。</p>
 </div>
-</body>
+
+
 </div>

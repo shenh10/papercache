@@ -16,9 +16,10 @@ title: 'Lightning Attention-2: A Free Lunch for Handling Unlimited Sequence Leng
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>Lightning Attention-2: A Free Lunch for Handling Unlimited Sequence Lengths in Large Language Models</h1>
 <p><strong>标题</strong>: Lightning Attention-2：处理大语言模型中无限序列长度的免费午餐<br/>
 <strong>作者</strong>: Zhen Qin, Weigao Sun, Dong Li, Xuyang Shen, Weixuan Sun, Yiran Zhong</p>
 <h3>A1 主要贡献</h3>
@@ -278,5 +279,6 @@ end for
 <h3>A5 结论</h3>
 <p>本文介绍了Lightning Attention-2，一种开创性的线性注意力实现，它在因果设置下成功地利用了其理论上的计算优势。我们的方法采用了“分而治之”和分块技术，通过将计算分离为块内和块间组件，有效解决了当前线性注意力算法的局限性，特别是与累积求和相关的挑战。通过这种方式，我们充分利用了GPU硬件的潜力，确保了效率。我们跨越不同模型大小和序列长度的广泛实验表明，Lightning Attention-2不仅能保持恒定的训练速度，不受输入序列长度的影响，而且在速度和准确性方面也优于现有的SOTA注意力机制。这一突破对大语言模型的未来具有深远影响，特别是那些需要处理长序列的模型。展望未来，我们计划将序列并行性与Lightning Attention-2相结合，旨在促进超长序列的训练，从而有效克服现有的硬件限制。</p>
 </div>
-</body>
+
+
 </div>

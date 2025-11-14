@@ -13,9 +13,10 @@ title: Robust LLM Training Infrastructure at ByteDance
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>Robust LLM Training Infrastructure at ByteDance</h1>
 <p><strong>作者/机构</strong>: Borui Wan, Gaohong Liu, Zuquan Song, Jun Wang, Yun Zhang, Guangming Sheng, Shuguang Wang, Houmin Wei, Chenyuan Wang, Weiqiang Lou, Xi Yang, Mofan Zhang, Kaihua Jiang, Cheng Ren, Xiaoyun Zhi, Menghan Yu, Zhe Nan, Zhuolin Zheng, Baoquan Zhong, Qinlong Wang, Huan Yu, Jinxin Chi, Wang Zhang, Yuhan Li, Zixian Du, Sida Zhao, Yongqiang Zhang, Jingzhe Tang, Zherui Liu, Chuan Wu, Yanghua Peng, Haibin Lin, Wencong Xiao, Xin Liu, Liang Xiang (香港大学, 字节跳动)</p>
 <h2>A1 主要贡献</h2>
 <p>本文介绍了ByteRobust，一个为大规模语言模型（LLM）的稳健和稳定训练量身定制的大规模GPU基础设施管理系统。当前LLM的训练规模已达数万个GPU，伴随而来的是故障（如CUDA错误、NaN值、作业挂起等）的普遍发生，这对训练稳定性构成了重大挑战。现有故障处理方法依赖于故障停止后的日志分析和压力测试，恢复过程（重新调度资源、重载TB级检查点）会产生数小时甚至数天的开销，严重影响有效训练时间比率（ETTR）。</p>
@@ -416,5 +417,6 @@ Table 5. 两个稀疏LLM训练作业的训练设置。Scale给出用于训练的
 <h2>A5 结论</h2>
 <p>本文介绍了ByteRobust，一个部署在字节跳动GPU集群中的LLM训练管理系统。基于大规模LLM训练的丰富经验，ByteRobust将故障特征、诊断能力和LLM特定功能整合到一个全面的系统设计中。它采用了一个自动化容错框架，能有效地区分故障类型，并使用运行时状态分析和数据驱动方法来检测和隔离故障机器。我们引入了高效的故障切换机制，包括聚合式热更新、温备机和故障感知检查点，从而最大限度地减少了停机时间。我们的见解旨在激发进一步的研究，并增强LLM训练系统的可靠性。</p>
 </div>
-</body>
+
+
 </div>

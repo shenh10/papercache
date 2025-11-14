@@ -15,9 +15,10 @@ title: 'Jamba: A Hybrid Transformer-Mamba Language Model'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="jamba-a-hybrid-transformer-mamba-language-model">Jamba: A Hybrid Transformer-Mamba Language Model</h1>
 <p><strong>文章标题</strong>: Jamba: 一种混合Transformer-Mamba语言模型<br/>
 <strong>作者/机构</strong>: Opher Lieber∗, Barak Lenz∗, Hofit Bata, Gal Cohen, Jhonathan Osin, Itay Dalmedigos, Erez Safahi, Shaked Meirom, Yonatan Belinkov, Shai Shalev-Shwartz, Omri Abend, Raz Alon, Tomer Asida, Amir Bergman, Roman Glozman, Michael Gokhman, Avshalom Manevich, Nir Ratner, Noam Rozen, Erez Schwartz, Mor Zusman, Yoav Shoham - Al21labs</p>
 <hr/>
@@ -236,5 +237,6 @@ Transformer架构虽然流行，但存在两大缺陷：<br/>
 <h2 id="a5">A5 结论</h2>
 <p>我们提出了Jamba，一种结合了注意力层和Mamba层，并带有MoE模块的新型架构，并开源了其实现。该模型达到了最先进的性能，并支持长上下文。我们展示了Jamba如何在性能和内存需求之间提供灵活性，同时保持高吞吐量。我们通过实验探讨了多种设计选择，如注意力与Mamba层的比例，并讨论了开发过程中的一些发现，这些发现将为未来混合注意力-状态空间模型的研究提供信息。为了促进此类研究，我们计划发布小规模训练运行的模型检查点。本次发布的最大的模型拥有12B活跃参数和52B总可用参数，支持高达256K词元的上下文长度，并且在处理140K词元文本时也能装入单个80GB的GPU中。</p>
 </div>
-</body>
+
+
 </div>

@@ -13,9 +13,10 @@ title: 'KIMI LINEAR: AN EXPRESSIVE, EFFICIENT ATTENTION ARCHITECTURE'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>KIMI LINEAR: AN EXPRESSIVE, EFFICIENT ATTENTION ARCHITECTURE</h1>
 <p><strong>Kimi Team</strong></p>
 <h2>A1 主要贡献</h2>
 <p>本文针对大型语言模型（LLM）在长序列推理和强化学习（RL）场景下面临的计算瓶颈，提出了一种名为 <strong>Kimi Linear</strong> 的混合线性注意力架构。传统 <strong>softmax 注意力</strong>机制存在二次方时间复杂度和线性增长的键值（KV）缓存问题，这在需要处理长轨迹、工具使用交互和复杂决策空间的智能体应用中成为效率瓶颈。尽管线性注意力能够降低计算复杂度，但其表达能力有限，通常在性能上不及 softmax 注意力。现有的混合架构虽然试图结合两者的优点，但往往缺乏在多样化基准上的全面评估。</p>
@@ -331,5 +332,6 @@ $$ = \sum_{i=1}^{L} Diag(\gamma_i^{l}) k_i^l u_i^T $$<br/>
 <figcaption class="figure-caption">表 9: Kimi-Linear-Instruct 和 Moonlight-Instruct 在不同任务上的性能。</figcaption>
 </figure>
 </div>
-</body>
+
+
 </div>

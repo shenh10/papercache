@@ -14,9 +14,10 @@ title: Learning to summarize from human feedback
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="learning-to-summarize-from-human-feedback">Learning to summarize from human feedback</h1>
 <p><strong>作者/机构</strong>: Nisan Stiennon∗, Long Ouyang∗, Jeff Wu∗, Daniel M. Ziegler∗, Ryan Lowe∗, Chelsea Voss∗, Alec Radford, Dario Amodei, Paul Christiano∗ (OpenAI)</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文的核心问题是，当前用于微调大型语言模型的监督学习目标（即最大化人类编写文本的对数概率）与我们真正关心的目标（即生成由人类判断的高质量输出）之间存在偏差。这种偏差导致模型无法区分重要错误（如捏造事实）和不重要错误（如选择同义词），同时模型会被低质量的人类示范数据影响，并在采样过程中因分布偏移而性能下降。现有的自动评估指标（如ROUGE）也与人类判断的相关性较差。</p>
@@ -530,5 +531,6 @@ title: Learning to summarize from human feedback
 </figure><br/>
 表 29: 我们过优化模型在一个1.3B奖励模型上过拟合的样本示例。</p>
 </div>
-</body>
+
+
 </div>

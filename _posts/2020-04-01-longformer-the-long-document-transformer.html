@@ -15,9 +15,10 @@ title: 'Longformer: The Long-Document Transformer'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>Longformer: The Long-Document Transformer</h1>
 <h3>Longformer：面向长文档的Transformer</h3>
 <p><strong>作者/机构</strong>: Iz Beltagy, Matthew E. Peters, Arman Cohan (Allen Institute for Artificial Intelligence, Seattle, WA, USA)</p>
 <h2>A1 主要贡献</h2>
@@ -278,5 +279,6 @@ title: 'Longformer: The Long-Document Transformer'
 <p><strong>共指消解</strong>。直接改编自Joshi等人 (2019)【23】的基于BERT的模型。将文档分割成最长为4096（Longformer）或384（RoBERTa）的非重叠片段，然后将激活值拼接起来送入粗到细的聚类阶段。未使用全局注意力。实现上，为了复用Tensorflow中的复杂逻辑，采用了一个PyTorch和Tensorflow混合的“超级hack”方案，在两者之间传递激活值和梯度。</p>
 <p><strong>文本分类</strong>。在<code>[CLS]</code> token上使用全局注意力，并附加一个分类头，使用二元交叉熵损失。训练设置包括Adam优化器、批量大小32、以及占总训练步数10%的线性预热和衰减。</p>
 </div>
-</body>
+
+
 </div>

@@ -14,9 +14,10 @@ title: 'Zen: Empowering Distributed Training with Sparsity-driven Data Synchroni
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="zen-empowering-distributed-training-with-sparsity-driven-data-synchronization">Zen: Empowering Distributed Training with Sparsity-driven Data Synchronization</h1>
 <p>Zhuang Wang, Rice University; Zhaozhuo Xu, Stevens Institute of Technology; Jingyi Xi, unaffiliated; Yuke Wang, Anshumali Shrivastava, and T. S. Eugene Ng, Rice University</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>论文针对分布式训练中的梯度同步问题，揭示了稀疏张量的高稀疏性特性，并探讨了其同步方案的设计空间。研究目标是桥接稀疏张量同步的性能差距，找出充分利用稀疏性的最优通信方案。具体创新点包括：分析流行模型中稀疏张量的特性，如重叠比率、致密化比率和非零梯度分布的偏斜性；系统探索同步方案的四个基本维度（通信、聚合、分区、平衡），证明存在通信最优方案；基于这些发现，开发ZEN系统，实现近最优通信时间，通过数据无关的分层散列算法和高效编码方案处理负载平衡和索引开销。ZEN在通信时间上比最先进方法加速高达5.09倍，在训练吞吐量上加速高达2.48倍。</p>
@@ -332,5 +333,6 @@ title: 'Zen: Empowering Distributed Training with Sparsity-driven Data Synchroni
 <p>不平衡比率 ≤ 1 + Θ(√(n log n / (|G| d_n^G))) </p>
 <p>以至少1 - 1/n的概率。因此，我们完成第二部分的证明。</p>
 </div>
-</body>
+
+
 </div>

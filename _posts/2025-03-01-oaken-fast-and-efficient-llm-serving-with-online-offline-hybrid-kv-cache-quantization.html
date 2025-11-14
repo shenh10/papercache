@@ -16,9 +16,10 @@ title: 'Oaken: Fast and Efficient LLM Serving with Online-Offline Hybrid KV Cach
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="oaken-fast-and-efficient-llm-serving-with-online-offline-hybrid-kv-cache-quantization">Oaken: Fast and Efficient LLM Serving with Online-Offline Hybrid KV Cache Quantization</h1>
 <p><strong>作者/机构</strong>: Minsu Kim (KAIST), Seongmin Hong (HyperAccel), RyeoWook Ko (KAIST), Soongyu Choi (KAIST), Hunjong Lee (HyperAccel), Junsoo Kim (HyperAccel), Joo-Young Kim (HyperAccel), Jongse Park (KAIST)</p>
 <hr/>
 <h2 id="a1">A1 主要贡献</h2>
@@ -272,5 +273,6 @@ Oaken为三个量化组中的每一个找到最小值和最大值，并在线动
 <h2 id="a5">A5 结论</h2>
 <p>批处理LLM推理面临着由高内存带宽和容量需求带来的重大挑战，这一问题因现代LLM产生长序列输出导致KV缓存日益增大而加剧。本文通过提出一个加速解决方案Oaken来应对这一挑战，该方案联合利用了(1)一种离线-在线混合KV缓存压缩技术和(2)为该算法量身定制的、可与LLM加速器集成的自定义硬件模块。Oaken有效地释放了足够的带宽和容量，这是其他方式难以实现的，从而在仅有边际精度损失的情况下带来了显著的吞吐量提升。这些引人注目的优势表明，Oaken高效地解决了现代LLM服务的两大主要瓶颈。</p>
 </div>
-</body>
+
+
 </div>

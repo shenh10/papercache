@@ -1,10 +1,10 @@
 ---
-added_date: '2025-11-07'
+added_date: '2025-11-14'
 author: shenh10
 categories:
-- llm
-- engineering
+- mlsys
 - compiler
+- tensor
 comments: true
 date: '2023-07-01'
 layout: post
@@ -14,9 +14,10 @@ title: 'EinNet: Optimizing Tensor Programs with Derivation-Based Transformations
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>EinNet: Optimizing Tensor Programs with Derivation-Based Transformations</h1>
 <ul>
 <li><strong>文章标题</strong>：EINNET：使用基于派生的变换优化张量程序</li>
 <li><strong>作者/机构</strong>：Liyan Zheng, Haojie Wang, Jidong Zhai, Muyan Hu, Zixuan Ma, Tuowei Wang, and Shuhong Huang, Tsinghua University; Xupeng Miao, Carnegie Mellon University; Shizhi Tang and Kezhao Huang, Tsinghua University; Zhihao Jia, Carnegie Mellon University</li>
@@ -225,5 +226,6 @@ $\mathbf{K}[k, n]=\mathbf{K}^{\prime}[c, r \times S \times F+s \times F+f]=\math
 - <strong>软件依赖</strong>：在Ubuntu 22.04 LTS (Linux kernel 5.15.0-58)上评估。依赖CUDA 11.0.2和cuDNN 8.0.3。需要以下框架作为基准：TensorFlow 2.4, TensorRT 8.0, PET 1.0, Nimble (commit ID bac6d10), TVM v0.10.0。</p>
 <p><strong>实验工作流</strong>：安装说明和后续实验已包含在本工件中。所有DNN基准测试使用GPU设备内存中的合成输入数据，以消除CPU和GPU之间数据传输的副作用。每个实验（E1-E6）的具体复现指南和脚本均在对应的子目录中提供（例如，<code>OSDI23-EinNet-AE/0_model/</code>用于E1）。</p>
 </div>
-</body>
+
+
 </div>

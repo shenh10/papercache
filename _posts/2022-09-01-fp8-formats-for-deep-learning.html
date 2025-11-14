@@ -14,9 +14,10 @@ title: FP8 FORMATS FOR DEEP LEARNING
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="fp8-formats-for-deep-learning">FP8 FORMATS FOR DEEP LEARNING</h1>
 <p><strong>文章标题</strong>：用于深度学习的FP8格式<br/>
 <strong>作者/机构</strong>：<br/>
 - Paulius Micikevicius, Dusan Stosic, Patrick Judd, John Kamalu, Stuart Oberman, Mohammad Shoeybi, Michael Siu, Hao Wu (NVIDIA)<br/>
@@ -191,5 +192,6 @@ Figure 2: 13亿参数GPT3模型在bfloat16训练后，其权重和激活输入�
 <p>本文提出了一种FP8二进制交换格式，包含E4M3和E5M2两种编码。该格式的设计原则是最小化地偏离IEEE-754惯例，以确保软件实现可以继续依赖IEEE浮点数的特性（如使用整数运算进行比较和排序）。提出此格式的主要动机是通过启用更小、更节能的数学计算流水线以及减少内存带宽压力，来加速深度学习的训练和推理。</p>
 <p>本文通过实验证明，对于图像和语言任务中的各种神经网络模型，使用FP8进行训练可以在不改变模型、优化器和训练超参数的情况下，达到与16位训练相当的模型精度。使用FP8不仅能加速训练并减少所需资源，还通过在训练和推理中使用相同的数据类型，简化了8位推理的部署。在FP8出现之前，8位推理通常需要对浮点训练的模型进行INT8的校准或微调，这增加了部署的复杂性，并且在某些情况下无法维持模型精度。</p>
 </div>
-</body>
+
+
 </div>

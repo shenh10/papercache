@@ -15,9 +15,10 @@ title: SIMPLIFIED STATE SPACE LAYERS FOR SEQUENCE MODELING
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>SIMPLIFIED STATE SPACE LAYERS FOR SEQUENCE MODELING</h1>
 <p><strong>简化用于序列建模的状态空间层</strong></p>
 <p><strong>作者/机构:</strong> Jimmy T.H. Smith*, 1, 2, Andrew Warrington*, 2, 3, Scott W. Linderman2, 3<br/>
 *同等贡献。<br/>
@@ -467,5 +468,6 @@ title: SIMPLIFIED STATE SPACE LAYERS FOR SEQUENCE MODELING
     这个算子是结合的，即 $(q_i • q_j) • q_k = q_i • (q_j • q_k)$。</p>
 <p><strong>并行计算示例</strong>。对于一个长度为4的序列，传统的循环计算需要4个串行步骤。而使用并行扫描，可以首先并行计算 $(c_1 • c_2)$ 和 $(c_3 • c_4)$，然后在第二步中计算 $((c_1 • c_2) • (c_3 • c_4))$ 来得到最终状态。通过这种树状的归约方式，可以将串行步骤从L减少到 $\log L$，从而实现并行加速。当状态矩阵A是对角矩阵时，矩阵乘法变为元素级乘法，使得该操作在计算上非常高效。</p>
 </div>
-</body>
+
+
 </div>

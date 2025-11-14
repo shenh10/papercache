@@ -1,10 +1,10 @@
 ---
-added_date: '2025-11-07'
+added_date: '2025-11-14'
 author: shenh10
 categories:
-- llm
-- engineering
+- mlsys
 - compiler
+- graph
 comments: true
 date: '2023-01-01'
 layout: post
@@ -15,9 +15,10 @@ title: 'oneDNN Graph Compiler: A Hybrid Approach for High-Performance Deep Learn
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>oneDNN Graph Compiler: A Hybrid Approach for High-Performance Deep Learning Compilation</h1>
 <p><strong>oneDNN Graph Compiler：一种用于高性能深度学习编译的混合方法</strong></p>
 <p><strong>作者/机构</strong><br/>
 Jianhui Li, Zhennan Qin, Yijie Mei, Jingze Cui, Yunfei Song, Ciyong Chen, Yifei Zhang, Longsheng Du, Xianhang Cheng, Baihui Jin, Yan Zhang, Jason Ye, Eric Lin, Dan Lavery<br/>
@@ -242,5 +243,6 @@ Jianhui Li, Zhennan Qin, Yijie Mei, Jingze Cui, Yunfei Song, Ciyong Chen, Yifei 
 <h3>A5 结论</h3>
 <p>本文提出了一种混合方法来应对深度学习编译的独特挑战。该方法提炼了专家为计算密集型DNN操作（如矩阵乘法）调优算子时的关键要素，并结合编译器技术在DNN计算图层面充分挖掘性能机会。模板使用了专家开发的微内核、算法和启发式方法，以确保编译器生成的代码能够达到与专家调优算子相当的性能。编译器使用图操作（DNN op graph）和类C程序（C program）两个级别的中间表示，以支持深度学习计算所需的领域特定优化，包括低精度计算、常量权重处理、张量内存布局、细粒度融合、粗粒度融合以及张量内存缓冲区的重用。性能评估结果显示，在CPU推理场景中，对于性能关键的DNN计算图和端到端模型，该方法相比现有的张量编译器和算子库取得了显著的性能增益。</p>
 </div>
-</body>
+
+
 </div>

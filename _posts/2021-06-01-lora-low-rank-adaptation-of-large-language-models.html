@@ -14,9 +14,10 @@ title: 'LORA: LOW-RANK ADAPTATION OF LARGE LANGUAGE MODELS'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="lora-low-rank-adaptation-of-large-language-models">LORA: LOW-RANK ADAPTATION OF LARGE LANGUAGE MODELS</h1>
 <p><strong>作者/机构</strong>: Edward Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, Weizhu Chen (Microsoft Corporation)</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文针对大型预训练语言模型在适应下游任务时面临的挑战，提出了一种名为“低秩适应”（Low-Rank Adaptation, LoRA）的高效方法。</p>
@@ -219,5 +220,6 @@ title: 'LORA: LOW-RANK ADAPTATION OF LARGE LANGUAGE MODELS'
 <p><strong>特征放大因子的定义与分析</strong>。我们可以自然地将特征放大因子定义为比率$\frac{\|\Delta W\|_F}{\|U^T W V\|_F}$，其中$U$和$V$是$\Delta W$的SVD分解的左、右奇异矩阵。（回忆一下，$UU^T W VV^T$给出了$W$在$\Delta W$所张成的子空间上的“投影”）。直观地说，当$\Delta W$主要包含任务特定方向时，这个量衡量了它们被$\Delta W$放大了多少。如第7.3节所示，对于$r=4$，这个放大因子高达20。换句话说，在每一层中（在整个预训练模型$W$的特征空间中），有（通常来说）四个特征方向需要被放大一个非常大的因子20，以便为下游特定任务达到我们报告的准确率。并且，对于每个不同的下游任务，应该期望有一组非常不同的特征方向被放大。</p>
 <p><strong>高秩下的放大因子</strong>。然而，人们可能会注意到，对于$r=64$，这个放大因子仅为2左右，这意味着在$r=64$的$\Delta W$中学到的大多数方向并没有被放大很多。这并不奇怪，实际上再次证明了表示“任务特定方向”（从而用于模型适应）所需的内在秩很低。相比之下，$\Delta W$的秩-4版本（对应于$r=4$）中的那些方向被放大了更大的因子20。</p>
 </div>
-</body>
+
+
 </div>

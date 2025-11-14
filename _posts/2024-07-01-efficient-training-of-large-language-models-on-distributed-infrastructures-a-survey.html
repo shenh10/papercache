@@ -14,9 +14,10 @@ title: 'Efficient Training of Large Language Models on Distributed Infrastructur
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="efficient-training-of-large-language-models-on-distributed-infrastructures-a-survey">Efficient Training of Large Language Models on Distributed Infrastructures: A Survey</h1>
 <h3 id="_1">高效训练分布式基础设施上的大型语言模型：一篇综述</h3>
 <p><strong>作者/机构</strong>: Jiangfei Duan<em>, Shuo Zhang</em>, Zerui Wang*, Lijuan Jiang, Wenwen Qu, Qinghao Hu, Guoteng Wang, Qizhen Weng, Hang Yan, Xingcheng Zhang, Xipeng Qiu, Dahua Lin, Yonggang Wen, Xin Jin, Tianwei Zhang and Peng SunB</p>
 <hr/>
@@ -366,5 +367,6 @@ Fig. 15: 分布式LLM训练的容错技术研究。</p>
 <p><strong>对LLM训练系统和基础设施进展的总结</strong>。LLM的兴起改变了人工智能，催生了个人助理、代码生成和科学研究等应用。像GPT、LLaMA和Gemini这样的模型设立了新的标准，但训练这些大规模模型，如LLaMA-3在16,384个GPU上耗时54天的过程，带来了可扩展性、效率和可靠性方面的挑战。管理庞大的GPU集群需要创新的硬件和网络解决方案。高效的训练要求优化计算、通信和内存使用。可靠性则涉及在长时间的训练期间建立强大的机制来检测和从故障中恢复。本综述回顾了LLM训练系统和基础设施的最新进展，重点介绍了增强可扩展性、效率和可靠性的方法。</p>
 <p><strong>未来展望：光子计算</strong>。由摩尔定律和登纳德缩放定律指导的传统基于数字电路的计算系统，在满足训练和部署LLM的计算需求方面正面临着重大的物理和经济限制。因此，AI行业需要创新的解决方案。一个有前途的方法是大规模光电集成技术，它用集成的硅光子学取代传统数字电路，以增强计算和通信能力【索引402，Taking stock of new data center computing paradigm，2023，eetimes.com】。这种光电混合数据中心技术将光计算与光网络相结合，提高了单节点计算能力和大规模分布式计算的效率。一些工作已经提出利用光网络进行LLM训练。例如，TopoOpt【索引67，{TopoOpt}: Co-optimizing network topology and parallelization strategy for distributed training jobs，2023，NSDI 23】在分布式训练中同时优化光网络拓扑和并行策略，增强了计算和通信效率。TPUv4【索引42，Tpu v4: An optically reconfigurable supercomputer for machine learning with hardware support for embeddings，2023，ISCA】使用光路交换机动态重构其3D环面互连拓扑，为LLM训练中密集的通信模式改善了数据流。此外，Taichi【索引403，Large-scale photonic chiplet taichi empowers 160-tops/w artificial general intelligence，2024，Science】探索了一种分布式衍射-干涉混合光子计算架构，以每瓦160万亿次操作（TOPS/W）的能效，有效地将光神经网络扩展到百万神经元级别。未来可能需要将LLM的训练和推理范式转向硅光子学。然而，这一转变将需要在系统设计和实现方面进行广泛的创新。</p>
 </div>
-</body>
+
+
 </div>

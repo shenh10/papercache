@@ -15,9 +15,10 @@ title: 'Mamba: Linear-Time Sequence Modeling with Selective State Spaces'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="mamba-linear-time-sequence-modeling-with-selective-state-spaces">Mamba: Linear-Time Sequence Modeling with Selective State Spaces</h1>
 <p><strong>作者/机构</strong>: Albert Gu (卡内基梅隆大学机器学习系), Tri Dao (普林斯顿大学计算机科学系)</p>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决现有主流基础模型（Foundation Models）骨干架构 Transformer 在处理长序列时计算效率低下的问题。Transformer 的核心注意力机制虽然效果强大，但其在上下文窗口内的密集信息路由能力导致了两个根本性缺陷：无法对窗口外的内容进行建模，以及计算复杂度随序列长度呈二次方增长。尽管已有许多亚二次方时间复杂度的架构（如线性注意力、门控卷积、循环模型和结构化状态空间模型SSM）被提出，但它们在语言等重要模态上的性能未能超越注意力机制。</p>
@@ -450,5 +451,6 @@ $\bar{\mathbf{B}}_t = (\Delta_t A)^{-1}(e^{\Delta_t A} - I) B = (-\Delta_t)^{-1}
 <figcaption class="figure-caption">表11：（归纳头。）模型在序列长度256上训练，并在各种序列长度（从64到1,048,576）上测试。✓表示完美的泛化准确率，而✗表示内存不足。</figcaption>
 </figure></p>
 </div>
-</body>
+
+
 </div>

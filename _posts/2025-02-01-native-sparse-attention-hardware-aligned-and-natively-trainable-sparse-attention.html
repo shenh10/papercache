@@ -15,9 +15,10 @@ title: 'Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse 
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="native-sparse-attention-hardware-aligned-and-natively-trainable-sparse-attention">Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse Attention</h1>
 <p><strong>作者/机构</strong>: Jingyang Yuan∗1,2, Huazuo Gao1, Damai Dai1, Junyu Luo2, Liang Zhao1, Zhengyan Zhang1, Zhenda Xie1, Y. X. Wei1, Lean Wang1, Zhiping Xiao3, Yuqing Wang1, Chong Ruan1, Ming Zhang2, Wenfeng Liang1, Wangding Zeng1</p>
 <p>1DeepSeek-AI 2北京大学计算机学院多媒体信息处理重点实验室, PKU-Anker LLM实验室 3华盛顿大学 {yuanjy, mzhang_cs}@pku.edu.cn, {zengwangding, wenfeng.liang}@deepseek.com</p>
 <h2 id="a1">A1 主要贡献</h2>
@@ -252,5 +253,6 @@ title: 'Native Sparse Attention: Hardware-Aligned and Natively Trainable Sparse 
 ⟨思考⟩...⟨/思考⟩ (16223 tokens)<br/>
 模型使用换底公式进行转换，但过程复杂且引入了不必要的 <code>ln</code> 函数。通过一系列复杂的代数变换，模型最终得到 $y = x^{4/9}$，并代入第一个方程，得到 $\log_x(x^2 \cdot (x^{4/9})^3) = 10$，解得 $x = 2^{9/2}$。随后计算 $y = (2^{9/2})^{4/9} = 2^2=4$。最终 $xy = 2^{9/2} \cdot 4 = 16\sqrt{2} \cdot 4 = 64\sqrt{2}$。（注：基线模型推理过程非常冗长，且最终答案错误）。</p>
 </div>
-</body>
+
+
 </div>

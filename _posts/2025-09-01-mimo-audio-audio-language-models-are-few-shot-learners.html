@@ -13,9 +13,10 @@ title: 'MiMo-Audio: Audio Language Models are Few-Shot Learners'
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>MiMo-Audio: Audio Language Models are Few-Shot Learners</h1>
 <p><strong>作者/机构</strong>: LLM-Core Xiaomi</p>
 <h2>A1 主要贡献</h2>
 <p>本文的核心论点是，通过大规模的下一词元预测预训练，可以像文本领域的GPT-3一样，在音频领域实现任务的泛化能力。现有的音频语言模型通常依赖于针对特定音频任务的微调，缺乏人类所拥有的那种仅通过少量示例或简单指令就能泛化到新音频任务的灵活性。</p>
@@ -372,5 +373,6 @@ Cici<br/>
 <p><strong>口语对话性能不稳定</strong>。MiMo-Audio-Instruct在语音对话中表现出一些局限性，包括音色不连续、音频质量不稳定、发音错误以及对系统提示的遵循不一致。值得注意的是，它在发音复杂符号和公式时极易出错，并且在对话过程中的风格控制也不稳定。在未来的工作中，我们将利用强化学习（RL）来提高模型性能的稳定性。</p>
 <p><strong>思维机制性能有限</strong>。在整合思维机制时，MiMo-Audio-Instruct仅在与语音相关的理解任务中带来性能提升，而在声音和音乐理解任务中却导致性能下降。对失败案例的分析表明，这种现象源于模型在思考过程中引入的幻觉。未来，我们计划通过强化学习（RL）来增强模型的音频理解能力。</p>
 </div>
-</body>
+
+
 </div>

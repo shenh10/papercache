@@ -15,9 +15,10 @@ title: 'PopFetcher: Towards Accelerated Mixture-of-Experts Training Via Populari
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1 id="popfetcher-towards-accelerated-mixture-of-experts-training-via-popularity-based-expert-wise-prefetch">PopFetcher: Towards Accelerated Mixture-of-Experts Training Via Popularity Based Expert-Wise Prefetch</h1>
 <p><strong>作者/机构</strong>: Junyi Zhang, Chuanhu Ma, Xiong Wang, and Yuntao Nie, 华中科技大学; Yuqing Li, 武汉大学; Yuedong Xu, 复旦大学; Xiaofei Liao, 华中科技大学; Bo Li, 香港科技大学; Hai Jin, 华中科技大学</p>
 <hr/>
 <h2 id="a1">A1 主要贡献</h2>
@@ -348,5 +349,6 @@ title: 'PopFetcher: Towards Accelerated Mixture-of-Experts Training Via Populari
 <h2 id="a6">A6 结论</h2>
 <p>本文提出了PopFetcher，一个有效且可扩展的MoE训练框架，它通过基于流行度的专家级预取来缓解MoE训练中的All-to-All通信瓶颈。PopFetcher识别出专家选择中的偏斜和相关模式，并采用基于滑动窗口的预测来确定未来层的专家流行度。基于此统计数据，PopFetcher精确分析了每个MoE层的端到端训练延迟，并为GPU工作节点建立了最优的预取专家映射。通过这样做，PopFetcher不仅最小化了通信时间，还确保了工作节点间的负载均衡。此外，PopFetcher利用网络空闲期将All-Reduce流与非MoE计算进行流水线化处理，从而加速了反向传播过程。在真实世界数据集上的实验评估表明，PopFetcher优于现有的最先进MoE训练系统，能够将训练时间减少15%-94.5%。</p>
 </div>
-</body>
+
+
 </div>

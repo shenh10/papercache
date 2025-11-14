@@ -16,9 +16,10 @@ title: 'Various Lengths, Constant Speed: Efficient Language Modeling with Lightn
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>Various Lengths, Constant Speed: Efficient Language Modeling with Lightning Attention</h1>
 <p><strong>作者/机构</strong>: Zhen Qin, Weigao Sun, Dong Li, Xuyang Shen, Weixuan Sun, Yiran Zhong</p>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决现有线性注意力机制在大型语言模型中未被广泛采用的两个核心问题：1) <strong>性能不佳</strong>：与顶尖的基于Softmax注意力的模型相比，存在明显的性能差距；2) <strong>训练速度慢</strong>：在因果语言建模中，由于需要使用累积求和操作（cumsum），导致实际训练速度缓慢，失去了线性注意力的理论优势。</p>
@@ -561,5 +562,6 @@ SGLU的模型并行适应如下：<br/>
 <figcaption class="figure-caption">Figure 7. SRMSNorm实现的性能评估。上图展示了在固定特征维度为3072时，不同序列长度的前向传播（左部分）和后向传播（右部分）的运行时间比较。下图展示了在固定序列长度为4096时，不同特征维度的运行时间比较。</figcaption>
 </figure></p>
 </div>
-</body>
+
+
 </div>

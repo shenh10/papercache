@@ -1,10 +1,10 @@
 ---
-added_date: '2025-11-07'
+added_date: '2025-11-14'
 author: shenh10
 categories:
-- llm
-- engineering
+- mlsys
 - compiler
+- tensor
 comments: true
 date: '2023-12-01'
 layout: post
@@ -14,9 +14,10 @@ title: Experiences Building an MLIR-based SYCL Compiler
 ---
 
 <div class="paper-content">
-<body>
-<div class="container">
 
+
+<div class="container">
+<h1>Experiences Building an MLIR-based SYCL Compiler</h1>
 <p>Ettore Tiotto (Intel Corporation), Vı́ctor Perez (Codeplay Software), Whitney Tsang (Intel Corporation), Lukas Sommer (Codeplay Software), Julian Oppermann (Codeplay Software), Victor Lomuller (Codeplay Software), Mehdi Goli (Codeplay Software), James Brodman (Intel Corporation)</p>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决当前SYCL编译器面临的两大挑战：一是由于过早地将高级语言结构和语义降低到低级中间表示（如LLVM IR），导致高级信息丢失，影响了优化效果；二是主机代码和设备代码的编译过程相互隔离，无法进行联合分析和优化。为了应对这些挑战，本文介绍了基于MLIR编译器框架设计和实现一个SYCL编译器的实践经验。</p>
@@ -352,5 +353,6 @@ title: Experiences Building an MLIR-based SYCL Compiler
 </li>
 </ul>
 </div>
-</body>
+
+
 </div>
