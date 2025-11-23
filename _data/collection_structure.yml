@@ -93,6 +93,15 @@ llm:
           - inference
           - low_precision
           tag: isca23
+        - title: 'LiquidGEMM: Hardware-Efficient W4A8 GEMM Kernel for High-Performance
+            LLM Serving'
+          date: '2025-09-01'
+          url: /papers/llm/engineering/inference/low_precision/2025/09/01/liquidgemm-hardware-efficient-w4a8-gemm-kernel-for-high-performance-llm-serving.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - low_precision
         - title: 'AWQ: ACTIVATION-AWARE WEIGHT QUANTIZATION FOR ON-DEVICE LLM COMPRESSION
             AND ACCELERATION'
           date: '2023-06-01'
@@ -863,6 +872,13 @@ llm:
         - llm
         - engineering
         - train
+      - title: 'FP4 All the Way: Fully Quantized Training of LLMs'
+        date: '2025-08-01'
+        url: /papers/llm/engineering/train/2025/08/01/fp4-all-the-way-fully-quantized-training-of-llms.html
+        categories:
+        - llm
+        - engineering
+        - train
       - title: Robust LLM Training Infrastructure at ByteDance
         date: '2025-09-01'
         url: /papers/llm/engineering/train/2025/09/01/robust-llm-training-infrastructure-at-bytedance.html
@@ -1125,6 +1141,14 @@ llm:
         - llm
         - engineering
         - moe
+      - title: 'OPPORTUNISTIC EXPERT ACTIVATION: BATCH-AWARE EXPERT ROUTING FOR FASTER
+          DECODE WITHOUT RETRAINING'
+        date: '2025-11-01'
+        url: /papers/llm/engineering/moe/2025/11/01/opportunistic-expert-activation-batch-aware-expert-routing-for-faster-decode-without-retraining.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: 'PopFetcher: Towards Accelerated Mixture-of-Experts Training Via Popularity
           Based Expert-Wise Prefetch'
         date: '2025-01-01'
@@ -1137,6 +1161,13 @@ llm:
       - title: 'ST-MOE: DESIGNING STABLE AND TRANSFERABLE SPARSE EXPERT MODELS'
         date: '2022-02-01'
         url: /papers/llm/engineering/moe/2022/02/01/st-moe-designing-stable-and-transferable-sparse-expert-models.html
+        categories:
+        - llm
+        - engineering
+        - moe
+      - title: 'FlashMoE: Fast Distributed MoE in a Single Kernel'
+        date: '2025-11-01'
+        url: /papers/llm/engineering/moe/2025/11/01/flashmoe-fast-distributed-moe-in-a-single-kernel.html
         categories:
         - llm
         - engineering
@@ -1254,6 +1285,14 @@ llm:
       - title: 'SEED RL: SCALABLE AND EFFICIENT DEEP-RL WITH ACCELERATED CENTRAL INFERENCE'
         date: '2019-10-01'
         url: /papers/llm/engineering/rl/2019/10/01/seed-rl-scalable-and-efficient-deep-rl-with-accelerated-central-inference.html
+        categories:
+        - llm
+        - engineering
+        - rl
+      - title: 'Seer: Online Context Learning for Fast Synchronous LLM Reinforcement
+          Learning'
+        date: '2025-11-01'
+        url: /papers/llm/engineering/rl/2025/11/01/seer-online-context-learning-for-fast-synchronous-llm-reinforcement-learning.html
         categories:
         - llm
         - engineering
@@ -1613,6 +1652,14 @@ llm:
           - algorithm
           - architecture
           - attention
+      posts:
+      - title: Virtual Width Networks
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/architecture/2025/11/01/virtual-width-networks.html
+        categories:
+        - llm
+        - algorithm
+        - architecture
     models:
       posts:
       - title: 'DeepSeek-Coder: When the Large Language Model Meets Programming -
@@ -2134,6 +2181,13 @@ mlsys:
       - mlsys
       - compiler
       tag: cgo23
+    - title: 'depyf: Open the Opaque Box of PyTorch Compiler for Machine Learning
+        Researchers'
+      date: '2024-03-01'
+      url: /papers/mlsys/compiler/2024/03/01/depyf-open-the-opaque-box-of-pytorch-compiler-for-machine-learning-researchers.html
+      categories:
+      - mlsys
+      - compiler
     tensor:
       posts:
       - title: 'Pet: Optimizing Tensor Programs with Partially Equivalent Transformations
@@ -2770,6 +2824,12 @@ mlsys:
       categories:
       - mlsys
       - networking
+    - title: An Extensible Software Transport Layer for GPU Networking
+      date: '2025-08-01'
+      url: /papers/mlsys/networking/2025/08/01/an-extensible-software-transport-layer-for-gpu-networking.html
+      categories:
+      - mlsys
+      - networking
     - title: Reexamining Direct Cache Access to Optimize I/O Intensive Applications
         for Multi-hundred-gigabit Networks
       date: '2022-07-01'
@@ -2901,6 +2961,12 @@ mlsys:
 diffusions:
   dllm:
     posts:
+    - title: 'FAST-DLLM V2: Efficient Block-Diffusion LLM'
+      date: '2025-09-01'
+      url: /papers/diffusions/dllm/2025/09/01/fast-dllm-v2-efficient-block-diffusion-llm.html
+      categories:
+      - diffusions
+      - dllm
     - title: 'Fast-dLLM: Training-free Acceleration of Diffusion LLM by Enabling KV
         Cache and Parallel Decoding'
       date: '2025-07-01'

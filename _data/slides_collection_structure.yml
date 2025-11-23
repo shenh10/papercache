@@ -1,44 +1,73 @@
 mlsys:
+  framework:
+    posts:
+    - categories:
+      - mlsys
+      - framework
+      date: '2022-03-01'
+      tag: gtc22
+      title: 'TPAT : TensorRT Plugin Autogen Tool'
+      url: /slides/mlsys/framework/2022/03/01/tpat-tensorrt-plugin-autogen-tool.html
   gpu:
     cuda:
-      math:
-        posts:
-        - categories:
-          - mlsys
-          - gpu
-          - cuda
-          - math
-          date: '2023-03-01'
-          tag: gtc23
-          title: Recent Developments in NVIDIA Math Libraries
-          url: /slides/mlsys/gpu/cuda/math/2023/03/01/recent-developments-in-nvidia-math-libraries.html
       posts:
       - categories:
         - mlsys
         - gpu
         - cuda
-        date: '2023-03-01'
-        tag: gtc23
-        title: 'Increasing Data Center Efficiency by Optimizing GPU Utilization Session
-          ID: S51297'
-        url: /slides/mlsys/gpu/cuda/2023/03/01/increasing-data-center-efficiency-by-optimizing-gpu-utilization-session-id-s51297.html
+        date: '2022-03-01'
+        tag: gtc22
+        title: HOW CUDA PROGRAMMING WORKS
+        url: /slides/mlsys/gpu/cuda/2022/03/01/how-cuda-programming-works.html
       - categories:
         - mlsys
         - gpu
         - cuda
         date: '2023-03-01'
         tag: gtc23
-        title: 'Optimizing at Scale: Investigating Hidden Bottlenecks in Multi-Node
-          Workloads'
-        url: /slides/mlsys/gpu/cuda/2023/03/01/optimizing-at-scale-investigating-hidden-bottlenecks-in-multi-node-workloads.html
+        title: CUDA Graphs 101
+        url: /slides/mlsys/gpu/cuda/2023/03/01/cuda-graphs-101.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2022-03-01'
+        tag: gtc22
+        title: ACCELERATING BACKWARD DATA GRADIENT BY INCREASING TENSOR CORE UTILIZATION
+          IN CUTLASS
+        url: /slides/mlsys/gpu/cuda/2022/03/01/accelerating-backward-data-gradient-by-increasing-tensor-core-utilization-in-cutlass.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2022-03-01'
+        tag: gtc22
+        title: AUTOMATED PERFORMANCE IMPROVEMENT USING CUDA LINK TIME OPTIMIZATION
+        url: /slides/mlsys/gpu/cuda/2022/03/01/automated-performance-improvement-using-cuda-link-time-optimization.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2022-03-01'
+        tag: gtc22
+        title: INSIDE THE NVIDIA HOPPER ARCHITECTURE
+        url: /slides/mlsys/gpu/cuda/2022/03/01/inside-the-nvidia-hopper-architecture.html
       - categories:
         - mlsys
         - gpu
         - cuda
         date: '2023-03-01'
         tag: gtc23
-        title: Programming Model and Applications for Grace Hopper Superchip
-        url: /slides/mlsys/gpu/cuda/2023/03/01/programming-model-and-applications-for-grace-hopper-superchip.html
+        title: Robust and Efficient CUDA C++ Concurrency with Stream-Ordered Allocation
+        url: /slides/mlsys/gpu/cuda/2023/03/01/robust-and-efficient-cuda-c-concurrency-with-stream-ordered-allocation.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2022-03-01'
+        tag: gtc22
+        title: OPTIMIZING CUDA APPLICATIONS FOR NVIDIA HOPPER ARCHITECTURE
+        url: /slides/mlsys/gpu/cuda/2022/03/01/optimizing-cuda-applications-for-nvidia-hopper-architecture.html
       profile:
         posts:
         - categories:
@@ -46,54 +75,64 @@ mlsys:
           - gpu
           - cuda
           - profile
-          date: '2023-03-01'
-          tag: gtc23
-          title: 'S51205 From the Macro to the Micro: CUDA Developer Tools Find and
-            Fix Problems at Any Scale'
-          url: /slides/mlsys/gpu/cuda/profile/2023/03/01/s51205-from-the-macro-to-the-micro-cuda-developer-tools-find-and-fix-problems-at-any-scale.html
-        - categories:
-          - mlsys
-          - gpu
-          - cuda
-          - profile
-          date: '2023-03-01'
-          tag: gtc23
-          title: 'Debugging CUDA: An Overview of CUDA Correctness Tools'
-          url: /slides/mlsys/gpu/cuda/profile/2023/03/01/debugging-cuda-an-overview-of-cuda-correctness-tools.html
+          date: '2022-03-01'
+          tag: gtc22
+          title: WHAT, WHERE, AND WHY? USE CUDA DEVELOPER TOOLS TO DETECT, LOCATE,
+            AND EXPLAIN BUGS AND BOTTLENECKS
+          url: /slides/mlsys/gpu/cuda/profile/2022/03/01/what-where-and-why-use-cuda-developer-tools-to-detect-locate-and-explain-bugs-and-bottlenecks.html
+    cuda-math:
+      posts:
+      - categories:
+        - mlsys
+        - gpu
+        - cuda-math
+        date: '2023-03-01'
+        tag: gtc23
+        title: 'cuNumeric and Legate: How to Create a Distributed, GPU-Accelerated
+          Library'
+        url: /slides/mlsys/gpu/cuda-math/2023/03/01/cunumeric-and-legate-how-to-create-a-distributed-gpu-accelerated-library.html
+    hpc:
+      posts:
+      - categories:
+        - mlsys
+        - gpu
+        - hpc
+        date: '2022-02-01'
+        tag: gtc22
+        title: STANDARD PARALLELISM
+        url: /slides/mlsys/gpu/hpc/2022/02/01/standard-parallelism.html
+      - categories:
+        - mlsys
+        - gpu
+        - hpc
+        date: '2022-03-01'
+        tag: gtc22
+        title: 'WARP: A HIGH-PERFORMANCE PYTHON FRAMEWORK FOR GPU SIMULATION AND GRAPHICS'
+        url: /slides/mlsys/gpu/hpc/2022/03/01/warp-a-high-performance-python-framework-for-gpu-simulation-and-graphics.html
     network:
       posts:
       - categories:
         - mlsys
         - gpu
         - network
-        date: '2023-03-01'
-        tag: gtc23
-        title: How to Streamline Shared Memory Space With the NVSHMEM Communication
-          Library
-        url: /slides/mlsys/gpu/network/2023/03/01/how-to-streamline-shared-memory-space-with-the-nvshmem-communication-library.html
+        date: '2022-03-01'
+        tag: gtc22
+        title: 'S41825: LATEST ON NVIDIA MAGNUM IO GPUDIRECT TECHNOLOGIES'
+        url: /slides/mlsys/gpu/network/2022/03/01/s41825-latest-on-nvidia-magnum-io-gpudirect-technologies.html
       - categories:
         - mlsys
         - gpu
         - network
-        date: '2023-03-01'
-        tag: gtc23
-        title: 'S5111: Scaling Deep Learning Training: Fast Inter-GPU Communication
-          with NCCL'
-        url: /slides/mlsys/gpu/network/2023/03/01/s5111-scaling-deep-learning-training-fast-inter-gpu-communication-with-nccl.html
+        date: '2022-03-01'
+        tag: gtc22
+        title: FAST INTER-GPU COMMUNICATION WITH NCCL FOR DEEP LEARNING TRAINING,
+          AND MORE
+        url: /slides/mlsys/gpu/network/2022/03/01/fast-inter-gpu-communication-with-nccl-for-deep-learning-training-and-more.html
       - categories:
         - mlsys
         - gpu
         - network
-        date: '2025-03-01'
-        tag: gtc23
-        title: 'S51882: Become Faster in Writing Performant CUDA Kernels using the
-          Source Page in Nsight Compute'
-        url: /slides/mlsys/gpu/network/2025/03/01/s51882-become-faster-in-writing-performant-cuda-kernels-using-the-source-page-in-nsight-compute.html
-      - categories:
-        - mlsys
-        - gpu
-        - network
-        date: '2023-03-01'
-        tag: gtc23
-        title: Accelerating data movement between GPUs and storage or memory
-        url: /slides/mlsys/gpu/network/2023/03/01/accelerating-data-movement-between-gpus-and-storage-or-memory.html
+        date: '2022-03-01'
+        tag: gtc22
+        title: MULTI GPU PROGRAMMING WITH MPI
+        url: /slides/mlsys/gpu/network/2022/03/01/multi-gpu-programming-with-mpi.html

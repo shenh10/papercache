@@ -22,7 +22,7 @@ title: 'AStitch: Enabling a New Multi-dimensional Optimization Space for Memory-
 <p><strong>作者/机构</strong>:<br/>
 Zhen Zheng, Xuanda Yang, Pengzhan Zhao, Guoping Long, Kai Zhu, Feiwen Zhu, Wenyi Zhao, Xiaoyong Liu, Jun Yang, Wei Lin (Alibaba Group China); Jidong Zhai (Tsinghua University China); Shuaiwen Leon Song (University of Sydney Australia)</p>
 <hr/>
-<h3>A1 主要贡献（总结）</h3>
+<h3>A1 主要贡献</h3>
 <p>本文揭示了在最新的机器学习模型中，内存密集型计算正成为一个日益关键的性能影响因素。由于存在复杂的两级依赖关系和即时（just-in-time）需求的独特挑战，现有的机器学习（ML）优化编译器无法进行高效的算子融合。它们面临着两难的困境：要么执行融合但带来沉重的冗余计算，要么跳过融合导致产生大量的内核。此外，由于缺乏对具有不规则张量形状的真实世界生产负载的支持，这些编译器常常导致并行度低下。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>
 *   <strong>问题识别</strong>: 传统上，优化重点在于计算密集型操作（如GEMM、卷积），但许多新兴模型（如NLP领域的Attention）中，内存密集型操作（如element-wise和reduction）在执行时间和内核数量上占据了主导地位。如图1所示，在五个生产模型中，内存密集型计算平均占执行时间的63.2%和内核总数的89.6%。随着新一代GPU架构（如从NVIDIA V100到A100）的算力与内存带宽比急剧增加，这一问题变得更加严峻。<br/>
@@ -160,7 +160,7 @@ a) 从真实工作负载中简化的内存密集型子图</p>
 <hr/>
 <h3>A4 实验</h3>
 <p>本节我们使用单块NVIDIA V100 GPU（16GB设备内存）、CUDA工具包10.0和cuDNN 7.6进行详细评估。</p>
-<h4>实验环境（总结）</h4>
+<h4>实验环境</h4>
 <ul>
 <li><strong>数据集与模型</strong>: 评估使用了一系列具有代表性的内存密集型ML应用，包括：<ul>
 <li><strong>BERT</strong>【索引编号21，BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding, 2018, arXiv】 和 <strong>Transformer</strong>【索引编号44，Attention is all you need, 2017, arXiv】 用于自然语言处理（NLP）。</li>
@@ -185,7 +185,7 @@ a) 从真实工作负载中简化的内存密集型子图</p>
 </li>
 <li><strong>评估指标</strong>: 评估推理时间或单次迭代的训练时间，重复10次取平均性能。</li>
 </ul>
-<h4>实验结果（总结）</h4>
+<h4>实验结果</h4>
 <h5>6.1.1 总体结果</h5>
 <p><strong>性能加速比</strong>。如图11所示，AStitch在所有工作负载上均优于其他对比技术。<br/>
 *   <strong>推理任务 (图11a)</strong>:<br/>
