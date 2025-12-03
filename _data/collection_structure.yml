@@ -236,6 +236,13 @@ llm:
         - llm
         - engineering
         - inference
+      - title: 'TASP: Topology-Aware Sequence Parallelism'
+        date: '2025-10-01'
+        url: /papers/llm/engineering/inference/2025/10/01/tasp-topology-aware-sequence-parallelism.html
+        categories:
+        - llm
+        - engineering
+        - inference
       - title: 'When to Reason: Semantic Router for vLLM'
         date: '2025-10-01'
         url: /papers/llm/engineering/inference/2025/10/01/when-to-reason-semantic-router-for-vllm.html
@@ -360,13 +367,6 @@ llm:
       - title: 'Transformers: State-of-the-Art Natural Language Processing'
         date: '2019-10-01'
         url: /papers/llm/engineering/inference/2019/10/01/transformers-state-of-the-art-natural-language-processing.html
-        categories:
-        - llm
-        - engineering
-        - inference
-      - title: A Survey of LLM Inference Systems
-        date: '2025-06-01'
-        url: /papers/llm/engineering/inference/2025/06/01/a-survey-of-llm-inference-systems.html
         categories:
         - llm
         - engineering
@@ -1228,6 +1228,14 @@ llm:
         - llm
         - engineering
         - rl
+      - title: Deterministic Inference Across Tensor Parallel Sizes That Eliminates
+          Training–Inference Mismatch
+        date: '2025-11-01'
+        url: /papers/llm/engineering/rl/2025/11/01/deterministic-inference-across-tensor-parallel-sizes-that-eliminates-traininginference-mismatch.html
+        categories:
+        - llm
+        - engineering
+        - rl
       - title: 'AsyncFlow: An Asynchronous Streaming RL Framework for Efficient LLM
           Post-Training'
         date: '2025-07-01'
@@ -1723,8 +1731,23 @@ llm:
         - models
       - title: 'DeepSeek-V3.2-Exp: Boosting Long-Context Efficiency with DeepSeek
           Sparse Attention'
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/models/2025/11/01/deepseek-v32-exp-boosting-long-context-efficiency-with-deepseek-sparse-attention.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'DeepSeek-V3.2-Exp: Boosting Long-Context Efficiency with DeepSeek
+          Sparse Attention'
         date: '2025-09-01'
         url: /papers/llm/algorithm/models/2025/09/01/deepseek-v32-exp-boosting-long-context-efficiency-with-deepseek-sparse-attention.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'System Card: Claude Opus 4.5'
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/models/2025/11/01/system-card-claude-opus-45.html
         categories:
         - llm
         - algorithm
@@ -1732,6 +1755,13 @@ llm:
       - title: 'Llama 2: Open Foundation and Fine-Tuned Chat Models'
         date: '2023-07-01'
         url: /papers/llm/algorithm/models/2023/07/01/llama-2-open-foundation-and-fine-tuned-chat-models.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: HunyuanOCR Technical Report
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/models/2025/11/01/hunyuanocr-technical-report.html
         categories:
         - llm
         - algorithm
@@ -1786,9 +1816,23 @@ llm:
         - llm
         - algorithm
         - models
+      - title: Gemini 3 Pro Model Card
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/models/2025/11/01/gemini-3-pro-model-card.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: 'GLM-4.5: Agentic, Reasoning, and Coding (ARC) Foundation Models'
         date: '2025-08-01'
         url: /papers/llm/algorithm/models/2025/08/01/glm-45-agentic-reasoning-and-coding-arc-foundation-models.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'DeepSeek-V3.2: Pushing the Frontier of Open Large Language Models'
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/models/2025/12/01/deepseek-v32-pushing-the-frontier-of-open-large-language-models.html
         categories:
         - llm
         - algorithm
@@ -2021,6 +2065,13 @@ llm:
         - llm
         - algorithm
         - pretrain_sft
+      - title: 'Nested Learning: The Illusion of Deep Learning Architectures'
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/11/01/nested-learning-the-illusion-of-deep-learning-architectures.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
       - title: 'INFERENCE SCALING LAWS: AN EMPIRICAL ANALYSIS OF COMPUTE-OPTIMAL INFERENCE
           FOR LLM PROBLEM-SOLVING'
         date: '2024-08-01'
@@ -2054,6 +2105,14 @@ llm:
         - algorithm
         - agent
         tag: nips23
+      - title: 'UI-TARS-2 Technical Report: Advancing GUI Agent with Multi-Turn Reinforcement
+          Learning'
+        date: '2025-09-01'
+        url: /papers/llm/algorithm/agent/2025/09/01/ui-tars-2-technical-report-advancing-gui-agent-with-multi-turn-reinforcement-learning.html
+        categories:
+        - llm
+        - algorithm
+        - agent
       - title: 'Retrieval-Augmented Generation for Large Language Models: A Survey'
         date: '2023-12-01'
         url: /papers/llm/algorithm/agent/2023/12/01/retrieval-augmented-generation-for-large-language-models-a-survey.html
@@ -2124,14 +2183,13 @@ llm:
         - algorithm
         - agent
         tag: iclr23
-      - title: 'Tree of Thoughts: Deliberate Problem Solving with Large Language Models'
-        date: '2023-12-01'
-        url: /papers/llm/algorithm/agent/2023/12/01/tree-of-thoughts-deliberate-problem-solving-with-large-language-models.html
+      - title: Effective Context Engineering for AI Agents
+        date: '2025-09-01'
+        url: /papers/llm/algorithm/agent/2025/09/01/effective-context-engineering-for-ai-agents.html
         categories:
         - llm
         - algorithm
         - agent
-        tag: nips23
       - title: 'R1-Searcher: Incentivizing the Search Capability in LLMs via Reinforcement
           Learning'
         date: '2025-03-01'
@@ -2140,14 +2198,6 @@ llm:
         - llm
         - algorithm
         - agent
-      - title: 'REAC T: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS'
-        date: '2023-11-01'
-        url: /papers/llm/algorithm/agent/2023/11/01/reac-t-synergizing-reasoning-and-acting-in-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-        tag: iclr23
       - title: 'Search-R1: Training LLMs to Reason and Leverage Search Engines with
           Reinforcement Learning'
         date: '2025-03-01'
@@ -2706,6 +2756,12 @@ mlsys:
       - mlsys
       - gpu
       tag: hpca24
+    - title: 'MMA-Sim: Bit-Accurate Reference Model of Tensor Cores and Matrix Cores'
+      date: '2025-12-01'
+      url: /papers/mlsys/gpu/2025/12/01/mma-sim-bit-accurate-reference-model-of-tensor-cores-and-matrix-cores.html
+      categories:
+      - mlsys
+      - gpu
     - title: Demystifying GPU Microarchitecture through Microbenchmarking
       date: '2010-01-01'
       url: /papers/mlsys/gpu/2010/01/01/demystifying-gpu-microarchitecture-through-microbenchmarking.html
