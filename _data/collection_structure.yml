@@ -156,7 +156,6 @@ llm:
           - engineering
           - inference
           - low_precision
-          tag: ppopp25
         - title: 'MicroScopiQ: Accelerating Foundational Models through Outlier-Aware
             Microscaling Quantization'
           date: '2024-11-01'
@@ -266,6 +265,20 @@ llm:
         - llm
         - engineering
         - inference
+      - title: 'State of AI: An Empirical 100 Trillion Token Study with OpenRouter'
+        date: '2025-12-01'
+        url: /papers/llm/engineering/inference/2025/12/01/state-of-ai-an-empirical-100-trillion-token-study-with-openrouter.html
+        categories:
+        - llm
+        - engineering
+        - inference
+      - title: Towards Efficient and Practical GPU Multitasking in the Era of LLM
+        date: '2025-08-01'
+        url: /papers/llm/engineering/inference/2025/08/01/towards-efficient-and-practical-gpu-multitasking-in-the-era-of-llm.html
+        categories:
+        - llm
+        - engineering
+        - inference
       - title: Flash-Decoding for long-context inference
         date: '2023-10-01'
         url: /papers/llm/engineering/inference/2023/10/01/flash-decoding-for-long-context-inference.html
@@ -371,6 +384,13 @@ llm:
         - llm
         - engineering
         - inference
+      - title: A Survey of LLM Inference Systems
+        date: '2025-06-01'
+        url: /papers/llm/engineering/inference/2025/06/01/a-survey-of-llm-inference-systems.html
+        categories:
+        - llm
+        - engineering
+        - inference
       - title: 'SGLang: Efficient Execution of Structured Language Model Programs'
         date: '2024-07-01'
         url: /papers/llm/engineering/inference/2024/07/01/sglang-efficient-execution-of-structured-language-model-programs.html
@@ -460,6 +480,15 @@ llm:
             Decoding Heads'
           date: '2024-06-01'
           url: /papers/llm/engineering/inference/speculative_decoding/2024/06/01/medusa-simple-llm-inference-acceleration-framework-with-multiple-decoding-heads.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: 'Native Parallel Reasoner: Reasoning in Parallelism via Self-Distilled
+            Reinforcement Learning'
+          date: '2025-12-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/12/01/native-parallel-reasoner-reasoning-in-parallelism-via-self-distilled-reinforcement-learning.html
           categories:
           - llm
           - engineering
@@ -1236,6 +1265,14 @@ llm:
         - llm
         - engineering
         - rl
+      - title: 'RLAX: Large-Scale, Distributed Reinforcement Learning for Large Language
+          Models on TPUs'
+        date: '2025-12-12'
+        url: /papers/llm/engineering/rl/2025/12/12/rlax-large-scale-distributed-reinforcement-learning-for-large-language-models-on-tpus.html
+        categories:
+        - llm
+        - engineering
+        - rl
       - title: 'AsyncFlow: An Asynchronous Streaming RL Framework for Efficient LLM
           Post-Training'
         date: '2025-07-01'
@@ -1823,6 +1860,13 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'Update to GPT-5 System Card: GPT-5.2'
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/models/2025/12/01/update-to-gpt-5-system-card-gpt-52.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: 'GLM-4.5: Agentic, Reasoning, and Coding (ARC) Foundation Models'
         date: '2025-08-01'
         url: /papers/llm/algorithm/models/2025/08/01/glm-45-agentic-reasoning-and-coding-arc-foundation-models.html
@@ -1851,6 +1895,37 @@ llm:
         - llm
         - algorithm
         - models
+    eval:
+      posts:
+      - title: The LLM Evaluation Guidebook
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/eval/2025/12/01/the-llm-evaluation-guidebook.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+      - title: 'MCP-Bench: Benchmarking Tool-Using LLM Agents with Complex Real-World
+          Tasks via MCP Servers'
+        date: '2025-08-01'
+        url: /papers/llm/algorithm/eval/2025/08/01/mcp-bench-benchmarking-tool-using-llm-agents-with-complex-real-world-tasks-via-mcp-servers.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+      - title: Instruction-Following Evaluation for Large Language Models
+        date: '2023-11-01'
+        url: /papers/llm/algorithm/eval/2023/11/01/instruction-following-evaluation-for-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+      - title: On the Tool Manipulation Capability of Open-source Large Language Models
+        date: '2023-05-01'
+        url: /papers/llm/algorithm/eval/2023/05/01/on-the-tool-manipulation-capability-of-open-source-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - eval
     rl:
       posts:
       - title: 'NeMo-Aligner: Scalable Toolkit for Efficient Model Alignment'
@@ -2190,6 +2265,14 @@ llm:
         - llm
         - algorithm
         - agent
+      - title: 'Tree of Thoughts: Deliberate Problem Solving with Large Language Models'
+        date: '2023-12-01'
+        url: /papers/llm/algorithm/agent/2023/12/01/tree-of-thoughts-deliberate-problem-solving-with-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: nips23
       - title: 'R1-Searcher: Incentivizing the Search Capability in LLMs via Reinforcement
           Learning'
         date: '2025-03-01'
@@ -2198,6 +2281,14 @@ llm:
         - llm
         - algorithm
         - agent
+      - title: 'REAC T: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS'
+        date: '2023-11-01'
+        url: /papers/llm/algorithm/agent/2023/11/01/reac-t-synergizing-reasoning-and-acting-in-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: iclr23
       - title: 'Search-R1: Training LLMs to Reason and Leverage Search Engines with
           Reinforcement Learning'
         date: '2025-03-01'
@@ -2748,6 +2839,12 @@ mlsys:
       - mlsys
       - gpu
       tag: mlsys23
+    - title: NVIDIA Blackwell
+      date: '2025-01-01'
+      url: /papers/mlsys/gpu/2025/01/01/nvidia-blackwell.html
+      categories:
+      - mlsys
+      - gpu
     - title: 'WASP: Exploiting GPU Pipeline Parallelism with Hardware-Accelerated
         Automatic Warp Specialization'
       date: '2024-03-01'
@@ -2759,6 +2856,12 @@ mlsys:
     - title: 'MMA-Sim: Bit-Accurate Reference Model of Tensor Cores and Matrix Cores'
       date: '2025-12-01'
       url: /papers/mlsys/gpu/2025/12/01/mma-sim-bit-accurate-reference-model-of-tensor-cores-and-matrix-cores.html
+      categories:
+      - mlsys
+      - gpu
+    - title: NVIDIA DGX B300
+      date: '2025-01-01'
+      url: /papers/mlsys/gpu/2025/01/01/nvidia-dgx-b300.html
       categories:
       - mlsys
       - gpu
@@ -2977,6 +3080,13 @@ mlsys:
       - mlsys
       - networking
       tag: sc20
+    - title: 'Beluga: A CXL-Based Memory Architecture for Scalable and Efficient LLM
+        KVCache Management'
+      date: '2025-12-01'
+      url: /papers/mlsys/networking/2025/12/01/beluga-a-cxl-based-memory-architecture-for-scalable-and-efficient-llm-kvcache-management.html
+      categories:
+      - mlsys
+      - networking
     - title: 'NetDIMM: Low-Latency Near-Memory Network Interface Architecture'
       date: '2019-10-01'
       url: /papers/mlsys/networking/2019/10/01/netdimm-low-latency-near-memory-network-interface-architecture.html
