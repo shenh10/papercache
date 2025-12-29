@@ -1,1 +1,783 @@
-{}
+llm:
+  engineering:
+    inference:
+      posts:
+      - categories:
+        - llm
+        - engineering
+        - inference
+        date: '2025-05-01'
+        tag: aiday25-bj
+        title: TensorRT-LLM
+        url: /slides/llm/engineering/inference/2025/05/01/tensorrt-llm.html
+      - categories:
+        - llm
+        - engineering
+        - inference
+        date: '2025-11-01'
+        tag: aiday25-hz
+        title: A Practical Guide to Deploying NVFP4 for Efficient Inference on Blackwell
+          GPUs
+        url: /slides/llm/engineering/inference/2025/11/01/a-practical-guide-to-deploying-nvfp4-for-efficient-inference-on-blackwell-gpus.html
+      - categories:
+        - llm
+        - engineering
+        - inference
+        date: '2025-05-01'
+        tag: aiday25-bj
+        title: 'TensorRT-LLM × PyTorch: A New Development Paradigm for High-Performance
+          LLM Inference'
+        url: /slides/llm/engineering/inference/2025/05/01/tensorrt-llm-pytorch-a-new-development-paradigm-for-high-performance-llm-inference.html
+      - categories:
+        - llm
+        - engineering
+        - inference
+        date: '2025-11-01'
+        tag: aiday25-hz
+        title: Linear Attention
+        url: /slides/llm/engineering/inference/2025/11/01/linear-attention.html
+      - categories:
+        - llm
+        - engineering
+        - inference
+        date: '2025-11-01'
+        tag: aiday25-hz
+        title: TensorRT-LLM Large-scale Expert Parallelism Optimizations
+        url: /slides/llm/engineering/inference/2025/11/01/tensorrt-llm-large-scale-expert-parallelism-optimizations.html
+      - categories:
+        - llm
+        - engineering
+        - inference
+        date: '2025-05-01'
+        tag: aiday25-bj
+        title: TensorRT-LLM驱动DeepSeek性能极限-协同腾讯联合优化实践
+        url: /slides/llm/engineering/inference/2025/05/01/tensorrt-llm驱动deepseek性能极限-协同腾讯联合优化实践.html
+      - categories:
+        - llm
+        - engineering
+        - inference
+        date: '2025-11-01'
+        tag: aiday25-hz
+        title: Best practice of Blackwell GPU deployment in the Chinese market
+        url: /slides/llm/engineering/inference/2025/11/01/best-practice-of-blackwell-gpu-deployment-in-the-chinese-market.html
+      - categories:
+        - llm
+        - engineering
+        - inference
+        date: '2025-03-01'
+        tag: gtc25
+        title: 'FlashAttention-3: Fast and Accurate Attention with Asynchrony and
+          Low-precision'
+        url: /slides/llm/engineering/inference/2025/03/01/flashattention-3-fast-and-accurate-attention-with-asynchrony-and-low-precision.html
+    train:
+      posts:
+      - categories:
+        - llm
+        - engineering
+        - train
+        date: '2025-05-01'
+        tag: aiday25-bj
+        title: FP8 Training Recipes, Performance and Convergence
+        url: /slides/llm/engineering/train/2025/05/01/fp8-training-recipes-performance-and-convergence.html
+      - categories:
+        - llm
+        - engineering
+        - train
+        date: '2025-11-01'
+        tag: aiday25-hz
+        title: 'Hybrid-EP: An Efficient MoE Communication Implementation'
+        url: /slides/llm/engineering/train/2025/11/01/hybrid-ep-an-efficient-moe-communication-implementation.html
+      - categories:
+        - llm
+        - engineering
+        - train
+        date: '2025-11-01'
+        tag: aiday25-hz
+        title: DeepSeek-V3 Pre-training Optimization on Grace Blackwell
+        url: /slides/llm/engineering/train/2025/11/01/deepseek-v3-pre-training-optimization-on-grace-blackwell.html
+      - categories:
+        - llm
+        - engineering
+        - train
+        date: '2025-11-01'
+        tag: aiday25-hz
+        title: Best Practices of Reinforcement Learning with verl
+        url: /slides/llm/engineering/train/2025/11/01/best-practices-of-reinforcement-learning-with-verl.html
+      - categories:
+        - llm
+        - engineering
+        - train
+        date: '2025-05-01'
+        tag: aiday25-bj
+        title: Megatron-Core Custom FSDP
+        url: /slides/llm/engineering/train/2025/05/01/megatron-core-custom-fsdp.html
+      - categories:
+        - llm
+        - engineering
+        - train
+        date: '2025-05-01'
+        tag: aiday25-bj
+        title: MCore MoE in 2025 - DeepSeek-V3 and Beyond
+        url: /slides/llm/engineering/train/2025/05/01/mcore-moe-in-2025-deepseek-v3-and-beyond.html
+      - categories:
+        - llm
+        - engineering
+        - train
+        date: '2025-11-01'
+        tag: aiday25-hz
+        title: Best Practice of MLA Kernel Optimization on Blackwell
+        url: /slides/llm/engineering/train/2025/11/01/best-practice-of-mla-kernel-optimization-on-blackwell.html
+      - categories:
+        - llm
+        - engineering
+        - train
+        date: '2025-03-01'
+        tag: gtc25
+        title: Profiling Large Language Model Trainings on the Grace Hopper Superchip
+          using Nsight Systems
+        url: /slides/llm/engineering/train/2025/03/01/profiling-large-language-model-trainings-on-the-grace-hopper-superchip-using-nsight-systems.html
+      - categories:
+        - llm
+        - engineering
+        - train
+        date: '2025-11-01'
+        tag: aiday25-hz
+        title: Distributed Implementation of Muon and Emerging Optimizers in Megatron-Core
+        url: /slides/llm/engineering/train/2025/11/01/distributed-implementation-of-muon-and-emerging-optimizers-in-megatron-core.html
+      - categories:
+        - llm
+        - engineering
+        - train
+        date: '2025-11-01'
+        tag: aiday25-hz
+        title: Megatron Core MoE Updates - 2025 H2
+        url: /slides/llm/engineering/train/2025/11/01/megatron-core-moe-updates-2025-h2.html
+mlsys:
+  cpu:
+    posts:
+    - categories:
+      - mlsys
+      - cpu
+      date: '2025-03-01'
+      tag: gtc25
+      title: Application Optimization for NVIDIA Grace CPU
+      url: /slides/mlsys/cpu/2025/03/01/application-optimization-for-nvidia-grace-cpu.html
+  framework:
+    posts:
+    - categories:
+      - mlsys
+      - framework
+      date: '2022-03-01'
+      tag: gtc22
+      title: 'TPAT : TensorRT Plugin Autogen Tool'
+      url: /slides/mlsys/framework/2022/03/01/tpat-tensorrt-plugin-autogen-tool.html
+  gpu:
+    cuda:
+      posts:
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: 'CUDA: New Features and Beyond'
+        url: /slides/mlsys/gpu/cuda/2025/03/01/cuda-new-features-and-beyond.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2007-01-01'
+        title: Optimizing Parallel Reduction in CUDA
+        url: /slides/mlsys/gpu/cuda/2007/01/01/optimizing-parallel-reduction-in-cuda.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2022-03-01'
+        tag: gtc22
+        title: HOW CUDA PROGRAMMING WORKS
+        url: /slides/mlsys/gpu/cuda/2022/03/01/how-cuda-programming-works.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2024-03-01'
+        tag: gtc24
+        title: 'CUDA: New Features and Beyond'
+        url: /slides/mlsys/gpu/cuda/2024/03/01/cuda-new-features-and-beyond.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: Get the most performance from Grace Hopper
+        url: /slides/mlsys/gpu/cuda/2025/03/01/get-the-most-performance-from-grace-hopper.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2023-03-01'
+        tag: gtc23
+        title: How To Write A CUDA Program
+        url: /slides/mlsys/gpu/cuda/2023/03/01/how-to-write-a-cuda-program.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2018-03-01'
+        title: 'PROGRAMMING TENSOR CORES: NATIVE VOLTA TENSOR CORE GEMM'
+        url: /slides/mlsys/gpu/cuda/2018/03/01/programming-tensor-cores-native-volta-tensor-core-gemm.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc23
+        title: The Performance of CUDA with the Flexibility of PyTorch
+        url: /slides/mlsys/gpu/cuda/2025/03/01/the-performance-of-cuda-with-the-flexibility-of-pytorch.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: How To Write A CUDA Program The Parallel Programming Edition
+        url: /slides/mlsys/gpu/cuda/2025/03/01/how-to-write-a-cuda-program-the-parallel-programming-edition.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: Accelerated Python The Community and Ecosystem
+        url: /slides/mlsys/gpu/cuda/2025/03/01/accelerated-python-the-community-and-ecosystem.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: It's Easier than You Think – Debugging and Optimizing CUDA with Intelligent
+          Developer Tools
+        url: /slides/mlsys/gpu/cuda/2025/03/01/its-easier-than-you-think-debugging-and-optimizing-cuda-with-intelligent-developer-tools.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2023-03-01'
+        tag: gtc23
+        title: CUDA Graphs 101
+        url: /slides/mlsys/gpu/cuda/2023/03/01/cuda-graphs-101.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2022-03-01'
+        tag: gtc22
+        title: ACCELERATING BACKWARD DATA GRADIENT BY INCREASING TENSOR CORE UTILIZATION
+          IN CUTLASS
+        url: /slides/mlsys/gpu/cuda/2022/03/01/accelerating-backward-data-gradient-by-increasing-tensor-core-utilization-in-cutlass.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2021-04-01'
+        tag: gtc21
+        title: ACCELERATING CONVOLUTION WITH TENSOR CORES IN CUTLASS
+        url: /slides/mlsys/gpu/cuda/2021/04/01/accelerating-convolution-with-tensor-cores-in-cutlass.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: THE CUDA C++ DEVELOPER'S TOOLBOX
+        url: /slides/mlsys/gpu/cuda/2025/03/01/the-cuda-c-developers-toolbox.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2022-03-01'
+        tag: gtc22
+        title: 'CUDA: New Features and Beyond'
+        url: /slides/mlsys/gpu/cuda/2022/03/01/cuda-new-features-and-beyond.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2023-03-01'
+        tag: gtc23
+        title: 'Increasing Data Center Efficiency by Optimizing GPU Utilization Session
+          ID: S51297'
+        url: /slides/mlsys/gpu/cuda/2023/03/01/increasing-data-center-efficiency-by-optimizing-gpu-utilization-session-id-s51297.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2024-03-01'
+        tag: gtc24
+        title: Grace Hopper Superchip Architecture and Performance Optimizations for
+          AI Applications
+        url: /slides/mlsys/gpu/cuda/2024/03/01/grace-hopper-superchip-architecture-and-performance-optimizations-for-ai-applications.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2022-03-01'
+        tag: gtc22
+        title: AUTOMATED PERFORMANCE IMPROVEMENT USING CUDA LINK TIME OPTIMIZATION
+        url: /slides/mlsys/gpu/cuda/2022/03/01/automated-performance-improvement-using-cuda-link-time-optimization.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: 'Performance Optimization Tutorial, Part 3 [S72686]: CUDA Techniques
+          to Maximize Concurrency and System Utilization'
+        url: /slides/mlsys/gpu/cuda/2025/03/01/performance-optimization-tutorial-part-3-s72686-cuda-techniques-to-maximize-concurrency-and-system-utilization.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: How to Get Data Between Storage and the GPU at the Speed of Light
+        url: /slides/mlsys/gpu/cuda/2025/03/01/how-to-get-data-between-storage-and-the-gpu-at-the-speed-of-light.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: 1,001 Ways to Write CUDA Kernels in Python
+        url: /slides/mlsys/gpu/cuda/2025/03/01/1001-ways-to-write-cuda-kernels-in-python.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: The CUDA Python Developer's Toolbox
+        url: /slides/mlsys/gpu/cuda/2025/03/01/the-cuda-python-developers-toolbox.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2022-03-01'
+        tag: gtc22
+        title: INSIDE THE NVIDIA HOPPER ARCHITECTURE
+        url: /slides/mlsys/gpu/cuda/2022/03/01/inside-the-nvidia-hopper-architecture.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: How You Should Write a CUDA C++ Kernel
+        url: /slides/mlsys/gpu/cuda/2025/03/01/how-you-should-write-a-cuda-c-kernel.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-05-01'
+        tag: aiday25-bj
+        title: Balancing the Compute Throughput & Latency in Async Programming
+        url: /slides/mlsys/gpu/cuda/2025/05/01/balancing-the-compute-throughput-latency-in-async-programming.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: CUDA Techniques to Maximize Memory Bandwidth and Hide Latency [S72683]
+        url: /slides/mlsys/gpu/cuda/2025/03/01/cuda-techniques-to-maximize-memory-bandwidth-and-hide-latency-s72683.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2023-03-01'
+        tag: gtc23
+        title: 'CUDA: New Features and Beyond'
+        url: /slides/mlsys/gpu/cuda/2023/03/01/cuda-new-features-and-beyond.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2024-03-01'
+        tag: gtc24
+        title: Advanced Performance Optimization in CUDA [S62192]
+        url: /slides/mlsys/gpu/cuda/2024/03/01/advanced-performance-optimization-in-cuda-s62192.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2023-03-01'
+        tag: gtc23
+        title: Robust and Efficient CUDA C++ Concurrency with Stream-Ordered Allocation
+        url: /slides/mlsys/gpu/cuda/2023/03/01/robust-and-efficient-cuda-c-concurrency-with-stream-ordered-allocation.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: CUDA Techniques to Maximize Compute and Instruction Throughput [S72685]
+        url: /slides/mlsys/gpu/cuda/2025/03/01/cuda-techniques-to-maximize-compute-and-instruction-throughput-s72685.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2022-03-01'
+        tag: gtc22
+        title: OPTIMIZING CUDA APPLICATIONS FOR NVIDIA HOPPER ARCHITECTURE
+        url: /slides/mlsys/gpu/cuda/2022/03/01/optimizing-cuda-applications-for-nvidia-hopper-architecture.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2023-03-01'
+        tag: gtc23
+        title: 'Optimizing at Scale: Investigating Hidden Bottlenecks in Multi-Node
+          Workloads'
+        url: /slides/mlsys/gpu/cuda/2023/03/01/optimizing-at-scale-investigating-hidden-bottlenecks-in-multi-node-workloads.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2023-03-01'
+        tag: gtc23
+        title: Programming Model and Applications for Grace Hopper Superchip
+        url: /slides/mlsys/gpu/cuda/2023/03/01/programming-model-and-applications-for-grace-hopper-superchip.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-05-01'
+        tag: aiday25-bj
+        title: Optimizing Memory Bandwidth and Latency on Hopper + Blackwell
+        url: /slides/mlsys/gpu/cuda/2025/05/01/optimizing-memory-bandwidth-and-latency-on-hopper-blackwell.html
+      profile:
+        posts:
+        - categories:
+          - mlsys
+          - gpu
+          - cuda
+          - profile
+          date: '2023-03-01'
+          tag: gtc23
+          title: Become Faster in Writing Performant CUDA Kernels using the Source
+            Page in Nsight Compute
+          url: /slides/mlsys/gpu/cuda/profile/2023/03/01/become-faster-in-writing-performant-cuda-kernels-using-the-source-page-in-nsight-compute.html
+        - categories:
+          - mlsys
+          - gpu
+          - cuda
+          - profile
+          date: '2023-03-01'
+          tag: gtc23
+          title: 'S51205 From the Macro to the Micro: CUDA Developer Tools Find and
+            Fix Problems at Any Scale'
+          url: /slides/mlsys/gpu/cuda/profile/2023/03/01/s51205-from-the-macro-to-the-micro-cuda-developer-tools-find-and-fix-problems-at-any-scale.html
+        - categories:
+          - mlsys
+          - gpu
+          - cuda
+          - profile
+          date: '2023-03-01'
+          tag: gtc23
+          title: 'Debugging CUDA: An Overview of CUDA Correctness Tools'
+          url: /slides/mlsys/gpu/cuda/profile/2023/03/01/debugging-cuda-an-overview-of-cuda-correctness-tools.html
+        - categories:
+          - mlsys
+          - gpu
+          - cuda
+          - profile
+          date: '2025-11-01'
+          tag: aiday25-hz
+          title: CUDA Profiling and Debugging Tools for LLM
+          url: /slides/mlsys/gpu/cuda/profile/2025/11/01/cuda-profiling-and-debugging-tools-for-llm.html
+        - categories:
+          - mlsys
+          - gpu
+          - cuda
+          - profile
+          date: '2025-05-01'
+          tag: gtc25
+          title: 'S72867: AI Developer Tools for Accelerated Computing - Scarce Data
+            Isn''t Scary!'
+          url: /slides/mlsys/gpu/cuda/profile/2025/05/01/s72867-ai-developer-tools-for-accelerated-computing-scarce-data-isnt-scary.html
+        - categories:
+          - mlsys
+          - gpu
+          - cuda
+          - profile
+          date: '2022-03-01'
+          tag: gtc22
+          title: WHAT, WHERE, AND WHY? USE CUDA DEVELOPER TOOLS TO DETECT, LOCATE,
+            AND EXPLAIN BUGS AND BOTTLENECKS
+          url: /slides/mlsys/gpu/cuda/profile/2022/03/01/what-where-and-why-use-cuda-developer-tools-to-detect-locate-and-explain-bugs-and-bottlenecks.html
+    cuda-math:
+      posts:
+      - categories:
+        - mlsys
+        - gpu
+        - cuda-math
+        date: '2024-03-01'
+        tag: gtc24
+        title: Deep Dive into Math Libraries
+        url: /slides/mlsys/gpu/cuda-math/2024/03/01/deep-dive-into-math-libraries.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda-math
+        date: '2023-03-01'
+        tag: gtc23
+        title: Recent Developments in NVIDIA Math Libraries
+        url: /slides/mlsys/gpu/cuda-math/2023/03/01/recent-developments-in-nvidia-math-libraries.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda-math
+        date: '2023-03-01'
+        tag: gtc23
+        title: 'cuNumeric and Legate: How to Create a Distributed, GPU-Accelerated
+          Library'
+        url: /slides/mlsys/gpu/cuda-math/2023/03/01/cunumeric-and-legate-how-to-create-a-distributed-gpu-accelerated-library.html
+    cutlass:
+      posts:
+      - categories:
+        - mlsys
+        - gpu
+        - cutlass
+        date: '2023-03-01'
+        tag: gtc23
+        title: Developing Optimal CUDA Kernels on Hopper Tensor Cores
+        url: /slides/mlsys/gpu/cutlass/2023/03/01/developing-optimal-cuda-kernels-on-hopper-tensor-cores.html
+      - categories:
+        - mlsys
+        - gpu
+        - cutlass
+        date: '2025-11-01'
+        tag: aiday25-hz
+        title: The Evolution and Applications of CuTeDSL
+        url: /slides/mlsys/gpu/cutlass/2025/11/01/the-evolution-and-applications-of-cutedsl.html
+      - categories:
+        - mlsys
+        - gpu
+        - cutlass
+        date: '2022-09-01'
+        tag: gtc22
+        title: 'CUTLASS: Python API, Enhancements, and CUTLASS 3.0 Preview'
+        url: /slides/mlsys/gpu/cutlass/2022/09/01/cutlass-python-api-enhancements-and-cutlass-30-preview.html
+      - categories:
+        - mlsys
+        - gpu
+        - cutlass
+        date: '2024-03-01'
+        tag: gtc24
+        title: 'CUTLASS: A Performant, Flexible, and Portable Way to Target Hopper
+          Tensor Cores'
+        url: /slides/mlsys/gpu/cutlass/2024/03/01/cutlass-a-performant-flexible-and-portable-way-to-target-hopper-tensor-cores.html
+      - categories:
+        - mlsys
+        - gpu
+        - cutlass
+        date: '2025-05-01'
+        tag: aiday25-bj
+        title: Enable Tensor Core Programming in Python with CUTLASS 4.0
+        url: /slides/mlsys/gpu/cutlass/2025/05/01/enable-tensor-core-programming-in-python-with-cutlass-40.html
+      - categories:
+        - mlsys
+        - gpu
+        - cutlass
+        date: '2025-03-01'
+        tag: gtc25
+        title: USE CUTLASS TO FUSE MULTIPLE GEMMS TO EXTREME PERFORMANCE
+        url: /slides/mlsys/gpu/cutlass/2025/03/01/use-cutlass-to-fuse-multiple-gemms-to-extreme-performance.html
+      - categories:
+        - mlsys
+        - gpu
+        - cutlass
+        date: '2020-05-01'
+        tag: gtc21
+        title: DEVELOPING CUDA KERNELS TO PUSH TENSOR CORES TO THE ABSOLUTE LIMIT
+          ON NVIDIA A100
+        url: /slides/mlsys/gpu/cutlass/2020/05/01/developing-cuda-kernels-to-push-tensor-cores-to-the-absolute-limit-on-nvidia-a100.html
+      - categories:
+        - mlsys
+        - gpu
+        - cutlass
+        date: '2025-03-01'
+        tag: gtc25
+        title: Programming Blackwell Tensor Cores with CuTe and CUTLASS
+        url: /slides/mlsys/gpu/cutlass/2025/03/01/programming-blackwell-tensor-cores-with-cute-and-cutlass.html
+    hpc:
+      posts:
+      - categories:
+        - mlsys
+        - gpu
+        - hpc
+        date: '2022-02-01'
+        tag: gtc22
+        title: STANDARD PARALLELISM
+        url: /slides/mlsys/gpu/hpc/2022/02/01/standard-parallelism.html
+      - categories:
+        - mlsys
+        - gpu
+        - hpc
+        date: '2022-03-01'
+        tag: gtc22
+        title: 'WARP: A HIGH-PERFORMANCE PYTHON FRAMEWORK FOR GPU SIMULATION AND GRAPHICS'
+        url: /slides/mlsys/gpu/hpc/2022/03/01/warp-a-high-performance-python-framework-for-gpu-simulation-and-graphics.html
+    network:
+      posts:
+      - categories:
+        - mlsys
+        - gpu
+        - network
+        date: '2023-03-01'
+        tag: gtc23
+        title: How to Streamline Shared Memory Space With the NVSHMEM Communication
+          Library
+        url: /slides/mlsys/gpu/network/2023/03/01/how-to-streamline-shared-memory-space-with-the-nvshmem-communication-library.html
+      - categories:
+        - mlsys
+        - gpu
+        - network
+        date: '2023-03-01'
+        tag: gtc23
+        title: 'S5111: Scaling Deep Learning Training: Fast Inter-GPU Communication
+          with NCCL'
+        url: /slides/mlsys/gpu/network/2023/03/01/s5111-scaling-deep-learning-training-fast-inter-gpu-communication-with-nccl.html
+      - categories:
+        - mlsys
+        - gpu
+        - network
+        date: '2025-03-01'
+        tag: gtc23
+        title: 'S51882: Become Faster in Writing Performant CUDA Kernels using the
+          Source Page in Nsight Compute'
+        url: /slides/mlsys/gpu/network/2025/03/01/s51882-become-faster-in-writing-performant-cuda-kernels-using-the-source-page-in-nsight-compute.html
+      - categories:
+        - mlsys
+        - gpu
+        - network
+        date: '2025-03-01'
+        tag: gtc25
+        title: Inter-GPU Communication Technology
+        url: /slides/mlsys/gpu/network/2025/03/01/inter-gpu-communication-technology.html
+      - categories:
+        - mlsys
+        - gpu
+        - network
+        date: '2023-03-01'
+        tag: gtc23
+        title: Accelerating data movement between GPUs and storage or memory
+        url: /slides/mlsys/gpu/network/2023/03/01/accelerating-data-movement-between-gpus-and-storage-or-memory.html
+      - categories:
+        - mlsys
+        - gpu
+        - network
+        date: '2022-03-01'
+        tag: gtc22
+        title: 'S41825: LATEST ON NVIDIA MAGNUM IO GPUDIRECT TECHNOLOGIES'
+        url: /slides/mlsys/gpu/network/2022/03/01/s41825-latest-on-nvidia-magnum-io-gpudirect-technologies.html
+      - categories:
+        - mlsys
+        - gpu
+        - network
+        date: '2022-03-01'
+        tag: gtc22
+        title: FAST INTER-GPU COMMUNICATION WITH NCCL FOR DEEP LEARNING TRAINING,
+          AND MORE
+        url: /slides/mlsys/gpu/network/2022/03/01/fast-inter-gpu-communication-with-nccl-for-deep-learning-training-and-more.html
+      - categories:
+        - mlsys
+        - gpu
+        - network
+        date: '2022-03-01'
+        tag: gtc22
+        title: MULTI GPU PROGRAMMING WITH MPI
+        url: /slides/mlsys/gpu/network/2022/03/01/multi-gpu-programming-with-mpi.html
+    posts:
+    - categories:
+      - mlsys
+      - gpu
+      date: '2025-11-01'
+      tag: aiday25-hz
+      title: DeepGEMM 2.0 Technical Overview
+      url: /slides/mlsys/gpu/2025/11/01/deepgemm-20-technical-overview.html
+    triton:
+      posts:
+      - categories:
+        - mlsys
+        - gpu
+        - triton
+        date: '2025-03-01'
+        tag: gtc25
+        title: Blackwell Programming for the Masses With OpenAI Triton
+        url: /slides/mlsys/gpu/triton/2025/03/01/blackwell-programming-for-the-masses-with-openai-triton.html
+  networking:
+    posts:
+    - categories:
+      - mlsys
+      - networking
+      date: '2025-12-29'
+      title: RDMA Aware Networks Programming User Manual
+      url: /slides/mlsys/networking/2025/12/29/rdma-aware-networks-programming-user-manual.html
+    - categories:
+      - mlsys
+      - networking
+      date: '2020-06-01'
+      title: RDMA WITH GPU MEMORY VIA DMA-BUF
+      url: /slides/mlsys/networking/2020/06/01/rdma-with-gpu-memory-via-dma-buf.html
+    - categories:
+      - mlsys
+      - networking
+      date: '2020-07-01'
+      tag: atc20
+      title: Reexamining Direct Cache Access to Optimize I/O Intensive Applications
+        for Multi-hundred-gigabit Networks
+      url: /slides/mlsys/networking/2020/07/01/reexamining-direct-cache-access-to-optimize-io-intensive-applications-for-multi-hundred-gigabit-networks.html
+    - categories:
+      - mlsys
+      - networking
+      date: '2018-01-01'
+      title: RDMA Tutorial
+      url: /slides/mlsys/networking/2018/01/01/rdma-tutorial.html
+recsys:
+  posts:
+  - categories:
+    - recsys
+    date: '2025-12-29'
+    title: 'RecSys-Example: HSTU Model Training and Inference Best Practice'
+    url: /slides/recsys/2025/12/29/recsys-example-hstu-model-training-and-inference-best-practice.html
+  - categories:
+    - recsys
+    date: '2025-12-29'
+    title: HSTU attention development and optimization using Cutlass/CuTe
+    url: /slides/recsys/2025/12/29/hstu-attention-development-and-optimization-using-cutlasscute.html
+robotics:
+  posts:
+  - categories:
+    - robotics
+    date: '2025-12-29'
+    title: IsaacSim/Lab Benchmark
+    url: /slides/robotics/2025/12/29/isaacsimlab-benchmark.html
+  - categories:
+    - robotics
+    date: '2025-12-29'
+    title: 'Batching Helpers: Optimizing Loss Computation'
+    url: /slides/robotics/2025/12/29/batching-helpers-optimizing-loss-computation.html
+  - categories:
+    - robotics
+    date: '2025-12-29'
+    title: Bridge the Sim2Real Gap with Neural Actuator
+    url: /slides/robotics/2025/12/29/bridge-the-sim2real-gap-with-neural-actuator.html
+  - categories:
+    - robotics
+    date: '2025-12-29'
+    title: Video Training for Assistance Driving
+    url: /slides/robotics/2025/12/29/video-training-for-assistance-driving.html

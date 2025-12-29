@@ -272,7 +272,7 @@ llm:
         - llm
         - engineering
         - inference
-        tag: nisp25
+        tag: nips25
       - title: 'TASP: Topology-Aware Sequence Parallelism'
         date: '2025-10-01'
         url: /papers/llm/engineering/inference/2025/10/01/tasp-topology-aware-sequence-parallelism.html
@@ -302,7 +302,7 @@ llm:
         - llm
         - engineering
         - inference
-        tag: nisp25
+        tag: nips25
       - title: 'SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked
           Prefills'
         date: '2023-08-01'
@@ -335,6 +335,7 @@ llm:
         - llm
         - engineering
         - inference
+        tag: blog
       - title: Towards Efficient and Practical GPU Multitasking in the Era of LLM
         date: '2025-08-01'
         url: /papers/llm/engineering/inference/2025/08/01/towards-efficient-and-practical-gpu-multitasking-in-the-era-of-llm.html
@@ -456,13 +457,6 @@ llm:
         - llm
         - engineering
         - inference
-      - title: A Survey of LLM Inference Systems
-        date: '2025-06-01'
-        url: /papers/llm/engineering/inference/2025/06/01/a-survey-of-llm-inference-systems.html
-        categories:
-        - llm
-        - engineering
-        - inference
       - title: 'SGLang: Efficient Execution of Structured Language Model Programs'
         date: '2024-07-01'
         url: /papers/llm/engineering/inference/2024/07/01/sglang-efficient-execution-of-structured-language-model-programs.html
@@ -548,6 +542,15 @@ llm:
             LLM Inference
           date: '2025-09-01'
           url: /papers/llm/engineering/inference/kvcache/2025/09/01/accurate-kv-cache-eviction-via-anchor-direction-projection-for-efficient-llm-inference.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
+          tag: nips25
+        - title: 'GRIFFIN: Effective Token Alignment for Faster Speculative Decoding'
+          date: '2025-10-01'
+          url: /papers/llm/engineering/inference/kvcache/2025/10/01/griffin-effective-token-alignment-for-faster-speculative-decoding.html
           categories:
           - llm
           - engineering
@@ -723,15 +726,6 @@ llm:
           - inference
           - speculative_decoding
           tag: nips25
-        - title: 'GRIFFIN: Effective Token Alignment for Faster Speculative Decoding'
-          date: '2025-10-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/10/01/griffin-effective-token-alignment-for-faster-speculative-decoding.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: nips25
         - title: 'Yggdrasil: Bridging Dynamic Speculation and Static Runtime for Latency-Optimal
             Tree-Based LLM Decoding'
           date: '2025-06-01'
@@ -760,6 +754,7 @@ llm:
           - engineering
           - inference
           - speculative_decoding
+          tag: nips25
         - title: 'EasySpec: Layer-Parallel Speculative Decoding for Efficient Multi-GPU
             Utilization'
           date: '2025-02-01'
@@ -842,6 +837,7 @@ llm:
         - llm
         - engineering
         - attention
+        tag: nips25
       - title: 'DuoAttention: Efficient Long-Context LLM Inference with Retrieval
           and Streaming Heads'
         date: '2024-10-01'
@@ -1237,6 +1233,7 @@ llm:
         - llm
         - engineering
         - train
+        tag: nips25
       - title: Robust LLM Training Infrastructure at ByteDance
         date: '2025-09-01'
         url: /papers/llm/engineering/train/2025/09/01/robust-llm-training-infrastructure-at-bytedance.html
@@ -1558,7 +1555,7 @@ llm:
         - llm
         - engineering
         - moe
-        tag: nisp25
+        tag: nips25
       - title: 'SonicMoE: Accelerating MoE with IO and Tile-aware Optimizations'
         date: '2025-12-01'
         url: /papers/llm/engineering/moe/2025/12/01/sonicmoe-accelerating-moe-with-io-and-tile-aware-optimizations.html
@@ -1606,6 +1603,7 @@ llm:
         - llm
         - engineering
         - moe
+        tag: nips25
       - title: Shortcut-connected Expert Parallelism for Accelerating Mixture of Experts
         date: '2024-04-01'
         url: /papers/llm/engineering/moe/2024/04/01/shortcut-connected-expert-parallelism-for-accelerating-mixture-of-experts.html
@@ -1670,14 +1668,6 @@ llm:
         - llm
         - engineering
         - rl
-      - title: 'RLAX: Large-Scale, Distributed Reinforcement Learning for Large Language
-          Models on TPUs'
-        date: '2025-12-12'
-        url: /papers/llm/engineering/rl/2025/12/12/rlax-large-scale-distributed-reinforcement-learning-for-large-language-models-on-tpus.html
-        categories:
-        - llm
-        - engineering
-        - rl
       - title: 'AsyncFlow: An Asynchronous Streaming RL Framework for Efficient LLM
           Post-Training'
         date: '2025-07-01'
@@ -1713,6 +1703,14 @@ llm:
       - title: 'DeepCoder: A Fully Open-Source 14B Coder at O3-mini Level'
         date: '2025-04-01'
         url: /papers/llm/engineering/rl/2025/04/01/deepcoder-a-fully-open-source-14b-coder-at-o3-mini-level.html
+        categories:
+        - llm
+        - engineering
+        - rl
+      - title: 'RLAX: Large-Scale, Distributed Reinforcement Learning for Large Language
+          Models on TPUs'
+        date: '2025-12-29'
+        url: /papers/llm/engineering/rl/2025/12/29/rlax-large-scale-distributed-reinforcement-learning-for-large-language-models-on-tpus.html
         categories:
         - llm
         - engineering
@@ -1755,6 +1753,7 @@ llm:
         - llm
         - engineering
         - rl
+        tag: nips25
       - title: 'StreamRL: Scalable, Heterogeneous, and Elastic RL for LLMs with Disaggregated
           Stream Generation'
         date: '2025-04-01'
@@ -2100,7 +2099,7 @@ llm:
           - algorithm
           - architecture
           - attention
-          tag: nisp25
+          tag: nips25
         - title: 'Gated Attention for Large Language Models: Non-linearity, Sparsity,
             and Attention-Sink-Free'
           date: '2025-06-01'
@@ -2130,6 +2129,7 @@ llm:
             - architecture
             - attention
             - sparsity
+            tag: nips25
           - title: 'Native Sparse Attention: Hardware-Aligned and Natively Trainable
               Sparse Attention'
             date: '2025-02-01'
@@ -2888,14 +2888,6 @@ llm:
         - llm
         - algorithm
         - agent
-      - title: 'Tree of Thoughts: Deliberate Problem Solving with Large Language Models'
-        date: '2023-12-01'
-        url: /papers/llm/algorithm/agent/2023/12/01/tree-of-thoughts-deliberate-problem-solving-with-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-        tag: nips23
       - title: 'R1-Searcher: Incentivizing the Search Capability in LLMs via Reinforcement
           Learning'
         date: '2025-03-01'
@@ -2904,14 +2896,6 @@ llm:
         - llm
         - algorithm
         - agent
-      - title: 'REAC T: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS'
-        date: '2023-11-01'
-        url: /papers/llm/algorithm/agent/2023/11/01/reac-t-synergizing-reasoning-and-acting-in-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-        tag: iclr23
       - title: 'MemAgent: Reshaping Long-Context LLM with Multi-Conv RL-based Memory
           Agent'
         date: '2025-07-01'
