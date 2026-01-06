@@ -373,6 +373,13 @@ llm:
         - engineering
         - inference
         tag: blog
+      - title: 'FlashInfer-Bench: Building the Virtuous Cycle for AI-Driven LLM Systems'
+        date: '2026-01-01'
+        url: /papers/llm/engineering/inference/2026/01/01/flashinfer-bench-building-the-virtuous-cycle-for-ai-driven-llm-systems.html
+        categories:
+        - llm
+        - engineering
+        - inference
       - title: Towards Efficient and Practical GPU Multitasking in the Era of LLM
         date: '2025-08-01'
         url: /papers/llm/engineering/inference/2025/08/01/towards-efficient-and-practical-gpu-multitasking-in-the-era-of-llm.html
@@ -656,15 +663,6 @@ llm:
           - engineering
           - inference
           - kvcache
-        - title: 'SWIFT: On-the-Fly Self-Speculative Decoding for LLM Inference Acceleration'
-          date: '2025-04-01'
-          url: /papers/llm/engineering/inference/kvcache/2025/04/01/swift-on-the-fly-self-speculative-decoding-for-llm-inference-acceleration.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - kvcache
-          tag: iclr25
         - title: 'CacheBlend: Fast Large Language Model Serving for RAG with Cached
             Knowledge Fusion'
           date: '2024-05-01'
@@ -901,6 +899,15 @@ llm:
           - inference
           - speculative_decoding
           tag: nips25
+        - title: 'SWIFT: On-the-Fly Self-Speculative Decoding for LLM Inference Acceleration'
+          date: '2025-04-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/swift-on-the-fly-self-speculative-decoding-for-llm-inference-acceleration.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: iclr25
         - title: Scaling Speculative Decoding with Lookahead Reasoning
           date: '2025-06-01'
           url: /papers/llm/engineering/inference/speculative_decoding/2025/06/01/scaling-speculative-decoding-with-lookahead-reasoning.html
@@ -1781,10 +1788,24 @@ llm:
         - llm
         - engineering
         - moe
+      - title: Scattered Mixture-of-Experts Implementation
+        date: '2024-03-01'
+        url: /papers/llm/engineering/moe/2024/03/01/scattered-mixture-of-experts-implementation.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: 'OPPORTUNISTIC EXPERT ACTIVATION: BATCH-AWARE EXPERT ROUTING FOR FASTER
           DECODE WITHOUT RETRAINING'
         date: '2025-11-01'
         url: /papers/llm/engineering/moe/2025/11/01/opportunistic-expert-activation-batch-aware-expert-routing-for-faster-decode-without-retraining.html
+        categories:
+        - llm
+        - engineering
+        - moe
+      - title: 'MEMoE: Enhancing Model Editing with Mixture of Experts Adaptors'
+        date: '2024-05-01'
+        url: /papers/llm/engineering/moe/2024/05/01/memoe-enhancing-model-editing-with-mixture-of-experts-adaptors.html
         categories:
         - llm
         - engineering
@@ -2419,9 +2440,26 @@ llm:
           - algorithm
           - architecture
           - transformer-variant
+        - title: Parallel Loop Transformer for Efficient Test-Time Computation Scaling
+          date: '2025-10-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2025/10/01/parallel-loop-transformer-for-efficient-test-time-computation-scaling.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
         - title: Hierarchical Reasoning Model
           date: '2025-08-01'
           url: /papers/llm/algorithm/architecture/transformer-variant/2025/08/01/hierarchical-reasoning-model.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+        - title: 'Scaling up Test-Time Compute with Latent Reasoning: A Recurrent
+            Depth Approach'
+          date: '2024-03-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2024/03/01/scaling-up-test-time-compute-with-latent-reasoning-a-recurrent-depth-approach.html
           categories:
           - llm
           - algorithm
@@ -2436,6 +2474,14 @@ llm:
           - architecture
           - transformer-variant
           tag: nips25
+        - title: 'Reasoning with Latent Thoughts: On the Power of Looped Transformers'
+          date: '2025-02-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2025/02/01/reasoning-with-latent-thoughts-on-the-power-of-looped-transformers.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
       posts:
       - title: 'Spark Transformer: Reactivating Sparsity in FFN and Attention'
         date: '2025-06-01'
@@ -2706,6 +2752,13 @@ llm:
       - title: 'KIMI K1.5: SCALING REINFORCEMENT LEARNING WITH LLMS'
         date: '2025-01-01'
         url: /papers/llm/algorithm/models/2025/01/01/kimi-k15-scaling-reinforcement-learning-with-llms.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: IQuest-Coder-V1 Technical Report
+        date: '2026-01-01'
+        url: /papers/llm/algorithm/models/2026/01/01/iquest-coder-v1-technical-report.html
         categories:
         - llm
         - algorithm
