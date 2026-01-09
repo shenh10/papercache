@@ -2456,6 +2456,14 @@ llm:
           - algorithm
           - architecture
           - transformer-variant
+        - title: Fast-weight Product Key Memory
+          date: '2026-01-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2026/01/01/fast-weight-product-key-memory.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
         - title: 'Scaling up Test-Time Compute with Latent Reasoning: A Recurrent
             Depth Approach'
           date: '2024-03-01'
@@ -3895,6 +3903,13 @@ mlsys:
       - mlsys
       - gpu
       tag: vlsi23
+    - title: Efficiently Emulating High-Bitwidth Computation with Low-Bitwidth Hardware
+      date: '2022-06-01'
+      url: /papers/mlsys/gpu/2022/06/01/efficiently-emulating-high-bitwidth-computation-with-low-bitwidth-hardware.html
+      categories:
+      - mlsys
+      - gpu
+      tag: ics22
     - title: NVIDIA RTX BLACKWELL GPU ARCHITECTURE
       date: '2025-01-01'
       url: /papers/mlsys/gpu/2025/01/01/nvidia-rtx-blackwell-gpu-architecture.html
