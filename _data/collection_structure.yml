@@ -2473,6 +2473,23 @@ llm:
           - algorithm
           - architecture
           - transformer-variant
+        - title: Hyper-Connections
+          date: '2025-04-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2025/04/01/hyper-connections.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+          tag: iclr25
+        - title: 'Scaling Laws with Vocabulary: Larger Models Deserve Larger Vocabularies'
+          date: '2024-07-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2024/07/01/scaling-laws-with-vocabulary-larger-models-deserve-larger-vocabularies.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
         - title: 'Conditional Memory via Scalable Lookup: A New Axis of Sparsity for
             Large Language Models'
           date: '2026-01-01'
@@ -2491,6 +2508,15 @@ llm:
           - architecture
           - transformer-variant
           tag: nips25
+        - title: 'MHLA: Restoring Expressivity of Linear Attention via Token-Level
+            Multi-Head'
+          date: '2026-01-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2026/01/01/mhla-restoring-expressivity-of-linear-attention-via-token-level-multi-head.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
         - title: 'Reasoning with Latent Thoughts: On the Power of Looped Transformers'
           date: '2025-02-01'
           url: /papers/llm/algorithm/architecture/transformer-variant/2025/02/01/reasoning-with-latent-thoughts-on-the-power-of-looped-transformers.html
@@ -3098,6 +3124,13 @@ llm:
       - title: 'Fusechat: Knowledge Fusion of Chat Models'
         date: '2024-08-01'
         url: /papers/llm/algorithm/pretrain_sft/2024/08/01/fusechat-knowledge-fusion-of-chat-models.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: Training Compute-Optimal Large Language Models
+        date: '2022-03-01'
+        url: /papers/llm/algorithm/pretrain_sft/2022/03/01/training-compute-optimal-large-language-models.html
         categories:
         - llm
         - algorithm
