@@ -273,7 +273,7 @@ title: 'Longformer: The Long-Document Transformer'
 <figcaption class="figure-caption"></figcaption>
 </figure><br/>
 表 14: 问答模型的超参数。所有模型都使用类似的调度器，包含线性预热和衰减。</p>
-<p><strong>WikiHop</strong>。输入格式为<code>[q] question [/q] [ent] candidate1 [/ent] ...</code>，后面接上用<code>&amp;amp;lt;/s&amp;amp;gt;</code>分隔的上下文。对问题和候选答案序列使用全局注意力。预测时，在每个<code>[ent]</code> token上附加一个线性层输出logit，然后对每个候选答案的所有logit求平均，通过softmax后用交叉熵损失进行训练。</p>
+<p><strong>WikiHop</strong>。输入格式为<code>[q] question [/q] [ent] candidate1 [/ent] ...</code>，后面接上用<code>&lt;/s&gt;</code>分隔的上下文。对问题和候选答案序列使用全局注意力。预测时，在每个<code>[ent]</code> token上附加一个线性层输出logit，然后对每个候选答案的所有logit求平均，通过softmax后用交叉熵损失进行训练。</p>
 <p><strong>TriviaQA</strong>。输入格式为<code>[s] question [/s] document [/s]</code>。对所有问题token使用全局注意力。预测时，增加一个层来预测答案的起始和结束位置，使用Clark和Gardner (2017)【8】的损失函数，该函数类似OR逻辑，模型只需正确预测一个答案片段即可。</p>
 <p><strong>HotpotQA</strong>。采用两阶段模型。第一阶段，将问题和所有10个段落拼接成一个长上下文输入，使用全局注意力关注问题、段落标题和句子token，预测相关段落。第二阶段，在筛选出的相关段落（最多5个）上进行答案抽取和证据句识别。模型以多任务方式联合训练，预测相关段落、证据句、答案片段和问题类型（是/否/片段）。</p>
 <p><strong>共指消解</strong>。直接改编自Joshi等人 (2019)【23】的基于BERT的模型。将文档分割成最长为4096（Longformer）或384（RoBERTa）的非重叠片段，然后将激活值拼接起来送入粗到细的聚类阶段。未使用全局注意力。实现上，为了复用Tensorflow中的复杂逻辑，采用了一个PyTorch和Tensorflow混合的“超级hack”方案，在两者之间传递激活值和梯度。</p>

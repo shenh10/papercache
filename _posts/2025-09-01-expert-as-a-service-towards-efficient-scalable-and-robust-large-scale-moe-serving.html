@@ -139,7 +139,7 @@ Require: process_a_token: The function to process a single token
 3: Load sh_num_tokens ← num_tokens_per_batch
 4: for batch_idx = 0 to batch_count − 1 do
 5:   num_tokens_in_this_batch ← sh_num_tokens[batch_idx]
-6:   while token_idx &amp;lt; num_tokens_in_this_batch do
+6:   while token_idx &lt; num_tokens_in_this_batch do
 7:     Call process_a_token(batch_idx, token_idx)
 8:     token_idx ← token_idx + blockDim.x
 9:   end while

@@ -395,19 +395,19 @@ $O = AV \text{ (T, P)}$<br/>
     <span>assert</span> <span>X</span><span>.</span><span>shape</span><span>[</span><span>1</span><span>]</span> <span>%</span> <span>block_len</span> <span>==</span> <span>0</span>
 
     <span># 重排为块/分块</span>
-    <span>X</span><span>,</span> <span>A</span><span>,</span> <span>B</span><span>,</span> <span>C</span> <span>=</span> <span>[</span><span>rearrange</span><span>(</span><span>x</span><span>,</span> <span>&amp;quot;b (c l) ... -&amp;gt; b c l ...&amp;quot;</span><span>,</span> <span>l</span><span>=</span><span>block_len</span><span>)</span> <span>for</span> <span>x</span> <span>in</span> <span>(</span><span>X</span><span>,</span> <span>A</span><span>,</span> <span>B</span><span>,</span> <span>C</span><span>)]</span>
+    <span>X</span><span>,</span> <span>A</span><span>,</span> <span>B</span><span>,</span> <span>C</span> <span>=</span> <span>[</span><span>rearrange</span><span>(</span><span>x</span><span>,</span> <span>&amp;quot;b (c l) ... -&gt; b c l ...&amp;quot;</span><span>,</span> <span>l</span><span>=</span><span>block_len</span><span>)</span> <span>for</span> <span>x</span> <span>in</span> <span>(</span><span>X</span><span>,</span> <span>A</span><span>,</span> <span>B</span><span>,</span> <span>C</span><span>)]</span>
 
-    <span>A</span> <span>=</span> <span>rearrange</span><span>(</span><span>A</span><span>,</span> <span>&amp;quot;b c l h -&amp;gt; b h c l&amp;quot;</span><span>)</span>
+    <span>A</span> <span>=</span> <span>rearrange</span><span>(</span><span>A</span><span>,</span> <span>&amp;quot;b c l h -&gt; b h c l&amp;quot;</span><span>)</span>
     <span>A_cumsum</span> <span>=</span> <span>torch</span><span>.</span><span>cumsum</span><span>(</span><span>A</span><span>,</span> <span>dim</span><span>=-</span><span>1</span><span>)</span>
 
     <span># 1. 计算每个块内（对角块）的输出</span>
     <span>L</span> <span>=</span> <span>torch</span><span>.</span><span>exp</span><span>(</span><span>segsum</span><span>(</span><span>A</span><span>))</span>
-    <span>Y_diag</span> <span>=</span> <span>torch</span><span>.</span><span>einsum</span><span>(</span><span>&amp;quot;bclhn,bcshn,bhcls,bcshp-&amp;gt;bclhp&amp;quot;</span><span>,</span> <span>C</span><span>,</span> <span>B</span><span>,</span> <span>L</span><span>,</span> <span>X</span><span>)</span>
+    <span>Y_diag</span> <span>=</span> <span>torch</span><span>.</span><span>einsum</span><span>(</span><span>&amp;quot;bclhn,bcshn,bhcls,bcshp-&gt;bclhp&amp;quot;</span><span>,</span> <span>C</span><span>,</span> <span>B</span><span>,</span> <span>L</span><span>,</span> <span>X</span><span>)</span>
 
     <span># 2. 计算每个块内的状态</span>
     <span># (非对角块低秩分解的右项；B项)</span>
     <span>decay_states</span> <span>=</span> <span>torch</span><span>.</span><span>exp</span><span>((</span><span>A_cumsum</span><span>[:,</span> <span>:,</span> <span>:,</span> <span>-</span><span>1</span><span>:]</span> <span>-</span> <span>A_cumsum</span><span>))</span>
-    <span>states</span> <span>=</span> <span>torch</span><span>.</span><span>einsum</span><span>(</span><span>&amp;quot;bclhn,bhcl,bclhp-&amp;gt;bchpn&amp;quot;</span><span>,</span> <span>B</span><span>,</span> <span>decay_states</span><span>,</span> <span>X</span><span>)</span>
+    <span>states</span> <span>=</span> <span>torch</span><span>.</span><span>einsum</span><span>(</span><span>&amp;quot;bclhn,bhcl,bclhp-&gt;bchpn&amp;quot;</span><span>,</span> <span>B</span><span>,</span> <span>decay_states</span><span>,</span> <span>X</span><span>)</span>
 
     <span># 3. 计算块间SSM循环；在块边界产生正确的SSM状态</span>
     <span># (非对角块分解的中间项；A项)</span>
@@ -415,16 +415,16 @@ $O = AV \text{ (T, P)}$<br/>
         <span>initial_states</span> <span>=</span> <span>torch</span><span>.</span><span>zeros_like</span><span>(</span><span>states</span><span>[:,</span> <span>:</span><span>1</span><span>])</span>
     <span>states</span> <span>=</span> <span>torch</span><span>.</span><span>cat</span><span>([</span><span>initial_states</span><span>,</span> <span>states</span><span>],</span> <span>dim</span><span>=</span><span>1</span><span>)</span>
     <span>decay_chunk</span> <span>=</span> <span>torch</span><span>.</span><span>exp</span><span>(</span><span>segsum</span><span>(</span><span>F</span><span>.</span><span>pad</span><span>(</span><span>A_cumsum</span><span>[:,</span> <span>:,</span> <span>:,</span> <span>-</span><span>1</span><span>],</span> <span>(</span><span>1</span><span>,</span> <span>0</span><span>))))</span>
-    <span>new_states</span> <span>=</span> <span>torch</span><span>.</span><span>einsum</span><span>(</span><span>&amp;quot;bhzc,bchpn-&amp;gt;bzhpn&amp;quot;</span><span>,</span> <span>decay_chunk</span><span>,</span> <span>states</span><span>)</span>
+    <span>new_states</span> <span>=</span> <span>torch</span><span>.</span><span>einsum</span><span>(</span><span>&amp;quot;bhzc,bchpn-&gt;bzhpn&amp;quot;</span><span>,</span> <span>decay_chunk</span><span>,</span> <span>states</span><span>)</span>
     <span>states</span><span>,</span> <span>final_state</span> <span>=</span> <span>new_states</span><span>[:,</span> <span>:</span><span>-</span><span>1</span><span>],</span> <span>new_states</span><span>[:,</span> <span>-</span><span>1</span><span>]</span>
 
-    <span># 4. 计算每个块的状态 -&amp;gt; 输出转换</span>
+    <span># 4. 计算每个块的状态 -&gt; 输出转换</span>
     <span># (非对角块低秩分解的左项；C项)</span>
     <span>state_decay_out</span> <span>=</span> <span>torch</span><span>.</span><span>exp</span><span>(</span><span>A_cumsum</span><span>)</span>
-    <span>Y_off</span> <span>=</span> <span>torch</span><span>.</span><span>einsum</span><span>(</span><span>&amp;#39;bclhn,bchpn,bhcl-&amp;gt;bclhp&amp;#39;</span><span>,</span> <span>C</span><span>,</span> <span>states</span><span>,</span> <span>state_decay_out</span><span>)</span>
+    <span>Y_off</span> <span>=</span> <span>torch</span><span>.</span><span>einsum</span><span>(</span><span>&amp;#39;bclhn,bchpn,bhcl-&gt;bclhp&amp;#39;</span><span>,</span> <span>C</span><span>,</span> <span>states</span><span>,</span> <span>state_decay_out</span><span>)</span>
 
     <span># 将块内和块间项的输出相加（对角块和非对角块）</span>
-    <span>Y</span> <span>=</span> <span>rearrange</span><span>(</span><span>Y_diag</span> <span>+</span> <span>Y_off</span><span>,</span> <span>&amp;quot;b c l h p -&amp;gt; b (c l) h p&amp;quot;</span><span>)</span>
+    <span>Y</span> <span>=</span> <span>rearrange</span><span>(</span><span>Y_diag</span> <span>+</span> <span>Y_off</span><span>,</span> <span>&amp;quot;b c l h p -&gt; b (c l) h p&amp;quot;</span><span>)</span>
     <span>return</span> <span>Y</span><span>,</span> <span>final_state</span>
 </code></pre></div>
 <p><figure class="image-figure">

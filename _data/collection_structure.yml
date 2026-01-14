@@ -2473,6 +2473,15 @@ llm:
           - algorithm
           - architecture
           - transformer-variant
+        - title: 'Conditional Memory via Scalable Lookup: A New Axis of Sparsity for
+            Large Language Models'
+          date: '2026-01-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2026/01/01/conditional-memory-via-scalable-lookup-a-new-axis-of-sparsity-for-large-language-models.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
         - title: Universal Reasoning Model
           date: '2025-12-01'
           url: /papers/llm/algorithm/architecture/transformer-variant/2025/12/01/universal-reasoning-model.html
@@ -2485,6 +2494,14 @@ llm:
         - title: 'Reasoning with Latent Thoughts: On the Power of Looped Transformers'
           date: '2025-02-01'
           url: /papers/llm/algorithm/architecture/transformer-variant/2025/02/01/reasoning-with-latent-thoughts-on-the-power-of-looped-transformers.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+        - title: 'mHC-lite: You Don’t Need 20 Sinkhorn-Knopp Iterations'
+          date: '2026-01-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2026/01/01/mhc-lite-you-dont-need-20-sinkhorn-knopp-iterations.html
           categories:
           - llm
           - algorithm

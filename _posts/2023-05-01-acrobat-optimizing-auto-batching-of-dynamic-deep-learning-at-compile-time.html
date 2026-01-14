@@ -80,8 +80,8 @@ Table 2. 深度学习计算中发现的控制流属性。图例：ITE：迭代�
 <div><pre><span></span><code>/* 清单 1：RNN 模型实现。为简洁起见，省略了类型注解。 */
 def @rnn(inputs, state, iweight, hweight, bias) {
   match(inputs) {
-  Nil -&amp;gt; Nil,
-  Cons(input, tail) -&amp;gt; {
+  Nil -&gt; Nil,
+  Cons(input, tail) -&gt; {
     let input_transformed = nn.dense(input, iweight);
     let new_state = sigmoid(input_transformed + nn.dense(state, hweight));
     Cons(new_state, @rnn(tail, new_state, iweight, hweight, bias))
@@ -117,7 +117,7 @@ def @main(%data: Tensor[(?, 128), &amp;quot;float32&amp;quot;],
 <span>  </span><span>...</span>
 <span>  </span><span>AcrobatVal</span><span> </span><span>encoded_states</span><span> </span><span>=</span><span> </span><span>rnn</span><span>(</span><span>data</span><span>,</span><span> </span><span>...);</span>
 <span>  </span><span>...</span>
-<span>  </span><span>auto</span><span> </span><span>out_fn</span><span> </span><span>=</span><span> </span><span>[</span><span>&amp;amp;</span><span>](</span><span>AcrobatVal</span><span> </span><span>state</span><span>)</span><span> </span><span>{</span>
+<span>  </span><span>auto</span><span> </span><span>out_fn</span><span> </span><span>=</span><span> </span><span>[</span><span>&amp;</span><span>](</span><span>AcrobatVal</span><span> </span><span>state</span><span>)</span><span> </span><span>{</span>
 <span>    </span><span>acrobat_rt</span><span>.</span><span>invoke_kernel</span><span>(</span><span>&amp;quot;relu_bias_dense&amp;quot;</span><span>,</span>
 <span>      </span><span>acrobat_rt</span><span>.</span><span>curr_depth</span><span>,</span><span> </span><span>// 动态确定的深度</span>
 <span>      </span><span>...);</span>

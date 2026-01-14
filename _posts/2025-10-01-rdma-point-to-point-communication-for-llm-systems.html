@@ -116,38 +116,38 @@ title: RDMA POINT-TO-POINT COMMUNICATION FOR LLM SYSTEMS
 <h5><strong>3.3 API 设计</strong></h5>
 <p>TransferEngine暴露的API（如图2所示）实现了对RDMA的抽象：</p>
 <pre><code>#[serde] struct NetAddr(Bytes);
-#[serde] struct MrDesc{ ptr: u64, rkeys: Vec&amp;lt;(NetAddr, u64)&amp;gt; }
-struct MrHandle(NonNull&amp;lt;c_void&amp;gt;);
+#[serde] struct MrDesc{ ptr: u64, rkeys: Vec&lt;(NetAddr, u64)&gt; }
+struct MrHandle(NonNull&lt;c_void&gt;);
 type Offset = u64;
-struct Pages{ indices: Vec&amp;lt;u32&amp;gt;, stride: u64, offset: Offset }
+struct Pages{ indices: Vec&lt;u32&gt;, stride: u64, offset: Offset }
 struct PeerGroupHandle(u64);
 struct ScatterDst{ len: u64, src: Offset, dst: (MrDesc,Offset)}
-enum OnDone { Callback(fn () -&amp;gt; ()), Flag(Atomic&amp;lt;bool&amp;gt;) }
+enum OnDone { Callback(fn () -&gt; ()), Flag(Atomic&lt;bool&gt;) }
 
 trait TransferEngine {
-    fn main_address() -&amp;gt; NetAddr;
+    fn main_address() -&gt; NetAddr;
     // 内存区域管理
-    fn reg_mr(ptr, len, device) -&amp;gt; (MrHandle, MrDesc);
+    fn reg_mr(ptr, len, device) -&gt; (MrHandle, MrDesc);
     // 双边 Send/Recv
-    fn submit_send(addr: NetAddr, msg: &amp;amp;[u8], cb: fn () -&amp;gt; ());
-    fn submit_recvs(len: u64, cnt: u64, cb: fn (&amp;amp;[u8]) -&amp;gt; ());
+    fn submit_send(addr: NetAddr, msg: &amp;[u8], cb: fn () -&gt; ());
+    fn submit_recvs(len: u64, cnt: u64, cb: fn (&amp;[u8]) -&gt; ());
     // 单边 Write
-    fn expect_imm_count(imm: u32, count: u32, cb: fn () -&amp;gt; ());
-    fn submit_single_write(len: u64, imm: Option&amp;lt;u32&amp;gt;,
+    fn expect_imm_count(imm: u32, count: u32, cb: fn () -&gt; ());
+    fn submit_single_write(len: u64, imm: Option&lt;u32&gt;,
                            src: (MrHandle, Offset),
                            dst: (MrDesc, Offset), OnDone);
-    fn submit_paged_writes(page_len: u64, imm: Option&amp;lt;u32&amp;gt;,
+    fn submit_paged_writes(page_len: u64, imm: Option&lt;u32&gt;,
                            src: (MrHandle, Pages),
                            dst: (MrDesc, Pages), OnDone);
     // 对一组对端的单边 Write
-    fn add_peer_group(addrs: Vec&amp;lt;NetAddr&amp;gt;) -&amp;gt; PeerGroupHandle;
-    fn submit_scatter(h: Option&amp;lt;PeerGroupHandle&amp;gt;, OnDone,
-                      imm: Option&amp;lt;u32&amp;gt;, src: MrHandle,
-                      dst: Vec&amp;lt;ScatterDst&amp;gt;);
-    fn submit_barrier(h: Option&amp;lt;PeerGroupHandle&amp;gt;, OnDone,
-                      imm: u32, dst: Vec&amp;lt;MrDesc&amp;gt;);
+    fn add_peer_group(addrs: Vec&lt;NetAddr&gt;) -&gt; PeerGroupHandle;
+    fn submit_scatter(h: Option&lt;PeerGroupHandle&gt;, OnDone,
+                      imm: Option&lt;u32&gt;, src: MrHandle,
+                      dst: Vec&lt;ScatterDst&gt;);
+    fn submit_barrier(h: Option&lt;PeerGroupHandle&gt;, OnDone,
+                      imm: u32, dst: Vec&lt;MrDesc&gt;);
     // 用于 CPU-GPU 同步的观察者
-    fn alloc_uvm_watcher(cb: fn(u64,u64) -&amp;gt; ()) -&amp;gt; NonNull&amp;lt;u64&amp;gt;;
+    fn alloc_uvm_watcher(cb: fn(u64,u64) -&gt; ()) -&gt; NonNull&lt;u64&gt;;
 }
 </code></pre>
 <ul>

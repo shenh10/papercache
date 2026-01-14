@@ -96,7 +96,7 @@ title: Qwen3 Technical Report
 <h4>4.4 通用强化学习（General RL）</h4>
 <p><strong>目标与核心能力</strong>。通用RL阶段旨在广泛增强模型在多样化场景下的能力和稳定性。为此，建立了一个覆盖超过20个不同任务的复杂奖励系统，每个任务都有定制的评分标准。这些任务专门针对提升以下核心能力：<br/>
 *   <strong>指令遵循 (Instruction Following)</strong>：确保模型准确理解并遵循用户指令，包括内容、格式、长度和结构化输出的要求，提供符合用户期望的响应。<br/>
-*   <strong>格式遵循 (Format Following)</strong>：除了显式指令外，期望模型遵守特定的格式约定。例如，它应能正确响应<code>/think</code>和<code>/no think</code>标志以切换思考模式，并始终使用指定的token（如<code>&amp;lt;think&amp;gt;</code>和<code>&amp;lt;/think&amp;gt;</code>）来分隔思考和响应部分。<br/>
+*   <strong>格式遵循 (Format Following)</strong>：除了显式指令外，期望模型遵守特定的格式约定。例如，它应能正确响应<code>/think</code>和<code>/no think</code>标志以切换思考模式，并始终使用指定的token（如<code>&lt;think&gt;</code>和<code>&lt;/think&gt;</code>）来分隔思考和响应部分。<br/>
 *   <strong>偏好对齐 (Preference Alignment)</strong>：对于开放式查询，偏好对齐侧重于提升模型的有用性、吸引力和风格，最终提供更自然、更令人满意的用户体验。<br/>
 *   <strong>Agent能力 (Agent Ability)</strong>：涉及训练模型通过指定接口正确调用工具。在RL rollout期间，允许模型与真实环境执行反馈进行完整的多轮交互循环，从而提高其在长远决策任务中的性能和稳定性。<br/>
 *   <strong>特定场景能力 (Abilities for Specialized Scenarios)</strong>：在更专业的场景中，设计了针对特定上下文的任务。例如，在检索增强生成（RAG）任务中，加入了奖励信号，引导模型生成准确且符合上下文的响应，从而最大限度地降低产生幻觉的风险。</p>

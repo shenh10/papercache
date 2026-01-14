@@ -184,9 +184,9 @@ title: A Framework for Fine-Grained Synchronization of Dependent GPU Kernels
 <p><strong>生成Tile处理顺序</strong>。cuSyncGen为每个核心生成一个tile处理顺序，以最小化等待时间。为了讨论这个过程，考虑一个依赖关系，其中一个消费者tile $C(x, y)$ 依赖于N个生产者tile，$\{P(x, a_0y + b_0), P(x, a_1y + b_1), \dots, P(x, a_{N-1}y + b_{N-1})\}$。当消费者核心以生产者核心产生tile的相同顺序来消费tile时，我们实现了最小的等待时间。因此，我们使用以下代码为每个消费者tile连续调度所有N个生产者tile：</p>
 <pre><code>1 int prodOrder(dim2 tile, dim2 grid) {
 2   int linear = bid.y*gDim.x + bid.x, y = 0;
-3   if (tile.y%a0 &amp;lt;= b0) y = 0;
+3   if (tile.y%a0 &lt;= b0) y = 0;
 4   //Similarly for tiles till N-2
-5   else if (tile.y%aN-1 &amp;lt;= bN-1) y = N-1;
+5   else if (tile.y%aN-1 &lt;= bN-1) y = N-1;
 6   return linear/N+y;
 7 }
 </code></pre>
@@ -194,10 +194,10 @@ title: A Framework for Fine-Grained Synchronization of Dependent GPU Kernels
 <p><strong>生成策略</strong>。cuSyncGen为每个依赖关系生成多个同步策略。对于接下来的讨论，考虑一个依赖关系，其中一个消费者tile，$C(x, y)$，依赖于N个生产者tile，$\{P(x, a_0y + b_0), P(x, a_1y + b_1), \dots, P(x, a_{N-1}y + b_{N-1})\}$。cuSyncGen为每个维度的依赖关系生成两种策略：(i) 将每个tile映射到一个不同的信号量，或 (ii) 将所有N个tile映射到同一个信号量。对于所考虑的依赖关系和$M \in \{1, N\}$的值，生成的代码是：</p>
 <pre><code>1 int sem(dim2 tile, dim2 grid) {
 2   int y = 0;
-3   if (tile.y%a0 &amp;lt;= b0)
+3   if (tile.y%a0 &lt;= b0)
 4     y = (tile.y-b0)/a0;
 5   //Similarly for tiles till M-2
-6   else if (tile.y%aM-1 &amp;lt;= bM-1)
+6   else if (tile.y%aM-1 &lt;= bM-1)
 7     y = (tile.y-bM-1)/aM-1;
 8   else y = tile.y;
 9   return y*grid.x + tile.x;
@@ -325,8 +325,8 @@ cd /cusync
 <li><strong>检查PyTorch和CUDA安装</strong>: 检查torch是否支持CUDA，如果<code>torch.cuda.is_available()</code>返回True：</li>
 </ol>
 <pre><code>python
-&amp;gt;&amp;gt;&amp;gt; import torch
-&amp;gt;&amp;gt;&amp;gt; torch.cuda.is_available()
+&gt;&gt;&gt; import torch
+&gt;&gt;&gt; torch.cuda.is_available()
 True
 </code></pre>
 <h3>B. 本地运行</h3>

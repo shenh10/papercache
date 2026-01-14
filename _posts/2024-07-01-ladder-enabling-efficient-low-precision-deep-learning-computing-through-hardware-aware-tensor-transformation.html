@@ -79,7 +79,7 @@ title: 'LADDER: Enabling Efficient Low-Precision Deep Learning Computing through
 </figure>
 <ul>
 <li>
-<p><strong>tType</strong>：根据第2节的观察，DNN计算中的数据类型通常在元素级或块级粒度上定义。为了表达这些数据类型，LADDER引入了<code>tType</code>的概念（图4(a)）。具体来说，<code>tType</code>表示一种由一组同质元素构成的数据类型。这些元素的布局是一个n维数组<code>shape</code>。每个元素共享相同的类型，并使用<code>nElemBits</code>位来存储。这组元素还共享相同的元数据。如第2节所述，数据类型通常可以被某些更高位的数据类型无损表示。<code>c_tTypes</code>表示一个<code>tType</code>可以通过<code>c_func</code>函数无损地转换为另一个<code>tType</code>。无论是现有的常用数据类型还是新的自定义数据类型，都可以用<code>tType</code>表示。例如，FP16类型可以表示为<code>shape=[1]</code>、<code>nElemBits=16</code>的<code>tType</code>。元素级的NF4类型可以表示为<code>shape=[1]</code>、<code>nElemBits=4</code>且元数据中包含共享值映射的<code>tType</code>。NF4类型可以无损地表示为FP16，因此在<code>c_tTypes</code>中可能有一个<code>&amp;lt;FP16, NF4_to_FP16_func&amp;gt;</code>条目。块级的OCP-MXFP8类型可以表示为<code>shape=[32]</code>、<code>nElemBits=8</code>且元数据中包含共享缩放因子的<code>tType</code>。</p>
+<p><strong>tType</strong>：根据第2节的观察，DNN计算中的数据类型通常在元素级或块级粒度上定义。为了表达这些数据类型，LADDER引入了<code>tType</code>的概念（图4(a)）。具体来说，<code>tType</code>表示一种由一组同质元素构成的数据类型。这些元素的布局是一个n维数组<code>shape</code>。每个元素共享相同的类型，并使用<code>nElemBits</code>位来存储。这组元素还共享相同的元数据。如第2节所述，数据类型通常可以被某些更高位的数据类型无损表示。<code>c_tTypes</code>表示一个<code>tType</code>可以通过<code>c_func</code>函数无损地转换为另一个<code>tType</code>。无论是现有的常用数据类型还是新的自定义数据类型，都可以用<code>tType</code>表示。例如，FP16类型可以表示为<code>shape=[1]</code>、<code>nElemBits=16</code>的<code>tType</code>。元素级的NF4类型可以表示为<code>shape=[1]</code>、<code>nElemBits=4</code>且元数据中包含共享值映射的<code>tType</code>。NF4类型可以无损地表示为FP16，因此在<code>c_tTypes</code>中可能有一个<code>&lt;FP16, NF4_to_FP16_func&gt;</code>条目。块级的OCP-MXFP8类型可以表示为<code>shape=[32]</code>、<code>nElemBits=8</code>且元数据中包含共享缩放因子的<code>tType</code>。</p>
 </li>
 <li>
 <p><strong>tTile</strong>：基于代表数据类型的<code>tType</code>，LADDER提出了<code>tTile</code>来表示特定数据类型的张量在细粒度分块上的形式。具体来说，如图4(b)所示，一个<code>tTile</code>被定义为一组具有相同数据类型<code>dtype</code>和n维数组布局<code>shape</code>的同质元素。一个<code>tTile</code>中的元素共享一个元数据。此外，<code>tTile</code>中的元素按行主序存储。</p>
@@ -157,7 +157,7 @@ Result: gret : scheduled tTile-graph
 25 for lid in length(D.layers) do   
 26 for op ∈ g[lid ] do   
 27 op.tTile[lid ] = ScheduleTiling(op,D,lid );   
-28 if lid &amp;gt; 0 then   
+28 if lid &gt; 0 then   
 29 op.transform[lid ] = ScheduleTransform(op,D,lid );   
 30 g = ProfileAndSelect(g);   
 31 return g;   

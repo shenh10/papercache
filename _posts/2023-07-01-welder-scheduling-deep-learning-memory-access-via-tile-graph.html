@@ -69,7 +69,7 @@ title: 'Welder: Scheduling Deep Learning Memory Access via Tile-graph'
 5 SetConnect(edge, level);   
 6 s = ExtractSubgraph(node, 0);   
 7 configs = SubGraphTiling(s, 0, tensor_shapes);   
-8 if t = Min(d.Profile(configs)) &amp;lt; best_latency   
+8 if t = Min(d.Profile(configs)) &lt; best_latency   
 9 best_latency = t;   
 10 best_level = level;   
 11 SetConnect(edge, best_level);   
@@ -77,7 +77,7 @@ title: 'Welder: Scheduling Deep Learning Memory Access via Tile-graph'
 13 configs = PriorityQueue();   
 14 for subtile : EnumerateSubtiles(g, c) do   
 15 config = Propogate(g, subtile);   
-16 if MemFootprint(g) &amp;gt; level.capacity   
+16 if MemFootprint(g) &gt; level.capacity   
 17 continue;   
 18 configs.push(config, priority=MemTraffic(g));   
 19 results = Dict();   
@@ -93,7 +93,7 @@ level+1, config);
 26 Func ExtractSubgraph(node:Node, level:Memory)   
 27 nodes = Set();   
 28 for edge : node.InOutEdges() do   
-29 if edge.connect_level &amp;gt; level   
+29 if edge.connect_level &gt; level   
 30 nodes.insert(ExtractSubgraph(edge.node, level));   
 31 return SubGraph(nodes);
 </code></pre>

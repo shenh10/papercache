@@ -1,1 +1,139 @@
-{}
+llm:
+  engineering:
+    inference:
+      posts:
+      - categories:
+        - llm
+        - engineering
+        - inference
+        date: '2025-03-01'
+        tag: gtc25
+        title: 'FlashAttention-3: Fast and Accurate Attention with Asynchrony and
+          Low-precision'
+        url: /slides/llm/engineering/inference/2025/03/01/flashattention-3-fast-and-accurate-attention-with-asynchrony-and-low-precision.html
+mlsys:
+  gpu:
+    cuda:
+      posts:
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: Get the most performance from Grace Hopper
+        url: /slides/mlsys/gpu/cuda/2025/03/01/get-the-most-performance-from-grace-hopper.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: It's Easier than You Think – Debugging and Optimizing CUDA with Intelligent
+          Developer Tools
+        url: /slides/mlsys/gpu/cuda/2025/03/01/its-easier-than-you-think-debugging-and-optimizing-cuda-with-intelligent-developer-tools.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2021-04-01'
+        tag: gtc21
+        title: ACCELERATING CONVOLUTION WITH TENSOR CORES IN CUTLASS
+        url: /slides/mlsys/gpu/cuda/2021/04/01/accelerating-convolution-with-tensor-cores-in-cutlass.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: 'Performance Optimization Tutorial, Part 3 [S72686]: CUDA Techniques
+          to Maximize Concurrency and System Utilization'
+        url: /slides/mlsys/gpu/cuda/2025/03/01/performance-optimization-tutorial-part-3-s72686-cuda-techniques-to-maximize-concurrency-and-system-utilization.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: How to Get Data Between Storage and the GPU at the Speed of Light
+        url: /slides/mlsys/gpu/cuda/2025/03/01/how-to-get-data-between-storage-and-the-gpu-at-the-speed-of-light.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2022-03-01'
+        tag: gtc22
+        title: INSIDE THE NVIDIA HOPPER ARCHITECTURE
+        url: /slides/mlsys/gpu/cuda/2022/03/01/inside-the-nvidia-hopper-architecture.html
+      - categories:
+        - mlsys
+        - gpu
+        - cuda
+        date: '2025-03-01'
+        tag: gtc25
+        title: How You Should Write a CUDA C++ Kernel
+        url: /slides/mlsys/gpu/cuda/2025/03/01/how-you-should-write-a-cuda-c-kernel.html
+      profile:
+        posts:
+        - categories:
+          - mlsys
+          - gpu
+          - cuda
+          - profile
+          date: '2023-03-01'
+          tag: gtc23
+          title: 'Debugging CUDA: An Overview of CUDA Correctness Tools'
+          url: /slides/mlsys/gpu/cuda/profile/2023/03/01/debugging-cuda-an-overview-of-cuda-correctness-tools.html
+        - categories:
+          - mlsys
+          - gpu
+          - cuda
+          - profile
+          date: '2025-11-01'
+          tag: aiday25-hz
+          title: CUDA Profiling and Debugging Tools for LLM
+          url: /slides/mlsys/gpu/cuda/profile/2025/11/01/cuda-profiling-and-debugging-tools-for-llm.html
+    cutlass:
+      posts:
+      - categories:
+        - mlsys
+        - gpu
+        - cutlass
+        date: '2025-03-01'
+        tag: gtc25
+        title: USE CUTLASS TO FUSE MULTIPLE GEMMS TO EXTREME PERFORMANCE
+        url: /slides/mlsys/gpu/cutlass/2025/03/01/use-cutlass-to-fuse-multiple-gemms-to-extreme-performance.html
+      - categories:
+        - mlsys
+        - gpu
+        - cutlass
+        date: '2020-05-01'
+        tag: gtc21
+        title: DEVELOPING CUDA KERNELS TO PUSH TENSOR CORES TO THE ABSOLUTE LIMIT
+          ON NVIDIA A100
+        url: /slides/mlsys/gpu/cutlass/2020/05/01/developing-cuda-kernels-to-push-tensor-cores-to-the-absolute-limit-on-nvidia-a100.html
+    network:
+      posts:
+      - categories:
+        - mlsys
+        - gpu
+        - network
+        date: '2022-03-01'
+        tag: gtc22
+        title: MULTI GPU PROGRAMMING WITH MPI
+        url: /slides/mlsys/gpu/network/2022/03/01/multi-gpu-programming-with-mpi.html
+    posts:
+    - categories:
+      - mlsys
+      - gpu
+      date: '2025-11-01'
+      tag: aiday25-hz
+      title: DeepGEMM 2.0 Technical Overview
+      url: /slides/mlsys/gpu/2025/11/01/deepgemm-20-technical-overview.html
+recsys:
+  posts:
+  - categories:
+    - recsys
+    date: '2026-01-14'
+    title: HSTU attention development and optimization using Cutlass/CuTe
+    url: /slides/recsys/2026/01/14/hstu-attention-development-and-optimization-using-cutlasscute.html

@@ -106,7 +106,7 @@ title: 'DNNFusion: Accelerating Deep Neural Networks Execution with Advanced Ope
 16  if relation == fuse_depend :
 17    # Step 2.3: get latency w/ database / runtime
 18    temp_latency = latency ( block + successor )
-19    if temp_latency &amp;gt; latency ( block , successor ) :
+19    if temp_latency &gt; latency ( block , successor ) :
 20      return
 21  block = op + successor
 22  # Step 2.4: recursively head to successor
@@ -117,7 +117,7 @@ title: 'DNNFusion: Accelerating Deep Neural Networks Execution with Advanced Ope
 27 def fuse_predecessor ( op , predecessor , block ) :
 28   # Similar with step 2.1 , 2.2 , 2.3 , 2.4
 29 
-30 # &amp;lt;Algorithm Entry &amp;gt;
+30 # &lt;Algorithm Entry &gt;
 31 unfused_ops = all_operators
 32 # Step 1: start fuse from the selected seed
 33 while ( sp = generate_seed ( unfused_ops ) )

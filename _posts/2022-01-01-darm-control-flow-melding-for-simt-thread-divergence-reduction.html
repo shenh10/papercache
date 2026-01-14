@@ -49,16 +49,16 @@ title: 'DARM: Control-Flow Melding for SIMT Thread Divergence Reduction'
 <pre><code>_global__ static void bitonicSort(int *values) {   
 2 // copy data from global memory to shared memor   
 3 _syncthreads();   
-4 for (unsigned int k = 2; k &amp;lt;= NUM; k *= 2) {   
-5 for (unsigned int j = k / 2; j &amp;gt; 0; j /= 2) {   
+4 for (unsigned int k = 2; k &lt;= NUM; k *= 2) {   
+5 for (unsigned int j = k / 2; j &gt; 0; j /= 2) {   
 6 unsigned int ixj = tid ^ j;   
-7 if (ixj &amp;gt; tid) {   
-8 if ((tid &amp;amp; k) == 0) {   
-9 if (shared[ixj] &amp;lt; shared[tid])   
+7 if (ixj &gt; tid) {   
+8 if ((tid &amp; k) == 0) {   
+9 if (shared[ixj] &lt; shared[tid])   
 10 swap(shared[tid], shared[ixj]);   
 11 }   
 12 else {   
-13 if ( shared[ixj] &amp;gt; shared[tid])   
+13 if ( shared[ixj] &gt; shared[tid])   
 14 swap(shared[tid], shared[ixj]);   
 15 }   
 16 }   

@@ -68,13 +68,13 @@ title: A Compiler Framework for Optimizing Dynamic parallelism on GPUs
 03 } 
 04 __global__ parent(...) { 
 05   ... 
-06   child &amp;lt;&amp;lt;&amp;lt; gDim, bDim &amp;gt;&amp;gt;&amp;gt; (args); 
+06   child &lt;&lt;&lt; gDim, bDim &gt;&gt;&gt; (args); 
 07   ... 
 08 }
 (a) 原始代码
 09 _device__ child_serial(params, dim3 _gDim, dim3 _bDim) { 
-10   for(_bx = 0; _bx &amp;lt; _gDim.x; ++_bx) { 
-11     for(_tx = 0; _tx &amp;lt; _bDim.x; ++_tx) { 
+10   for(_bx = 0; _bx &lt; _gDim.x; ++_bx) { 
+11     for(_tx = 0; _tx &lt; _bDim.x; ++_tx) { 
 12       child body // 用 _bx 替换 blockIdx.x, 
 13     }            // 用 _tx 替换 threadIdx.x, 用 _gDim
 14   }              // 替换 gridDim, 用 _bDim 替换 blockDim
@@ -85,8 +85,8 @@ title: A Compiler Framework for Optimizing Dynamic parallelism on GPUs
 19 _global__ parent(...) { 
 20   
 21   _threads = ...; // 从 gDim 表达式中提取
-22   if(_threads &amp;gt;= _THRESHOLD) { 
-23     child &amp;lt;&amp;lt;&amp;lt; gDim, bDim &amp;gt;&amp;gt;&amp;gt; (args); 
+22   if(_threads &gt;= _THRESHOLD) { 
+23     child &lt;&lt;&lt; gDim, bDim &gt;&gt;&gt; (args); 
 24   } else { 
 25     child_serial (args, gDim, bDim); 
 26   } 
@@ -129,7 +129,7 @@ title: A Compiler Framework for Optimizing Dynamic parallelism on GPUs
 <figcaption class="figure-caption">图6. 粗化代码转换示例</figcaption>
 </figure>
 <pre><code>01 _global child(params, _gDim) { 
-02   for(_bx = blockIdx.x; _bx &amp;lt; _gDim.x; _bx += gridDim.x) { 
+02   for(_bx = blockIdx.x; _bx &lt; _gDim.x; _bx += gridDim.x) { 
 03     child body // 用 _bx 替换 blockIdx.x
 04   }            // 用 _gDim 替换 gridDim
 05 } 
@@ -137,7 +137,7 @@ title: A Compiler Framework for Optimizing Dynamic parallelism on GPUs
 07   
 08   _cgDim = _gDim = gDim ; 
 09   _cgDim.x = (_gDim.x + _CFACTOR – 1)/_CFACTOR; 
-10   child &amp;lt;&amp;lt;&amp;lt; _cgDim, bDim &amp;gt;&amp;gt;&amp;gt;(args, _gDim); 
+10   child &lt;&lt;&lt; _cgDim, bDim &gt;&gt;&gt;(args, _gDim); 
 11   
 12 }
 </code></pre>
@@ -156,7 +156,7 @@ title: A Compiler Framework for Optimizing Dynamic parallelism on GPUs
 04   _gDim = _gDimScannedArray[_parentIdx] - _gDimScannedArray[_parentIdx - 1] 
 05   _bx = blockIdx.x - _gDimScannedArray[_parentIdx - 1] 
 06   _bDim = _bDimArray[_parentIdx] 
-07   if(threadIdx &amp;lt; _bDim) { 
+07   if(threadIdx &lt; _bDim) { 
 08     child body // 用 _bx 替换 blockIdx.x
 09                // 用 _gDim 替换 gridDim
 10   } 
@@ -167,21 +167,21 @@ title: A Compiler Framework for Optimizing Dynamic parallelism on GPUs
 15   _bDim = bDim 
 16   _groupIdx = blockIdx.x/_AGG_GRANULARITY 
 17   // 根据 _groupIdx 在预分配的缓冲区中找到组的内存段
-18   if(_gDim &amp;gt; 0) { 
+18   if(_gDim &gt; 0) { 
 19     (_parentIdx, _sumPrevGDim) = 
-20       atomicAdd(&amp;amp;(_numParents[_groupIdx], _sumGDim[_groupIdx]), (1, _gDim)) 
+20       atomicAdd(&amp;(_numParents[_groupIdx], _sumGDim[_groupIdx]), (1, _gDim)) 
 21     _argsArray[_parentIdx] = args 
 22     _gDimScannedArray[_parentIdx] = _sumPrevGDim + _gDim 
 23     _bDimArray[_parentIdx] = _bDim 
-24     atomicMax(&amp;amp;_maxBDim[_groupIdx], _bDim) 
+24     atomicMax(&amp;_maxBDim[_groupIdx], _bDim) 
 25   } 
 26   _threadfence() 
 27   _syncthreads() 
 28   if(threadIdx == launcher thread in block) { 
-29     _nFinishedBlocks = atomicAdd(&amp;amp;_numFinishedBlocks[_groupIdx], 1) + 1 
+29     _nFinishedBlocks = atomicAdd(&amp;_numFinishedBlocks[_groupIdx], 1) + 1 
 30     _isLastBlockToFinish = (_nFinishedBlocks == _AGG_GRANULARITY) 
 31     if(_isLastBlockToFinish) { 
-32       child &amp;lt;&amp;lt;&amp;lt; _sumGDim[_groupIdx] , _maxBDim[_groupIdx] &amp;gt;&amp;gt;&amp;gt; 
+32       child &lt;&lt;&lt; _sumGDim[_groupIdx] , _maxBDim[_groupIdx] &gt;&gt;&gt; 
 33         (_argsArray, _gDimScannedArray, _bDimArray); 
 34     } 
 35   } 

@@ -153,7 +153,7 @@ CA：核心注意力层；Linear：FFN，qkvo-proj；MISC：layer norm, dropout,
 <li>为了找到最有效的迁移Item，调度器对每个候选Item使用成本效益启发式进行评估。它首先确定一个Item可迁移的最大FLOPs量 <code>∆Fmax = min(F_Item, S_source, D_destination)</code>。</li>
 <li>然后，选择一个FLOPs等于<code>∆Fmax</code>且通信成本<code>Vcomm</code>最小的分片。</li>
 <li>接着，计算每个候选Item的优先级分数，定义为单位计算量转移的通信成本：<code>E = ∆Fmax / Vcomm</code>。<code>E</code>越高表示迁移效率越高。</li>
-<li>调度器选择得分最高的Item。根据计算出的<code>∆Fmax</code>，如果<code>∆Fmax = F_Item</code>，则整个Item被迁移；如果<code>∆Fmax &amp;lt; F_Item</code>，则该Item被拆分为两个子Item，新创建的具有<code>∆Fmax</code> FLOPs的子Item被分派到目标服务器。</li>
+<li>调度器选择得分最高的Item。根据计算出的<code>∆Fmax</code>，如果<code>∆Fmax = F_Item</code>，则整个Item被迁移；如果<code>∆Fmax &lt; F_Item</code>，则该Item被拆分为两个子Item，新创建的具有<code>∆Fmax</code> FLOPs的子Item被分派到目标服务器。</li>
 </ul>
 </li>
 <li><strong>终止条件</strong>：当每个服务器上的负载都在<code>ϵF¯</code>（一个容忍度epsilon）范围内，或者当剩余的迁移无法使<code>E</code>值超过一个很小的阈值时，调度器停止。这样，调度器在确保系统负载平衡的同时，避免了因微不足道的迁移而产生不必要的通信。</li>

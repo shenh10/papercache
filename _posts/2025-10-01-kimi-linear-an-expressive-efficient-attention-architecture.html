@@ -276,7 +276,7 @@ $$ = \sum_{i=1}^{L} Diag(\gamma_i^{l}) k_i^l u_i^T $$<br/>
     N = T // C
 
     q, k, v, g, beta = map(
-        lambda x: rearrange(x, 'b (n c) h ... -&amp;gt; b h n c ...', c=C).to(torch.float),
+        lambda x: rearrange(x, 'b (n c) h ... -&gt; b h n c ...', c=C).to(torch.float),
         [q, k, v, g, beta]
     )
     q = q * K**-0.5
@@ -287,7 +287,7 @@ $$ = \sum_{i=1}^{L} Diag(\gamma_i^{l}) k_i^l u_i^T $$<br/>
     for i in range(C):
         k_i = k[..., i, :]
         g_i = g[..., i:i+1, :]
-        A[..., i] = torch.einsum('... c d, d -&amp;gt; c', k * (g - g_i).exp(), k_i)
+        A[..., i] = torch.einsum('... c d, d -&gt; c', k * (g - g_i).exp(), k_i)
     A = A * beta[..., None]
     # matrix inverse by forward substitution
     A = -A.masked_fill(mask, 0)
@@ -312,13 +312,13 @@ $$ = \sum_{i=1}^{L} Diag(\gamma_i^{l}) k_i^l u_i^T $$<br/>
         for j in range(C):
             k_j = k[:, :, i, j]
             g_j = g[:, :, i, j:j+1, :]
-            A[..., j] = torch.einsum('... c d, ... d -&amp;gt; ... c', q_i * (g_i - g_j).exp(), k_j)
+            A[..., j] = torch.einsum('... c d, ... d -&gt; ... c', q_i * (g_i - g_j).exp(), k_j)
         A = A.masked_fill(mask, 0)
         v_i = u_i - w_i @ S
         o[:, :, i] = (q_i * g_i.exp()) @ S + A @ v_i
-        S = S * rearrange(g_i[:, :, -1].exp(), 'b h k -&amp;gt; b h k 1')
-        S += rearrange((g_i[:, :, -1:] - g_i).exp() * k_i, 'b h c k -&amp;gt; b h k c') @ v_i
-    return rearrange(o, 'b h n c d -&amp;gt; b (n c) h d').to(dtype)
+        S = S * rearrange(g_i[:, :, -1].exp(), 'b h k -&gt; b h k 1')
+        S += rearrange((g_i[:, :, -1:] - g_i).exp() * k_i, 'b h c k -&gt; b h k c') @ v_i
+    return rearrange(o, 'b h n c d -&gt; b (n c) h d').to(dtype)
 </code></pre>
 <h3>D Kimi Linear@5.7T 结果</h3>
 <p><strong>与 Moonlight 的比较</strong>。我们遵循 Moonlight 的做法，也使用一个扩展的 5.7T token 数据集训练了 Kimi Linear，以展示其有效性。凭借 3 倍的稀疏度和新的注意力架构设计，Kimi Linear 在几乎所有基准测试中都持续优于 Moonlight，凸显了新架构的有效性。基础模型和指令调优模型的结果分别显示在表 8 和表 9 中。Moonlight-Instruct 未在超过其 8K 上下文限制的任务上进行评估（“-”）。</p>

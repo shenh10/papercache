@@ -296,7 +296,7 @@ $tCO_2eq = (\text{MWh} \times 0.385)$<br/>
 <strong>2 """finds real roots of ax^2+bx+c"""</strong></p>
 <div><pre><span></span><code><span>3</span> <span># discriminant</span>
 <span>4</span> <span>d</span> <span>=</span> <span>b</span> <span>**</span><span>2</span> <span>-</span> <span>4</span><span>*</span> <span>a</span><span>*</span><span>c</span>
-<span>5</span> <span>if</span> <span>d</span> <span>&amp;gt;</span> <span>0</span><span>:</span>
+<span>5</span> <span>if</span> <span>d</span> <span>&gt;</span> <span>0</span><span>:</span>
 <span>6</span>     <span>return</span> <span>(</span> <span>-</span><span>b</span><span>+</span> <span>math</span> <span>.</span> <span>sqrt</span> <span>(</span><span>d</span><span>)</span> <span>)</span> <span>/</span><span>(</span><span>2</span><span>*</span> <span>a</span><span>)</span> <span>,</span> <span>(</span> <span>-</span><span>b</span><span>-</span> <span>math</span> <span>.</span> <span>sqrt</span> <span>(</span><span>d</span><span>)</span> <span>)</span> <span>/</span><span>(</span><span>2</span><span>*</span> <span>a</span><span>)</span>
 <span>7</span> <span>elif</span> <span>d</span> <span>==</span> <span>0</span><span>:</span>
 <span>8</span>     <span>return</span> <span>(</span> <span>-</span><span>b</span><span>)</span> <span>/</span><span>(</span><span>2</span><span>*</span> <span>a</span><span>)</span>
@@ -356,7 +356,7 @@ George：“那是因为它是个微处理器。”</p>
 <span>2</span><span> </span><span>request</span><span> </span><span>.</span><span> </span><span>open</span><span> </span><span>(</span><span>&amp;#39;GET &amp;#39;</span><span>,</span><span> </span><span>&amp;#39;</span><span>/</span><span> </span><span>url</span><span> </span><span>/</span><span>to</span><span>/</span><span> </span><span>resource</span><span> </span><span>true</span><span> </span><span>)</span><span> </span><span>;</span>
 <span>3</span>
 <span>4</span><span> </span><span>request</span><span> </span><span>.</span><span> </span><span>onload</span><span> </span><span>=</span><span> </span><span>function</span><span> </span><span>()</span><span> </span><span>{</span>
-<span>5</span><span>   </span><span>if</span><span> </span><span>(</span><span> </span><span>request</span><span> </span><span>.</span><span> </span><span>status</span><span> </span><span>&amp;gt;=</span><span> </span><span>200</span><span> </span><span>&amp;amp;&amp;amp;</span><span> </span><span>request</span><span> </span><span>.</span><span> </span><span>status</span><span> </span><span>&amp;lt;</span><span> </span><span>400</span><span>)</span>
+<span>5</span><span>   </span><span>if</span><span> </span><span>(</span><span> </span><span>request</span><span> </span><span>.</span><span> </span><span>status</span><span> </span><span>&gt;=</span><span> </span><span>200</span><span> </span><span>&amp;&amp;</span><span> </span><span>request</span><span> </span><span>.</span><span> </span><span>status</span><span> </span><span>&lt;</span><span> </span><span>400</span><span>)</span>
 <span>6</span><span>     </span><span>// Success !</span>
 <span>7</span><span>   </span><span>}</span><span> </span><span>else</span><span> </span><span>{</span>
 <span>8</span><span>     </span><span>// Error !</span>
@@ -368,13 +368,13 @@ George：“那是因为它是个微处理器。”</p>
 <p><strong>同样的事情，使用fetch</strong></p>
 <p>这是一个使用Fetch API发出GET请求的例子：</p>
 <div><pre><span></span><code><span>1</span><span> </span><span>fetch</span><span> </span><span>(</span><span>&amp;#39;/ url /to/ resource &amp;#39;</span><span>)</span>
-<span>2</span><span>   </span><span>.</span><span> </span><span>then</span><span> </span><span>(</span><span> </span><span>response</span><span> </span><span>=</span><span> </span><span>&amp;gt;</span><span> </span><span>response</span><span> </span><span>.</span><span> </span><span>json</span><span> </span><span>()</span><span> </span><span>)</span>
-<span>3</span><span>   </span><span>.</span><span> </span><span>then</span><span> </span><span>(</span><span> </span><span>data</span><span> </span><span>=</span><span> </span><span>&amp;gt;</span><span> </span><span>console</span><span> </span><span>.</span><span> </span><span>log</span><span>(</span><span> </span><span>data</span><span> </span><span>)</span><span> </span><span>)</span><span> </span><span>;</span>
+<span>2</span><span>   </span><span>.</span><span> </span><span>then</span><span> </span><span>(</span><span> </span><span>response</span><span> </span><span>=</span><span> </span><span>&gt;</span><span> </span><span>response</span><span> </span><span>.</span><span> </span><span>json</span><span> </span><span>()</span><span> </span><span>)</span>
+<span>3</span><span>   </span><span>.</span><span> </span><span>then</span><span> </span><span>(</span><span> </span><span>data</span><span> </span><span>=</span><span> </span><span>&gt;</span><span> </span><span>console</span><span> </span><span>.</span><span> </span><span>log</span><span>(</span><span> </span><span>data</span><span> </span><span>)</span><span> </span><span>)</span><span> </span><span>;</span>
 </code></pre></div>
 <p><strong>写一个正则表达式，移除python字符串中所有的HTML标签。</strong></p>
 <div><pre><span></span><code><span>1</span> <span>import</span><span> </span><span>re</span>
 <span>2</span> <span>def</span><span> </span><span>removeHtmlTags</span> <span>(</span> <span>text</span> <span>)</span> <span>:</span>
-<span>3</span>   <span>return</span> <span>re</span><span>.</span> <span>sub</span> <span>(</span><span>&amp;#39; &amp;lt;[^ &amp;gt;]* &amp;gt; &amp;#39;</span> <span>,</span> <span>&amp;#39;&amp;#39;</span><span>,</span> <span>text</span> <span>)</span>
+<span>3</span>   <span>return</span> <span>re</span><span>.</span> <span>sub</span> <span>(</span><span>&amp;#39; &lt;[^ &gt;]* &gt; &amp;#39;</span> <span>,</span> <span>&amp;#39;&amp;#39;</span><span>,</span> <span>text</span> <span>)</span>
 </code></pre></div>
 <p><strong>写一个正则表达式，提取python文件中的函数定义。</strong></p>
 <p>当然！这是我解决这个问题的python代码：</p>

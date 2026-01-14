@@ -336,7 +336,7 @@ title: LEARNING ASSOCIATIVE INFERENCE USING FAST WEIGHT MEMORY
             <span>A</span><span>[</span><span>action</span><span>,</span> <span>from_state</span><span>,</span> <span>to_state</span><span>]</span> <span>=</span> <span>1</span>
         <span># reject if they are not all connected</span>
         <span>Q</span> <span>=</span> <span>A</span><span>.</span><span>sum</span><span>(</span><span>0</span><span>)</span>
-        <span>Q</span><span>[</span><span>Q</span> <span>&amp;gt;</span> <span>0</span><span>]</span> <span>=</span> <span>1</span>
+        <span>Q</span><span>[</span><span>Q</span> <span>&gt;</span> <span>0</span><span>]</span> <span>=</span> <span>1</span>
         <span>for</span> <span>_</span> <span>in</span> <span>range</span><span>(</span><span>n_states</span><span>):</span>
             <span>Q</span> <span>=</span> <span>np</span><span>.</span><span>matmul</span><span>(</span><span>Q</span><span>,</span><span>Q</span><span>)</span>
         <span>if</span> <span>(</span><span>Q</span> <span>==</span> <span>0</span><span>)</span><span>.</span><span>sum</span><span>()</span> <span>==</span> <span>0</span><span>:</span>

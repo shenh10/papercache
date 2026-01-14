@@ -384,7 +384,7 @@ title: 'VeOmni: Scaling Any Modality Model Training with Model-Centric Distribut
     <span>value</span><span>:</span> <span>torch</span><span>.</span><span>Tensor</span><span>,</span>
     <span>attention_mask</span><span>:</span> <span>Optional</span><span>[</span><span>torch</span><span>.</span><span>Tensor</span><span>],</span>
     <span>**</span><span>kwargs</span><span>,</span>
-<span>)</span> <span>-&amp;gt;</span> <span>Tuple</span><span>[</span><span>torch</span><span>.</span><span>Tensor</span><span>,</span> <span>None</span><span>]:</span>
+<span>)</span> <span>-&gt;</span> <span>Tuple</span><span>[</span><span>torch</span><span>.</span><span>Tensor</span><span>,</span> <span>None</span><span>]:</span>
     <span># Ulysses all-to-all</span>
     <span>ulysses_enabled</span> <span>=</span> <span>get_parallel_state</span><span>()</span><span>.</span><span>ulysses_enabled</span>
     <span>if</span> <span>ulysses_enabled</span><span>:</span>

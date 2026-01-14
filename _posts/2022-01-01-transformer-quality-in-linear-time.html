@@ -381,7 +381,7 @@ title: Transformer Quality in Linear Time
 - <strong>相对位置偏置伪代码 (Code 4)</strong></p>
 <div><pre><span></span><code><span>def</span><span> </span><span>rel_pos_bias</span><span>(</span><span>n</span><span>):</span>
 <span>    </span><span>&amp;quot;&amp;quot;&amp;quot;Relative position bias.&amp;quot;&amp;quot;&amp;quot;</span>
-    <span>if</span> <span>n</span> <span>&amp;lt;</span> <span>512</span><span>:</span>
+    <span>if</span> <span>n</span> <span>&lt;</span> <span>512</span><span>:</span>
         <span># Construct Toeplitz matrix directly when the sequence length is less than 512.</span>
         <span>w</span> <span>=</span> <span>tf</span><span>.</span><span>get_variable</span><span>(</span>
             <span>&amp;#39;weight&amp;#39;</span><span>,</span>
@@ -408,7 +408,7 @@ title: Transformer Quality in Linear Time
             <span>initializer</span><span>=</span><span>WEIGHT_INITIALIZER</span><span>)</span>
         <span>a</span> <span>=</span> <span>rope</span><span>(</span><span>tf</span><span>.</span><span>tile</span><span>(</span><span>a</span><span>[</span><span>None</span><span>,</span> <span>:],</span> <span>[</span><span>n</span><span>,</span> <span>1</span><span>]),</span> <span>axis</span><span>=</span><span>0</span><span>)</span>
         <span>b</span> <span>=</span> <span>rope</span><span>(</span><span>tf</span><span>.</span><span>tile</span><span>(</span><span>b</span><span>[</span><span>None</span><span>,</span> <span>:],</span> <span>[</span><span>n</span><span>,</span> <span>1</span><span>]),</span> <span>axis</span><span>=</span><span>0</span><span>)</span>
-        <span>t</span> <span>=</span> <span>tf</span><span>.</span><span>einsum</span><span>(</span><span>&amp;#39;mk,nk-&amp;gt;mn&amp;#39;</span><span>,</span> <span>a</span><span>,</span> <span>b</span><span>)</span>
+        <span>t</span> <span>=</span> <span>tf</span><span>.</span><span>einsum</span><span>(</span><span>&amp;#39;mk,nk-&gt;mn&amp;#39;</span><span>,</span> <span>a</span><span>,</span> <span>b</span><span>)</span>
 
     <span>return</span> <span>t</span>
 </code></pre></div>
@@ -428,7 +428,7 @@ title: Transformer Quality in Linear Time
     <span>half_d</span> <span>=</span> <span>hidden_size</span> <span>//</span> <span>2</span>
     <span>freq_seq</span> <span>=</span> <span>tf</span><span>.</span><span>cast</span><span>(</span><span>tf</span><span>.</span><span>range</span><span>(</span><span>half_d</span><span>),</span> <span>tf</span><span>.</span><span>float32</span><span>)</span> <span>/</span> <span>float</span><span>(</span><span>half_d</span><span>)</span>
     <span>inv_freq</span> <span>=</span> <span>10000</span> <span>**</span> <span>-</span><span>freq_seq</span>
-    <span>sinusoid</span> <span>=</span> <span>tf</span><span>.</span><span>einsum</span><span>(</span><span>&amp;#39;s,d-&amp;gt;sd&amp;#39;</span><span>,</span> <span>pos</span><span>,</span> <span>inv_freq</span><span>)</span>
+    <span>sinusoid</span> <span>=</span> <span>tf</span><span>.</span><span>einsum</span><span>(</span><span>&amp;#39;s,d-&gt;sd&amp;#39;</span><span>,</span> <span>pos</span><span>,</span> <span>inv_freq</span><span>)</span>
     <span>scaledsin</span> <span>=</span> <span>tf</span><span>.</span><span>concat</span><span>([</span><span>tf</span><span>.</span><span>sin</span><span>(</span><span>sinusoid</span><span>),</span> <span>tf</span><span>.</span><span>cos</span><span>(</span><span>sinusoid</span><span>)],</span> <span>axis</span><span>=-</span><span>1</span><span>)</span>
     <span>scalar</span> <span>=</span> <span>tf</span><span>.</span><span>get_variable</span><span>(</span>
         <span>&amp;#39;scaledsin_scalar&amp;#39;</span><span>,</span>

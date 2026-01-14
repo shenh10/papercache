@@ -184,7 +184,7 @@ $$ \text{score}(v) = \left(1 - \frac{1}{n} \text{heat}(v) - \sum_{u \in G, \text
 7     S_max = max_{v∈V(G&amp;#39;)} S[v];
 8     if S_max ≤ 0 then continue;
 9     for l ∈ {1, 2, ..., L} do
-10        C := {v ∈ V(G&amp;#39;) | l/L ≤ S[v]/S_max &amp;lt; (l + 1)/L};
+10        C := {v ∈ V(G&amp;#39;) | l/L ≤ S[v]/S_max &lt; (l + 1)/L};
 11        for v_dom ∈ {v ∈ C | T.des(v) ∩ C = ∅} do
 12            S := T.des(v_dom) \ {v_dom};
 13            S&amp;#39; := 从 S 诱导的 G&amp;#39; 的子图;
@@ -265,7 +265,7 @@ $$ \text{score}(v) = \left(1 - \frac{1}{n} \text{heat}(v) - \sum_{u \in G, \text
 1 function GetRescheduleInterval(G, S, ψ):
 2   function ExtendBound(i, d):
 3     ñ := 0; l := 0; v := ψ[i];
-4     while l &amp;lt; 20 ∧ (ñ &amp;gt; 10 ∨ nw(v) &amp;lt; 4) ∧ nw(v) &amp;lt; ñ do
+4     while l &lt; 20 ∧ (ñ &gt; 10 ∨ nw(v) &lt; 4) ∧ nw(v) &lt; ñ do
 5       ñ := nw(v); i := i + d; v := ψ[i]; l := l + 1;
 6     return i;
 7   I_S := {i | i = 1, ..., |ψ| if ψ[i] ∈ S};
@@ -299,7 +299,7 @@ $$ \text{score}(v) = \left(1 - \frac{1}{n} \text{heat}(v) - \sum_{u \in G, \text
 输入: 输入图 G; 内存约束 M; F-Tree 最大层级 L
 输出: 优化的 M-State μ_best
 1 function BetterThan(μ_1, μ_2, δ = 1):
-2   return (max(μ_1.mem, M), μ_1.lat) &amp;lt; (max(δ × μ_2.mem, M), δ × μ_2.lat);
+2   return (max(μ_1.mem, M), μ_1.lat) &lt; (max(δ × μ_2.mem, M), δ × μ_2.lat);
 3 function GraphHash(G):
 4   for v ∈ topo-order(G) do
 5     x_v := hash(v) ⊕ (⊕_{u∈G.pre(v)} x_u);
