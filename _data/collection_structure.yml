@@ -1962,6 +1962,14 @@ llm:
         - llm
         - engineering
         - rl
+      - title: 'Jet-RL: Enabling On-Policy FP8 Reinforcement Learning with Unified
+          Training and Rollout Precision Flow'
+        date: '2026-01-01'
+        url: /papers/llm/engineering/rl/2026/01/01/jet-rl-enabling-on-policy-fp8-reinforcement-learning-with-unified-training-and-rollout-precision-flow.html
+        categories:
+        - llm
+        - engineering
+        - rl
       - title: 'RLAX: Large-Scale, Distributed Reinforcement Learning for Large Language
           Models on TPUs'
         date: '2025-12-29'
@@ -2045,6 +2053,14 @@ llm:
       - title: 'TileLang: A Composable Tiled Programming Model for AI Systems'
         date: '2025-04-01'
         url: /papers/llm/engineering/compiler/2025/04/01/tilelang-a-composable-tiled-programming-model-for-ai-systems.html
+        categories:
+        - llm
+        - engineering
+        - compiler
+      - title: 'Mirage Persistent Kernel: A Compiler and Runtime for Mega-Kernelizing
+          Tensor Programs'
+        date: '2025-12-01'
+        url: /papers/llm/engineering/compiler/2025/12/01/mirage-persistent-kernel-a-compiler-and-runtime-for-mega-kernelizing-tensor-programs.html
         categories:
         - llm
         - engineering
