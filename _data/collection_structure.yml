@@ -293,6 +293,14 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts
+          Language Model'
+        date: '2024-06-01'
+        url: /papers/llm/algorithm/models/2024/06/01/deepseek-v2-a-strong-economical-and-efficient-mixture-of-experts-language-model.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: 'QwenLong-L1.5: Post-Training Recipe for Long-Context Reasoning and
           Memory Management'
         date: '2025-12-01'
@@ -493,6 +501,13 @@ llm:
           Models'
         date: '2025-04-01'
         url: /papers/llm/algorithm/models/2025/04/01/nemotron-h-a-family-of-accurate-and-efficient-hybrid-mamba-transformer-models.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'Seed2.0 Model Card: Towards Intelligence Frontier for Real-World Complexity'
+        date: '2026-02-01'
+        url: /papers/llm/algorithm/models/2026/02/01/seed20-model-card-towards-intelligence-frontier-for-real-world-complexity.html
         categories:
         - llm
         - algorithm
@@ -2832,6 +2847,14 @@ llm:
         - llm
         - engineering
         - train
+      - title: 'MTraining: Efficient Distributed Training for Ultra-Long Contexts
+          via Dynamic Sparse Attention'
+        date: '2025-10-01'
+        url: /papers/llm/engineering/train/2025/10/01/mtraining-efficient-distributed-training-for-ultra-long-contexts-via-dynamic-sparse-attention.html
+        categories:
+        - llm
+        - engineering
+        - train
       - title: 'FP4 All the Way: Fully Quantized Training of LLMs'
         date: '2025-08-01'
         url: /papers/llm/engineering/train/2025/08/01/fp4-all-the-way-fully-quantized-training-of-llms.html
@@ -3167,6 +3190,13 @@ llm:
         - engineering
         - rl
         tag: atc25
+      - title: 'Forge: Scalable Agent RL Framework and Algorithm'
+        date: '2026-02-01'
+        url: /papers/llm/engineering/rl/2026/02/01/forge-scalable-agent-rl-framework-and-algorithm.html
+        categories:
+        - llm
+        - engineering
+        - rl
       - title: 'Tree Training: Accelerating Agentic LLMs Training via Shared Prefix
           Reuse'
         date: '2026-02-01'
