@@ -2054,6 +2054,15 @@ llm:
           - inference
           - kvcache
           tag: nips25
+        - title: 'DualPath: Breaking the Storage Bandwidth Bottleneck in Agentic LLM
+            Inference'
+          date: '2026-02-01'
+          url: /papers/llm/engineering/inference/kvcache/2026/02/01/dualpath-breaking-the-storage-bandwidth-bottleneck-in-agentic-llm-inference.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'SqueezeAttention: 2D Management of KVCache in LLM Inference via
             Layer-Wise Optimal Budget'
           date: '2025-04-01'
@@ -2814,6 +2823,15 @@ llm:
         - engineering
         - train
         tag: sosp23
+      - title: Accelerating the Training of Large Language Models using Efficient
+          Activation Rematerialization and Optimal Hybrid Parallelism
+        date: '2024-07-01'
+        url: /papers/llm/engineering/train/2024/07/01/accelerating-the-training-of-large-language-models-using-efficient-activation-rematerialization-and-optimal-hybrid-parallelism.html
+        categories:
+        - llm
+        - engineering
+        - train
+        tag: atc24
       - title: 'GShard: Scaling Giant Models with Conditional Computation and Automatic
           Sharding'
         date: '2020-06-01'
