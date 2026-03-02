@@ -3974,6 +3974,13 @@ mlsys:
       categories:
       - mlsys
       - gpu
+    - title: 'CUDA Agent: Large-Scale Agentic RL for High-Performance CUDA Kernel
+        Generation'
+      date: '2026-02-01'
+      url: /papers/mlsys/gpu/2026/02/01/cuda-agent-large-scale-agentic-rl-for-high-performance-cuda-kernel-generation.html
+      categories:
+      - mlsys
+      - gpu
     - title: 'Neutrino: Fine-grained GPU Kernel Profiling via Programmable Probing'
       date: '2025-03-01'
       url: /papers/mlsys/gpu/2025/03/01/neutrino-fine-grained-gpu-kernel-profiling-via-programmable-probing.html
@@ -4124,6 +4131,13 @@ mlsys:
       categories:
       - mlsys
       - gpu
+    - title: 'AxCore: A Quantization-Aware Approximate GEMM Unit for LLM Inference'
+      date: '2025-10-01'
+      url: /papers/mlsys/gpu/2025/10/01/axcore-a-quantization-aware-approximate-gemm-unit-for-llm-inference.html
+      categories:
+      - mlsys
+      - gpu
+      tag: micro25
     - title: 'MMA-Sim: Bit-Accurate Reference Model of Tensor Cores and Matrix Cores'
       date: '2025-12-01'
       url: /papers/mlsys/gpu/2025/12/01/mma-sim-bit-accurate-reference-model-of-tensor-cores-and-matrix-cores.html
