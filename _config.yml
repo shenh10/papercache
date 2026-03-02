@@ -1,10 +1,10 @@
 title: PaperCache
 description: "深度学习、机器学习和人工智能研究论文的精选缓存"
-baseurl: "/papercache"
-url: "https://shenh10.github.io"
+baseurl: "/"
+url: "https://www.papercache.org"
 
 # RSS Feed 配置 - 生产环境 URL（始终使用，不受本地开发环境影响）
-rss_base_url: "https://shenh10.github.io/papercache"
+rss_base_url: "https://www.papercache.org"
 
 # API 配置 - Vercel Functions 部署地址
 # 生产环境 API 应该指向 Vercel，因为 GitHub Pages 不支持动态 API
