@@ -1997,6 +1997,14 @@ llm:
           - inference
           - speculative_decoding
           tag: iclr25
+        - title: Speculative Speculative Decoding
+          date: '2026-03-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2026/03/01/speculative-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
         - title: 'EAGLE-2: Faster Inference of Language Models with Dynamic Draft
             Trees'
           date: '2024-06-01'
@@ -3309,6 +3317,14 @@ llm:
           ATTENTION'
         date: '2025-09-01'
         url: /papers/llm/engineering/attention/2025/09/01/sla-beyond-sparsity-in-diffusion-transformers-via-fine-tunable-sparselinear-attention.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'FlashAttention-4: Algorithm and Kernel Pipelining Co-Design for Asymmetric
+          Hardware Scaling'
+        date: '2026-03-01'
+        url: /papers/llm/engineering/attention/2026/03/01/flashattention-4-algorithm-and-kernel-pipelining-co-design-for-asymmetric-hardware-scaling.html
         categories:
         - llm
         - engineering
