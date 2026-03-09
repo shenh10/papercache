@@ -3453,6 +3453,14 @@ llm:
         - engineering
         - attention
         tag: iclr25
+      - title: 'DEFT: Decoding with Flash Tree-Attention for Efficient Tree-Structured
+          LLM Inference'
+        date: '2025-01-01'
+        url: /papers/llm/engineering/attention/2025/01/01/deft-decoding-with-flash-tree-attention-for-efficient-tree-structured-llm-inference.html
+        categories:
+        - llm
+        - engineering
+        - attention
       - title: Mixture of Contexts for Long Video Generation
         date: '2025-08-01'
         url: /papers/llm/engineering/attention/2025/08/01/mixture-of-contexts-for-long-video-generation.html
@@ -4055,6 +4063,14 @@ mlsys:
       - mlsys
       - gpu
       tag: vlsi23
+    - title: 'Coruscant: Co-Designing GPU Kernel and Sparse Tensor Core to Advocate
+        Unstructured Sparsity in Efficient LLM Inference'
+      date: '2025-10-01'
+      url: /papers/mlsys/gpu/2025/10/01/coruscant-co-designing-gpu-kernel-and-sparse-tensor-core-to-advocate-unstructured-sparsity-in-efficient-llm-inference.html
+      categories:
+      - mlsys
+      - gpu
+      tag: micro25
     - title: Locality-Aware CTA Clustering for Modern GPUs
       date: '2017-04-01'
       url: /papers/mlsys/gpu/2017/04/01/locality-aware-cta-clustering-for-modern-gpus.html
@@ -4314,6 +4330,14 @@ mlsys:
       - mlsys
       - networking
       tag: atc16
+    - title: Optimizing All-to-All Collective Communication with Fault Tolerance on
+        Torus Networks
+      date: '2025-10-01'
+      url: /papers/mlsys/networking/2025/10/01/optimizing-all-to-all-collective-communication-with-fault-tolerance-on-torus-networks.html
+      categories:
+      - mlsys
+      - networking
+      tag: micro25
     - title: GPU-Initiated Networking for NCCL
       date: '2025-11-01'
       url: /papers/mlsys/networking/2025/11/01/gpu-initiated-networking-for-nccl.html
