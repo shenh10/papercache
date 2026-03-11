@@ -1801,6 +1801,16 @@ llm:
           - inference
           - low_precision
           tag: icme24
+        - title: 'MX+: Pushing the Limits of Microscaling Formats for Efficient Large
+            Language Model Serving'
+          date: '2025-10-01'
+          url: /papers/llm/engineering/inference/low_precision/2025/10/01/mx-pushing-the-limits-of-microscaling-formats-for-efficient-large-language-model-serving.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - low_precision
+          tag: micro25
       speculative_decoding:
         posts:
         - title: 'SuffixDecoding: Extreme Speculative Decoding for Emerging AI Applications'
@@ -1940,6 +1950,14 @@ llm:
         - title: 'P-EAGLE: Parallel-Drafting EAGLE with Scalable Training'
           date: '2026-02-01'
           url: /papers/llm/engineering/inference/speculative_decoding/2026/02/01/p-eagle-parallel-drafting-eagle-with-scalable-training.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: 'DFlash: Block Diffusion for Flash Speculative Decoding'
+          date: '2026-01-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2026/01/01/dflash-block-diffusion-for-flash-speculative-decoding.html
           categories:
           - llm
           - engineering
@@ -2265,6 +2283,16 @@ llm:
           - inference
           - kvcache
           tag: nips25
+        - title: 'Kelle: Co-design KV Caching and eDRAM for Efficient LLM Serving
+            in Edge Computing'
+          date: '2025-10-01'
+          url: /papers/llm/engineering/inference/kvcache/2025/10/01/kelle-co-design-kv-caching-and-edram-for-efficient-llm-serving-in-edge-computing.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
+          tag: micro25
         - title: 'Ecco: Improving Memory Bandwidth and Capacity for LLMs via Entropy-aware
             Cache Compression'
           date: '2025-05-01'
@@ -2412,6 +2440,13 @@ llm:
         - engineering
         - moe
         tag: nips25
+      - title: Scalable Training of Mixture-of-Experts Models with Megatron Core
+        date: '2026-03-01'
+        url: /papers/llm/engineering/moe/2026/03/01/scalable-training-of-mixture-of-experts-models-with-megatron-core.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: 'Netmoe: Accelerating Moe Training Through Dynamic Sample Placement'
         date: '2025-04-01'
         url: /papers/llm/engineering/moe/2025/04/01/netmoe-accelerating-moe-training-through-dynamic-sample-placement.html
@@ -2428,6 +2463,15 @@ llm:
         - engineering
         - moe
         tag: icml22
+      - title: 'Stratum: System-Hardware Co-Design with Tiered Monolithic 3D-Stackable
+          DRAM for Efficient MoE Serving'
+        date: '2025-10-01'
+        url: /papers/llm/engineering/moe/2025/10/01/stratum-system-hardware-co-design-with-tiered-monolithic-3d-stackable-dram-for-efficient-moe-serving.html
+        categories:
+        - llm
+        - engineering
+        - moe
+        tag: micro25
       - title: 'PopFetcher: Towards Accelerated Mixture-of-Experts Training Via Popularity
           Based Expert-Wise Prefetch'
         date: '2025-01-01'
@@ -3134,8 +3178,8 @@ llm:
         - rl
       - title: 'RLAX: Large-Scale, Distributed Reinforcement Learning for Large Language
           Models on TPUs'
-        date: '2026-03-09'
-        url: /papers/llm/engineering/rl/2026/03/09/rlax-large-scale-distributed-reinforcement-learning-for-large-language-models-on-tpus.html
+        date: '2026-03-11'
+        url: /papers/llm/engineering/rl/2026/03/11/rlax-large-scale-distributed-reinforcement-learning-for-large-language-models-on-tpus.html
         categories:
         - llm
         - engineering
@@ -3491,6 +3535,15 @@ mlsys:
         - compiler
         - graph
         tag: atc24
+      - title: 'Elk: Exploring the Efficiency of Inter-core Connected AI Chips with
+          Deep Learning Compiler Techniques'
+        date: '2025-07-01'
+        url: /papers/mlsys/compiler/graph/2025/07/01/elk-exploring-the-efficiency-of-inter-core-connected-ai-chips-with-deep-learning-compiler-techniques.html
+        categories:
+        - mlsys
+        - compiler
+        - graph
+        tag: micro25
       - title: Progressive Raising in Multi-level IR
         date: '2021-02-01'
         url: /papers/mlsys/compiler/graph/2021/02/01/progressive-raising-in-multi-level-ir.html
@@ -3774,6 +3827,14 @@ mlsys:
         - compiler
         - tensor
         tag: osdi21
+      - title: 'StreamTensor: Make Tensors Stream in Dataflow Accelerators for LLMs'
+        date: '2025-09-01'
+        url: /papers/mlsys/compiler/tensor/2025/09/01/streamtensor-make-tensors-stream-in-dataflow-accelerators-for-llms.html
+        categories:
+        - mlsys
+        - compiler
+        - tensor
+        tag: micro25
       - title: 'JITSPMM: Just-in-Time Instruction Generation for Accelerated Sparse
           Matrix-Matrix Multiplication'
         date: '2023-12-01'
@@ -3990,6 +4051,12 @@ mlsys:
       categories:
       - mlsys
       - gpu
+    - title: Dissecting and Modeling the Architecture of Modern GPU Cores
+      date: '2025-01-01'
+      url: /papers/mlsys/gpu/2025/01/01/dissecting-and-modeling-the-architecture-of-modern-gpu-cores.html
+      categories:
+      - mlsys
+      - gpu
     - title: 'WASP: Exploiting GPU Pipeline Parallelism with Hardware-Accelerated
         Automatic Warp Specialization'
       date: '2024-03-01'
@@ -4023,6 +4090,14 @@ mlsys:
         Unstructured Sparsity in Efficient LLM Inference'
       date: '2025-10-01'
       url: /papers/mlsys/gpu/2025/10/01/coruscant-co-designing-gpu-kernel-and-sparse-tensor-core-to-advocate-unstructured-sparsity-in-efficient-llm-inference.html
+      categories:
+      - mlsys
+      - gpu
+      tag: micro25
+    - title: DRAM Fault Classification through Large-Scale Field Monitoring for Robust
+        Memory RAS Management
+      date: '2025-10-01'
+      url: /papers/mlsys/gpu/2025/10/01/dram-fault-classification-through-large-scale-field-monitoring-for-robust-memory-ras-management.html
       categories:
       - mlsys
       - gpu
@@ -4148,6 +4223,14 @@ mlsys:
       categories:
       - mlsys
       - gpu
+    - title: Leveraging Chiplet-Locality for Efficient Memory Mapping in Multi-Chip
+        Module GPUs
+      date: '2025-10-01'
+      url: /papers/mlsys/gpu/2025/10/01/leveraging-chiplet-locality-for-efficient-memory-mapping-in-multi-chip-module-gpus.html
+      categories:
+      - mlsys
+      - gpu
+      tag: micro25
     - title: A Framework for Fine-Grained Synchronization of Dependent GPU Kernels
       date: '2023-05-01'
       url: /papers/mlsys/gpu/2023/05/01/a-framework-for-fine-grained-synchronization-of-dependent-gpu-kernels.html
@@ -4173,6 +4256,24 @@ mlsys:
         - networking
         - nccl
         tag: blog
+      - title: 'SkipReduce: (Interconnection) Network Sparsity to Accelerate Distributed
+          Machine Learning'
+        date: '2025-10-01'
+        url: /papers/mlsys/networking/nccl/2025/10/01/skipreduce-interconnection-network-sparsity-to-accelerate-distributed-machine-learning.html
+        categories:
+        - mlsys
+        - networking
+        - nccl
+        tag: micro25
+      - title: 'NetZIP: Algorithm/Hardware Co-design of In-network Lossless Compression
+          for Distributed Large Model Training'
+        date: '2025-10-01'
+        url: /papers/mlsys/networking/nccl/2025/10/01/netzip-algorithmhardware-co-design-of-in-network-lossless-compression-for-distributed-large-model-training.html
+        categories:
+        - mlsys
+        - networking
+        - nccl
+        tag: micro25
       - title: Enabling Fast Inference and Resilient Training with NCCL 2.27
         date: '2025-07-01'
         url: /papers/mlsys/networking/nccl/2025/07/01/enabling-fast-inference-and-resilient-training-with-nccl-227.html
@@ -4181,6 +4282,15 @@ mlsys:
         - networking
         - nccl
         tag: blog
+      - title: Optimizing All-to-All Collective Communication with Fault Tolerance
+          on Torus Networks
+        date: '2025-10-01'
+        url: /papers/mlsys/networking/nccl/2025/10/01/optimizing-all-to-all-collective-communication-with-fault-tolerance-on-torus-networks.html
+        categories:
+        - mlsys
+        - networking
+        - nccl
+        tag: micro25
       - title: New Scaling Algorithm and Initialization with NVIDIA Collective Communications
           Library 2.23
         date: '2025-01-01'
@@ -4207,6 +4317,14 @@ mlsys:
         - networking
         - nccl
         tag: blog
+      - title: 'SuperMesh: Energy-Efficient Collective Communications for Accelerators'
+        date: '2025-10-01'
+        url: /papers/mlsys/networking/nccl/2025/10/01/supermesh-energy-efficient-collective-communications-for-accelerators.html
+        categories:
+        - mlsys
+        - networking
+        - nccl
+        tag: micro25
       - title: Memory Efficiency, Faster Initialization, and Cost Estimation with
           NVIDIA Collective Communications Library 2.22
         date: '2024-09-01'
@@ -4286,14 +4404,6 @@ mlsys:
       - mlsys
       - networking
       tag: atc16
-    - title: Optimizing All-to-All Collective Communication with Fault Tolerance on
-        Torus Networks
-      date: '2025-10-01'
-      url: /papers/mlsys/networking/2025/10/01/optimizing-all-to-all-collective-communication-with-fault-tolerance-on-torus-networks.html
-      categories:
-      - mlsys
-      - networking
-      tag: micro25
     - title: GPU-Initiated Networking for NCCL
       date: '2025-11-01'
       url: /papers/mlsys/networking/2025/11/01/gpu-initiated-networking-for-nccl.html
