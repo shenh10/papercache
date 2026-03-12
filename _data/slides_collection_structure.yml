@@ -743,40 +743,40 @@ mlsys:
     - categories:
       - mlsys
       - networking
-      date: '2026-03-11'
+      date: '2026-03-12'
       title: RDMA Aware Networks Programming User Manual
-      url: /slides/mlsys/networking/2026/03/11/rdma-aware-networks-programming-user-manual.html
+      url: /slides/mlsys/networking/2026/03/12/rdma-aware-networks-programming-user-manual.html
 recsys:
   posts:
   - categories:
     - recsys
-    date: '2026-03-11'
+    date: '2026-03-12'
     title: 'RecSys-Example: HSTU Model Training and Inference Best Practice'
-    url: /slides/recsys/2026/03/11/recsys-example-hstu-model-training-and-inference-best-practice.html
+    url: /slides/recsys/2026/03/12/recsys-example-hstu-model-training-and-inference-best-practice.html
   - categories:
     - recsys
-    date: '2026-03-11'
+    date: '2026-03-12'
     title: HSTU attention development and optimization using Cutlass/CuTe
-    url: /slides/recsys/2026/03/11/hstu-attention-development-and-optimization-using-cutlasscute.html
+    url: /slides/recsys/2026/03/12/hstu-attention-development-and-optimization-using-cutlasscute.html
 robotics:
   posts:
   - categories:
     - robotics
-    date: '2026-03-11'
-    title: Video Training for Assistance Driving
-    url: /slides/robotics/2026/03/11/video-training-for-assistance-driving.html
-  - categories:
-    - robotics
-    date: '2026-03-11'
+    date: '2026-03-12'
     title: 'Batching Helpers: Optimizing Loss Computation'
-    url: /slides/robotics/2026/03/11/batching-helpers-optimizing-loss-computation.html
+    url: /slides/robotics/2026/03/12/batching-helpers-optimizing-loss-computation.html
   - categories:
     - robotics
-    date: '2026-03-11'
-    title: IsaacSim/Lab Benchmark
-    url: /slides/robotics/2026/03/11/isaacsimlab-benchmark.html
+    date: '2026-03-12'
+    title: Video Training for Assistance Driving
+    url: /slides/robotics/2026/03/12/video-training-for-assistance-driving.html
   - categories:
     - robotics
-    date: '2026-03-11'
+    date: '2026-03-12'
     title: Bridge the Sim2Real Gap with Neural Actuator
-    url: /slides/robotics/2026/03/11/bridge-the-sim2real-gap-with-neural-actuator.html
+    url: /slides/robotics/2026/03/12/bridge-the-sim2real-gap-with-neural-actuator.html
+  - categories:
+    - robotics
+    date: '2026-03-12'
+    title: IsaacSim/Lab Benchmark
+    url: /slides/robotics/2026/03/12/isaacsimlab-benchmark.html

@@ -3176,14 +3176,6 @@ llm:
         - llm
         - engineering
         - rl
-      - title: 'RLAX: Large-Scale, Distributed Reinforcement Learning for Large Language
-          Models on TPUs'
-        date: '2026-03-11'
-        url: /papers/llm/engineering/rl/2026/03/11/rlax-large-scale-distributed-reinforcement-learning-for-large-language-models-on-tpus.html
-        categories:
-        - llm
-        - engineering
-        - rl
       - title: 'StreamRL: Scalable, Heterogeneous, and Elastic RL for LLMs with Disaggregated
           Stream Generation'
         date: '2025-04-01'
@@ -3196,6 +3188,14 @@ llm:
           and Intra-Stage Fusion'
         date: '2024-09-01'
         url: /papers/llm/engineering/rl/2024/09/01/rlhfuse-efficient-rlhf-training-for-large-language-models-with-inter-and-intra-stage-fusion.html
+        categories:
+        - llm
+        - engineering
+        - rl
+      - title: 'RLAX: Large-Scale, Distributed Reinforcement Learning for Large Language
+          Models on TPUs'
+        date: '2026-03-12'
+        url: /papers/llm/engineering/rl/2026/03/12/rlax-large-scale-distributed-reinforcement-learning-for-large-language-models-on-tpus.html
         categories:
         - llm
         - engineering
