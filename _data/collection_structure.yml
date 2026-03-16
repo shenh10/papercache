@@ -483,6 +483,14 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'DeepSeek-V3.2-Exp: Boosting Long-Context Efficiency with DeepSeek
+          Sparse Attention'
+        date: '2025-09-01'
+        url: /papers/llm/algorithm/models/2025/09/01/deepseek-v32-exp-boosting-long-context-efficiency-with-deepseek-sparse-attention.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: 'LLaMA: Open and Efficient Foundation Language Models'
         date: '2023-02-01'
         url: /papers/llm/algorithm/models/2023/02/01/llama-open-and-efficient-foundation-language-models.html
@@ -1178,6 +1186,14 @@ llm:
         - algorithm
         - agent
         tag: nips25
+      - title: 'REAC T: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS'
+        date: '2023-11-01'
+        url: /papers/llm/algorithm/agent/2023/11/01/reac-t-synergizing-reasoning-and-acting-in-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: iclr23
       - title: 'R1-Searcher: Incentivizing the Search Capability in LLMs via Reinforcement
           Learning'
         date: '2025-03-01'
@@ -1217,6 +1233,14 @@ llm:
         - algorithm
         - agent
         tag: nips25
+      - title: 'Tree of Thoughts: Deliberate Problem Solving with Large Language Models'
+        date: '2023-12-01'
+        url: /papers/llm/algorithm/agent/2023/12/01/tree-of-thoughts-deliberate-problem-solving-with-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: nips23
       - title: 'Mem0: Building Production-Ready AI Agents with Scalable Long-Term
           Memory'
         date: '2025-04-01'
@@ -1358,6 +1382,13 @@ llm:
           Prefills'
         date: '2023-08-01'
         url: /papers/llm/engineering/inference/2023/08/01/sarathi-efficient-llm-inference-by-piggybacking-decodes-with-chunked-prefills.html
+        categories:
+        - llm
+        - engineering
+        - inference
+      - title: A Survey of LLM Inference Systems
+        date: '2025-06-01'
+        url: /papers/llm/engineering/inference/2025/06/01/a-survey-of-llm-inference-systems.html
         categories:
         - llm
         - engineering
@@ -2715,6 +2746,14 @@ llm:
         - engineering
         - train
         tag: nsdi25
+      - title: 'Optimus: Accelerating Large-Scale Multi-Modal LLM Training by Bubble
+          Exploitation'
+        date: '2024-08-01'
+        url: /papers/llm/engineering/train/2024/08/01/optimus-accelerating-large-scale-multi-modal-llm-training-by-bubble-exploitation.html
+        categories:
+        - llm
+        - engineering
+        - train
       - title: 'Quartet: Native FP4 Training Can Be Optimal for Large Language Models'
         date: '2025-11-01'
         url: /papers/llm/engineering/train/2025/11/01/quartet-native-fp4-training-can-be-optimal-for-large-language-models.html
@@ -3160,6 +3199,14 @@ llm:
         - llm
         - engineering
         - rl
+      - title: 'RLAX: Large-Scale, Distributed Reinforcement Learning for Large Language
+          Models on TPUs'
+        date: '2025-12-12'
+        url: /papers/llm/engineering/rl/2025/12/12/rlax-large-scale-distributed-reinforcement-learning-for-large-language-models-on-tpus.html
+        categories:
+        - llm
+        - engineering
+        - rl
       - title: Stabilizing MoE Reinforcement Learning by Aligning Training and Inference
           Routers
         date: '2025-10-01'
@@ -3176,6 +3223,22 @@ llm:
         - llm
         - engineering
         - rl
+      - title: 'RLAX: Large-Scale, Distributed Reinforcement Learning for Large Language
+          Models on TPUs'
+        date: '2026-03-11'
+        url: /papers/llm/engineering/rl/2026/03/11/rlax-large-scale-distributed-reinforcement-learning-for-large-language-models-on-tpus.html
+        categories:
+        - llm
+        - engineering
+        - rl
+      - title: 'RLAX: Large-Scale, Distributed Reinforcement Learning for Large Language
+          Models on TPUs'
+        date: '2026-03-09'
+        url: /papers/llm/engineering/rl/2026/03/09/rlax-large-scale-distributed-reinforcement-learning-for-large-language-models-on-tpus.html
+        categories:
+        - llm
+        - engineering
+        - rl
       - title: 'StreamRL: Scalable, Heterogeneous, and Elastic RL for LLMs with Disaggregated
           Stream Generation'
         date: '2025-04-01'
@@ -3188,6 +3251,14 @@ llm:
           and Intra-Stage Fusion'
         date: '2024-09-01'
         url: /papers/llm/engineering/rl/2024/09/01/rlhfuse-efficient-rlhf-training-for-large-language-models-with-inter-and-intra-stage-fusion.html
+        categories:
+        - llm
+        - engineering
+        - rl
+      - title: 'RLAX: Large-Scale, Distributed Reinforcement Learning for Large Language
+          Models on TPUs'
+        date: '2025-12-29'
+        url: /papers/llm/engineering/rl/2025/12/29/rlax-large-scale-distributed-reinforcement-learning-for-large-language-models-on-tpus.html
         categories:
         - llm
         - engineering
@@ -3243,6 +3314,14 @@ llm:
       - title: 'Forge: Scalable Agent RL Framework and Algorithm'
         date: '2026-02-01'
         url: /papers/llm/engineering/rl/2026/02/01/forge-scalable-agent-rl-framework-and-algorithm.html
+        categories:
+        - llm
+        - engineering
+        - rl
+      - title: 'Tree Training: Accelerating Agentic LLMs Training via Shared Prefix
+          Reuse'
+        date: '2026-02-01'
+        url: /papers/llm/engineering/rl/2026/02/01/tree-training-accelerating-agentic-llms-training-via-shared-prefix-reuse.html
         categories:
         - llm
         - engineering
@@ -3990,6 +4069,14 @@ mlsys:
       - mlsys
       - compiler
       tag: cgo23
+    - title: 'JITSPMM: Just-in-Time Instruction Generation for Accelerated Sparse
+        Matrix-Matrix Multiplication'
+      date: '2013-12-01'
+      url: /papers/mlsys/compiler/2013/12/01/jitspmm-just-in-time-instruction-generation-for-accelerated-sparse-matrix-matrix-multiplication.html
+      categories:
+      - mlsys
+      - compiler
+      tag: cgo24
   gpu:
     posts:
     - title: 'Mind the Gap: Attainable Data Movement and Operational Intensity Bounds
@@ -4282,15 +4369,6 @@ mlsys:
         - networking
         - nccl
         tag: blog
-      - title: Optimizing All-to-All Collective Communication with Fault Tolerance
-          on Torus Networks
-        date: '2025-10-01'
-        url: /papers/mlsys/networking/nccl/2025/10/01/optimizing-all-to-all-collective-communication-with-fault-tolerance-on-torus-networks.html
-        categories:
-        - mlsys
-        - networking
-        - nccl
-        tag: micro25
       - title: New Scaling Algorithm and Initialization with NVIDIA Collective Communications
           Library 2.23
         date: '2025-01-01'
@@ -4404,6 +4482,14 @@ mlsys:
       - mlsys
       - networking
       tag: atc16
+    - title: Optimizing All-to-All Collective Communication with Fault Tolerance on
+        Torus Networks
+      date: '2025-10-01'
+      url: /papers/mlsys/networking/2025/10/01/optimizing-all-to-all-collective-communication-with-fault-tolerance-on-torus-networks.html
+      categories:
+      - mlsys
+      - networking
+      tag: micro25
     - title: GPU-Initiated Networking for NCCL
       date: '2025-11-01'
       url: /papers/mlsys/networking/2025/11/01/gpu-initiated-networking-for-nccl.html
