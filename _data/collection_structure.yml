@@ -844,6 +844,14 @@ llm:
           - algorithm
           - architecture
           - attention
+        - title: Technical Report of Attention Residuals
+          date: '2026-03-01'
+          url: /papers/llm/algorithm/architecture/attention/2026/03/01/technical-report-of-attention-residuals.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - attention
         - title: Multipole Attention for Efficient Long Context Reasoning
           date: '2025-06-01'
           url: /papers/llm/algorithm/architecture/attention/2025/06/01/multipole-attention-for-efficient-long-context-reasoning.html
