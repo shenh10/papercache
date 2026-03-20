@@ -704,6 +704,15 @@ llm:
             - attention
             - ssm
             tag: nips25
+          - title: 'Mamba-3: Improved Sequence Modeling using State Space Principles'
+            date: '2026-03-01'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2026/03/01/mamba-3-improved-sequence-modeling-using-state-space-principles.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
           - title: 'GATED DELTA NETWORKS: IMPROVING MAMBA2 WITH DELTA RULE'
             date: '2024-12-01'
             url: /papers/llm/algorithm/architecture/attention/ssm/2024/12/01/gated-delta-networks-improving-mamba2-with-delta-rule.html
@@ -774,6 +783,15 @@ llm:
             - attention
             - sparsity
             tag: iclr25
+          - title: Mixture-of-Depths Attention
+            date: '2026-03-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2026/03/01/mixture-of-depths-attention.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
           - title: 'MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS'
             date: '2025-02-01'
             url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/moba-mixture-of-block-attention-for-long-context-llms.html
@@ -1043,6 +1061,13 @@ llm:
           LLMS'
         date: '2024-12-01'
         url: /papers/llm/algorithm/pretrain_sft/2024/12/01/unveiling-the-secret-recipe-a-guide-for-supervised-fine-tuning-small-llms.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: Scaling up Muon for Large-Scale Language Model Training
+        date: '2025-02-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/02/01/scaling-up-muon-for-large-scale-language-model-training.html
         categories:
         - llm
         - algorithm
@@ -4337,6 +4362,13 @@ mlsys:
         - networking
         - nccl
         tag: blog
+      - title: 'NCCL EP: Towards a Unified Expert Parallel Communication API for NCCL'
+        date: '2026-03-01'
+        url: /papers/mlsys/networking/nccl/2026/03/01/nccl-ep-towards-a-unified-expert-parallel-communication-api-for-nccl.html
+        categories:
+        - mlsys
+        - networking
+        - nccl
       - title: New Scaling Algorithm and Initialization with NVIDIA Collective Communications
           Library 2.23
         date: '2025-01-01'
