@@ -1272,6 +1272,13 @@ llm:
         - llm
         - algorithm
         - agent
+      - title: Composer 2 Technical Report
+        date: '2026-03-25'
+        url: /papers/llm/algorithm/agent/2026/03/25/composer-2-technical-report.html
+        categories:
+        - llm
+        - algorithm
+        - agent
       - title: 'MemAgent: Reshaping Long-Context LLM with Multi-Conv RL-based Memory
           Agent'
         date: '2025-07-01'
@@ -4324,6 +4331,21 @@ mlsys:
       categories:
       - mlsys
       - gpu
+  system:
+    posts:
+    - title: 'Modern Code Review: A Case Study at Google'
+      date: '2026-03-25'
+      url: /papers/mlsys/system/2026/03/25/modern-code-review-a-case-study-at-google.html
+      categories:
+      - mlsys
+      - system
+    - title: Principles and Methodologies for Serial Performance Optimization
+      date: '2025-01-01'
+      url: /papers/mlsys/system/2025/01/01/principles-and-methodologies-for-serial-performance-optimization.html
+      categories:
+      - mlsys
+      - system
+      tag: osdi25
   networking:
     nccl:
       posts:
@@ -4603,15 +4625,6 @@ mlsys:
       categories:
       - mlsys
       - framework
-  system:
-    posts:
-    - title: Principles and Methodologies for Serial Performance Optimization
-      date: '2025-01-01'
-      url: /papers/mlsys/system/2025/01/01/principles-and-methodologies-for-serial-performance-optimization.html
-      categories:
-      - mlsys
-      - system
-      tag: osdi25
 diffusions:
   dllm:
     posts:
