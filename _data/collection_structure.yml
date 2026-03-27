@@ -1279,6 +1279,13 @@ llm:
         - llm
         - algorithm
         - agent
+      - title: 'AVO: Agentic Variation Operators for Autonomous Evolutionary Search'
+        date: '2026-03-01'
+        url: /papers/llm/algorithm/agent/2026/03/01/avo-agentic-variation-operators-for-autonomous-evolutionary-search.html
+        categories:
+        - llm
+        - algorithm
+        - agent
       - title: 'MemAgent: Reshaping Long-Context LLM with Multi-Conv RL-based Memory
           Agent'
         date: '2025-07-01'
