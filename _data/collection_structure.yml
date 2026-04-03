@@ -387,6 +387,16 @@ llm:
           - inference
           - low_precision
           tag: icme24
+        - title: 'IntAttention: A Fully Integer Attention Pipeline for Efficient Edge
+            Inference'
+          date: '2025-11-01'
+          url: /papers/llm/engineering/inference/low_precision/2025/11/01/intattention-a-fully-integer-attention-pipeline-for-efficient-edge-inference.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - low_precision
+          tag: mlsys26
         - title: 'MicroScopiQ: Accelerating Foundational Models through Outlier-Aware
             Microscaling Quantization'
           date: '2024-11-01'
@@ -559,6 +569,16 @@ llm:
           - inference
           - low_precision
           tag: nips25
+        - title: 'TurboQuant: Online Vector Quantization with Near-optimal Distortion
+            Rate'
+          date: '2025-04-01'
+          url: /papers/llm/engineering/inference/low_precision/2025/04/01/turboquant-online-vector-quantization-with-near-optimal-distortion-rate.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - low_precision
+          tag: iclr26
         - title: 'Ozaki Scheme II: A GEMM-oriented emulation of floating-point matrix
             multiplication using an integer modular technique'
           date: '2025-04-01'
@@ -568,6 +588,16 @@ llm:
           - engineering
           - inference
           - low_precision
+        - title: 'CAGE: Curvature-Aware Gradient Estimation for Accurate Quantization-Aware
+            Training'
+          date: '2025-10-01'
+          url: /papers/llm/engineering/inference/low_precision/2025/10/01/cage-curvature-aware-gradient-estimation-for-accurate-quantization-aware-training.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - low_precision
+          tag: mlsys26
         - title: 'MARLIN: Mixed-Precision Auto-Regressive Parallel Inference on Large
             Language Models'
           date: '2024-08-01'
@@ -1040,6 +1070,16 @@ llm:
           - inference
           - speculative_decoding
           tag: nips25
+        - title: 'Accelerating Large-Scale Reasoning Model Inference: Self-Speculative
+            Decoding with Sparse Attention'
+          date: '2025-12-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/12/01/accelerating-large-scale-reasoning-model-inference-self-speculative-decoding-with-sparse-attention.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: mlsys26
         - title: Towards Optimal Multi-Draft Speculative Decoding
           date: '2025-04-01'
           url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/towards-optimal-multi-draft-speculative-decoding.html
@@ -1243,6 +1283,15 @@ llm:
         - llm
         - engineering
         - train
+      - title: 'HexiScale: Accommodating Large Language Model Training over Heterogeneous
+          Environment'
+        date: '2024-09-01'
+        url: /papers/llm/engineering/train/2024/09/01/hexiscale-accommodating-large-language-model-training-over-heterogeneous-environment.html
+        categories:
+        - llm
+        - engineering
+        - train
+        tag: mlsys26
       - title: 'GShard: Scaling Giant Models with Conditional Computation and Automatic
           Sharding'
         date: '2020-06-01'
@@ -1353,6 +1402,15 @@ llm:
         - engineering
         - train
         tag: nips25
+      - title: 'DreamDDP: Accelerating Data Parallel Distributed LLM Training with
+          Layer-wise Scheduled Partial Synchronization'
+        date: '2025-02-01'
+        url: /papers/llm/engineering/train/2025/02/01/dreamddp-accelerating-data-parallel-distributed-llm-training-with-layer-wise-scheduled-partial-synchronization.html
+        categories:
+        - llm
+        - engineering
+        - train
+        tag: mlsys26
       - title: 'WeiPipe: Weight Pipeline Parallelism for Communication-Effective Long-Context
           Large Model Training'
         date: '2025-02-01'
@@ -1755,6 +1813,13 @@ llm:
         - llm
         - engineering
         - rl
+      - title: 'RLHFless: Serverless Computing for Efficient RLHF'
+        date: '2026-02-01'
+        url: /papers/llm/engineering/rl/2026/02/01/rlhfless-serverless-computing-for-efficient-rlhf.html
+        categories:
+        - llm
+        - engineering
+        - rl
       - title: 'ReTool: Reinforcement Learning for Strategic Tool Use in LLMs'
         date: '2025-04-01'
         url: /papers/llm/engineering/rl/2025/04/01/retool-reinforcement-learning-for-strategic-tool-use-in-llms.html
@@ -1774,6 +1839,14 @@ llm:
           Models at All Scales'
         date: '2023-03-01'
         url: /papers/llm/engineering/rl/2023/03/01/deepspeed-chat-easy-fast-and-affordable-rlhf-training-of-chatgpt-like-models-at-all-scales.html
+        categories:
+        - llm
+        - engineering
+        - rl
+      - title: 'LlamaRL: A Distributed Asynchronous Reinforcement Learning Framework
+          for Efficient Large-scale LLM Training'
+        date: '2025-05-01'
+        url: /papers/llm/engineering/rl/2025/05/01/llamarl-a-distributed-asynchronous-reinforcement-learning-framework-for-efficient-large-scale-llm-training.html
         categories:
         - llm
         - engineering
@@ -1806,6 +1879,13 @@ llm:
           Stream Generation'
         date: '2025-04-01'
         url: /papers/llm/engineering/rl/2025/04/01/streamrl-scalable-heterogeneous-and-elastic-rl-for-llms-with-disaggregated-stream-generation.html
+        categories:
+        - llm
+        - engineering
+        - rl
+      - title: 'Heddle: A Distributed Orchestration System for Agentic RL Rollout'
+        date: '2026-03-01'
+        url: /papers/llm/engineering/rl/2026/03/01/heddle-a-distributed-orchestration-system-for-agentic-rl-rollout.html
         categories:
         - llm
         - engineering
@@ -1856,6 +1936,22 @@ llm:
         - llm
         - engineering
         - rl
+      - title: 'ARL-Tangram: Unleash the Resource Efficiency in Agentic Reinforcement
+          Learning'
+        date: '2026-03-01'
+        url: /papers/llm/engineering/rl/2026/03/01/arl-tangram-unleash-the-resource-efficiency-in-agentic-reinforcement-learning.html
+        categories:
+        - llm
+        - engineering
+        - rl
+      - title: 'ECHO-2: A Large-Scale Distributed Rollout Framework for Cost-Efficient
+          Reinforcement Learning'
+        date: '2026-02-01'
+        url: /papers/llm/engineering/rl/2026/02/01/echo-2-a-large-scale-distributed-rollout-framework-for-cost-efficient-reinforcement-learning.html
+        categories:
+        - llm
+        - engineering
+        - rl
       - title: 'RLAX: Large-Scale, Distributed Reinforcement Learning for Large Language
           Models on TPUs'
         date: '2025-12-01'
@@ -1888,6 +1984,14 @@ llm:
         - engineering
         - rl
         tag: nips25
+      - title: 'PipelineRL: Faster On-policy Reinforcement Learning for Long Sequence
+          Generation'
+        date: '2025-09-01'
+        url: /papers/llm/engineering/rl/2025/09/01/pipelinerl-faster-on-policy-reinforcement-learning-for-long-sequence-generation.html
+        categories:
+        - llm
+        - engineering
+        - rl
       - title: 'RLHFuse: Efficient RLHF Training for Large Language Models with Inter-
           and Intra-Stage Fusion'
         date: '2024-09-01'
@@ -2167,6 +2271,15 @@ llm:
         - llm
         - engineering
         - moe
+      - title: 'FarSkip-Collective: Unhobbling Blocking Communication in Mixture of
+          Experts Models'
+        date: '2025-11-01'
+        url: /papers/llm/engineering/moe/2025/11/01/farskip-collective-unhobbling-blocking-communication-in-mixture-of-experts-models.html
+        categories:
+        - llm
+        - engineering
+        - moe
+        tag: mlsys26
       - title: 'TUTEL: ADAPTIVE MIXTURE-OF-EXPERTS AT SCALE'
         date: '2022-06-01'
         url: /papers/llm/engineering/moe/2022/06/01/tutel-adaptive-mixture-of-experts-at-scale.html
@@ -2269,6 +2382,15 @@ llm:
         - llm
         - engineering
         - moe
+      - title: 'MoEBlaze: Breaking the Memory Wall for Efficient MoE Training on Modern
+          GPUs'
+        date: '2026-01-01'
+        url: /papers/llm/engineering/moe/2026/01/01/moeblaze-breaking-the-memory-wall-for-efficient-moe-training-on-modern-gpus.html
+        categories:
+        - llm
+        - engineering
+        - moe
+        tag: mlsys26
       - title: 'DeepSpeed-MoE: Advancing Mixture-of-Experts Inference and Training
           to Power Next-Generation AI Scale'
         date: '2022-01-01'
@@ -2329,6 +2451,14 @@ llm:
       - title: 'Least-Loaded Expert Parallelism: Load Balancing an Imbalanced Mixture-of-Experts'
         date: '2026-01-01'
         url: /papers/llm/engineering/moe/2026/01/01/least-loaded-expert-parallelism-load-balancing-an-imbalanced-mixture-of-experts.html
+        categories:
+        - llm
+        - engineering
+        - moe
+      - title: 'HybridEP: Scaling Expert Parallelism to Cross-Datacenter Scenario
+          via Hybrid Expert/Data Transmission'
+        date: '2025-10-01'
+        url: /papers/llm/engineering/moe/2025/10/01/hybridep-scaling-expert-parallelism-to-cross-datacenter-scenario-via-hybrid-expertdata-transmission.html
         categories:
         - llm
         - engineering
@@ -2861,6 +2991,16 @@ llm:
             - attention
             - sparsity
             tag: nips25
+          - title: 'BLASST: Dynamic Blocked Attention Sparsity via Softmax Thresholding'
+            date: '2025-12-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/12/01/blasst-dynamic-blocked-attention-sparsity-via-softmax-thresholding.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            tag: mlsys26
           - title: Mixture-of-Depths Attention
             date: '2026-03-01'
             url: /papers/llm/algorithm/architecture/attention/sparsity/2026/03/01/mixture-of-depths-attention.html
@@ -3619,6 +3759,14 @@ llm:
         - llm
         - algorithm
         - rl
+      - title: 'INTELLECT-2: A Reasoning Model Trained Through Globally Decentralized
+          Reinforcement Learning'
+        date: '2025-05-01'
+        url: /papers/llm/algorithm/rl/2025/05/01/intellect-2-a-reasoning-model-trained-through-globally-decentralized-reinforcement-learning.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: Proximal Policy Optimization Algorithms
         date: '2017-08-01'
         url: /papers/llm/algorithm/rl/2017/08/01/proximal-policy-optimization-algorithms.html
@@ -3742,6 +3890,15 @@ llm:
         - llm
         - algorithm
         - rl
+      - title: 'Tapered Off-Policy REINFORCE: Stable and Efficient Reinforcement Learning
+          for LLMs'
+        date: '2025-03-01'
+        url: /papers/llm/algorithm/rl/2025/03/01/tapered-off-policy-reinforce-stable-and-efficient-reinforcement-learning-for-llms.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+        tag: neurips25
       - title: On the Interplay of Pre-Training, Mid-Training, and RL on Reasoning
           Language Models
         date: '2025-12-01'
@@ -4793,6 +4950,13 @@ mlsys:
       - mlsys
       - system
       tag: mlsys26
+    - title: '(De)composing Craft: An Elementary Grammar for Sharing Expertise in
+        Craft Workflows'
+      date: '2025-06-01'
+      url: /papers/mlsys/system/2025/06/01/decomposing-craft-an-elementary-grammar-for-sharing-expertise-in-craft-workflows.html
+      categories:
+      - mlsys
+      - system
     - title: Principles and Methodologies for Serial Performance Optimization
       date: '2025-01-01'
       url: /papers/mlsys/system/2025/01/01/principles-and-methodologies-for-serial-performance-optimization.html
