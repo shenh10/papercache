@@ -1,4 +1,1395 @@
 llm:
+  algorithm:
+    pretrain_sft:
+      posts:
+      - title: 'EvoLM: In Search of Lost Language Model Training Dynamics'
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/11/01/evolm-in-search-of-lost-language-model-training-dynamics.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: WHAT MAKES GOOD DATA FOR ALIGNMENT? A COMPREHENSIVE STUDY OF AUTOMATIC
+          DATA SELECTION IN INSTRUCTION TUNING
+        date: '2013-12-01'
+        url: /papers/llm/algorithm/pretrain_sft/2013/12/01/what-makes-good-data-for-alignment-a-comprehensive-study-of-automatic-data-selection-in-instruction-tuning.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'Fusechat: Knowledge Fusion of Chat Models'
+        date: '2024-08-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/08/01/fusechat-knowledge-fusion-of-chat-models.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'Conditional Memory via Scalable Lookup: A New Axis of Sparsity for
+          Large Language Models'
+        date: '2026-01-01'
+        url: /papers/llm/algorithm/pretrain_sft/2026/01/01/conditional-memory-via-scalable-lookup-a-new-axis-of-sparsity-for-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'Nested Learning: The Illusion of Deep Learning Architectures'
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/11/01/nested-learning-the-illusion-of-deep-learning-architectures.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'UNVEILING THE SECRET RECIPE: A GUIDE FOR SUPERVISED FINE-TUNING SMALL
+          LLMS'
+        date: '2024-12-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/12/01/unveiling-the-secret-recipe-a-guide-for-supervised-fine-tuning-small-llms.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'SampleMix: A Sample-wise Pre-training Data Mixing Strategey by Coordinating
+          Data Quality and Diversity'
+        date: '2025-03-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/03/01/samplemix-a-sample-wise-pre-training-data-mixing-strategey-by-coordinating-data-quality-and-diversity.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: Scaling up Muon for Large-Scale Language Model Training
+        date: '2025-02-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/02/01/scaling-up-muon-for-large-scale-language-model-training.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'INFERENCE SCALING LAWS: AN EMPIRICAL ANALYSIS OF COMPUTE-OPTIMAL INFERENCE
+          FOR LLM PROBLEM-SOLVING'
+        date: '2024-08-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/08/01/inference-scaling-laws-an-empirical-analysis-of-compute-optimal-inference-for-llm-problem-solving.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+        tag: iclr25
+      - title: 'DeepNet: Scaling Transformers to 1,000 Layers'
+        date: '2022-03-01'
+        url: /papers/llm/algorithm/pretrain_sft/2022/03/01/deepnet-scaling-transformers-to-1000-layers.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'SkyLadder: Better and Faster Pretraining via Context Window Scheduling'
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/12/01/skyladder-better-and-faster-pretraining-via-context-window-scheduling.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+        tag: nips25
+      - title: 'Stacking Your Transformers: A Closer Look at Model Growth for Efficient
+          LLM Pre-Training'
+        date: '2024-05-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/05/01/stacking-your-transformers-a-closer-look-at-model-growth-for-efficient-llm-pre-training.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+        tag: nips24
+      - title: 'ROFORMER: ENHANCED TRANSFORMER WITH ROTARY POSITION EMBEDDING'
+        date: '2021-04-01'
+        url: /papers/llm/algorithm/pretrain_sft/2021/04/01/roformer-enhanced-transformer-with-rotary-position-embedding.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: "Tensor Programs V: Tuning Large Neural Networks via Zero-Shot\n  \
+          \    Hyperparameter Transfer"
+        date: '2022-03-01'
+        url: /papers/llm/algorithm/pretrain_sft/2022/03/01/tensor-programs-v-tuning-large-neural-networks-via-zero-shot-hyperparameter-transfer.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: Training Compute-Optimal Large Language Models
+        date: '2022-03-01'
+        url: /papers/llm/algorithm/pretrain_sft/2022/03/01/training-compute-optimal-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: How Does Critical Batch Size Scale in Pretraining?
+        date: '2025-04-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/04/01/how-does-critical-batch-size-scale-in-pretraining.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+        tag: iclr25
+      pruning:
+        posts:
+        - title: Beware of Calibration Data for Pruning Large Language Models
+          date: '2025-04-01'
+          url: /papers/llm/algorithm/pretrain_sft/pruning/2025/04/01/beware-of-calibration-data-for-pruning-large-language-models.html
+          categories:
+          - llm
+          - algorithm
+          - pretrain_sft
+          - pruning
+          tag: iclr25
+        - title: 'Probe Pruning: Accelerating LLMs Through Dynamic Pruning via Model-Probing'
+          date: '2025-04-01'
+          url: /papers/llm/algorithm/pretrain_sft/pruning/2025/04/01/probe-pruning-accelerating-llms-through-dynamic-pruning-via-model-probing.html
+          categories:
+          - llm
+          - algorithm
+          - pretrain_sft
+          - pruning
+          tag: iclr25
+    agent:
+      posts:
+      - title: 'ContextCache: Context-Aware Semantic Cache for Multi-Turn Queries
+          in Large Language Models'
+        date: '2025-06-01'
+        url: /papers/llm/algorithm/agent/2025/06/01/contextcache-context-aware-semantic-cache-for-multi-turn-queries-in-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: nips25
+      - title: Composer 2 Technical Report
+        date: '2026-03-25'
+        url: /papers/llm/algorithm/agent/2026/03/25/composer-2-technical-report.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+      - title: 'R1-Searcher: Incentivizing the Search Capability in LLMs via Reinforcement
+          Learning'
+        date: '2025-03-01'
+        url: /papers/llm/algorithm/agent/2025/03/01/r1-searcher-incentivizing-the-search-capability-in-llms-via-reinforcement-learning.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+      - title: 'AVO: Agentic Variation Operators for Autonomous Evolutionary Search'
+        date: '2026-03-01'
+        url: /papers/llm/algorithm/agent/2026/03/01/avo-agentic-variation-operators-for-autonomous-evolutionary-search.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+      - title: 'Retrieval-Augmented Generation for Large Language Models: A Survey'
+        date: '2023-12-01'
+        url: /papers/llm/algorithm/agent/2023/12/01/retrieval-augmented-generation-for-large-language-models-a-survey.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+      - title: 'Large Language Model-Based Agents for Software Engineering: A Survey'
+        date: '2024-09-01'
+        url: /papers/llm/algorithm/agent/2024/09/01/large-language-model-based-agents-for-software-engineering-a-survey.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+      - title: 'MemAgent: Reshaping Long-Context LLM with Multi-Conv RL-based Memory
+          Agent'
+        date: '2025-07-01'
+        url: /papers/llm/algorithm/agent/2025/07/01/memagent-reshaping-long-context-llm-with-multi-conv-rl-based-memory-agent.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: nips25
+      - title: 'WebShop: Towards Scalable Real-World Web Interaction with Grounded
+          Language Agents'
+        date: '2022-07-01'
+        url: /papers/llm/algorithm/agent/2022/07/01/webshop-towards-scalable-real-world-web-interaction-with-grounded-language-agents.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: nips22
+      - title: 'The Landscape of Agentic Reinforcement Learning for LLMs: A Survey'
+        date: '2025-09-01'
+        url: /papers/llm/algorithm/agent/2025/09/01/the-landscape-of-agentic-reinforcement-learning-for-llms-a-survey.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+      - title: Transcending Cost-Quality Tradeoff in Agent Serving via Session-Awareness
+        date: '2025-09-01'
+        url: /papers/llm/algorithm/agent/2025/09/01/transcending-cost-quality-tradeoff-in-agent-serving-via-session-awareness.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: nips25
+      - title: 'Tree of Thoughts: Deliberate Problem Solving with Large Language Models'
+        date: '2023-09-01'
+        url: /papers/llm/algorithm/agent/2023/09/01/tree-of-thoughts-deliberate-problem-solving-with-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: nips23
+      - title: Effective Context Engineering for AI Agents
+        date: '2025-09-01'
+        url: /papers/llm/algorithm/agent/2025/09/01/effective-context-engineering-for-ai-agents.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+      - title: 'Mem0: Building Production-Ready AI Agents with Scalable Long-Term
+          Memory'
+        date: '2025-04-01'
+        url: /papers/llm/algorithm/agent/2025/04/01/mem0-building-production-ready-ai-agents-with-scalable-long-term-memory.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+      - title: Do Phone-Use Agents Respect Your Privacy?
+        date: '2026-03-01'
+        url: /papers/llm/algorithm/agent/2026/03/01/do-phone-use-agents-respect-your-privacy.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+      - title: Towards a Science of Scaling Agent Systems
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/agent/2025/12/01/towards-a-science-of-scaling-agent-systems.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+      - title: 'Search-R1: Training LLMs to Reason and Leverage Search Engines with
+          Reinforcement Learning'
+        date: '2025-03-01'
+        url: /papers/llm/algorithm/agent/2025/03/01/search-r1-training-llms-to-reason-and-leverage-search-engines-with-reinforcement-learning.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+      - title: 'UI-TARS-2 Technical Report: Advancing GUI Agent with Multi-Turn Reinforcement
+          Learning'
+        date: '2025-09-01'
+        url: /papers/llm/algorithm/agent/2025/09/01/ui-tars-2-technical-report-advancing-gui-agent-with-multi-turn-reinforcement-learning.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+      - title: 'REAC T: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS'
+        date: '2023-03-01'
+        url: /papers/llm/algorithm/agent/2023/03/01/reac-t-synergizing-reasoning-and-acting-in-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: iclr23
+      - title: 'A Survey on Test-Time Scaling in Large Language Models: What, How,
+          Where, and How Well'
+        date: '2025-05-01'
+        url: /papers/llm/algorithm/agent/2025/05/01/a-survey-on-test-time-scaling-in-large-language-models-what-how-where-and-how-well.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+      - title: 'Toolformer: Language Models Can Teach Themselves to Use Tools'
+        date: '2023-02-01'
+        url: /papers/llm/algorithm/agent/2023/02/01/toolformer-language-models-can-teach-themselves-to-use-tools.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: nips23
+      - title: Chain-of-Thought Prompting Elicits Reasoning in Large Language Models
+        date: '2022-01-01'
+        url: /papers/llm/algorithm/agent/2022/01/01/chain-of-thought-prompting-elicits-reasoning-in-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: nips22
+      - title: 'FIREACT: TOWARD LANGUAGE AGENT FINE-TUNING'
+        date: '2023-10-01'
+        url: /papers/llm/algorithm/agent/2023/10/01/fireact-toward-language-agent-fine-tuning.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+    models:
+      posts:
+      - title: 'NVIDIA Nemotron 3: Efficient and Open Intelligence'
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/models/2025/12/01/nvidia-nemotron-3-efficient-and-open-intelligence.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'GLM-4.5: Agentic, Reasoning, and Coding (ARC) Foundation Models'
+        date: '2025-08-01'
+        url: /papers/llm/algorithm/models/2025/08/01/glm-45-agentic-reasoning-and-coding-arc-foundation-models.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: Qwen3 Technical Report
+        date: '2025-05-01'
+        url: /papers/llm/algorithm/models/2025/05/01/qwen3-technical-report.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts
+          Language Model'
+        date: '2024-06-01'
+        url: /papers/llm/algorithm/models/2024/06/01/deepseek-v2-a-strong-economical-and-efficient-mixture-of-experts-language-model.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'NVIDIA Nemotron Nano 2: An Accurate and Efficient Hybrid Mamba-Transformer
+          Reasoning Model'
+        date: '2025-08-01'
+        url: /papers/llm/algorithm/models/2025/08/01/nvidia-nemotron-nano-2-an-accurate-and-efficient-hybrid-mamba-transformer-reasoning-model.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'System Card: Claude Opus 4.5'
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/models/2025/11/01/system-card-claude-opus-45.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: MiMo-V2-Flash Technical Report
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/models/2025/12/01/mimo-v2-flash-technical-report.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: HunyuanOCR Technical Report
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/models/2025/11/01/hunyuanocr-technical-report.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: Kling-Omni Technical Report
+        date: '2025-08-01'
+        url: /papers/llm/algorithm/models/2025/08/01/kling-omni-technical-report.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'KIMI K1.5: SCALING REINFORCEMENT LEARNING WITH LLMS'
+        date: '2025-01-01'
+        url: /papers/llm/algorithm/models/2025/01/01/kimi-k15-scaling-reinforcement-learning-with-llms.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: LongCat-Flash Technical Report
+        date: '2025-08-01'
+        url: /papers/llm/algorithm/models/2025/08/01/longcat-flash-technical-report.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'System Card: Claude Opus 4.6'
+        date: '2026-02-01'
+        url: /papers/llm/algorithm/models/2026/02/01/system-card-claude-opus-46.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: dots.llm1 Technical Report
+        date: '2025-06-01'
+        url: /papers/llm/algorithm/models/2025/06/01/dotsllm1-technical-report.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: IQuest-Coder-V1 Technical Report
+        date: '2026-01-01'
+        url: /papers/llm/algorithm/models/2026/01/01/iquest-coder-v1-technical-report.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'MiMo-Audio: Audio Language Models are Few-Shot Learners'
+        date: '2025-09-01'
+        url: /papers/llm/algorithm/models/2025/09/01/mimo-audio-audio-language-models-are-few-shot-learners.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'Llama 2: Open Foundation and Fine-Tuned Chat Models'
+        date: '2023-07-01'
+        url: /papers/llm/algorithm/models/2023/07/01/llama-2-open-foundation-and-fine-tuned-chat-models.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'Gemini 1.5: Unlocking multimodal understanding across millions of
+          tokens of context'
+        date: '2024-03-01'
+        url: /papers/llm/algorithm/models/2024/03/01/gemini-15-unlocking-multimodal-understanding-across-millions-of-tokens-of-context.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: LongCat-Flash-Omni Technical Report
+        date: '2025-10-01'
+        url: /papers/llm/algorithm/models/2025/10/01/longcat-flash-omni-technical-report.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: Gemini 3 Pro Model Card
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/models/2025/11/01/gemini-3-pro-model-card.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'Update to GPT-5 System Card: GPT-5.2'
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/models/2025/12/01/update-to-gpt-5-system-card-gpt-52.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'KIMI K2.5: VISUAL AGENTIC INTELLIGENCE'
+        date: '2026-02-01'
+        url: /papers/llm/algorithm/models/2026/02/01/kimi-k25-visual-agentic-intelligence.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'Seed1.8 Model Card: Towards Generalized Real-World Agency'
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/models/2025/12/01/seed18-model-card-towards-generalized-real-world-agency.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: The Llama 3 Herd of Models
+        date: '2024-07-01'
+        url: /papers/llm/algorithm/models/2024/07/01/the-llama-3-herd-of-models.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'DeepSeek-V3.2-Exp: Boosting Long-Context Efficiency with DeepSeek
+          Sparse Attention'
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/models/2025/11/01/deepseek-v32-exp-boosting-long-context-efficiency-with-deepseek-sparse-attention.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'MiMo: Unlocking the Reasoning Potential of Language Model – From Pretraining
+          to Posttraining'
+        date: '2025-05-01'
+        url: /papers/llm/algorithm/models/2025/05/01/mimo-unlocking-the-reasoning-potential-of-language-model-from-pretraining-to-posttraining.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: LongCat-Flash-Thinking Technical Report
+        date: '2025-09-01'
+        url: /papers/llm/algorithm/models/2025/09/01/longcat-flash-thinking-technical-report.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'Seed2.0 Model Card: Towards Intelligence Frontier for Real-World Complexity'
+        date: '2026-02-01'
+        url: /papers/llm/algorithm/models/2026/02/01/seed20-model-card-towards-intelligence-frontier-for-real-world-complexity.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'Nemotron-H: A Family of Accurate and Efficient Hybrid Mamba-Transformer
+          Models'
+        date: '2025-04-01'
+        url: /papers/llm/algorithm/models/2025/04/01/nemotron-h-a-family-of-accurate-and-efficient-hybrid-mamba-transformer-models.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: DeepSeek-V3 Technical Report
+        date: '2024-12-01'
+        url: /papers/llm/algorithm/models/2024/12/01/deepseek-v3-technical-report.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'Nemotron 3 Nano: Open, Efficient Mixture-of-Experts Hybrid Mamba-Transformer
+          Model for Agentic Reasoning'
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/models/2025/12/01/nemotron-3-nano-open-efficient-mixture-of-experts-hybrid-mamba-transformer-model-for-agentic-reasoning.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'QwenLong-L1.5: Post-Training Recipe for Long-Context Reasoning and
+          Memory Management'
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/models/2025/12/01/qwenlong-l15-post-training-recipe-for-long-context-reasoning-and-memory-management.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'Step-3 is Large yet Affordable: Model-system Co-design for Cost-effective
+          Decoding'
+        date: '2025-07-01'
+        url: /papers/llm/algorithm/models/2025/07/01/step-3-is-large-yet-affordable-model-system-co-design-for-cost-effective-decoding.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'KIMI K2: OPEN AGENTIC INTELLIGENCE'
+        date: '2025-08-01'
+        url: /papers/llm/algorithm/models/2025/08/01/kimi-k2-open-agentic-intelligence.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'DeepSeek-Coder: When the Large Language Model Meets Programming -
+          The Rise of Code Intelligence'
+        date: '2024-01-01'
+        url: /papers/llm/algorithm/models/2024/01/01/deepseek-coder-when-the-large-language-model-meets-programming-the-rise-of-code-intelligence.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'DeepSeek-V3.2: Pushing the Frontier of Open Large Language Models'
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/models/2025/12/01/deepseek-v32-pushing-the-frontier-of-open-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'DeepSeek-OCR: Contexts Optical Compression'
+        date: '2025-10-01'
+        url: /papers/llm/algorithm/models/2025/10/01/deepseek-ocr-contexts-optical-compression.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'System Card: Claude Mythos Preview'
+        date: '2026-04-01'
+        url: /papers/llm/algorithm/models/2026/04/01/system-card-claude-mythos-preview.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'LLaMA: Open and Efficient Foundation Language Models'
+        date: '2023-02-01'
+        url: /papers/llm/algorithm/models/2023/02/01/llama-open-and-efficient-foundation-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: Scaling Embeddings Outperforms Scaling Experts in Language Models
+        date: '2026-01-01'
+        url: /papers/llm/algorithm/models/2026/01/01/scaling-embeddings-outperforms-scaling-experts-in-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'Seed1.5-Thinking: Advancing Superb Reasoning Models with Reinforcement
+          Learning'
+        date: '2025-04-01'
+        url: /papers/llm/algorithm/models/2025/04/01/seed15-thinking-advancing-superb-reasoning-models-with-reinforcement-learning.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'KIMI LINEAR: AN EXPRESSIVE, EFFICIENT ATTENTION ARCHITECTURE'
+        date: '2025-10-01'
+        url: /papers/llm/algorithm/models/2025/10/01/kimi-linear-an-expressive-efficient-attention-architecture.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'GLM-5: From Vibe Coding to Agentic Engineering'
+        date: '2026-02-01'
+        url: /papers/llm/algorithm/models/2026/02/01/glm-5-from-vibe-coding-to-agentic-engineering.html
+        categories:
+        - llm
+        - algorithm
+        - models
+    architecture:
+      attention:
+        linear:
+          posts:
+          - title: 'MiniMax-01: Scaling Foundation Models with Lightning Attention'
+            date: '2025-01-01'
+            url: /papers/llm/algorithm/architecture/attention/linear/2025/01/01/minimax-01-scaling-foundation-models-with-lightning-attention.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+          - title: Linear Attention Sequence Parallelism
+            date: '2024-04-01'
+            url: /papers/llm/algorithm/architecture/attention/linear/2024/04/01/linear-attention-sequence-parallelism.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+          - title: 'Various Lengths, Constant Speed: Efficient Language Modeling with
+              Lightning Attention'
+            date: '2024-05-01'
+            url: /papers/llm/algorithm/architecture/attention/linear/2024/05/01/various-lengths-constant-speed-efficient-language-modeling-with-lightning-attention.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+          - title: Scaling TransNormer to 175 Billion Parameters
+            date: '2023-07-01'
+            url: /papers/llm/algorithm/architecture/attention/linear/2023/07/01/scaling-transnormer-to-175-billion-parameters.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+          - title: The Devil in Linear Transformer
+            date: '2022-10-01'
+            url: /papers/llm/algorithm/architecture/attention/linear/2022/10/01/the-devil-in-linear-transformer.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+          - title: LEARNING ASSOCIATIVE INFERENCE USING FAST WEIGHT MEMORY
+            date: '2021-02-01'
+            url: /papers/llm/algorithm/architecture/attention/linear/2021/02/01/learning-associative-inference-using-fast-weight-memory.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+            tag: iclr21
+          - title: Artificial Hippocampus Networks for Efficient Long-Context Modeling
+            date: '2025-08-01'
+            url: /papers/llm/algorithm/architecture/attention/linear/2025/08/01/artificial-hippocampus-networks-for-efficient-long-context-modeling.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+          - title: Transformer Quality in Linear Time
+            date: '2022-01-01'
+            url: /papers/llm/algorithm/architecture/attention/linear/2022/01/01/transformer-quality-in-linear-time.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+            tag: pmlr22
+          - title: Linear Transformers Are Secretly Fast Weight Programmers
+            date: '2021-06-01'
+            url: /papers/llm/algorithm/architecture/attention/linear/2021/06/01/linear-transformers-are-secretly-fast-weight-programmers.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+            tag: icml21
+          - title: 'Lightning Attention-2: A Free Lunch for Handling Unlimited Sequence
+              Lengths in Large Language Models'
+            date: '2024-01-01'
+            url: /papers/llm/algorithm/architecture/attention/linear/2024/01/01/lightning-attention-2-a-free-lunch-for-handling-unlimited-sequence-lengths-in-large-language-models.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+          - title: Gated Linear Attention Transformers with Hardware-Efficient Training
+            date: '2023-12-01'
+            url: /papers/llm/algorithm/architecture/attention/linear/2023/12/01/gated-linear-attention-transformers-with-hardware-efficient-training.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+          - title: 'Transformers are RNNs: Fast Autoregressive Transformers with Linear
+              Attention'
+            date: '2020-06-01'
+            url: /papers/llm/algorithm/architecture/attention/linear/2020/06/01/transformers-are-rnns-fast-autoregressive-transformers-with-linear-attention.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
+            tag: icml20
+        posts:
+        - title: 'A Little Goes a Long Way: Efficient Long Context Training and Inference
+            with Partial Contexts'
+          date: '2025-04-01'
+          url: /papers/llm/algorithm/architecture/attention/2025/04/01/a-little-goes-a-long-way-efficient-long-context-training-and-inference-with-partial-contexts.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - attention
+          tag: iclr25
+        - title: 'Why Low-Precision Transformer Training Fails: An Analysis on Flash
+            Attention'
+          date: '2025-10-01'
+          url: /papers/llm/algorithm/architecture/attention/2025/10/01/why-low-precision-transformer-training-fails-an-analysis-on-flash-attention.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - attention
+        - title: Technical Report of Attention Residuals
+          date: '2026-03-01'
+          url: /papers/llm/algorithm/architecture/attention/2026/03/01/technical-report-of-attention-residuals.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - attention
+        - title: Multipole Attention for Efficient Long Context Reasoning
+          date: '2025-06-01'
+          url: /papers/llm/algorithm/architecture/attention/2025/06/01/multipole-attention-for-efficient-long-context-reasoning.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - attention
+          tag: nips25
+        - title: 'mHC: Manifold-Constrained Hyper-Connections'
+          date: '2025-12-01'
+          url: /papers/llm/algorithm/architecture/attention/2025/12/01/mhc-manifold-constrained-hyper-connections.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - attention
+        - title: Tensor Product Attention Is All You Need
+          date: '2025-12-01'
+          url: /papers/llm/algorithm/architecture/attention/2025/12/01/tensor-product-attention-is-all-you-need.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - attention
+          tag: nips25
+        - title: 'Gated Attention for Large Language Models: Non-linearity, Sparsity,
+            and Attention-Sink-Free'
+          date: '2025-06-01'
+          url: /papers/llm/algorithm/architecture/attention/2025/06/01/gated-attention-for-large-language-models-non-linearity-sparsity-and-attention-sink-free.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - attention
+        sparsity:
+          posts:
+          - title: 'Native Sparse Attention: Hardware-Aligned and Natively Trainable
+              Sparse Attention'
+            date: '2025-02-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/native-sparse-attention-hardware-aligned-and-natively-trainable-sparse-attention.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+          - title: 'FlexPrefill: A Context-Aware Sparse Attention Mechanism for Efficient
+              Long-Sequence Inference'
+            date: '2025-02-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/flexprefill-a-context-aware-sparse-attention-mechanism-for-efficient-long-sequence-inference.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            tag: iclr25
+          - title: 'MInference 1.0: Accelerating Pre-filling for Long-Context LLMs
+              via Dynamic Sparse Attention'
+            date: '2024-07-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2024/07/01/minference-10-accelerating-pre-filling-for-long-context-llms-via-dynamic-sparse-attention.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            tag: nips24
+          - title: 'MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS'
+            date: '2025-02-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/moba-mixture-of-block-attention-for-long-context-llms.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            tag: nips25
+          - title: 'BLASST: Dynamic Blocked Attention Sparsity via Softmax Thresholding'
+            date: '2025-12-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/12/01/blasst-dynamic-blocked-attention-sparsity-via-softmax-thresholding.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            tag: mlsys26
+          - title: 'Longformer: The Long-Document Transformer'
+            date: '2020-04-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2020/04/01/longformer-the-long-document-transformer.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+          - title: 'XAttention: Block Sparse Attention with Antidiagonal Scoring'
+            date: '2025-03-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/03/01/xattention-block-sparse-attention-with-antidiagonal-scoring.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            tag: iclr25
+          - title: Mixture-of-Depths Attention
+            date: '2026-03-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2026/03/01/mixture-of-depths-attention.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+        ssm:
+          posts:
+          - title: SIMPLIFIED STATE SPACE LAYERS FOR SEQUENCE MODELING
+            date: '2023-03-01'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2023/03/01/simplified-state-space-layers-for-sequence-modeling.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+          - title: 'GATED DELTA NETWORKS: IMPROVING MAMBA2 WITH DELTA RULE'
+            date: '2024-12-01'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2024/12/01/gated-delta-networks-improving-mamba2-with-delta-rule.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+            tag: iclr25
+          - title: Combining Recurrent, Convolutional, and Continuous-time Models
+              with Linear State-Space Layers
+            date: '2021-10-01'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2021/10/01/combining-recurrent-convolutional-and-continuous-time-models-with-linear-state-space-layers.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+          - title: Efficiently Modeling Long Sequences with Structured State Spaces
+            date: '2021-10-01'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2021/10/01/efficiently-modeling-long-sequences-with-structured-state-spaces.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+          - title: 'Mamba-3: Improved Sequence Modeling using State Space Principles'
+            date: '2026-03-01'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2026/03/01/mamba-3-improved-sequence-modeling-using-state-space-principles.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+          - title: 'MoE-Mamba: Efficient Selective State Space Models with Mixture
+              of Experts'
+            date: '2024-02-01'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2024/02/01/moe-mamba-efficient-selective-state-space-models-with-mixture-of-experts.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+          - title: Overcoming Long-Context Limitations of State-Space Models via Context-Dependent
+              Sparse Attention
+            date: '2025-07-01'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2025/07/01/overcoming-long-context-limitations-of-state-space-models-via-context-dependent-sparse-attention.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+            tag: nips25
+          - title: 'Transformers are SSMs: Generalized Models and Efficient Algorithms
+              Through Structured State Space Duality'
+            date: '2024-05-01'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2024/05/01/transformers-are-ssms-generalized-models-and-efficient-algorithms-through-structured-state-space-duality.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+          - title: 'Hungry Hungry Hippos: Towards Language Modeling with State Space
+              Models'
+            date: '2023-04-01'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2023/04/01/hungry-hungry-hippos-towards-language-modeling-with-state-space-models.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+          - title: 'Jamba: A Hybrid Transformer-Mamba Language Model'
+            date: '2024-03-01'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2024/03/01/jamba-a-hybrid-transformer-mamba-language-model.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+          - title: 'Mamba: Linear-Time Sequence Modeling with Selective State Spaces'
+            date: '2023-12-01'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2023/12/01/mamba-linear-time-sequence-modeling-with-selective-state-spaces.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+          - title: 'Transformer-XL: Attentive Language Models Beyond a Fixed-Length
+              Context'
+            date: '2019-01-01'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2019/01/01/transformer-xl-attentive-language-models-beyond-a-fixed-length-context.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+      transformer-variant:
+        posts:
+        - title: 'Scaling Laws with Vocabulary: Larger Models Deserve Larger Vocabularies'
+          date: '2024-07-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2024/07/01/scaling-laws-with-vocabulary-larger-models-deserve-larger-vocabularies.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+        - title: 'MHLA: Restoring Expressivity of Linear Attention via Token-Level
+            Multi-Head'
+          date: '2026-01-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2026/01/01/mhla-restoring-expressivity-of-linear-attention-via-token-level-multi-head.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+        - title: 'Scaling up Test-Time Compute with Latent Reasoning: A Recurrent
+            Depth Approach'
+          date: '2024-03-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2024/03/01/scaling-up-test-time-compute-with-latent-reasoning-a-recurrent-depth-approach.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+        - title: 'mHC-lite: You Don’t Need 20 Sinkhorn-Knopp Iterations'
+          date: '2026-01-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2026/01/01/mhc-lite-you-dont-need-20-sinkhorn-knopp-iterations.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+        - title: Hierarchical Reasoning Model
+          date: '2025-08-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2025/08/01/hierarchical-reasoning-model.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+        - title: 'Reasoning with Latent Thoughts: On the Power of Looped Transformers'
+          date: '2025-02-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2025/02/01/reasoning-with-latent-thoughts-on-the-power-of-looped-transformers.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+        - title: Hyper-Connections
+          date: '2025-04-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2025/04/01/hyper-connections.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+          tag: iclr25
+        - title: Parallel Loop Transformer for Efficient Test-Time Computation Scaling
+          date: '2025-10-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2025/10/01/parallel-loop-transformer-for-efficient-test-time-computation-scaling.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+        - title: Universal Reasoning Model
+          date: '2025-12-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2025/12/01/universal-reasoning-model.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+          tag: nips25
+        - title: Universal Transformers
+          date: '2018-07-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2018/07/01/universal-transformers.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+        - title: Fast-weight Product Key Memory
+          date: '2026-01-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2026/01/01/fast-weight-product-key-memory.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+      posts:
+      - title: 'Fast Attention Mechanisms: A Tale of Parallelism'
+        date: '2025-09-01'
+        url: /papers/llm/algorithm/architecture/2025/09/01/fast-attention-mechanisms-a-tale-of-parallelism.html
+        categories:
+        - llm
+        - algorithm
+        - architecture
+        tag: nips25
+      - title: Virtual Width Networks
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/architecture/2025/11/01/virtual-width-networks.html
+        categories:
+        - llm
+        - algorithm
+        - architecture
+      - title: 'Spark Transformer: Reactivating Sparsity in FFN and Attention'
+        date: '2025-06-01'
+        url: /papers/llm/algorithm/architecture/2025/06/01/spark-transformer-reactivating-sparsity-in-ffn-and-attention.html
+        categories:
+        - llm
+        - algorithm
+        - architecture
+        tag: nips25
+      - title: Weight-sparse Transformers Have Interpretable Circuits
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/architecture/2025/11/01/weight-sparse-transformers-have-interpretable-circuits.html
+        categories:
+        - llm
+        - algorithm
+        - architecture
+    rl:
+      posts:
+      - title: 'ProRL: Prolonged Reinforcement Learning Expands Reasoning Boundaries
+          in Large Language Models'
+        date: '2025-05-01'
+        url: /papers/llm/algorithm/rl/2025/05/01/prorl-prolonged-reinforcement-learning-expands-reasoning-boundaries-in-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: Group Sequence Policy Optimization
+        date: '2025-07-01'
+        url: /papers/llm/algorithm/rl/2025/07/01/group-sequence-policy-optimization.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: 'DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open
+          Language Models'
+        date: '2024-02-01'
+        url: /papers/llm/algorithm/rl/2024/02/01/deepseekmath-pushing-the-limits-of-mathematical-reasoning-in-open-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: Scaling LLM Test-Time Compute Optimally can be More Effective than
+          Scaling Model Parameters
+        date: '2024-08-01'
+        url: /papers/llm/algorithm/rl/2024/08/01/scaling-llm-test-time-compute-optimally-can-be-more-effective-than-scaling-model-parameters.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: Training a Helpful and Harmless Assistant with Reinforcement Learning
+          from Human Feedback
+        date: '2022-04-01'
+        url: /papers/llm/algorithm/rl/2022/04/01/training-a-helpful-and-harmless-assistant-with-reinforcement-learning-from-human-feedback.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: 'Direct Preference Optimization: Your Language Model is Secretly a
+          Reward Model'
+        date: '2023-05-01'
+        url: /papers/llm/algorithm/rl/2023/05/01/direct-preference-optimization-your-language-model-is-secretly-a-reward-model.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+        tag: nips23
+      - title: 'RLlib: Abstractions for Distributed Reinforcement Learning'
+        date: '2017-12-01'
+        url: /papers/llm/algorithm/rl/2017/12/01/rllib-abstractions-for-distributed-reinforcement-learning.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+        tag: pmlr18
+      - title: Exploring Data Scaling Trends and Effects in Reinforcement Learning
+          from Human Feedback
+        date: '2025-04-01'
+        url: /papers/llm/algorithm/rl/2025/04/01/exploring-data-scaling-trends-and-effects-in-reinforcement-learning-from-human-feedback.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: 'Tapered Off-Policy REINFORCE: Stable and Efficient Reinforcement Learning
+          for LLMs'
+        date: '2025-03-01'
+        url: /papers/llm/algorithm/rl/2025/03/01/tapered-off-policy-reinforce-stable-and-efficient-reinforcement-learning-for-llms.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+        tag: neurips25
+      - title: 'DAPO: An Open-Source LLM Reinforcement Learning System at Scale'
+        date: '2025-05-01'
+        url: /papers/llm/algorithm/rl/2025/05/01/dapo-an-open-source-llm-reinforcement-learning-system-at-scale.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: 'INTELLECT-2: A Reasoning Model Trained Through Globally Decentralized
+          Reinforcement Learning'
+        date: '2025-05-01'
+        url: /papers/llm/algorithm/rl/2025/05/01/intellect-2-a-reasoning-model-trained-through-globally-decentralized-reinforcement-learning.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: Playing Atari with Deep Reinforcement Learning
+        date: '2013-12-01'
+        url: /papers/llm/algorithm/rl/2013/12/01/playing-atari-with-deep-reinforcement-learning.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: 'NeMo-Aligner: Scalable Toolkit for Efficient Model Alignment'
+        date: '2024-05-01'
+        url: /papers/llm/algorithm/rl/2024/05/01/nemo-aligner-scalable-toolkit-for-efficient-model-alignment.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: 'HelpSteer2: Open-source dataset for training top-performing reward
+          models'
+        date: '2024-07-01'
+        url: /papers/llm/algorithm/rl/2024/07/01/helpsteer2-open-source-dataset-for-training-top-performing-reward-models.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+        tag: nips24
+      - title: 'SteerLM: Attribute Conditioned SFT as an (User-Steerable) Alternative
+          to RLHF'
+        date: '2023-10-01'
+        url: /papers/llm/algorithm/rl/2023/10/01/steerlm-attribute-conditioned-sft-as-an-user-steerable-alternative-to-rlhf.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: Proximal Policy Optimization Algorithms
+        date: '2017-08-01'
+        url: /papers/llm/algorithm/rl/2017/08/01/proximal-policy-optimization-algorithms.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: 'ON-POLICY RL MEETS OFF-POLICY EXPERTS: HARMONIZING SUPERVISED FINE-TUNING
+          AND REINFORCEMENT LEARNING VIA DYNAMIC WEIGHTING'
+        date: '2025-08-01'
+        url: /papers/llm/algorithm/rl/2025/08/01/on-policy-rl-meets-off-policy-experts-harmonizing-supervised-fine-tuning-and-reinforcement-learning-via-dynamic-weighting.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: Massively Parallel Methods for Deep Reinforcement Learning
+        date: '2015-07-01'
+        url: /papers/llm/algorithm/rl/2015/07/01/massively-parallel-methods-for-deep-reinforcement-learning.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: Learning to summarize from human feedback
+        date: '2020-09-01'
+        url: /papers/llm/algorithm/rl/2020/09/01/learning-to-summarize-from-human-feedback.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+        tag: nips20
+      - title: The Entropy Mechanism of Reinforcement Learning for Reasoning Language
+          Models
+        date: '2025-05-01'
+        url: /papers/llm/algorithm/rl/2025/05/01/the-entropy-mechanism-of-reinforcement-learning-for-reasoning-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: Training language models to follow instructions with human feedback
+        date: '2022-03-01'
+        url: /papers/llm/algorithm/rl/2022/03/01/training-language-models-to-follow-instructions-with-human-feedback.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: Understanding and Exploiting Weight Update Sparsity for Communication-Efficient
+          Distributed RL
+        date: '2026-02-01'
+        url: /papers/llm/algorithm/rl/2026/02/01/understanding-and-exploiting-weight-update-sparsity-for-communication-efficient-distributed-rl.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: On the Interplay of Pre-Training, Mid-Training, and RL on Reasoning
+          Language Models
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/rl/2025/12/01/on-the-interplay-of-pre-training-mid-training-and-rl-on-reasoning-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: Self-Play Fine-Tuning Converts Weak Language Models to Strong Language
+          Models
+        date: '2024-01-01'
+        url: /papers/llm/algorithm/rl/2024/01/01/self-play-fine-tuning-converts-weak-language-models-to-strong-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: Mastering the game of Go with deep neural networks and tree search
+        date: '2016-01-01'
+        url: /papers/llm/algorithm/rl/2016/01/01/mastering-the-game-of-go-with-deep-neural-networks-and-tree-search.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+    eval:
+      posts:
+      - title: 'GAIA: A Benchmark for General AI Assistants'
+        date: '2023-11-01'
+        url: /papers/llm/algorithm/eval/2023/11/01/gaia-a-benchmark-for-general-ai-assistants.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+      - title: 'MCP-Bench: Benchmarking Tool-Using LLM Agents with Complex Real-World
+          Tasks via MCP Servers'
+        date: '2025-08-01'
+        url: /papers/llm/algorithm/eval/2025/08/01/mcp-bench-benchmarking-tool-using-llm-agents-with-complex-real-world-tasks-via-mcp-servers.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+      - title: Instruction-Following Evaluation for Large Language Models
+        date: '2023-11-01'
+        url: /papers/llm/algorithm/eval/2023/11/01/instruction-following-evaluation-for-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+      - title: 'LiveCodeBench: Holistic and Contamination Free Evaluation of Large
+          Language Models for Code'
+        date: '2024-05-01'
+        url: /papers/llm/algorithm/eval/2024/05/01/livecodebench-holistic-and-contamination-free-evaluation-of-large-language-models-for-code.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+      - title: On the Tool Manipulation Capability of Open-source Large Language Models
+        date: '2023-05-01'
+        url: /papers/llm/algorithm/eval/2023/05/01/on-the-tool-manipulation-capability-of-open-source-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+      - title: 'SWE-BENCH: Can Language Models Resolve Real-world Github Issues?'
+        date: '2024-09-01'
+        url: /papers/llm/algorithm/eval/2024/09/01/swe-bench-can-language-models-resolve-real-world-github-issues.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+        tag: iclr
+      - title: Measuring Massive Multitask Language Understanding
+        date: '2020-09-01'
+        url: /papers/llm/algorithm/eval/2020/09/01/measuring-massive-multitask-language-understanding.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+        tag: iclr21
+      - title: The LLM Evaluation Guidebook
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/eval/2025/12/01/the-llm-evaluation-guidebook.html
+        categories:
+        - llm
+        - algorithm
+        - eval
   engineering:
     inference:
       speculative_decoding:
@@ -292,6 +1683,14 @@ llm:
           - inference
           - speculative_decoding
           tag: iclr25
+        - title: 'MoE-Spec: Expert Budgeting for Efficient Speculative Decoding'
+          date: '2026-02-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2026/02/01/moe-spec-expert-budgeting-for-efficient-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
       kvcache:
         posts:
         - title: 'Kelle: Co-design KV Caching and eDRAM for Efficient LLM Serving
@@ -346,6 +1745,15 @@ llm:
         - title: Do Large Language Models Need a Content Delivery Network?
           date: '2024-10-01'
           url: /papers/llm/engineering/inference/kvcache/2024/10/01/do-large-language-models-need-a-content-delivery-network.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
+        - title: 'TokenDance: Scaling Multi-Agent LLM Serving via Collective KV Cache
+            Sharing'
+          date: '2026-04-01'
+          url: /papers/llm/engineering/inference/kvcache/2026/04/01/tokendance-scaling-multi-agent-llm-serving-via-collective-kv-cache-sharing.html
           categories:
           - llm
           - engineering
@@ -483,6 +1891,15 @@ llm:
           - inference
           - kvcache
           tag: sigcomm24
+        - title: 'You Only Cache Once: Decoder-Decoder Architectures for Language
+            Models'
+          date: '2024-05-01'
+          url: /papers/llm/engineering/inference/kvcache/2024/05/01/you-only-cache-once-decoder-decoder-architectures-for-language-models.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: Efficient Low Rank Attention for Long-Context Inference in Large
             Language Models
           date: '2025-12-01'
@@ -598,6 +2015,14 @@ llm:
         - engineering
         - inference
         tag: atc25
+      - title: 'DWDP: Distributed Weight Data Parallelism for High-Performance LLM
+          Inference on NVL72'
+        date: '2026-04-01'
+        url: /papers/llm/engineering/inference/2026/04/01/dwdp-distributed-weight-data-parallelism-for-high-performance-llm-inference-on-nvl72.html
+        categories:
+        - llm
+        - engineering
+        - inference
       - title: 'Weaver: Efficient Multi-LLM Serving with Attention Offloading'
         date: '2025-01-01'
         url: /papers/llm/engineering/inference/2025/01/01/weaver-efficient-multi-llm-serving-with-attention-offloading.html
@@ -2433,6 +3858,14 @@ llm:
         - llm
         - engineering
         - moe
+      - title: 'fMoE: Fine-Grained Expert Offloading for Large Mixture-of-Experts
+          Serving'
+        date: '2025-02-01'
+        url: /papers/llm/engineering/moe/2025/02/01/fmoe-fine-grained-expert-offloading-for-large-mixture-of-experts-serving.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: 'DeepSeekMoE: Towards Ultimate Expert Specialization in Mixture-of-Experts
           Language Models'
         date: '2024-01-01'
@@ -2513,6 +3946,14 @@ llm:
         - llm
         - engineering
         - moe
+      - title: Scalable Pretraining of Large Mixture of Experts Language Models on
+          Aurora Super Computer
+        date: '2026-04-01'
+        url: /papers/llm/engineering/moe/2026/04/01/scalable-pretraining-of-large-mixture-of-experts-language-models-on-aurora-super-computer.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: 'FlowMoE: A Scalable Pipeline Scheduling Framework for Distributed
           Mixture-of-Experts Training'
         date: '2025-09-01'
@@ -2576,1382 +4017,6 @@ llm:
         - engineering
         - moe
         tag: mlsys26
-  algorithm:
-    agent:
-      posts:
-      - title: 'ContextCache: Context-Aware Semantic Cache for Multi-Turn Queries
-          in Large Language Models'
-        date: '2025-06-01'
-        url: /papers/llm/algorithm/agent/2025/06/01/contextcache-context-aware-semantic-cache-for-multi-turn-queries-in-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-        tag: nips25
-      - title: Composer 2 Technical Report
-        date: '2026-03-25'
-        url: /papers/llm/algorithm/agent/2026/03/25/composer-2-technical-report.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-      - title: 'R1-Searcher: Incentivizing the Search Capability in LLMs via Reinforcement
-          Learning'
-        date: '2025-03-01'
-        url: /papers/llm/algorithm/agent/2025/03/01/r1-searcher-incentivizing-the-search-capability-in-llms-via-reinforcement-learning.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-      - title: 'AVO: Agentic Variation Operators for Autonomous Evolutionary Search'
-        date: '2026-03-01'
-        url: /papers/llm/algorithm/agent/2026/03/01/avo-agentic-variation-operators-for-autonomous-evolutionary-search.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-      - title: 'Retrieval-Augmented Generation for Large Language Models: A Survey'
-        date: '2023-12-01'
-        url: /papers/llm/algorithm/agent/2023/12/01/retrieval-augmented-generation-for-large-language-models-a-survey.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-      - title: 'Large Language Model-Based Agents for Software Engineering: A Survey'
-        date: '2024-09-01'
-        url: /papers/llm/algorithm/agent/2024/09/01/large-language-model-based-agents-for-software-engineering-a-survey.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-      - title: 'MemAgent: Reshaping Long-Context LLM with Multi-Conv RL-based Memory
-          Agent'
-        date: '2025-07-01'
-        url: /papers/llm/algorithm/agent/2025/07/01/memagent-reshaping-long-context-llm-with-multi-conv-rl-based-memory-agent.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-        tag: nips25
-      - title: 'WebShop: Towards Scalable Real-World Web Interaction with Grounded
-          Language Agents'
-        date: '2022-07-01'
-        url: /papers/llm/algorithm/agent/2022/07/01/webshop-towards-scalable-real-world-web-interaction-with-grounded-language-agents.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-        tag: nips22
-      - title: 'The Landscape of Agentic Reinforcement Learning for LLMs: A Survey'
-        date: '2025-09-01'
-        url: /papers/llm/algorithm/agent/2025/09/01/the-landscape-of-agentic-reinforcement-learning-for-llms-a-survey.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-      - title: Transcending Cost-Quality Tradeoff in Agent Serving via Session-Awareness
-        date: '2025-09-01'
-        url: /papers/llm/algorithm/agent/2025/09/01/transcending-cost-quality-tradeoff-in-agent-serving-via-session-awareness.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-        tag: nips25
-      - title: 'Tree of Thoughts: Deliberate Problem Solving with Large Language Models'
-        date: '2023-09-01'
-        url: /papers/llm/algorithm/agent/2023/09/01/tree-of-thoughts-deliberate-problem-solving-with-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-        tag: nips23
-      - title: Effective Context Engineering for AI Agents
-        date: '2025-09-01'
-        url: /papers/llm/algorithm/agent/2025/09/01/effective-context-engineering-for-ai-agents.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-      - title: 'Mem0: Building Production-Ready AI Agents with Scalable Long-Term
-          Memory'
-        date: '2025-04-01'
-        url: /papers/llm/algorithm/agent/2025/04/01/mem0-building-production-ready-ai-agents-with-scalable-long-term-memory.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-      - title: Do Phone-Use Agents Respect Your Privacy?
-        date: '2026-03-01'
-        url: /papers/llm/algorithm/agent/2026/03/01/do-phone-use-agents-respect-your-privacy.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-      - title: Towards a Science of Scaling Agent Systems
-        date: '2025-12-01'
-        url: /papers/llm/algorithm/agent/2025/12/01/towards-a-science-of-scaling-agent-systems.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-      - title: 'Search-R1: Training LLMs to Reason and Leverage Search Engines with
-          Reinforcement Learning'
-        date: '2025-03-01'
-        url: /papers/llm/algorithm/agent/2025/03/01/search-r1-training-llms-to-reason-and-leverage-search-engines-with-reinforcement-learning.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-      - title: 'UI-TARS-2 Technical Report: Advancing GUI Agent with Multi-Turn Reinforcement
-          Learning'
-        date: '2025-09-01'
-        url: /papers/llm/algorithm/agent/2025/09/01/ui-tars-2-technical-report-advancing-gui-agent-with-multi-turn-reinforcement-learning.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-      - title: 'REAC T: SYNERGIZING REASONING AND ACTING IN LANGUAGE MODELS'
-        date: '2023-03-01'
-        url: /papers/llm/algorithm/agent/2023/03/01/reac-t-synergizing-reasoning-and-acting-in-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-        tag: iclr23
-      - title: 'A Survey on Test-Time Scaling in Large Language Models: What, How,
-          Where, and How Well'
-        date: '2025-05-01'
-        url: /papers/llm/algorithm/agent/2025/05/01/a-survey-on-test-time-scaling-in-large-language-models-what-how-where-and-how-well.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-      - title: 'Toolformer: Language Models Can Teach Themselves to Use Tools'
-        date: '2023-02-01'
-        url: /papers/llm/algorithm/agent/2023/02/01/toolformer-language-models-can-teach-themselves-to-use-tools.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-        tag: nips23
-      - title: Chain-of-Thought Prompting Elicits Reasoning in Large Language Models
-        date: '2022-01-01'
-        url: /papers/llm/algorithm/agent/2022/01/01/chain-of-thought-prompting-elicits-reasoning-in-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-        tag: nips22
-      - title: 'FIREACT: TOWARD LANGUAGE AGENT FINE-TUNING'
-        date: '2023-10-01'
-        url: /papers/llm/algorithm/agent/2023/10/01/fireact-toward-language-agent-fine-tuning.html
-        categories:
-        - llm
-        - algorithm
-        - agent
-    models:
-      posts:
-      - title: 'NVIDIA Nemotron 3: Efficient and Open Intelligence'
-        date: '2025-12-01'
-        url: /papers/llm/algorithm/models/2025/12/01/nvidia-nemotron-3-efficient-and-open-intelligence.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'GLM-4.5: Agentic, Reasoning, and Coding (ARC) Foundation Models'
-        date: '2025-08-01'
-        url: /papers/llm/algorithm/models/2025/08/01/glm-45-agentic-reasoning-and-coding-arc-foundation-models.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: Qwen3 Technical Report
-        date: '2025-05-01'
-        url: /papers/llm/algorithm/models/2025/05/01/qwen3-technical-report.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'DeepSeek-V2: A Strong, Economical, and Efficient Mixture-of-Experts
-          Language Model'
-        date: '2024-06-01'
-        url: /papers/llm/algorithm/models/2024/06/01/deepseek-v2-a-strong-economical-and-efficient-mixture-of-experts-language-model.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'NVIDIA Nemotron Nano 2: An Accurate and Efficient Hybrid Mamba-Transformer
-          Reasoning Model'
-        date: '2025-08-01'
-        url: /papers/llm/algorithm/models/2025/08/01/nvidia-nemotron-nano-2-an-accurate-and-efficient-hybrid-mamba-transformer-reasoning-model.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'System Card: Claude Opus 4.5'
-        date: '2025-11-01'
-        url: /papers/llm/algorithm/models/2025/11/01/system-card-claude-opus-45.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: MiMo-V2-Flash Technical Report
-        date: '2025-12-01'
-        url: /papers/llm/algorithm/models/2025/12/01/mimo-v2-flash-technical-report.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: HunyuanOCR Technical Report
-        date: '2025-11-01'
-        url: /papers/llm/algorithm/models/2025/11/01/hunyuanocr-technical-report.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: Kling-Omni Technical Report
-        date: '2025-08-01'
-        url: /papers/llm/algorithm/models/2025/08/01/kling-omni-technical-report.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'KIMI K1.5: SCALING REINFORCEMENT LEARNING WITH LLMS'
-        date: '2025-01-01'
-        url: /papers/llm/algorithm/models/2025/01/01/kimi-k15-scaling-reinforcement-learning-with-llms.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: LongCat-Flash Technical Report
-        date: '2025-08-01'
-        url: /papers/llm/algorithm/models/2025/08/01/longcat-flash-technical-report.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'System Card: Claude Opus 4.6'
-        date: '2026-02-01'
-        url: /papers/llm/algorithm/models/2026/02/01/system-card-claude-opus-46.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: dots.llm1 Technical Report
-        date: '2025-06-01'
-        url: /papers/llm/algorithm/models/2025/06/01/dotsllm1-technical-report.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: IQuest-Coder-V1 Technical Report
-        date: '2026-01-01'
-        url: /papers/llm/algorithm/models/2026/01/01/iquest-coder-v1-technical-report.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'MiMo-Audio: Audio Language Models are Few-Shot Learners'
-        date: '2025-09-01'
-        url: /papers/llm/algorithm/models/2025/09/01/mimo-audio-audio-language-models-are-few-shot-learners.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'Llama 2: Open Foundation and Fine-Tuned Chat Models'
-        date: '2023-07-01'
-        url: /papers/llm/algorithm/models/2023/07/01/llama-2-open-foundation-and-fine-tuned-chat-models.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'Gemini 1.5: Unlocking multimodal understanding across millions of
-          tokens of context'
-        date: '2024-03-01'
-        url: /papers/llm/algorithm/models/2024/03/01/gemini-15-unlocking-multimodal-understanding-across-millions-of-tokens-of-context.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: LongCat-Flash-Omni Technical Report
-        date: '2025-10-01'
-        url: /papers/llm/algorithm/models/2025/10/01/longcat-flash-omni-technical-report.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: Gemini 3 Pro Model Card
-        date: '2025-11-01'
-        url: /papers/llm/algorithm/models/2025/11/01/gemini-3-pro-model-card.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'Update to GPT-5 System Card: GPT-5.2'
-        date: '2025-12-01'
-        url: /papers/llm/algorithm/models/2025/12/01/update-to-gpt-5-system-card-gpt-52.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'KIMI K2.5: VISUAL AGENTIC INTELLIGENCE'
-        date: '2026-02-01'
-        url: /papers/llm/algorithm/models/2026/02/01/kimi-k25-visual-agentic-intelligence.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'Seed1.8 Model Card: Towards Generalized Real-World Agency'
-        date: '2025-12-01'
-        url: /papers/llm/algorithm/models/2025/12/01/seed18-model-card-towards-generalized-real-world-agency.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: The Llama 3 Herd of Models
-        date: '2024-07-01'
-        url: /papers/llm/algorithm/models/2024/07/01/the-llama-3-herd-of-models.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'DeepSeek-V3.2-Exp: Boosting Long-Context Efficiency with DeepSeek
-          Sparse Attention'
-        date: '2025-11-01'
-        url: /papers/llm/algorithm/models/2025/11/01/deepseek-v32-exp-boosting-long-context-efficiency-with-deepseek-sparse-attention.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'MiMo: Unlocking the Reasoning Potential of Language Model – From Pretraining
-          to Posttraining'
-        date: '2025-05-01'
-        url: /papers/llm/algorithm/models/2025/05/01/mimo-unlocking-the-reasoning-potential-of-language-model-from-pretraining-to-posttraining.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: LongCat-Flash-Thinking Technical Report
-        date: '2025-09-01'
-        url: /papers/llm/algorithm/models/2025/09/01/longcat-flash-thinking-technical-report.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'Seed2.0 Model Card: Towards Intelligence Frontier for Real-World Complexity'
-        date: '2026-02-01'
-        url: /papers/llm/algorithm/models/2026/02/01/seed20-model-card-towards-intelligence-frontier-for-real-world-complexity.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'Nemotron-H: A Family of Accurate and Efficient Hybrid Mamba-Transformer
-          Models'
-        date: '2025-04-01'
-        url: /papers/llm/algorithm/models/2025/04/01/nemotron-h-a-family-of-accurate-and-efficient-hybrid-mamba-transformer-models.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: DeepSeek-V3 Technical Report
-        date: '2024-12-01'
-        url: /papers/llm/algorithm/models/2024/12/01/deepseek-v3-technical-report.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'Nemotron 3 Nano: Open, Efficient Mixture-of-Experts Hybrid Mamba-Transformer
-          Model for Agentic Reasoning'
-        date: '2025-12-01'
-        url: /papers/llm/algorithm/models/2025/12/01/nemotron-3-nano-open-efficient-mixture-of-experts-hybrid-mamba-transformer-model-for-agentic-reasoning.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'QwenLong-L1.5: Post-Training Recipe for Long-Context Reasoning and
-          Memory Management'
-        date: '2025-12-01'
-        url: /papers/llm/algorithm/models/2025/12/01/qwenlong-l15-post-training-recipe-for-long-context-reasoning-and-memory-management.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'Step-3 is Large yet Affordable: Model-system Co-design for Cost-effective
-          Decoding'
-        date: '2025-07-01'
-        url: /papers/llm/algorithm/models/2025/07/01/step-3-is-large-yet-affordable-model-system-co-design-for-cost-effective-decoding.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'KIMI K2: OPEN AGENTIC INTELLIGENCE'
-        date: '2025-08-01'
-        url: /papers/llm/algorithm/models/2025/08/01/kimi-k2-open-agentic-intelligence.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'DeepSeek-Coder: When the Large Language Model Meets Programming -
-          The Rise of Code Intelligence'
-        date: '2024-01-01'
-        url: /papers/llm/algorithm/models/2024/01/01/deepseek-coder-when-the-large-language-model-meets-programming-the-rise-of-code-intelligence.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'DeepSeek-V3.2: Pushing the Frontier of Open Large Language Models'
-        date: '2025-12-01'
-        url: /papers/llm/algorithm/models/2025/12/01/deepseek-v32-pushing-the-frontier-of-open-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'DeepSeek-OCR: Contexts Optical Compression'
-        date: '2025-10-01'
-        url: /papers/llm/algorithm/models/2025/10/01/deepseek-ocr-contexts-optical-compression.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'System Card: Claude Mythos Preview'
-        date: '2026-04-01'
-        url: /papers/llm/algorithm/models/2026/04/01/system-card-claude-mythos-preview.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'LLaMA: Open and Efficient Foundation Language Models'
-        date: '2023-02-01'
-        url: /papers/llm/algorithm/models/2023/02/01/llama-open-and-efficient-foundation-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: Scaling Embeddings Outperforms Scaling Experts in Language Models
-        date: '2026-01-01'
-        url: /papers/llm/algorithm/models/2026/01/01/scaling-embeddings-outperforms-scaling-experts-in-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'Seed1.5-Thinking: Advancing Superb Reasoning Models with Reinforcement
-          Learning'
-        date: '2025-04-01'
-        url: /papers/llm/algorithm/models/2025/04/01/seed15-thinking-advancing-superb-reasoning-models-with-reinforcement-learning.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'KIMI LINEAR: AN EXPRESSIVE, EFFICIENT ATTENTION ARCHITECTURE'
-        date: '2025-10-01'
-        url: /papers/llm/algorithm/models/2025/10/01/kimi-linear-an-expressive-efficient-attention-architecture.html
-        categories:
-        - llm
-        - algorithm
-        - models
-      - title: 'GLM-5: From Vibe Coding to Agentic Engineering'
-        date: '2026-02-01'
-        url: /papers/llm/algorithm/models/2026/02/01/glm-5-from-vibe-coding-to-agentic-engineering.html
-        categories:
-        - llm
-        - algorithm
-        - models
-    architecture:
-      attention:
-        linear:
-          posts:
-          - title: 'MiniMax-01: Scaling Foundation Models with Lightning Attention'
-            date: '2025-01-01'
-            url: /papers/llm/algorithm/architecture/attention/linear/2025/01/01/minimax-01-scaling-foundation-models-with-lightning-attention.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - linear
-          - title: Linear Attention Sequence Parallelism
-            date: '2024-04-01'
-            url: /papers/llm/algorithm/architecture/attention/linear/2024/04/01/linear-attention-sequence-parallelism.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - linear
-          - title: 'Various Lengths, Constant Speed: Efficient Language Modeling with
-              Lightning Attention'
-            date: '2024-05-01'
-            url: /papers/llm/algorithm/architecture/attention/linear/2024/05/01/various-lengths-constant-speed-efficient-language-modeling-with-lightning-attention.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - linear
-          - title: Scaling TransNormer to 175 Billion Parameters
-            date: '2023-07-01'
-            url: /papers/llm/algorithm/architecture/attention/linear/2023/07/01/scaling-transnormer-to-175-billion-parameters.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - linear
-          - title: The Devil in Linear Transformer
-            date: '2022-10-01'
-            url: /papers/llm/algorithm/architecture/attention/linear/2022/10/01/the-devil-in-linear-transformer.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - linear
-          - title: LEARNING ASSOCIATIVE INFERENCE USING FAST WEIGHT MEMORY
-            date: '2021-02-01'
-            url: /papers/llm/algorithm/architecture/attention/linear/2021/02/01/learning-associative-inference-using-fast-weight-memory.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - linear
-            tag: iclr21
-          - title: Artificial Hippocampus Networks for Efficient Long-Context Modeling
-            date: '2025-08-01'
-            url: /papers/llm/algorithm/architecture/attention/linear/2025/08/01/artificial-hippocampus-networks-for-efficient-long-context-modeling.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - linear
-          - title: Transformer Quality in Linear Time
-            date: '2022-01-01'
-            url: /papers/llm/algorithm/architecture/attention/linear/2022/01/01/transformer-quality-in-linear-time.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - linear
-            tag: pmlr22
-          - title: Linear Transformers Are Secretly Fast Weight Programmers
-            date: '2021-06-01'
-            url: /papers/llm/algorithm/architecture/attention/linear/2021/06/01/linear-transformers-are-secretly-fast-weight-programmers.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - linear
-            tag: icml21
-          - title: 'Lightning Attention-2: A Free Lunch for Handling Unlimited Sequence
-              Lengths in Large Language Models'
-            date: '2024-01-01'
-            url: /papers/llm/algorithm/architecture/attention/linear/2024/01/01/lightning-attention-2-a-free-lunch-for-handling-unlimited-sequence-lengths-in-large-language-models.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - linear
-          - title: Gated Linear Attention Transformers with Hardware-Efficient Training
-            date: '2023-12-01'
-            url: /papers/llm/algorithm/architecture/attention/linear/2023/12/01/gated-linear-attention-transformers-with-hardware-efficient-training.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - linear
-          - title: 'Transformers are RNNs: Fast Autoregressive Transformers with Linear
-              Attention'
-            date: '2020-06-01'
-            url: /papers/llm/algorithm/architecture/attention/linear/2020/06/01/transformers-are-rnns-fast-autoregressive-transformers-with-linear-attention.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - linear
-            tag: icml20
-        posts:
-        - title: 'A Little Goes a Long Way: Efficient Long Context Training and Inference
-            with Partial Contexts'
-          date: '2025-04-01'
-          url: /papers/llm/algorithm/architecture/attention/2025/04/01/a-little-goes-a-long-way-efficient-long-context-training-and-inference-with-partial-contexts.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - attention
-          tag: iclr25
-        - title: 'Why Low-Precision Transformer Training Fails: An Analysis on Flash
-            Attention'
-          date: '2025-10-01'
-          url: /papers/llm/algorithm/architecture/attention/2025/10/01/why-low-precision-transformer-training-fails-an-analysis-on-flash-attention.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - attention
-        - title: Technical Report of Attention Residuals
-          date: '2026-03-01'
-          url: /papers/llm/algorithm/architecture/attention/2026/03/01/technical-report-of-attention-residuals.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - attention
-        - title: Multipole Attention for Efficient Long Context Reasoning
-          date: '2025-06-01'
-          url: /papers/llm/algorithm/architecture/attention/2025/06/01/multipole-attention-for-efficient-long-context-reasoning.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - attention
-          tag: nips25
-        - title: 'mHC: Manifold-Constrained Hyper-Connections'
-          date: '2025-12-01'
-          url: /papers/llm/algorithm/architecture/attention/2025/12/01/mhc-manifold-constrained-hyper-connections.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - attention
-        - title: Tensor Product Attention Is All You Need
-          date: '2025-12-01'
-          url: /papers/llm/algorithm/architecture/attention/2025/12/01/tensor-product-attention-is-all-you-need.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - attention
-          tag: nips25
-        - title: 'Gated Attention for Large Language Models: Non-linearity, Sparsity,
-            and Attention-Sink-Free'
-          date: '2025-06-01'
-          url: /papers/llm/algorithm/architecture/attention/2025/06/01/gated-attention-for-large-language-models-non-linearity-sparsity-and-attention-sink-free.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - attention
-        sparsity:
-          posts:
-          - title: 'Native Sparse Attention: Hardware-Aligned and Natively Trainable
-              Sparse Attention'
-            date: '2025-02-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/native-sparse-attention-hardware-aligned-and-natively-trainable-sparse-attention.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-          - title: 'FlexPrefill: A Context-Aware Sparse Attention Mechanism for Efficient
-              Long-Sequence Inference'
-            date: '2025-02-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/flexprefill-a-context-aware-sparse-attention-mechanism-for-efficient-long-sequence-inference.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-            tag: iclr25
-          - title: 'MInference 1.0: Accelerating Pre-filling for Long-Context LLMs
-              via Dynamic Sparse Attention'
-            date: '2024-07-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2024/07/01/minference-10-accelerating-pre-filling-for-long-context-llms-via-dynamic-sparse-attention.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-            tag: nips24
-          - title: 'MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS'
-            date: '2025-02-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/moba-mixture-of-block-attention-for-long-context-llms.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-            tag: nips25
-          - title: 'BLASST: Dynamic Blocked Attention Sparsity via Softmax Thresholding'
-            date: '2025-12-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/12/01/blasst-dynamic-blocked-attention-sparsity-via-softmax-thresholding.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-            tag: mlsys26
-          - title: 'Longformer: The Long-Document Transformer'
-            date: '2020-04-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2020/04/01/longformer-the-long-document-transformer.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-          - title: 'XAttention: Block Sparse Attention with Antidiagonal Scoring'
-            date: '2025-03-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/03/01/xattention-block-sparse-attention-with-antidiagonal-scoring.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-            tag: iclr25
-          - title: Mixture-of-Depths Attention
-            date: '2026-03-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2026/03/01/mixture-of-depths-attention.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-        ssm:
-          posts:
-          - title: SIMPLIFIED STATE SPACE LAYERS FOR SEQUENCE MODELING
-            date: '2023-03-01'
-            url: /papers/llm/algorithm/architecture/attention/ssm/2023/03/01/simplified-state-space-layers-for-sequence-modeling.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - ssm
-          - title: 'GATED DELTA NETWORKS: IMPROVING MAMBA2 WITH DELTA RULE'
-            date: '2024-12-01'
-            url: /papers/llm/algorithm/architecture/attention/ssm/2024/12/01/gated-delta-networks-improving-mamba2-with-delta-rule.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - ssm
-            tag: iclr25
-          - title: Combining Recurrent, Convolutional, and Continuous-time Models
-              with Linear State-Space Layers
-            date: '2021-10-01'
-            url: /papers/llm/algorithm/architecture/attention/ssm/2021/10/01/combining-recurrent-convolutional-and-continuous-time-models-with-linear-state-space-layers.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - ssm
-          - title: Efficiently Modeling Long Sequences with Structured State Spaces
-            date: '2021-10-01'
-            url: /papers/llm/algorithm/architecture/attention/ssm/2021/10/01/efficiently-modeling-long-sequences-with-structured-state-spaces.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - ssm
-          - title: 'Mamba-3: Improved Sequence Modeling using State Space Principles'
-            date: '2026-03-01'
-            url: /papers/llm/algorithm/architecture/attention/ssm/2026/03/01/mamba-3-improved-sequence-modeling-using-state-space-principles.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - ssm
-          - title: 'MoE-Mamba: Efficient Selective State Space Models with Mixture
-              of Experts'
-            date: '2024-02-01'
-            url: /papers/llm/algorithm/architecture/attention/ssm/2024/02/01/moe-mamba-efficient-selective-state-space-models-with-mixture-of-experts.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - ssm
-          - title: Overcoming Long-Context Limitations of State-Space Models via Context-Dependent
-              Sparse Attention
-            date: '2025-07-01'
-            url: /papers/llm/algorithm/architecture/attention/ssm/2025/07/01/overcoming-long-context-limitations-of-state-space-models-via-context-dependent-sparse-attention.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - ssm
-            tag: nips25
-          - title: 'Transformers are SSMs: Generalized Models and Efficient Algorithms
-              Through Structured State Space Duality'
-            date: '2024-05-01'
-            url: /papers/llm/algorithm/architecture/attention/ssm/2024/05/01/transformers-are-ssms-generalized-models-and-efficient-algorithms-through-structured-state-space-duality.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - ssm
-          - title: 'Hungry Hungry Hippos: Towards Language Modeling with State Space
-              Models'
-            date: '2023-04-01'
-            url: /papers/llm/algorithm/architecture/attention/ssm/2023/04/01/hungry-hungry-hippos-towards-language-modeling-with-state-space-models.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - ssm
-          - title: 'Jamba: A Hybrid Transformer-Mamba Language Model'
-            date: '2024-03-01'
-            url: /papers/llm/algorithm/architecture/attention/ssm/2024/03/01/jamba-a-hybrid-transformer-mamba-language-model.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - ssm
-          - title: 'Mamba: Linear-Time Sequence Modeling with Selective State Spaces'
-            date: '2023-12-01'
-            url: /papers/llm/algorithm/architecture/attention/ssm/2023/12/01/mamba-linear-time-sequence-modeling-with-selective-state-spaces.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - ssm
-          - title: 'Transformer-XL: Attentive Language Models Beyond a Fixed-Length
-              Context'
-            date: '2019-01-01'
-            url: /papers/llm/algorithm/architecture/attention/ssm/2019/01/01/transformer-xl-attentive-language-models-beyond-a-fixed-length-context.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - ssm
-      transformer-variant:
-        posts:
-        - title: 'Scaling Laws with Vocabulary: Larger Models Deserve Larger Vocabularies'
-          date: '2024-07-01'
-          url: /papers/llm/algorithm/architecture/transformer-variant/2024/07/01/scaling-laws-with-vocabulary-larger-models-deserve-larger-vocabularies.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - transformer-variant
-        - title: 'MHLA: Restoring Expressivity of Linear Attention via Token-Level
-            Multi-Head'
-          date: '2026-01-01'
-          url: /papers/llm/algorithm/architecture/transformer-variant/2026/01/01/mhla-restoring-expressivity-of-linear-attention-via-token-level-multi-head.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - transformer-variant
-        - title: 'Scaling up Test-Time Compute with Latent Reasoning: A Recurrent
-            Depth Approach'
-          date: '2024-03-01'
-          url: /papers/llm/algorithm/architecture/transformer-variant/2024/03/01/scaling-up-test-time-compute-with-latent-reasoning-a-recurrent-depth-approach.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - transformer-variant
-        - title: 'mHC-lite: You Don’t Need 20 Sinkhorn-Knopp Iterations'
-          date: '2026-01-01'
-          url: /papers/llm/algorithm/architecture/transformer-variant/2026/01/01/mhc-lite-you-dont-need-20-sinkhorn-knopp-iterations.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - transformer-variant
-        - title: Hierarchical Reasoning Model
-          date: '2025-08-01'
-          url: /papers/llm/algorithm/architecture/transformer-variant/2025/08/01/hierarchical-reasoning-model.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - transformer-variant
-        - title: 'Reasoning with Latent Thoughts: On the Power of Looped Transformers'
-          date: '2025-02-01'
-          url: /papers/llm/algorithm/architecture/transformer-variant/2025/02/01/reasoning-with-latent-thoughts-on-the-power-of-looped-transformers.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - transformer-variant
-        - title: Hyper-Connections
-          date: '2025-04-01'
-          url: /papers/llm/algorithm/architecture/transformer-variant/2025/04/01/hyper-connections.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - transformer-variant
-          tag: iclr25
-        - title: Parallel Loop Transformer for Efficient Test-Time Computation Scaling
-          date: '2025-10-01'
-          url: /papers/llm/algorithm/architecture/transformer-variant/2025/10/01/parallel-loop-transformer-for-efficient-test-time-computation-scaling.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - transformer-variant
-        - title: Universal Reasoning Model
-          date: '2025-12-01'
-          url: /papers/llm/algorithm/architecture/transformer-variant/2025/12/01/universal-reasoning-model.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - transformer-variant
-          tag: nips25
-        - title: Universal Transformers
-          date: '2018-07-01'
-          url: /papers/llm/algorithm/architecture/transformer-variant/2018/07/01/universal-transformers.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - transformer-variant
-        - title: Fast-weight Product Key Memory
-          date: '2026-01-01'
-          url: /papers/llm/algorithm/architecture/transformer-variant/2026/01/01/fast-weight-product-key-memory.html
-          categories:
-          - llm
-          - algorithm
-          - architecture
-          - transformer-variant
-      posts:
-      - title: 'Fast Attention Mechanisms: A Tale of Parallelism'
-        date: '2025-09-01'
-        url: /papers/llm/algorithm/architecture/2025/09/01/fast-attention-mechanisms-a-tale-of-parallelism.html
-        categories:
-        - llm
-        - algorithm
-        - architecture
-        tag: nips25
-      - title: Virtual Width Networks
-        date: '2025-11-01'
-        url: /papers/llm/algorithm/architecture/2025/11/01/virtual-width-networks.html
-        categories:
-        - llm
-        - algorithm
-        - architecture
-      - title: 'Spark Transformer: Reactivating Sparsity in FFN and Attention'
-        date: '2025-06-01'
-        url: /papers/llm/algorithm/architecture/2025/06/01/spark-transformer-reactivating-sparsity-in-ffn-and-attention.html
-        categories:
-        - llm
-        - algorithm
-        - architecture
-        tag: nips25
-      - title: Weight-sparse Transformers Have Interpretable Circuits
-        date: '2025-11-01'
-        url: /papers/llm/algorithm/architecture/2025/11/01/weight-sparse-transformers-have-interpretable-circuits.html
-        categories:
-        - llm
-        - algorithm
-        - architecture
-    rl:
-      posts:
-      - title: 'ProRL: Prolonged Reinforcement Learning Expands Reasoning Boundaries
-          in Large Language Models'
-        date: '2025-05-01'
-        url: /papers/llm/algorithm/rl/2025/05/01/prorl-prolonged-reinforcement-learning-expands-reasoning-boundaries-in-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: Group Sequence Policy Optimization
-        date: '2025-07-01'
-        url: /papers/llm/algorithm/rl/2025/07/01/group-sequence-policy-optimization.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: 'DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open
-          Language Models'
-        date: '2024-02-01'
-        url: /papers/llm/algorithm/rl/2024/02/01/deepseekmath-pushing-the-limits-of-mathematical-reasoning-in-open-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: Scaling LLM Test-Time Compute Optimally can be More Effective than
-          Scaling Model Parameters
-        date: '2024-08-01'
-        url: /papers/llm/algorithm/rl/2024/08/01/scaling-llm-test-time-compute-optimally-can-be-more-effective-than-scaling-model-parameters.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: Training a Helpful and Harmless Assistant with Reinforcement Learning
-          from Human Feedback
-        date: '2022-04-01'
-        url: /papers/llm/algorithm/rl/2022/04/01/training-a-helpful-and-harmless-assistant-with-reinforcement-learning-from-human-feedback.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: 'Direct Preference Optimization: Your Language Model is Secretly a
-          Reward Model'
-        date: '2023-05-01'
-        url: /papers/llm/algorithm/rl/2023/05/01/direct-preference-optimization-your-language-model-is-secretly-a-reward-model.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-        tag: nips23
-      - title: 'RLlib: Abstractions for Distributed Reinforcement Learning'
-        date: '2017-12-01'
-        url: /papers/llm/algorithm/rl/2017/12/01/rllib-abstractions-for-distributed-reinforcement-learning.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-        tag: pmlr18
-      - title: Exploring Data Scaling Trends and Effects in Reinforcement Learning
-          from Human Feedback
-        date: '2025-04-01'
-        url: /papers/llm/algorithm/rl/2025/04/01/exploring-data-scaling-trends-and-effects-in-reinforcement-learning-from-human-feedback.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: 'Tapered Off-Policy REINFORCE: Stable and Efficient Reinforcement Learning
-          for LLMs'
-        date: '2025-03-01'
-        url: /papers/llm/algorithm/rl/2025/03/01/tapered-off-policy-reinforce-stable-and-efficient-reinforcement-learning-for-llms.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-        tag: neurips25
-      - title: 'DAPO: An Open-Source LLM Reinforcement Learning System at Scale'
-        date: '2025-05-01'
-        url: /papers/llm/algorithm/rl/2025/05/01/dapo-an-open-source-llm-reinforcement-learning-system-at-scale.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: 'INTELLECT-2: A Reasoning Model Trained Through Globally Decentralized
-          Reinforcement Learning'
-        date: '2025-05-01'
-        url: /papers/llm/algorithm/rl/2025/05/01/intellect-2-a-reasoning-model-trained-through-globally-decentralized-reinforcement-learning.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: Playing Atari with Deep Reinforcement Learning
-        date: '2013-12-01'
-        url: /papers/llm/algorithm/rl/2013/12/01/playing-atari-with-deep-reinforcement-learning.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: 'NeMo-Aligner: Scalable Toolkit for Efficient Model Alignment'
-        date: '2024-05-01'
-        url: /papers/llm/algorithm/rl/2024/05/01/nemo-aligner-scalable-toolkit-for-efficient-model-alignment.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: 'HelpSteer2: Open-source dataset for training top-performing reward
-          models'
-        date: '2024-07-01'
-        url: /papers/llm/algorithm/rl/2024/07/01/helpsteer2-open-source-dataset-for-training-top-performing-reward-models.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-        tag: nips24
-      - title: 'SteerLM: Attribute Conditioned SFT as an (User-Steerable) Alternative
-          to RLHF'
-        date: '2023-10-01'
-        url: /papers/llm/algorithm/rl/2023/10/01/steerlm-attribute-conditioned-sft-as-an-user-steerable-alternative-to-rlhf.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: Proximal Policy Optimization Algorithms
-        date: '2017-08-01'
-        url: /papers/llm/algorithm/rl/2017/08/01/proximal-policy-optimization-algorithms.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: 'ON-POLICY RL MEETS OFF-POLICY EXPERTS: HARMONIZING SUPERVISED FINE-TUNING
-          AND REINFORCEMENT LEARNING VIA DYNAMIC WEIGHTING'
-        date: '2025-08-01'
-        url: /papers/llm/algorithm/rl/2025/08/01/on-policy-rl-meets-off-policy-experts-harmonizing-supervised-fine-tuning-and-reinforcement-learning-via-dynamic-weighting.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: Massively Parallel Methods for Deep Reinforcement Learning
-        date: '2015-07-01'
-        url: /papers/llm/algorithm/rl/2015/07/01/massively-parallel-methods-for-deep-reinforcement-learning.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: Learning to summarize from human feedback
-        date: '2020-09-01'
-        url: /papers/llm/algorithm/rl/2020/09/01/learning-to-summarize-from-human-feedback.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-        tag: nips20
-      - title: The Entropy Mechanism of Reinforcement Learning for Reasoning Language
-          Models
-        date: '2025-05-01'
-        url: /papers/llm/algorithm/rl/2025/05/01/the-entropy-mechanism-of-reinforcement-learning-for-reasoning-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: Training language models to follow instructions with human feedback
-        date: '2022-03-01'
-        url: /papers/llm/algorithm/rl/2022/03/01/training-language-models-to-follow-instructions-with-human-feedback.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: On the Interplay of Pre-Training, Mid-Training, and RL on Reasoning
-          Language Models
-        date: '2025-12-01'
-        url: /papers/llm/algorithm/rl/2025/12/01/on-the-interplay-of-pre-training-mid-training-and-rl-on-reasoning-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: Self-Play Fine-Tuning Converts Weak Language Models to Strong Language
-          Models
-        date: '2024-01-01'
-        url: /papers/llm/algorithm/rl/2024/01/01/self-play-fine-tuning-converts-weak-language-models-to-strong-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: Mastering the game of Go with deep neural networks and tree search
-        date: '2016-01-01'
-        url: /papers/llm/algorithm/rl/2016/01/01/mastering-the-game-of-go-with-deep-neural-networks-and-tree-search.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-    pretrain_sft:
-      posts:
-      - title: WHAT MAKES GOOD DATA FOR ALIGNMENT? A COMPREHENSIVE STUDY OF AUTOMATIC
-          DATA SELECTION IN INSTRUCTION TUNING
-        date: '2013-12-01'
-        url: /papers/llm/algorithm/pretrain_sft/2013/12/01/what-makes-good-data-for-alignment-a-comprehensive-study-of-automatic-data-selection-in-instruction-tuning.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'Fusechat: Knowledge Fusion of Chat Models'
-        date: '2024-08-01'
-        url: /papers/llm/algorithm/pretrain_sft/2024/08/01/fusechat-knowledge-fusion-of-chat-models.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'Conditional Memory via Scalable Lookup: A New Axis of Sparsity for
-          Large Language Models'
-        date: '2026-01-01'
-        url: /papers/llm/algorithm/pretrain_sft/2026/01/01/conditional-memory-via-scalable-lookup-a-new-axis-of-sparsity-for-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'Nested Learning: The Illusion of Deep Learning Architectures'
-        date: '2025-11-01'
-        url: /papers/llm/algorithm/pretrain_sft/2025/11/01/nested-learning-the-illusion-of-deep-learning-architectures.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'UNVEILING THE SECRET RECIPE: A GUIDE FOR SUPERVISED FINE-TUNING SMALL
-          LLMS'
-        date: '2024-12-01'
-        url: /papers/llm/algorithm/pretrain_sft/2024/12/01/unveiling-the-secret-recipe-a-guide-for-supervised-fine-tuning-small-llms.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'SampleMix: A Sample-wise Pre-training Data Mixing Strategey by Coordinating
-          Data Quality and Diversity'
-        date: '2025-03-01'
-        url: /papers/llm/algorithm/pretrain_sft/2025/03/01/samplemix-a-sample-wise-pre-training-data-mixing-strategey-by-coordinating-data-quality-and-diversity.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: Scaling up Muon for Large-Scale Language Model Training
-        date: '2025-02-01'
-        url: /papers/llm/algorithm/pretrain_sft/2025/02/01/scaling-up-muon-for-large-scale-language-model-training.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'INFERENCE SCALING LAWS: AN EMPIRICAL ANALYSIS OF COMPUTE-OPTIMAL INFERENCE
-          FOR LLM PROBLEM-SOLVING'
-        date: '2024-08-01'
-        url: /papers/llm/algorithm/pretrain_sft/2024/08/01/inference-scaling-laws-an-empirical-analysis-of-compute-optimal-inference-for-llm-problem-solving.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-        tag: iclr25
-      - title: 'DeepNet: Scaling Transformers to 1,000 Layers'
-        date: '2022-03-01'
-        url: /papers/llm/algorithm/pretrain_sft/2022/03/01/deepnet-scaling-transformers-to-1000-layers.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'SkyLadder: Better and Faster Pretraining via Context Window Scheduling'
-        date: '2025-12-01'
-        url: /papers/llm/algorithm/pretrain_sft/2025/12/01/skyladder-better-and-faster-pretraining-via-context-window-scheduling.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-        tag: nips25
-      - title: 'Stacking Your Transformers: A Closer Look at Model Growth for Efficient
-          LLM Pre-Training'
-        date: '2024-05-01'
-        url: /papers/llm/algorithm/pretrain_sft/2024/05/01/stacking-your-transformers-a-closer-look-at-model-growth-for-efficient-llm-pre-training.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-        tag: nips24
-      - title: 'ROFORMER: ENHANCED TRANSFORMER WITH ROTARY POSITION EMBEDDING'
-        date: '2021-04-01'
-        url: /papers/llm/algorithm/pretrain_sft/2021/04/01/roformer-enhanced-transformer-with-rotary-position-embedding.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: "Tensor Programs V: Tuning Large Neural Networks via Zero-Shot\n  \
-          \    Hyperparameter Transfer"
-        date: '2022-03-01'
-        url: /papers/llm/algorithm/pretrain_sft/2022/03/01/tensor-programs-v-tuning-large-neural-networks-via-zero-shot-hyperparameter-transfer.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: Training Compute-Optimal Large Language Models
-        date: '2022-03-01'
-        url: /papers/llm/algorithm/pretrain_sft/2022/03/01/training-compute-optimal-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: How Does Critical Batch Size Scale in Pretraining?
-        date: '2025-04-01'
-        url: /papers/llm/algorithm/pretrain_sft/2025/04/01/how-does-critical-batch-size-scale-in-pretraining.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-        tag: iclr25
-      pruning:
-        posts:
-        - title: Beware of Calibration Data for Pruning Large Language Models
-          date: '2025-04-01'
-          url: /papers/llm/algorithm/pretrain_sft/pruning/2025/04/01/beware-of-calibration-data-for-pruning-large-language-models.html
-          categories:
-          - llm
-          - algorithm
-          - pretrain_sft
-          - pruning
-          tag: iclr25
-        - title: 'Probe Pruning: Accelerating LLMs Through Dynamic Pruning via Model-Probing'
-          date: '2025-04-01'
-          url: /papers/llm/algorithm/pretrain_sft/pruning/2025/04/01/probe-pruning-accelerating-llms-through-dynamic-pruning-via-model-probing.html
-          categories:
-          - llm
-          - algorithm
-          - pretrain_sft
-          - pruning
-          tag: iclr25
-    eval:
-      posts:
-      - title: 'GAIA: A Benchmark for General AI Assistants'
-        date: '2023-11-01'
-        url: /papers/llm/algorithm/eval/2023/11/01/gaia-a-benchmark-for-general-ai-assistants.html
-        categories:
-        - llm
-        - algorithm
-        - eval
-      - title: 'MCP-Bench: Benchmarking Tool-Using LLM Agents with Complex Real-World
-          Tasks via MCP Servers'
-        date: '2025-08-01'
-        url: /papers/llm/algorithm/eval/2025/08/01/mcp-bench-benchmarking-tool-using-llm-agents-with-complex-real-world-tasks-via-mcp-servers.html
-        categories:
-        - llm
-        - algorithm
-        - eval
-      - title: Instruction-Following Evaluation for Large Language Models
-        date: '2023-11-01'
-        url: /papers/llm/algorithm/eval/2023/11/01/instruction-following-evaluation-for-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - eval
-      - title: 'LiveCodeBench: Holistic and Contamination Free Evaluation of Large
-          Language Models for Code'
-        date: '2024-05-01'
-        url: /papers/llm/algorithm/eval/2024/05/01/livecodebench-holistic-and-contamination-free-evaluation-of-large-language-models-for-code.html
-        categories:
-        - llm
-        - algorithm
-        - eval
-      - title: On the Tool Manipulation Capability of Open-source Large Language Models
-        date: '2023-05-01'
-        url: /papers/llm/algorithm/eval/2023/05/01/on-the-tool-manipulation-capability-of-open-source-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - eval
-      - title: 'SWE-BENCH: Can Language Models Resolve Real-world Github Issues?'
-        date: '2024-09-01'
-        url: /papers/llm/algorithm/eval/2024/09/01/swe-bench-can-language-models-resolve-real-world-github-issues.html
-        categories:
-        - llm
-        - algorithm
-        - eval
-        tag: iclr
-      - title: Measuring Massive Multitask Language Understanding
-        date: '2020-09-01'
-        url: /papers/llm/algorithm/eval/2020/09/01/measuring-massive-multitask-language-understanding.html
-        categories:
-        - llm
-        - algorithm
-        - eval
-        tag: iclr21
-      - title: The LLM Evaluation Guidebook
-        date: '2025-12-01'
-        url: /papers/llm/algorithm/eval/2025/12/01/the-llm-evaluation-guidebook.html
-        categories:
-        - llm
-        - algorithm
-        - eval
 mlsys:
   compiler:
     tensor:
