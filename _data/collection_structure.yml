@@ -1016,6 +1016,14 @@ llm:
           - algorithm
           - architecture
           - transformer-variant
+        - title: 'DeepSeek-V4: Towards Highly Efficient Million-Token Context Intelligence'
+          date: '2026-04-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2026/04/01/deepseek-v4-towards-highly-efficient-million-token-context-intelligence.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
         - title: 'MHLA: Restoring Expressivity of Linear Attention via Token-Level
             Multi-Head'
           date: '2026-01-01'
@@ -1045,6 +1053,14 @@ llm:
         - title: Hierarchical Reasoning Model
           date: '2025-08-01'
           url: /papers/llm/algorithm/architecture/transformer-variant/2025/08/01/hierarchical-reasoning-model.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+        - title: Scaling Latent Reasoning via Looped Language Models
+          date: '2025-11-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2025/11/01/scaling-latent-reasoning-via-looped-language-models.html
           categories:
           - llm
           - algorithm
@@ -1148,6 +1164,14 @@ llm:
         - llm
         - algorithm
         - rl
+      - title: 'AREAL-DTA: Dynamic Tree Attention for Efficient Reinforcement Learning
+          of Large Language Models'
+        date: '2026-01-01'
+        url: /papers/llm/algorithm/rl/2026/01/01/areal-dta-dynamic-tree-attention-for-efficient-reinforcement-learning-of-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: 'DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open
           Language Models'
         date: '2024-02-01'
@@ -1181,6 +1205,23 @@ llm:
         - algorithm
         - rl
         tag: nips23
+      - title: 'When RL Meets Adaptive Speculative Training: A Unified Training–Serving
+          System'
+        date: '2026-04-01'
+        url: /papers/llm/algorithm/rl/2026/04/01/when-rl-meets-adaptive-speculative-training-a-unified-trainingserving-system.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: 'On-Policy Distillation of Language Models: Learning from Self-Generated
+          Mistakes'
+        date: '2024-01-01'
+        url: /papers/llm/algorithm/rl/2024/01/01/on-policy-distillation-of-language-models-learning-from-self-generated-mistakes.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+        tag: iclr24
       - title: 'RLlib: Abstractions for Distributed Reinforcement Learning'
         date: '2017-12-01'
         url: /papers/llm/algorithm/rl/2017/12/01/rllib-abstractions-for-distributed-reinforcement-learning.html
@@ -1769,6 +1810,15 @@ llm:
           - inference
           - kvcache
           tag: mlsys26
+        - title: 'The Illusion of Equivalence: Systematic FP16 Divergence in KV-Cached
+            Autoregressive Inference'
+          date: '2026-04-01'
+          url: /papers/llm/engineering/inference/kvcache/2026/04/01/the-illusion-of-equivalence-systematic-fp16-divergence-in-kv-cached-autoregressive-inference.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'Ecco: Improving Memory Bandwidth and Capacity for LLMs via Entropy-aware
             Cache Compression'
           date: '2025-05-01'
@@ -1792,6 +1842,14 @@ llm:
         - title: 'Contextpilot: Fast Long-context Inference Via Context Reuse'
           date: '2025-11-01'
           url: /papers/llm/engineering/inference/kvcache/2025/11/01/contextpilot-fast-long-context-inference-via-context-reuse.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
+        - title: 'TriAttention: Efficient Long Reasoning with Trigonometric KV Compression'
+          date: '2026-04-01'
+          url: /papers/llm/engineering/inference/kvcache/2026/04/01/triattention-efficient-long-reasoning-with-trigonometric-kv-compression.html
           categories:
           - llm
           - engineering
@@ -2031,6 +2089,14 @@ llm:
         - engineering
         - inference
         tag: atc25
+      - title: 'Blink: CPU-Free LLM Inference by Delegating the Serving Stack to GPU
+          and SmartNIC'
+        date: '2026-04-01'
+        url: /papers/llm/engineering/inference/2026/04/01/blink-cpu-free-llm-inference-by-delegating-the-serving-stack-to-gpu-and-smartnic.html
+        categories:
+        - llm
+        - engineering
+        - inference
       - title: 'DistServe: Disaggregating Prefill and Decoding for Goodput-optimized
           Large Language Model Serving'
         date: '2024-01-01'
@@ -4000,6 +4066,13 @@ llm:
         - llm
         - engineering
         - moe
+      - title: Routing-Free Mixture-of-Experts
+        date: '2026-04-01'
+        url: /papers/llm/engineering/moe/2026/04/01/routing-free-mixture-of-experts.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: 'DeepSpeed-MoE: Advancing Mixture-of-Experts Inference and Training
           to Power Next-Generation AI Scale'
         date: '2022-01-01'
@@ -4494,6 +4567,13 @@ mlsys:
     - title: Optimizing Cache Bypassing and Warp Scheduling for GPUs
       date: '2017-10-01'
       url: /papers/mlsys/gpu/2017/10/01/optimizing-cache-bypassing-and-warp-scheduling-for-gpus.html
+      categories:
+      - mlsys
+      - gpu
+    - title: 'GMLake: Efficient and Transparent GPU Memory Defragmentation for Large-scale
+        DNN Training with Virtual Memory Stitching'
+      date: '2024-01-01'
+      url: /papers/mlsys/gpu/2024/01/01/gmlake-efficient-and-transparent-gpu-memory-defragmentation-for-large-scale-dnn-training-with-virtual-memory-stitching.html
       categories:
       - mlsys
       - gpu
