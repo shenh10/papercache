@@ -228,6 +228,19 @@ jobs:
                   echo "⚠️  _site/papers 目录不存在"
                 fi
 
+            - name: 🔎 Sync posts to Supabase search index
+              run: |
+                if [ -n "${{ secrets.SUPABASE_URL }}" ] && [ -n "${{ secrets.SUPABASE_SERVICE_KEY }}" ]; then
+                  echo "🔄 同步论文到 Supabase posts_search 表..."
+                  python3 scripts/sync_posts_to_search.py || echo "⚠️  搜索索引同步失败，继续部署..."
+                else
+                  echo "⚠️  Supabase 配置未设置，跳过搜索索引同步"
+                fi
+              continue-on-error: true
+              env:
+                SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+                SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
             # ⚠️  暂时禁用清理步骤，避免误删数据
             # 问题：URL 匹配可能不一致，导致所有记录被误删
             # TODO: 修复 URL 规范化逻辑后再启用
