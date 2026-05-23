@@ -18,6 +18,7 @@ title: 'GPU-centric Communication on NVIDIA GPU Clusters with InfiniBand: A Case
 
 <div class="container">
 <h1>GPU-centric Communication on NVIDIA GPU Clusters with InfiniBand: A Case Study with OpenSHMEM</h1>
+<p><strong>发表时间</strong>: 2017-12 · HiPC'17 (IEEE 24th International Conference on High Performance Computing)</p>
 <p><strong>作者/机构</strong>: S. Potluri, A. Goswami, D. Rossetti and C. J. Newburn (NVIDIA Corporation), M. Gorentla Venkata and N. Imam (Oak Ridge National Laboratory)</p>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决在大型GPU集群中，传统MPI+CUDA编程模型下CPU和GPU之间交替进行计算和通信所带来的开销和资源利用率不足的问题。传统的模型中，计算和通信阶段是分离的，这会导致重复的内核启动开销，并且在通信期间GPU资源闲置，在计算期间网络资源闲置。尽管可以通过代码重构来重叠计算与通信，但这会增加代码复杂性，且随着每个GPU处理的问题规模变小，其收益也会减弱。</p>
