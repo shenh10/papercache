@@ -231,6 +231,14 @@ llm:
         - llm
         - engineering
         - moe
+      - title: 'DisagMoE: Computation-Communication Overlapped MoE Training via Disaggregated
+          AF-Pipe Parallelism'
+        date: '2026-05-01'
+        url: /papers/llm/engineering/moe/2026/05/01/disagmoe-computation-communication-overlapped-moe-training-via-disaggregated-af-pipe-parallelism.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: Scalable Pretraining of Large Mixture of Experts Language Models on
           Aurora Super Computer
         date: '2026-04-01'
@@ -574,6 +582,14 @@ llm:
         - engineering
         - train
         tag: sc20
+      - title: 'MegaScale-Omni: A Hyper-Scale, Workload-Resilient System for MultiModal
+          LLM Training in Production'
+        date: '2026-05-01'
+        url: /papers/llm/engineering/train/2026/05/01/megascale-omni-a-hyper-scale-workload-resilient-system-for-multimodal-llm-training-in-production.html
+        categories:
+        - llm
+        - engineering
+        - train
       - title: 'Obscura: Concealing Recomputation Overhead in Training of Large Language
           Models with Bubble-filling Pipeline Transformation'
         date: '2025-01-01'
@@ -668,6 +684,15 @@ llm:
         - engineering
         - train
         tag: osdi25
+      - title: Overlap Communication with Dependent Computation via Decomposition
+          in Large Deep Learning Models
+        date: '2023-12-01'
+        url: /papers/llm/engineering/train/2023/12/01/overlap-communication-with-dependent-computation-via-decomposition-in-large-deep-learning-models.html
+        categories:
+        - llm
+        - engineering
+        - train
+        tag: asplos23
       - title: Pipeline Parallelism with Controllable Memory
         date: '2024-05-01'
         url: /papers/llm/engineering/train/2024/05/01/pipeline-parallelism-with-controllable-memory.html
@@ -1321,6 +1346,15 @@ llm:
           - inference
           - kvcache
           tag: isca25
+        - title: 'Prefill-as-a-Service: KVCache of Next-Generation Models Could Go
+            Cross-Datacenter'
+          date: '2026-04-01'
+          url: /papers/llm/engineering/inference/kvcache/2026/04/01/prefill-as-a-service-kvcache-of-next-generation-models-could-go-cross-datacenter.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'FlashPrefill: Instantaneous Pattern Discovery and Thresholding for
             Ultra-Fast Long-Context Prefilling'
           date: '2026-03-01'
@@ -1659,6 +1693,16 @@ llm:
           - engineering
           - inference
           - speculative_decoding
+        - title: 'SpecDiff-2: Scaling Diffusion Drafter Alignment for Faster Speculative
+            Decoding'
+          date: '2025-11-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/11/01/specdiff-2-scaling-diffusion-drafter-alignment-for-faster-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: mlsys26
         - title: 'MAGICDEC: BREAKING THE LATENCY-THROUGHPUT TRADEOFF FOR LONG CONTEXT
             GENERATION WITH SPECULATIVE DECODING'
           date: '2024-08-01'
@@ -4877,6 +4921,12 @@ mlsys:
       - mlsys
       - networking
       tag: micro25
+    - title: The Landscape of GPU-Centric Communication
+      date: '2024-09-01'
+      url: /papers/mlsys/networking/2024/09/01/the-landscape-of-gpu-centric-communication.html
+      categories:
+      - mlsys
+      - networking
     - title: Introducing data center fabric, the next-generation Facebook data center
         network
       date: '2014-11-01'
@@ -4921,6 +4971,12 @@ mlsys:
         and GPUDirect Async
       date: '2022-11-01'
       url: /papers/mlsys/networking/2022/11/01/improving-network-performance-of-hpc-systems-using-nvidia-magnum-io-nvshmem-and-gpudirect-async.html
+      categories:
+      - mlsys
+      - networking
+    - title: NVIDIA DOCA GPUNetIO Programming Guide
+      date: '2023-10-01'
+      url: /papers/mlsys/networking/2023/10/01/nvidia-doca-gpunetio-programming-guide.html
       categories:
       - mlsys
       - networking
