@@ -3779,6 +3779,14 @@ llm:
         - llm
         - algorithm
         - rl
+      - title: 'Reinforcement Learning Optimization for Large-Scale Learning: An Efficient
+          and User-Friendly Scaling Library'
+        date: '2025-06-01'
+        url: /papers/llm/algorithm/rl/2025/06/01/reinforcement-learning-optimization-for-large-scale-learning-an-efficient-and-user-friendly-scaling-library.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: The Entropy Mechanism of Reinforcement Learning for Reasoning Language
           Models
         date: '2025-05-01'
