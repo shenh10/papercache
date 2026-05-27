@@ -1399,6 +1399,15 @@ llm:
           - engineering
           - inference
           - kvcache
+        - title: 'Continuum: Efficient and Robust Multi-Turn LLM Agent Scheduling
+            with KV Cache Time-to-Live'
+          date: '2025-11-01'
+          url: /papers/llm/engineering/inference/kvcache/2025/11/01/continuum-efficient-and-robust-multi-turn-llm-agent-scheduling-with-kv-cache-time-to-live.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'Kitty: Accurate and Efficient 2-Bit KV Cache Quantization with Dynamic
             Channel-wise Precision Boost'
           date: '2025-11-01'
