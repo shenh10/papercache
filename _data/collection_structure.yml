@@ -3602,6 +3602,14 @@ llm:
         - llm
         - algorithm
         - rl
+      - title: 'RAGEN: Understanding Self-Evolution in LLM Agents via Multi-Turn Reinforcement
+          Learning'
+        date: '2025-04-01'
+        url: /papers/llm/algorithm/rl/2025/04/01/ragen-understanding-self-evolution-in-llm-agents-via-multi-turn-reinforcement-learning.html
+        categories:
+        - llm
+        - algorithm
+        - rl
     models:
       posts:
       - title: LongCat-Flash-Omni Technical Report
