@@ -3362,6 +3362,13 @@ llm:
         - llm
         - algorithm
         - rl
+      - title: 'Asymmetric Proximal Policy Optimization: Mini-critics Boost LLM Reasoning'
+        date: '2025-10-01'
+        url: /papers/llm/algorithm/rl/2025/10/01/asymmetric-proximal-policy-optimization-mini-critics-boost-llm-reasoning.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: Playing Atari with Deep Reinforcement Learning
         date: '2013-12-01'
         url: /papers/llm/algorithm/rl/2013/12/01/playing-atari-with-deep-reinforcement-learning.html
