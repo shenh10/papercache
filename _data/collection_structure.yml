@@ -224,6 +224,14 @@ llm:
         - llm
         - engineering
         - moe
+      - title: 'The MiniMax-M2 Series: Mini Activations Unleashing Max Real-World
+          Intelligence'
+        date: '2026-05-01'
+        url: /papers/llm/engineering/moe/2026/05/01/the-minimax-m2-series-mini-activations-unleashing-max-real-world-intelligence.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: 'Least-Loaded Expert Parallelism: Load Balancing an Imbalanced Mixture-of-Experts'
         date: '2026-01-01'
         url: /papers/llm/engineering/moe/2026/01/01/least-loaded-expert-parallelism-load-balancing-an-imbalanced-mixture-of-experts.html
