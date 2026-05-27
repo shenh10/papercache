@@ -3314,6 +3314,13 @@ llm:
         - algorithm
         - rl
         tag: nips20
+      - title: 'Agent Lightning: Train ANY AI Agents with Reinforcement Learning'
+        date: '2025-08-01'
+        url: /papers/llm/algorithm/rl/2025/08/01/agent-lightning-train-any-ai-agents-with-reinforcement-learning.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: 'INTELLECT-2: A Reasoning Model Trained Through Globally Decentralized
           Reinforcement Learning'
         date: '2025-05-01'
