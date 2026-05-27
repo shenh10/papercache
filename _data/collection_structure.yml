@@ -1267,6 +1267,15 @@ llm:
           - inference
           - kvcache
           tag: nips25
+        - title: 'ThunderAgent: A Simple, Fast and Program-Aware Agentic Inference
+            System'
+          date: '2026-02-01'
+          url: /papers/llm/engineering/inference/kvcache/2026/02/01/thunderagent-a-simple-fast-and-program-aware-agentic-inference-system.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'RazorAttention: Efficient KV Cache Compression Through Retrieval
             Heads'
           date: '2025-04-01'
