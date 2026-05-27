@@ -3503,6 +3503,14 @@ llm:
         - algorithm
         - rl
         tag: nips23
+      - title: 'Part II: ROLL Flash – Accelerating RLVR and Agentic Training with
+          Asynchrony'
+        date: '2025-10-01'
+        url: /papers/llm/algorithm/rl/2025/10/01/part-ii-roll-flash-accelerating-rlvr-and-agentic-training-with-asynchrony.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: 'RLlib: Abstractions for Distributed Reinforcement Learning'
         date: '2017-12-01'
         url: /papers/llm/algorithm/rl/2017/12/01/rllib-abstractions-for-distributed-reinforcement-learning.html
