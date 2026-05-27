@@ -3307,6 +3307,14 @@ llm:
         tag: iclr
     rl:
       posts:
+      - title: 'Let It Flow: Agentic Crafting on Rock and Roll Building the ROME Model
+          within an Open Agentic Learning Ecosystem'
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/rl/2025/12/01/let-it-flow-agentic-crafting-on-rock-and-roll-building-the-rome-model-within-an-open-agentic-learning-ecosystem.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: 'ProRL Agent: Rollout-as-a-Service for RL Training of Multi-Turn LLM
           Agents'
         date: '2026-03-01'
