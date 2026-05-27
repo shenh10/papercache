@@ -3525,6 +3525,13 @@ llm:
         - llm
         - algorithm
         - rl
+      - title: 'PRIME-RL: Async & Decentralized RL Training at Scale'
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/rl/2025/11/01/prime-rl-async-decentralized-rl-training-at-scale.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: 'DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open
           Language Models'
         date: '2024-02-01'
