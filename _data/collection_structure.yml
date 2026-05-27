@@ -980,6 +980,13 @@ llm:
         - engineering
         - train
         tag: osdi25
+      - title: Pretraining Large Language Models with MXFP4 on Native FP4 Hardware
+        date: '2026-05-01'
+        url: /papers/llm/engineering/train/2026/05/01/pretraining-large-language-models-with-mxfp4-on-native-fp4-hardware.html
+        categories:
+        - llm
+        - engineering
+        - train
       - title: 'StreamBP: Memory-Efficient Exact Backpropagation for Long Sequence
           Training of LLMs'
         date: '2025-06-01'
