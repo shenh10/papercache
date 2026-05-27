@@ -3558,6 +3558,13 @@ llm:
         - llm
         - algorithm
         - rl
+      - title: Tricks or Traps? A Deep Dive into RL for LLM Reasoning
+        date: '2025-08-01'
+        url: /papers/llm/algorithm/rl/2025/08/01/tricks-or-traps-a-deep-dive-into-rl-for-llm-reasoning.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: Massively Parallel Methods for Deep Reinforcement Learning
         date: '2015-07-01'
         url: /papers/llm/algorithm/rl/2015/07/01/massively-parallel-methods-for-deep-reinforcement-learning.html
