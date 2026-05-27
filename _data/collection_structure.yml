@@ -1183,6 +1183,15 @@ llm:
           - inference
           - kvcache
           tag: atc25
+        - title: 'Autellix: An Efficient Serving Engine for LLM Agents as General
+            Programs'
+          date: '2025-02-01'
+          url: /papers/llm/engineering/inference/kvcache/2025/02/01/autellix-an-efficient-serving-engine-for-llm-agents-as-general-programs.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'FlexiCache: Leveraging Temporal Stability of Attention Heads for
             Efficient KV Cache Management'
           date: '2025-11-01'
