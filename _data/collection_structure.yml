@@ -3401,6 +3401,13 @@ llm:
         - llm
         - algorithm
         - rl
+      - title: 'SKYRL-AGENT: Efficient RL Training for Multi-Turn LLM Agent'
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/rl/2025/11/01/skyrl-agent-efficient-rl-training-for-multi-turn-llm-agent.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: 'HelpSteer2: Open-source dataset for training top-performing reward
           models'
         date: '2024-07-01'
