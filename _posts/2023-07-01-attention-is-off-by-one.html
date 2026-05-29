@@ -1,0 +1,96 @@
+---
+added_date: '2026-05-30'
+author: shenh10
+categories:
+- llm
+- algorithm
+- architecture
+- transformer-variant
+comments: true
+date: '2023-07-01'
+layout: post
+mathjax: true
+title: Attention Is Off By One
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>Attention Is Off By One</h1>
+<p><strong>发表时间</strong>: 2023-07 · Blog post by Evan Miller (evanmiller.org)</p>
+<p><strong>作者：</strong> Evan Miller</p>
+<h2>A1 主要贡献</h2>
+<p>本文针对现代人工智能（特别是Transformer模型）中普遍存在的量化困难问题，提出了一个核心观点：Attention机制中的softmax函数存在“off-by-one”错误。</p>
+<ul>
+<li><strong>核心问题</strong>：Transformer模型中存在大量异常权重（Outlier weights）和极大的激活值（Mega-activations），这些值使得模型在进行整数（Integer）量化时性能严重下降，且难以压缩部署。</li>
+<li><strong>研究目标</strong>：通过修正Attention机制中的数学定义，允许Attention Head在没有有效信息时“保持沉默”，从而减少不必要的噪声标注，改善模型的量化特性。</li>
+<li><strong>创新点</strong>：提出了“Softmax1”函数，通过在softmax的分母中引入常数1，使得Attention Head能够表达“不进行任何标注”的意图，并将该机制命名为“QuietAttention”。</li>
+</ul>
+<h2>A3 背景知识与关键观察</h2>
+<h3>异常值（Outliers）问题</h3>
+<p>LLM中存在着难以消除的异常值，这些值在数量级上远超同类。研究表明，这些异常值对于模型的运作至关重要，但其存在与神经网络的常规认知相悖。<br/>
+- 现有研究（如：[Quantizable Transformers: Removing Outliers by Helping Attention Heads Do Nothing, 2023, Qualcomm AI Research, <a href="https://arxiv.org/abs/2306.12929" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2306.12929</a>]）指出，超过97%的LLM异常激活值出现在空格和标点符号位置 。<br/>
+- 现有针对这些异常值的量化方案（如位压缩技术）往往会导致模型性能显著下降。</p>
+<h3>Softmax机制的局限性</h3>
+<p>Attention机制的原始公式为：<br/>
+$[ \textrm{Attention}(Q, K, V) = \textrm{softmax}\left(\frac{QK^T}{\sqrt{d}}\right)V ]$</p>
+<ul>
+<li><strong>强制选择特性</strong>：Softmax函数源于统计力学和多项式逻辑回归，其核心机制是强制在竞争项之间进行选择（概率求和为1）。</li>
+<li><strong>Attention中的误用</strong>：在Transformer中，Softmax被用于将输入映射为概率分布以混合Value向量。这强制每个Attention Head必须对输出向量进行标注，即使该Head在当前位置并无相关信息可添加。</li>
+<li><strong>噪声放大</strong>：由于Softmax不允许“不选择”，它迫使模型在面对非语义标记（如标点）时也必须产生权重，导致了大量不必要的噪声和异常激活值。</li>
+</ul>
+<h2>A2 方法细节</h2>
+<h3>Softmax1 定义</h3>
+<p>为了解决上述问题，作者提出了Softmax1函数，旨在为Attention机制提供一个“退出机制”。</p>
+<p><strong>Softmax1 公式</strong>：<br/>
+$[ (\textrm{softmax}_1(x))_i = \frac{\exp(x_i)}{1+\sum_j \exp(x_j)} ]$</p>
+<ul>
+<li><strong>设计逻辑</strong>：通过在分母中增加常数1，该函数允许向量整体趋向于零。这与标准softmax不同，标准softmax在输入趋向负无穷时，输出分布仍需满足归一化条件（即概率之和为1）。</li>
+<li><strong>对比分析</strong>：<ul>
+<li>原版softmax在极限情况下的表现：<br/>
+  $[ \lim_{x_1 \to -\infty} \ldots \lim_{x_k \to -\infty} (\textrm{softmax}(x))_i = \frac{1}{k} \gt 0 ]$<br/>
+  这意味着无论输入如何，原版softmax总是会产生非零的权重。</li>
+<li>Softmax1在极限情况下的表现：<br/>
+  $[ \lim_{x_1 \to -\infty} \ldots \lim_{x_k \to -\infty} (\textrm{softmax}_1(x))_i = 0 ]$<br/>
+  这使得模型在需要时可以“逃逸”或“不进行任何标注”。</li>
+</ul>
+</li>
+</ul>
+<h3>QuietAttention 机制</h3>
+<p>基于Softmax1，作者定义了改进后的Attention机制：</p>
+<p><strong>QuietAttention 公式</strong>：<br/>
+$[ \textrm{QuietAttention}(Q, K, V) := \textrm{softmax}_1 \left(\frac{QK^T}{\sqrt{d}}\right)V ]$</p>
+<ul>
+<li><strong>数学属性</strong>：<ul>
+<li>该函数保持了相对值的不变性，即：<br/>
+  $[ \frac{(\textrm{softmax}_1(x))_i}{(\textrm{softmax}_1(x))_j} = \frac{(\textrm{softmax}(x))_i}{(\textrm{softmax}(x))_j} = \frac{\exp(x_i)}{\exp(x_j)} \quad \forall \ i, j ]$</li>
+<li>导数始终为正，确保了梯度传播的有效性。</li>
+<li>输出值的总和处于0到1之间，保证了激活值的可控性。</li>
+</ul>
+</li>
+</ul>
+<h3>实现建议</h3>
+<p>作者建议通过以下方式快速验证该机制：</p>
+<ul>
+<li>在输入上下文前缀中添加一个零向量（Zero Vector）。</li>
+<li>确保神经网络不包含额外的偏置项（包括位置编码）。</li>
+<li>这种输入结构将使得零向量在计算中起到类似于分母中增加常数1的效果，从而无需修改现有的梯度计算代码。</li>
+</ul>
+<h2>A4 实验环境与结果</h2>
+<ul>
+<li><strong>实验环境</strong>：本文为观点性文章，未提供具体的实验数据、硬件配置或软件框架实现细节。</li>
+<li><strong>实验结果</strong>：作者尚未进行大规模实验验证，该方法目前处于理论构想阶段，呼吁社区进行实验验证。</li>
+</ul>
+<h2>A5 结论与展望</h2>
+<ul>
+<li><strong>结论</strong>：现有的Transformer Attention机制中存在的异常值问题，根源在于softmax函数强制性的概率归一化，导致Attention Head无法选择“不作为”。</li>
+<li><strong>展望</strong>：通过采用Softmax1（QuietAttention），有望解决异常激活值问题，从而使LLM更易于量化和部署。作者邀请社区进行实验，通过观察权重峰度（kurtosis）和激活无穷范数（infinity norms）的变化来验证该方法的有效性。</li>
+</ul>
+<hr/>
+<p><strong>参考文献说明：</strong><br/>
+1. [Quantizable Transformers: Removing Outliers by Helping Attention Heads Do Nothing, 2023, Qualcomm AI Research, <a href="https://arxiv.org/abs/2306.12929" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2306.12929</a>]：该论文被引用以说明LLM中异常激活值 （outlier activations）的分布特征（97%+出现在空格和标点位置）。</p>
+</div>
+
+
+</div>
