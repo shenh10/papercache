@@ -3983,6 +3983,13 @@ llm:
         - llm
         - algorithm
         - rl
+      - title: Reinforcement Learning via Self-Distillation
+        date: '2026-01-01'
+        url: /papers/llm/algorithm/rl/2026/01/01/reinforcement-learning-via-self-distillation.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: 'On-Policy Distillation of Language Models: Learning from Self-Generated
           Mistakes'
         date: '2024-01-01'
