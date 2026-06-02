@@ -4661,6 +4661,12 @@ mlsys:
       - mlsys
       - networking
       tag: hipc17
+    - title: Eliminating Hidden Serialization in Multi-Node Megakernel Communication
+      date: '2026-05-01'
+      url: /papers/mlsys/networking/2026/05/01/eliminating-hidden-serialization-in-multi-node-megakernel-communication.html
+      categories:
+      - mlsys
+      - networking
     - title: 'SuperMesh: Energy-Efficient Collective Communications for Accelerators'
       date: '2025-10-01'
       url: /papers/mlsys/networking/2025/10/01/supermesh-energy-efficient-collective-communications-for-accelerators.html
