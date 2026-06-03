@@ -3493,6 +3493,13 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'MAI-Thinking-1: Building a Hill-Climbing Machine'
+        date: '2026-06-01'
+        url: /papers/llm/algorithm/models/2026/06/01/mai-thinking-1-building-a-hill-climbing-machine.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: Gemini 3 Pro Model Card
         date: '2025-11-01'
         url: /papers/llm/algorithm/models/2025/11/01/gemini-3-pro-model-card.html
@@ -3819,13 +3826,6 @@ llm:
         - algorithm
         - rl
         tag: pmlr18
-      - title: 'MAI-Thinking-1: Building a Hill-Climbing Machine'
-        date: '2026-06-01'
-        url: /papers/llm/algorithm/rl/2026/06/01/mai-thinking-1-building-a-hill-climbing-machine.html
-        categories:
-        - llm
-        - algorithm
-        - rl
       - title: Learning to summarize from human feedback
         date: '2020-09-01'
         url: /papers/llm/algorithm/rl/2020/09/01/learning-to-summarize-from-human-feedback.html
