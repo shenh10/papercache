@@ -1179,6 +1179,15 @@ llm:
           - inference
           - kvcache
           tag: nips25
+        - title: 'MOMENTKV: Closing the Directional Gap in KV Cache Eviction for Long-Context
+            Inference'
+          date: '2026-06-01'
+          url: /papers/llm/engineering/inference/kvcache/2026/06/01/momentkv-closing-the-directional-gap-in-kv-cache-eviction-for-long-context-inference.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: Do Large Language Models Need a Content Delivery Network?
           date: '2024-10-01'
           url: /papers/llm/engineering/inference/kvcache/2024/10/01/do-large-language-models-need-a-content-delivery-network.html
