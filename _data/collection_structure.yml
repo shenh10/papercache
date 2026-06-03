@@ -3812,6 +3812,13 @@ llm:
         - algorithm
         - rl
         tag: pmlr18
+      - title: 'MAI-Thinking-1: Building a Hill-Climbing Machine'
+        date: '2026-06-01'
+        url: /papers/llm/algorithm/rl/2026/06/01/mai-thinking-1-building-a-hill-climbing-machine.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: Learning to summarize from human feedback
         date: '2020-09-01'
         url: /papers/llm/algorithm/rl/2020/09/01/learning-to-summarize-from-human-feedback.html
