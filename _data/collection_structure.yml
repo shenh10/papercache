@@ -1416,6 +1416,13 @@ llm:
         - engineering
         - moe
         tag: iclr25
+      - title: 'PithTrain: A Compact and Agent-Native MoE Training System'
+        date: '2026-05-01'
+        url: /papers/llm/engineering/moe/2026/05/01/pithtrain-a-compact-and-agent-native-moe-training-system.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: 'FP8-Flow-MoE: A Casting-Free FP8 Recipe without Double Quantization
           Error'
         date: '2025-11-01'
