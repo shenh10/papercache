@@ -3599,6 +3599,13 @@ llm:
         - llm
         - algorithm
         - models
+      - title: Scaling Laws for Neural Language Models
+        date: '2020-01-01'
+        url: /papers/llm/algorithm/models/2020/01/01/scaling-laws-for-neural-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: 'DeepSeek-V3.2-Exp: Boosting Long-Context Efficiency with DeepSeek
           Sparse Attention'
         date: '2025-11-01'
