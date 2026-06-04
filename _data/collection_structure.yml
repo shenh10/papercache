@@ -3616,6 +3616,13 @@ llm:
         - llm
         - algorithm
         - models
+      - title: A Visual Guide to Gemma 4 12B
+        date: '2026-06-01'
+        url: /papers/llm/algorithm/models/2026/06/01/a-visual-guide-to-gemma-4-12b.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: Scaling Embeddings Outperforms Scaling Experts in Language Models
         date: '2026-01-01'
         url: /papers/llm/algorithm/models/2026/01/01/scaling-embeddings-outperforms-scaling-experts-in-language-models.html
