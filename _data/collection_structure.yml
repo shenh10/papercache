@@ -3629,6 +3629,13 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'Introducing Gemma 4 12B: A Unified, Encoder-Free Multimodal Model'
+        date: '2026-06-01'
+        url: /papers/llm/algorithm/models/2026/06/01/introducing-gemma-4-12b-a-unified-encoder-free-multimodal-model.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: 'DeepSeek-V3.2-Exp: Boosting Long-Context Efficiency with DeepSeek
           Sparse Attention'
         date: '2025-11-01'

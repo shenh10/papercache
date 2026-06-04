@@ -1,0 +1,93 @@
+---
+added_date: '2026-06-04'
+author: shenh10
+categories:
+- llm
+- algorithm
+- models
+comments: true
+date: '2026-06-01'
+layout: post
+mathjax: true
+title: 'Introducing Gemma 4 12B: A Unified, Encoder-Free Multimodal Model'
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>Introducing Gemma 4 12B: A Unified, Encoder-Free Multimodal Model</h1>
+<p><strong>发表时间</strong>: 2026-06 · Blog post by Google (blog.google)</p>
+<p><strong>文章作者/机构</strong>: Olivier Lacombe (Google Deepmind 产品管理总监), Gus Martins (Google DeepMind 产品经理)</p>
+<hr/>
+<h3>A1 主要贡献</h3>
+<p>本文介绍了 Gemma 4 12B，这是一款旨在将具备智能体（agentic）能力的高性能多模态智能直接引入笔记本电脑的最新模型。该模型旨在弥合边缘友好型模型E4B与更先进的26B混合专家（MoE）模型之间的差距，通过减小的内存占用封装了强大的功能。</p>
+<p><strong>研究目标与核心问题</strong>：<br/>
+核心目标是开发一款中等规模的模型，它既能保持接近大型模型的先进推理能力，又能足够高效以便在消费级硬件（如笔记本电脑）上本地运行。这解决了在不牺牲性能的前提下，让高级多模态和智能体体验普及化的挑战。</p>
+<p><strong>主要创新点</strong>：<br/>
+Gemma 4 12B 的独特性体现在以下几个方面：<br/>
+* <strong>新颖的统一架构</strong>：模型不使用传统的多模态编码器。视觉和音频输入直接流入大型语言模型（LLM）的骨干网络，简化了结构并降低了延迟。<br/>
+* <strong>先进的推理能力</strong>：在基准测试中，其性能接近于更大的26B模型，从而能够支持强大的多步推理和智能体工作流。<br/>
+* <strong>为笔记本电脑优化</strong>：模型足够小，仅需16GB的VRAM或统一内存即可在本地运行。<br/>
+* <strong>开放与可及性</strong>：模型在 Apache 2.0 许可下发布，并获得了整个开发者生态系统的支持。<br/>
+* <strong>支持Drafter</strong>：Gemma 4 12B配备了多词元预测（Multi-Token Prediction, MTP）drafter，以减少推理延迟。<br/>
+* <strong>原生音频输入</strong>：这是谷歌首款具备原生音频输入功能的中等规模模型。</p>
+<p>这些特性共同作用，使得先进的多模态能力能够在日常硬件上实现，而无需在速度或推理能力上做出妥协。</p>
+<figure class="image-figure">
+<img alt="Gemma 4 12B 统一 Transformer" class="figure-image" src="https://storage.googleapis.com/gweb-uniblog-publish-prod/images/Hero_Visual_G4_12B_1.width-200.format-webp.webp"/>
+<figcaption class="figure-caption">Gemma 4 12B 统一 Transformer</figcaption>
+</figure>
+<hr/>
+<h3>A3 关键观察与设计原则</h3>
+<p><strong>在本地运行最先进的智能体</strong>。Gemma 4 12B 在标准基准测试中的性能接近于我们更大的26B混合专家（MoE）模型，但其总内存占用不到后者的一半。该模型足够小，可以在配备16GB RAM的消费级笔记本电脑上本地运行，从而直接在用户的设备上解锁强大的多模态和智能体体验。</p>
+<figure class="image-figure">
+<img alt="Gemma 4 12B 基准测试" class="figure-image" src="https://storage.googleapis.com/gweb-uniblog-publish-prod/images/1920x1080_xMVEyWv.width-100.format-webp.webp"/>
+<figcaption class="figure-caption">Gemma 4 12B 基准测试</figcaption>
+</figure>
+<hr/>
+<h3>A2 方法细节</h3>
+<p><strong>体验独特高效的统一架构</strong>。Gemma 4 12B 的突出之处在于其处理视觉和音频输入的流线型方法。传统的多模态模型通常依赖独立的编码器来转换图像和音频，然后才将这些表示传递给语言模型。由于这种分离式编码器会增加延迟并提高内存使用量，我们训练 Gemma 4 12B 时采用了一种无编码器（encoder-free）的架构，以直接集成音频和视觉输入。</p>
+<p><strong>原生处理多模态输入的方式</strong>。Gemma 4 12B 通过以下方式原生处理多模态输入：<br/>
+* <strong>视觉处理</strong>：我们用一个轻量级的嵌入模块取代了Gemma 4的视觉编码器，该模块仅由一次矩阵乘法、位置嵌入和归一化组成。这种设计使得大型语言模型（LLM）的骨干网络能够直接接管视觉处理任务。<br/>
+* <strong>音频处理</strong>：我们进一步简化了音频处理。我们完全移除了音频编码器，并将原始音频信号直接投影到与文本词元（text tokens）相同的维度空间中。</p>
+<p>对于希望了解技术分解的开发者，可以参阅我们配套的《Gemma 4 12B 开发者指南》【一篇详细介绍该模型技术细节的博客文章，URL: <a href="https://developers.googleblog.com/gemma-4-12b-the-developer-guide/" rel="noopener noreferrer" target="_blank">https://developers.googleblog.com/gemma-4-12b-the-developer-guide/</a>】 。</p>
+<hr/>
+<h3>A4 实验环境</h3>
+<ul>
+<li><strong>模型架构</strong>：Gemma 4 12B，一个拥有120亿参数的密集型（dense）多模态模型。其关键特性是采用统一的、无编码器的架构，能原生处理视觉和音频输入。该模型定位介于边缘友好的E4B模型和更大型的26B混合专家（MoE）模型之间。</li>
+<li><strong>硬件配置</strong>：模型设计用于在消费级硬件上运行，特别是配备16GB VRAM或统一内存的笔记本电脑。</li>
+<li><strong>软件配置</strong>：<ul>
+<li><strong>模型获取</strong>：权重检查点可通过 Hugging Face 和 Kaggle 下载。</li>
+<li><strong>本地推理工具</strong>：支持在 LM Studio、Ollama、Google AI Edge Gallery App、Google AI Edge Eloquent app 和 LiteRT-LM CLI 中运行。</li>
+<li><strong>开发框架</strong>：支持通过 Hugging Face Transformers、llama.cpp、MLX、SGLang 和 vLLM 实现本地推理。</li>
+<li><strong>微调工具</strong>：支持使用 Unsloth 进行高效微调。</li>
+<li><strong>智能体开发</strong>：提供了官方的 Gemma Skills GitHub 仓库。</li>
+<li><strong>云部署</strong>：支持通过 Google Cloud 平台进行部署，具体包括 Gemini Enterprise Agent Platform Model Garden、Cloud Run 和 Google Kubernetes Engine (GKE)。</li>
+</ul>
+</li>
+</ul>
+<hr/>
+<h3>A4 实验结果</h3>
+<p>本文的主要实验结果通过性能对比图表和文字描述呈现，旨在说明 Gemma 4 12B 相对于更大模型的效率和性能。</p>
+<ul>
+<li><strong>实验内容</strong>：将 Gemma 4 12B 模型与更大规模的 Gemma 4 26B (MoE) 模型在多个标准基准测试上进行性能比较。</li>
+<li><strong>实验结果</strong>：如文中的基准测试图所示（详见图<code><img alt="Gemma 4 12B 基准测试" class="figure-image" src="https://storage.googleapis.com/gweb-uniblog-publish-prod/images/1920x1080_xMVEyWv.width-100.format-webp.webp"/></code>），Gemma 4 12B 的性能表现接近于 26B MoE 模型。</li>
+<li><strong>分析结论</strong>：Gemma 4 12B 在性能上接近于参数量两倍多的 26B MoE 模型，但其总内存占用不到后者的一半。这一结果证明，该模型成功地在保持强大推理能力的同时，实现了在消费级硬件上高效运行的设计目标，为在本地设备上部署高级多模态应用和智能体提供了可能。</li>
+</ul>
+<hr/>
+<h3>A7 补充细节</h3>
+<p><strong>立即开始</strong>。开发者可以通过以下多种方式开始使用 Gemma 4 12B：<br/>
+* <strong>亲身体验</strong>：通过几次点击即可在 <a href="https://lmstudio.ai/models/gemma-4">https://lmstudio.ai/models/gemma-4</a>、<a href="https://ollama.com/library/gemma4">https://ollama.com/library/gemma4</a>、<a href="https://developers.google.com/edge/gallery">https://developers.google.com/edge/gallery</a>、<a href="https://ai.google.dev/edge/eloquent">https://ai.google.dev/edge/eloquent</a> 应用以及 <a href="https://ai.google.dev/edge/litert-lm/cli">https://ai.google.dev/edge/litert-lm/cli</a> 中进行实验。<br/>
+* <strong>下载权重</strong>：直接从 <a href="https://huggingface.co/collections/google/gemma-4">https://huggingface.co/collections/google/gemma-4</a> 和 <a href="https://www.kaggle.com/models/google/gemma-4">https://www.kaggle.com/models/google/gemma-4</a> 下载预训练和指令微调的检查点。<br/>
+* <strong>集成与学习</strong>：查阅<a href="https://ai.google.dev/gemma/docs/core">https://ai.google.dev/gemma/docs/core</a>和<a href="https://ai.google.dev/gemma/docs/capabilities/text/basic">https://ai.google.dev/gemma/docs/capabilities/text/basic</a>。<br/>
+* <strong>使用您喜欢的开发工具</strong>：使用 <a href="https://huggingface.co/google/gemma-4-12B-it">https://huggingface.co/google/gemma-4-12B-it</a>、<a href="https://huggingface.co/collections/ggml-org/gemma-4">https://huggingface.co/collections/ggml-org/gemma-4</a>、<a href="https://huggingface.co/collections/mlx-community/gemma-4">https://huggingface.co/collections/mlx-community/gemma-4</a>、<a href="https://docs.sglang.io/cookbook/autoregressive/Google/Gemma4">https://docs.sglang.io/cookbook/autoregressive/Google/Gemma4</a> 和 <a href="https://docs.vllm.ai/projects/recipes/en/latest/Google/Gemma4.html">https://docs.vllm.ai/projects/recipes/en/latest/Google/Gemma4.html</a> 实现本地推理管道，或使用 <a href="https://unsloth.ai/docs/models/gemma-4">https://unsloth.ai/docs/models/gemma-4</a> 进行高效微调。<br/>
+* <strong>通过 Gemma Skills 解锁智能体开发</strong>：为了支持使用最新的 Gemma 进展构建智能体，我们发布了官方的 <a href="https://github.com/google-gemma/gemma-skills">https://github.com/google-gemma/gemma-skills</a>。这是一个专为使用 Gemma 模型构建智能体而设计的技能库。<br/>
+* <strong>按您的方式部署</strong>：使用 Google Cloud 启动生产环境中的端点。通过 <a href="https://console.cloud.google.com/agent-platform/publishers/google/model-garden/gemma4;publisherModelVersion=gemma-4-12b-it">https://console.cloud.google.com/agent-platform/publishers/google/model-garden/gemma4;publisherModelVersion=gemma-4-12b-it</a>、<a href="https://codelabs.developers.google.com/codelabs/cloud-run/cloud-run-gpu-rtx-pro-6000-gemma4-vllm">https://codelabs.developers.google.com/codelabs/cloud-run/cloud-run-gpu-rtx-pro-6000-gemma4-vllm</a> 和 <a href="https://docs.cloud.google.com/kubernetes-engine/docs/tutorials/serve-gemma-gpu-vllm">https://docs.cloud.google.com/kubernetes-engine/docs/tutorials/serve-gemma-gpu-vllm</a> 进行部署。</p>
+<hr/>
+<h3>A5 结论</h3>
+<p>Gemma 4 12B 是一款创新的中等规模多模态模型，其核心优势在于其统一的、无编码器的架构，能够高效地在消费级笔记本电脑上运行。该模型通过直接将视觉和音频输入整合到LLM骨干网络中，显著降低了内存占用和延迟，同时保持了接近于大型模型的先进推理能力。</p>
+<p>Gemma 4 12B 的发布，特别是其对原生音频输入的支持和在 Apache 2.0 许可下的开放获取，旨在推动开发者社区在本地设备上构建新一代的智能体和多模态应用。我们对开发者社区将利用这一新模型创造出的成果充满期待。</p>
+</div>
+
+
+</div>
