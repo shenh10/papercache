@@ -3538,6 +3538,13 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'Gemma 4 12B: The Developer Guide'
+        date: '2026-06-01'
+        url: /papers/llm/algorithm/models/2026/06/01/gemma-4-12b-the-developer-guide.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: 'KIMI LINEAR: AN EXPRESSIVE, EFFICIENT ATTENTION ARCHITECTURE'
         date: '2025-10-01'
         url: /papers/llm/algorithm/models/2025/10/01/kimi-linear-an-expressive-efficient-attention-architecture.html
