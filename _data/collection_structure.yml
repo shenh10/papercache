@@ -1609,6 +1609,14 @@ llm:
         - llm
         - engineering
         - moe
+      - title: 'UltraEP: Unleash MoE Training and Inference on Rack-Scale Nodes with
+          Near-Optimal Load Balancing'
+        date: '2026-06-01'
+        url: /papers/llm/engineering/moe/2026/06/01/ultraep-unleash-moe-training-and-inference-on-rack-scale-nodes-with-near-optimal-load-balancing.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: 'FlowMoE: A Scalable Pipeline Scheduling Framework for Distributed
           Mixture-of-Experts Training'
         date: '2025-09-01'
