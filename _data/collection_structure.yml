@@ -445,6 +445,14 @@ llm:
           - inference
           - low_precision
           tag: iclr25
+        - title: Pretraining Large Language Models with NVFP4
+          date: '2025-09-01'
+          url: /papers/llm/engineering/inference/low_precision/2025/09/01/pretraining-large-language-models-with-nvfp4.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - low_precision
         - title: 'DecDEC: A Systems Approach to Advancing Low-Bit LLM Quantization'
           date: '2025-01-01'
           url: /papers/llm/engineering/inference/low_precision/2025/01/01/decdec-a-systems-approach-to-advancing-low-bit-llm-quantization.html
