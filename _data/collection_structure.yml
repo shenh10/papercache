@@ -1398,6 +1398,14 @@ llm:
         - llm
         - engineering
         - moe
+      - title: 'LatentMoE: Toward Optimal Accuracy per FLOP and Parameter in Mixture
+          of Experts'
+        date: '2026-01-01'
+        url: /papers/llm/engineering/moe/2026/01/01/latentmoe-toward-optimal-accuracy-per-flop-and-parameter-in-mixture-of-experts.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: 'MoEBlaze: Breaking the Memory Wall for Efficient MoE Training on Modern
           GPUs'
         date: '2026-01-01'
