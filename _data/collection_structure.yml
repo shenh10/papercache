@@ -3482,6 +3482,14 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'Nemotron 3 Ultra: Open, Efficient Mixture-of-Experts Hybrid Mamba-Transformer
+          Model for Agentic Reasoning'
+        date: '2026-06-01'
+        url: /papers/llm/algorithm/models/2026/06/01/nemotron-3-ultra-open-efficient-mixture-of-experts-hybrid-mamba-transformer-model-for-agentic-reasoning.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: HunyuanOCR Technical Report
         date: '2025-11-01'
         url: /papers/llm/algorithm/models/2025/11/01/hunyuanocr-technical-report.html
