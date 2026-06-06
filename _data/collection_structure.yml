@@ -4291,6 +4291,14 @@ llm:
         - llm
         - algorithm
         - pretrain_sft
+      - title: 'Efficient Sequence Packing without Cross-Contamination: Accelerating
+          Large Language Models without Impacting Performance'
+        date: '2021-07-01'
+        url: /papers/llm/algorithm/pretrain_sft/2021/07/01/efficient-sequence-packing-without-cross-contamination-accelerating-large-language-models-without-impacting-performance.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
       - title: Scaling up Muon for Large-Scale Language Model Training
         date: '2025-02-01'
         url: /papers/llm/algorithm/pretrain_sft/2025/02/01/scaling-up-muon-for-large-scale-language-model-training.html
