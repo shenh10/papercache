@@ -4270,6 +4270,13 @@ llm:
         - algorithm
         - pretrain_sft
         tag: iclr25
+      - title: 'Why Muon Outperforms Adam: A Curvature Perspective'
+        date: '2026-06-01'
+        url: /papers/llm/algorithm/pretrain_sft/2026/06/01/why-muon-outperforms-adam-a-curvature-perspective.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
       - title: Training Compute-Optimal Large Language Models
         date: '2022-03-01'
         url: /papers/llm/algorithm/pretrain_sft/2022/03/01/training-compute-optimal-large-language-models.html
