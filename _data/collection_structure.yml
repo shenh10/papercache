@@ -3194,6 +3194,14 @@ llm:
           - algorithm
           - architecture
           - transformer-variant
+        - title: Do Transformers Need Three Projections? Systematic Study of QKV Variants
+          date: '2026-06-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2026/06/01/do-transformers-need-three-projections-systematic-study-of-qkv-variants.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
         - title: Parallel Loop Transformer for Efficient Test-Time Computation Scaling
           date: '2025-10-01'
           url: /papers/llm/algorithm/architecture/transformer-variant/2025/10/01/parallel-loop-transformer-for-efficient-test-time-computation-scaling.html
