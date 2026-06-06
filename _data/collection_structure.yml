@@ -4276,6 +4276,13 @@ llm:
         - llm
         - algorithm
         - pretrain_sft
+      - title: How to Train Long-Context Language Models (Effectively)
+        date: '2024-10-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/10/01/how-to-train-long-context-language-models-effectively.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
       - title: 'UNVEILING THE SECRET RECIPE: A GUIDE FOR SUPERVISED FINE-TUNING SMALL
           LLMS'
         date: '2024-12-01'
