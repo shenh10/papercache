@@ -4321,6 +4321,13 @@ llm:
         - llm
         - algorithm
         - pretrain_sft
+      - title: 'Over-Tokenized Transformer: Vocabulary is Generally Worth Scaling'
+        date: '2025-01-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/01/01/over-tokenized-transformer-vocabulary-is-generally-worth-scaling.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
       - title: 'Efficient Sequence Packing without Cross-Contamination: Accelerating
           Large Language Models without Impacting Performance'
         date: '2021-07-01'
