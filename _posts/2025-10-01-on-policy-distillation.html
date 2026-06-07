@@ -1,0 +1,423 @@
+---
+added_date: '2026-06-07'
+author: shenh10
+categories:
+- llm
+- algorithm
+- pretrain_sft
+comments: true
+date: '2025-10-01'
+layout: post
+mathjax: true
+title: On-Policy Distillation
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>On-Policy Distillation</h1>
+<p><strong>发表时间</strong>: 2025-10 · Blog post by Kevin Lu / Thinking Machines Lab (thinkingmachines.ai)</p>
+<p><strong>作者/机构</strong>: Kevin Lu in collaboration with others at Thinking Machines</p>
+<h2>A1 主要贡献</h2>
+<p>本文探讨了一种名为“在策略蒸馏”（On-policy Distillation）的高效模型后训练（post-training）方法，旨在结合在策略学习（on-policy learning）和知识蒸馏（distillation）的优点，以训练出性能更强的专用小型模型。</p>
+<p><strong>核心问题与研究目标</strong>:<br/>
+大型语言模型（LLM）的训练通常分为预训练、中训练和后训练三个阶段。为了在特定领域获得专家级性能，同时利用小型模型在部署、隐私、更新和推理成本上的优势，选择合适的后训练方法至关重要。现有的后训练方法主要有两类：<br/>
+1. <strong>在策略训练（如强化学习 RL）</strong>：从学生模型自身采样轨迹进行训练。优点是直接针对学生模型的行为进行优化，能有效避免其自身错误。缺点是奖励信号稀疏，学习效率低下，无法精确定位错误根源。<br/>
+2. <strong>离策略训练（如监督微调 SFT/离策略蒸馏）</strong>：从外部来源（如教师模型）获取目标输出进行模仿学习。优点是监督信号密集，学习效率高。缺点是学生模型在训练中遇到的状态分布与其实际应用中遇到的可能不同，导致误差累积（compounding error）；此外，学生可能只学会模仿教师的风格而非事实准确性。</p>
+<p>本文的研究目标是提出并验证一种能结合二者优势的后训练方法，即在策略蒸馏。该方法旨在利用在策略采样的相关性，同时获得知识蒸馏的密集奖励信号，从而实现高效且高性能的模型后训练。</p>
+<p><strong>创新点与主要贡献</strong>:<br/>
+本文的核心创新在于系统性地提出、实现并验证了“在策略蒸馏”方法。<br/>
+1. <strong>方法提出</strong>：明确提出了在策略蒸馏的核心思想——从学生模型采样轨迹，并使用一个高性能的教师模型对学生轨迹中的<em>每一个词元（token）</em>进行评分。这与RL的稀疏序列级奖励和离策略蒸馏的非自身轨迹学习形成对比。</p>
+<p>| 方法 | 采样 | 奖励信号 |
+| :--- | :--- | :--- |
+| 监督微调 | 离策略 | 密集 |
+| 强化学习 | 在策略 | 稀疏 |
+| **在策略蒸馏** | **在策略** | **密集** |</p>
+<ol>
+<li>
+<p><strong>应用验证</strong>：通过两个关键应用场景展示了该方法的有效性：</p>
+<ul>
+<li><strong>推理能力训练</strong>：将在策略蒸馏应用于数学推理任务，结果表明，相较于离策略蒸馏的推断成本和强化学习的高昂计算成本，在策略蒸馏能以极低的计算开销（约1/9至1/30）达到甚至超越同等性能水平。</li>
+<li><strong>模型个性化与持续学习</strong>：将在策略蒸馏用于一个为公司内部文档训练的助理模型。实验证明，当中训练（mid-training）导致模型遗忘原有的指令遵循能力时，在策略蒸馏可以有效地恢复这些能力，且不损失新学到的领域知识，展示了其在持续学习场景下的巨大潜力。</li>
+</ul>
+</li>
+<li>
+<p><strong>效率分析</strong>：通过实验量化了在策略蒸馏相较于RL的计算效率优势。由于其密集的词元级奖励，在策略蒸馏的学习效率比RL高出50-100倍。此外，该方法能有效复用训练数据，提高了数据效率。</p>
+</li>
+<li><strong>理论洞察</strong>：提出了RL主要是在“语义策略空间”进行搜索，而蒸馏则可以作为学习已发现优秀策略的“捷径”。同时，揭示了传统的SFT即使在“在策略”的数据集上也会因梯度更新导致性能下降，进一步凸显了在策略蒸馏在保持策略稳定性方面的优势。</li>
+</ol>
+<p>总之，本文论证了在策略蒸馏是一种强大且经济的后训练技术，它能够高效地将大型教师模型的复杂能力迁移到小型学生模型中，特别适用于提升模型在推理、个性化和持续学习等方面的表现。</p>
+<h2>A3 背景知识</h2>
+<p>大型语言模型（LLM）在特定领域展现出专家级的性能，这是多种能力叠加的结果：输入感知、知识检索、计划选择和可靠执行。这需要一系列训练方法，大致可分为三个阶段：<br/>
+* <strong>预训练（Pre-training）</strong>：教授通用能力，如语言使用、广泛的推理能力和世界知识。<br/>
+* <strong>中训练（Mid-training）</strong>：灌输领域知识，如代码、医学数据库或公司内部文件。<br/>
+* <strong>后训练（Post-training）</strong>：引出目标行为，如指令遵循、解决数学问题或聊天。</p>
+<p>经过更强训练的小型模型通常在其专业领域内胜过更大型的通用模型。使用小型模型有许多好处：它们可以为隐私或安全考虑进行本地部署，可以更容易地持续训练和更新，并节省推理成本。要利用这些优势，需要为训练的后期阶段选择正确的方法。</p>
+<p>后训练“学生”模型的方法可分为两种：<br/>
+* <strong>在策略训练（On-policy training）</strong>：从学生模型本身采样轨迹（rollouts），并为其分配某种奖励。<br/>
+* <strong>离策略训练（Off-policy training）</strong>：依赖于某个外部来源的目标输出，学生学习模仿这些输出。</p>
+<p>例如，我们可能希望训练一个紧凑模型来解决如下数学问题：<br/>
+<img alt="" class="figure-image" src="images/prompt.svg"/></p>
+<p>我们可以通过强化学习进行在策略训练，通过评判每个学生轨迹是否解决了问题来打分。这种评分可以由人类完成，或者由一个能可靠得到正确答案的“教师”模型完成。<br/>
+<img alt="" class="figure-image" src="images/reinforcement-learning.svg"/></p>
+<p>在策略训练的优势在于，通过在自身的样本上训练，学生能以更直接的方式学会避免错误。但RL有一个主要缺点：它提供的反馈非常稀疏，每个训练回合只教授【固定的比特数】（【<a href="https://thinkingmachines.ai/blog/lora/#how-much-capacity-is-needed-by-supervised-and-reinforcement-learning">https://thinkingmachines.ai/blog/lora/#how-much-capacity-is-needed-by-supervised-and-reinforcement-learning</a>】），无论使用了多少词元。在上面的例子中，学生只学到“21”是错误答案，并更新策略以避免产生这个轨迹。但它没有学到错误究竟出在哪里，是运算顺序错了还是算术本身出错了。这种反馈的稀疏性使得RL在许多应用中效率低下。</p>
+<p>离策略训练通常通过监督微调（SFT）完成：在一个精心策划的、包含特定任务标签示例的数据集上进行训练。这些标签示例的来源可以是一个在手头任务上表现出色的教师模型。</p>
+<p>我们可以使用一种称为<strong>蒸馏（distillation）</strong>的机制：训练学生模型来匹配教师模型的输出分布。我们在教师的<strong>轨迹（trajectories）</strong>上进行训练，即生成的完整词元序列，包括中间的思考步骤。我们可以使用教师在每一步的完整下一个词元分布（常被称为“logit蒸馏”），或者只使用采样的给定序列。在实践中，采样序列提供了对教师分布的无偏估计，并能达到相同的目标。学生模型会朝着序列中的每个词元进行更新，更新的幅度与它自己生成该词元的可能性成反比，如下图中较深的颜色所示：<br/>
+<img alt="" class="figure-image" src="images/off-policy-distillation.svg"/></p>
+<p>从大型模型教师进行蒸馏已被证明在训练小型模型方面非常有效，包括【遵循指令】（【Taori等人，《Alpaca: A Strong, Replicable Instruction-Following Model》，2021，<a href="https://crfm.stanford.edu/2023/03/13/alpaca.html">https://crfm.stanford.edu/2023/03/13/alpaca.html</a>】）、【在数学和科学上进行推理】（【Guha等人，《OpenThoughts: Data Recipes for Reasoning Models》，2025，<a href="https://arxiv.org/abs/2506.04178">https://arxiv.org/abs/2506.04178</a>】）、【从医疗记录中提取临床信息】（【Vedula等人，《Distilling Large Language Models for Efficient Clinical Information Extraction》，2025，<a href="https://arxiv.org/html/2501.00031v1">https://arxiv.org/html/2501.00031v1</a>】）以及【进行多轮聊天对话】（【Ding等人，《Enhancing Chat Language Models by Scaling High-quality Instructional Conversations》，2023，<a href="https://arxiv.org/abs/2305.14233">https://arxiv.org/abs/2305.14233</a>】）。用于这些及其他应用的蒸馏数据集通常是开源和公开发布的。</p>
+<p>离策略训练的缺点是，学生在教师频繁访问的上下文中学习，而不是学生自己经常会遇到的上下文。这可能导致误差累积：如果学生在早期犯了一个教师从未犯过的错误，它会发现自己越来越偏离在训练中观察到的状态。当我们在意学生在长序列上的表现时，这个问题变得尤为严重。为避免这种偏离，学生必须学会从自己的错误中恢复。</p>
+<p>离策略蒸馏观察到的另一个问题是，学生可能学会模仿教师的风格和自信，但【不一定能模仿其事实的准确性】（【Gudibande等人，《The False Promise of Imitating Proprietary LLMs》，2023，<a href="https://arxiv.org/abs/2305.15717">https://arxiv.org/abs/2305.15717</a>】）。</p>
+<p>如果你在学习下棋，在策略RL类似于没有任何指导地玩游戏。赢或输的反馈直接与你自己的下法相关，但每局只收到一次，并且不会告诉你哪些棋步对结果贡献最大。离策略蒸馏类似于观看一位特级大师下棋——你观察到非常高超的棋步，但它们是在新手玩家很少会遇到的棋盘状态下走出的。</p>
+<p>我们希望将在策略RL的相关性与蒸馏的密集奖励信号结合起来。对于学习下棋来说，这将是一个能为你自己的每一步棋打分的老师，评分范围从“大漏招”到“神之一手”。对于LLM的后训练来说，这就是在策略蒸馏。<br/>
+<img alt="" class="figure-image" src="images/chess.png"/><br/>
+来自 <a href="http://chess.com" rel="noopener noreferrer" target="_blank">http://chess.com</a> 的截图。每一步棋都由分析引擎进行颜色分级，将棋步标记为大漏招（红色）、错误（橙色）、不精确（黄色）或神之一手（蓝色）。</p>
+<h3>在策略蒸馏——两全其美</h3>
+<p><strong>在策略蒸馏的核心思想</strong>是从<em>学生</em>模型中采样轨迹，并使用一个高性能的教师模型来对每个轨迹的<em>每一个词元</em>进行评分。回到我们的数学例子，在策略蒸馏会对解题的每一步进行评分，惩罚导致学生得出错误答案的错误，同时强化那些执行正确的步骤。<br/>
+<img alt="" class="figure-image" src="images/on-policy-distillation.svg"/></p>
+<p>在这篇文章中，我们探讨了在策略蒸馏在训练数学推理模型和训练一个结合了领域知识与指令遵循能力的助理模型等任务中的应用。我们在已经通过预训练和中训练具备了基础能力的模型上应用在策略蒸馏。我们发现，这是一种廉价而强大的后训练方法，它结合了在策略训练的优势和密集奖励信号。</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>采样</th>
+<th>奖励信号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>监督微调</td>
+<td>离策略</td>
+<td>密集</td>
+</tr>
+<tr>
+<td>强化学习</td>
+<td>在策略</td>
+<td>稀疏</td>
+</tr>
+<tr>
+<td><strong>在策略蒸馏</strong></td>
+<td><strong>在策略</strong></td>
+<td><strong>密集</strong></td>
+</tr>
+</tbody>
+</table>
+<p>我们关于在策略蒸馏的工作受到了【DAGGER】（【Ross等人，《A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning》，2010，<a href="https://arxiv.org/abs/1011.0686">https://arxiv.org/abs/1011.0686</a>】）的启发，这是一种迭代式SFT算法，包含了教师对学生访问过的状态的评估。它也类似于【过程奖励建模】（【Lightman等人，《Let’s Verify Step by Step》，2023，<a href="https://arxiv.org/abs/2305.20050">https://arxiv.org/abs/2305.20050</a>】），这是一种对学生模型思维链中每一步都进行评分的RL方法。我们扩展了先前由【Agarwal等人】（【Agarwal等人，《On-Policy Distillation of Language Models: Learning from Self-Generated Mistakes》，2023，<a href="https://arxiv.org/abs/2306.13649">https://arxiv.org/abs/2306.13649</a>】）、【Gu等人】（【Gu等人，《MiniLLM: Knowledge Distillation of Large Language Models》，2023，<a href="https://arxiv.org/abs/2306.08543">https://arxiv.org/abs/2306.08543</a>】）和【Qwen3团队】（【Qwen Team，《Qwen3 Technical Report》，2025，<a href="https://arxiv.org/abs/2505.09388">https://arxiv.org/abs/2505.09388</a>】）所做的在策略蒸馏工作。利用【Tinker训练API】（【<a href="https://thinkingmachines.ai/tinker/">https://thinkingmachines.ai/tinker/</a>】），我们复现了Qwen3的成果，即通过在策略蒸馏，以远低于RL的成本在推理基准上达到了同等性能。</p>
+<h2>A2 方法细节</h2>
+<p>您可以跟随【Tinker cookbook】（【<a href="https://github.com/thinking-machines-lab/tinker-cookbook/tree/main/tinker_cookbook/recipes/distillation">https://github.com/thinking-machines-lab/tinker-cookbook/tree/main/tinker_cookbook/recipes/distillation</a>】）中的每一步来实现。</p>
+<h3>损失函数：反向KL散度</h3>
+<p><strong>在策略蒸馏可以使用多种损失函数</strong>。在策略蒸馏可以使用多种损失函数来评估学生模型的轨迹（Agarwal等人的工作分析了各种损失函数的选择）。为简单起见，我们选择逐词元的反向KL散度——即在给定相同先前轨迹的条件下，学生模型（$\pi_\theta$）和教师模型（$\pi_\text{teacher}$）分布之间的散度：<br/>
+</p>
+$$\text{KL}\Bigl(\pi_\theta \lvert\rvert \pi_\text{teacher}\Bigr) = \mathbb{E}_{x \sim {\pi_\theta}} \Bigl[ \log \pi_\theta(x_{t+1} | x_{1..t}) - \log \pi_\text{teacher}(x_{t+1} | x_{1..t}) \Bigr]$$
+
+<p><strong>奖励函数最小化反向KL散度</strong>。我们的奖励函数旨在最小化反向KL散度，这会促使学生在它所处的每一个状态下都去近似教师的行为。当学生的行为与教师完全一致时，反向KL散度为零。为了简化，我们使用的折扣因子为零：在任何给定的时间步，学生只优化紧邻的下一个词元，而不考虑未来的词元（尽管数学上更正确的做法是使用大于0的折扣因子，但我们在实践中并未发现这能提升性能，因此为简单起见选择了零）。</p>
+<p><strong>反向KL散度的特性</strong>。反向KL散度与强化学习（RL）有天然的协同作用，RL通常优化由奖励模型引导的某种形式的序列级反向KL散度。然而，与实践中大多数奖励模型不同，反向KL散度是“不可被利用的”（unhackable），因为从教师模型的角度看，低的KL散度总是对应着高概率的理想行为。反向KL散度的另外两个有用特性是它是“寻找众数的”（mode seeking）（详见【Eric Jang的博客文章】(<a href="https://blog.evjang.com/2016/08/variational-bayes.html">https://blog.evjang.com/2016/08/variational-bayes.html</a>)对寻找众数行为的更多讨论）——它学习一种特定的行为（教师的行为），而不是将概率分布分散在几个次优选项上——并且它能减少【暴露偏差（exposure bias）】（【Bengio等人，《Scheduled Sampling for Sequence Prediction with Recurrent Neural Networks》，2015，<a href="https://arxiv.org/abs/1506.03099">https://arxiv.org/abs/1506.03099</a>】）。更多讨论请参见Gu等人的工作。</p>
+<p><strong>计算成本优势</strong>。这种方法在计算上能显著节省成本。因为它不需要等待一个轨迹完成采样才能计算奖励，所以我们可以使用更短或部分的轨迹进行训练。查询教师模型的对数概率也只需要大型模型进行一次前向传播，而轨迹则是由更小、更廉价的学生模型生成的。</p>
+<p><strong>无需独立的奖励模型</strong>。我们也不需要一个独立的奖励或标注模型。将基于蒸馏的逐词元奖励与序列级的环境奖励相结合可能会有优势；这是一个有趣的潜在未来研究领域。</p>
+<h3>图解说明</h3>
+<p><strong>一个真实的错误学生轨迹示例</strong>。下面是一个真实的、由教师模型评分的错误学生轨迹示例。该示例来自【SimpleBench】（<a href="https://simple-bench.com/">https://simple-bench.com/</a>），它要求模型做出一个关键观察，即问题的物理前提很重要：正确答案是“B. 0”，因为冰块在煎锅里会融化。学生模型【Qwen3-4B-Instruct-2507】（<a href="https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507">https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507</a>）错误地将其视为一个纯数学问题，没有考虑物理背景。颜色越深的词元代表从教师模型【Qwen3-235B-A22B-Instruct-2507】（<a href="https://huggingface.co/Qwen/Qwen3-235B-A22B-Instruct-2507">https://huggingface.co/Qwen/Qwen3-235B-A22B-Instruct-2507</a>）那里受到的惩罚越高，而该教师模型能正确解决这个问题。我们看到，教师模型惩罚了那些引导学生走向歧途的短语开头的词元，这直观上对应了指导推理的重要【“分叉词元”（forking tokens）】（【Wang等人，《Beyond the 80/20 Rule: High-Entropy Minority Tokens Drive Effective Reinforcement Learning for LLM Reasoning》，2025，<a href="https://arxiv.org/abs/2506.01939">https://arxiv.org/abs/2506.01939</a>】）。最终的答案虽然是错的，但并没有受到惩罚——因为它在给定整个前文序列的条件下是完全可预测的。<br/>
+<img alt="" class="figure-image" src="images/example-kl-illustration.svg"/><br/>
+由教师模型评分的示例轨迹。颜色更深的红色词元对应更高的反向KL散度。</p>
+<h3>伪代码</h3>
+<p><strong>在Tinker的RL脚本基础上实现</strong>。我们在【Tinker中的RL脚本】（<a href="https://github.com/thinking-machines-lab/tinker-cookbook/blob/main/tinker_cookbook/rl/train.py">https://github.com/thinking-machines-lab/tinker-cookbook/blob/main/tinker_cookbook/rl/train.py</a>）之上实现了在策略蒸馏，该脚本已经实现了采样、奖励计算和策略梯度风格的训练。我们的实现实际上可以是在使用KL正则化的RL实现上进行一行代码的更改：我们只需替换掉正则化器模型。</p>
+<p><strong>实现步骤</strong>：<br/>
+1. <strong>初始化教师客户端</strong>。Tinker API可以轻松地为不同模型创建不同的客户端，而无需担心模型引擎的利用率。我们使用一个采样客户端，因为我们不需要通过教师模型传播对数概率。<br/>
+2. <strong>采样轨迹</strong>。我们像在RL中一样从学生模型中采样轨迹。在采样过程中，RL已经计算了学生的对数概率 $\log \pi_\theta(x)$，用作【重要性采样】（<a href="https://tinker-docs.thinkingmachines.ai/losses#policy-gradient-importance_sampling">https://tinker-docs.thinkingmachines.ai/losses#policy-gradient-importance_sampling</a>）损失的一部分。<br/>
+3. <strong>计算奖励</strong>。我们使用 <code>compute_logprobs</code> 函数查询教师客户端，传入采样的轨迹，该函数返回教师模型在学生采样的词元 $x$ 上的对数概率 $\log \pi_\text{teacher}(x)$。在本文中，我们所有实验均未考虑logit（top-k）蒸馏，该方法可用于进一步提高计算效率。然后我们用它来计算反向KL散度。<br/>
+4. <strong>使用RL进行训练</strong>。我们将逐词元的优势（advantage）设置为负的反向KL散度，并调用RL的重要性采样损失函数对学生模型执行训练更新。</p>
+<pre><code># 初始化教师客户端 (main):
+teacher_client = service_client.create_sampling_client(
+    base_model=teacher_config.base_model,
+    model_path=teacher_config.load_checkpoint_path,
+)
+
+# 采样轨迹 (main):
+trajectories = do_group_rollout(student_client, env_group_builder)
+sampled_logprobs = trajectories.loss_fn_inputs["logprobs"]
+
+# 计算奖励 (compute_teacher_reverse_kl):
+teacher_logprobs = teacher_client.compute_logprobs(trajectories)
+reverse_kl = sampled_logprobs - teacher_logprobs
+trajectories["advantages"] = -reverse_kl
+
+# 使用RL进行训练 (train_step):
+training_client.forward_backward(trajectories, loss_fn="importance_sampling")</code></pre>
+<p><strong>训练流程说明</strong>。在下面的实验中，我们通常对已经在中训练阶段接受过特定领域知识训练的模型应用在策略蒸馏。这种训练增加了学生生成教师分布内词元的概率，尽管这通常远不足以复现教师的性能。SFT使用前向KL散度，为新词元增加了【支持（support）】（<a href="https://en.wikipedia.org/wiki/Support_">https://en.wikipedia.org/wiki/Support_</a>(mathematics)）。然后，反向KL方法可以在初始化的支持范围内进行模式搜索。通常，正如我们将在个性化示例中看到的，生成相关词元的概率最初为零，因为学生缺乏任何相关的领域知识。</p>
+<p><strong>后训练阶段的应用</strong>。我们使用在策略蒸馏进行后训练，并将其与其他用于训练专家模型的关键最后阶段的方法进行比较。</p>
+<h2>A4 实验环境</h2>
+<ul>
+<li>
+<p><strong>数据集</strong>:</p>
+<ul>
+<li>
+<p><strong>推理任务</strong>:</p>
+<ul>
+<li><strong>OpenThoughts-3</strong>: 一个由QwQ-32B生成的包含120万个推理提示和响应的数据集，用于数学推理的离策略蒸馏（SFT）。</li>
+<li><strong>AIME'24</strong>: 一个数学问题基准测试，用于评估模型的数学推理能力。</li>
+<li><strong>GPQA-Diamond</strong>: 一个推理基准测试。</li>
+<li><strong>DeepMath</strong>: 用于RL训练的数据集。</li>
+<li><strong>SimpleBench</strong>: 用于提供推理问题示例。</li>
+</ul>
+</li>
+<li>
+<p><strong>个性化任务</strong>:</p>
+<ul>
+<li><strong>内部公司文档</strong>: 用于中训练，向模型灌输特定领域知识。</li>
+<li><strong>Tulu3</strong>: 一个广泛的聊天和指令遵循数据集，其提示被用于生成背景聊天数据，以及在后训练阶段恢复指令遵循能力。</li>
+<li><strong>IF-eval</strong>: 一个常用的指令遵循能力评估基准。</li>
+<li><strong>内部QA评估</strong>: 用于衡量模型对公司内部知识的掌握程度。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>模型架构</strong>:</p>
+<ul>
+<li>
+<p><strong>学生模型</strong>:</p>
+<ul>
+<li>Qwen3-8B-Base</li>
+<li>Qwen3-8B (后训练版本)</li>
+<li>Qwen3-4B-Instruct-2507 (用于图解说明)</li>
+</ul>
+</li>
+<li>
+<p><strong>教师模型</strong>:</p>
+<ul>
+<li>Qwen3-32B</li>
+<li>Qwen3-235B-A22B-Instruct-2507 (用于图解说明)</li>
+<li>RL训练后的Qwen3-8B-Base (用于自蒸馏实验)</li>
+</ul>
+</li>
+<li>
+<p><strong>训练方法</strong>:</p>
+<ul>
+<li>全量微调 (Full fine-tuning)</li>
+<li>LoRA (Low-Rank Adaptation)，在实验中使用了rank=32和rank=128的配置。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>硬件配置</strong>:</p>
+<ul>
+<li><strong>GPU</strong>: 具体型号未说明，但提到了GPU小时数作为计算成本的度量单位（例如，RL使用了17,920 GPU小时）。</li>
+<li><strong>其他</strong>: CPU、网络等未详细说明。</li>
+</ul>
+</li>
+<li>
+<p><strong>软件配置</strong>:</p>
+<ul>
+<li><strong>代码实现</strong>: 基于Tinker cookbook中的RL脚本实现。</li>
+<li><strong>依赖库/平台</strong>:<ul>
+<li><strong>Tinker训练API</strong>: 用于创建模型客户端、采样、计算logprobs和执行训练。</li>
+<li><strong>Hugging Face</strong>: 用于托管和访问模型（如Qwen3系列）。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2>A4 实验结果</h2>
+<h3>蒸馏用于推理能力训练</h3>
+<p>本实验旨在通过蒸馏提升Qwen3-8B-Base模型在数学推理任务上的表现，使用Qwen3-32B作为教师模型。</p>
+<ul>
+<li>
+<p><strong>离策略蒸馏 (基线)</strong>:</p>
+<ul>
+<li><strong>内容</strong>: 使用OpenThoughts-3数据集对Qwen3-8B-Base进行监督微调（SFT）。</li>
+<li><strong>结果</strong>: 训练40万个提示后，模型在AIME'24基准上达到60%的得分。性能增长呈对数线性关系，初期收益显著，后期成本高昂。LoRA方法在大规模SFT中表现不如全量微调。</li>
+<li><strong>结论</strong>: 要达到70%的得分，根据对数线性外推，预计需要训练约200万个提示。这为其他方法提供了一个成本-性能的比较基准。<br/>
+<img alt="" class="figure-image" src="images/experiment-off-policy-distillation.svg"/><br/>
+AIME'24得分随离策略蒸馏（SFT）进程的变化。在最初的5-10万个提示后，性能遵循可预测的对数线性缩放曲线。正如LoRA Without Regret中所预测的，当使用高批量大小进行大规模SFT时，我们观察到LoRA性能更差。</li>
+</ul>
+</li>
+<li>
+<p><strong>强化学习 (对比)</strong>:</p>
+<ul>
+<li><strong>内容</strong>: 引用Qwen3技术报告中的数据，在类似的SFT初始化模型上进行RL训练。</li>
+<li><strong>结果</strong>: 使用17,920 GPU小时的RL，AIME'24得分达到67.6%。其成本与训练200万个离策略蒸馏提示的成本相当。</li>
+</ul>
+</li>
+<li>
+<p><strong>在策略蒸馏 (本文方法)</strong>:</p>
+<ul>
+<li><strong>内容</strong>: 从SFT训练了40万提示的检查点开始，进行在策略蒸馏。</li>
+<li><strong>结果</strong>: 仅用约150个训练步骤（约7.7万个提示，每个提示4个样本）就使AIME'24得分达到了70%。与SFT外推结果相比，计算效率提升了9到30倍（取决于是否计算教师模型生成SFT数据的成本）。与RL相比，成本仅为其1/10，得分却更高（74.4% vs 67.6%，引用Qwen3报告）。</li>
+<li><strong>结论</strong>: 在策略蒸馏在提升推理能力方面，比离策略蒸馏和RL具有显著的计算效率优势。<br/>
+<img alt="" class="figure-image" src="images/experiment-on-policy-distillation-loras.svg"/><br/>
+AIME'24得分随在策略蒸馏进程的变化。我们以训练FLOPs来衡量额外计算量。在策略蒸馏比SFT计算效率高得多，特别是对于LoRA模型。在rank=32时，LoRA在SFT后落后全量微调13%，但在策略蒸馏后仅落后6%。</li>
+</ul>
+</li>
+</ul>
+<p><strong>各方法成本与性能对比表</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>AIME’24</th>
+<th>教师 FLOPs</th>
+<th>学生 FLOPs</th>
+<th>相对SFT-2M的计算效率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>初始化: SFT-400K</em></td>
+<td>60%</td>
+<td>8.5 × 10²⁰</td>
+<td>3.8 × 10²⁰</td>
+<td>–</td>
+</tr>
+<tr>
+<td>SFT-2M (外推)</td>
+<td>~70% (外推)</td>
+<td>3.4 × 10²¹</td>
+<td>1.5 × 10²¹</td>
+<td>1×</td>
+</tr>
+<tr>
+<td>强化学习</td>
+<td>68%</td>
+<td>-</td>
+<td>-</td>
+<td>≈1×</td>
+</tr>
+<tr>
+<td><strong>在策略蒸馏</strong></td>
+<td><strong>70%</strong></td>
+<td><strong>8.4 × 10¹⁹</strong></td>
+<td><strong>8.2 × 10¹⁹</strong></td>
+<td><strong>9-30×</strong></td>
+</tr>
+</tbody>
+</table>
+<h3>蒸馏用于模型个性化</h3>
+<p>本实验探讨使用在策略蒸馏来训练一个既具备内部知识又保持良好指令遵循行为的定制化助理模型。</p>
+<ul>
+<li>
+<p><strong>问题陈述：知识训练导致行为退化</strong>:</p>
+<ul>
+<li><strong>内容</strong>: 从一个已具备良好指令遵循能力的Qwen3-8B模型开始，对其进行中训练，混合了公司内部文档数据和背景聊天数据。</li>
+<li><strong>结果</strong>: 增加内部文档数据的比例可以提升模型知识水平（内部QA评估得分），但即使混合了高达30%的聊天数据，模型的指令遵循能力（IF-eval得分）也无法维持初始水平，甚至出现严重退化。使用LoRA也无法有效缓解这种“灾难性遗忘”。<br/>
+<img alt="" class="figure-image" src="images/experiment-personalization-midtrain.svg"/><br/>
+在中训练期间，对内部文档与背景聊天数据的比例进行扫描。尽管混合少量聊天数据有助于防止灾难性回归，但没有一种权重能维持原有的IF-eval性能。<br/>
+<img alt="" class="figure-image" src="images/experiment-midtrain-if-eval.svg"/><br/>
+在所有数据混合比例下，IF-eval得分在中训练期间均下降。当我们使用线性学习率（如图所示）时，性能退化最终趋于平缓，并随着学习率衰减而缓慢恢复。然而，性能从未完全恢复。<br/>
+<img alt="" class="figure-image" src="images/experiment-midtrain-lora.svg"/><br/>
+当用于在后训练过的Qwen3-8B上进行个性化中训练时，LoRA学到的知识更少，并且仍然会忘记其原有的后训练行为。</li>
+</ul>
+</li>
+<li>
+<p><strong>解决方案：在策略蒸馏恢复行为</strong>:</p>
+<ul>
+<li><strong>内容</strong>: 在中训练之后，使用原始的Qwen3-8B模型作为教师，在Tulu3聊天提示上进行在策略蒸馏，以恢复其指令遵循能力。</li>
+<li><strong>结果</strong>: 在策略蒸馏几乎完全恢复了模型的IF-eval性能（从79%提升到83%），同时没有损失任何新学到的知识（内部QA评估得分甚至从36%略微提升到41%）。</li>
+<li><strong>结论</strong>: 在策略蒸馏是一种有效的工具，可以在模型学习新知识后，廉价地恢复或“重新调用”其被遗忘的专业行为，展示了其在持续学习和模型维护中的巨大价值。</li>
+</ul>
+</li>
+</ul>
+<p><strong>个性化实验性能汇总表</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>内部QA评估 (知识)</th>
+<th>IF-eval (聊天)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>Qwen3-8B (初始)</em></td>
+<td>18%</td>
+<td>85%</td>
+</tr>
+<tr>
+<td><em>+ 中训练 (100%文档)</em></td>
+<td>43%</td>
+<td>45%</td>
+</tr>
+<tr>
+<td>+ 中训练 (70%文档)</td>
+<td>36%</td>
+<td>79%</td>
+</tr>
+<tr>
+<td><strong>+ 中训练 (70%) + 蒸馏</strong></td>
+<td><strong>41%</strong></td>
+<td><strong>83%</strong></td>
+</tr>
+</tbody>
+</table>
+<h3>其他关键实验结果</h3>
+<ul>
+<li>
+<p><strong>RL vs. 在策略蒸馏的直接效率对比</strong>:</p>
+<ul>
+<li><strong>内容</strong>: 首先用RL训练一个模型，然后用这个模型作为教师，通过在策略蒸馏将知识传回给基础模型。</li>
+<li><strong>结果</strong>: 在策略蒸馏达到教师模型性能所需梯度步数比RL少7-10倍，综合计算效率高出50-100倍。这得益于更短的上下文长度和更小的批次大小。<br/>
+<img alt="" class="figure-image" src="images/experiment-self-distillation.svg"/><br/>
+从相同的初始化开始，在策略蒸馏学习RL训练的策略所需的梯度步数大约减少了7-10倍，对应于50-100倍的计算效率提升。</li>
+</ul>
+</li>
+<li>
+<p><strong>数据效率</strong>:</p>
+<ul>
+<li><strong>内容</strong>: 仅使用一个训练提示，进行多轮（20步）在策略蒸馏。</li>
+<li><strong>结果</strong>: 模型性能近似达到了教师模型的水平，证明在策略蒸馏能够高效地复用训练数据，而不会像RL那样轻易过拟合到最终答案。<br/>
+<img alt="" class="figure-image" src="images/experiment-self-distillation-multiepoch.svg"/><br/>
+在此示例中，对一个训练样本进行多轮训练足以蒸馏出教师模型在AIME'24上的性能。我们的默认配置（也用于个性化实验）使用64个提示/批次和4个样本/提示进行在策略蒸馏。所有显示的方法都使用256个样本/批次进行训练。请注意，右图显示的是训练KL散度，因此总共1个提示的表现优于每批次1个提示是正常的。</li>
+</ul>
+</li>
+<li>
+<p><strong>SFT在策略数据的不稳定性</strong>:</p>
+<ul>
+<li><strong>内容</strong>: 对一个模型使用其自身采样的数据（理论上KL散度为0）进行SFT。</li>
+<li><strong>结果</strong>: 模型的IF-eval性能仍然会下降。这表明SFT由于每个批次的随机性导致梯度更新，会使模型策略逐渐偏离初始状态，从而引发类似离策略训练的误差累积问题。</li>
+<li><strong>结论</strong>: 这反衬出在策略蒸馏通过固定的教师模型和反向KL损失，能够稳定地收敛到目标行为，是更可靠的持续学习工具。<br/>
+<img alt="" class="figure-image" src="images/experiment-sft-on-policy.svg"/><br/>
+在Qwen3-32B自身的样本上运行SFT会降低性能。我们使用了与个性化部分相同的学习率，该学习率是为实际性能考虑而调整的。线性学习率可以防止前向KL/IF-eval无限倒退，但在学习率衰减到零之前无法恢复性能。</li>
+</ul>
+</li>
+</ul>
+<h2>A7 补充细节</h2>
+<h3>密集的监督信号极大地提高了计算效率</h3>
+<p><strong>RL与在策略蒸馏的比较</strong>。强化学习和在策略蒸馏都通过反向KL散度进行学习，修剪基础策略中存在的行动空间。区别在于奖励的密度。在【LoRA Without Regret】（<a href="https://thinkingmachines.ai/blog/lora/">https://thinkingmachines.ai/blog/lora/</a>）中，我们从信息论的角度提出，强化学习每个回合只教授 $O(1)$ 比特的信息。相比之下，蒸馏每个回合教授 $O(N)$ 比特的信息，其中 $N$ 是词元的数量。我们能否量化通过更密集的奖励获得的训练效率提升？</p>
+<p><strong>直接对比实验</strong>。我们进行了一个实验来直接比较两者：</p>
+<ol>
+<li>从Qwen3-8B-Base（无额外SFT）开始。</li>
+<li>在DeepMath上运行RL，匹配我们【LoRA Without Regret】（<a href="https://thinkingmachines.ai/blog/lora/">https://thinkingmachines.ai/blog/lora/</a>）中的程序。我们使用LoRA rank为128。得到的模型作为蒸馏的教师。</li>
+<li>将在RL训练的模型（2）上进行在策略蒸馏，蒸馏回基础模型（1）。<br/>
+我们发现，蒸馏达到教师性能水平的速度大约比RL快7-10倍（在模型架构匹配，即LoRA rank 128的情况下）。反向KL散度在不到10个梯度步骤内降至接近零，AIME分数也得以恢复，而RL则需要70个步骤才能达到该水平。<br/>
+<img alt="" class="figure-image" src="images/experiment-self-distillation.svg"/><br/>
+从相同的初始化开始，在策略蒸馏学习RL训练的策略所需的梯度步数大约减少了7-10倍，对应于50-100倍的计算效率提升。</li>
+</ol>
+<p><strong>计算效率的累计提升</strong>。累计来看，所需计算量的减少量级在50-100倍之间：<br/>
+* RL需要在接近评估上下文长度的环境中训练（以便策略学习上下文限制，避免格式惩罚），而蒸馏在较短的上下文长度下也能合理学习，因为完成采样和继续采样的轨迹之间没有奖励的急剧截断。<br/>
+* 当SFT初始化很强时（即教师策略在学生策略的支持域内；如果不是，如“推理蒸馏”部分所示，则需要更大的批次大小），在策略蒸馏能以小得多的批次大小有效工作，因为它每个回合提供的信息比特数要多得多，从而减少了梯度噪声。</p>
+<p>尽管通常用过程监督来训练强化学习模型很困难，但这些结果表明，作为一个大方向，过程监督和密集奖励有潜力将学习效率提高一个数量级。这与Lightman等人的早期RL研究结果相符。</p>
+<h3>蒸馏可以有效地重用训练数据以提高数据效率</h3>
+<p><strong>数据复用的重要性</strong>。对于实践者来说，收集大量的训练提示可能既困难又耗时。因此，我们希望能够在训练中多次重用提示。对于RL，尤其是在大型模型上，对同一提示进行多轮训练常常导致简单地记忆最终答案。（【Wang等人，2025年的论文“Reinforcement Learning for Reasoning in Large Language Models with One Training Example”】（<a href="https://arxiv.org/abs/2504.20571">https://arxiv.org/abs/2504.20571</a>)在某些设置下呈现了积极的结果）。相比之下，在策略蒸馏通过最小化反向KL散度来学习近似教师的完整分布，而不是记忆单个答案。这使我们能够从同一个提示中训练多个样本。</p>
+<p><strong>单一样本训练实验</strong>。我们重复了上述在数学上训练Qwen3-8B-Base的实验，但这次只使用数据集中随机选择的一个提示。（提示：“求极限：$\lim_{x \to \infty} \sqrt{x} \left( \sqrt[3]{x+1} - \sqrt[3]{x-1} \right)$”）。我们在这个提示上连续训练20步，每步一个批次的256个轨迹，总共5120个评分序列。我们以顺序方式对同一提示进行多步训练，这通常会导致过拟合。虽然这自然计算效率较低，但我们确实近似达到了教师模型的性能，尽管只在一个提示上训练。<br/>
+<img alt="" class="figure-image" src="images/experiment-self-distillation-multiepoch.svg"/><br/>
+在此示例中，对一个训练样本进行多轮训练足以蒸馏出教师模型在AIME'24上的性能。我们的默认配置（也用于个性化实验）使用64个提示/批次和4个样本/提示进行在策略蒸馏。所有显示的方法都使用256个样本/批次进行训练。请注意，右图显示的是训练KL散度，因此总共1个提示的表现优于每批次1个提示是正常的。</p>
+<h3>RL在语义策略空间中搜索</h3>
+<p><strong>RL与预训练的搜索空间不同</strong>。我们已经看到，在策略蒸馏可以用少得多的训练步骤复制RL提供的学习效果。对此结果的一种解释是，与预训练不同，RL本身在梯度步骤上花费的计算量并不大。我们应该认为RL的大部分计算都花在了<em>搜索</em>上——即推出一个策略并进行信用分配。引用【Rich Sutton的《苦涩的教训》】（<a href="http://www.incompleteideas.net/IncIdeas/BitterLesson.html">http://www.incompleteideas.net/IncIdeas/BitterLesson.html</a>）：“突破性进展最终来自一种基于通过<strong>搜索</strong>和<strong>学习</strong>来扩展计算的对立方法”。</p>
+<p><strong>预训练与RL的对比</strong>。通过随机梯度下降进行的预训练是在高维参数空间中探索。预训练需要海量信息，并且非常难以蒸馏，部分原因是参数空间在某种程度上对每个网络都是独特的（参考【Frankle和Carbin，2018年的“彩票假设：寻找稀疏、可训练的神经网络”】（<a href="https://arxiv.org/abs/1803.03635">https://arxiv.org/abs/1803.03635</a>)）。预训练所需的梯度步骤在计算上极其昂贵且耗时。相比之下，我们应将RL视为在语义策略空间中探索。请注意，策略探索与结果探索有细微差别；RL要求基础模型最初就有非零的成功率，因此已经“找到了结果”，但策略可以在RL过程中被提炼，以使成功结果更有可能出现。在每一步，RL都会尝试对过去发现的某个策略进行微小修改。它不是在参数空间中探索，而是通过运气“偶然发现”新策略——它是在从已有的权重集合中随机抽样。</p>
+<p><strong>蒸馏是学习策略的捷径</strong>。一旦找到一个好的策略，蒸馏就成了学习它的捷径：在策略蒸馏不需要对RL课程中的中间策略进行建模，而只需要学习最终的策略。如果我们只对最终策略感兴趣（在生产用例中很常见），我们就不需要花费计算来模拟所有中间策略。</p>
+<p><strong>一个类比</strong>。可以做一个类比：在科学研究中，我们花费大量时间和资源寻找答案和探索新思想。一旦一个结果被发现，通过自然语言表达出来教给别人就简单得多。这与直观的身体技能（如体育运动）形成对比。这些技能很难教给别人，因为知识存在于一种只有我们自己才能轻易理解的内在语言中（例如，肌肉记忆）。体育运动只能通过反复练习来学习。</p>
+<h3>在策略学习作为持续学习的工具</h3>
+<p><strong>在策略学习的优势</strong>。在关于个性化蒸馏的部分，我们探讨了在策略蒸馏将专门训练的行为重新引入模型的能力。这可以推广到更广泛的持续学习任务，这些任务要求在不降低先前能力的情况下获取新知识。先前的研究发现，在策略学习（RL）比离策略学习遗忘得更少（参考【Shenfeld等人，2025年的“RL's Razor: Why Online Reinforcement Learning Forgets Less”】（<a href="https://arxiv.org/abs/2509.04259">https://arxiv.org/abs/2509.04259</a>)）。然而，RL只能塑造行为——它不能很好地教授新知识，因此不足以用于持续学习。</p>
+<p><strong>SFT在持续学习中的失败</strong>。在上面的部分，我们看到SFT（包括离策略蒸馏）在支持持续学习方面失败了，因为它会降低行为表现。我们更深入地研究了这一点，并用一个直接的例子来证明。与上面类似，我们通过从Tulu3提示中采样，使用Qwen3-32B在<code>temperature = 1.0</code>且无其他修改的情况下构建了一个数据集。因此，该数据集与Qwen3-32B的KL散度为零。（“真正策略上”KL=0数据的重要性也在我们之前的文章【《战胜LLM推理中的不确定性》】（<a href="https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/">https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/</a>)中探讨过）。</p>
+<p><strong>SFT在“在策略”数据上的退化</strong>。当我们在这个模型自身的样本数据集上运行SFT时会发生什么？我们看到，任何大于零的实用学习率都会导致在指令遵循评估上的性能下降！<br/>
+<img alt="" class="figure-image" src="images/experiment-sft-on-policy.svg"/><br/>
+在Qwen3-32B自身的样本上运行SFT会降低性能。我们使用了与个性化部分相同的学习率，该学习率是为实际性能考虑而调整的。线性学习率可以防止前向KL/IF-eval无限倒退，但在学习率衰减到零之前无法恢复性能。</p>
+<p><strong>原因分析与在策略蒸馏的优越性</strong>。对此一个可能的解释是，虽然KL散度在期望上为0，但每个有限批次在实践中都会表现出略有不同的分布。在这些有限批次上训练会导致一个非零的梯度更新，这会使更新后的模型策略偏离其原始状态。这个过程使得在自身样本上训练随着时间的推移变成了离策略训练，从而导致与离策略训练中同样发生的误差累积和在长序列上的发散。在策略蒸馏始终保持在策略状态，并且由于教师模型保持不变，学生模型会收敛于教师的理想行为，在自蒸馏设置中不会像SFT那样出现性能退化。这使得在策略蒸馏成为一个非常有前途的持续学习工具。</p>
+<h2>A5 结论</h2>
+<p>我们探讨了在策略蒸馏在训练小型数学推理模型或持续学习的助理等应用中的作用。我们将策略蒸馏与另外两种后训练方法进行了比较：离策略蒸馏和在策略强化学习（RL）。我们发现，在策略蒸馏结合了两者的优点：在策略训练的可靠性能，以及密集奖励信号带来的成本效益。</p>
+<p>后训练是达到前沿模型能力的关键部分。通过利用学生模型的在策略采样和教师模型的密集监督，在策略蒸馏这一方案能够以前沿高计算量RL运行成本的一小部分达到这些能力。</p>
+<p>我们的实现可以在【Tinker cookbook】（<a href="https://github.com/thinking-machines-lab/tinker-cookbook/tree/main/tinker_cookbook/recipes/distillation">https://github.com/thinking-machines-lab/tinker-cookbook/tree/main/tinker_cookbook/recipes/distillation</a>）中找到。我们的工作探索了在策略蒸馏的简单直接的实例，以清晰地展示其优势。我们希望继续研究蒸馏的新应用、改进教师监督的新方法，以及提高数据效率和持续学习能力的方法。</p>
+<p>在Thinking Machines，我们的使命是让人们能够使用结合了前沿性能、适应性和个性化的AI模型。在策略蒸馏是实现这一目标的有力工具。</p>
+</div>
+
+
+</div>

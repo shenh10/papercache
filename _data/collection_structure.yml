@@ -4382,6 +4382,13 @@ llm:
         - llm
         - algorithm
         - pretrain_sft
+      - title: On-Policy Distillation
+        date: '2025-10-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/10/01/on-policy-distillation.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
       pruning:
         posts:
         - title: 'Probe Pruning: Accelerating LLMs Through Dynamic Pruning via Model-Probing'
