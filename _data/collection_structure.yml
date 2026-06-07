@@ -4314,6 +4314,14 @@ llm:
         - llm
         - algorithm
         - pretrain_sft
+      - title: Fewer Truncations Improve Language Modeling
+        date: '2024-04-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/04/01/fewer-truncations-improve-language-modeling.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+        tag: icml24
       - title: 'ROFORMER: ENHANCED TRANSFORMER WITH ROTARY POSITION EMBEDDING'
         date: '2021-04-01'
         url: /papers/llm/algorithm/pretrain_sft/2021/04/01/roformer-enhanced-transformer-with-rotary-position-embedding.html
