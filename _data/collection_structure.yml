@@ -4059,6 +4059,14 @@ llm:
         - llm
         - algorithm
         - rl
+      - title: 'Nemotron-Cascade 2: Post-Training LLMs with Cascade RL and Multi-Domain
+          On-Policy Distillation'
+        date: '2026-03-01'
+        url: /papers/llm/algorithm/rl/2026/03/01/nemotron-cascade-2-post-training-llms-with-cascade-rl-and-multi-domain-on-policy-distillation.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: The Entropy Mechanism of Reinforcement Learning for Reasoning Language
           Models
         date: '2025-05-01'
