@@ -1714,6 +1714,14 @@ llm:
         - llm
         - engineering
         - rl
+      - title: 'Laminar: A Scalable Asynchronous RL Post-Training Framework'
+        date: '2025-10-01'
+        url: /papers/llm/engineering/rl/2025/10/01/laminar-a-scalable-asynchronous-rl-post-training-framework.html
+        categories:
+        - llm
+        - engineering
+        - rl
+        tag: eurosys26
       - title: 'RLHFuse: Efficient RLHF Training for Large Language Models with Inter-
           and Intra-Stage Fusion'
         date: '2024-09-01'
