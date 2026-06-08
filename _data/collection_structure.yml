@@ -4344,6 +4344,14 @@ llm:
         - llm
         - algorithm
         - pretrain_sft
+      - title: Knowledge Fusion of Large Language Models
+        date: '2024-01-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/01/01/knowledge-fusion-of-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+        tag: iclr24
       - title: 'Efficient Sequence Packing without Cross-Contamination: Accelerating
           Large Language Models without Impacting Performance'
         date: '2021-07-01'
