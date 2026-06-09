@@ -221,16 +221,6 @@ llm:
           - engineering
           - inference
           - speculative_decoding
-        - title: 'Beat the Long Tail: Distribution-Aware Speculative Decoding for
-            RL Training'
-          date: '2025-11-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/11/01/beat-the-long-tail-distribution-aware-speculative-decoding-for-rl-training.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: mlsys26
         - title: 'SWIFT: On-the-Fly Self-Speculative Decoding for LLM Inference Acceleration'
           date: '2025-04-01'
           url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/swift-on-the-fly-self-speculative-decoding-for-llm-inference-acceleration.html
@@ -1847,6 +1837,15 @@ llm:
         - llm
         - engineering
         - rl
+      - title: 'Beat the Long Tail: Distribution-Aware Speculative Decoding for RL
+          Training'
+        date: '2025-11-01'
+        url: /papers/llm/engineering/rl/2025/11/01/beat-the-long-tail-distribution-aware-speculative-decoding-for-rl-training.html
+        categories:
+        - llm
+        - engineering
+        - rl
+        tag: mlsys26
       - title: 'SeamlessFlow: A Trainer–Agent Isolation RL Framework Achieving Bubble-Free
           Pipelines via Tag Scheduling'
         date: '2025-08-01'
