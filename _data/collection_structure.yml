@@ -2012,6 +2012,14 @@ llm:
         - engineering
         - train
         tag: sc23
+      - title: 'FlashCP: Load-Balanced Communication-Efficient Context Parallelism
+          for LLM Training'
+        date: '2026-06-01'
+        url: /papers/llm/engineering/train/2026/06/01/flashcp-load-balanced-communication-efficient-context-parallelism-for-llm-training.html
+        categories:
+        - llm
+        - engineering
+        - train
       - title: Robust LLM Training Infrastructure at ByteDance
         date: '2025-09-01'
         url: /papers/llm/engineering/train/2025/09/01/robust-llm-training-infrastructure-at-bytedance.html
