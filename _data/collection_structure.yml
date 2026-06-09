@@ -4654,6 +4654,13 @@ mlsys:
       categories:
       - mlsys
       - gpu
+    - title: 'SOL-ExecBench: Speed-of-Light Benchmarking for Real-World GPU Kernels
+        Against Hardware Limits'
+      date: '2026-03-01'
+      url: /papers/mlsys/gpu/2026/03/01/sol-execbench-speed-of-light-benchmarking-for-real-world-gpu-kernels-against-hardware-limits.html
+      categories:
+      - mlsys
+      - gpu
     - title: Retargeting and Respecializing GPU Workloads for Performance Portability
       date: '2024-09-01'
       url: /papers/mlsys/gpu/2024/09/01/retargeting-and-respecializing-gpu-workloads-for-performance-portability.html
