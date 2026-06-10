@@ -4269,6 +4269,15 @@ llm:
         - algorithm
         - pretrain_sft
         tag: nips24
+      - title: 'Infini-gram: Scaling Unbounded n-gram Language Models to a Trillion
+          Tokens'
+        date: '2024-01-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/01/01/infini-gram-scaling-unbounded-n-gram-language-models-to-a-trillion-tokens.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+        tag: colm24
       - title: 'SkyLadder: Better and Faster Pretraining via Context Window Scheduling'
         date: '2025-12-01'
         url: /papers/llm/algorithm/pretrain_sft/2025/12/01/skyladder-better-and-faster-pretraining-via-context-window-scheduling.html
