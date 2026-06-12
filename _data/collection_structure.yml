@@ -309,6 +309,14 @@ llm:
         - llm
         - engineering
         - rl
+      - title: 'Breaking Entropy Bounds: Accelerating RL Training via MTP with Rejection
+          Sampling'
+        date: '2026-06-01'
+        url: /papers/llm/engineering/rl/2026/06/01/breaking-entropy-bounds-accelerating-rl-training-via-mtp-with-rejection-sampling.html
+        categories:
+        - llm
+        - engineering
+        - rl
       - title: 'StreamRL: Scalable, Heterogeneous, and Elastic RL for LLMs with Disaggregated
           Stream Generation'
         date: '2025-04-01'
