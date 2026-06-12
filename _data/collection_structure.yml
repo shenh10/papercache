@@ -1230,6 +1230,14 @@ llm:
         - llm
         - engineering
         - inference
+      - title: 'Beyond Per-Token Pricing: A Concurrency-Aware Methodology for LLM
+          Infrastructure Cost Estimation'
+        date: '2026-06-01'
+        url: /papers/llm/engineering/inference/2026/06/01/beyond-per-token-pricing-a-concurrency-aware-methodology-for-llm-infrastructure-cost-estimation.html
+        categories:
+        - llm
+        - engineering
+        - inference
       - title: 'Insights into DeepSeek-V3: Scaling Challenges and Reflections on Hardware
           for AI Architectures'
         date: '2025-05-01'
