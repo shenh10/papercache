@@ -140,6 +140,13 @@ llm:
         - engineering
         - attention
         tag: nips25
+      - title: MiniMax Sparse Attention
+        date: '2026-06-01'
+        url: /papers/llm/engineering/attention/2026/06/01/minimax-sparse-attention.html
+        categories:
+        - llm
+        - engineering
+        - attention
       - title: 'Mesh-Attention: A New Communication-Efficient Distributed Attention
           with Improved Data Locality'
         date: '2025-12-01'
