@@ -1,0 +1,189 @@
+---
+added_date: '2026-06-15'
+author: shenh10
+categories:
+- llm
+- engineering
+- train
+comments: true
+date: '2026-01-01'
+layout: post
+mathjax: true
+title: Speeding up Variable-Length Training with Dynamic Context Parallelism and NVIDIA
+  Megatron Core
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>Speeding up Variable-Length Training with Dynamic Context Parallelism and NVIDIA Megatron Core</h1>
+<p><strong>发表时间</strong>: 2026-01 · NVIDIA Developer Blog by Kunlun Li et al. (NVIDIA × Kling)</p>
+<p><strong>文章标题</strong>：借助动态上下文并行和 NVIDIA Megatron Core 加速可变长度训练<br/>
+<strong>作者/机构</strong>：Kunlun Li, Tailai Ma, Parth Mannan, 杨静怡 (NVIDIA)；与可灵团队共同开发</p>
+<h3>A1 主要贡献</h3>
+<p>本文介绍了一种应用于 NVIDIA Megatron Core 的新型调度方法——动态上下文并行 (Dynamic-CP)，该方法由可灵团队和 NVIDIA 技术团队共同开发，主要用于大语言模型（LLM）的后训练和扩散 Transformer（DiT）的预训练。</p>
+<ul>
+<li><strong>核心问题</strong>：在大模型训练中，真实数据集（如LLM训练、视频生成）的序列长度呈长尾分布，少数超长样本带来了不成比例的计算开销和显存消耗。这导致了数据并行（DP）rank间、不同模态以及微批次（micro-batch）之间的计算效率和显存占用严重失衡，制约了整体训练效率。</li>
+<li>
+<p><strong>现有方法局限</strong>：</p>
+<ol>
+<li><strong>样本级打包（Sample-level packing）</strong>：虽然能将多个短序列拼接成固定总长度的微批次，但由于注意力计算复杂度与序列长度呈二次关系（$\mathrm{O}(S^2)$），打包后各样本的实际计算负载并不均衡，导致GPU空闲和流水线并行（PP）气泡加剧。</li>
+<li><strong>静态上下文并行（Static CP）</strong>：为了适应最长序列，CP的切分大小被静态固定。这使得本不需要CP的短序列也被不必要地切分，从而引入了额外的通信开销，在计算量不足以掩盖通信时（特别是跨IB域通信），会“暴露”出来，降低计算效率。</li>
+</ol>
+</li>
+<li>
+<p><strong>研究目标与创新点</strong>：</p>
+<ul>
+<li><strong>提出Dynamic-CP方法</strong>：本文提出动态上下文并行（Dynamic-CP），在微批次粒度上动态地调整CP大小和打包策略，以高效应对可变长度序列训练问题。</li>
+<li><strong>设计求解器与调度流程</strong>：设计了一个求解器，它能够根据一组可变长度序列，在不超过GPU显存限制的前提下，确定最优的打包策略和CP大小，从而最大化计算效率。该求解器通过对计算和通信成本进行建模，避免对短序列过度切分，以减少不必要的CP通信，并缓解数据并行不均衡和CP低效问题。</li>
+<li><strong>框架集成与优化</strong>：将Dynamic-CP集成到Megatron Core中，通过预构建多规模CP通信组、引入轻量级数据迭代器包装器、扩展参数传递机制等方式，以最小的侵入性修改支持了动态调度。同时，优化了损失计算和FLOPS统计方法，以适应变长序列场景。</li>
+<li><strong>显著性能提升</strong>：在LLM训练任务上，Dynamic-CP相比仅使用序列打包的基线方法，在GitHub和CommonCrawl数据集上分别实现了高达1.48倍和1.25倍的加速，并在工业级千卡集群上带来了超过35%的端到端性能提升。</li>
+</ul>
+</li>
+</ul>
+<h3>A3 背景知识/关键Observation/设计原则</h3>
+<p><strong>可变序列长度带来的性能瓶颈</strong>。在大模型训练中，真实数据集中序列长度的分布不均成为了一个经常被忽视的性能瓶瓶颈。无论是在 LLM 训练还是在大规模视频生成任务中，序列长度均呈现出明显的长尾分布特征：少量超长样本带来了不成比例的计算开销和显存消耗。</p>
+<p><strong>计算与显存失衡</strong>。在 LLM 训练中，这种现象表现为不同 batch 之间文本序列长度差异显著；在视频生成任务中也是如此——从几百 token 的短片段到数万 token 的高清长视频，序列长度跨度巨大。上述特性直接导致计算效率和显存占用在数据并行（DP）rank间、不同模态以及微批次之间严重失衡，从而显著制约了调度效率和整体资源利用率。</p>
+<p><strong>现有打包策略的局限</strong>。为应对可变长度的输入，现有训练系统通常采用样本级打包（sample-level packing）策略，即将多个较短序列拼接为一个微批次，并限制其总 token 长度不超过目标序列长度。如图 1 所示，几个不同长度的序列被打包成了三个具有相同长度的微批次。<br/>
+<img alt="图 1. 打包序列与未打包序列的对比" class="figure-image" src="images/image24.png"/></p>
+<p><strong>打包后的计算不均衡问题</strong>。尽管这三个打包后的样本具有相同的总长度，但由于点积注意力的计算复杂度与序列长度是二次关系，它们的计算负载并不相同，如图 2 所示。打包后的样本之间计算负载的这种差异被称为数据并行计算不均衡。该不均衡会导致 GPU 空闲，即部分 DP rank 需要等待计算负载更高的 DP rank 完成梯度同步。此外，这种计算不均衡还会进一步加剧流水线并行（Pipeline Parallel，PP）气泡，从而降低整体训练效率。<br/>
+<img alt="图 2. 打包序列之间的 attention 计算不均衡" class="figure-image" src="https://developer-blogs.nvidia.com/zh-cn-blog/wp-content/uploads/sites/2/2026/01/image-44-1024x249.png"/></p>
+<p><strong>负载不均衡的实际观测</strong>。在图 3 中，NVIDIA Nsight Systems 的 profiling 显示了 VLM 训练中的负载不均衡。其中不同的图像/ 视频样本具有可变的序列长度，且已对序列进行了打包以减少填充。图3展示了不同 DP 通信组之间的同步开销。<br/>
+<img alt="图 3. 不同 DP 通信组之间同步的开销" class="figure-image" src="https://developer-blogs.nvidia.com/zh-cn-blog/wp-content/uploads/sites/2/2026/01/image19.png"/></p>
+<p><strong>静态上下文并行的低效性</strong>。此外，在使用上下文并行时，为了避免GPU内存不足，CP 的切分大小往往由最长的序列决定。结果是，那些本不需要上下文并行的较短序列也会被切分，即使这些序列在单个 GPU上就能存下，他们仍会因为存在更长的序列而被分片，从而带来不必要的 CP 通信开销。</p>
+<p><strong>通信开销无法被计算掩盖</strong>。通常情况下，CP 的通信开销可以被计算掩盖。但是当 CP 较大时 (尤其是跨 InfiniBand (IB) 域的通信时) ，若打包后的序列较短、计算负载较小时，通信开销就会”暴露“出来，这会使 CP 的计算低效。以下示例展示了由于总序列长度较大，需要使用 TP2CP8 的配置。许多打包好的序列由较小的子序列组成，计算量不足以掩盖 CP 通信。<br/>
+<img alt="图 4. 由于计算量不足，无法在序列打包的情况下隐藏 CP 通信" class="figure-image" src="https://developer-blogs.nvidia.com/zh-cn-blog/wp-content/uploads/sites/2/2026/01/image-45.png"/></p>
+<p><strong>动态上下文并行的提出</strong>。这些结果表明，需要一种对上下文并行（CP）进行动态调整的方法。由此，本文提出了动态上下文并行（Dynamic-CP），这种方法不是静态地将 CP 大小固定为一个最长的序列所需的值，而是在 micro batch 粒度动态地调整 CP 大小和打包策略。相关工作（如ByteScale 和 WLB-LLM）也在解决类似问题。</p>
+<p><strong>Dynamic-CP的开销优势</strong>。切换 CP 大小需要重新划分序列切片，并重组 attention 计算所需的CP通信组。与其他的动态并行方案 (例如根据序列长度调整 TP 或 PP 大小) 相比，Dynamic-CP 增加的额外开销最少，因为调整 TP/ PP 大小往往需要在不同的 GPU 上重新分发权重或重构流水线计算图，这些操作代价很大。</p>
+<p><strong>求解器的设计目标</strong>。为了决定如何打包序列，需要设计一个求解器。该求解器旨在给定一组可变长度序列，确定如何打包它们并选择 CP 大小，以在不超过 GPU 显存限制的情况下最大限度地提高计算效率。求解器的功能是获取可变长度序列，并计算最佳打包策略和 CP 大小。这种方法可更大限度地提高计算效率，同时不超过GPU 显存限制。通过对计算和通信成本进行建模，求解器可以避免对短序列过度切分以减少不必要的 CP 通信，从而缓解数据并行不均衡和 CP 低效问题。</p>
+<p><strong>Dynamic-CP的效果展示</strong>。以下示例展示了 Dynamic-CP 的优势。若不使用 Dynamic-CP，负载不均会导致不同 micro batch 之间出现流水线空泡（pipeline bubble），进一步引发了不同 DP rank之间的不均衡。开启 Dynamic-CP 后，micro batch 和 DP rank之间的空泡显著减少。<br/>
+<img alt="图 5. Dynamic-CP 方法的优势" class="figure-image" src="https://developer-blogs.nvidia.com/zh-cn-blog/wp-content/uploads/sites/2/2026/01/image-46.png"/></p>
+<h3>A2 方法细节</h3>
+<h4>用于支持 Dynamic-CP 的 Megatron Core 框架修改</h4>
+<p>在这部分中，我们会介绍将 Dynamic-CP 集成到 Megatron Core 的整体流程。<br/>
+<img alt="图 6. 将 Dynamic-CP 集成到 Megatron Core 中" class="figure-image" src="https://developer-blogs.nvidia.com/zh-cn-blog/wp-content/uploads/sites/2/2026/01/image-47.png"/></p>
+<p><strong>为每个 rank 构建多个 CP group</strong>。使用标准的上下文并行时，每个 rank 属于具有固定 <code>cp_size</code> 的单个组 (<code>cp_group</code>)，且 <code>cp_size</code> 在初始化期间静态确定。但是，Dynamic-CP 在不同 iteration 和 micro batch 中具有不同的 <code>cp_size</code>。为此，单个 rank 必须参与多个不同规模的 CP 组。在初始化过程中，系统会构建多个 CP 组，其 <code>cp_size</code> 介于 1 到 <code>max_cp_size</code> 之间，且限制为2的幂次方。这种设计允许在运行时根据打包和调度结果选择合适的 CP 组，而不会产生动态创建通信组的开销。</p>
+<p><strong>动态重新调度和打包数据</strong>。预训练的数据通常使用 Batch x Sequence x Head x Dim (BSHD) 布局，而 Dynamic-CP 则在 THD 布局上运行。在这种格式中，变长序列会在长度约束下被打包在一起，将原始 BS 维度折叠成为 T 维度（total token）。因此，micro batch 的数量不再是静态的。在 BSHD 中，可以通过 <code>num_microbatches = global_batch_size / dp_size / micro_batch_size</code> 计算出 micro batch 的数量。而使用 THD 时，每个打包序列中包含的原始序列数量不固定，这会导致 <code>num_microbatches</code> 在训练步数迭代中发生变化。为了尽量减少对 Megatron-Core 现有调度逻辑（如PP/VPP）的侵入式修改，我们引入了一个围绕原始 <code>data_iterator</code> 的轻量级 <code>data_iterator_wrapper</code>。该 wrapper 执行三个步骤：1. 重新调度与打包Global batch中的序列，使 DP rank 间的工作负载尽量均衡。2. 根据打包结果选择合适的 <code>cp_size</code>，以最大限度地减少 CP 通信的低效性。3. 为当前迭代返回有效的 <code>num_microbatches</code>。通过这种方式，只需插入一个 wrapper，就能为所有调度器添加 Dynamic-CP 支持，同时保持原有调度代码基本不变。</p>
+<p><strong>在流水线各阶段间广播，并扩展 PackedSeqParams</strong>。由于 <code>num_microbatches</code> 会发生变化，并且只有 TP rank 0以及第一个和最后一个 PP stage 会有 <code>data_iterator</code>，因此框架需要向所有相关的 PP rank 广播 <code>num_micro_batches</code>、<code>max_seqlen</code> 和 <code>cu_seqlens</code>，以确保在动态 micro batch 调度下流水线的一致执行。此外，使用 Dynamic-CP 时，<code>cp_size</code> 会随迭代变化，因此依赖全局静态 CP 设置是不合适的。为解决此问题，<code>PackedSeqParams</code> 被进一步扩展，增加了 <code>cp_size</code> 和 <code>cp_group</code> 两个变量。所有依赖上下文并行的组件——例如位置编码和 Transformer Engine 的 attention——现在都会从 <code>PackedSeqParams</code> 中获取 CP 配置，替代原先的全局 CP 变量，这保证了所有与 CP 相关的操作都与动态选择的 CP 布局保持一致。</p>
+<p><strong>Loss 计算和 FLOPS 统计</strong>。在变长序列和 THD 布局下，不同序列包含的有效 token 数量不同。因此，loss 需要按 token 进行归一化计算：<code>loss = loss_over_valid_tokens / total_number_valid_tokens</code>。这样做可以避免填充引入的偏差。此前版本的 Megatron-Core 在计算 FLOPs 时并未考虑 THD 布局，而是假设 <code>max_seqlen</code> 就是有效序列长度，导致在变长场景下对 FLOPs 产生系统性的高估，新方法对此进行了修正。</p>
+<h4>数据调度建模</h4>
+<p>Transformer 工作负载与序列长度$S$呈现二次关系 ($\mathrm{O}(S^2)$)。与此同时，激活显存随$S$线性增长 ($\mathcal{O}(S)$)，这意味着即使序列长度只有很小的波动，也可能在不同 DP rank 和不同 micro-batch 之间造成显著的计算与显存不均衡。为了平衡一个大样本的工作负载，我们可能会把多个小样本打包在一起，但这会带来严重的显存压力。由于无法同时让 FLOPs 与显存做到完全均衡，这就决定了调度与 packing 策略必须在两者之间权衡。</p>
+<p>我们的目标是实现理想的均衡分布：在 DP rank 与 micro-batch 之间尽可能均匀地切分工作负载和显存占用。在每个 DP rank 的 micro-batch 数量固定时，可以为每个 micro-batch 设定目标的工作量与显存配额。随后，一个三阶段调度器会在“工作负载”和“显存”目标之间交替优化，并在需要时为更重的样本增大 CP 大小，以改善计算与显存的平衡。</p>
+<p><strong>工作负载模型、求解器和模拟器的协作</strong>。完整的调度流程由三个组件组成：</p>
+<ol>
+<li><strong>工作负载模型</strong>：根据每个样本的序列长度来估算其执行时间，并对 Transformer 各类算子上单个样本工作负载进行建模。这定义了最基本的负载单元，其准确性会直接影响最终的性能收益。</li>
+<li><strong>求解器</strong>：以工作负载模型的输出作为输入，使用启发式算法为各样本确定近似最优的 packing 策略。随后将打包后的样本组成 micro-batch，并为其分配 CP 大小。通过遍历不同的“每 DP rank 的 micro-batch 数量”，可以找到最优结果，以平衡流水线气泡、流水线并行不均衡和数据并行不均衡。</li>
+<li><strong>模拟器</strong>：在分布式流水线并行调度下评估这些 micro-batch，选择执行时间最短（即工作负载最均衡）的方案，同时满足峰值显存约束。</li>
+</ol>
+<p><strong>建模过程和双目标平衡</strong>。理想的均衡分布，是在不同 DP rank 以及不同 micro-batch 之间，将计算工作量与显存占用尽可能均匀地切分。在各个 DP rank 采用相同 micro-batch 数量的前提下，可以确定每个 micro-batch 的目标工作量配额与显存配额。同时，pipeline bubble 的大小也会有所不同，需要将其在各个 micro-batch 之间尽量均匀分摊，才能实现端到端的整体均衡。如下所示，均衡 DP rank中的端到端训练时间完全相同，需满足：<br/>
+1. <img alt="公式1" class="figure-image" src="https://developer-blogs.nvidia.com/zh-cn-blog/wp-content/uploads/sites/2/2026/01/image-28.png"/><br/>
+    * <img alt="M_i" class="figure-image" src="https://developer-blogs.nvidia.com/zh-cn-blog/wp-content/uploads/sites/2/2026/01/image-29.png"/> 是第 i 个 DP rank 的 micro batch 数量<br/>
+    * <img alt="W_ij" class="figure-image" src="https://developer-blogs.nvidia.com/zh-cn-blog/wp-content/uploads/sites/2/2026/01/image-30.png"/> 是第 i 个 DP rank 中一个 virtual pipeline stage 的每个 micro batch 的工作负载<br/>
+    * <img alt="V" class="figure-image" src="https://developer-blogs.nvidia.com/zh-cn-blog/wp-content/uploads/sites/2/2026/01/image-31.png"/> 是虚拟流水线阶段的数量<br/>
+    * <img alt="p" class="figure-image" src="https://developer-blogs.nvidia.com/zh-cn-blog/wp-content/uploads/sites/2/2026/01/image-32.png"/> 是流水线阶段编号。</p>
+<p>各 rank 的工作负载配额满足：</p>
+<ol>
+<li><figure class="image-figure">
+<img alt="公式2" class="figure-image" src="https://developer-blogs.nvidia.com/zh-cn-blog/wp-content/uploads/sites/2/2026/01/image-33.png"/>
+<figcaption class="figure-caption">公式2</figcaption>
+</figure></li>
+</ol>
+<p>同时，全局批量样本在一个 virtual pipeline stage 的总工作负载可表示为：<br/>
+3. <img alt="公式3" class="figure-image" src="https://developer-blogs.nvidia.com/zh-cn-blog/wp-content/uploads/sites/2/2026/01/image-34.png"/></p>
+<p>结合公式 2 和 3，就可以确定不同 DP 的每个 micro batch 的工作负载。由于计算负载按 $\mathrm{O}(S^2)$ 增长，而内存消耗按 $\mathcal{O}(S)$ 增长，很难同时实现工作负载和内存的平衡。因此，求解器会在不同阶段交替优化“工作量优先”和“显存优先”两个目标，逐步逼近一个兼顾二者的平衡解。如果单个工作负载超过 micro batch 工作负载配额，系统会为其分配更大的 CP 大小。完成此步骤后，工作负载的不均衡会减小，而显存成为主要约束。然后，目标会转移到显存，选择计算量最少的样本来填充存储桶。其余样本按降序排序，并使用相同的启发式算法分配给每个 micro batch。</p>
+<h3>A7 补充细节</h3>
+<h4>零开销运行</h4>
+<p>在运行时，调度工作流不能在训练循环中引入可感知的额外开销。实际系统需要解决两个问题：I/O 压力与求解器的运行开销。</p>
+<p><strong>I/O 压力</strong>。首先，构建调度方案需要对 global batch 额外进行一次 <code>get_item</code> 遍历，以收集序列长度与形状信息。为缓解 I/O 压力，系统采用两种互补技术：将探测用的 <code>get_item</code> 分摊到集群各节点/各 rank 上执行，并在额外的一次通信中只汇聚轻量级的形状与序列长度元数据。</p>
+<p><strong>求解器运行</strong>。为避免阻塞主要训练过程，求解器在 <code>data_sampler</code> 中异步运行，以便与训练迭代重叠执行。为控制开销，我们将穷举搜索替换为小型网格搜索，所有 DP rank 被约束使用相同的 micro-batch 数量，并将该数量从 PP*1 扫描到 PP 的一个小倍数范围内。在 global batch size 固定的情况下，这个一维网格能够刻画“每个 micro-batch 的工作量”与“pipeline bubble”之间的权衡。图 7 显示：随着 micro-batch 数量增加，micro batch 的工作负载的变化速度会越来越慢，所以针对较大的 micro batch 数量，求解出来的效果和 micro batch 较小时基本一致。系统选择曲线上工作负载预算变化的“拐点（knee）”，并将搜索限制在其邻域，以保证求解器开销在可接受范围内。<br/>
+<img alt="图 7. Microbatch FLOPS 预算曲线" class="figure-image" src="https://developer-blogs.nvidia.com/zh-cn-blog/wp-content/uploads/sites/2/2026/01/image-2.gif"/></p>
+<h3>A4 实验环境</h3>
+<ul>
+<li><strong>模型架构</strong>：Llama 13B</li>
+<li><strong>硬件配置</strong>：工业级集群，包含数千张 GPU。</li>
+<li>
+<p><strong>软件配置</strong>：</p>
+<ul>
+<li><strong>框架</strong>：NVIDIA Megatron Core</li>
+<li><strong>并行策略</strong>：流水线并行度（PP）为8，上下文并行度（CP）为8（作为基准和最大值），并启用完全重计算（full recompute）。</li>
+</ul>
+</li>
+<li>
+<p><strong>数据集</strong>：</p>
+<ul>
+<li><strong>GitHub 数据集</strong>：包含可变长度序列。</li>
+<li><strong>CommonCrawl 数据集</strong>：包含可变长度序列。</li>
+</ul>
+</li>
+<li>
+<p><strong>训练参数</strong>：</p>
+<ul>
+<li><strong>Global Batch Size</strong>：2048</li>
+</ul>
+</li>
+</ul>
+<h3>A5 实验结果</h3>
+<p>实验将引入所有改进的 Dynamic-CP 方法与仅做序列打包（THD）而不引入额外优化的基准版本进行对比。实验共进行10次迭代，丢弃第一次作为预热（warm-up），对剩余9次迭代的迭代时间取平均值。</p>
+<ul>
+<li>
+<p><strong>实验内容</strong>：在Llama-13B模型上，分别使用GitHub和CommonCrawl这两个具有可变长度序列分布的数据集进行训练，对比启用Dynamic-CP前后的性能（以TFLOPS/GPU衡量）。</p>
+</li>
+<li>
+<p><strong>实验结果</strong>：</p>
+<ul>
+<li>如表1所示，在GitHub数据集上，Dynamic-CP将TFLOPS/GPU从195.88提升至289.32，获得了<strong>1.48倍</strong>的加速。</li>
+<li>在CommonCrawl数据集上，Dynamic-CP将TFLOPS/GPU从139.17提升至174.39，获得了<strong>1.25倍</strong>的加速。</li>
+<li>在有数千张GPU的工业级集群中，Dynamic-CP带来了超过<strong>35%</strong>的端到端性能提升。</li>
+</ul>
+</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>模型大小</th>
+<th>数据集类型</th>
+<th>方法</th>
+<th>TFLOPS/GPU</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Llama 13B</td>
+<td>GitHub</td>
+<td>Only Packing</td>
+<td>195.88</td>
+</tr>
+<tr>
+<td>Llama 13B</td>
+<td>GitHub</td>
+<td>Dynamic CP</td>
+<td>289.32</td>
+</tr>
+<tr>
+<td>Llama 13B</td>
+<td>Commoncrawl</td>
+<td>Only Packing</td>
+<td>139.17</td>
+</tr>
+<tr>
+<td>Llama 13B</td>
+<td>Commoncrawl</td>
+<td>Dynamic CP</td>
+<td>174.39</td>
+</tr>
+</tbody>
+</table>
+<p>表 1. 是否开启动态 CP 在不同数据集上的比较</p>
+<ul>
+<li><strong>分析结论</strong>：实验结果表明，Dynamic-CP能够显著减少由可变长度序列分布引起的不平衡空泡，从而大幅提升训练吞吐量和GPU利用率。</li>
+</ul>
+<h3>A6 结论</h3>
+<p>本文展示了在 Megatron-Core 框架上，Dynamic-CP 方法相比传统的固定CP方法，能够显著提升可变长度序列训练的吞吐量。通过结合序列打包、4D并行（TP, DP, PP, CP）以及针对GPU优化的内核，Dynamic-CP能够在不同模型规模下保证高效率的训练。这项工作为解决大模型训练中普遍存在的负载不均衡问题提供了一个有效且实用的方案。</p>
+<p><strong>未来工作与资源</strong>：<br/>
+- 读者可以访问 <a href="https://www.google.com/url?q=https://github.com/NVIDIA/Megatron-LM/pull/2000&amp;sa=D&amp;source=editors&amp;ust=1770807430324281&amp;usg=AOvVaw378Dgj4pDwip_-X4lz8Krs">https://www.google.com/url?q=https://github.com/NVIDIA/Megatron-LM/pull/2000&amp;sa=D&amp;source=editors&amp;ust=1770807430324281&amp;usg=AOvVaw378Dgj4pDwip_-X4lz8Krs</a>https://www.google.com/url?q=https://github.com/NVIDIA/Megatron-LM/pull/2000&amp;amp;sa=D&amp;amp;source=editors&amp;amp;ust=1770807430324281&amp;amp;usg=AOvVaw378Dgj4pDwip_-X4lz8Krs 来使用Megatron-Core的优化功能训练变长序列模型。<br/>
+- 具体的<a href="https://www.google.com/url?q=https://github.com/NVIDIA/Megatron-LM/pull/2959&amp;sa=D&amp;source=editors&amp;ust=1770807430324644&amp;usg=AOvVaw1NB88E4Bx1G-vZHlcYSppe">https://www.google.com/url?q=https://github.com/NVIDIA/Megatron-LM/pull/2959&amp;sa=D&amp;source=editors&amp;ust=1770807430324644&amp;usg=AOvVaw1NB88E4Bx1G-vZHlcYSppe</a>https://www.google.com/url?q=https://github.com/NVIDIA/Megatron-LM/pull/2959&amp;amp;sa=D&amp;amp;source=editors&amp;amp;ust=1770807430324644&amp;amp;usg=AOvVaw1NB88E4Bx1G-vZHlcYSppe可以在GitHub上查看。</p>
+</div>
+
+
+</div>

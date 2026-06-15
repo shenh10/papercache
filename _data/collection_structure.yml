@@ -2652,6 +2652,14 @@ llm:
         - llm
         - engineering
         - train
+      - title: Speeding up Variable-Length Training with Dynamic Context Parallelism
+          and NVIDIA Megatron Core
+        date: '2026-01-01'
+        url: /papers/llm/engineering/train/2026/01/01/speeding-up-variable-length-training-with-dynamic-context-parallelism-and-nvidia-megatron-core.html
+        categories:
+        - llm
+        - engineering
+        - train
       - title: Efficient Pre-Training of LLMs via Topology-Aware Communication Alignment
           on More Than 9600 GPUs
         date: '2025-09-01'
