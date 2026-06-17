@@ -2884,6 +2884,13 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'GLM-5.2: Built for Long-Horizon Tasks'
+        date: '2026-06-01'
+        url: /papers/llm/algorithm/models/2026/06/01/glm-52-built-for-long-horizon-tasks.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: MiMo-V2-Flash Technical Report
         date: '2025-12-01'
         url: /papers/llm/algorithm/models/2025/12/01/mimo-v2-flash-technical-report.html
