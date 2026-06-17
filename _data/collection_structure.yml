@@ -4132,6 +4132,16 @@ llm:
             - architecture
             - attention
             - sparsity
+          - title: 'IndexCache: Accelerating Sparse Attention via Cross-Layer Index
+              Reuse'
+            date: '2026-03-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2026/03/01/indexcache-accelerating-sparse-attention-via-cross-layer-index-reuse.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
           - title: 'MInference 1.0: Accelerating Pre-filling for Long-Context LLMs
               via Dynamic Sparse Attention'
             date: '2024-07-01'
