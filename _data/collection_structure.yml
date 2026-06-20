@@ -5298,6 +5298,14 @@ mlsys:
       categories:
       - mlsys
       - system
+    - title: 'Google''s Training Supercomputers from TPU v2 to Ironwood: Architectural
+        Stability, Scale, Resilience, Power Efficiency, and Sustainability Across
+        Five Generations'
+      date: '2026-06-01'
+      url: /papers/mlsys/system/2026/06/01/googles-training-supercomputers-from-tpu-v2-to-ironwood-architectural-stability-scale-resilience-power-efficiency-and-sustainability-across-five-generations.html
+      categories:
+      - mlsys
+      - system
     - title: Principles and Methodologies for Serial Performance Optimization
       date: '2025-01-01'
       url: /papers/mlsys/system/2025/01/01/principles-and-methodologies-for-serial-performance-optimization.html
