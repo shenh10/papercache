@@ -3563,6 +3563,13 @@ llm:
         - llm
         - algorithm
         - pretrain_sft
+      - title: 'Not All Correct Answers Are Equal: Why Your Distillation Source Matters'
+        date: '2025-05-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/05/01/not-all-correct-answers-are-equal-why-your-distillation-source-matters.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
       - title: 'ROFORMER: ENHANCED TRANSFORMER WITH ROTARY POSITION EMBEDDING'
         date: '2021-04-01'
         url: /papers/llm/algorithm/pretrain_sft/2021/04/01/roformer-enhanced-transformer-with-rotary-position-embedding.html
