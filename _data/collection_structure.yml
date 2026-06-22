@@ -4396,6 +4396,13 @@ llm:
         - llm
         - algorithm
         - agent
+      - title: The Next Era of Knowledge Work
+        date: '2026-06-01'
+        url: /papers/llm/algorithm/agent/2026/06/01/the-next-era-of-knowledge-work.html
+        categories:
+        - llm
+        - algorithm
+        - agent
       - title: 'FIREACT: TOWARD LANGUAGE AGENT FINE-TUNING'
         date: '2023-10-01'
         url: /papers/llm/algorithm/agent/2023/10/01/fireact-toward-language-agent-fine-tuning.html
