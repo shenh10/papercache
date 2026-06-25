@@ -293,6 +293,14 @@ llm:
         - llm
         - engineering
         - rl
+      - title: 'RollPacker: Mitigating Long-Tail Rollouts for Fast, Synchronous RL
+          Post-Training'
+        date: '2025-09-01'
+        url: /papers/llm/engineering/rl/2025/09/01/rollpacker-mitigating-long-tail-rollouts-for-fast-synchronous-rl-post-training.html
+        categories:
+        - llm
+        - engineering
+        - rl
       - title: 'RLAX: Large-Scale, Distributed Reinforcement Learning for Large Language
           Models on TPUs'
         date: '2025-12-01'
@@ -3270,14 +3278,6 @@ llm:
           of Large Language Models'
         date: '2026-01-01'
         url: /papers/llm/algorithm/rl/2026/01/01/areal-dta-dynamic-tree-attention-for-efficient-reinforcement-learning-of-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - rl
-      - title: 'RollPacker: Mitigating Long-Tail Rollouts for Fast, Synchronous RL
-          Post-Training'
-        date: '2025-09-01'
-        url: /papers/llm/algorithm/rl/2025/09/01/rollpacker-mitigating-long-tail-rollouts-for-fast-synchronous-rl-post-training.html
         categories:
         - llm
         - algorithm
