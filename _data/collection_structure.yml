@@ -253,6 +253,13 @@ llm:
         - llm
         - engineering
         - rl
+      - title: 'ROLLART: Disaggregated Multi-Task Agentic RL Training at Scale'
+        date: '2025-12-01'
+        url: /papers/llm/engineering/rl/2025/12/01/rollart-disaggregated-multi-task-agentic-rl-training-at-scale.html
+        categories:
+        - llm
+        - engineering
+        - rl
       - title: 'GMI-DRL: Empowering Multi-GPU Deep Reinforcement Learning with GPU
           Spatial Multiplexing'
         date: '2022-06-01'
@@ -429,6 +436,13 @@ llm:
           Learning'
         date: '2025-11-01'
         url: /papers/llm/engineering/rl/2025/11/01/seer-online-context-learning-for-fast-synchronous-llm-reinforcement-learning.html
+        categories:
+        - llm
+        - engineering
+        - rl
+      - title: 'ROLLMUX: Phase-Level Multiplexing for Disaggregated RL Post-Training'
+        date: '2025-12-01'
+        url: /papers/llm/engineering/rl/2025/12/01/rollmux-phase-level-multiplexing-for-disaggregated-rl-post-training.html
         categories:
         - llm
         - engineering
