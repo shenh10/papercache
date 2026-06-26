@@ -4454,6 +4454,14 @@ llm:
         - llm
         - algorithm
         - agent
+      - title: 'A Survey of Frontiers in LLM Reasoning: Inference Scaling, Learning
+          to Reason, and Agentic Systems'
+        date: '2025-04-01'
+        url: /papers/llm/algorithm/agent/2025/04/01/a-survey-of-frontiers-in-llm-reasoning-inference-scaling-learning-to-reason-and-agentic-systems.html
+        categories:
+        - llm
+        - algorithm
+        - agent
       - title: 'Toolformer: Language Models Can Teach Themselves to Use Tools'
         date: '2023-02-01'
         url: /papers/llm/algorithm/agent/2023/02/01/toolformer-language-models-can-teach-themselves-to-use-tools.html
