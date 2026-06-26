@@ -4501,6 +4501,14 @@ llm:
         - llm
         - algorithm
         - agent
+      - title: 'Multi-Agent Reinforcement Learning: A Selective Overview of Theories
+          and Algorithms'
+        date: '2019-11-01'
+        url: /papers/llm/algorithm/agent/2019/11/01/multi-agent-reinforcement-learning-a-selective-overview-of-theories-and-algorithms.html
+        categories:
+        - llm
+        - algorithm
+        - agent
       - title: 'Mem0: Building Production-Ready AI Agents with Scalable Long-Term
           Memory'
         date: '2025-04-01'
