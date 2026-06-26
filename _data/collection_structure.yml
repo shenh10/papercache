@@ -3062,6 +3062,13 @@ llm:
         - llm
         - algorithm
         - models
+      - title: Scaling Laws, Carefully
+        date: '2026-06-01'
+        url: /papers/llm/algorithm/models/2026/06/01/scaling-laws-carefully.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: 'Step-3 is Large yet Affordable: Model-system Co-design for Cost-effective
           Decoding'
         date: '2025-07-01'
