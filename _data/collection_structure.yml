@@ -1,5 +1,234 @@
 llm:
   engineering:
+    attention:
+      posts:
+      - title: 'FlashAttention-4: Algorithm and Kernel Pipelining Co-Design for Asymmetric
+          Hardware Scaling'
+        date: '2026-03-01'
+        url: /papers/llm/engineering/attention/2026/03/01/flashattention-4-algorithm-and-kernel-pipelining-co-design-for-asymmetric-hardware-scaling.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'SageAttention: Accurate 8-Bit Attention for Plug-and-Play Inference
+          Acceleration'
+        date: '2024-10-01'
+        url: /papers/llm/engineering/attention/2024/10/01/sageattention-accurate-8-bit-attention-for-plug-and-play-inference-acceleration.html
+        categories:
+        - llm
+        - engineering
+        - attention
+        tag: iclr25
+      - title: Ring Attention with Blockwise Transformers for Near-Infinite Context
+        date: '2023-10-01'
+        url: /papers/llm/engineering/attention/2023/10/01/ring-attention-with-blockwise-transformers-for-near-infinite-context.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'FlashAttention-3: Fast and Accurate Attention with Asynchrony and
+          Low-precision'
+        date: '2024-07-01'
+        url: /papers/llm/engineering/attention/2024/07/01/flashattention-3-fast-and-accurate-attention-with-asynchrony-and-low-precision.html
+        categories:
+        - llm
+        - engineering
+        - attention
+        tag: nips24
+      - title: 'Leave No Context Behind: Efficient Infinite Context Transformers with
+          Infini-attention'
+        date: '2024-04-01'
+        url: /papers/llm/engineering/attention/2024/04/01/leave-no-context-behind-efficient-infinite-context-transformers-with-infini-attention.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'DEEPSPEED ULYSSES: SYSTEM OPTIMIZATIONS FOR ENABLING TRAINING OF EXTREME
+          LONG SEQUENCE TRANSFORMER MODELS'
+        date: '2023-09-01'
+        url: /papers/llm/engineering/attention/2023/09/01/deepspeed-ulysses-system-optimizations-for-enabling-training-of-extreme-long-sequence-transformer-models.html
+        categories:
+        - llm
+        - engineering
+        - attention
+        tag: podc23
+      - title: 'DEFT: Decoding with Flash Tree-Attention for Efficient Tree-Structured
+          LLM Inference'
+        date: '2025-01-01'
+        url: /papers/llm/engineering/attention/2025/01/01/deft-decoding-with-flash-tree-attention-for-efficient-tree-structured-llm-inference.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'Flashmask: Efficient and Rich Mask Extension of Flashattention'
+        date: '2025-04-01'
+        url: /papers/llm/engineering/attention/2025/04/01/flashmask-efficient-and-rich-mask-extension-of-flashattention.html
+        categories:
+        - llm
+        - engineering
+        - attention
+        tag: iclr25
+      - title: 'Fast Transformer Decoding: One Write-Head is All You Need'
+        date: '2019-11-01'
+        url: /papers/llm/engineering/attention/2019/11/01/fast-transformer-decoding-one-write-head-is-all-you-need.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'SageAttention3: Microscaling FP4 Attention for Inference and An Exploration
+          of 8-bit Training'
+        date: '2025-05-01'
+        url: /papers/llm/engineering/attention/2025/05/01/sageattention3-microscaling-fp4-attention-for-inference-and-an-exploration-of-8-bit-training.html
+        categories:
+        - llm
+        - engineering
+        - attention
+        tag: nips25
+      - title: 'TREE ATTENTION: TOPOLOGY-AWARE DECODING FOR LONG-CONTEXT ATTENTION
+          ON GPU CLUSTERS'
+        date: '2025-02-01'
+        url: /papers/llm/engineering/attention/2025/02/01/tree-attention-topology-aware-decoding-for-long-context-attention-on-gpu-clusters.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'FlashMLA-ETAP: Efficient Transpose Attention Pipeline for Accelerating
+          MLA Inference on NVIDIA H20 GPUs'
+        date: '2025-05-01'
+        url: /papers/llm/engineering/attention/2025/05/01/flashmla-etap-efficient-transpose-attention-pipeline-for-accelerating-mla-inference-on-nvidia-h20-gpus.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: Mixture of Contexts for Long Video Generation
+        date: '2025-08-01'
+        url: /papers/llm/engineering/attention/2025/08/01/mixture-of-contexts-for-long-video-generation.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'FlashAttention-2: Faster Attention with Better Parallelism and Work
+          Partitioning'
+        date: '2023-07-01'
+        url: /papers/llm/engineering/attention/2023/07/01/flashattention-2-faster-attention-with-better-parallelism-and-work-partitioning.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'LASP-2: Rethinking Sequence Parallelism for Linear Attention and its
+          Hybrid'
+        date: '2025-02-01'
+        url: /papers/llm/engineering/attention/2025/02/01/lasp-2-rethinking-sequence-parallelism-for-linear-attention-and-its-hybrid.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'GQA: Training Generalized Multi-Query Transformer Models from Multi-Head
+          Checkpoints'
+        date: '2023-12-01'
+        url: /papers/llm/engineering/attention/2023/12/01/gqa-training-generalized-multi-query-transformer-models-from-multi-head-checkpoints.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'Tiled Flash Linear Attention: More Efficient Linear RNN and xLSTM
+          Kernels'
+        date: '2025-03-01'
+        url: /papers/llm/engineering/attention/2025/03/01/tiled-flash-linear-attention-more-efficient-linear-rnn-and-xlstm-kernels.html
+        categories:
+        - llm
+        - engineering
+        - attention
+        tag: nips25
+      - title: MiniMax Sparse Attention
+        date: '2026-06-01'
+        url: /papers/llm/engineering/attention/2026/06/01/minimax-sparse-attention.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'Mesh-Attention: A New Communication-Efficient Distributed Attention
+          with Improved Data Locality'
+        date: '2025-12-01'
+        url: /papers/llm/engineering/attention/2025/12/01/mesh-attention-a-new-communication-efficient-distributed-attention-with-improved-data-locality.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'DuoAttention: Efficient Long-Context LLM Inference with Retrieval
+          and Streaming Heads'
+        date: '2024-10-01'
+        url: /papers/llm/engineering/attention/2024/10/01/duoattention-efficient-long-context-llm-inference-with-retrieval-and-streaming-heads.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'Skrull: Towards Efficient Long Context Fine-tuning through Dynamic
+          Data Scheduling'
+        date: '2025-12-01'
+        url: /papers/llm/engineering/attention/2025/12/01/skrull-towards-efficient-long-context-fine-tuning-through-dynamic-data-scheduling.html
+        categories:
+        - llm
+        - engineering
+        - attention
+        tag: nips25
+      - title: 'SageAttention2: Efficient Attention with Thorough Outlier Smoothing
+          and Per-thread INT4 Quantization'
+        date: '2024-11-01'
+        url: /papers/llm/engineering/attention/2024/11/01/sageattention2-efficient-attention-with-thorough-outlier-smoothing-and-per-thread-int4-quantization.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'FlashAttention-T: Towards Fully Tensorized Attention by Exploiting
+          Tensor-Vector Parallelism'
+        date: '2026-01-01'
+        url: /papers/llm/engineering/attention/2026/01/01/flashattention-t-towards-fully-tensorized-attention-by-exploiting-tensor-vector-parallelism.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness'
+        date: '2022-07-01'
+        url: /papers/llm/engineering/attention/2022/07/01/flashattention-fast-and-memory-efficient-exact-attention-with-io-awareness.html
+        categories:
+        - llm
+        - engineering
+        - attention
+        tag: nips22
+      - title: 'SeerAttention: Self-distilled Attention Gating for Efficient Long-context
+          Prefilling'
+        date: '2025-09-01'
+        url: /papers/llm/engineering/attention/2025/09/01/seerattention-self-distilled-attention-gating-for-efficient-long-context-prefilling.html
+        categories:
+        - llm
+        - engineering
+        - attention
+        tag: nips25
+      - title: Low-Rank Bottleneck in Multi-head Attention Models
+        date: '2020-02-01'
+        url: /papers/llm/engineering/attention/2020/02/01/low-rank-bottleneck-in-multi-head-attention-models.html
+        categories:
+        - llm
+        - engineering
+        - attention
+        tag: icml20
+      - title: 'SLA: BEYOND SPARSITY IN DIFFUSION TRANSFORMERS VIA FINE-TUNABLE SPARSE–LINEAR
+          ATTENTION'
+        date: '2025-09-01'
+        url: /papers/llm/engineering/attention/2025/09/01/sla-beyond-sparsity-in-diffusion-transformers-via-fine-tunable-sparselinear-attention.html
+        categories:
+        - llm
+        - engineering
+        - attention
+      - title: 'USP: A Unified Sequence Parallelism Approach for Long Context Generative
+          AI'
+        date: '2024-07-01'
+        url: /papers/llm/engineering/attention/2024/07/01/usp-a-unified-sequence-parallelism-approach-for-long-context-generative-ai.html
+        categories:
+        - llm
+        - engineering
+        - attention
     rl:
       posts:
       - title: 'DeepCoder: A Fully Open-Source 14B Coder at O3-mini Level'
@@ -249,6 +478,14 @@ llm:
         - llm
         - engineering
         - rl
+      - title: 'RLAX: Large-Scale, Distributed Reinforcement Learning for Large Language
+          Models on TPUs'
+        date: '2026-03-12'
+        url: /papers/llm/engineering/rl/2026/03/12/rlax-large-scale-distributed-reinforcement-learning-for-large-language-models-on-tpus.html
+        categories:
+        - llm
+        - engineering
+        - rl
       - title: 'Beat the Long Tail: Distribution-Aware Speculative Decoding for RL
           Training'
         date: '2025-11-01'
@@ -346,6 +583,15 @@ llm:
           - inference
           - kvcache
           tag: iclr25
+        - title: 'FlashPrefill: Instantaneous Pattern Discovery and Thresholding for
+            Ultra-Fast Long-Context Prefilling'
+          date: '2026-03-01'
+          url: /papers/llm/engineering/inference/kvcache/2026/03/01/flashprefill-instantaneous-pattern-discovery-and-thresholding-for-ultra-fast-long-context-prefilling.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'CacheBlend: Fast Large Language Model Serving for RAG with Cached
             Knowledge Fusion'
           date: '2024-05-01'
@@ -450,6 +696,15 @@ llm:
           - inference
           - kvcache
           tag: iclr25
+        - title: 'DualPath: Breaking the Storage Bandwidth Bottleneck in Agentic LLM
+            Inference'
+          date: '2026-02-01'
+          url: /papers/llm/engineering/inference/kvcache/2026/02/01/dualpath-breaking-the-storage-bandwidth-bottleneck-in-agentic-llm-inference.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'PROMPT CACHE: MODULAR ATTENTION REUSE FOR LOW-LATENCY INFERENCE'
           date: '2024-04-01'
           url: /papers/llm/engineering/inference/kvcache/2024/04/01/prompt-cache-modular-attention-reuse-for-low-latency-inference.html
@@ -1414,10 +1669,26 @@ llm:
           - inference
           - speculative_decoding
           tag: iclr25
+        - title: Speculative Speculative Decoding
+          date: '2026-03-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2026/03/01/speculative-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
         - title: 'MAGICDEC: BREAKING THE LATENCY-THROUGHPUT TRADEOFF FOR LONG CONTEXT
             GENERATION WITH SPECULATIVE DECODING'
           date: '2024-08-01'
           url: /papers/llm/engineering/inference/speculative_decoding/2024/08/01/magicdec-breaking-the-latency-throughput-tradeoff-for-long-context-generation-with-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: Accelerating Large Language Model Decoding with Speculative Sampling
+          date: '2023-02-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2023/02/01/accelerating-large-language-model-decoding-with-speculative-sampling.html
           categories:
           - llm
           - engineering
@@ -1435,6 +1706,14 @@ llm:
             Reinforcement Learning'
           date: '2025-12-01'
           url: /papers/llm/engineering/inference/speculative_decoding/2025/12/01/native-parallel-reasoner-reasoning-in-parallelism-via-self-distilled-reinforcement-learning.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: 'DFlash: Block Diffusion for Flash Speculative Decoding'
+          date: '2026-02-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2026/02/01/dflash-block-diffusion-for-flash-speculative-decoding.html
           categories:
           - llm
           - engineering
@@ -2412,6 +2691,13 @@ llm:
         - engineering
         - train
         tag: nips25
+      - title: EFFICIENT LONG-CONTEXT LANGUAGE MODEL TRAINING BY Core Attention Disaggregation
+        date: '2025-10-01'
+        url: /papers/llm/engineering/train/2025/10/01/efficient-long-context-language-model-training-by-core-attention-disaggregation.html
+        categories:
+        - llm
+        - engineering
+        - train
       - title: 'PaLM: Scaling Language Modeling with Pathways'
         date: '2022-04-01'
         url: /papers/llm/engineering/train/2022/04/01/palm-scaling-language-modeling-with-pathways.html
@@ -2483,227 +2769,6 @@ llm:
         - engineering
         - train
         tag: isca25
-    attention:
-      posts:
-      - title: 'SageAttention: Accurate 8-Bit Attention for Plug-and-Play Inference
-          Acceleration'
-        date: '2024-10-01'
-        url: /papers/llm/engineering/attention/2024/10/01/sageattention-accurate-8-bit-attention-for-plug-and-play-inference-acceleration.html
-        categories:
-        - llm
-        - engineering
-        - attention
-        tag: iclr25
-      - title: Ring Attention with Blockwise Transformers for Near-Infinite Context
-        date: '2023-10-01'
-        url: /papers/llm/engineering/attention/2023/10/01/ring-attention-with-blockwise-transformers-for-near-infinite-context.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: 'FlashAttention-3: Fast and Accurate Attention with Asynchrony and
-          Low-precision'
-        date: '2024-07-01'
-        url: /papers/llm/engineering/attention/2024/07/01/flashattention-3-fast-and-accurate-attention-with-asynchrony-and-low-precision.html
-        categories:
-        - llm
-        - engineering
-        - attention
-        tag: nips24
-      - title: 'Leave No Context Behind: Efficient Infinite Context Transformers with
-          Infini-attention'
-        date: '2024-04-01'
-        url: /papers/llm/engineering/attention/2024/04/01/leave-no-context-behind-efficient-infinite-context-transformers-with-infini-attention.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: 'DEEPSPEED ULYSSES: SYSTEM OPTIMIZATIONS FOR ENABLING TRAINING OF EXTREME
-          LONG SEQUENCE TRANSFORMER MODELS'
-        date: '2023-09-01'
-        url: /papers/llm/engineering/attention/2023/09/01/deepspeed-ulysses-system-optimizations-for-enabling-training-of-extreme-long-sequence-transformer-models.html
-        categories:
-        - llm
-        - engineering
-        - attention
-        tag: podc23
-      - title: 'DEFT: Decoding with Flash Tree-Attention for Efficient Tree-Structured
-          LLM Inference'
-        date: '2025-01-01'
-        url: /papers/llm/engineering/attention/2025/01/01/deft-decoding-with-flash-tree-attention-for-efficient-tree-structured-llm-inference.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: 'Flashmask: Efficient and Rich Mask Extension of Flashattention'
-        date: '2025-04-01'
-        url: /papers/llm/engineering/attention/2025/04/01/flashmask-efficient-and-rich-mask-extension-of-flashattention.html
-        categories:
-        - llm
-        - engineering
-        - attention
-        tag: iclr25
-      - title: 'Fast Transformer Decoding: One Write-Head is All You Need'
-        date: '2019-11-01'
-        url: /papers/llm/engineering/attention/2019/11/01/fast-transformer-decoding-one-write-head-is-all-you-need.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: 'SageAttention3: Microscaling FP4 Attention for Inference and An Exploration
-          of 8-bit Training'
-        date: '2025-05-01'
-        url: /papers/llm/engineering/attention/2025/05/01/sageattention3-microscaling-fp4-attention-for-inference-and-an-exploration-of-8-bit-training.html
-        categories:
-        - llm
-        - engineering
-        - attention
-        tag: nips25
-      - title: 'TREE ATTENTION: TOPOLOGY-AWARE DECODING FOR LONG-CONTEXT ATTENTION
-          ON GPU CLUSTERS'
-        date: '2025-02-01'
-        url: /papers/llm/engineering/attention/2025/02/01/tree-attention-topology-aware-decoding-for-long-context-attention-on-gpu-clusters.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: 'FlashMLA-ETAP: Efficient Transpose Attention Pipeline for Accelerating
-          MLA Inference on NVIDIA H20 GPUs'
-        date: '2025-05-01'
-        url: /papers/llm/engineering/attention/2025/05/01/flashmla-etap-efficient-transpose-attention-pipeline-for-accelerating-mla-inference-on-nvidia-h20-gpus.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: Mixture of Contexts for Long Video Generation
-        date: '2025-08-01'
-        url: /papers/llm/engineering/attention/2025/08/01/mixture-of-contexts-for-long-video-generation.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: 'FlashAttention-2: Faster Attention with Better Parallelism and Work
-          Partitioning'
-        date: '2023-07-01'
-        url: /papers/llm/engineering/attention/2023/07/01/flashattention-2-faster-attention-with-better-parallelism-and-work-partitioning.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: 'LASP-2: Rethinking Sequence Parallelism for Linear Attention and its
-          Hybrid'
-        date: '2025-02-01'
-        url: /papers/llm/engineering/attention/2025/02/01/lasp-2-rethinking-sequence-parallelism-for-linear-attention-and-its-hybrid.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: 'GQA: Training Generalized Multi-Query Transformer Models from Multi-Head
-          Checkpoints'
-        date: '2023-12-01'
-        url: /papers/llm/engineering/attention/2023/12/01/gqa-training-generalized-multi-query-transformer-models-from-multi-head-checkpoints.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: 'Tiled Flash Linear Attention: More Efficient Linear RNN and xLSTM
-          Kernels'
-        date: '2025-03-01'
-        url: /papers/llm/engineering/attention/2025/03/01/tiled-flash-linear-attention-more-efficient-linear-rnn-and-xlstm-kernels.html
-        categories:
-        - llm
-        - engineering
-        - attention
-        tag: nips25
-      - title: MiniMax Sparse Attention
-        date: '2026-06-01'
-        url: /papers/llm/engineering/attention/2026/06/01/minimax-sparse-attention.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: 'Mesh-Attention: A New Communication-Efficient Distributed Attention
-          with Improved Data Locality'
-        date: '2025-12-01'
-        url: /papers/llm/engineering/attention/2025/12/01/mesh-attention-a-new-communication-efficient-distributed-attention-with-improved-data-locality.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: 'DuoAttention: Efficient Long-Context LLM Inference with Retrieval
-          and Streaming Heads'
-        date: '2024-10-01'
-        url: /papers/llm/engineering/attention/2024/10/01/duoattention-efficient-long-context-llm-inference-with-retrieval-and-streaming-heads.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: 'Skrull: Towards Efficient Long Context Fine-tuning through Dynamic
-          Data Scheduling'
-        date: '2025-12-01'
-        url: /papers/llm/engineering/attention/2025/12/01/skrull-towards-efficient-long-context-fine-tuning-through-dynamic-data-scheduling.html
-        categories:
-        - llm
-        - engineering
-        - attention
-        tag: nips25
-      - title: 'SageAttention2: Efficient Attention with Thorough Outlier Smoothing
-          and Per-thread INT4 Quantization'
-        date: '2024-11-01'
-        url: /papers/llm/engineering/attention/2024/11/01/sageattention2-efficient-attention-with-thorough-outlier-smoothing-and-per-thread-int4-quantization.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: 'FlashAttention-T: Towards Fully Tensorized Attention by Exploiting
-          Tensor-Vector Parallelism'
-        date: '2026-01-01'
-        url: /papers/llm/engineering/attention/2026/01/01/flashattention-t-towards-fully-tensorized-attention-by-exploiting-tensor-vector-parallelism.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: 'FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness'
-        date: '2022-07-01'
-        url: /papers/llm/engineering/attention/2022/07/01/flashattention-fast-and-memory-efficient-exact-attention-with-io-awareness.html
-        categories:
-        - llm
-        - engineering
-        - attention
-        tag: nips22
-      - title: 'SeerAttention: Self-distilled Attention Gating for Efficient Long-context
-          Prefilling'
-        date: '2025-09-01'
-        url: /papers/llm/engineering/attention/2025/09/01/seerattention-self-distilled-attention-gating-for-efficient-long-context-prefilling.html
-        categories:
-        - llm
-        - engineering
-        - attention
-        tag: nips25
-      - title: Low-Rank Bottleneck in Multi-head Attention Models
-        date: '2020-02-01'
-        url: /papers/llm/engineering/attention/2020/02/01/low-rank-bottleneck-in-multi-head-attention-models.html
-        categories:
-        - llm
-        - engineering
-        - attention
-        tag: icml20
-      - title: 'SLA: BEYOND SPARSITY IN DIFFUSION TRANSFORMERS VIA FINE-TUNABLE SPARSE–LINEAR
-          ATTENTION'
-        date: '2025-09-01'
-        url: /papers/llm/engineering/attention/2025/09/01/sla-beyond-sparsity-in-diffusion-transformers-via-fine-tunable-sparselinear-attention.html
-        categories:
-        - llm
-        - engineering
-        - attention
-      - title: 'USP: A Unified Sequence Parallelism Approach for Long Context Generative
-          AI'
-        date: '2024-07-01'
-        url: /papers/llm/engineering/attention/2024/07/01/usp-a-unified-sequence-parallelism-approach-for-long-context-generative-ai.html
-        categories:
-        - llm
-        - engineering
-        - attention
     compiler:
       posts:
       - title: 'Mirage: A Multi-Level Superoptimizer for Tensor Programs'
@@ -2851,6 +2916,13 @@ llm:
       - title: MiMo-V2-Flash Technical Report
         date: '2025-12-01'
         url: /papers/llm/algorithm/models/2025/12/01/mimo-v2-flash-technical-report.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'Gemma 4 12B: The Developer Guide'
+        date: '2026-06-01'
+        url: /papers/llm/algorithm/models/2026/06/01/gemma-4-12b-the-developer-guide.html
         categories:
         - llm
         - algorithm
@@ -3009,6 +3081,13 @@ llm:
           Language Model'
         date: '2024-06-01'
         url: /papers/llm/algorithm/models/2024/06/01/deepseek-v2-a-strong-economical-and-efficient-mixture-of-experts-language-model.html
+        categories:
+        - llm
+        - algorithm
+        - models
+      - title: 'Introducing Gemma 4 12B: A Unified, Encoder-Free Multimodal Model'
+        date: '2026-06-01'
+        url: /papers/llm/algorithm/models/2026/06/01/introducing-gemma-4-12b-a-unified-encoder-free-multimodal-model.html
         categories:
         - llm
         - algorithm
@@ -3197,6 +3276,14 @@ llm:
       - title: Tricks or Traps? A Deep Dive into RL for LLM Reasoning
         date: '2025-08-01'
         url: /papers/llm/algorithm/rl/2025/08/01/tricks-or-traps-a-deep-dive-into-rl-for-llm-reasoning.html
+        categories:
+        - llm
+        - algorithm
+        - rl
+      - title: On the Interplay of Pre-Training, Mid-Training, and RL on Reasoning
+          Language Models
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/rl/2025/12/01/on-the-interplay-of-pre-training-mid-training-and-rl-on-reasoning-language-models.html
         categories:
         - llm
         - algorithm
@@ -3552,6 +3639,13 @@ llm:
       - title: 'Nested Learning: The Illusion of Deep Learning Architectures'
         date: '2025-11-01'
         url: /papers/llm/algorithm/pretrain_sft/2025/11/01/nested-learning-the-illusion-of-deep-learning-architectures.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: Scaling up Muon for Large-Scale Language Model Training
+        date: '2025-02-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/02/01/scaling-up-muon-for-large-scale-language-model-training.html
         categories:
         - llm
         - algorithm
@@ -3969,6 +4063,15 @@ llm:
             - attention
             - ssm
             tag: iclr25
+          - title: 'Mamba-3: Improved Sequence Modeling using State Space Principles'
+            date: '2026-03-01'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2026/03/01/mamba-3-improved-sequence-modeling-using-state-space-principles.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
           - title: SIMPLIFIED STATE SPACE LAYERS FOR SEQUENCE MODELING
             date: '2023-03-01'
             url: /papers/llm/algorithm/architecture/attention/ssm/2023/03/01/simplified-state-space-layers-for-sequence-modeling.html
@@ -4048,6 +4151,15 @@ llm:
             - architecture
             - attention
             - sparsity
+          - title: Mixture-of-Depths Attention
+            date: '2026-03-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2026/03/01/mixture-of-depths-attention.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
           - title: 'IndexCache: Accelerating Sparse Attention via Cross-Layer Index
               Reuse'
             date: '2026-03-01'
@@ -4058,6 +4170,38 @@ llm:
             - architecture
             - attention
             - sparsity
+          - title: 'MInference 1.0: Accelerating Pre-filling for Long-Context LLMs
+              via Dynamic Sparse Attention'
+            date: '2024-07-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2024/07/01/minference-10-accelerating-pre-filling-for-long-context-llms-via-dynamic-sparse-attention.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            tag: nips24
+          - title: 'FlexPrefill: A Context-Aware Sparse Attention Mechanism for Efficient
+              Long-Sequence Inference'
+            date: '2025-02-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/flexprefill-a-context-aware-sparse-attention-mechanism-for-efficient-long-sequence-inference.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            tag: iclr25
+          - title: 'XAttention: Block Sparse Attention with Antidiagonal Scoring'
+            date: '2025-03-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/03/01/xattention-block-sparse-attention-with-antidiagonal-scoring.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            tag: iclr25
           - title: 'MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS'
             date: '2025-02-01'
             url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/moba-mixture-of-block-attention-for-long-context-llms.html
@@ -4123,6 +4267,14 @@ llm:
           - algorithm
           - architecture
           - attention
+        - title: Technical Report of Attention Residuals
+          date: '2026-03-01'
+          url: /papers/llm/algorithm/architecture/attention/2026/03/01/technical-report-of-attention-residuals.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - attention
       posts:
       - title: 'Spark Transformer: Reactivating Sparsity in FFN and Attention'
         date: '2025-06-01'
@@ -4156,6 +4308,13 @@ llm:
         tag: nips25
     agent:
       posts:
+      - title: Composer 2 Technical Report
+        date: '2026-03-25'
+        url: /papers/llm/algorithm/agent/2026/03/25/composer-2-technical-report.html
+        categories:
+        - llm
+        - algorithm
+        - agent
       - title: Do Phone-Use Agents Respect Your Privacy?
         date: '2026-03-01'
         url: /papers/llm/algorithm/agent/2026/03/01/do-phone-use-agents-respect-your-privacy.html
@@ -4212,6 +4371,13 @@ llm:
         - algorithm
         - agent
         tag: nips25
+      - title: 'AVO: Agentic Variation Operators for Autonomous Evolutionary Search'
+        date: '2026-03-01'
+        url: /papers/llm/algorithm/agent/2026/03/01/avo-agentic-variation-operators-for-autonomous-evolutionary-search.html
+        categories:
+        - llm
+        - algorithm
+        - agent
       - title: 'A Survey on Test-Time Scaling in Large Language Models: What, How,
           Where, and How Well'
         date: '2025-05-01'
@@ -4429,6 +4595,13 @@ mlsys:
         - networking
         - nccl
         tag: blog
+      - title: 'NCCL EP: Towards a Unified Expert Parallel Communication API for NCCL'
+        date: '2026-03-01'
+        url: /papers/mlsys/networking/nccl/2026/03/01/nccl-ep-towards-a-unified-expert-parallel-communication-api-for-nccl.html
+        categories:
+        - mlsys
+        - networking
+        - nccl
       - title: Memory Efficiency, Faster Initialization, and Cost Estimation with
           NVIDIA Collective Communications Library 2.22
         date: '2024-09-01'
@@ -4476,6 +4649,12 @@ mlsys:
     - title: Introducing UALink 200G 1.0 Specification
       date: '2025-04-01'
       url: /papers/mlsys/networking/2025/04/01/introducing-ualink-200g-10-specification.html
+      categories:
+      - mlsys
+      - networking
+    - title: RDMA POINT-TO-POINT COMMUNICATION FOR LLM SYSTEMS
+      date: '2025-10-01'
+      url: /papers/mlsys/networking/2025/10/01/rdma-point-to-point-communication-for-llm-systems.html
       categories:
       - mlsys
       - networking
@@ -5383,6 +5562,13 @@ mlsys:
       - mlsys
       - gpu
       tag: cgo22
+    - title: 'AxCore: A Quantization-Aware Approximate GEMM Unit for LLM Inference'
+      date: '2025-10-01'
+      url: /papers/mlsys/gpu/2025/10/01/axcore-a-quantization-aware-approximate-gemm-unit-for-llm-inference.html
+      categories:
+      - mlsys
+      - gpu
+      tag: micro25
     - title: 'GPUDirect Async: Exploring GPU synchronous communication techniques
         for InfiniBand clusters'
       date: '2018-04-01'
@@ -5411,6 +5597,12 @@ mlsys:
         Craft Workflows'
       date: '2025-06-01'
       url: /papers/mlsys/system/2025/06/01/decomposing-craft-an-elementary-grammar-for-sharing-expertise-in-craft-workflows.html
+      categories:
+      - mlsys
+      - system
+    - title: 'Modern Code Review: A Case Study at Google'
+      date: '2026-03-25'
+      url: /papers/mlsys/system/2026/03/25/modern-code-review-a-case-study-at-google.html
       categories:
       - mlsys
       - system
