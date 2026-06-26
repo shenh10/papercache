@@ -4379,6 +4379,14 @@ llm:
         - algorithm
         - agent
         tag: nips25
+      - title: 'Large Language Model based Multi-Agents: A Survey of Progress and
+          Challenges'
+        date: '2024-02-01'
+        url: /papers/llm/algorithm/agent/2024/02/01/large-language-model-based-multi-agents-a-survey-of-progress-and-challenges.html
+        categories:
+        - llm
+        - algorithm
+        - agent
       - title: 'AVO: Agentic Variation Operators for Autonomous Evolutionary Search'
         date: '2026-03-01'
         url: /papers/llm/algorithm/agent/2026/03/01/avo-agentic-variation-operators-for-autonomous-evolutionary-search.html
