@@ -3496,6 +3496,13 @@ llm:
         - algorithm
         - rl
         tag: pmlr18
+      - title: Solving Math Word Problems with Process- and Outcome-Based Feedback
+        date: '2022-11-01'
+        url: /papers/llm/algorithm/rl/2022/11/01/solving-math-word-problems-with-process-and-outcome-based-feedback.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: 'Direct Preference Optimization: Your Language Model is Secretly a
           Reward Model'
         date: '2023-05-01'
