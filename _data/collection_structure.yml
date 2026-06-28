@@ -3505,6 +3505,13 @@ llm:
         - algorithm
         - rl
         tag: nips23
+      - title: Evaluating Robustness of Reward Models for Mathematical Reasoning
+        date: '2024-10-01'
+        url: /papers/llm/algorithm/rl/2024/10/01/evaluating-robustness-of-reward-models-for-mathematical-reasoning.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: Massively Parallel Methods for Deep Reinforcement Learning
         date: '2015-07-01'
         url: /papers/llm/algorithm/rl/2015/07/01/massively-parallel-methods-for-deep-reinforcement-learning.html
