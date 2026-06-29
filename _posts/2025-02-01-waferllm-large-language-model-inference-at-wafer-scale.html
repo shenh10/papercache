@@ -1,0 +1,255 @@
+---
+added_date: '2026-06-29'
+author: shenh10
+categories:
+- mlsys
+- system
+comments: true
+date: '2025-02-01'
+layout: post
+mathjax: true
+tag: osdi25
+title: 'WaferLLM: Large Language Model Inference at Wafer Scale'
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>WaferLLM: Large Language Model Inference at Wafer Scale</h1>
+<p><strong>发表时间</strong>: 2025-02 · arXiv:2502.04563 · OSDI'25 (University of Edinburgh &amp; Microsoft Research)</p>
+<p><strong>原文</strong>: <a href="https://arxiv.org/abs/2502.04563" rel="noopener" target="_blank">https://arxiv.org/abs/2502.04563</a></p>
+<p><strong>作者/机构</strong>: Congjie He1, Yeqi Huang1, Pei Mu1, Ziming Miao2, Jilong Xue2, Lingxiao Ma2, Fan Yang2, Luo Mai1 (1爱丁堡大学, 2微软研究院)</p>
+<h2>A1 主要贡献</h2>
+<p>新兴的人工智能（AI）加速器越来越多地采用晶圆级制造技术，将数十万个AI核心集成在网状架构中，配备了庞大的分布式片上内存（总计几十GB）和超高的片上内存带宽（几十PB/s）。然而，当前的LLM推理系统主要为GPU等共享内存架构优化，无法充分利用这些加速器的潜力。本文介绍了WaferLLM，这是首个晶圆级LLM推理系统。</p>
+<p>本文的主要贡献如下：<br/>
+1. <strong>晶圆级加速器设备模型</strong>：提出了PLMR模型（发音为“Plummer”），用于捕捉晶圆级加速器的关键硬件特性：<br/>
+    * <strong>海量并行核心 (P)</strong>：晶圆上可集成数百万核心，要求系统能有效划分LLM及其操作。<br/>
+    * <strong>高度非均匀的内存访问延迟 (L)</strong>：核心间数据访问延迟差异巨大（可达1000倍），系统必须设法缓解此问题。<br/>
+    * <strong>受限的每核心本地内存 (M)</strong>：每个核心的内存有限（几十KB到几MB），要求高效的内存使用。<br/>
+    * <strong>有限的硬件辅助路由 (R)</strong>：片上网络（NoC）的路由硬件受限于每个核心的面积，只能支持有限的路由路径（如Cerebras WSE-2上少于25条）。</p>
+<ol>
+<li>
+<p><strong>晶圆级LLM并行策略</strong>：提出了一种有效的、符合PLMR模型的LLM并行策略。</p>
+<ul>
+<li>在<strong>预填充（prefill）阶段</strong>，设计了细粒度的分区策略，以实现百万核心级别的并行。</li>
+<li>在<strong>解码（decode）阶段</strong>，由于张量维度不足以进行分区，设计了细粒度的复制策略，以最小的通信成本实现并行。</li>
+<li>提出了消除矩阵转置的张量放置策略，因为矩阵转置在网状NoC上成本高昂。</li>
+<li>设计了一种可扩展的KV缓存管理方法，采用新颖的KV缓存移位（shift）方法，确保核心使用均衡，避免了GPU上常见的KV缓存拼接方法导致的利用率倾斜。</li>
+</ul>
+</li>
+<li>
+<p><strong>晶圆级GEMM (MeshGEMM)</strong>：提出了一种可扩展的、为晶圆级设备设计的GEMM算法，用于加速预填充阶段。MeshGEMM通过循环移位（cyclic shifting）和交错（interleaving）操作，实现了对PLMR模型的完全兼容，有效降低了通信延迟和资源开销。</p>
+</li>
+<li><strong>晶圆级GEMV (MeshGEMV)</strong>：提出了一种可扩展的、为晶圆级设备设计的GEMV算法，用于加速解码阶段。MeshGEMV采用一种新颖的K-tree allreduce算法，在满足硬件路由资源限制的同时，有效聚合本地GEMV结果并降低通信延迟。</li>
+</ol>
+<p>通过结合这些创新，WaferLLM在Cerebras WSE-2上的性能远超现有系统，与在NVIDIA A100 GPU集群上运行的SOTA系统（如SGLang和vLLM）相比，实现了10-20倍的端到端速度提升。</p>
+<p>LLM推理中的关键组件如下图所示，预填充阶段主要由GEMM（通用矩阵乘法）主导，而解码阶段主要由GEMV（通用矩阵向量乘积）主导。<br/>
+<img alt="" class="figure-image" src="images/47864dd7cba60bf7c4317e5d97464bc490fabcec0b011763a451c9586d566c41.jpg"/><br/>
+图1: LLM推理中的关键组件</p>
+<h2>A3 背景知识与设计原则</h2>
+<h3>2.1 LLM推理及其关键约束</h3>
+<p><strong>LLM推理过程与瓶颈</strong>。一个LLM推理系统通常执行自回归的逐令牌生成，如图1所示。模型由多个Transformer层组成，主要由自注意力（self-attention）和前馈（feedforward）模块主导。推理过程分为两个阶段：预填充（prefill）和解码（decode）。预填充阶段的总周期主要由GEMM操作（图中①所示）主导。而解码阶段的总周期则由GEMV操作（图中②所示）主导。</p>
+<p><strong>内存带宽成为瓶颈</strong>。LLM推理是内存带宽受限的。模型权重（10-1000 GB）在推理过程中需要从外部内存中反复加载，因为GPU通常只有约100MB的片上内存。对于每个请求，每秒生成数千个令牌需要数百TB/s的带宽，这远超当前GPU上HBM（高带宽内存）的能力。</p>
+<p><strong>分布式方案的挑战</strong>。虽然跨GPU的张量并行可以增加带宽，但在大型GPU集群中缓解通信瓶颈仍然是一个挑战。此外，增加GPU可以提高并发查询的吞吐量，但并不能减少每个输出令牌的时间（TPOT），因为每个查询仍然受到内存带宽的限制。</p>
+<h3>2.2 采用晶圆级加速器的原因</h3>
+<p>为了增加内存带宽，加速器设计者越来越多地采用片上晶圆系统集成（system-on-wafer integration）【21, TSMC bets big on advanced packaging, 2023】，原因如下：</p>
+<p><strong>性能优势</strong>。片上晶圆技术允许将数万亿个晶体管集成到单个晶圆级芯片上，面积比典型GPU芯片大100倍，如表1所示。这使得数百万个AI优化核心成为可能，提供几十GB的片上内存和高达几十PB/s的内存带宽，比标准GPU的几TB/s高出1000倍。未来的晶圆级芯片还可以在其边缘连接比标准芯片多40-80倍的HBM芯片【21, TSMC bets big on advanced packaging, 2023】。</p>
+<p><strong>集成效率</strong>。片上晶圆在集成大规模并行核心方面表现出色。基于晶圆的裸片到裸片（die-to-die）连接提供的单位面积带宽比传统的基于PCB的芯片到芯片（chip-to-chip）互连（如NVIDIA NVLink, PCIe）高出10倍，延迟降低100-300倍，每比特功耗效率提高近100倍【24, Cerebras architecture deep dive: First look inside the hardware/software co-design for deep learning, 2023】，如表1所示。如前所述，LLM推理主要受限于数据密集访问导致的内存带宽。在分布式环境中，远程内存访问带来的芯片间通信开销，尤其是在解码阶段的GEMV操作中，限制了可扩展性。因此，片上晶圆集成提供了比传统芯片间链路更低延迟、更高带宽的互连和更高的效率。</p>
+<p>表1: 片上裸片系统 vs. 片上晶圆系统<br/>
+<img alt="" class="figure-image" src="images/c2099fd3d21e93912901b9440dae7358353e613fdc820ea515c324fee3df663b.jpg"/></p>
+<p><strong>更低的成本</strong>。晶圆级集成可以降低制造成本，因为制造（通常占30-50%）的很大一部分成本与测试和封装单个芯片有关【48, Wikipedia contributors. Wafer-scale integration, 2024】。此外，晶圆级集成在良率提升方面取得了显著进展。台积电等公司也在开发将完全测试过的裸片集成到单个晶圆上的技术，以进一步提高良率。</p>
+<h3>2.3 晶圆级LLM推理的挑战</h3>
+<p><strong>架构转变带来的挑战</strong>。在晶圆级加速器上利用LLM推理的关键挑战在于其向单芯片上分布式、非均匀内存架构的转变。当前的LLM系统是为共享内存（单芯片）或全连接架构（如GPU pod）优化的，如图2(a)所示。然而，随着片上内存大小的增长，这些架构面临着指数级的制造成本和性能下降，从而推动了对分布式片上架构的需求。</p>
+<p><strong>网状NoC架构的主导地位</strong>。AI加速器设计者主要使用网状（mesh-like）片上网络（NoC）来连接大规模核心（从数十万到数百万），如图2(b)所示。网状拓扑因其在核心排列、有效散热【29, An electrical-thermal co-simulation model of chiplet heterogeneous integration systems, 2024】、供电【19, Chiplet/interposer co-design for power delivery network optimization in heterogeneous 2.5-d ICs, 2021】和经济布线【38, Multiple Si layer ICs: motivation, performance analysis, and design implications, 2000; 46, Application defined on-chip networks for heterogeneous chiplets: An implementation perspective, 2022】方面的效率而备受青睐，每个核心只与邻近的核心通信，如图2(b)所示。其他拓扑结构，如3D环面或树状结构，由于片上布线成本高昂而变得不切实际。因此，像Cerebras WSE【24, Cerebras architecture deep dive: First look inside the hardware/software co-design for deep learning, 2023】和Tesla Dojo【41, DOJO: The microarchitecture of Tesla’s exa-scale computer, 2022】这样的晶圆级芯片制造商都采用大规模网状架构。即使是非晶圆级加速器，如Meta MTIA【30, Introducing MTIA: Meta’s next-generation training and inference accelerator for AI, 2024】、Tenstorrent【18, Tenstorrent Blackhole and Metalium for standalone AI processing, 2024】等【4, AMD XDNA adaptive architecture, 2023; 31, Azure Maia: For the era of AI from silicon to software to systems, 2023】，也使用网状结构来扩展芯片上的核心。</p>
+<p><img alt="" class="figure-image" src="images/66480b2a5526e5385d0eded8365ed8d83407d3f39b58fa9b25caba4870896af9.jpg"/><br/>
+图2: 大规模网状内存架构</p>
+<p><strong>特定LLM操作的挑战</strong>。大规模网状架构由于其高数据移动需求，对几个LLM操作提出了挑战：（i）管理LLM模型和KV缓存；（ii）预填充阶段的GEMM操作；以及（iii）解码阶段的GEMV操作。其他操作，如点积和激活函数等逐元素计算，不需要数据移动，自然能从并行中受益。需要allreduce的操作，如RMSNorm和Softmax，可以利用GEMV的解决方案。</p>
+<h3>3.1 PLMR模型</h3>
+<p>我们开发了PLMR模型来捕捉晶圆级加速器的独特硬件属性，并为利用这种新兴硬件所需的系统要求提供动力。</p>
+<p><strong>（1）海量并行（P）</strong>。晶圆级加速器可以容纳数百万个并行核心，而GPU只有数千个。每个核心都有一个本地硬件流水线，可以在周期级别上重叠数据输入、输出、计算和内存访问。这要求计算被大规模地划分，并进行细粒度的调度以重叠计算、内存访问和NoC通信。</p>
+<p><strong>（2）高度非均匀的内存访问延迟（L）</strong>。在网状结构中跨核心访问内存会产生高度非均匀的延迟。在一个$N_w \times N_h$核心的矩形网格中，两个核心之间的最大NoC跳数是$N_w + N_h$，最坏情况下的内存访问延迟由$ \alpha(N_w + N_h) + \beta r $给出，其中$r &lt; N_w + N_h$表示通信路径上的路由阶段数。这里，$\alpha$表示每跳传输延迟，是消息根据路由器硬件预配置规则直接转发时产生的成本，随跳数增加而增加。$\beta$表示每路由延迟，是消息在核心转发时由软件进行报头解析和重写所产生的开销【27, Nearoptimal wafer-scale reduce, 2024】。通常，$\alpha &lt; \beta$。在一个拥有百万核心的网状结构中，最大跳数和路由阶段可达数千，导致本地和远程内存访问延迟差距高达千倍。因此，最小化长距离通信对性能至关重要。</p>
+<p><strong>（3）受限的每核心本地内存（M）</strong>。每个核心的本地内存很小（几十KB到几MB），因为性能和能效会随着容量增大而下降【47, Wikipedia contributors. Static random-access memory, 2024】。因此，计算数据必须被明确地划分为细粒度的块，以完全适应每个核心本地内存的限制。</p>
+<p><strong>（4）受限的路由资源（R）</strong>。集成数百万核心的晶圆级加速器对每个核心的路由电路复杂性或路由表大小施加了严格的限制。例如，在Cerebras WSE-2上，每个核心只能识别带有5位地址码的消息头。因此，每个核心最多只能支持$2^5$个不同的路由路径，软件系统必须仔细规划这些路径。对于长距离远程通信，一对核心可以消耗路由资源建立直接路由路径，只产生$\alpha$延迟。但是，如果路由路径数量超过硬件限制，消息必须通过多个中间核心中继，引入额外的$\beta$延迟。</p>
+<p><strong>PLMR模型的普适性</strong>。我们预计这些属性将保持相关性，因为它们根植于硬件及其制造过程的基本特性。PLMR模型适用于当前（Cerebras WSE）和未来（Tesla Dojo）的晶圆级设备。即使是一些非晶圆级设备，如具有基于网状NoC架构的Tenstorrent Blackhole【18, Tenstorrent Blackhole and Metalium for standalone AI processing, 2024】，也可以通过调整并行度（P）、网格大小（L）或放宽对本地内存（M）和路由资源（R）的限制来用PLMR模型表示。</p>
+<h3>3.2 现有方法的局限性</h3>
+<p><strong>基于PLMR模型的分析</strong>。利用PLMR模型，我们分析了为什么现有的AI系统无法充分利用晶圆级加速器。在晶圆级加速器上运行LLM，我们通常有两种选择：（i）将每个核心中的分布式本地内存抽象为共享内存，通过NoC直接访问放置在远程核心中的数据；（ii）将计算显式地划分到分布式核心中，并使用消息传递来交换必要的数据。我们分析了两种代表性系统：为共享内存架构（如GPU）设计的LLM运行时或DNN编译器，例如Ladder【45, Ladder: Enabling efficient lowprecision deep learning computing through hardwareaware tensor transformation, 2024】；以及为分布式片上内存架构设计的SOTA编译器，例如用于GraphCore IPU的T10【25, Scaling deep learning computation over the inter-core connected intelligence processor with T10, 2024】。</p>
+<p><strong>共享内存系统（如Ladder）的局限性</strong>。像Ladder这样的基于共享内存的DNN编译器通常假设底层内存层次结构中存在统一的内存访问模式，这无法容忍晶圆级加速器在访问远程内存时数千倍的延迟差异（在L方面失败）。此外，这些编译器【10, TVM: An automated end-to-end optimization stack for deep learning, 2018; 28, Rammer: Enabling holistic deep learning compiler optimizations with rTasks, 2020; 37, Welder: Scheduling deep learning memory access via tile-graph, 2023; 45, Ladder: Enabling efficient lowprecision deep learning computing through hardwareaware tensor transformation, 2024; 51, Ansor: A compiler stack for auto-tuning tensor programs, 2020; 54, FlexTensor: An automatic schedule exploration and optimization framework for tensor computation on heterogeneous system, 2020; 57, ROLLER: Fast and efficient tensor compilation for deep learning, 2022】通常主要关注计算划分，而较少优化数据划分。这种方法很容易导致大量数据重复，并违反内存约束要求（在M方面失败）。最后，这些编译器不知道每个核心的通信距离，因此无法很好地处理路由资源的限制。</p>
+<p><strong>分布式内存系统（如T10）的局限性</strong>。T10系统【25, Scaling deep learning computation over the inter-core connected intelligence processor with T10, 2024】专为具有片上交叉开关（crossbar）的AI加速器设计，该交叉开关确保了对同一芯片上任何其他核心的内存访问具有恒定延迟。T10处理小型本地内存并平衡通信负载，解决了内存约束（M）和路由资源限制（R）。然而，在PLMR设备上，它未能考虑变化的内存访问延迟（在L方面失败），并且其扩展规模是数千核心，而非数百万核心（在P方面失败）。</p>
+<h2>A2 方法细节</h2>
+<h3>4 晶圆级LLM并行策略</h3>
+<p>我们提出了晶圆级LLM并行策略，其在预填充、解码和KV缓存管理方面都有新的设计。</p>
+<h4>4.1 预填充并行</h4>
+<p><strong>预填充并行的挑战</strong>。LLM预填充的并行策略必须确保符合PLMR模型。关键挑战包括：（i）处理预填充期间的多个大矩阵，需要有效的维度划分以实现百万核心并行（P）；（ii）优化GEMM操作，这涉及进一步的划分以及计算和通信的重叠，以最小化长距离通信延迟（L），遵守本地内存约束（M），并考虑有限的路由资源（R）；以及（iii）处理矩阵转置，这在网状NoC上成本高昂（L），但对于顺序GEMM操作通常是必需的。</p>
+<p><strong>设计细粒度分区以实现百万核心并行</strong>。为了实现高芯片利用率，我们建议沿核心的X轴和Y轴同时对输入激活和权重矩阵的两个维度进行分区。与现有方法【12, FlashAttention-2: Faster attention with better parallelism and work partitioning, 2024; 15, Flashdecoding++: Faster large language model inference on GPUs, 2023; 32, Efficient large-scale language model training on GPU clusters using Megatron-LM, 2021; 35, Efficiently scaling transformer inference, 2023】相比，这种方法能够实现更细粒度的百万级并行，这些方法通常只划分嵌入维度，导致在PLMR设备上并行度不足。我们使用自注意力和前馈网络来说明这种分区方式，如图3所示。在此讨论中，我们定义以下符号：输入激活A和权重W是预填充过程中的多维张量。B表示批大小，L表示序列维度，E表示嵌入维度，H表示头维度，F表示前馈块中的隐藏维度。如图中①所示，A的分区布局表示为$BL_yE_x$，其中L维度沿核心的Y轴划分，E维度沿核心的X轴划分。类似地，所有权重矩阵（$W_Q, W_K, W_V, W_{in}, W_{out}$）都在两个维度上进行分区。</p>
+<p><strong>设计符合PLMR的分布式GEMM</strong>。我们建议在预填充阶段用新设计的、符合PLMR的分布式GEMM替换传统的、为共享内存架构设计的GEMM算子（如图3中②所示）。与主要依赖allgather操作进行GEMM的TPU和GPU系统不同，符合PLMR的分布式GEMM算法在尊重本地内存和路由约束的同时，实现了高NoC带宽利用率，确保了对L、M和R属性的遵守。这种符合PLMR的分布式GEMM将在第5节中详细描述。</p>
+<p><strong>使用转置分布式GEMM避免矩阵转置</strong>。我们提出了一个用于预填充的无转置并行计划，以避免矩阵转置，这是为共享内存架构设计的LLM系统中常见的操作。PLMR中的L属性强调了矩阵转置在晶圆级设备上尤其昂贵。它需要网格一个角落的核心将数据发送到对角线的另一个角落，形成一条长距离通信路径。我们的无转置并行计划利用转置分布式GEMM（表示为dist-GEMM-T）【11, Parallel matrix transpose algorithms on distributed memory concurrent computers, 1995; 42, SUMMA: scalable universal matrix multiplication algorithm, 1997】来计算LLM预填充期间的$Q@K^T$，如图3中③所示。具体来说，中间张量Q和K是通过X与$W_Q$和$W_K$相乘生成的，由于片上分区形状，在进行dist-GEMM操作之前需要转置K。</p>
+<p><img alt="" class="figure-image" src="images/5842ec3714a559e73b47cc85204f3a2d3455121c96598adf326fe0b2726dc662.jpg"/><br/>
+图3: 预填充并行计划。$E_xF_y$表示形状为EF的矩阵，其中E维度沿核心的x轴分区，F维度沿核心的y轴分区。</p>
+<h4>4.2 解码并行</h4>
+<p><strong>解码并行的挑战</strong>。LLM解码的并行策略必须解决其内存带宽密集型的特性，这带来了几个挑战：（i）由于输入序列和批处理大小有限，解码使用的矩阵比预填充小，当维度不足以进行分区时，需要仔细进行并行化；（ii）该阶段严重依赖GEMV操作，其计算密集度低于GEMM，导致计算阶段较短，与通信的重叠有限，使GEMV在网状NoC上容易受到长距离通信延迟（L）的影响，并要求遵守本地内存和路由约束（M和R）；（iii）顺序的GEMV操作在NoC上引入了昂贵的矩阵转置，有违反L属性的风险。</p>
+<p><strong>设计细粒度复制以最小通信成本实现并行</strong>。当张量维度不足以实现解码所需的高并行度时，我们建议对LLM中的张量进行细粒度复制，特别是在序列维度上进行复制，其中序列长度在预填充阶段等于提示长度，在解码阶段等于1。这种方法有两个关键优势：（i）它提高了并行度并确保所有核心的负载均衡，以及（ii）它避免了跨所有核心的额外通信操作，如allreduce。如图4中①所示，E维度沿y轴分区，L维度沿x轴复制，表示为$BE_yL_x$。权重矩阵W在两个维度上分区，与预填充阶段一致。我们的细粒度复制不同于最近关于长上下文/序列推理系统的工作【49, LoongServe: Efficiently serving long-context large language models with elastic sequence parallelism, 2024; 55, DistServe: Disaggregating prefill and decoding for goodputoptimized large language model serving, 2024】，后者在预填充阶段而非解码阶段选择性地复制某些维度。</p>
+<p><strong>设计符合PLMR的分布式GEMV</strong>。我们发现现有的GEMV实现由于长距离通信和每个核心过度的路由资源消耗，未能完全符合PLMR的要求。为了解决这个问题，我们提出了一个符合PLMR的分布式GEMV，并在整个解码阶段使用这个新实现（如图4中②所示）。这个GEMV设计的全面描述在第6节中提供。</p>
+<p><strong>预优化模型权重放置以避免矩阵转置</strong>。为了避免解码期间的矩阵转置，我们预先优化了解码的模型权重布局，特别是针对分布式GEMV操作，以消除矩阵转置。虽然这在预填充和解码阶段之间引入了重新放置的开销，但这个开销远小于令牌生成期间顺序矩阵转置的开销。图4在③中详细说明了这一提议。具体来说，我们优化了诸如$W_O$和$W_{out}$等权重在解码中分布式GEMV的放置，这与它们在预填充阶段的布局不同。这种方法还消除了在解码自注意力期间计算$Q@K^T$时的转置操作。</p>
+<p><img alt="" class="figure-image" src="images/a87697939bf2aba5bbf170488538378da7807602d36a6efaf38e5fb6c06d5c0a.jpg"/><br/>
+图4: 解码并行计划。$E_yF_x$表示E维度沿y轴复制，F维度沿x轴分区。</p>
+<h4>4.3 基于移位的KV缓存管理</h4>
+<p><strong>KV缓存管理的挑战</strong>。在PLMR设备上管理KV缓存具有挑战性，因为它需要在遵守本地内存约束（M）的同时，将大量数据存储在分布式核心中，并分发KV缓存计算以实现高并行度（P）。为了解决这些问题，我们有以下见解：</p>
+<p><strong>现有的基于拼接的管理导致核心利用率倾斜</strong>。当前的KV缓存管理方法主要将最新生成的KV向量拼接到现有缓存的末尾。虽然在共享内存架构中效率很高，但这种拼接操作在PLMR设备上会导致核心利用率严重倾斜，如图5中①所示，其中一行中只有一个核心负责存储和计算生成的KV向量。经过几次令牌生成步骤后，这个核心很快成为瓶颈，如图5中②所示，导致内存使用倾斜，违反了PLMR中的M属性。此外，核心间KV缓存分布不均导致并行效率低下，违反了P属性。</p>
+<p><strong>提出基于移位的管理以实现均衡的核心利用率</strong>。我们提出了一种基于移位的KV缓存管理策略，该策略将缓存数据均匀分布在所有核心上。该方法不是在末尾拼接新的KV缓存向量，而是执行一个平衡的移位操作，其中每一行将最旧的KV缓存数据传输到上一行，如图5中③所示。当新的KV数据到达时，每个核心会检查其本地容量并与邻居比较。如果相等，则触发向上移位，每一行从下方接收数据并向上传递一些数据。如④所示，这确保了KV缓存在所有核心上的均匀分布。向上移位并行利用NoC链路，保持高性能并满足P属性。KV缓存的物理放置与逻辑连续性保持一致，并且只涉及相邻核心之间的数据移动，遵守L属性。该方法还完全解决了在基于拼接的方法中观察到的最后一排核心的M违规问题。</p>
+<p><img alt="" class="figure-image" src="images/58421056ed88297ac27cc5f91bc5adf83029e1f3a9533e0dee939842f4d36354.jpg"/><br/>
+图5: KV缓存拼接 vs. KV缓存移位</p>
+<h4>4.4 实现细节</h4>
+<p>我们概述了以下几个实现细节：</p>
+<p><strong>预填充和解码转换</strong>。预填充和解码需要不同的策略。为了高效地处理转换，我们通过高速NoC重新洗牌KV缓存和权重，该NoC通常提供数百Pbit/s的聚合带宽，可以即时完成，而无需依赖较慢的片外内存。</p>
+<p><strong>并行配置</strong>。WaferLLM使用离线自动调优为每个模型选择核心数量，根据模型大小、输入/输出长度、每核心内存以及预填充/解码阶段来优化延迟。它为每个阶段选择不同的核心数量，并通过高NoC带宽实现快速动态重映射。对于具有可变输入/输出长度的模型，使用平均值来保持接近峰值的性能。自动调优为每个模型单独运行，以适应特定需求。</p>
+<p><strong>自注意力的变体</strong>。WaferLLM支持自注意力的变体，包括分组查询注意力（Grouped Query Attention）【3, Gqa: Training generalized multi-query transformer models from multi-head checkpoints, 2023】、多头注意力（Multihead Attention）【43, Attention is all you need, 2017】和多查询注意力（Multi-query Attention）【5, Language models are few-shot learners, 2020】。这些变体的不同之处在于，在按头维度分组后，本地执行dist-GEMM、dist-GEMV和dist-GEMM-T。</p>
+<h3>5 晶圆级GEMM</h3>
+<p>在本节中，我们介绍MeshGEMM，一种适用于大规模网状架构的可扩展分布式GEMM。</p>
+<h4>5.1 分布式GEMM的PLMR合规性</h4>
+<p><strong>评估指标</strong>。为了为PLMR设备找到一个可扩展的分布式GEMM，我们定义了以下指标：（i）每核心路由路径数：每核心的路由路径数量，路径越少越能确保符合R属性。（ii）关键路径延迟：每步中所有通信路径传输子矩阵的最大延迟（如图6中的红线所示），延迟越小越能遵守L属性。（iii）每核心内存：每个核心所需的内存，使用量越低越能确保M属性。</p>
+<p>我们分析了当前的分布式GEMM方法，并展示了MeshGEMM如何满足这些指标：</p>
+<p><strong>（1）通过Allgather实现的GEMM</strong>。这在GPU和TPU pod中常用于分布式GEMM【32, Efficient large-scale language model training on GPU clusters using Megatron-LM, 2021; 35, Efficiently scaling transformer inference, 2023; 56, Exploring TensorRT to improve real-time inference for deep learning, 2022】。其每步的关键通信路径是一个核心从最远的核心收集数据，如图6中①的红线所示，并且需要N步完成allgather。每个核心为其行和列中的邻居创建N个路由路径（违反R）。R的限制要求通过中间核心逐步传输子矩阵，导致关键路径上的通信延迟为$O[(\alpha + \beta)N]$（违反L），并且每个核心由于工作缓冲区膨胀而使用$O(1/N)$的内存（违反M）。</p>
+<p><strong>（2）SUMMA</strong>。这是Cerebras在其晶圆级引擎上进行分布式GEMM的默认选择【7, GEMM with collective operations】。其每步的关键通信路径是一个核心沿列或行向最远的核心广播数据，如图6中②的红线所示。与①中的allgather通信相同，每个核心创建N个路由路径（违反R），并且关键路径的延迟为$O[(\alpha + \beta)N]$（违反L）。虽然SUMMA在内存使用上比allgather有所改进，只需要一个等于本地分区子矩阵大小的工作集，但它仍然使峰值内存使用量翻倍。</p>
+<p><strong>（3）Cannon</strong>。这是为网状结构优化的分布式GEMM选择【6, A cellular computer to implement the kalman filter algorithm, 1969】，在超级计算机和分布式集群中很受欢迎。其每步的关键通信路径是头核心向尾核心发送数据，如图6中③所示。每个中间核心与2D环面中的两个邻居通信，并将子矩阵从头传递到尾，这只需要$O(1)$的通信路径和$O(1/N^2)$的最优内存使用。值得注意的是，Cannon每个核心只涉及恒定数量的路由路径，允许为邻居通信和关键路径分配静态路由规则。在每一步中，子矩阵可以从头核心直接通过中间核心传递到尾核心，不像通过allgather或SUMMA实现的GEMM那样需要逐步消息传输。因此，关键路径只产生每跳延迟$\alpha$，没有额外的每路由开销$\beta$。然而，由于关键路径跨越N跳，它仍然产生$O(\alpha N)$的延迟，如图中③的红线所示，违反了L。</p>
+<p><strong>（44) MeshGEMM (我们的方法)</strong>。这是一种符合PLMR模型的分布式GEMM。每一步的关键通信路径，我们称之为两跳传输（two-hop transmission），如图6中④的红线所示，比其他方法短得多。每个核心与两个两跳远的邻居通信，并穿过一个一跳邻居的通信。这种设计实现了每核心$O(1)$的通信路径和$O(1/N^2)$的最优内存使用，与Cannon类似。至关重要的是，它将关键路径限制在恒定的2跳，复杂度为$O(\alpha)$，使其独特地能够解决L属性。</p>
+<p><img alt="" class="figure-image" src="images/bc7ca9abfd7176ab50db1cf1b9deb85e554706f9b2963352054116bc83ad5996.jpg"/><br/>
+图6: 分布式GEMM中的PLMR合规性</p>
+<h4>5.2 设计直觉与可扩展性分析</h4>
+<p>我们的设计包括两个阶段：（i）我们使用循环移位过程来确保GEMM算法的正确性，（ii）然后使用交错操作将关键路径延迟限制为一个常数。基于循环移位和交错，我们得到了两跳传输的通信路径，并证明了在这个循环上，这是满足L属性所需的最小距离。</p>
+<p><strong>循环移位（Cyclic shifting）</strong>。循环移位通过将通信限制在两个邻居并最小化内存使用，使MeshGEMM能够满足M和R属性。它确保了正确的GEMM结果，其推理与Cannon【6, A cellular computer to implement the kalman filter algorithm, 1969】类似。如图6中③所示，一个由5个核心组成的逻辑环被展平为物理通信映射，关键路径从头核心到尾核心。</p>
+<p><strong>交错（Interleaving）</strong>。对于展平的通信计划，我们希望进一步最小化关键路径的长度，从而满足L属性。我们的关键直觉是引入一个INTERLEAVE操作来找到从逻辑到物理的映射关系，该操作在算法1中定义。如图7中①所示，MeshGEMM首先在核心0和4之间插入核心1，在核心4和3之间插入核心2，形成一个逻辑映射，然后调用INTERLEAVE操作来获取发送到和接收自邻居的索引，从而得到一个置换后的等效通信计划，如图7中②所示。例如，总共有5个核心（N=5），所以物理核心2（index=2）向物理核心4（send_index=4）发送数据，并从物理核心0（recv_index=0）接收数据。图6和图7以5个核心为例进行说明，而算法1表明MeshGEMM中的两跳通信模式可以推广到N≥3的任意大小的网状架构。</p>
+<p><img alt="" class="figure-image" src="images/47b21d22395a72f8c4bdbc6f3c45aedd0d7782e41bcd230f8f60b7e1fdb8d6ed.jpg"/><br/>
+图7: 设计直觉与可扩展性分析</p>
+<pre><code>算法 1: INTERLEAVE
+输入: index, N
+输出: send_index, recv_index
+1 如果 index mod 2 == 0:
+2     recv_index = Max(index - 2, 0)
+3     send_index = Min(index + 2, N - 1)
+4 否则:
+5     recv_index = Min(index + 2, N - 1)
+6     send_index = Max(index - 2, 0)
+7 如果 index == 0: recv_index = 1
+8 如果 index == N - 1:
+9     如果 N mod 2 == 0: recv_index = N - 2
+10    否则: send_index = N - 2
+11 返回 send_index, recv_index</code></pre>
+<p><strong>可扩展性分析</strong>。我们可以证明由INTERLEAVE创建的两跳距离无法进一步缩短。该证明依赖于顺序排列的基本属性：如果我们试图创建一个循环序列，其中每个数字与其邻居的差异都恰好是一跳，我们会遇到一个数学上的不可能。这可以通过将数字想象成一条线上的点来理解——虽然相邻的数字可以连接，但序列的端点在形成一个圆的同时，无法同时与它们的邻居保持一跳的差异。请注意，我们基于一维数组的讨论自然可以扩展到二维网格，因为一维数组由于其对称性对应于网格的X轴和Y轴。</p>
+<h4>5.3 MeshGEMM算法</h4>
+<p>我们概述MeshGEMM的关键步骤如下：</p>
+<p><strong>(1) 初始化</strong>: 考虑 $C = A \times B$。MeshGEMM会将A和B沿两个维度划分为$A_{sub}$和$B_{sub}$瓦片，形成$N \times N$个瓦片，分布在各个核心上。每个核心接收一个$A_{sub}$瓦片和一个$B_{sub}$瓦片。然后MeshGEMM将使用INTERLEAVE为每个核心初始化邻居的位置。<br/>
+<strong>(2) 对齐</strong>: 每个核心将与邻居对齐，以对齐输入子矩阵，确保分布式系统中的每个核心都以适当的操作数开始矩阵乘法过程。<br/>
+<strong>(3) 计算-移位循环</strong>: 每个核心运行一个包含N步通信和计算的计算-移位循环。在每一步中，每个核心计算其对应$C_{sub}$的部分和：$C_{sub} = A_{sub} \times B_{sub} + C_{sub}$。同时，沿X轴移位$A_{sub}$，沿Y轴移位$B_{sub}$，以获得下一步计算所需的新$A'_{sub}$和$B'_{sub}$，如图7中③所示。N步之后，返回累积的$C_{sub}$。</p>
+<h4>5.4 实现细节</h4>
+<p><strong>处理非方形网格</strong>。对于一个非方形网格$N_h \times N_w$（$N_h \neq N_w$），A和B矩阵可以逻辑上划分为$N_{lcm} \times N_{lcm}$个核心，其中$N_{lcm}$是$N_h$和$N_w$的最小公倍数。</p>
+<p><strong>转置分布式GEMM</strong>。上述算法可应用于$C = A \times B^T$的计算，即图3中的dist-GEMM-T，以避免在网格上转置B。它在计算前不需要对齐，并且仅需要对右矩阵B沿Y轴进行N步的两跳计算-移位。在每个移位步骤之后，每个核心计算$C_{sub} = A_{sub} \times B_{sub}$，然后沿X轴对$C_{sub}$进行ReduceAdd。N步之后，获得最终矩阵C。</p>
+<h3>6 晶圆级GEMV</h3>
+<p>在本节中，我们描述MeshGEMV，一种适用于PLMR设备的可扩展GEMV算法。</p>
+<h4>6.1 分布式GEMV的PLMR合规性</h4>
+<p><strong>评估指标</strong>。分布式GEMV的完成时间主要由一个逐元素计算以在每个核心生成部分和结果，然后是一个allreduce操作来聚合所有选定核心的部分结果，并将聚合结果发送回所有核心以进行连续的GEMV。与GEMM的分析一样，在晶圆级GEMV中，我们也定义以下指标：（i）每核心路由路径数：每核心的路由路径数量，路径越少越能确保符合R属性。（ii）关键路径延迟：整个allreduce通信的最大延迟，主要由从最远核心发送部分和到最远核心接收聚合和的时间决定。</p>
+<p>我们分析了当前的分布式GEMV方法，并展示了MeshGEMV如何满足这些指标：</p>
+<p><strong>（1）带流水线allreduce的GEMV</strong>。这在TPU pod系统【35, Efficiently scaling transformer inference, 2023】中常用，并且是Cerebras演示中的默认设置【9, Benchmark GEMV collectives, 2023】。如图8中①的红线所示，流水线all-reduce的关键路径从最远的核心开始，部分和逐步向根核心归约，然后聚合结果从根广播到所有核心。虽然这种方法确保了每个核心的路由路径保持在R约束内，即每核心$O(1)$的路由资源使用，但它总共产生了2N跳和N个路由阶段，违反了L属性。</p>
+<p><strong>（2）带环形allreduce的GEMV</strong>。这在GPU pod系统中常用，是默认配置，特别是对于大量数据【27, Nearoptimal wafer-scale reduce, 2024】。如图8中②所示，环形allreduce的关键路径涉及每个部分和遍历环中的所有核心。与流水线allreduce类似，这种方法保持了$O(1)$的每核心路由路径，但产生了$O[(2\alpha + \beta)N]$的通信延迟，因此违反了PLMR中定义的延迟约束L。</p>
+<p><strong>（3）带K-tree allreduce的GEMV (我们的方法)</strong>。正如上面对流水线和环形allreduce的分析，reduce-add操作的顺序执行导致关键路径上有N个路由阶段。相比之下，K-tree allreduce将reduce-add路径组织成一个平衡的K-tree，使得K个阶段的分组并行归约成为可能，每组有$O(\sqrt[K]{N})$个核心，并将关键路径减少到只有$\sqrt[K]{N}$次路由和$N$跳。然而，这是以每个核心需要$O(K)$个路由路径为代价的。</p>
+<p><img alt="" class="figure-image" src="images/131bf93600534c4fa7006ba7927f24859e539acf8e3b6086c7c5ea54069636bc.jpg"/><br/>
+图8: 分布式GEMV中的PLMR合规性</p>
+<h4>6.2 MeshGEMV算法</h4>
+<p>我们将概述MeshGEMM的关键步骤如下：</p>
+<p><strong>(1) 初始化</strong>: 考虑$C = A \times B$，其中A是一个向量。MeshGEMV将B沿两个维度划分为$B_{sub}$瓦片，形成$N \times N$个瓦片并分布在核心上。对于A，MeshGEMV将沿向量长度划分，形成N个瓦片分布在一个轴上，并在另一个轴上复制A。每个核心接收一个$A_{sub}$和一个$B_{sub}$瓦片。然后，我们根据K-tree确定在每个阶段哪些核心组成一个组以获得聚合结果。<br/>
+<strong>(2) 并行计算</strong>: 在此阶段，每个核心执行本地GEMV $A_{sub} \times B_{sub}$以获得部分和$C_{sub}$。<br/>
+<strong>(3) 聚合</strong>: 聚合步骤主要涉及使用我们设计的K-tree allreduce。关键步骤如下：（i）在第一阶段，每个组执行组内归约，并在每个组的根核心处获得$C_{sub}$的部分和。（ii）在第k阶段，来自第(k-1)阶段的结果被归约到第k阶段每个组的根核心。重复K次后，通过拼接所有K-tree根核心的$C_{sub}$可以获得C。（iii）可选地，根据是否需要连续的GEMV，可能会有一个从K-tree根核心的广播操作。</p>
+<p><strong>可扩展性分析</strong>。如图8中③所示，该方法通过选择合适的K，能够有效地随并行度扩展并满足L属性。它在树根核心处需要K+1条路径，但允许根据硬件限制灵活调整K以解决R问题。与流水线和环形all-reduce相比，K-tree all-reduce通过消耗路由资源，在远距离核心之间建立了直通路径，从而减少了路由延迟。然而，更大的K并不总是更好，因为它取决于N和R的约束。此外，更大的K会增加路由复杂性和开销。考虑到这些因素，我们在当前实现中选择了K=2，并在后续章节中进行了评估。</p>
+<h2>A4 实验环境</h2>
+<p><strong>硬件配置</strong>：<br/>
+* <strong>晶圆级加速器</strong>：一台配备Cerebras WSE-2的服务器。WSE-2拥有850,000个核心，每个核心的计算引擎（CE）最高运行频率为1.1 GHz。每个时钟周期可以从SRAM获取两个32位操作数，执行一次乘法累加操作，然后写回SRAM。每个核心还有一个Fabric路由器，可以在一个时钟周期内与相邻核心发送或接收32位消息。此外，每个核心包含48KB的SRAM，整个芯片总计40GB的聚合SRAM。<br/>
+* <strong>GPU集群</strong>：使用NVIDIA A100进行GPU对比实验，该GPU与WSE-2采用相同的7nm工艺。实验最多使用两台节点上的16个GPU（2x8配置）。单个节点内的8个A100 GPU通过NVLink互连，节点间通信通过高性能InfiniBand（IB）网络处理。</p>
+<p><strong>软件配置</strong>：<br/>
+* <strong>WaferLLM实现</strong>：使用约7000行CSL（一种类C语言）实现了LLM并行、MeshGEMM和MeshGEMV，以及约2000行Python用于加载LLM检查点、启动推理和执行并行策略。<br/>
+* <strong>对比系统</strong>：<br/>
+    * T10【25, Scaling deep learning computation over the inter-core connected intelligence processor with T10, 2024】：在WSE-2上实现，将每个核心视为由交叉开关互连的分布式内存系统的一部分。<br/>
+    * Ladder【45, Ladder: Enabling efficient lowprecision deep learning computing through hardwareaware tensor transformation, 2024】：在WSE-2上实现，将分布式内存架构视为统一内存。<br/>
+    * SGLang【53, Sglang: Efficient execution of structured language model programs, 2024】：在A100 GPU上使用，是性能最高的LLM推理系统之一。</p>
+<p><strong>模型与数据集</strong>：</p>
+<ul>
+<li>
+<p><strong>LLM模型</strong>：评估了多种代表性LLM，包括LLaMA3-8B、LLaMA2-13B、CodeLLaMA-34B（部分层）和QWen2-72B（部分层）。</p>
+<ul>
+<li>LLaMA3-8B使用GQA以减少KV缓存。</li>
+<li>LLaMA2-13B被修改以移除4K上下文长度限制，用于评估不同输入输出长度下的系统性能。</li>
+<li>由于内存限制，CodeLLaMA-34B和QWen2-72B在WSE-2上评估了部分层并按比例缩放结果。</li>
+</ul>
+</li>
+<li>
+<p><strong>评估指标</strong>：使用每请求吞吐量（Throughput per Request, TPR）作为关键指标，TPR = 1 / TPOT（Time per Output Token）。</p>
+</li>
+</ul>
+<h2>A4 实验结果</h2>
+<h3>7.1 LLM推理性能</h3>
+<p><strong>端到端吞吐量 (表2)</strong>：<br/>
+* WaferLLM在WSE-2上对LLaMA3-8B和LLaMA2-13B的推理性能远超T10和Ladder。与T10相比，WaferLLM平均提速160倍（最高180倍）；与Ladder相比，平均提速625倍（最高677倍）。<br/>
+* 与在A100 GPU集群上运行的SGLang相比，WaferLLM实现了10-20倍的端到端速度提升。<br/>
+* T10和Ladder未能有效利用WSE-2的硬件能力，性能甚至不如单个A100上的SGLang，这突显了PLMR感知设计的重要性。</p>
+<p>表2: 端到端LLM推理TPR<br/>
+<img alt="" class="figure-image" src="images/3eee17bef44008bc4ae441dbec7ced1dcf6186c1d3aef931c2c7071c2fd93ab7.jpg"/></p>
+<p><strong>预填充吞吐量 (表3)</strong>：<br/>
+* WaferLLM相较于T10平均提速160倍（最高178倍），相较于Ladder提速270-450倍。<br/>
+* WaferLLM在增加核心数量时表现出良好的可扩展性，而T10和Ladder的性能甚至会下降，因为它们没有考虑空间局部性（L属性），导致通信开销增加。</p>
+<p>表3: 预填充每请求吞吐量(TPR)<br/>
+<img alt="" class="figure-image" src="images/6bbd70336d9b54099ed07d6339102408a8e63ce8d19eb4635a23e8896d58b911.jpg"/></p>
+<p><strong>解码吞吐量 (表4)</strong>：<br/>
+* WaferLLM相较于T10平均提速5.7倍（最高6.5倍），相较于Ladder平均提速217倍（最高260倍）。<br/>
+* WaferLLM对T10的解码阶段提速幅度小于预填充阶段，因为解码的dist-GEMV对通信顺序不敏感，T10的分布式内存设计在此场景下有一定收益。而Ladder完全为共享内存设计，在两种情况下都表现不佳。</p>
+<p>表4: 解码每请求吞吐量(TPR)<br/>
+<img alt="" class="figure-image" src="images/9d03c76545ae3c9caf2c088f47994973b96f03ff637c2743a25c1677db7a5247.jpg"/></p>
+<h3>7.2 MeshGEMM性能</h3>
+<p><strong>核心数扩展性 (图9)</strong>：<br/>
+* 在不同矩阵大小和核心数量下，MeshGEMM的延迟始终低于SUMMA和Cannon。其交错传输（interleave transmission）最小化了通信开销，表现出强大的可扩展性，即使在接近硬件极限时也能保持70%以上的计算效率。<br/>
+* 对于小矩阵，增加核心数可能导致SUMMA和Cannon性能下降，因为通信开销增长超过了计算收益。而MeshGEMM的通信开销增长缓慢，性能更稳定。</p>
+<p><strong>矩阵大小扩展性 (图9)</strong>：<br/>
+* 对于大矩阵，MeshGEMM同样优于SUMMA和Cannon，总周期减少约17%。<br/>
+* 一个有趣的现象是，对于8K矩阵，通信周期随着核心数增加而减少。这是因为此时通信受带宽限制，增加核心数可以提升聚合带宽。</p>
+<p><img alt="" class="figure-image" src="images/91660a8c3b78bb057d97ad608e8b85150b9816b7c36d5c97f30ccbad1cbe4e70.jpg"/><br/>
+图9: MeshGEMM vs. SUMMA &amp; Cannon</p>
+<h3>7.3 MeshGEMV性能</h3>
+<p><strong>通信延迟瓶颈 (图10)</strong>：<br/>
+* 在WSE-2上，通信是dist-GEMV计算的主要瓶颈，尤其是在大规模并行时，通信开销可占总时间的90%。<br/>
+* MeshGEMV通过K-tree Allreduce显著减少了通信开销，比Cerebras基线GEMV实现了约4.6倍的端到端性能提升。</p>
+<p><strong>核心数和矩阵大小扩展性 (图10)</strong>：<br/>
+* MeshGEMV的通信开销随核心数增长得更慢，表现出更好的可扩展性，使得更灵活的片上映射策略成为可能。</p>
+<p><img alt="" class="figure-image" src="images/9012d04faa293de90850c60fec563f0f02a4a55317817e9fa87ed0bea7c41e30.jpg"/><br/>
+图10: MeshGEMV vs. GEMV-Cerebras</p>
+<h3>7.4 基于移位的KV缓存管理</h3>
+<p><strong>KV缓存容量 (表5)</strong>：<br/>
+* WaferLLM的基于移位的KV缓存管理方法，由于实现了均衡的核心利用率，与PagedAttention中基于拼接的方法相比，支持的令牌数量分别在LLaMA3-8B和LLaMA2-13B上多出360倍和385倍。</p>
+<p>表5: 最大解码输出长度<br/>
+<img alt="" class="figure-image" src="images/322b81ddc0f8972f1d5a61bf1ddfec21d74bd6ce85ec06bacd1fc35289a126b3.jpg"/></p>
+<h3>7.5 与GPU的比较</h3>
+<p><strong>GEMV性能 (表6)</strong>：<br/>
+* 与单个A100 GPU相比，MeshGEMV在不同矩阵大小下快280-606倍，能效高7.5-16倍。<br/>
+* 多GPU上的分布式GEMV扩展性有限，性能从1个GPU扩展到8个仅提升1.32倍，到16个时甚至下降。<br/>
+* 与最佳GPU集群结果相比，MeshGEMV性能高166-210倍，能效高45-70倍。</p>
+<p>表6: MeshGEMV (WSE-2) 与 SGLang(A100)中TP的GEMV延迟和能耗对比<br/>
+<img alt="" class="figure-image" src="images/24a00dea9f5cf761b3d7b28a18d2092dda8f8b546ace24647fc217f816cfad21.jpg"/></p>
+<p><strong>LLM推理性能 (表2, 7, 8)</strong>：<br/>
+* WaferLLM的TPR比A100多GPU集群高6-20倍，对于长输出和大型号，差距更大。<br/>
+* SGLang在GPU上的扩展性不佳，从1个扩展到8个GPU，预填充提速1.2-1.6倍，解码提速3.3-3.6倍，远低于线性扩展。<br/>
+* 在能效方面，尽管WSE-2的面积、功耗和成本远高于A100，WaferLLM在SGLang的最佳多GPU配置下仍实现了2-2.5倍的能效优势，这主要归功于GPU在解码任务上非线性的扩展性。</p>
+<p>表7: WaferLLM (WSE-2) 与 SGLang(A100) 在预填充吞吐量和能耗上的对比<br/>
+<img alt="" class="figure-image" src="images/443dc1ad5373e44e66a5c9876884910084deabd123198d407efd32f19171cea1.jpg"/></p>
+<p>表8: WaferLLM (WSE-2) 与 SGLang(A100) 在解码吞吐量和能耗上的对比<br/>
+<img alt="" class="figure-image" src="images/d55e05542a900cfd46cabacaa2ca305b58915f279c8b7af777d6c027ba21685b.jpg"/></p>
+<h2>A7 补充细节</h2>
+<h3>8 实现细节与未来方向</h3>
+<p>我们讨论WaferLLM和晶圆级加速器的当前局限性，并展望其未来解决方案：</p>
+<p><strong>硬件架构</strong>。WaferLLM的性能目前受到流水线并行需求导致的执行气泡的限制。将核心的本地内存增加5-6倍可以消除对流水线并行的需求，实现像vLLM和SGLang那样的完全张量并行。晶圆级芯片设计者已经在朝这个方向发展。Cerebras WSE-3保留了相同的NoC配置，但提高了每核心效率和本地内存，而特斯拉的Dojo则为每个核心集成了1MB的内存。</p>
+<p><strong>内存与计算比率</strong>。LLM解码要求接近1:1的内存与计算比率。然而，像A100这样的GPU片上SRAM有限，迫使频繁的片外内存访问，导致了1:312（FP16）的糟糕比率。多GPU设置由于大量的GPU间通信而加剧了这一问题。相比之下，Cerebras WSE-2通过低延迟NoC将大部分模型权重映射到片上内存，实现了近乎理想的局部性，并接近1:1的比率。为了在基于网状的NoC上完全实现这种平衡，必须遵守PLMR模型，这使得WaferLLM在TPR上能够比基于GPU的系统高出几个数量级。</p>
+<p><strong>处理可靠性问题</strong>。目前，Cerebras WSE-2/3通过硬件处理故障，只向软件暴露健康的核心（组织成网状结构），在软件层面无需显式处理。此外，在制造时就内置了冗余的核心和链路，片上SoC在运行时动态地重新映射和绕过缺陷，以低冗余成本确保最小的性能影响。同时，晶圆级芯片制造商最近报告了93%的功能晶圆面积，高于商用GPU的70-80%【8, 100× defect tolerance: How cerebras solved the yield problem, 2022】，这得益于每核心面积更小的设计。在WSE-2部署的两年中，我们观察到了高可靠性，证实了这些容错机制在实际使用中的有效性。</p>
+<p><strong>多样的模型架构</strong>。WaferLLM对MoE（混合专家模型）也很有利，因为它与密集型LLM共享关键算子，包括MeshGEMM、MeshGEMV和基于移位的KV缓存管理。主要区别在于注意力和专家层之间的all-to-all通信，我们使用WSE-2的NoC多播操作来实现。针对稀疏模型的进一步优化，如卸载和稀疏注意力，是我们未来的研究方向。</p>
+<p><strong>超越Cerebras WSE</strong>。虽然在Cerebras WSE上进行了评估，但PLMR模型可以推广到新兴的网状架构，如特斯拉Dojo，它也具有数十万个带本地内存和受限NoC路由的核心。2D环面或混合网状-交换机拓扑等变体也符合PLMR。我们为MeshGEMM和MeshGEMV的设计针对的是最坏情况的2D网格，并在这些平台上保持竞争力。除了片上网状结构，芯片到芯片的网状互连，如Tenstorrent的核心级和卡级网状结构，也与PLMR非常吻合。展望未来，晶圆级集成的进步，如台积电预计到2027年密度增加40倍，进一步加强了我们方法的长期适用性。</p>
+<h2>A5 结论</h2>
+<p>我们认为这篇论文是探索晶圆级计算在LLM领域潜力的奠基性一步。简单而有效的PLMR模型揭示了巨大的机遇，指导了首个晶圆级LLM并行解决方案以及可扩展的GEMM和GEMV算法的开发。尽管当前晶圆级设备的软件栈存在局限性，我们的方法在性能和能效上都取得了数量级的提升。我们希望这项工作能激励更多对晶圆级计算的关注，并推动AI走向更可持续的未来。</p>
+</div>
+
+
+</div>

@@ -5660,6 +5660,13 @@ mlsys:
       categories:
       - mlsys
       - system
+    - title: 'WaferLLM: Large Language Model Inference at Wafer Scale'
+      date: '2025-02-01'
+      url: /papers/mlsys/system/2025/02/01/waferllm-large-language-model-inference-at-wafer-scale.html
+      categories:
+      - mlsys
+      - system
+      tag: osdi25
     - title: 'Google''s Training Supercomputers from TPU v2 to Ironwood: Architectural
         Stability, Scale, Resilience, Power Efficiency, and Sustainability Across
         Five Generations'
