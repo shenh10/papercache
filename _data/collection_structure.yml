@@ -610,6 +610,15 @@ llm:
           - inference
           - kvcache
           tag: eurosys25
+        - title: 'BitDecoding: Unlocking Tensor Cores for Long-Context LLMs with Low-Bit
+            KV Cache'
+          date: '2025-03-01'
+          url: /papers/llm/engineering/inference/kvcache/2025/03/01/bitdecoding-unlocking-tensor-cores-for-long-context-llms-with-low-bit-kv-cache.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'Twilight: Adaptive Attention Sparsity with Hierarchical Top-p Pruning'
           date: '2025-02-01'
           url: /papers/llm/engineering/inference/kvcache/2025/02/01/twilight-adaptive-attention-sparsity-with-hierarchical-top-p-pruning.html
