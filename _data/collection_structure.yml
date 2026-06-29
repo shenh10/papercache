@@ -1914,6 +1914,14 @@ llm:
         - engineering
         - moe
         tag: micro25
+      - title: 'MOE-INFINITY: Efficient MoE Inference on Personal Machines with Sparsity-Aware
+          Expert Cache'
+        date: '2024-01-01'
+        url: /papers/llm/engineering/moe/2024/01/01/moe-infinity-efficient-moe-inference-on-personal-machines-with-sparsity-aware-expert-cache.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: 'Expert-as-a-Service: Towards Efficient, Scalable, and Robust Large-scale
           MoE Serving'
         date: '2025-09-01'
