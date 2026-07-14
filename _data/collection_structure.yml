@@ -4259,6 +4259,16 @@ llm:
             - attention
             - sparsity
             tag: nips25
+          - title: 'HySparse: A Hybrid Sparse Attention Architecture with Oracle Token
+              Selection and KV Cache Sharing'
+            date: '2026-02-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2026/02/01/hysparse-a-hybrid-sparse-attention-architecture-with-oracle-token-selection-and-kv-cache-sharing.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
         posts:
         - title: 'Why Low-Precision Transformer Training Fails: An Analysis on Flash
             Attention'
