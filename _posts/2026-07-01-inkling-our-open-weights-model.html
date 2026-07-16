@@ -103,17 +103,25 @@ title: 'Inkling: Our Open-Weights Model'
 <p><strong>Inkling支持可控的思考努力，允许您在性能与token效率之间进行平衡</strong>。上图展示了Inkling以及其他开源权重模型在一系列基准测试上的努力/性能曲线：用于智能体编码的Terminal Bench 2.1，用于高级推理的HLE，以及用于指令遵循的IFBench。Inkling仅用三分之一的token就能在Terminal Bench上达到与Nemotron 3 Ultra相同的性能。对于需要运行数百万次并作为更长工作流一部分的模型来说，成本和延迟至关重要；查看完整的成本曲线可以让开发者为每个用例选择最佳模型。</p>
 <h3>多模态</h3>
 <p><strong>Inkling设计的一个主要目标是作为我们最近推出的交互模型系统【interaction models】中的背景推理模型</strong>。交互模型使用户能够通过语音和视觉实时自然地协作。这需要一个为广泛多模态能力而原生训练的模型。</p>
-<p>| | 开源权重 | | | 闭源权重 | | |<br/>
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |<br/>
-| | <strong>Inkling</strong> effort=0.99 | Qwen3-Omni | Nemotron-3 Nano-Omni | Kimi K2.5 | Kimi K2.6 | Qwen3.5 Omni-Plus | Gemini 3.1 Pro (high) |<br/>
-| <strong>音频</strong> | | | | | | | |<br/>
-| Audio MC | 56.6% | 24.3% | 23.2% | – | – | 37.6% | 66.8% |<br/>
-| MMAU | 77.2% | 77.5% | 76.7% | – | – | 81.1% | 82.5% |<br/>
-| VoiceBench | 91.4% | 88.8% | 89.4% | – | – | 92.4% | 94.3% |<br/>
-| <strong>视觉</strong> | | | | | | | |<br/>
-| MMMU Pro (Standard 10) | 73.5% | 60.0% | 53.0% | 75.0% | 79.0% | 71.0% | 82.0% |<br/>
-| Charxiv RQ | 78.1% | 61.1% | 63.6% | 77.5% | 80.4% | 72.5% | 80.2% |<br/>
-| Charxiv RQ with python | 82.0% | – | – | 78.7% | 86.7% | – | 89.9% |</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th colspan="5">开源权重</th>
+<th colspan="2">闭源权重</th>
+</tr>
+<tr><th></th><th><strong>Inkling</strong> effort=0.99</th><th>Qwen3-Omni</th><th>Nemotron-3 Nano-Omni</th><th>Kimi K2.5</th><th>Kimi K2.6</th><th>Qwen3.5 Omni-Plus</th><th>Gemini 3.1 Pro (high)</th></tr>
+</thead>
+<tbody>
+<tr class="benchmark-section"><td colspan="8"><strong>音频</strong></td></tr>
+<tr><td>Audio MC</td><td>56.6%</td><td>24.3%</td><td>23.2%</td><td>–</td><td>–</td><td>37.6%</td><td>66.8%</td></tr>
+<tr><td>MMAU</td><td>77.2%</td><td>77.5%</td><td>76.7%</td><td>–</td><td>–</td><td>81.1%</td><td>82.5%</td></tr>
+<tr><td>VoiceBench</td><td>91.4%</td><td>88.8%</td><td>89.4%</td><td>–</td><td>–</td><td>92.4%</td><td>94.3%</td></tr>
+<tr class="benchmark-section"><td colspan="8"><strong>视觉</strong></td></tr>
+<tr><td>MMMU Pro (Standard 10)</td><td>73.5%</td><td>60.0%</td><td>53.0%</td><td>75.0%</td><td>79.0%</td><td>71.0%</td><td>82.0%</td></tr>
+<tr><td>Charxiv RQ</td><td>78.1%</td><td>61.1%</td><td>63.6%</td><td>77.5%</td><td>80.4%</td><td>72.5%</td><td>80.2%</td></tr>
+<tr><td>Charxiv RQ with python</td><td>82.0%</td><td>–</td><td>–</td><td>78.7%</td><td>86.7%</td><td>–</td><td>89.9%</td></tr>
+</tbody></table>
 <p><em>音频和视觉基准测试与专业的全能模型（开源和闭源权重）进行对比，报告于effort=0.99。</em></p>
 <p><strong>多模态组件是基于通用领域数据从头开始训练的</strong>。我们为音频和视觉输入选择了无编码器（encoder-free）的架构，这与交互模型的设计一致。音频信号以dMel频谱图的形式输入【1，dMel: Speech Tokenization made Simple，Richard He Bai et al，2024，arXiv，<a href="https://arxiv.org/abs/2407.15835" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2407.15835</a>】，而图像则通过一个四层hMLP【2 ，Three things everyone should know about Vision Transformers，Hugo Touvron et al，2022，arXiv，<a href="https://arxiv.org/abs/2203.09795" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2203.09795</a>】编码为40x40像素的补丁。两者都通过一个轻量级嵌入层进行转换，并与文本token共同处理 。</p>
 <p><strong>Inkling能够转录语音、遵循口头指令、回答有关录音的问题，并对长篇音频进行推理</strong>。这些能力使其在VoiceBench、MMAU和AudioMC上成为最强的开源权重音频模型之一。在视觉方面，Inkling接受图像作为输入，可以描述视觉内容、回答问题，并根据提供的视觉信息进行深入推理。它在图表、图解和数学视觉推理任务上表现出强大的性能。在推理过程中，Inkling还可以利用Python工具通过缩放和裁剪等操作来支持图像理解，同时将视觉推理与基于代码的推理无缝集成。</p>
@@ -288,41 +296,49 @@ title: 'Inkling: Our Open-Weights Model'
 <li><strong>多模态能力</strong>：在视觉（MMMU Pro, Charxiv RQ）和音频（Audio MC, MMAU, VoiceBench）基准上，Inkling的表现均位于开源模型前列，证明了其原生多模态架构的有效性。</li>
 <li><strong>安全性</strong>：在FORTRESS对抗性测试中，Inkling（78.0%）的有害请求拒绝率显著高于多数开源模型，同时在良性请求上保持了高通过率（95.9%），显示了其卓越的内置安全防护能力。</li>
 </ul>
-<p>| | 开源权重 | | | | | 闭源权重 | | |<br/>
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |<br/>
-| | <strong>Inkling</strong> effort=0.99 | Nemotron 3 Ultra | Kimi K2.5 | Kimi K2.6 | GLM 5.2 | DeepSeek V4 Pro | Gemini 3.1 Pro (high) | Claude Fable 5 (max) | GPT 5.6 Sol (max/xhigh) |<br/>
-| <strong>推理</strong> | | | | | | | | | |<br/>
-| HLE text only | 29.7% | 26.6% | 29.4% | 35.9% | 40.1% | 35.9% | 44.7% | 53.3% | 47.2% |<br/>
-| HLE with tools | 46.0% | 37.4% | 50.2% | 54.0% | 54.7% | 48.2% | 51.4% | 64.5% | 55.0% |<br/>
-| AIME 2026 | 97.1% | 94.2% | 95.8% | 96.4% | 99.2% | 96.7% | 98.3% | 99.9% | 99.9% |<br/>
-| GPQA Diamond | 87.2% | 86.7% | 87.9% | 91.1% | 89.5% | 88.8% | 94.1% | 92.6% | 94.1% |<br/>
-| <strong>智能体 (编码)</strong> | | | | | | | | | |<br/>
-| SWEBench Verified<em> | 77.6% | 70.7% | 76.8% | 80.2% | 80.0% | 80.6% | 80.6% | 95.0% | 82.2% |<br/>
-| SWEBench ProPublic | 54.3% | 46.4% | 50.7% | 58.6% | 62.1% | 55.4% | 54.2% | 80.0% | 64.6% |<br/>
-| Terminal Bench 2.1</em> Best Harness | 63.8% | 56.4% | 51.3% | 71.3% | 82.7% | 64% | 73.8% | 84.6% | 89.5% |<br/>
-| <strong>智能体 (通用)</strong> | | | | | | | | | |<br/>
-| GDPVal-AA v2 | 1238 | 1164 | 1009 | 1190 | 1514 | 1307 | 962 | 1760 | 1748 |<br/>
-| MCP Atlas | 74.1% | 44.7% | 64.0% | 68.1% | 77.8% | 73.2% | 78.2% | 83.3% | 81.8% |<br/>
-| Tau 3 Banking | 23.7% | 13.8% | 14.2% | 20.6% | 26.8% | 25.8% | 16.5% | 26.8% | 33.0% |<br/>
-| BrowseComp w/ ctx management | 77.1% | – | 74.9% | 83.2% | – | 83.4% | 85.9% | 88.0% | 90.84% |<br/>
-| <strong>事实性</strong> | | | | | | | | | |<br/>
-| SimpleQA Verified | 43.9% | 32.4% | 36.9% | 38.7% | 38.1% | 57.0% | 77.3% | 68.3% | 71.6% |<br/>
-| AA Omniscience | 2.1 | -1.0 | -8.0 | 6.0 | 4.0 | -10.0 | 33.0 | 40.0 | 22.0 |<br/>
-| <strong>聊天</strong> | | | | | | | | | |<br/>
-| IFBench | 79.8% | 81.4% | 70.2% | 76.0% | 73.3% | 76.5% | 77.1% | 63.5% | 72.7% |<br/>
-| Global-MMLU-Lite | 88.7% | 85.6% | 84.0% | 88.4% | 89.2% | 89.3% | 92.7% | 93.3% | 91.8% |<br/>
-| <strong>视觉</strong> | | | | | | | | | |<br/>
-| MMMU Pro Standard 10 | 73.5% | – | 75.0% | 79.0% | – | – | 82.0% | 84.2% | 83.0% |<br/>
-| Charxiv RQ | 78.1% | – | 77.5% | 80.4% | – | – | 80.2% | 86.5% | 84.7% |<br/>
-| Charxiv RQ† with python | 82.0% | – | 78.7% | 86.7% | – | – | 89.9% | 89.4% | 87.8% |<br/>
-| <strong>音频</strong> | | | | | | | | | |<br/>
-| Audio MC† | 56.6% | – | – | – | – | – | 66.8% | – | – |<br/>
-| MMAU | 77.2% | – | – | – | – | – | 82.5% | – | – |<br/>
-| VoiceBench† | 91.4% | – | – | – | – | – | 94.3% | – | – |<br/>
-| <strong>安全</strong> | | | | | | | | | |<br/>
-| FORTRESS Adversarial | 78.0% | 77.6% | 54.1% | 65.6% | 71.3% | 36.0% | 65.2% | 96.0% | 82.4% |<br/>
-| FORTRESS Benign | 95.9% | 90.5% | 98.3% | 97.2% | 90.0% | 98.5% | 98.0% | 55.1% | 98.1% |<br/>
-| StrongREJECT | 98.6% | 98.7% | 99.5% | 99.8% | 98.5% | 98.6% | 98.0% | 98.7% | 98.5% |</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th colspan="6">开源权重</th>
+<th colspan="3">闭源权重</th>
+</tr>
+<tr><th></th><th><strong>Inkling</strong> effort=0.99</th><th>Nemotron 3 Ultra</th><th>Kimi K2.5</th><th>Kimi K2.6</th><th>GLM 5.2</th><th>DeepSeek V4 Pro</th><th>Gemini 3.1 Pro (high)</th><th>Claude Fable 5 (max)</th><th>GPT 5.6 Sol (max/xhigh)</th></tr>
+</thead>
+<tbody>
+<tr class="benchmark-section"><td colspan="10"><strong>推理</strong></td></tr>
+<tr><td>HLE text only</td><td>29.7%</td><td>26.6%</td><td>29.4%</td><td>35.9%</td><td>40.1%</td><td>35.9%</td><td>44.7%</td><td>53.3%</td><td>47.2%</td></tr>
+<tr><td>HLE with tools</td><td>46.0%</td><td>37.4%</td><td>50.2%</td><td>54.0%</td><td>54.7%</td><td>48.2%</td><td>51.4%</td><td>64.5%</td><td>55.0%</td></tr>
+<tr><td>AIME 2026</td><td>97.1%</td><td>94.2%</td><td>95.8%</td><td>96.4%</td><td>99.2%</td><td>96.7%</td><td>98.3%</td><td>99.9%</td><td>99.9%</td></tr>
+<tr><td>GPQA Diamond</td><td>87.2%</td><td>86.7%</td><td>87.9%</td><td>91.1%</td><td>89.5%</td><td>88.8%</td><td>94.1%</td><td>92.6%</td><td>94.1%</td></tr>
+<tr class="benchmark-section"><td colspan="10"><strong>智能体 (编码)</strong></td></tr>
+<tr><td>SWEBench Verified<em></em></td><td>77.6%</td><td>70.7%</td><td>76.8%</td><td>80.2%</td><td>80.0%</td><td>80.6%</td><td>80.6%</td><td>95.0%</td><td>82.2%</td></tr>
+<tr><td>SWEBench ProPublic</td><td>54.3%</td><td>46.4%</td><td>50.7%</td><td>58.6%</td><td>62.1%</td><td>55.4%</td><td>54.2%</td><td>80.0%</td><td>64.6%</td></tr>
+<tr><td>Terminal Bench 2.1 Best Harness</td><td>63.8%</td><td>56.4%</td><td>51.3%</td><td>71.3%</td><td>82.7%</td><td>64%</td><td>73.8%</td><td>84.6%</td><td>89.5%</td></tr>
+<tr class="benchmark-section"><td colspan="10"><strong>智能体 (通用)</strong></td></tr>
+<tr><td>GDPVal-AA v2</td><td>1238</td><td>1164</td><td>1009</td><td>1190</td><td>1514</td><td>1307</td><td>962</td><td>1760</td><td>1748</td></tr>
+<tr><td>MCP Atlas</td><td>74.1%</td><td>44.7%</td><td>64.0%</td><td>68.1%</td><td>77.8%</td><td>73.2%</td><td>78.2%</td><td>83.3%</td><td>81.8%</td></tr>
+<tr><td>Tau 3 Banking</td><td>23.7%</td><td>13.8%</td><td>14.2%</td><td>20.6%</td><td>26.8%</td><td>25.8%</td><td>16.5%</td><td>26.8%</td><td>33.0%</td></tr>
+<tr><td>BrowseComp w/ ctx management</td><td>77.1%</td><td>–</td><td>74.9%</td><td>83.2%</td><td>–</td><td>83.4%</td><td>85.9%</td><td>88.0%</td><td>90.84%</td></tr>
+<tr class="benchmark-section"><td colspan="10"><strong>事实性</strong></td></tr>
+<tr><td>SimpleQA Verified</td><td>43.9%</td><td>32.4%</td><td>36.9%</td><td>38.7%</td><td>38.1%</td><td>57.0%</td><td>77.3%</td><td>68.3%</td><td>71.6%</td></tr>
+<tr><td>AA Omniscience</td><td>2.1</td><td>-1.0</td><td>-8.0</td><td>6.0</td><td>4.0</td><td>-10.0</td><td>33.0</td><td>40.0</td><td>22.0</td></tr>
+<tr class="benchmark-section"><td colspan="10"><strong>聊天</strong></td></tr>
+<tr><td>IFBench</td><td>79.8%</td><td>81.4%</td><td>70.2%</td><td>76.0%</td><td>73.3%</td><td>76.5%</td><td>77.1%</td><td>63.5%</td><td>72.7%</td></tr>
+<tr><td>Global-MMLU-Lite</td><td>88.7%</td><td>85.6%</td><td>84.0%</td><td>88.4%</td><td>89.2%</td><td>89.3%</td><td>92.7%</td><td>93.3%</td><td>91.8%</td></tr>
+<tr class="benchmark-section"><td colspan="10"><strong>视觉</strong></td></tr>
+<tr><td>MMMU Pro Standard 10</td><td>73.5%</td><td>–</td><td>75.0%</td><td>79.0%</td><td>–</td><td>–</td><td>82.0%</td><td>84.2%</td><td>83.0%</td></tr>
+<tr><td>Charxiv RQ</td><td>78.1%</td><td>–</td><td>77.5%</td><td>80.4%</td><td>–</td><td>–</td><td>80.2%</td><td>86.5%</td><td>84.7%</td></tr>
+<tr><td>Charxiv RQ† with python</td><td>82.0%</td><td>–</td><td>78.7%</td><td>86.7%</td><td>–</td><td>–</td><td>89.9%</td><td>89.4%</td><td>87.8%</td></tr>
+<tr class="benchmark-section"><td colspan="10"><strong>音频</strong></td></tr>
+<tr><td>Audio MC†</td><td>56.6%</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>66.8%</td><td>–</td><td>–</td></tr>
+<tr><td>MMAU</td><td>77.2%</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>82.5%</td><td>–</td><td>–</td></tr>
+<tr><td>VoiceBench†</td><td>91.4%</td><td>–</td><td>–</td><td>–</td><td>–</td><td>–</td><td>94.3%</td><td>–</td><td>–</td></tr>
+<tr class="benchmark-section"><td colspan="10"><strong>安全</strong></td></tr>
+<tr><td>FORTRESS Adversarial</td><td>78.0%</td><td>77.6%</td><td>54.1%</td><td>65.6%</td><td>71.3%</td><td>36.0%</td><td>65.2%</td><td>96.0%</td><td>82.4%</td></tr>
+<tr><td>FORTRESS Benign</td><td>95.9%</td><td>90.5%</td><td>98.3%</td><td>97.2%</td><td>90.0%</td><td>98.5%</td><td>98.0%</td><td>55.1%</td><td>98.1%</td></tr>
+<tr><td>StrongREJECT</td><td>98.6%</td><td>98.7%</td><td>99.5%</td><td>99.8%</td><td>98.5%</td><td>98.6%</td><td>98.0%</td><td>98.7%</td><td>98.5%</td></tr>
+</tbody></table>
 <p><em>SWEBench Verified: Inkling的数字是使用纯bash框架报告的。外部模型使用自报数字。</em>Terminal Bench 2.1: Inkling的数字是使用内部编码框架报告的。少量解决方案被发现受到网络搜索污染，得分为0。外部模型尽可能使用自报数字，否则使用我们的内部框架报告性能。†Audio MC: 其他模型由于不在官方排行榜上，因此在内部进行了评估。†VoiceBench: VoiceBench使用基于规则的硬编码字符串匹配进行评分，使得评估对输出格式差异敏感。因此，我们添加了系统消息，指示模型遵循预期的答案格式。†CharXiv RQ with tools: 我们使用内部Python框架对Claude Fable 5和GPT 5.6 Sol (max/xhigh)进行了基准测试。*</p>
 <p><strong>结论分析</strong>：<br/>
 * <strong>全面的通用能力</strong>：如雷达图（图2）所示，Inkling在各项评估中表现均衡，没有明显的短板，这证实了其作为“广泛、均衡的通用模型”的设计目标。<br/>
