@@ -1,0 +1,566 @@
+---
+added_date: '2026-07-16'
+author: shenh10
+categories:
+- llm
+- algorithm
+- models
+comments: true
+date: '2026-07-01'
+layout: post
+mathjax: true
+title: 'Inkling: Our Open-Weights Model'
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>Inkling: Our Open-Weights Model</h1>
+<p><strong>发表时间</strong>: 2026-07 · Blog post by Thinking Machines Lab (thinkingmachines.ai)</p>
+<p><strong>原文</strong>: <a href="https://thinkingmachines.ai/news/introducing-inkling/" rel="noopener" target="_blank">https://thinkingmachines.ai/news/introducing-inkling/</a></p>
+<p><strong>作者/机构</strong>: Thinking Machines<br/>
+<strong>发布日期</strong>: 2026年7月15日</p>
+<h2>A1 主要贡献</h2>
+<p><strong>研究目标与核心问题</strong>：Thinking Machines的使命是构建能够扩展人类意志和判断力的AI。为了推进这一使命，他们发布了一款名为Inkling的开源权重模型，旨在让更多人能够根据自身需求定制模型。Inkling并非当前最强的模型，但其多方面的优良特性使其成为一个理想的定制化基础模型。</p>
+<p><strong>模型概览</strong>：<br/>
+* <strong>模型名称</strong>：Inkling<br/>
+* <strong>架构</strong>：拥有9750亿总参数和410亿活跃参数的混合专家（Mixture-of-Experts, MoE）Transformer。<br/>
+* <strong>上下文窗口</strong>：支持高达100万个token。<br/>
+* <strong>预训练数据</strong>：在包含文本、图像、音频和视频的45万亿个token上进行了预训练。<br/>
+* <strong>模型家族</strong>：Inkling是一个模型家族中的首个产品，同时发布的还有轻量级预览版Inkling-Small，拥有120亿活跃参数。</p>
+<p><strong>核心创新与特点</strong>：<br/>
+1. <strong>广泛而均衡的基础模型</strong>：Inkling被设计为一个在多领域表现均衡的通用模型，而非针对单一基准进行优化的“专才”。其优势在于强大的适应性，能够满足不同用户的定制化需求。<br/>
+2. <strong>多模态能力</strong>：原生支持处理文本、图像和音频，为丰富的交互体验和应用场景提供基础。<br/>
+3. <strong>高效且可控的“思考努力”</strong>：模型允许用户在性能和成本（如token消耗和延迟）之间进行权衡，通过调整“思考努力”来适应不同应用场景的约束。<br/>
+4. <strong>开放与可定制性</strong>：Inkling在Thinking Machines的Tinker平台上开放微调，并提供了完整的模型权重。为了展示其定制能力，文章演示了Inkling使用Tinker平台自我微调的案例：模型自主编写微调任务，生成训练数据，执行训练，评估结果，并最终更新自身权重，成功转变为一个不使用字母“e”的“缺字文”（lipogram）模型。</p>
+<figure class="image-figure">
+<img alt="OpenCode" class="figure-image" src="images/opencode-wordmark-dark.svg"/>
+<figcaption class="figure-caption">OpenCode</figcaption>
+</figure>
+<p>以下为Inkling自我微调过程的演示：<br/>
+1. <strong>初始状态</strong>：Inkling作为AI助手运行，可以访问工作区和Tinker平台。<br/>
+2. <strong>任务指令</strong>：用户要求Inkling将自己微调成一个在回答中从不使用字母“e”的模型。<br/>
+3. <strong>生成微调代码</strong>：Inkling编写了<code>objective.py</code>文件，定义了微调目标（避免使用“e”）、评分函数（包含“e”则得0分，否则得10分）和系统提示。</p>
+<pre><code>+ """Lipogram: no 'e' or 'E' in any output."""
++ OBJECTIVE = "A lipogram model that avoids using the letter e in all answers."
++ GEN_SYS = (
++     "You are a lipogram assistant. You must write all answers without using the letter 'e' or 'E'. "
++     "Avoid that symbol totally. Write long, natural, grammatical answers using only words that lack 'e'. "
++ )
++ THRESHOLD = 10.0
++ USE_TEACHER = False
++ 
++ def score(prompt, answer) -&gt; float:
++     if 'e' in answer or 'E' in answer:
++         return 0.0
++     return 10.0</code></pre>
+<ol>
+<li><strong>执行训练</strong>：Inkling通过Tinker API启动了训练过程，日志显示了训练的详细步骤，包括训练轮次、权重削减方式等。</li>
+<li><strong>完成与自我更新</strong>：训练在大约27分钟后完成，并验证了模型性能得到提升。Inkling随后调用<code>self-update-weights</code>技能，加载了新的模型权重，完成了自我更新循环。</li>
+<li><strong>验证结果</strong>：更新后的模型在回答“当我的团队发布一个大语言模型时我该怎么做？”这一问题时，给出了完全不含字母“e”的回答：“As your group puts out a big AI, you should party, thank staff, post a summary, watch for bugs, fix faults fast, and plan upcoming work.”</li>
+</ol>
+<figure class="image-figure">
+<img alt="自我微调运行过程的可视化界面" class="figure-image" src="images/self-finetuning.png"/>
+<figcaption class="figure-caption">自我微调运行过程的可视化界面</figcaption>
+</figure>
+<h2>A3 关键能力</h2>
+<p>现实世界的应用要求模型具备广泛的能力，并且这些能力可以通过微调进行组合和改进。本节展示了Inkling的能力及其在可信度和安全性等重要质量上的表现。</p>
+<h3>通用模型</h3>
+<p><strong>Inkling被设计为具有广泛能力的模型</strong>。我们对其进行了跨越智能体、推理、编码、指令遵循、事实性、视觉和音频等任务的训练，而不是狭隘地优化单一领域。这种广度对于定制化和现实世界的使用至关重要：不同的用户需要模型能够适应截然不同的工作流程，而不仅仅是在基准测试中表现出色。</p>
+<p><img alt="Inkling与Nemotron 3 Ultra, GLM 5.2, GPT 5.6 Sol, Claude Fable 5在十项评估中的得分对比雷达图。" class="figure-image" src="images/spider-chart.svg"/><br/>
+<em>Inkling是一个广泛、均衡的通用模型。基准分数在统一的0-100分制上显示；分数越高越好。结果显示，该模型在文本、智能体、多模态和音频评估中具有竞争力，而不是一个为某个基准家族狭隘优化的模型。这种广度反映了Inkling的预期角色：一个用于跨领域、工作流程和产品定制的实用多模态基础模型。</em></p>
+<h3>智能体编码与工具使用</h3>
+<p><strong>一个强大的微调基础模型需要能够灵活地通过智能体工具使用来解决各种任务</strong>。Inkling在大多数智能体基准测试中，在开源权重模型中得分很高。我们在多种编码和智能体框架内训练了Inkling，并在训练期间随机化了工具集和模式，以减少对任何特定框架的敏感性。Inkling的可控思考努力可以在框架内设置。以下是一些展示Inkling智能体编码、工具使用及其创造的成果的演示。</p>
+<h4>一次性生成包含嵌入式浏览器使用的Web应用</h4>
+<p><strong>Inkling能够一次性构建一个功能齐全的Web应用，并驱动一个嵌入式AI助手</strong>。该助手可以通过自然语言指令操作Web应用界面。例如，它根据指令“构建一个高级软件工程师职位的简历填写单页应用”成功生成了应用，并能根据后续指令“使用我保存的个人资料填写申请表。至于为什么想加入，就说我想做很酷的东西！”来完成表单填写。</p>
+<figure class="image-figure">
+<img alt="Inkling一次性生成一个求职Web应用，然后一个浏览器使用智能体根据保存的个人资料填写表单。" class="figure-image" src="images/agentic-web-app.png"/>
+<figcaption class="figure-caption">Inkling一次性生成一个求职Web应用，然后一个浏览器使用智能体根据保存的个人资料填写表单。</figcaption>
+</figure>
+<h5>Design Arena</h5>
+<p><strong>Inkling在Design Arena的智能体Web开发排行榜上进行了评估</strong>，该排行榜由匿名的真人评估员对生成的Web应用进行头对头比较。它在最强的开源权重模型中名列前茅。</p>
+<figure class="image-figure">
+<img alt="Inkling在Design Arena的智能体Web开发排行榜上的位置，这是一个对生成应用进行的匿名人类评估。点表示开源权重模型。" class="figure-image" src="images/design-arena.svg"/>
+<figcaption class="figure-caption">Inkling在Design Arena的智能体Web开发排行榜上的位置，这是一个对生成应用进行的匿名人类评估。点表示开源权重模型。</figcaption>
+</figure>
+<h4>风格统一的工件</h4>
+<p><strong>Inkling能够创建多页工件，并能精确遵循指令、提供准确信息，且在整个文档中保持风格和设计的统一性</strong>。例如，根据一个详细的提示，要求创建一个名为“世界各地的早餐”的高级美食旅行期刊，Inkling生成了一份精美的九页PDF文档，包含了封面、引言、城市特写等，并确保了优雅的排版、温暖的中性色调和准确的图文匹配。</p>
+<figure class="image-figure">
+<img alt="根据提示，Inkling生成了一份精美的九页PDF美食与旅行期刊——您可以在上方浏览实际文档。" class="figure-image" src="images/editorial-pdf.png"/>
+<figcaption class="figure-caption">根据提示，Inkling生成了一份精美的九页PDF美食与旅行期刊——您可以在上方浏览实际文档。</figcaption>
+</figure>
+<h4>通过长轮次优化循环创建的多人游戏</h4>
+<p><strong>Inkling通过与充当审查员的GPT Codex进行40轮反馈迭代，优化了一个在线贪吃蛇游戏</strong>。维持长期优化过程并从反馈中改进的能力，对于创造最佳的协作作品至关重要。根据一个非常详细的、包含服务器架构、游戏逻辑、客户端渲染和测试要求的提示，Inkling成功生成了一个功能完整的实时多人贪吃蛇游戏，包括服务器、机器人和排行榜。</p>
+<figure class="image-figure">
+<img alt="由Inkling根据提示生成的多人贪吃蛇游戏——实时服务器、机器人、排行榜一应俱全。" class="figure-image" src="images/snake-game.png"/>
+<figcaption class="figure-caption">由Inkling根据提示生成的多人贪吃蛇游戏——实时服务器、机器人、排行榜一应俱全。</figcaption>
+</figure>
+<h3>可控的思考努力</h3>
+<p><strong>测试时的扩展和解决问题的能力是每个模型的核心能力，但这种能力很难用单一数字来衡量</strong>。为专业任务微调模型的开发者，对效率的关注程度不亚于对公共基准上最大努力性能的关注【Learning to Replicate Expert Judgment in Financial Tasks】。成本和延迟通常是现实世界应用中的硬性约束，而低延迟对于通过迭代实现协作和改进尤其关键。</p>
+<p><img alt="Ink-ling的努力设置从0.2扫到0.99，描绘了其在Terminal Bench 2.1、HLE和IFBench上的性能与平均生成token数的关系；竞争模型以其默认操作点显示。" class="figure-image" src="images/effort-sweep.svg"/><br/>
+<em>在Terminal Bench 2.1、HLE和IFBench上，通过调整Inkling的努力设置（从0.2到0.99），可以观察其性能与平均生成token数的关系曲线；竞争模型则以其默认操作点展示。Inkling用更少的token就能达到给定的分数——例如，在Terminal Bench 2.1上，它用大约三分之一的token就达到了与Nemotron 3 Ultra相当的性能。</em>Humanity's Last Exam的分数反映了较早的检查点，略低于最终发布版本。*</p>
+<p><strong>Inkling支持可控的思考努力，允许您在性能与token效率之间进行平衡</strong>。上图展示了Inkling以及其他开源权重模型在一系列基准测试上的努力/性能曲线：用于智能体编码的Terminal Bench 2.1，用于高级推理的HLE，以及用于指令遵循的IFBench。Inkling仅用三分之一的token就能在Terminal Bench上达到与Nemotron 3 Ultra相同的性能。对于需要运行数百万次并作为更长工作流一部分的模型来说，成本和延迟至关重要；查看完整的成本曲线可以让开发者为每个用例选择最佳模型。</p>
+<h3>多模态</h3>
+<p><strong>Inkling设计的一个主要目标是作为我们最近推出的交互模型系统【interaction models】中的背景推理模型</strong>。交互模型使用户能够通过语音和视觉实时自然地协作。这需要一个为广泛多模态能力而原生训练的模型。</p>
+<p>| | 开源权重 | | | 闭源权重 | | |<br/>
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |<br/>
+| | <strong>Inkling</strong> effort=0.99 | Qwen3-Omni | Nemotron-3 Nano-Omni | Kimi K2.5 | Kimi K2.6 | Qwen3.5 Omni-Plus | Gemini 3.1 Pro (high) |<br/>
+| <strong>音频</strong> | | | | | | | |<br/>
+| Audio MC | 56.6% | 24.3% | 23.2% | – | – | 37.6% | 66.8% |<br/>
+| MMAU | 77.2% | 77.5% | 76.7% | – | – | 81.1% | 82.5% |<br/>
+| VoiceBench | 91.4% | 88.8% | 89.4% | – | – | 92.4% | 94.3% |<br/>
+| <strong>视觉</strong> | | | | | | | |<br/>
+| MMMU Pro (Standard 10) | 73.5% | 60.0% | 53.0% | 75.0% | 79.0% | 71.0% | 82.0% |<br/>
+| Charxiv RQ | 78.1% | 61.1% | 63.6% | 77.5% | 80.4% | 72.5% | 80.2% |<br/>
+| Charxiv RQ with python | 82.0% | – | – | 78.7% | 86.7% | – | 89.9% |</p>
+<p><em>音频和视觉基准测试与专业的全能模型（开源和闭源权重）进行对比，报告于effort=0.99。</em></p>
+<p><strong>多模态组件是基于通用领域数据从头开始训练的</strong>。我们为音频和视觉输入选择了无编码器（encoder-free）的架构，这与交互模型的设计一致。音频信号以dMel频谱图的形式输入【1，dMel: Speech Tokenization made Simple，Richard He Bai et al，2024，arXiv，<a href="https://arxiv.org/abs/2407.15835" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2407.15835</a>】，而图像则通过一个四层hMLP【2 ，Three things everyone should know about Vision Transformers，Hugo Touvron et al，2022，arXiv，<a href="https://arxiv.org/abs/2203.09795" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2203.09795</a>】编码为40x40像素的补丁。两者都通过一个轻量级嵌入层进行转换，并与文本token共同处理 。</p>
+<p><strong>Inkling能够转录语音、遵循口头指令、回答有关录音的问题，并对长篇音频进行推理</strong>。这些能力使其在VoiceBench、MMAU和AudioMC上成为最强的开源权重音频模型之一。在视觉方面，Inkling接受图像作为输入，可以描述视觉内容、回答问题，并根据提供的视觉信息进行深入推理。它在图表、图解和数学视觉推理任务上表现出强大的性能。在推理过程中，Inkling还可以利用Python工具通过缩放和裁剪等操作来支持图像理解，同时将视觉推理与基于代码的推理无缝集成。</p>
+<p><strong>作为我们的首个发布版本，Inkling为未来的工作奠定了坚实的多模态基础</strong>。我们预计随着我们在后续迭代中扩展模型和训练流水线，其多模态能力将继续提高。</p>
+<h3>认知学（Epistemics）</h3>
+<p><strong>我们将Inkling训练为具备校准、指令遵循和抗审查的能力，我们统称为模型的“认知学”</strong>。正确获取事实不仅仅是记住大量的知识语料库。一个有用的模型必须经过良好校准，对其答案表达适当的置信度——包括那些尚未有定论的问题。后者是预测和预报的关键能力，这是一个重要的用例，在最近几个月中，微调模型已显示出快速的进步【training-llms-to-predict-world-events】，甚至超越了前沿的LLM【<a href="https://x.com/tinkerapi/status/2056798250532057139" rel="noopener noreferrer" target="_blank">https://x.com/tinkerapi/status/2056798250532057139</a>】 。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>Inkling</strong></th>
+<th>GPT-5.5</th>
+<th>Claude Opus 4.8</th>
+<th>Gemini 3.1 Pro</th>
+<th>Grok 4.3</th>
+<th>Kimi K2.6</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ForecastBench Brier Index ↑ · no search</td>
+<td>61.1 ± 0.79</td>
+<td>59.1 ± 0.41</td>
+<td>54.6 ± 0.99</td>
+<td>61.1 ± 0.56</td>
+<td>61.7 ± 0.54</td>
+<td>58.1 ± 0.54</td>
+</tr>
+<tr>
+<td>ForecastBench Brier Index ↑ · with search</td>
+<td>63.7 ± 0.82</td>
+<td>64.7 ± 1.28</td>
+<td>58.6 ± 0.66</td>
+<td>64.3 ± 1.05</td>
+<td>63.2 ± 0.82</td>
+<td>-</td>
+</tr>
+<tr>
+<td>Prophet Arena Brier Score ↓</td>
+<td>0.1617</td>
+<td>0.1598</td>
+<td>0.1605</td>
+<td>0.1594</td>
+<td>0.1715</td>
+<td>0.1675</td>
+</tr>
+</tbody>
+</table>
+<p><em>结果是在2026年6月30日至7月13日期间，在一个与发布版本不同的Inkling检查点上测试获得的。</em></p>
+<p><strong>预测需要将多个信息源整合成一个经过校准的概率，这是用户可以信任的模型的核心技能</strong>。一个对其给出的每个答案都充满信心，包括在信息缺失和胡编乱造时的模型，会迫使用户反复核查一切。一个能给出适当置信度的模型，在信息常常相互冲突、不可靠或难以找到的更多现实世界领域中更为有用。我们通过在大量已解决的真实世界问题语料库上，使用适当评分规则进行强化学习（RL）来训练校准能力。</p>
+<p><strong>一个可信赖模型的第二个组成部分是指令遵循，包括在难以验证的复杂查询上</strong>。我们使用了两个自动化评分器进行RL：一个评分标准评分器和一个声明评分器。第一个评分器根据一个良好答案应包含内容的清单来对每个响应进行评分。评分标准原则上可以惩罚错误，但实际上它们强调召回率，并且可能被模型通过罗列貌似相关的事实来匹配评分项而“破解”。声明评分器则验证响应中的每个事实性声明，惩罚那些无法核实的声明。它执行智能体式网络搜索进行声明验证，而不仅仅依赖于自身的知识。这两个评分器共同作用，同时提高了有用性和减少了幻觉，而不是在两者之间进行权衡。</p>
+<p><strong>这些奖励并不直接针对长篇响应中经过校准的不确定性，因此我们添加了针对性的数据集</strong>。最大的是带有“弃权感知”奖励的简短事实问答：只有当模型很可能正确时，回答才有回报，因此最优策略是在有信心时回答，否则说“我不知道”或给出有所保留的最佳猜测。一些提示鼓励或禁止含糊其辞，教会模型遵循用户对强制猜测与校准后不作答的偏好。</p>
+<p><strong>最后，我们训练Inkling直接回答可能受到审查的主题</strong>。Cognition在他们的宣传与审查评估中对该模型进行了评估【7，Measuring the Trustworthiness of Open-Source-Derived Models，The Cognition Team，2026，Cognition Blog，<a href="https://cognition.com/blog/measuring-open-source-model-trustworthiness" rel="noopener noreferrer" target="_blank">https://cognition.com/blog/measuring-open-source-model-trustworthiness</a>】，结果显示出强烈的审查不遵从模式 。</p>
+<h3>安全性</h3>
+<p><strong>我们按照内部规范对Inkling在所有模态下的安全行为进行了训练</strong>，然后委托外部安全测试人员验证结果。我们在几个方面评估了Inkling的安全性。对于危险能力——CBRN（化学、生物、放射性和核）、网络和失控——我们进行了内部评估并聘请了外部测试人员。我们关注了人机威胁向量，包括谄媚、弱势用户和有害操纵，同样使用了内部评估和外部测试人员。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>Inkling</strong> effort=0.99</th>
+<th>Nemotron 3 Ultra</th>
+<th>Kimi K2.5</th>
+<th>Kimi K2.6</th>
+<th>GLM 5.2</th>
+<th>DeepSeek V4 Pro</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FORTRESS (Adversarial)</td>
+<td>78.0%</td>
+<td>77.6%</td>
+<td>54.1%</td>
+<td>65.6%</td>
+<td>71.3%</td>
+<td>36.0%</td>
+</tr>
+<tr>
+<td>FORTRESS (Benign)</td>
+<td>95.9%</td>
+<td>90.5%</td>
+<td>98.3%</td>
+<td>97.2%</td>
+<td>90.0%</td>
+<td>98.5%</td>
+</tr>
+<tr>
+<td>StrongREJECT</td>
+<td>98.6%</td>
+<td>98.7%</td>
+<td>99.5%</td>
+<td>99.8%</td>
+<td>98.5%</td>
+<td>98.6%</td>
+</tr>
+</tbody>
+</table>
+<p><em>Inkling在我们比较的任何开源权重模型中，在FORTRESS基准测试上显示出最强的内置安全措施。该基准测试测试对与武器和暴力相关的请求的拒绝能力，以及对良性相似查询的拒绝情况。Inkling拒绝了更多有害请求，而没有过度拒绝良性类似请求。Inkling在StrongREJECT（一个对明确有害请求的拒绝测试）上得分超过98%，与其他开源和闭源权重模型一致。</em></p>
+<p><strong>安全性对于开源权重模型至关重要</strong>。我们正在继续研究可定制模型中的安全行为和能力提升，包括在Tinker上进行微调如何影响安全行为。</p>
+<h2>A2 方法细节</h2>
+<h3>架构</h3>
+<p><strong>Inkling是一个混合专家（MoE）Transformer模型，其设计在常见配方的基础上做了一些调整，每个调整都是为了提高效率和长上下文性能</strong>。</p>
+<p><strong>MoE设计在很大程度上遵循了DeepSeek-V3的方案</strong>。每个MoE层包含256个路由专家和2个共享专家，每个token会激活6个路由专家。Inkling使用一个基于sigmoid的路由器，并带有一个无辅助损失的负载均衡偏置。被选中的路由专家和共享专家的分数会联合归一化，并用于加权它们的组合输出。</p>
+<p><strong>在注意力机制方面，我们以5:1的比例交替使用滑动窗口注意力和全局注意力层，并配备8个KV头</strong>。我们发现，使用相对位置嵌入【3，Self-Attention with Relative Position Representations，Peter Shaw et al，2018，arXiv，<a href="https://arxiv.org/abs/1803.02155" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/1803.02155</a>】【4 ，Music Transformer，Cheng-Zhi Anna Huang et al，2018，arXiv，<a href="https://arxiv.org/abs/1809.04281" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/1809.04281</a>】来编码位置信息，其性能和对更长序列的外推能力均优于更广泛采用的旋转位置嵌入（RoPE）。此外，我们还在两个位置应用了短卷积：一是在每个注意力层中键（key）和值（value）投影之后，二是在注意力和MLP残差分支的输出在重新汇入主残差流之前 。</p>
+<h3>训练</h3>
+<p><strong>Inkling在一个包含文本、图像、音频和视频等多种内容类型的45万亿token数据集上进行了预训练</strong>。我们采用了一种混合优化策略来训练Inkling——对大型矩阵权重使用Muon优化器，对其他参数使用Adam优化器——并借鉴了我们之前关于模块化流形【modular manifolds】的研究来设计超参数调度方案。我们将权重衰减强度与学习率的平方进行耦合，发现这能在整个训练周期内保持模型权重的整体大小稳定【5，Decoupled-AdamW: A Method for Stable Weight Decay，Kosson et al.，2023，arXiv，<a href="https://arxiv.org/abs/2305.17212" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2305.17212</a>】【6 ，Adam with Decoupled Weight Decay is Insufficient for Stable Optimization，Defazio，2025，arXiv，<a href="https://arxiv.org/abs/2506.02285v1" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2506.02285v1</a>】 。</p>
+<p><strong>我们对Inkling进行了后训练，涵盖了数学、智能体编码与工具使用、音频、图像、聊天和安全等广泛领域</strong>。为了启动后训练，我们首先在由包括Kimi K2.5在内的开源权重模型生成的合成数据上进行了一轮初始的监督微调（SFT）。这一启动阶段只占用了少量计算资源，大部分计算资源被用于在合成和人类创建的环境中进行大规模的强化学习（RL）。</p>
+<p><strong>Inkling是我们首个重大的训练项目，在NVIDIA GB300 NVL72系统上进行训练</strong>。未来的模型将在预训练、后训练和RL方面进一步提升计算规模。</p>
+<h3>规模化强化学习（RL at scale）</h3>
+<p><strong>我们依赖大规模异步强化学习来塑造模型行为，并提升其推理能力和整体性能</strong>。下图显示了模型在一组包含AIME、HLE、GPQA等推理评估的留出集上的得分。我们将RL扩展到超过3000万次推演（rollouts），并在两个长的连续运行中保持了稳定的训练。在整个过程中，推理性能呈现出对数线性增长，最终实现了显著的整体提升。</p>
+<p><img alt="在一个包含AIME、HLE、GPQA等推理评估的留出集上的奖励，在超过3000万次RL推演中呈对数线性增长，从SFT初始化到发布的检查点。" class="figure-image" src="images/rl-at-scale.svg"/><br/>
+<em>在一个包含AIME、HLE、GPQA等推理评估的留出集上的奖励，在超过3000万次RL推演中呈对数线性增长，从SFT初始化到发布的检查点。</em></p>
+<p><strong>我们通过改变系统消息和调整每个token的成本，来指定模型在不同样本上的“思考努力”水平</strong>。这导致模型在不同的推演中使用不同数量的token，并学会了控制思考努力的能力。</p>
+<p><strong>我们还观察到，在RL训练过程中，推理风格出现了自发的转变</strong>。随着时间的推移，思维链变得更加简洁，减少了语法上的冗余，但仍然易于理解，并且最终的回答不受影响。这种变化并非由奖励机制直接引导——仅仅是效率的驱动导致了这种压缩。Cognition团队在训练SWE-1.7的过程中也注意到了类似的效果【8，SWE-1.7: Frontier Intelligence at a Fraction of the Cost，The Cognition Team，Cognition Blog，<a href="https://cognition.com/blog/swe-1-7" rel="noopener noreferrer" target="_blank">https://cognition.com/blog/swe-1-7</a>】。以下是一个例子，展示了Inkling在同一个数学问题上的思维链如何随着RL训练而演变 ：</p>
+<ul>
+<li>
+<p><strong>RL早期（冗长，语法化）</strong>：<br/>
+<strong>我们需要理解</strong>这个算子。5D线元是 $ds² = e^{2A(x)} (ds²_{4d} + dx²)$，其中 $A(x) = \sin(x) + 4 \cos(x)$，x在[0, 2π]区间。内部坐标是周期性的。背景是一个扭曲乘积：度规 $g_{MN}$，其中M,N = 0..4。内部方向的度规是 $e^{2A(x)} dx²$ 吗？等等，ds²是 $e^{2A} (ds²_{4d} + dx²)$。所以内部度规是 $e^{2A(x)} dx²$。实际上，如果总度规是 $ds² = e^{2A(x)} (ds²_{4d} + dx²)$，那么是的，内部度规是 $e^{2A} dx²$。…</p>
+</li>
+<li>
+<p><strong>RL后期（压缩，电报式）</strong>：<br/>
+<strong>我们需要确定特征值问题</strong>，针对自旋-2涨落 $h_{μν}(x,y)$，在4d中是TT（横向无迹）且依赖于x。对于形式为 $ds² = e^{2A(x)} (g_{μν}(y) + h_{μν}(y,x)) dy^μ dy^ν + e^{2A(x)}$ 的度规？等等，内部度规是 $e^{2A} dx²$ 吗？实际上 $ds² = e^{2A} [ds_4² + dx²]$。所以内部度规是 $e^{2A} dx²$；4d和内部的扭曲因子相同？是的。我们需要 $h_{μν}(y,x) = h_{μν}(y) \phi(x)$ 的方程，可能需要归一化。…</p>
+</li>
+</ul>
+<p><em>同一个思维链，在RL的早期和晚期。晚期RL的轨迹省略了冠词和连接词——“We need <em>to</em> understand”变成了“We need determine”——但仍然可以理解，并得出了相同的答案。</em></p>
+<h2>A4 实验环境</h2>
+<ul>
+<li>
+<p><strong>模型</strong>：</p>
+<ul>
+<li><strong>主要模型</strong>：Inkling（9750亿总参数，410亿活跃参数，1M token上下文）。</li>
+<li><strong>小型模型</strong>：Inkling-Small（2760亿总参数，120亿活跃参数）。</li>
+<li><strong>对比模型</strong>：包括开源模型（Nemotron 3 Ultra, Kimi K2.5/K2.6, GLM 5.2, DeepSeek V4 Pro等）和闭源模型（Gemini 3.1 Pro, Claude Fable 5, GPT 5.6 Sol等）。</li>
+</ul>
+</li>
+<li>
+<p><strong>硬件配置</strong>：</p>
+<ul>
+<li><strong>训练平台</strong>：NVIDIA GB300 NVL72系统。</li>
+<li><strong>推理平台</strong>：支持在NVIDIA Blackwell系统上通过NVFP4检查点进行高效推理。</li>
+</ul>
+</li>
+<li>
+<p><strong>软件与评估配置</strong>：</p>
+<ul>
+<li><strong>评估参数</strong>：所有评估均在<code>effort=0.99</code>和<code>temperature=1.0</code>的设置下运行。</li>
+<li><strong>编码评估</strong>：轨迹限制为最大256K token。</li>
+<li><strong>数据来源</strong>：为保证一致性，尽可能使用由Artificial Analysis等第三方报告的外部模型评估分数。</li>
+<li><strong>评估工具</strong>：部分基准测试（如Terminal Bench 2.1）使用内部编码框架进行评估。在部分视觉任务中，模型可使用Python工具（如缩放、裁剪）辅助理解。</li>
+<li><strong>评估框架</strong>：<ul>
+<li>代码实现基于Thinking Machines的内部框架。</li>
+<li>微调和部署通过Tinker平台进行，并与多个第三方API和服务（如TogetherAI, Fireworks, Modal, Databricks, Baseten）以及开源库（SGLang, Miles, vLLM, TokenSpeed, llama.cpp, transformers）集成。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>数据集</strong>：</p>
+<ul>
+<li><strong>预训练</strong>：在一个包含文本、图像、音频和视频的45万亿token数据集上进行。</li>
+<li><strong>后训练与RL</strong>：使用了大量覆盖数学、智能体、多模态、聊天和安全等领域的合成及人工创建的数据集。</li>
+</ul>
+</li>
+</ul>
+<h2>A4 实验结果</h2>
+<p>Inkling在一系列广泛的能力基准上进行了测试，展示了其作为一个全面且均衡的模型的实力。</p>
+<p><strong>综合性能基准测试</strong>：<br/>
+下表展示了Inkling与其他主流开源及闭源模型在推理、智能体、事实性、聊天、视觉、音频和安全等多个维度的性能对比。</p>
+<ul>
+<li><strong>推理能力</strong>：在HLE、AIME 2026和GPQA Diamond等高级推理任务上，Inkling表现出色，与顶尖开源模型相当，尤其是在启用工具后性能提升显著。</li>
+<li><strong>智能体能力</strong>：在SWEBench、Terminal Bench 2.1等编码和通用智能体任务上，Inkling展现了强大的竞争力，在多个子任务上领先于其他开源模型。</li>
+<li><strong>多模态能力</strong>：在视觉（MMMU Pro, Charxiv RQ）和音频（Audio MC, MMAU, VoiceBench）基准上，Inkling的表现均位于开源模型前列，证明了其原生多模态架构的有效性。</li>
+<li><strong>安全性</strong>：在FORTRESS对抗性测试中，Inkling（78.0%）的有害请求拒绝率显著高于多数开源模型，同时在良性请求上保持了高通过率（95.9%），显示了其卓越的内置安全防护能力。</li>
+</ul>
+<p>| | 开源权重 | | | | | 闭源权重 | | |<br/>
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |<br/>
+| | <strong>Inkling</strong> effort=0.99 | Nemotron 3 Ultra | Kimi K2.5 | Kimi K2.6 | GLM 5.2 | DeepSeek V4 Pro | Gemini 3.1 Pro (high) | Claude Fable 5 (max) | GPT 5.6 Sol (max/xhigh) |<br/>
+| <strong>推理</strong> | | | | | | | | | |<br/>
+| HLE text only | 29.7% | 26.6% | 29.4% | 35.9% | 40.1% | 35.9% | 44.7% | 53.3% | 47.2% |<br/>
+| HLE with tools | 46.0% | 37.4% | 50.2% | 54.0% | 54.7% | 48.2% | 51.4% | 64.5% | 55.0% |<br/>
+| AIME 2026 | 97.1% | 94.2% | 95.8% | 96.4% | 99.2% | 96.7% | 98.3% | 99.9% | 99.9% |<br/>
+| GPQA Diamond | 87.2% | 86.7% | 87.9% | 91.1% | 89.5% | 88.8% | 94.1% | 92.6% | 94.1% |<br/>
+| <strong>智能体 (编码)</strong> | | | | | | | | | |<br/>
+| SWEBench Verified<em> | 77.6% | 70.7% | 76.8% | 80.2% | 80.0% | 80.6% | 80.6% | 95.0% | 82.2% |<br/>
+| SWEBench ProPublic | 54.3% | 46.4% | 50.7% | 58.6% | 62.1% | 55.4% | 54.2% | 80.0% | 64.6% |<br/>
+| Terminal Bench 2.1</em> Best Harness | 63.8% | 56.4% | 51.3% | 71.3% | 82.7% | 64% | 73.8% | 84.6% | 89.5% |<br/>
+| <strong>智能体 (通用)</strong> | | | | | | | | | |<br/>
+| GDPVal-AA v2 | 1238 | 1164 | 1009 | 1190 | 1514 | 1307 | 962 | 1760 | 1748 |<br/>
+| MCP Atlas | 74.1% | 44.7% | 64.0% | 68.1% | 77.8% | 73.2% | 78.2% | 83.3% | 81.8% |<br/>
+| Tau 3 Banking | 23.7% | 13.8% | 14.2% | 20.6% | 26.8% | 25.8% | 16.5% | 26.8% | 33.0% |<br/>
+| BrowseComp w/ ctx management | 77.1% | – | 74.9% | 83.2% | – | 83.4% | 85.9% | 88.0% | 90.84% |<br/>
+| <strong>事实性</strong> | | | | | | | | | |<br/>
+| SimpleQA Verified | 43.9% | 32.4% | 36.9% | 38.7% | 38.1% | 57.0% | 77.3% | 68.3% | 71.6% |<br/>
+| AA Omniscience | 2.1 | -1.0 | -8.0 | 6.0 | 4.0 | -10.0 | 33.0 | 40.0 | 22.0 |<br/>
+| <strong>聊天</strong> | | | | | | | | | |<br/>
+| IFBench | 79.8% | 81.4% | 70.2% | 76.0% | 73.3% | 76.5% | 77.1% | 63.5% | 72.7% |<br/>
+| Global-MMLU-Lite | 88.7% | 85.6% | 84.0% | 88.4% | 89.2% | 89.3% | 92.7% | 93.3% | 91.8% |<br/>
+| <strong>视觉</strong> | | | | | | | | | |<br/>
+| MMMU Pro Standard 10 | 73.5% | – | 75.0% | 79.0% | – | – | 82.0% | 84.2% | 83.0% |<br/>
+| Charxiv RQ | 78.1% | – | 77.5% | 80.4% | – | – | 80.2% | 86.5% | 84.7% |<br/>
+| Charxiv RQ† with python | 82.0% | – | 78.7% | 86.7% | – | – | 89.9% | 89.4% | 87.8% |<br/>
+| <strong>音频</strong> | | | | | | | | | |<br/>
+| Audio MC† | 56.6% | – | – | – | – | – | 66.8% | – | – |<br/>
+| MMAU | 77.2% | – | – | – | – | – | 82.5% | – | – |<br/>
+| VoiceBench† | 91.4% | – | – | – | – | – | 94.3% | – | – |<br/>
+| <strong>安全</strong> | | | | | | | | | |<br/>
+| FORTRESS Adversarial | 78.0% | 77.6% | 54.1% | 65.6% | 71.3% | 36.0% | 65.2% | 96.0% | 82.4% |<br/>
+| FORTRESS Benign | 95.9% | 90.5% | 98.3% | 97.2% | 90.0% | 98.5% | 98.0% | 55.1% | 98.1% |<br/>
+| StrongREJECT | 98.6% | 98.7% | 99.5% | 99.8% | 98.5% | 98.6% | 98.0% | 98.7% | 98.5% |</p>
+<p><em>SWEBench Verified: Inkling的数字是使用纯bash框架报告的。外部模型使用自报数字。</em>Terminal Bench 2.1: Inkling的数字是使用内部编码框架报告的。少量解决方案被发现受到网络搜索污染，得分为0。外部模型尽可能使用自报数字，否则使用我们的内部框架报告性能。†Audio MC: 其他模型由于不在官方排行榜上，因此在内部进行了评估。†VoiceBench: VoiceBench使用基于规则的硬编码字符串匹配进行评分，使得评估对输出格式差异敏感。因此，我们添加了系统消息，指示模型遵循预期的答案格式。†CharXiv RQ with tools: 我们使用内部Python框架对Claude Fable 5和GPT 5.6 Sol (max/xhigh)进行了基准测试。*</p>
+<p><strong>结论分析</strong>：<br/>
+* <strong>全面的通用能力</strong>：如雷达图（图2）所示，Inkling在各项评估中表现均衡，没有明显的短板，这证实了其作为“广泛、均衡的通用模型”的设计目标。<br/>
+* <strong>高效的思考努力</strong>：如努力/性能曲线图（图5）所示，Inkling在达到同等性能水平时所需的token数量显著更少。例如，在Terminal Bench 2.1上，它仅用约三分之一的token就达到了与Nemotron 3 Ultra相当的性能，这在成本和延迟敏感的应用中具有巨大优势。<br/>
+* <strong>强大的可定制性潜力</strong>：大规模RL训练（图10）显示，模型的推理能力随着训练推演次数的增加呈对数线性提升，表明Inkling具有巨大的学习和改进潜力，非常适合通过微调来适应特定任务。</p>
+<h2>A7 补充细节：Inkling-Small</h2>
+<p><strong>除了Inkling，我们还分享了Inkling-Small的预览版</strong>。这是一个拥有2760亿参数的混合专家模型（120亿活跃参数，而Inkling为410亿），具有不同的性能/延迟权衡。Inkling-Small在许多基准测试中达到或超过了其更大的同类产品——这是我们对较小模型的预训练数据和配方进行改进的结果。这两个模型共享相同的可扩展后训练技术栈。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>Inkling</strong> effort=0.99</th>
+<th><strong>Inkling-Small (Preview)</strong> effort=0.99</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>推理</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>HLE text only</td>
+<td>29.7%</td>
+<td><strong>29.6%</strong></td>
+</tr>
+<tr>
+<td>HLE with tools</td>
+<td>46.0%</td>
+<td><strong>46.6%</strong></td>
+</tr>
+<tr>
+<td>AIME 2026</td>
+<td><strong>97.1%</strong></td>
+<td>95.1%</td>
+</tr>
+<tr>
+<td>GPQA Diamond</td>
+<td>87.2%</td>
+<td><strong>88.3%</strong></td>
+</tr>
+<tr>
+<td><strong>智能体 (编码)</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SWEBench Verified</td>
+<td><strong>77.6%</strong></td>
+<td>77.4%</td>
+</tr>
+<tr>
+<td>SWEBench ProPublic</td>
+<td><strong>54.3%</strong></td>
+<td>53.2%</td>
+</tr>
+<tr>
+<td>Terminal Bench 2.1 Best Harness</td>
+<td><strong>63.8%</strong>*</td>
+<td>52.7%</td>
+</tr>
+<tr>
+<td><strong>智能体 (通用)</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Tau 3 Banking</td>
+<td><strong>23.7%</strong></td>
+<td>13.6%</td>
+</tr>
+<tr>
+<td>MCP-Atlas</td>
+<td>74.1%</td>
+<td><strong>74.9%</strong></td>
+</tr>
+<tr>
+<td><strong>事实性</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>SimpleQA Verified</td>
+<td><strong>43.9%</strong></td>
+<td>20.9%</td>
+</tr>
+<tr>
+<td><strong>聊天</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>IFBench</td>
+<td>79.8%</td>
+<td><strong>83.4%</strong></td>
+</tr>
+<tr>
+<td>Global-MMLU-Lite</td>
+<td><strong>88.7%</strong></td>
+<td>86.8%</td>
+</tr>
+<tr>
+<td><strong>视觉</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>MMMU Pro Standard 10</td>
+<td><strong>73.5%</strong></td>
+<td>73.1%</td>
+</tr>
+<tr>
+<td>Charxiv RQ</td>
+<td><strong>78.1%</strong></td>
+<td>76.7%</td>
+</tr>
+<tr>
+<td>Charxiv RQ with python</td>
+<td>82.0%</td>
+<td><strong>83.4%</strong></td>
+</tr>
+<tr>
+<td><strong>音频</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Audio MC</td>
+<td><strong>56.6%</strong></td>
+<td>49.6%</td>
+</tr>
+<tr>
+<td>MMAU</td>
+<td>77.2%</td>
+<td><strong>77.5%</strong></td>
+</tr>
+<tr>
+<td>VoiceBench</td>
+<td><strong>91.4%</strong></td>
+<td>90.0%</td>
+</tr>
+<tr>
+<td><strong>安全</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>FORTRESS Adversarial</td>
+<td><strong>78.0%</strong></td>
+<td>75.6%</td>
+</tr>
+<tr>
+<td>FORTRESS Benign</td>
+<td><strong>95.9%</strong></td>
+<td>94.1%</td>
+</tr>
+<tr>
+<td>StrongREJECT</td>
+<td>98.6%</td>
+<td><strong>98.8%</strong></td>
+</tr>
+</tbody>
+</table>
+<p><em>两个模型均在effort=0.99下报告；每行中较高的结果已加粗。</em>我们对Terminal Bench 2.1中存在网络搜索解决方案污染的推演给予0分。*</p>
+<p><strong>早期结果显示，Inkling-Small在推理和智能体任务上的表现接近Inkling</strong>。凭借120亿活跃参数和可控的思考努力，它非常适合对成本和延迟敏感的工作负载，例如编码、使用LLM进行评分或为其他模型生成合成数据。</p>
+<p><strong>我们目前正在完成Inkling-Small的测试</strong>，并将在工作完成后发布其完整权重。</p>
+<h2>A5 结论</h2>
+<p><strong>论文核心结论</strong>：<br/>
+Inkling作为一个开放权重的多模态基础模型，成功地在广泛的能力和高效的性能之间取得了平衡。它并非追求在所有基准上登顶，而是被设计为一个强大、可靠且易于定制的平台。其核心优势在于：广泛的通用能力、原生的多模态处理、可控的思考努力、良好的认知学特性（校准、指令遵循）和强大的内置安全性。通过在Tinker平台上开放微调，并与广泛的生态系统合作，Inkling旨在将强大的AI定制能力交到更多开发者和组织手中，以解决现实世界中的专业问题。</p>
+<p><strong>未来工作展望</strong>：<br/>
+1. <strong>模型家族的持续发展</strong>：Inkling是模型家族的第一个版本，未来将继续构建和发布更多不同规模和特性的模型，如即将发布的Inkling-Small。<br/>
+2. <strong>能力的持续提升</strong>：团队将继续扩展模型和训练流水线，以进一步提升其多模态能力和其他各项性能。<br/>
+3. <strong>推动定制化应用</strong>：通过Tinker平台和生态合作，支持用户在金融、预测、软件开发等领域进行深度微调，探索和解决更多专业化问题。<br/>
+4. <strong>安全性的深入研究</strong>：将继续研究可定制模型中的安全行为和能力提升，特别是在微调过程中安全性的变化和保障。</p>
+<p><strong>模型可用性</strong>：<br/>
+* Inkling现已在Tinker平台上提供，支持64K和256K的上下文长度。<br/>
+* 完整的模型权重已在Hugging Face上发布，包括原始检查点和用于NVIDIA Blackwell系统高效推理的NVFP4检查点。<br/>
+* 通过与TogetherAI、Fireworks、RadixArk、Inferact、Unsloth、Hugging Face等生态伙伴的合作，Inkling在多种主流平台和框架上得到了推理和微调支持。</p>
+<h2>参考文献引用说明</h2>
+<ol>
+<li>
+<p><strong>【1，dMel: Speech Tokenization made Simple，Richard He Bai et al，2024，arXiv，<a href="https://arxiv.org/abs/2407.15835" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2407.15835</a> 】</strong></p>
+<ul>
+<li>引用位置：A3.多模态</li>
+<li>引用描述：用于描述音频信号的输入方式，即采用dMel频谱图。</li>
+</ul>
+</li>
+<li>
+<p><strong>【2，Three things everyone should know about Vision Transformers，Hugo Touvron et al，2022，arXiv，<a href="https://arxiv.org/abs/2203.09795" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2203.09795</a> 】</strong></p>
+<ul>
+<li>引用位置：A3.多模态</li>
+<li>引用描述：用于描述图像的编码方式，即通过一个四层hMLP将图像编码为40x40像素的补丁。</li>
+</ul>
+</li>
+<li>
+<p><strong>【3，Self-Attention with Relative Position Representations，Peter Shaw et al，2018，arXiv，<a href="https://arxiv.org/abs/1803.02155" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/1803.02155</a> 】</strong></p>
+<ul>
+<li>引用位置：A2.架构</li>
+<li>引用描述：作为Inkling模型采用的相对位置嵌入技术的来源之一，并指出其性能优于RoPE。</li>
+</ul>
+</li>
+<li>
+<p><strong>【4，Music Transformer，Cheng-Zhi Anna Huang et al，2018，arXiv，<a href="https://arxiv.org/abs/1809.04281" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/1809.04281</a> 】</strong></p>
+<ul>
+<li>引用位置：A2.架构</li>
+<li>引用描述：作为Inkling模型采用的相对位置嵌入技术的来源之二。</li>
+</ul>
+</li>
+<li>
+<p><strong>【5，Decoupled-AdamW: A Method for Stable Weight Decay，Kosson et al.，2023，arXiv，<a href="https://arxiv.org/abs/2305.17212" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2305.17212</a> 】</strong></p>
+<ul>
+<li>引用位置：A2.训练</li>
+<li>引用描述：作为将权重衰减强度与学习率平方耦合以稳定模型权重的理论支持之一。</li>
+</ul>
+</li>
+<li>
+<p><strong>【6，Adam with Decoupled Weight Decay is Insufficient for Stable Optimization，Defazio，2025，arXiv，<a href="https://arxiv.org/abs/2506.02285v1" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2506.02285v1</a> 】</strong></p>
+<ul>
+<li>引用位置：A2.训练</li>
+<li>引用描述：作为将权重衰减强度与学习率平方耦合以稳定模型权重的理论支持之二。</li>
+</ul>
+</li>
+<li>
+<p><strong>【7，Measuring the Trustworthiness of Open-Source-Derived Models，The Cognition Team，2026，Cognition Blog，<a href="https://cognition.com/blog/measuring-open-source-model-trustworthiness" rel="noopener noreferrer" target="_blank">https://cognition.com/blog/measuring-open-source-model-trustworthiness</a> 】</strong></p>
+<ul>
+<li>引用位置：A3.认知学</li>
+<li>引用描述：引用了Cognition团队对Inkling进行的宣传与审查评估，证明了模型具有强烈的审查不遵从模式。</li>
+</ul>
+</li>
+<li>
+<p><strong>【8，SWE-1.7: Frontier Intelligence at a Fraction of the Cost，The Cognition Team，Cognition Blog，<a href="https://cognition.com/blog/swe-1-7" rel="noopener noreferrer" target="_blank">https://cognition.com/blog/swe-1-7</a> 】</strong></p>
+<ul>
+<li>引用位置：A2.规模化强化学习</li>
+<li>引用描述：用于佐证在RL训练中出现的思维链自发压缩、变得更简洁的现象，指出Cognition团队在训练SWE-1.7时也观察到了类似效果。</li>
+</ul>
+</li>
+</ol>
+</div>
+
+
+</div>
