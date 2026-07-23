@@ -1712,6 +1712,14 @@ llm:
         - algorithm
         - agent
         tag: iclr23
+      - title: 'Large Language Model Agent: A Survey on Methodology, Applications
+          and Challenges'
+        date: '2025-03-01'
+        url: /papers/llm/algorithm/agent/2025/03/01/large-language-model-agent-a-survey-on-methodology-applications-and-challenges.html
+        categories:
+        - llm
+        - algorithm
+        - agent
       - title: 'UI-TARS-2 Technical Report: Advancing GUI Agent with Multi-Turn Reinforcement
           Learning'
         date: '2025-09-01'
@@ -5422,6 +5430,12 @@ mlsys:
     - title: NVIDIA Blackwell Architecture Technical Brief
       date: '2024-07-01'
       url: /papers/mlsys/gpu/2024/07/01/nvidia-blackwell-architecture-technical-brief.html
+      categories:
+      - mlsys
+      - gpu
+    - title: 'Inside NVIDIA Rubin GPU Architecture: Powering the Era of Agentic AI'
+      date: '2026-07-01'
+      url: /papers/mlsys/gpu/2026/07/01/inside-nvidia-rubin-gpu-architecture-powering-the-era-of-agentic-ai.html
       categories:
       - mlsys
       - gpu

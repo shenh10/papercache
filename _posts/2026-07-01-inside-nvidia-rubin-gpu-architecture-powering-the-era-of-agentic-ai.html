@@ -1,0 +1,226 @@
+---
+added_date: '2026-07-23'
+author: shenh10
+categories:
+- mlsys
+- gpu
+comments: true
+date: '2026-07-01'
+layout: post
+mathjax: true
+title: 'Inside NVIDIA Rubin GPU Architecture: Powering the Era of Agentic AI'
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>Inside NVIDIA Rubin GPU Architecture: Powering the Era of Agentic AI</h1>
+<p><strong>发表时间</strong>: 2026-07 · Blog post by Eduardo Alvarez, Vishal Mehta, Farshad Ghodsian (developer.nvidia.com)</p>
+<p><strong>原文</strong>: <a href="https://developer.nvidia.com/blog/inside-nvidia-rubin-gpu-architecture-powering-the-era-of-agentic-ai/" rel="noopener" target="_blank">https://developer.nvidia.com/blog/inside-nvidia-rubin-gpu-architecture-powering-the-era-of-agentic-ai/</a></p>
+<p><strong>文章标题</strong>：NVIDIA Rubin GPU 架构揭秘：赋能代理式 AI 时代<br/>
+<strong>作者/机构</strong>：Eduardo Alvarez, Vishal Mehta, Farshad Ghodsian</p>
+<h2>A1 主要贡献</h2>
+<p>本文介绍了 NVIDIA Rubin GPU 架构，它是 NVIDIA Vera Rubin 平台的核心，专为代理式（Agentic）AI 工作负载而设计。随着 AI 从离散的模型训练和聊天界面演变为持续产生智能的“AI 工厂”，新的工作负载需要支持推理、规划、工具使用、结果验证和执行复杂多步任务。</p>
+<p><strong>核心问题与研究目标</strong>：<br/>
+代理式工作负载的特点是持续的推理过程，而非单一的问答交互。这对计算平台提出了新的要求：<br/>
+1. <strong>低延迟</strong>：每一步推理的延迟要低。<br/>
+2. <strong>高吞吐量</strong>：解码吞吐量要高。<br/>
+3. <strong>长上下文效率</strong>：需要高效处理长上下文注意力机制。<br/>
+4. <strong>大容量</strong>：需要巨大的 KV 缓存容量。<br/>
+5. <strong>可扩展性</strong>：能够在紧密耦合的 GPU 集群中扩展模型。<br/>
+为了应对这些挑战，NVIDIA 的目标是重新构想数据中心，将其视为一个单一的计算单元，并通过 NVIDIA Vera Rubin 平台及其核心 Rubin GPU 实现这一愿景。</p>
+<p><strong>主要创新点与贡献</strong>：<br/>
+1. <strong>性能飞跃</strong>：Rubin GPU 旨在提供比 NVIDIA Blackwell 高出 10 倍的单位能耗代理式吞吐量。如图 1 所示，Vera Rubin 平台在代理式推理性能上实现了巨大的代际提升。<br/>
+2. <strong>核心硬件升级</strong>：<br/>
+    * <strong>增强的 Tensor Cores</strong>：具有更强的精度灵活性，支持高达 50 petaflops 的 NVFP4 推理性能。<br/>
+    * <strong>第三代 Transformer 引擎</strong>：协同 Tensor Cores，高效加速代理式工作负载。<br/>
+    * <strong>全新 HBM4 内存子系统</strong>：提供前所未有的内存带宽和容量。</p>
+<ol>
+<li><strong>端到端瓶颈优化</strong>：本文详细阐述了 Rubin GPU 及其协同设计的扩展系统如何解决代理式推理中的端到端瓶颈，涵盖了从数据移动、计算效率到长上下文执行和机架级部署的各个方面。</li>
+</ol>
+<p><img alt="图表比较了 NVIDIA Hopper、Blackwell 和 Rubin 系统在代理吞吐量和交互性方面的表现，显示 Rubin NVL72 加上 Vera 支持的代理数量大约是前者的 10 倍，工具调用次数是其两倍。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/07/hopper-blackwell-rubin-throughput-interactivity-comparison.webp"/> <br/>
+<strong>图 1. Pareto 前沿图，展示了 Vera Rubin 平台在代理式推理性能上的 10 倍代际提升（基于内部 2T MoE 工作负载）</strong></p>
+<h2>A2 方法细节</h2>
+<h3>Rubin GPU 架构如何支持代理式工作负载？</h3>
+<p><strong>GPU 整体结构</strong><br/>
+Rubin GPU 由两个达到光罩尺寸极限（reticle limited）的计算裸晶（compute die）构成，以实现高密度和高效率。这两个裸晶通过一种名为 NVIDIA 高带宽接口（NVIDIA High-Bandwidth Interface, NV-HBI）的高速裸晶间链路统一封装在单个基板上。</p>
+<p><img alt="NVIDIA Rubin GPU 的注释图，展示了图形处理器集群、HBM 内存控制器、L2 缓存、NVLink、PCIe Gen 6 和性能规格。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/07/nvidia-rubin-gpu-chip-architecture-1.webp"/> <br/>
+<strong>图 2. NVIDIA Rubin GPU 芯片架构</strong></p>
+<p><strong>计算核心与精度灵活性</strong><br/>
+该架构的设计初衷是为了应对代理式工作负载在推理、生成、检索和工具使用之间切换时，如何保持海量计算资源的高效利用。它集成了 3360 亿个晶体管、224 个流式多处理器（SM）和 896 个 Tensor Core，提供了原始的计算密度。同时，第三代 Transformer 引擎能够自适应地在不同数值格式间切换精度。这种灵活性使得 Rubin GPU 能够在保持精度的同时，提供高达 50 petaflops 的 NVFP4 推理性能。</p>
+<p><strong>计算资源组织与协调</strong><br/>
+性能不仅仅取决于 Tensor Core 的吞吐量。Rubin GPU 将计算资源组织成图形处理器集群（GPC），并配备了一个大型的集中式 L2 缓存。GigaThread 引擎负责协调工作，MIG Control 功能可以将 GPU 分区以支持多个工作负载，而 NV-DEC 则用于加速解码。这些功能共同帮助 Rubin GPU 将其高计算密度转化为在大型代理式系统所特有的多样化和动态工作负载下的持续高利用率。</p>
+<p><strong>内存与连接性</strong><br/>
+高利用率还取决于数据到达计算核心的速度。Rubin 集成了高达 288 GB 的 HBM4 内存，由专用的 HBM 控制器和 12-Hi 堆栈驱动，可提供高达 22 TB/s 的峰值带宽。增强的 Tensor Memory Accelerator (TMA) 负责管理复杂数据布局下的高效数据移动。连接性方面，NVIDIA NVLink 6 为全对全（all-to-all）的 GPU 间通信提供了 3,600 GB/s 的扩展带宽至 NVLink Switch；NVLink-C2C 为一致性的 CPU-GPU 通信提供了 1,800 GB/s 的带宽；而 x16 PCIe Gen 6 则提供了高达 256 GB/s 的主机连接速度。</p>
+<p><strong>数据安全</strong><br/>
+大规模的代理式部署必须保护在执行域中流动的数据。通过 TEE-I/O 实现的机密计算（Confidential Computing）旨在保护 AI 工厂中处于静止、传输和使用状态的数据。这些计算、内存、连接和安全功能共同构成了 GPU 级别的基础，以支持那些必须在日益增大的模型和扩展域中保持高效执行的代理式工作负载。</p>
+<h3>Rubin GPU 如何加速关键推理路径？</h3>
+<p>峰值计算能力本身不足以加速代理式推理。实际性能还取决于 GPU 移动数据、执行矩阵运算、处理长上下文注意力以及在依赖内核之间转换的效率。本节探讨了 Rubin GPU 为减少这些关键执行路径中的开销而设计的特性。</p>
+<h4>加速机架级 MoE 权重和 Token 移动</h4>
+<p><strong>MoE 模型的挑战</strong><br/>
+专家混合（Mixture-of-experts, MoE）模型会动态地将 token 路由到多个专家网络。随着专家数量的增长，高效地定位和移动专家权重对推理性能变得日益重要。</p>
+<p><strong>Tensor Memory Accelerator (TMA) 的增强</strong><br/>
+Rubin GPU 增强了 Tensor Memory Accelerator (TMA)，以减少专家密集型模型的数据移动开销。其改进的描述符（descriptor）处理能力使软件能够更有效地处理那些共享通用布局但位于内存不同位置的张量。</p>
+<p><strong>内联描述符更新支持</strong><br/>
+Rubin 通过为 TMA 提供内联描述符更新支持来改进这一点。如图 3 所示，内核无需在内存中修改描述符，而是可以为共享相同布局的张量保留一个统一的描述符，并在运行时直接在 TMA 指令中覆盖内存指针和步长（stride）等字段。</p>
+<p><img alt="Blackwell 和 Rubin 的并排图：Blackwell 为每个专家使用一个 MoE 描述符，而 Rubin 在所有专家之间共享一个描述符。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/07/rubin-gpu-moe-descriptor-sharing-1.webp"/> <br/>
+<strong>图 3. Rubin 简化了 MoE 描述符共享</strong></p>
+<p><strong>MoE 扩展效率</strong><br/>
+这一特性有助于 MoE 模型随着专家数量的增加而更高效地扩展。通过减少元数据管理和数据移动的开销，Rubin 使更多的 GPU 时间可以用于有价值的推理计算，从而为依赖大型 MoE 模型的代理式工作负载提供更高的吞吐量。</p>
+<h4>将机架级矩阵运算效率加倍</h4>
+<p><strong>K 维度指令吞吐量加倍</strong><br/>
+Rubin 通过将其在 $K$ 维度上可处理的数据量加倍，从而使每个时钟周期的 Tensor Core 吞吐量翻倍。这项优化不仅有助于受吞吐量限制的内核，也对受内存和延迟限制的内核有益。</p>
+<p><strong>多 GPU 拆分场景下的优势</strong><br/>
+当模型执行被拆分到多个 GPU 上时，每个 GPU 通常只接收到一小部分输出工作，而规约（reduction）维度仍然很大。</p>
+<p><strong>减少循环开销与提高利用率</strong><br/>
+更大的 $K$ 维度意味着更少的 $K$ 循环迭代。如图 4 所示，一个在 Blackwell 上需要四次 $K$ 迭代的 GEMM（通用矩阵乘法）操作，在 Rubin 上只需两次迭代即可完成。更少的迭代次数减少了循环开销，提高了 Tensor Core 的利用率，并有助于上下文（context）和解码（decode）阶段的 GEMM 在高度张量并行的规模下更高效地运行。</p>
+<p><img alt="图表显示 Rubin 在两次迭代中处理了两倍大的 K 维度，而 Blackwell 需要四次迭代。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/07/rubin-k-dimension-instruction-throughput-1.webp"/> <br/>
+<strong>图 4. Rubin 将 K 维度指令吞吐量加倍</strong></p>
+<h4>应对代理式 AI 长上下文处理中的关键挑战</h4>
+<p><strong>长上下文注意力的压力</strong><br/>
+长上下文和代理式 AI 工作负载给注意力（attention）机制带来了越来越大的压力。随着上下文窗口的增长，模型必须比较更多的 token，对更大的注意力分数矩阵进行归一化，并将这些分数应用于值（value）数据以产生下一层的输出。这使得注意力成为提高每用户每秒 token 数（tokens per second per user）最重要的性能路径之一。</p>
+<p><strong>激活稀疏性与自适应压缩的应用</strong><br/>
+Rubin 通过将激活稀疏性（activation sparsity）与自适应压缩（adaptive compression）和改进的 softmax 吞吐量相结合来加速注意力。在注意力机制中使用 Rubin 新的稀疏性特性的一个简单、安全且有效的方法如下：注意力流水线首先通过密集的 $QK^T$ 计算生成中间注意力分数。然后，Rubin 可以将这些中间数据从 Tensor Memory 加载为结构化的 2:4 稀疏压缩形式，同时生成非零值和有效使用它们所需的元数据，从而降低分数的写入成本和存储需求。这使得后续的注意力阶段可以在更少的数据上进行操作，同时保持模型其余部分所期望的密集输出格式。</p>
+<p><img alt="图表显示一个密集矩阵被转换为带有元数据的稀疏矩阵，并应用于 Transformer 块中的注意力和 MLP 激活阶段。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/07/nvidia-rubin-adaptive-compression-sparsity-1.webp"/> <br/>
+<strong>图 5. Rubin 的稀疏性特性可应用于注意力块和 MLP 块的激活</strong></p>
+<p><strong>压缩中间表示的优势</strong><br/>
+这种压缩的中间表示在两个关键环节减少了工作量：softmax 和第二次注意力 GEMM。Softmax 可以在非零注意力值上操作，而随后与密集 $V$ 矩阵的乘法可以利用来自 Softmax 的非零值和原始压缩步骤的元数据进行稀疏矩阵乘法（sparse MMA）。其结果是在长上下文注意力最耗费计算资源的部分减少了计算量和数据移动，从而提高了每瓦特 token 数（tokens/watt），且无需改变周围模型流水线的接口。</p>
+<p><strong>Softmax 吞吐量提升</strong><br/>
+Rubin 还提高了 softmax 的吞吐量。随着 Tensor Core 吞吐量的增加，softmax 可能成为瓶颈，因为它依赖于指数运算和跨注意力行的规约操作。Rubin 增加了指数运算的吞吐量，与 Blackwell 基线相比，FP32 吞吐量提升了 2 倍，BF16/FP16 吞吐量提升了 4 倍（如表 1 所示），这有助于 softmax 与更快的矩阵运算保持同步。</p>
+<table>
+<thead>
+<tr>
+<th><strong>NVIDIA GPU 平台</strong></th>
+<th><strong>FP32 指数吞吐量</strong> <br/> <strong>(每时钟周期每 SM)</strong></th>
+<th><strong>BF16/FP16 指数吞吐量</strong> <br/> <strong>(每时钟周期每 SM)</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Blackwell</td>
+<td>1x</td>
+<td>1x</td>
+</tr>
+<tr>
+<td>Blackwell Ultra</td>
+<td>2x</td>
+<td>2x</td>
+</tr>
+<tr>
+<td>Rubin</td>
+<td>2x</td>
+<td>4x</td>
+</tr>
+</tbody>
+</table>
+<p><strong>表 1. 从 Blackwell 到 Rubin 的指数吞吐量提升</strong></p>
+<p><strong>综合效益</strong><br/>
+总而言之，这些特性使得 Rubin 的注意力加速不仅仅是单个内核的改进。激活稀疏性减少了中间注意力的工作量，而更快的指数运算则缓解了 softmax 的瓶颈。</p>
+<h4>提高内核执行效率</h4>
+<p><strong>核间转换效率的重要性</strong><br/>
+随着推理在更大模型和更多 GPU 上扩展，原始的 Tensor Core 吞吐量只是性能的一部分。GPU 还需要高效地从一个内核转换到下一个内核。在推理中，这一点尤其重要，因为激活（activations）通常位于关键路径上：一个内核产生激活数据，将其写入内存，然后下一个内核消费这些数据以继续生成下一个 token。</p>
+<p><strong>传统执行模式的空闲间隙</strong><br/>
+传统的生产者-消费者执行模式可能会在 GPU 时间线上产生“气泡”（bubbles）。生产者内核可能提前完成了某些瓦片（tiles）或线程块（thread blocks）的工作，但消费者内核可能要等到一个更广泛的依赖关系解决后才能开始有效工作。Blackwell 的程序化依赖启动（programmatic dependent launch）通过允许消费者内核更早地取得进展来改善了这一点，但依赖的工作仍然可能需要等待所需的激活数据变得可用。</p>
+<p><img alt="Blackwell 和 Rubin 的时间线比较了生产者和消费者线程块；Rubin 使用数据驱动的轮询，在生产者数据可用时更早地开始消费者工作。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/07/blackwell-rubin-timelines-producer-consumer-thread-blocks-1.webp"/> <br/>
+<strong>图 6. 生产者-消费者重叠：Blackwell 的批量触发（上）和 Rubin 的瓦片级触发（下）</strong></p>
+<p><strong>更细粒度的依赖内核协调</strong><br/>
+Rubin 使得依赖内核之间能够进行更细粒度的协调。这允许消费者工作在所需的输入数据变得可用时就更早地开始，而不是等待更大范围的生产者工作完成。</p>
+<p><strong>性能影响</strong><br/>
+结果是 GPU 时间线被更紧密地打包，减少了空闲间隙，并改善了依赖内核之间的重叠。这对于代理式推理尤其有价值，因为在这种场景下，激活数据按顺序流经模型，内核到内核的延迟直接影响每用户每秒的 token 数。</p>
+<h3>Rubin 的内存和通信如何维持高吞吞吐量推理？</h3>
+<p>随着模型、上下文窗口和 GPU 域的增长，数据移动变得与计算同等重要。Rubin 的设计旨在改善权重、激活、KV 缓存数据和通信流量在 GPU 内部以及跨扩展系统中的流动。以下各节探讨了有助于维持高吞吐量推理的内存和通信创新。</p>
+<h4>加速的扩展通信</h4>
+<p><strong>通信与计算的融合</strong><br/>
+当推理从单个 GPU 扩展到整个机架级系统时，通信成为关键性能路径的一部分。当通信被直接融合（fused）到 GPU 内核内部时，内核不会停止并将控制权交还给 CPU；它会在计算仍在进行时，直接通过 NVLink 向另一个 GPU 写入数据或执行规约操作。</p>
+<p><strong>传统 GPU 间通信的开销</strong><br/>
+传统的 GPU 到 GPU 通信除了移动有效载荷数据外，还需要协调和同步工作。这些步骤会增加延迟并消耗互连带宽，尤其是在分布式推理工作负载中频繁发生通信时。</p>
+<p><strong>引入“计数的写入”（Counted Writes）</strong><br/>
+Rubin 为设备发起的 NVLink 通信引入了“计数的写入”（counted writes）。如图 7 所示，这一功能通过允许接收方 GPU 更有效地跟踪传输完成情况，简化了 GPU 间数据传输的同步过程。</p>
+<p><img alt="并排的通信图显示，Blackwell 使用内存屏障、确认和原子标志，而 Rubin 在接收 GPU 加载数据前使用计数器更新。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/07/rubin-nvlink-communication-acceleration.webp"/> <br/>
+<strong>图 7. Rubin 使用“计数的写入”加速 NVLink 通信</strong></p>
+<p><strong>低延迟协调机制</strong><br/>
+带有“计数的写入”的 NVLink 融合通信提供了一种更低延迟的机制来协调 GPU 间的数据移动，有助于保持计算持续进行，而不是等待同步操作。</p>
+<h4>协同设计内存子系统以实现最大功率和计算效率</h4>
+<p><strong>解码阶段的内存瓶颈</strong><br/>
+推理的解码（或生成）阶段在根本上是受内存子系统限制的。关键不在于峰值带宽规格，而在于每个内核能多高效地利用整个内存子系统。现代的推理和代理式工作负载通过在解码阶段花费更多的端到端运行时间来放大这一限制：长上下文、大型 KV 缓存和交互式 token 生成使得已实现的内存带宽成为一个关键的性能杠杆。</p>
+<p><img alt="条形图比较了 Blackwell、Blackwell Ultra 和 Rubin GPU：在 Rubin 上，带宽从 8 TB/s 上升到 22 TB/s。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/07/memory-bandwidth-nvidia-rubin-gpu.webp"/> <br/>
+<strong>图 8. 从 Blackwell 到 Rubin 的内存带宽扩展</strong></p>
+<p><strong>HBM4 与高效子系统的结合</strong><br/>
+Rubin 通过将 HBM4 与一个高效的本地化内存子系统相结合来解决这个问题。HBM4 的接口宽度是 HBM3e 的两倍。结合新的内存控制器、与内存生态系统的深度协同工程以及更紧密的计算-内存集成，该子系统提供了高达 22 TB/s 的内存带宽：比 Blackwell 和 Blackwell Ultra 增加了 2.8 倍。</p>
+<p><strong>容量与带宽的互补作用</strong><br/>
+Rubin 每颗 GPU 还提供高达 288 GB 的 HBM4，相对于 Blackwell 增加了可用的片上容量。容量和带宽扮演着不同但互补的角色：<br/>
+* <strong>容量</strong>：支持模型常驻、更大的上下文窗口、更大的 KV 缓存以及更高的并发性，而无需不必要的 KV 缓存卸载。<br/>
+* <strong>带宽</strong>：支持逐个 token 的生成阶段，在此期间，模型权重和 KV 状态必须被足够快地移动，以保持计算引擎的生产力。<br/>
+* <strong>内存子系统</strong>：TMA 和内存局部性策略帮助软件高效地使用内存子系统，为复杂的数据布局提供高实际带宽。</p>
+<p><strong>综合作用</strong><br/>
+高容量、高带宽的 HBM4 对于托管数万亿参数模型、在不卸载 KV 缓存的情况下扩展上下文长度，以及支持高并发、长周期的推理工作负载至关重要。</p>
+<h2>A7 补充细节：设计、可扩展性与可靠性</h2>
+<p>代理式 AI 基础设施必须优化的不仅仅是单个 GPU；它必须在整个 AI 工厂中有效利用电力、冷却、网络和机架级资源。NVIDIA Vera Rubin NVL72 将 Rubin GPU 架构扩展为一个集成的、具有弹性的机架级执行域。本节探讨了 NVIDIA 如何处理能效、运营可扩展性和系统级可靠性问题。</p>
+<h3>在相同功率预算内增加 GPU 数量</h3>
+<p><strong>机架级能效设计</strong><br/>
+代理式 AI 使能源效率成为一个 AI 工厂级别的问题，而不仅仅是 GPU 的功耗问题。在机架规模上，Vera Rubin NVL72 将计算、网络、液体冷却、功率导向（power steering）和带有储能的智能功率平滑（Intelligent Power Smoothing）技术集成到一个执行域中，旨在在固定的功率范围内最大化有价值的 token 输出。</p>
+<p><img alt="GPU 功率图显示电容器覆盖了峰值并填充了空闲时间的谷底，以维持更稳定的持续交流电源输入。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/07/gpu-power-chart.webp"/> <br/>
+<strong>图 9. 显示功率平滑技术影响的 GPU 功率图</strong></p>
+<p><strong>智能功率平滑技术</strong><br/>
+在 AI 工作负载期间，电力需求可能会急剧变化，产生瞬时峰值，这会闲置可用容量并降低工厂级的吞吐量。Vera Rubin 的电源使用基于充电状态（State-of-Charge, SoC）的智能功率平滑技术来吸收这些波动，与前一代功率平滑技术相比，平均功耗降低约 10%，50 毫秒的峰值功耗降低约 20%。通过提供更稳定的功率曲线，系统可以降低持续的最大功率需求，使支持性的电力基础设施和电网受益，并能在相同的 AI 工厂功率预算内支持更多的计算资源。</p>
+<p><strong>DSX MaxLPS 实现功率恢复</strong><br/>
+在 AI 工厂层面，NVIDIA DSX MaxLPS 将这种方法扩展到 GPU、机架、45°C 液体冷却和工作负载，而 DSX OS 则为调度、生命周期管理和健康自动化提供了操作层。它们共同旨在恢复闲置的电力，并在固定的兆瓦级功率范围内增加有效的计算。DSX MaxLPS 可以使运营商在相同的功率预算下，在节能的操作点上配置多达 40% 的 GPU（如图 10 所示），而对工作负载性能的影响微乎其微。</p>
+<p><img alt="网格比较显示，在没有 DSX MaxLPS 的情况下，AI 工厂容量未使用，而使用 DSX MaxLPS 在相同功率预算下可增加多达 40% 的 GPU 插槽。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/07/power-budget-comparison-dsx-maxlps-1.webp"/> <br/>
+<strong>图 10. 在相同的功率预算下，DSX MaxLPS 可支持多达 40% 的 GPU</strong></p>
+<h3>为弹性和数据中心可扩展性设计机架</h3>
+<p><strong>Vera Rubin NVL72 机架架构</strong><br/>
+Vera Rubin NVL72 将 Rubin GPU 扩展为适用于数万亿参数和多机架代理式工作负载的机架级执行域。其第三代 MGX 机架架构结合了无电缆的计算和交换机托盘、45°C 液体冷却、动态机架级功率导向和智能功率平滑技术，使计算、网络、冷却和电力作为一个系统协同工作。可热插拔的 NVLink 交换机托盘和改进的 RAS（可靠性、可用性、可服务性）能力进一步支持了大规模下的弹性运行。</p>
+<p><strong>Pod 级扩展基础</strong><br/>
+这种机架设计是 Pod 级、多机架代理式系统的基础，通过 NVLink 和 NVIDIA Spectrum-X 以太网（参见 <a href="https://www.nvidia.com/en-us/networking/spectrumx/">https://www.nvidia.com/en-us/networking/spectrumx/</a>）提供开放和灵活的连接。</p>
+<h2>A4 实验环境</h2>
+<p>本文作为一篇技术博客，未提供传统论文格式的详细实验环境，但提到了以下关键配置信息：</p>
+<ul>
+<li><strong>工作负载</strong>：图 1 的性能比较基于一个“内部 2T MoE 工作负载”（internal 2T MoE workload）。</li>
+<li>
+<p><strong>硬件配置</strong>：</p>
+<ul>
+<li><strong>GPU</strong>：NVIDIA Rubin GPU，拥有 3360 亿晶体管、224 个 SM、896 个 Tensor Core、288 GB HBM4 内存。</li>
+<li><strong>平台</strong>：NVIDIA Vera Rubin NVL72，集成了计算、网络、液冷、电源管理。</li>
+<li><strong>互连</strong>：NVLink 6（3600 GB/s）、NVLink-C2C（1800 GB/s）、PCIe Gen 6（x16, 256 GB/s）、NVIDIA Spectrum-X 以太网。</li>
+<li><strong>电源</strong>：NVIDIA DSX MaxLPS 电源管理系统。</li>
+</ul>
+</li>
+<li>
+<p><strong>软件配置</strong>：</p>
+<ul>
+<li><strong>操作系统/管理</strong>：DSX OS 用于调度、生命周期管理和健康自动化。</li>
+<li><strong>安全</strong>：提及使用 TEE-I/O 实现机密计算。</li>
+</ul>
+</li>
+</ul>
+<h2>A5 实验结果</h2>
+<p>本文通过与前代架构（主要是 Blackwell）的对比，展示了 Rubin 架构的性能优势，具体如下：</p>
+<ul>
+<li><strong>代理式吞吐量</strong>：Vera Rubin 平台（以 Rubin NVL72 为核心）的单位能耗代理式吞吐量比 NVIDIA Blackwell 高出 10 倍（图 1）。</li>
+<li><strong>计算性能</strong>：Rubin GPU 可提供高达 50 petaflops 的 NVFP4 推理性能。</li>
+<li><strong>内存带宽</strong>：通过 HBM4，Rubin GPU 实现了高达 22 TB/s 的内存带宽，是 Blackwell 的 2.8 倍（图 8）。</li>
+<li>
+<p><strong>注意力机制加速</strong>：</p>
+<ul>
+<li><strong>指数运算吞吐量</strong>：与 Blackwell 相比，Rubin 的 FP32 指数吞吐量提升 2 倍，BF16/FP16 吞吐量提升 4 倍（表 1）。</li>
+<li><strong>稀疏性与压缩</strong>：通过激活稀疏性和自适应压缩技术，减少了长上下文注意力中的计算和数据移动（图 5）。</li>
+</ul>
+</li>
+<li>
+<p><strong>矩阵运算效率</strong>：通过将 $K$ 维度的指令吞吐量加倍，GEMM 操作的迭代次数减半，减少了循环开销（图 4）。</p>
+</li>
+<li><strong>内核执行效率</strong>：通过细粒度的依赖内核触发机制，显著减少了生产者-消费者模式下的 GPU 空闲时间，提高了内核重叠（图 6）。</li>
+<li><strong>通信效率</strong>：NVLink 的“计数的写入”功能简化了 GPU 间同步，提供了更低延迟的数据移动机制（图 7）。</li>
+<li><strong>能效与密度</strong>：<ul>
+<li><strong>功率平滑</strong>：智能功率平滑技术可将平均功耗降低约 10%，瞬时峰值功耗降低约 20%（图 9）。</li>
+<li><strong>机架密度</strong>：DSX MaxLPS 系统能在相同功率预算下，将 GPU 部署数量增加多达 40%（图 10）。</li>
+</ul>
+</li>
+</ul>
+<h2>A6 结论</h2>
+<p>NVIDIA Rubin GPU 专为代理式 AI 的执行模式而设计，这些模式的特点是长上下文推理、多步生成、分布式 MoE 解码和低延迟交互，并且需要大规模、持续地运行。其计算、内存、网络、机架、电源、冷却和软件等各个层面都经过精心协同设计，旨在让 AI 工厂的更多部分执行有效工作，而不是等待数据、通信或受限于功率。最终，该架构旨在最大化每瓦特的代理式性能——在固定的功率范围内产生更多有价值的 token 和完成更多的 AI 工作。</p>
+</div>
+
+
+</div>
