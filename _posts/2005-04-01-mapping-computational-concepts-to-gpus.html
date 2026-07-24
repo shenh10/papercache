@@ -1,0 +1,289 @@
+---
+added_date: '2026-07-24'
+author: shenh10
+categories:
+- mlsys
+- gpu
+comments: true
+date: '2005-04-01'
+layout: post
+mathjax: true
+tag: blog
+title: Mapping Computational Concepts to GPUs
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>Mapping Computational Concepts to GPUs</h1>
+<p><strong>发表时间</strong>: 2005-04 · GPU Gems 2, Chapter 31 by Mark Harris (NVIDIA)</p>
+<p><strong>原文</strong>: <a href="https://developer.nvidia.com/gpugems/gpugems2/part-iv-general-purpose-computation-gpus-primer/chapter-31-mapping-computational" rel="noopener" target="_blank">https://developer.nvidia.com/gpugems/gpugems2/part-iv-general-purpose-computation-gpus-primer/chapter-31-mapping-computational</a></p>
+<p><strong>文章标题</strong>：将计算概念映射到GPU<br/>
+<strong>作者/机构</strong>：Mark Harris, NVIDIA Corporation</p>
+<h2>A1 主要贡献（总结）</h2>
+<p>本文旨在为希望利用图形处理器（GPU）进行通用计算的开发者提供指导。随着GPU成为一个强大的计算平台，许多研究表明，将其应用于数据并行计算问题可以实现显著的加速。然而，实现这些加速需要深入了解GPU的编程方式和体系结构，这对非图形领域的程序员构成了挑战。</p>
+<p>本文的核心贡献在于，通过建立标准计算概念与GPU专用特性之间的直观映射，抽象化了复杂的计算机图形API和编程语言，从而降低了GPGPU（通用GPU计算）的入门门槛。文章的主要目标包括：</p>
+<ol>
+<li><strong>建立概念类比</strong>：系统性地将CPU编程中的核心概念（如数组、内层循环、数据反馈）与GPU中的对应物（如纹理、片段程序、渲染到纹理）进行类比，帮助开发者形成数据并行的思维模式。</li>
+<li><strong>介绍GPGPU编程模式</strong>：阐释了如何利用GPU的图形渲染管线来发起计算、定义计算域和范围，以及如何实现并行归约等高级操作。</li>
+<li><strong>提供实用编程框架</strong>：介绍了一个名为 <code>pug</code> 的C++ GPGPU编程框架，该框架封装了底层的图形API调用，使开发者能以更接近传统CPU编程的方式来管理数据流（流）、定义计算核（核函数）并执行计算。</li>
+<li><strong>提供示例代码</strong>：通过一个具体的化学反应扩散模拟（Grey-Scott模型）案例，展示了如何使用 <code>pug</code> 框架和Cg语言编写GPGPU程序，为读者提供了可直接上手的实践起点。</li>
+</ol>
+<p>总而言之，本文通过理论讲解、概念映射和实践框架相结合的方式，为开发者，特别是科学计算和可视化领域的研究人员，提供了一套清晰、易懂的GPGPU编程方法论和工具，旨在让他们能够更高效地利用GPU强大的并行计算能力。</p>
+<h2>A3 背景知识/关键Observation/设计原则（缩写）</h2>
+<h3>31.1 数据并行性的重要性</h3>
+<p><strong>GPU架构的并行特性</strong>：要从GPU获得最大性能，需要理解其架构。GPU专为计算机图形学设计，其计算模式具有高度并行性，即从顶点和纹素等独立数据元素的输入流，计算出彩色像素的输出流。为此，现代GPU拥有大量可编程处理器，可并行地将核函数计算应用于流元素。在对GPU进行编程时（无论是用于图形学还是通用计算），牢记其设计至关重要。本章将流处理概念应用于GPU上的通用计算（GPGPU）。将GPU应用于通用计算问题的最大困难在于其高度专业化的设计。因此，GPU编程深植于计算机图形API和编程语言中。我们的目标是通过在计算机图形概念和通用计算概念之间建立类比，从这些API中抽象出来，从而帮助读者进入充分利用GPU并行架构所必需的数据并行思维模式。</p>
+<h4>31.1.1 适合GPU的计算类型</h4>
+<p><strong>算术强度是关键指标</strong>：适合GPU的计算任务具有两个关键属性：数据并行性和独立性。这意味着相同或相似的计算被应用于许多顶点和片段的流，并且每个元素上的计算几乎不依赖于其他元素。这两个属性可以合并为一个称为<strong>算术强度</strong>（arithmetic intensity）的概念，即计算与带宽的比率，其正式定义为：</p>
+<h2>算术强度 = 操作数 / 传输的字数</h2>
+<p>微处理器上计算成本的下降速度快于通信成本的下降速度，这一点在像GPU这样的并行处理器上尤为明显。因为随着技术进步提供更多晶体管，更多晶体管被用于增加计算吞吐量的功能单元（如算术逻辑单元），而不是用于减少内存延迟的内存层次结构（缓存）。因此，GPU需要高算术强度才能达到峰值性能。</p>
+<p><strong>高算术强度计算的例子</strong>：受益于GPU处理最多的计算具有高算术强度。一个很好的例子是线性方程组的求解【Chapter 44, "A GPU Framework for Solving Systems of Linear Equations"】。这些计算在GPU上表现良好，因为它们是高度数据并行的：它们由大量数据元素（以矩阵和向量的形式）的流组成，并对这些流应用相同的计算核函数。计算输出流中每个元素所需的数据通信量小且具有一致性。结果是，从主内存传输的数据字数保持在较低水平，算术强度很高。其他适合GPU的计算例子包括基于格点的物理模拟【Chapter 47, "Flow Simulation with Complex Boundaries"】和全对最短路径算法【Chapter 43, "GPU Computing for Protein Structure Prediction"】。</p>
+<h4>31.1.2 示例：在网格上进行模拟</h4>
+<p><strong>网格计算与GPU的天然匹配</strong>：本章使用一个简单而有效的例子：在网格上模拟自然现象。如图31-1所示的笛卡尔网格是现象演化的二维空间域的离散表示。此处的例子是一个基于物理的云模拟。我们不深入探讨此模拟的物理和数学细节，仅用其阐释一些基本的GPGPU概念（更多关于云模拟的信息，请参见【Harris et al. 2003, "Simulation of Cloud Dynamics on Graphics Hardware", 2003, Proceedings of the SIGGRAPH/Eurographics Workshop on Graphics Hardware 2003】）。在GPGPU中，网格上的计算很常见，因为网格在GPU上有自然的表示形式：纹理。此外，GPU包含为二维数据局部性优化的小型纹理缓存，这与CPU中采用的一维数据缓存不同。许多计算可以自然地映射到网格上，包括矩阵代数、图像和体积处理、基于物理的模拟以及全局光照算法，如光线追踪、光子映射和辐射度【Chapter 39, "Global Illumination Using Progressive Refinement Radiosity"】。不自然在网格上执行的计算也可以通过将一维地址转换为二维地址来映射到网格计算。</p>
+<p><strong>流处理视角下的网格模拟</strong>：云模拟算法包含多个步骤，如图31-1所示。关于算法步骤的重要细节是，每一步都会更新整个网格，并且每一步必须在下一步开始前完成。用流处理的术语来说，存储在网格单元中的数据构成了我们的流，而算法步骤是我们的计算核函数。每个核函数被应用于每个流元素，生成一个新的流，该流成为下一步的输入。</p>
+<figure class="image-figure">
+<img alt="在网格上进行模拟" class="figure-image" src="https://developer.download.nvidia.com/books/gpugems2/31_concepts_01.jpg"/>
+<figcaption class="figure-caption">在网格上进行模拟</figcaption>
+</figure>
+<p>图31-1 在网格上进行模拟</p>
+<h4>31.1.3 流通信：Gather vs. Scatter</h4>
+<p><strong>Gather与Scatter的定义与区别</strong>：高算术强度要求流元素之间的通信最小化，但对于许多计算来说，通信是不可避免的。例如，在云模拟中，一些核函数必须从当前核函数正在处理的单元之外的其他单元获取信息。在讨论GPU上的数据通信时，区分两种主要通信类型很有帮助：<strong>gather</strong>（聚集）和<strong>scatter</strong>（分散）。当处理流元素的核函数从流中的其他元素请求信息时，发生Gather：它从内存的其他部分“聚集”信息。另一方面，当处理流元素的核函数将信息分发给其他流元素时，发生Scatter：它将信息“分散”到内存的其他部分。用传统的内存概念来说，gather仅需要随机访问的加载（load）能力，而scatter仅需要随机访问的存储（store）能力。后文将说明为什么gather通常比scatter更可取。</p>
+<h3>31.2 GPU计算资源清单</h3>
+<p>为了开始将通用计算映射到GPU的专用硬件上，我们应首先盘点GPU提供的计算资源。我们从计算的主力：处理器开始。</p>
+<h4>31.2.1 可编程并行处理器</h4>
+<p><strong>GPU处理器的两种类型</strong>：GPU拥有两种类型的可编程处理器：<strong>顶点处理器</strong>（vertex processors）和<strong>片段处理器</strong>（fragment processors）。顶点处理器处理由顶点（由位置、颜色、法向量和其他属性组成）构成的流，这些顶点是构成多边形几何模型的元素。计算机图形学通常用三角网格表示三维对象。顶点处理器应用<strong>顶点程序</strong>（vertex program，有时称为vertex shader）根据每个顶点相对于摄像机的位置来变换它，然后每三个顶点被用来计算一个三角形，并从中生成<strong>片段</strong>（fragments）流。一个片段可以被认为是一个“准像素”，它包含了生成最终图像中着色像素所需的所有信息，包括颜色、深度和在帧缓冲中的目标位置。片段处理器对流中的每个片段应用<strong>片段程序</strong>（fragment program，有时称为pixel shader），以计算每个像素的最终颜色。</p>
+<p><strong>顶点处理器（Vertex Processors）的特性</strong>：现代GPU拥有多个顶点处理器（NVIDIA GeForce 6800 Ultra和ATI Radeon X800 XT都有六个）。这些处理器是完全可编程的，并以SIMD或MIMD并行方式对输入顶点进行操作（关于这些术语的更多信息，请参见Chapter 34）。3D计算机图形学的基本图元是投影空间中的3D顶点，由一个($x, y, z, w$)向量表示，以及存储为（红、绿、蓝、alpha）向量（通常缩写为RGBA）的四分量颜色，其中alpha通常表示不透明度百分比。因此，顶点处理器拥有处理四分量向量的硬件，这使它们能用更少的周期产生变换后的顶点位置。顶点处理器能够改变输入顶点的位置。考虑到这些顶点的位置最终影响像素在图像中的绘制位置，而图像不过是一个内存数组，因此，由于顶点处理器可以控制数据写入内存的位置，它们能够实现<strong>scatter</strong>（分散）操作。然而，目前大多数顶点处理器不能直接从输入流中读取除当前正在处理的顶点之外的其他顶点元素信息，因此它们不能实现<strong>gather</strong>（聚集）操作。NVIDIA GeForce 6系列GPU有一项名为<strong>顶点纹理拾取</strong>（vertex texture fetch, VTF）的新功能。这意味着GeForce 6的顶点处理器能够进行随机访问的内存读取。因此，我们可以将部分或全部输入流数据存储在顶点纹理中，并使用VTF来实现gather操作。</p>
+<p><strong>片段处理器（Fragment Processors）的特性</strong>：现代GPU也拥有多个片段处理器（NVIDIA GeForce 6800 Ultra和ATI X800 XT都有16个）。与顶点处理器一样，它们是完全可编程的。片段处理器以SIMD并行方式对输入元素进行操作，并行处理四元素向量。片段处理器能够从纹理中拾取数据，因此它们能够实现<strong>gather</strong>（聚集）操作。然而，片段的输出地址总是在片段处理之前就确定了：处理器不能改变像素的输出位置。因此，片段处理器本身不具备<strong>scatter</strong>（分散）能力。但关于绕过此限制的技术，请参见第31.3节的进一步讨论。对于GPGPU应用，片段处理器通常比顶点处理器使用得更频繁。这主要有两个原因。首先，典型的可编程GPU上片段处理器的数量多于顶点处理器。其次，片段处理器的输出或多或少直接进入内存，这些内存可以立即作为新的纹理数据流反馈回来。而顶点处理器的输出必须经过光栅化器和片段处理器才能到达内存，这使得从顶点处理器直接输出变得不那么直接。</p>
+<p><strong>光栅化器（Rasterizer）</strong>：如前所述，在顶点处理器变换顶点之后，每组三个顶点被用来计算一个三角形（以边方程的形式），并从这个三角形生成一个片段流。生成片段的工作由<strong>光栅化器</strong>完成。我们可以将光栅化器视为一个<strong>地址内插器</strong>。稍后我们将展示内存地址如何表示为纹理坐标。光栅化器根据片段位置内插这些地址和其他逐顶点值。因为它能从少数输入元素生成许多数据元素，我们也可以将光栅化器视为一个<strong>数据放大器</strong>。光栅化器的这些功能非常专门化于渲染三角形，并且不是用户可编程的。</p>
+<p><strong>纹理单元（Texture Unit）</strong>：片段处理器（以及最新GPU上的顶点处理器）可以以纹理的形式访问内存。我们可以将纹理单元视为一个<strong>只读内存接口</strong>。</p>
+<p><strong>渲染到纹理（Render-to-Texture）</strong>：当GPU生成图像时，它可以写入可供显示的帧缓冲内存，也可以写入纹理内存。这种<strong>渲染到纹理</strong>功能对GPGPU至关重要，因为它是当前唯一无需返回主机处理器即可实现GPU输出直接反馈到输入的机制。（间接反馈也可以通过<strong>复制到纹理</strong>实现，这需要从GPU内存的一个位置复制到另一个位置。）我们可以将渲染到纹理视为一个<strong>只写内存接口</strong>。你可能想知道为什么我们不将纹理单元和渲染到纹理合起来看作一个读写内存接口。原因在于，片段处理器可以在一个核函数内部任意多次读取内存，但只能在核函数程序<strong>结束时</strong>写入数据（这被称为<strong>流输出</strong>）。因此，内存的读和写在GPU上是根本上分开的，这样分开考虑有助于理解。</p>
+<p><strong>数据类型（Data Types）</strong>：在CPU编程中，我们习惯于处理多种数据类型，如整数、浮点数和布尔值。当前GPU在这方面更受限制。尽管一些GPU使用的高级着色语言暴露了整数和布尔数据类型，但当前GPU只处理以定点或浮点值形式存在的实数。此外，当前GPU支持多种浮点格式。例如，NVIDIA GeForce FX和GeForce 6系列GPU支持16位（1个符号位，10个尾数位，5个指数位）和32位（1个符号位，23个尾数位，8个指数位：与IEEE-754标准相同）浮点格式。所有当前的ATI产品，包括Radeon 9800和X800，支持一种24位浮点格式，包含1个符号位，16个尾数位和7个指数位。GPU上缺乏整数数据类型是当前的局限性。这通常可以通过使用浮点数来解决，但例如，并非所有32位整数都能在32位浮点格式中表示（因为尾数只有23位）。必须小心，因为浮点数无法精确表示与其相同大小的整数所能表示的全部整数范围。表31-1显示了每种浮点格式的位域及其可表示值的描述。</p>
+<h4>表31-1. NVIDIA和ATI GPU当前支持的浮点格式</h4>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>符号位</th>
+<th>指数位</th>
+<th>尾数位</th>
+<th>最大值</th>
+<th>最小值</th>
+<th>整数范围 <a title="elementLinks/ch31tn01.html">[1]</a>)</th>
+<th>支持特殊值 (NaN, Inf, 等)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NVIDIA 16位</td>
+<td>15 (1)</td>
+<td>14:10 (5)</td>
+<td>9:0 (10)</td>
+<td>±65,504</td>
+<td>±2&lt;sup&gt;-14&lt;/sup&gt; <img alt="约等于" class="figure-image" src="https://developer.download.nvidia.com/books/gpugems2/U2245.GIF"/> 10&lt;sup&gt;-5&lt;/sup&gt; (使用非规格化数可达±2&lt;sup&gt;-24&lt;/sup&gt;)</td>
+<td>±2048</td>
+<td>是</td>
+</tr>
+<tr>
+<td>ATI 16位</td>
+<td>15 (1)</td>
+<td>14:10 (5)</td>
+<td>9:0 (10)</td>
+<td>±131,008</td>
+<td>±2&lt;sup&gt;-15&lt;/sup&gt; <img alt="约等于" class="figure-image" src="https://developer.download.nvidia.com/books/gpugems2/U2245.GIF"/> 10&lt;sup&gt;-5&lt;/sup&gt;</td>
+<td>±2048</td>
+<td>否</td>
+</tr>
+<tr>
+<td>ATI 24位</td>
+<td>23 (1)</td>
+<td>22:16 (7)</td>
+<td>15:0 (16)</td>
+<td>±~2&lt;sup&gt;64&lt;/sup&gt; <img alt="约等于" class="figure-image" src="https://developer.download.nvidia.com/books/gpugems2/U2245.GIF"/> 10&lt;sup&gt;19&lt;/sup&gt;</td>
+<td>±~2&lt;sup&gt;-62&lt;/sup&gt; <img alt="约等于" class="figure-image" src="https://developer.download.nvidia.com/books/gpugems2/U2245.GIF"/> 10&lt;sup&gt;-19&lt;/sup&gt;</td>
+<td>±131,072</td>
+<td>否</td>
+</tr>
+<tr>
+<td>NVIDIA 32位 (IEEE 754)</td>
+<td>31 (1)</td>
+<td>30:23 (8)</td>
+<td>22:0 (23)</td>
+<td>±~2&lt;sup&gt;128&lt;/sup&gt; <img alt="约等于" class="figure-image" src="https://developer.download.nvidia.com/books/gpugems2/U2245.GIF"/> 10&lt;sup&gt;38&lt;/sup&gt;</td>
+<td>±~2&lt;sup&gt;-126&lt;/sup&gt; <img alt="约等于" class="figure-image" src="https://developer.download.nvidia.com/books/gpugems2/U2245.GIF"/> 10&lt;sup&gt;-38&lt;/sup&gt;</td>
+<td>±16,777,216</td>
+<td>是</td>
+</tr>
+</tbody>
+</table>
+<h2>A2 方法细节（缩写）</h2>
+<h3>31.3 CPU-GPU类比</h3>
+<p>即使对于专家级的CPU程序员，如果没有一些图形编程知识，开始GPU编程也可能很棘手。在本节中，我们试图通过在传统CPU计算概念与其GPU对应物之间建立一些非常简单的类比来帮助您理解。我们从流和核函数的概念开始。</p>
+<h4>31.3.1 流：GPU纹理 = CPU数组</h4>
+<p><strong>数据结构类比</strong>：这一点很简单。GPU上的基本数组数据结构是纹理和顶点数组。正如我们之前观察到的，对于GPGPU，片段处理器往往比顶点处理器更有用。因此，在CPU上我们会使用数据数组的任何地方，我们都可以在GPU上使用纹理。</p>
+<h4>31.3.2 核函数：GPU片段程序 = CPU“内层循环”</h4>
+<p><strong>计算单元类比</strong>：GPU的众多并行处理器是其计算主力——它们对数据流执行核函数计算。在CPU上，我们会使用一个循环来迭代处理流的元素（存储在数组中），顺序地处理它们。在CPU的情况下，循环内部的指令就是核函数。在GPU上，我们在片段程序内部编写类似的指令，这些指令被应用于流的所有元素。这种计算的并行量取决于我们使用的GPU上的处理器数量，但也取决于我们如何很好地利用GPU算术的四向量结构所带来的指令级并行性。注意，顶点程序也可以被认为是作用于顶点流的核函数。</p>
+<h4>31.3.3 渲染到纹理 = 反馈</h4>
+<p><strong>数据反馈机制</strong>：如前所述，大多数计算被分解为多个步骤。每个步骤都依赖于前一步骤的输出。就流而言，由于流元素之间存在依赖关系，通常一个核函数必须处理完整个流，下一个核函数才能继续。此外，在基于物理的模拟中，模拟的每个时间步都依赖于前一个时间步的结果。所有这些反馈在CPU上实现起来都很简单，因为它有统一的内存模型，内存可以在程序的任何地方被读取或写入。但在GPU上事情并不那么容易，正如我们之前讨论的。为了实现反馈，我们必须使用<strong>渲染到纹理</strong>将片段程序的结果写入内存，以便它们可以被用作未来程序的输入。</p>
+<h4>31.3.4 几何光栅化 = 计算调用</h4>
+<p><strong>计算触发机制</strong>：现在我们有了数据表示、计算和反馈的类比。但要运行一个程序，我们需要知道如何调用计算。我们的核函数是片段程序，所以我们只需要知道如何生成片段流。从上一节应该可以清楚地看到；要调用计算，我们只需绘制几何体。顶点处理器将变换几何体，光栅化器将确定它覆盖了输出缓冲区中的哪些像素，并为每个像素生成一个片段。在GPGPU中，我们通常处理代表一个网格的矩形片段流的每个元素。因此，GPGPU编程中最常见的调用是绘制一个单独的四边形。</p>
+<h4>31.3.5 纹理坐标 = 计算域</h4>
+<p><strong>输入域定义</strong>：在GPU上执行的每个核函数（片段程序）都以若干流作为输入，并通常生成一个输出流。支持多个渲染目标（multiple render targets）的新型GPU可以生成多个输出流（目前限制为四个RGBA流）。任何计算都有一个输入域和一个输出范围。在许多情况下，GPU上计算的域可能与输入流的维度不同。GPU通过纹理坐标的形式提供了一种简单的方法来处理这个问题。这些坐标存储在顶点上，光栅化器线性地内插每个顶点的坐标，为每个片段生成一组坐标。内插后的坐标作为输入传递给片段处理器。在计算机图形学中，这些坐标被用作纹理拾取的索引。对于GPGPU，我们可以将它们视为数组索引，并用它们来控制计算的域。域和范围的大小可以相同，域可以小于范围（数据放大/放大），或者域可以大于范围（数据缩小）。光栅化器使得在每种情况下都能以正确的间隔正确采样输入流变得容易。</p>
+<h4>31.3.6 顶点坐标 = 计算范围</h4>
+<p><strong>输出范围定义</strong>：如前所述，片段是由输入几何体通过光栅化器生成的，这些片段在经过片段处理后成为输出像素。因为片段处理器不能直接进行scatter操作，所以输入顶点和顶点程序决定了生成哪些像素。通常，我们在输出像素坐标中指定一个四边形的四个顶点，并应用一个简单地将顶点原样传递的顶点程序。因此，顶点坐标直接控制了计算的输出范围。</p>
+<h4>31.3.7 归约</h4>
+<p><strong>并行归约操作</strong>：到目前为止我们讨论的一切都假定是纯粹的并行计算：每个元素的计算在很大程度上独立于流的其他部分。然而，有时我们需要将一个大的值向量<strong>归约</strong>为一个较小的向量，甚至一个单一的值。例如，我们可能需要计算数组中所有值的总和或最大值。这种计算被称为<strong>并行归约</strong>（parallel reduction）。在GPU上，归约可以通过交替地向一对缓冲区进行渲染和读取来执行。在每一遍（pass）中，输出的大小（计算范围）都会减少某个分数。为了产生输出的每个元素，一个片段程序读取两个或多个值，并使用归约操作符（如加法或最大值）计算一个新值。这些遍会持续进行，直到输出是一个单元素缓冲区，此时我们就得到了归约结果。通常，这个过程需要 $O(\log n)$ 遍，其中 $n$ 是要归约的元素数量。例如，对于一个二维归约，片段程序可能会从输入缓冲区的四个象限中读取四个元素，这样每一步输出的大小在两个维度上都减半。图31-2演示了在二维缓冲区上进行的最大值归约。</p>
+<figure class="image-figure">
+<img alt="使用多遍执行的最大值归约" class="figure-image" src="https://developer.download.nvidia.com/books/gpugems2/31_concepts_02.jpg"/>
+<figcaption class="figure-caption">使用多遍执行的最大值归约</figcaption>
+</figure>
+<p>图31-2 使用多遍执行的最大值归约</p>
+<h3>31.4 从类比到实现</h3>
+<p>到目前为止，您已经对大多数GPGPU程序如何在当前GPU上运行有了高层次的理解。上一节的类比为我们提供了一个通用的实现计划。现在，为了让您能开始让GPU工作，我们将深入探讨您在实践中需要的具体实现细节。</p>
+<h4>31.4.1 整合一切：一个基础的GPGPU框架</h4>
+<p><strong>Pug框架介绍</strong>：为了简化操作，我们用C++编写了一个非常基础的框架，您可以用它来编写GPGPU程序。您可以在本书附带的CD上找到这个名为 <strong>pug</strong> 的框架。该框架融合了上一节的所有类比，以便以一种更易于有经验的CPU程序员接受的方式来抽象GPGPU编程。</p>
+<p><strong>初始化与终止GPGPU应用</strong>：GPGPU应用的第一步是初始化GPU。在框架中这非常简单：只需调用 <code>pugInit()</code>。当应用使用完GPU后，可以通过调用 <code>pugCleanup()</code> 来清理图形API使用的内存。</p>
+<p><strong>指定核函数</strong>：在我们的框架中，核函数是用Cg语言编写的。虽然Cg是为图形学设计的，但它基于C语言，因此非常容易学习。更多信息，我们推荐《The Cg Tutorial》【Fernando and Kilgard 2003, <em>The Cg Tutorial: The Definitive Guide to Programmable Real-Time Graphics</em>】和Cg发行版附带的文档【NVIDIA 2004, <em>The Cg Toolkit</em>, 可在线获取: <a href="http://developer.nvidia.com/object/cg_toolkit.html" rel="noopener noreferrer" target="_blank">http://developer.nvidia.com/object/cg_toolkit.html</a>】。Cg中图形专用的关键字很少。我们提供了一个名 为<code>pug.cg</code>的Cg文件，您可以将其包含在您的核函数文件中。该文件定义了一个名为<code>Stream</code>的结构，它抽象了最具图形学中心概念的纹理拾取。<code>Stream</code>是对Cg纹理采样器类型的封装。调用<code>Stream</code>结构的<code>value()</code>函数之一可以获取流元素的值。要从文件加载并初始化一个核函数程序，请使用<code>pugLoadProgram()</code>函数。该函数返回一个指向<code>PUGProgram</code>结构的指针，您需要存储该指针并将其传递给框架的其他函数，以绑定常量和流到核函数并运行它。</p>
+<p><strong>流管理</strong>：框架中的数据数组被称为<strong>缓冲区</strong>（buffers）。<code>pugAllocateBuffer()</code>函数创建一个新缓冲区。缓冲区可以是只读、只写或读写的，这可以通过该函数的<code>mode</code>参数指定。该函数返回一个指向<code>PUGBuffer</code>结构的指针，该指针可以传递给框架中的多个函数，包括以下两个。要将初始数据加载到缓冲区中，请将数据传递给<code>pugInitBuffer()</code>函数。要将核函数的输入流绑定到缓冲区，请调用<code>pugBindStream()</code>，其参数包括要绑定的<code>PUGProgram</code>指针、<code>PUGBuffer</code>指针，以及一个包含此<code>PUGBuffer</code>应绑定到的Cg核函数程序中<code>Stream</code>参数名称的字符串。</p>
+<p><strong>指定计算域和范围</strong>：要指定计算的域和范围，请定义一个<code>PUGRect</code>结构，其中包含用作域或范围的矩形角点坐标。可以指定多个域，这将生成核函数程序可以根据需要使用的额外纹理坐标。要绑定一个域，请调用<code>pugBindDomain()</code>，并向其传递<code>PUGProgram</code>、在核函数Cg程序中为此域定义的字符串参数名，以及该域的<code>PUGRect</code>。由于片段程序无法进行scatter操作，一个核函数只能有一个范围。要指定范围，只需将一个<code>PUGRect</code>传递给<code>pugRunProgram()</code>函数的<code>range</code>参数。</p>
+<p><strong>指定常量参数</strong>：可以使用<code>pugBindFloat()</code>指定一、二、三或四分量的浮点常量参数，该函数接受<code>PUGProgram</code>指针、字符串参数名和最多四个浮点值作为参数。</p>
+<p><strong>调用核函数</strong>：完成上述步骤后，执行计算很简单：只需调用<code>pugRunProgram()</code>函数。向其传递<code>PUGProgram</code>指针、输出的<code>PUGBuffer</code>（必须是可写的），以及一个可选的<code>PUGRect</code>来指定范围。如果未指定范围，则将写入整个缓冲区。请注意，如果一个缓冲区当前正被用作核函数的输出，那么流不能绑定到该缓冲区。框架会自动释放在<code>pugRunProgram()</code>中被指定为输出缓冲区的所有已绑定流。</p>
+<p><strong>将数据传回CPU</strong>：要将GPU上的结果传回CPU，请调用<code>pugGetBufferData()</code>函数，并向其传递<code>PUGBuffer</code>指针。该函数返回一个指向C <code>float</code>类型数组的指针。从GPU读回数据可能导致GPU管线刷新，因此请谨慎使用此函数以避免影响应用性能。</p>
+<p><strong>并行归约</strong>：该框架为三种类型的简单并行归约提供支持。缓冲区可以沿行归约（归约为单列向量）、沿列归约（归约为单行向量）或同时沿行列归约（归约为单个值）。框架中用于这些操作的函数是<code>pugReduce1D()</code>和<code>pugReduce2D()</code>。</p>
+<h2>A7 补充细节（缩写）</h2>
+<h3>31.5 一个简单示例</h3>
+<p><strong>示例介绍：反应扩散模型</strong>：作为一个基础但非平凡的GPGPU示例，我们使用一种称为化学反应扩散现象的模拟。反应扩散是模拟溶液中两种或多种反应物在经历化学反应和扩散过程时，其浓度如何随空间和时间演变的模型。我们使用的反应扩散模型被称为Grey-Scott模型【Pearson 1993, "Complex Patterns in a Simple System." <em>Science</em> 261, p. 189.】，仅涉及两种化学反应物。这个现象学模型不代表特定的真实化学反应；它作为一个研究一般反应扩散现象的简单模型。图31-3显示了Grey-Scott模型多次迭代的结果。</p>
+<figure class="image-figure">
+<img alt="可视化Grey-Scott模型" class="figure-image" src="https://developer.download.nvidia.com/books/gpugems2/31_concepts_03.jpg"/>
+<figcaption class="figure-caption">可视化Grey-Scott模型</figcaption>
+</figure>
+<p>图31-3 可视化Grey-Scott模型</p>
+<p><strong>模型方程</strong>：Grey-Scott模型由两个简单的偏微分方程组成，它们控制着两种化学反应物U和V的浓度演化：</p>
+<figure class="image-figure">
+<img alt="Grey-Scott方程" class="figure-image" src="https://developer.download.nvidia.com/books/gpugems2/0506equ01.jpg"/>
+<figcaption class="figure-caption">Grey-Scott方程</figcaption>
+</figure>
+<p>这里，$k$ 和 $F$ 是常数；$D_u$ 和 $D_v$ 是反应物的扩散速率；<img alt="拉普拉斯算子" class="figure-image" src="https://developer.download.nvidia.com/books/gpugems2/U2207.GIF"/>&lt;sup&gt;2&lt;/sup&gt; 是拉普拉斯算子，代表扩散。拉普拉斯算子在物理学中很常见，最著名的是以扩散方程的形式出现，如热方程。应用于二维笛卡尔网格（索引为 $i, j$，单元格大小为 $x$）上的标量场 $p$ 的拉普拉斯算子的有限差分形式是：</p>
+<figure class="image-figure">
+<img alt="拉普拉斯算子的有限差分形式" class="figure-image" src="https://developer.download.nvidia.com/books/gpugems2/0506equ02.jpg"/>
+<figcaption class="figure-caption">拉普拉斯算子的有限差分形式</figcaption>
+</figure>
+<p><strong>GPU实现</strong>：Grey-Scott模型的实现相当简单。只有一个数据流：化学浓度 $U$ 和 $V$ 存储在代表离散空间网格的单个纹理的两个通道中。这个流作为实现上述方程离散形式的简单核函数的输入。该核函数如列表31-1所示。使用该框架实现模拟的C++代码如列表31-2所示。</p>
+<h4>示例31-1. 反应扩散核函数程序</h4>
+<pre><code>float4 rd(float2 coords
+          : DOMAIN, uniform stream concentration, uniform float2 DuDv,
+            uniform float F, uniform float k)
+    : RANGE
+{
+  float2 center = concentration.value2(coords).xy;
+  float2 diffusion = concentration.value2(coords + half2(1, 0));
+  diffusion += concentration.value2(coords + half2(-1, 0));
+  diffusion += concentration.value2(coords + half2(0, 1));
+  diffusion += concentration.value2(coords + half2(0, -1));
+  // 平均并按扩散系数缩放
+  diffusion *= 0.25f * DuDv;
+  float2 reaction = center.xx * center.yy * center.yy;
+  reaction.x = -1;
+  reaction.x += (1 - DuDv.x) * center.x + F * (1 - center.x);
+  reaction.y += (-F - k + (1 - DuDv.y)) * center.y;
+  // 现在将扩散加到反应中得到结果
+  return float4(diffusion + reaction, 0, 0);
+}</code></pre>
+<h4>示例31-2. 在GPU上设置和运行反应扩散模拟的C++代码</h4>
+<p><em>更多细节请参见附带CD上的源代码。</em></p>
+<pre><code>PUGBuffer *rdBuffer;
+PUGProgram *rdProgram;
+void init_rd()
+{ // 调用一次
+  pugInit();
+  // 启动GPU框架
+  // 创建一个“双缓冲”的PUGBuffer。两个缓冲区允许
+  // 模拟交替使用一个作为输入，一个作为输出
+  PUGBuffer *rdBuffer =
+      pugAllocateBuffer(width, height, PUG_READWRITE, 4, true);
+  PUGProgram *rdProgram = pugLoadProgram("rd.cg", "rd");
+  pugBindFloat(rdProgram, "DuDv", du, dv); // 绑定参数
+  pugBindFloat(rdProgram, "F", F);
+  pugBindFloat(rdProgram, "k", k);
+  // 用数组中的值初始化模拟状态
+  pugInitBuffer(rdBuffer, array);
+}
+void update_rd()
+{ // 每次迭代调用
+  pugBindStream(rdProgram, "concentration", rdBuffer, currentSource);
+  PUGRect range(0, width, 0, height);
+  pugRunProgram(rdProgram, rdBuffer, range, currentTarget);
+  std::swap(currentSource, currentTarget);
+}</code></pre>
+<h2>A4 实验环境（总结）</h2>
+<p>本文的示例部分旨在演示编程框架和方法，而非严格的性能评测，因此实验环境描述较为概括。</p>
+<ul>
+<li>
+<p><strong>模型与数据集</strong>：</p>
+<ul>
+<li><strong>模型</strong>：采用了Grey-Scott反应扩散模型进行二维空间模拟。这是一个数学模型，不依赖外部数据集。</li>
+<li><strong>数据</strong>：模拟状态（两种化学物质的浓度 $U$ 和 $V$）存储在一个二维网格中，该网格在GPU上表现为纹理。初始状态由一个CPU数组 <code>array</code> 提供。</li>
+</ul>
+</li>
+<li>
+<p><strong>硬件配置</strong>：</p>
+<ul>
+<li><strong>GPU</strong>：未指定具体的GPU型号。但文中提到了NVIDIA GeForce 6800 Ultra/FX、ATI Radeon X800 XT/9800等作为当时的代表性硬件，表明该方法适用于支持可编程着色器和渲染到纹理功能的GPU。</li>
+<li><strong>CPU/连接</strong>：未提供具体信息。</li>
+</ul>
+</li>
+<li>
+<p><strong>软件配置</strong>：</p>
+<ul>
+<li><strong>实现框架</strong>：使用了本文提出的一个名为 <code>pug</code> 的C++ GPGPU框架。</li>
+<li><strong>语言</strong>：主机端代码使用C++，GPU核函数使用NVIDIA的Cg（C for Graphics）语言。</li>
+<li><strong>依赖库</strong>：<code>pug</code> 框架封装了底层的图形API（如OpenGL或Direct3D）和Cg运行时库。</li>
+</ul>
+</li>
+</ul>
+<h2>A4 实验结果（总结）</h2>
+<p>本文通过一个简单的反应扩散模拟示例（Grey-Scott模型）来展示其提出的GPGPU编程方法和<code>pug</code>框架的有效性。</p>
+<ul>
+<li>
+<p><strong>实验内容</strong>：在GPU上实现了Grey-Scott模型的迭代计算。每个迭代步骤中，一个Cg核函数被执行，它读取当前网格上每个点的化学浓度及其邻居的浓度，计算扩散和反应项，然后将更新后的浓度写入输出缓冲区。通过双缓冲技术，输出缓冲区在下一次迭代中成为输入，从而实现时间上的演化。</p>
+</li>
+<li>
+<p><strong>实验结果</strong>：</p>
+<ul>
+<li><strong>功能验证</strong>：该示例成功地在GPU上实现了复杂的科学模拟。如图31-3所示，经过多次迭代，模拟能够生成复杂的、动态演变的类生物图案，验证了该GPGPU编程模型的可行性。</li>
+<li><strong>性能</strong>：文章没有提供定量的性能数据（如帧率或与CPU实现的比较）。其主要目的在于概念验证和教学，展示如何将一个计算问题映射到GPU架构并用所提供的框架实现，而不是进行性能基准测试。</li>
+</ul>
+</li>
+<li>
+<p><strong>分析结论</strong>：该示例证明，通过将计算网格映射到纹理，将计算步骤映射到片段程序，并利用渲染到纹理进行反馈，可以有效地在GPU上执行数据并行的网格计算。<code>pug</code>框架成功地抽象了底层的图形API细节，使得开发者可以更专注于计算逻辑本身。</p>
+</li>
+</ul>
+<h2>A5 结论（总结）</h2>
+<p>您现在应该对如何将通用计算映射到GPU有了很好的理解。有了这些基础知识，您可以开始编写自己的GPGPU应用程序并学习更高级的概念。上一节介绍的简单GPU框架包含在本书的CD中。我们希望它能为您的程序提供一个有用的起点。</p>
+<h2>引用的参考文献</h2>
+<p>本文在特定段落引用了以下文献，以支撑其论点或提供进一步的阅读材料：</p>
+<ol>
+<li>
+<p><strong>引用位置</strong>: 31.1.2节，在介绍云模拟示例时。<br/>
+<strong>原文描述</strong>: "For more information on cloud simulation, see Harris et al. 2003."<br/>
+<strong>文献信息</strong>: 【Harris et al. 2003, "Simulation of Cloud Dynamics on Graphics Hardware", 2003, Proceedings of the SIGGRAPH/Eurographics Workshop on Graphics Hardware 2003】</p>
+</li>
+<li>
+<p><strong>引用位置</strong>: 31.4.1节，在介绍Cg语言时。<br/>
+<strong>原文描述</strong>: "For more information, we recommend <em>The Cg Tutorial</em> (Fernando and Kilgard 2003) and the documentation included with the Cg distribution (NVIDIA 2004)."<br/>
+<strong>文献信息</strong>:</p>
+<ul>
+<li>【Fernando and Kilgard 2003, <em>The Cg Tutorial: The Definitive Guide to Programmable Real-Time Graphics</em>, 2003, Addison-Wesley】</li>
+<li>【NVIDIA 2004, <em>The Cg Toolkit</em>, 2004, 可在线获取: <a href="http://developer.nvidia.com/object/cg_toolkit.html" rel="noopener noreferrer" target="_blank">http://developer.nvidia.com/object/cg_toolkit.html</a> 】</li>
+</ul>
+</li>
+<li>
+<p><strong>引用位置</strong>: 31.5节，在介绍Grey-Scott模型时。<br/>
+<strong>原文描述</strong>: "The reaction-diffusion model we use is called the Grey-Scott model (Pearson 1993)..."<br/>
+<strong>文献信息</strong>: 【Pearson 1993, "Complex Patterns in a Simple System", 1993, <em>Science</em> 261, p. 189】</p>
+</li>
+</ol>
+</div>
+
+
+</div>

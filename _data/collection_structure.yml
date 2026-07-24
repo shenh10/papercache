@@ -4896,6 +4896,13 @@ mlsys:
       categories:
       - mlsys
       - gpu
+    - title: Mapping Computational Concepts to GPUs
+      date: '2005-04-01'
+      url: /papers/mlsys/gpu/2005/04/01/mapping-computational-concepts-to-gpus.html
+      categories:
+      - mlsys
+      - gpu
+      tag: blog
     - title: 'WASP: Exploiting GPU Pipeline Parallelism with Hardware-Accelerated
         Automatic Warp Specialization'
       date: '2024-03-01'
