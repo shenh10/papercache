@@ -21,7 +21,7 @@ title: Mapping Computational Concepts to GPUs
 <p><strong>原文</strong>: <a href="https://developer.nvidia.com/gpugems/gpugems2/part-iv-general-purpose-computation-gpus-primer/chapter-31-mapping-computational" rel="noopener" target="_blank">https://developer.nvidia.com/gpugems/gpugems2/part-iv-general-purpose-computation-gpus-primer/chapter-31-mapping-computational</a></p>
 <p><strong>文章标题</strong>：将计算概念映射到GPU<br/>
 <strong>作者/机构</strong>：Mark Harris, NVIDIA Corporation</p>
-<h2>A1 主要贡献（总结）</h2>
+<h2>A1 主要贡献</h2>
 <p>本文旨在为希望利用图形处理器（GPU）进行通用计算的开发者提供指导。随着GPU成为一个强大的计算平台，许多研究表明，将其应用于数据并行计算问题可以实现显著的加速。然而，实现这些加速需要深入了解GPU的编程方式和体系结构，这对非图形领域的程序员构成了挑战。</p>
 <p>本文的核心贡献在于，通过建立标准计算概念与GPU专用特性之间的直观映射，抽象化了复杂的计算机图形API和编程语言，从而降低了GPGPU（通用GPU计算）的入门门槛。文章的主要目标包括：</p>
 <ol>
@@ -31,7 +31,7 @@ title: Mapping Computational Concepts to GPUs
 <li><strong>提供示例代码</strong>：通过一个具体的化学反应扩散模拟（Grey-Scott模型）案例，展示了如何使用 <code>pug</code> 框架和Cg语言编写GPGPU程序，为读者提供了可直接上手的实践起点。</li>
 </ol>
 <p>总而言之，本文通过理论讲解、概念映射和实践框架相结合的方式，为开发者，特别是科学计算和可视化领域的研究人员，提供了一套清晰、易懂的GPGPU编程方法论和工具，旨在让他们能够更高效地利用GPU强大的并行计算能力。</p>
-<h2>A3 背景知识/关键Observation/设计原则（缩写）</h2>
+<h2>A3 背景知识/关键Observation/设计原则</h2>
 <h3>31.1 数据并行性的重要性</h3>
 <p><strong>GPU架构的并行特性</strong>：要从GPU获得最大性能，需要理解其架构。GPU专为计算机图形学设计，其计算模式具有高度并行性，即从顶点和纹素等独立数据元素的输入流，计算出彩色像素的输出流。为此，现代GPU拥有大量可编程处理器，可并行地将核函数计算应用于流元素。在对GPU进行编程时（无论是用于图形学还是通用计算），牢记其设计至关重要。本章将流处理概念应用于GPU上的通用计算（GPGPU）。将GPU应用于通用计算问题的最大困难在于其高度专业化的设计。因此，GPU编程深植于计算机图形API和编程语言中。我们的目标是通过在计算机图形概念和通用计算概念之间建立类比，从这些API中抽象出来，从而帮助读者进入充分利用GPU并行架构所必需的数据并行思维模式。</p>
 <h4>31.1.1 适合GPU的计算类型</h4>
@@ -116,7 +116,7 @@ title: Mapping Computational Concepts to GPUs
 </tr>
 </tbody>
 </table>
-<h2>A2 方法细节（缩写）</h2>
+<h2>A2 方法细节</h2>
 <h3>31.3 CPU-GPU类比</h3>
 <p>即使对于专家级的CPU程序员，如果没有一些图形编程知识，开始GPU编程也可能很棘手。在本节中，我们试图通过在传统CPU计算概念与其GPU对应物之间建立一些非常简单的类比来帮助您理解。我们从流和核函数的概念开始。</p>
 <h4>31.3.1 流：GPU纹理 = CPU数组</h4>
@@ -150,7 +150,7 @@ title: Mapping Computational Concepts to GPUs
 <p><strong>调用核函数</strong>：完成上述步骤后，执行计算很简单：只需调用<code>pugRunProgram()</code>函数。向其传递<code>PUGProgram</code>指针、输出的<code>PUGBuffer</code>（必须是可写的），以及一个可选的<code>PUGRect</code>来指定范围。如果未指定范围，则将写入整个缓冲区。请注意，如果一个缓冲区当前正被用作核函数的输出，那么流不能绑定到该缓冲区。框架会自动释放在<code>pugRunProgram()</code>中被指定为输出缓冲区的所有已绑定流。</p>
 <p><strong>将数据传回CPU</strong>：要将GPU上的结果传回CPU，请调用<code>pugGetBufferData()</code>函数，并向其传递<code>PUGBuffer</code>指针。该函数返回一个指向C <code>float</code>类型数组的指针。从GPU读回数据可能导致GPU管线刷新，因此请谨慎使用此函数以避免影响应用性能。</p>
 <p><strong>并行归约</strong>：该框架为三种类型的简单并行归约提供支持。缓冲区可以沿行归约（归约为单列向量）、沿列归约（归约为单行向量）或同时沿行列归约（归约为单个值）。框架中用于这些操作的函数是<code>pugReduce1D()</code>和<code>pugReduce2D()</code>。</p>
-<h2>A7 补充细节（缩写）</h2>
+<h2>A7 补充细节</h2>
 <h3>31.5 一个简单示例</h3>
 <p><strong>示例介绍：反应扩散模型</strong>：作为一个基础但非平凡的GPGPU示例，我们使用一种称为化学反应扩散现象的模拟。反应扩散是模拟溶液中两种或多种反应物在经历化学反应和扩散过程时，其浓度如何随空间和时间演变的模型。我们使用的反应扩散模型被称为Grey-Scott模型【Pearson 1993, "Complex Patterns in a Simple System." <em>Science</em> 261, p. 189.】，仅涉及两种化学反应物。这个现象学模型不代表特定的真实化学反应；它作为一个研究一般反应扩散现象的简单模型。图31-3显示了Grey-Scott模型多次迭代的结果。</p>
 <figure class="image-figure">
@@ -215,7 +215,7 @@ void update_rd()
   pugRunProgram(rdProgram, rdBuffer, range, currentTarget);
   std::swap(currentSource, currentTarget);
 }</code></pre>
-<h2>A4 实验环境（总结）</h2>
+<h2>A4 实验环境</h2>
 <p>本文的示例部分旨在演示编程框架和方法，而非严格的性能评测，因此实验环境描述较为概括。</p>
 <ul>
 <li>
@@ -241,7 +241,7 @@ void update_rd()
 </ul>
 </li>
 </ul>
-<h2>A4 实验结果（总结）</h2>
+<h2>A4 实验结果</h2>
 <p>本文通过一个简单的反应扩散模拟示例（Grey-Scott模型）来展示其提出的GPGPU编程方法和<code>pug</code>框架的有效性。</p>
 <ul>
 <li>
@@ -258,7 +258,7 @@ void update_rd()
 <p><strong>分析结论</strong>：该示例证明，通过将计算网格映射到纹理，将计算步骤映射到片段程序，并利用渲染到纹理进行反馈，可以有效地在GPU上执行数据并行的网格计算。<code>pug</code>框架成功地抽象了底层的图形API细节，使得开发者可以更专注于计算逻辑本身。</p>
 </li>
 </ul>
-<h2>A5 结论（总结）</h2>
+<h2>A5 结论</h2>
 <p>您现在应该对如何将通用计算映射到GPU有了很好的理解。有了这些基础知识，您可以开始编写自己的GPGPU应用程序并学习更高级的概念。上一节介绍的简单GPU框架包含在本书的CD中。我们希望它能为您的程序提供一个有用的起点。</p>
 <h2>引用的参考文献</h2>
 <p>本文在特定段落引用了以下文献，以支撑其论点或提供进一步的阅读材料：</p>
