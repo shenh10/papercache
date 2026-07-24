@@ -1,0 +1,404 @@
+---
+added_date: '2026-07-24'
+author: shenh10
+categories:
+- mlsys
+- gpu
+comments: true
+date: '2026-03-01'
+layout: post
+mathjax: true
+tag: blog
+title: 'NVIDIA Vera Rubin POD: Seven Chips, Five Rack-Scale Systems, One AI Supercomputer'
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>NVIDIA Vera Rubin POD: Seven Chips, Five Rack-Scale Systems, One AI Supercomputer</h1>
+<p><strong>发表时间</strong>: 2026-03 · Blog post by Rohil Bhargava, Taylor Allison, Harry Petty (developer.nvidia.com)</p>
+<p><strong>原文</strong>: <a href="https://developer.nvidia.com/blog/nvidia-vera-rubin-pod-seven-chips-five-rack-scale-systems-one-ai-supercomputer/" rel="noopener" target="_blank">https://developer.nvidia.com/blog/nvidia-vera-rubin-pod-seven-chips-five-rack-scale-systems-one-ai-supercomputer/</a></p>
+<p><strong>文章标题</strong>: NVIDIA Vera Rubin POD: Seven Chips, Five Rack-Scale Systems, One AI Supercomputer<br/>
+<strong>作者/机构</strong>: Rohil Bhargava, Taylor Allison, Harry Petty (NVIDIA)</p>
+<h2>A1 主要贡献</h2>
+<p>本文介绍了NVIDIA Vera Rubin POD，这是一个专为代理式AI（agentic AI）时代设计的、由五个专用机架级系统组成的AI超级计算机平台。</p>
+<ul>
+<li>
+<p><strong>核心问题</strong>：现代代理式AI系统（如涉及规划、工具调用、代码执行、数据检索和多智能体协作的系统）产生了海量的推理令牌，极大地扩展了KV缓存，并需要基于CPU的沙盒环境来测试和验证结果。这给GPU、CPU、纵向扩展域（scale-up）、横向扩展网络（scale-out）和存储带来了低延迟、高吞吐量的严苛要求。</p>
+</li>
+<li>
+<p><strong>研究目标</strong>：为了满足这些需求，需要构建由专用机架级系统组成的集群，这些系统能够作为一个连贯的AI超级计算机协同工作，以提供高吞吐量、极低延迟、高能效和成本效益的基础设施。</p>
+</li>
+<li>
+<p><strong>创新点与主要贡献</strong>：</p>
+<ol>
+<li><strong>Vera Rubin POD平台</strong>：推出了一个集成的POD级AI平台，由五个不同的、专门构建的机架级系统组成，以应对代理式AI工作负载，包括高吞吐量计算、极低延迟推理、密集的CPU沙盒和大规模上下文内存存储。</li>
+<li><strong>极致协同设计</strong>：通过对计算、网络和存储三大领域的七种芯片进行极致的协同设计，构建了一个包含40个机架、1.2千万亿个晶体管、近20,000个NVIDIA裸晶（die）、1,152个NVIDIA Rubin GPU的庞大系统，可提供60 exaflops的算力和10 PB/s的总纵向扩展带宽。</li>
+<li><strong>第三代MGX架构</strong>：整个POD基于第三代NVIDIA MGX机架架构构建。该架构具有模块化、无电缆、无软管的设计，支持动态电源导向、机架级储能和智能功率平滑等创新功能，并通过45°C温水液冷技术实现了高可靠性、可维护性和能效。</li>
+<li>
+<p><strong>五个专用机架系统</strong>：</p>
+<ul>
+<li><strong>NVIDIA Vera Rubin NVL72</strong>: 作为核心计算引擎，支持AI的四种扩展定律，针对混合专家模型（MoE）和推理的上下文阶段进行了优化。</li>
+<li><strong>NVIDIA Groq 3 LPX</strong>: 低延迟推理加速器机架，与NVL72配合，解决高交互速度和吞吐量之间的矛盾。</li>
+<li><strong>NVIDIA Vera CPU机架</strong>: 提供大规模、高能效的CPU容量，用于代理式AI和强化学习中的沙盒环境。</li>
+<li><strong>NVIDIA BlueField-4 STX</strong>: AI原生存储机架，通过NVIDIA CMX上下文内存存储平台，将GPU上下文容量扩展到整个POD，并加速KV缓存的卸载。</li>
+<li><strong>NVIDIA Spectrum-6 SPX</strong>: 网络机架，采用硅光子技术，为整个POD提供低延迟、高吞吐量的连接。</li>
+</ul>
+</li>
+<li>
+<p><strong>开放生态系统</strong>：MGX是一个开放标准，已贡献给开放计算项目（OCP），并拥有超过80个全球合作伙伴组成的生态系统，从而加速机架级和POD级AI基础设施的部署和采用。</p>
+</li>
+</ol>
+</li>
+</ul>
+<p><img alt="一张展示构成NVIDIA Vera Rubin POD的五个机架级系统的图片。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/five-rack-scale-system-nvidia-vera-rubin-1.webp"/><br/>
+<em>图1. NVIDIA Vera Rubin POD包括五个机架级系统、一个AI超级计算机、一个NVIDIA MGX机架架构和生态系统</em></p>
+<h2>A3 背景知识</h2>
+<p><strong>代理式AI驱动的令牌消耗</strong>。人工智能是令牌驱动的，无论是提示、推理步骤还是智能体交互都会生成令牌。过去一年里，令牌消耗量增长了数倍，目前已超过每年10千万亿个令牌。虽然大部分令牌由人类与AI交互产生，但新时代将是AI与AI交互产生大多数令牌。</p>
+<p><strong>现代代理式系统的基础设施需求</strong>。现代代理式系统能够规划任务、调用工具、执行代码、检索数据，并在包含众多【AI智能体（AI agents），<a href="https://www.nvidia.com/en-us/glossary/ai-agents/" rel="noopener noreferrer" target="_blank">https://www.nvidia.com/en-us/glossary/ai-agents/</a>】的持续多步工作流中进行协调。这些交互产生了大量的推理令牌，扩展了KV缓存，并且需要基于CPU的沙盒环境来测试和验证由加速计算系统生成的结果。这对GPU、CPU、纵向扩展域、横向扩展网络和存储都提出了低延迟、高吞-吐量的要求 。</p>
+<p><strong>连贯的AI超级计算机需求</strong>。为这些现代代理式系统提供有用的智能，需要由专用机架级系统组成的集群，这些系统能够作为一个连贯的AI超级计算机协同工作。本文介绍了【NVIDIA Vera Rubin POD，<a href="https://nvidianews.nvidia.com/news/nvidia-vera-rubin-platform" rel="noopener noreferrer" target="_blank">https://nvidianews.nvidia.com/news/nvidia-vera-rubin-platform</a>】，这是一套基于第三代 【NVIDIA MGX，<a href="https://www.nvidia.com/en-us/data-center/products/mgx/" rel="noopener noreferrer" target="_blank">https://www.nvidia.com/en-us/data-center/products/mgx/</a>】机架架构构建的、专为代理式AI时代设计的五个专用机架级系统 。</p>
+<h2>A2 方法细节</h2>
+<h3>推出NVIDIA Vera Rubin POD</h3>
+<p><strong>极致协同设计下的POD级AI平台</strong>。通过对计算、网络和存储领域的七种芯片进行极致协同设计，NVIDIA Vera Rubin推出了迄今最复杂的POD级AI平台。该平台拥有40个机架、1.2千万亿个晶体管、近20,000个NVIDIA裸晶、1,152个【NVIDIA Rubin，<a href="https://www.nvidia.com/en-us/data-center/technologies/rubin/" rel="noopener noreferrer" target="_blank">https://www.nvidia.com/en-us/data-center/technologies/rubin/</a>】GPU 、60 exaflops的算力以及10 PB/s的总纵向扩展带宽。</p>
+<p><strong>五个专用机架系统</strong>。Vera Rubin POD引入了五个全新的、专为代理式AI工作负载设计的机架级系统，这些工作负载要求高吞吐量、极低延迟推理、密集的CPU沙盒以及海量的上下文内存存储。这些机架共同构成一个统一的系统，将为全球能效和成本效益最高的数据中心提供动力。</p>
+<p><img alt="一张展示构成NVIDIA Vera Rubin POD的五个机架级系统的图片。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/five-rack-scale-system-nvidia-vera-rubin-1.webp"/><br/>
+<em>图1. NVIDIA Vera Rubin POD包括五个机架级系统、一个AI超级计算机、一个NVIDIA MGX机架架构和生态系统</em></p>
+<p><strong>基于第三代MGX机架的生态系统支持</strong>。POD中的每种芯片都通过第三代NVIDIA MGX机架进行扩展，并得到一个由80多个合作伙伴组成的生态系统的支持，这些合作伙伴拥有将大规模AI系统推向市场的全球供应链经验。由于每个NVIDIA MGX机架共享相同的电力、冷却和机械外形，这使得快速部署和无缝过渡成为可能。</p>
+<p><strong>两种MGX机架类型</strong>。存在两种类型的MGX机架，它们都采用铜质背板（copper spines）设计，以实现高性能、高弹性和高能效。MGX NVL机架通过【NVIDIA NVLink，<a href="https://www.nvidia.com/en-us/data-center/nvlink/" rel="noopener noreferrer" target="_blank">https://www.nvidia.com/en-us/data-center/nvlink/</a>】连接，而新 的NVIDIA MGX ETL机架则通过两种背板之一连接：【NVIDIA Spectrum-X Ethernet，<a href="https://www.nvidia.com/en-us/networking/spectrumx/" rel="noopener noreferrer" target="_blank">https://www.nvidia.com/en-us/networking/spectrumx/</a>】 或NVIDIA Groq 3 LPU直接芯片到芯片的链接。</p>
+<h4>NVIDIA Vera Rubin NVL72：支持四种扩展定律的平台</h4>
+<p><strong>核心计算引擎</strong>。【NVIDIA Vera Rubin NVL72，<a href="https://www.nvidia.com/en-us/data-center/vera-rubin-nvl72/" rel="noopener noreferrer" target="_blank">https://www.nvidia.com/en-us/data-center/vera-rubin-nvl72/</a>】是最新【AI工厂，https://www.nvidia.com/en-us/solutions/ai-factories/】的核心机架级计算引擎。它集成了72 个NVIDIA Rubin GPU和36个NVIDIA Vera CPU，通过一个巨大的NVLink铜质背板连接，使其作为一个巨型GPU运行。NVIDIA Vera Rubin NVL72专为AI的四种扩展定律设计：预训练、后训练、测试时扩展和代理式扩展。它可以针对复杂的混合专家模型（MoE）路由以及AI推理中计算密集型的上下文阶段进行优化。与【NVIDIA Blackwell，<a href="https://www.nvidia.com/en-us/data-center/technologies/blackwell-architecture/" rel="noopener noreferrer" target="_blank">https://www.nvidia.com/en-us/data-center/technologies/blackwell-architecture/</a>】相比，它提供了高达4倍的训练性能提升、高达10倍的每瓦推理性能提升，并将令牌成本降低到十分之一 。</p>
+<h4>NVIDIA Groq 3 LPX：推理加速器机架</h4>
+<p><strong>低延迟推理解决方案</strong>。NVIDIA Groq 3 LPX与NVIDIA Vera Rubin平台协同设计，以满足代理式AI的海量上下文和低延迟需求，每个机架配备256个语言处理单元（LPU）。它与Vera Rubin NVL72配对，消除了高交互速度与高吞吐量之间的权衡。通过将高带宽、仅使用SRAM的LPU与具有大容量HBM的Rubin GPU融合，该系统在长上下文长度下实现了低延迟和高吞吐量，从而在不牺牲系统吞吐量的情况下，极大地增强了万亿参数模型的用户交互性。与Blackwell相比，Vera Rubin NVL72加上LPX可为万亿参数模型提供高达35倍的令牌输出和高达10倍的收入机会。更多信息请参见【NVIDIA Groq 3 LPX内部揭秘（Inside NVIDIA Groq 3 LPX），<a href="https://developer.nvidia.com/blog/inside-nvidia-groq-3-lpx-the-low-latency-inference-accelerator-for-the-nvidia-vera-rubin-platform" rel="noopener noreferrer" target="_blank">https://developer.nvidia.com/blog/inside-nvidia-groq-3-lpx-the-low-latency-inference-accelerator-for-the-nvidia-vera-rubin-platform</a>】 。</p>
+<h4>NVIDIA Vera CPU机架：大规模代理式AI和强化学习</h4>
+<p><strong>高密度CPU计算</strong>。【NVIDIA Vera CPU，<a href="https://www.nvidia.com/en-us/data-center/vera-cpu/" rel="noopener noreferrer" target="_blank">https://www.nvidia.com/en-us/data-center/vera-cpu/</a>】机架在一个密集的液冷机架中集成了多达256 个NVIDIA Vera CPU，以提供可扩展、高能效的计算容量。单个机架可以支持超过22,500个并发的【强化学习（RL），<a href="https://www.nvidia.com/en-us/glossary/reinforcement-learning/" rel="noopener noreferrer" target="_blank">https://www.nvidia.com/en-us/glossary/reinforcement-learning/</a>】或智能体沙盒环境，从而最大化用于测试、执行和验证来 自Vera Rubin NVL72和LPX机架结果的环境数量。【Vera CPU机架，<a href="https://nvidia.com/en-us/data-center/products/vera-rack/" rel="noopener noreferrer" target="_blank">https://nvidia.com/en-us/data-center/products/vera-rack/</a>】为大规模代理式AI和强化学习提供了基础，其效率是传统机架级CPU的两倍，速度快50%。更多关 于Vera CPU如何为AI工厂提供高性能带宽和效率的信息，请参见【NVIDIA Vera CPU为AI工厂提供高性能带宽和效率，<a href="https://developer.nvidia.com/blog/nvidia-vera-cpu-delivers-high-performance-bandwidth-and-efficiency-for-ai-factories" rel="noopener noreferrer" target="_blank">https://developer.nvidia.com/blog/nvidia-vera-cpu-delivers-high-performance-bandwidth-and-efficiency-for-ai-factories</a>】 。</p>
+<h4>NVIDIA BlueField-4 STX：AI原生存储</h4>
+<p><strong>AI原生存储基础设施</strong>。【NVIDIA BlueField-4 STX，<a href="https://www.nvidia.com/en-us/data-center/ai-storage/stx/" rel="noopener noreferrer" target="_blank">https://www.nvidia.com/en-us/data-center/ai-storage/stx/</a>】机架采 用NVIDIA BlueField-4处理器构建，该处理器结合了Vera CPU和ConnectX-9 SuperNIC，并通过Spectrum-X以太网进行横向扩展。</p>
+<p><strong>CMX上下文内存存储平台</strong>。该机架托管了【NVIDIA CMX上下文内存存储平台，<a href="https://www.nvidia.com/en-us/data-center/ai-storage/cmx/" rel="noopener noreferrer" target="_blank">https://www.nvidia.com/en-us/data-center/ai-storage/cmx/</a>】，这是一种新型的AI原生存储基础设施，可将GPU上下文容量无缝扩展到整个POD，并通过将KV缓存卸载到专用的高带宽存储层来加速推理。CMX经过优化，用于存储和提供海量的上下文内存（KV缓存），将临时的推理上下文视为一种AI原生的共享数据类型，可以在不同的对话轮次、会话和智能体之间重用。与传统存储方法相比，这带来了高达5倍的每秒令牌数提升和高达5倍的能效提升 。</p>
+<h4>NVIDIA Spectrum-6 SPX：网络机架</h4>
+<p><strong>POD级连接</strong>。将整个POD连接成一个单一超级计算机的是【NVIDIA Spectrum-6 SPX，<a href="https://www.nvidia.com/en-us/networking/spectrumx/" rel="noopener noreferrer" target="_blank">https://www.nvidia.com/en-us/networking/spectrumx/</a>】网络机架 。Spectrum-6 SPX网络机架旨在加速AI工厂内的东西向和南北向流量。它可配置Spectrum-X以太网或【NVIDIA Quantum-X800 InfiniBand，<a href="https://www.nvidia.com/en-us/networking/products/infiniband/quantum-x800/" rel="noopener noreferrer" target="_blank">https://www.nvidia.com/en-us/networking/products/infiniband/quantum-x800/</a>】交换机，以大规模提供低延迟、高吞吐量的机架间连接 。</p>
+<p><strong>硅光子集成</strong>。Spectrum-6 SPX机架现在包含了102.4 Tb/s的Spectrum-6交换机，该交换机在单芯片和多芯片产品中集成了512个通道和200 Gb/s的共封装光学器件（CPO）。这种硅光子集成取代了可插拔收发器，提供了最高的能效和弹性、低延迟和抖动，以及近乎完美的有效带宽，以确保跨计算和存储环境的AI工作负载保持完美同步。</p>
+<p><strong>协同设计优势</strong>。通过将这些专用机架协同设计成一个整体，Vera Rubin POD能够加速代理式AI工作负载的每个组成部分。这一切都始于构成POD中每个机架基础的、流线型的NVIDIA MGX机架设计。</p>
+<h3>第三代NVIDIA MGX机架级架构</h3>
+<p><strong>生产级AI机架的关键要求</strong>。生产级的AI机架必须在多个关键领域表现出色：快速量产能力、经过验证的大规模性能、深度的软硬件协同设计、高弹性和高能效、无缝的数据中心部署和物流、对未来架构的准备等。</p>
+<p><strong>第三代MGX架构的工程突破</strong>。第三代NVIDIA MGX机架级架构凭借其在机械、电力和冷却设计中集成的工程突破，在所有这些类别中设立了标准。</p>
+<h4>实现弹性和可扩展性</h4>
+<p><strong>模块化与可维护性</strong>。NVIDIA MGX机架通过其单宽（single-wide）设计优先采用基于PCB的连接。它实现了完全模块化、无电缆、无软管、无风扇的计算和NVLink交换机托盘，从而最大限度地提高了可靠性、可扩展性和可维护性。19英寸宽的单机架也简化了运输和物流，加速了在AI工厂中的部署。</p>
+<p><img alt="NVIDIA MGX机架背板的图片，展示了四个模块化、预集成、预验证的铜缆盒。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/nvidia-mgx-rack-spine-1.webp"/><br/>
+<em>图2. NVIDIA MGX机架背板容纳了数千根电缆，可配置用于MGX NVL机架的NVLink，以及用于MGX ETL机架的Spectrum-X以太网或直接的Groq 3 LPU芯片到芯片链接</em></p>
+<p><strong>模块化背板</strong>。该机架的背板采用高度模块化的设计，由多达四个预集成和预验证的铜缆盒组成，将每个托盘连接成一个整体。该背板容纳了数千根电缆，并且MGX NVL和MGX ETL机架共享相同的机械外形。</p>
+<h4>确保从芯片到电网的峰值能效</h4>
+<p><strong>动态功率导向</strong>。在组件层面，NVIDIA MGX机架具备动态功率导向功能，系统会将电力分配给最需要的组件。该功能可以在CPU、GPU和NVLink交换机托盘之间转移电力，以确保机架中的组件以峰值能效运行，从而提高每瓦性能。</p>
+<p><img alt="图表显示了功率平滑如何平抑大规模功率瞬变。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/power-smoothing-nvidia-mgx-racks.webp"/><br/>
+<em>图3. NVIDIA MGX机架采用智能功率平滑技术，确保机架中的组件以峰值能效运行</em></p>
+<p><strong>应对功率波动</strong>。AI训练和推理工作负载会产生巨大的负载波动。如果管理不当，这些波动会对电网、数据中心电力基础设施和IT设备造成巨大压力。</p>
+<p><strong>机架级储能</strong>。为了防止功率波动，MGX机架配备了机架级储能装置，通过电容器缓冲功率瞬变。当工作负载突然需要大量电力时，电容器会提供额外的电力，而电网的功耗保持平稳或缓慢上升。当工作负载突然停止时，电容器会充电，而电网功耗保持平稳或缓慢下降。</p>
+<p><strong>智能功率平滑</strong>。NVIDIA Vera Rubin NVL72现在引入了智能功率平滑技术。与前几代相比，它的机架级储能容量增加了6倍（每个GPU 400焦耳），并引入了一个新的闭环系统，使GPU能够持续监控电容器的充电状态，从而更有效地平滑功率曲线。这实现了更小的每分钟交流功率变化，并将峰值电流需求降低高达25%，以防止亚秒级的大规模功率瞬变。</p>
+<p><img alt="比较两种电源分配策略的图表，使用堆叠条形图展示了多个服务器机架。第一行（“静态Max-P”）显示了固定的功率分配，存在闲置容量，并有一个机架标记为“无功率预算”。第二行（“动态Max-Q”）显示了回收或重新分配的电力，为机架提供了更多可用容量，并增加了一个“额外机架”，显示有110千瓦可用。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/dynamic-max-q-power-provisioning-gpu-capacity.webp"/><br/>
+<em>图4. 动态Max-Q电源分配可以释放闲置电力并解锁更多GPU容量</em></p>
+<p><strong>动态Max-Q电源分配</strong>。在设施层面，以静态Max-P（最大功率）配置机架会闲置本可用于生成令牌的电力容量。这种方法假设工作负载是同质的，总是需要峰值功率，而实际上AI工厂运行着具有不同功率需求的混合工作负载。通过在较低的动态Max-Q（最大效率）水平上配置MGX机架，数据中心可以根据工作负载动态地为每个机架分配适量的电力，从而最大化AI数据中心的吞吐量。这释放了闲置的电力，在相同的功率预算下，结合45°C液冷技术，可解锁多达30%的GPU容量，并提升每瓦性能。</p>
+<h4>为计算解锁更大的能源预算</h4>
+<p><strong>45°C温水液冷</strong>。所有MGX机架都通用设计为在45°C（113°F）的温水入口温度下运行，因此已经为液冷设计的数据中心可以保证无缝过渡，无需重新设计冷却基础设施。图5展示了提供41°C（105.8°F）水给冷却剂分配单元（CDU）的基础设施布局示意图，CDU再将45°C（113°F）的冷却剂供应给AI机架。</p>
+<p><img alt="一幅展示全自然冷却模式的插图。来自外部干式冷却器的水通过热交换器冷却设施循环水路。隔离阀绕过冷水机组，仅运行水泵和风扇，从而显著降低功耗。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/nvidia-mgx-rack-energy-cost-effecient-free-cooling.webp"/><br/>
+<em>图5. 使用45°C最高入口温度冷却NVIDIA MGX机架时的高能效和低成本自然冷却方案</em></p>
+<p><strong>提升能源效率</strong>。在45°C下运行，使得许多气候条件下的数据中心可以使用环境空气和闭环干式冷却器进行冷却，减少了对压缩机的需求，从而降低了PUE（电源使用效率），并为计算解锁了更大的能源预算。较低的35°C入口温度要求数据中心为冷却转移大量设施电力或水，而较高的入口温度则最大化了直接转化为令牌的电网功率。这带来了显著的数据中心节能效果——足以在相同的功率预算下额外分配多达10%的Vera Rubin NVL72机架，以生成更多令牌。</p>
+<p><strong>液冷基础设施</strong>。MGX机架可以实现100%液冷，并利用与前几代相同的数据中心冷却基础设施。第三代MGX机架配备了新的内部托盘歧管、机架UQD08歧管和支持高达5,000A电流的液冷汇流条。机架使用的冷却剂将取决于客户和数据中心，但许多将继续使用去离子水或基于丙二醇的液体（PG25），这种液体在闭环系统中可持续使用长达10年，且液体维护需求极少。</p>
+<h4>开放标准</h4>
+<p><strong>开放与生态系统</strong>。支撑这些特性的是一个开放、标准化的MGX机架架构。首个大规模生产的机架级系统是2024年的NVIDIA Blackwell。【NVIDIA已将该设计贡献给开放计算项目（OCP），<a href="https://developer.nvidia.com/blog/nvidia-contributes-nvidia-gb200-nvl72-designs-to-open-compute-project/" rel="noopener noreferrer" target="_blank">https://developer.nvidia.com/blog/nvidia-contributes-nvidia-gb200-nvl72-designs-to-open-compute-project/</a>】，这加强了对开源技术的承诺，并使整个生态系统能够快速创新和加速采用。NVIDIA已建立了一个由80多个全球合作伙伴组成的生态系统，创建了一个高效、全球多元化的供应链，这些合作伙伴在将机架级AI系统推向市场方面经验丰富 。</p>
+<h3>NVIDIA MGX NVL机架</h3>
+<p><strong>性能与成本优势</strong>。正如独立的【SemiAnalysis InferenceMax基准测试，<a href="https://blogs.nvidia.com/blog/data-blackwell-ultra-performance-lower-cost-agentic-ai/" rel="noopener noreferrer" target="_blank">https://blogs.nvidia.com/blog/data-blackwell-ultra-performance-lower-cost-agentic-ai/</a>】所展示的，NVIDIA的机架级系统 （NVIDIA GB300 NVL72 vs NVIDIA H200）提供了50倍的每瓦性能和35倍的每令牌成本降低，这直接转化为更高的收入和更好的运营利润。</p>
+<p><strong>产品迭代</strong>。2024年，NVIDIA交付了首批NVIDIA GB200 NVL72机架级系统。2025年，交付了NVIDIA GB300 NVL72。现在，NVIDIA Vera Rubin NVL72已全面投产，并计划于2026年下半年发货。</p>
+<h4>NVIDIA Vera Rubin NVL72的流线型设计</h4>
+<p><strong>工程奇迹</strong>。【NVIDIA Vera Rubin NVL72，<a href="https://www.nvidia.com/en-us/data-center/vera-rubin-nvl72/" rel="noopener noreferrer" target="_blank">https://www.nvidia.com/en-us/data-center/vera-rubin-nvl72/</a>】是一项工程奇迹，旨在无缝地融入现有的数据中心空间。它将拥有比 【NVIDIA GB200 NVL72，<a href="https://www.nvidia.com/en-us/data-center/gb200-nvl72/" rel="noopener noreferrer" target="_blank">https://www.nvidia.com/en-us/data-center/gb200-nvl72/</a>】多近两倍的晶体管，同时通过极致的协同设计提供10倍的每瓦性能。该机架集成了72 个NVIDIA Rubin GPU、36个NVIDIA Vera CPU、ConnectX-9 SuperNIC和BlueField-4 DPU，分布在18个计算托盘中，同时还有9个NVLink交换机托盘。总计，该机架容纳了130万个独立组件，近1300个芯片，全部封装在一个重约4000磅（约一辆皮卡车的重量）的单宽第三代NVIDIA MGX机架中。</p>
+<p><img alt="展示完整的Vera Rubin NVL72机架的图片，包含18个计算托盘和9个NVLink交换机托盘。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/nvidia-vera-rubin-nvl72-rack-1.webp"/><br/>
+<em>图6. NVIDIA Vera Rubin NVL72机架</em></p>
+<h5>计算和NVLink交换机托盘</h5>
+<p><strong>第六代NVLink</strong>。使这72个GPU能够作为一个统一引擎运行的是第六代NVLink。它为每个GPU提供3.6 TB/s的带宽，每个机架提供260 TB/s的纵向扩展带宽——这个数据量超过了全球互联网的总带宽。这种高速数据传输发生在机架背部的NVLink背板中，该背板包含四个模块化的预集成电缆盒，容纳了5000根总长度超过两英里的铜缆。</p>
+<p><strong>重新设计的计算托盘</strong>。Vera Rubin NVL72内部的计算托盘相比NVIDIA Blackwell进行了完全重新设计。它采用坚固的PCB中板设计，以适应单宽机架，并实现了无电缆、无软管、无风扇的设计。这种简化将计算托盘的组装时间从近两个小时缩短到仅五分钟——组装和维护速度提高了20倍。</p>
+<p><strong>Vera Rubin Superchip</strong>。每个计算托盘配备两个【NVIDIA Vera Rubin superchip，<a href="https://developer.nvidia.com/blog/inside-the-nvidia-rubin-platform-six-new-chips-one-ai-supercomputer/#nvidia_vera_rubin_superchip%C2%A0" rel="noopener noreferrer" target="_blank">https://developer.nvidia.com/blog/inside-the-nvidia-rubin-platform-six-new-chips-one-ai-supercomputer/#nvidia_vera_rubin_superchip%C2%A0</a>】，每个superchip包含17,000个组件——大约是现代智能手机组件数量的五倍。这些superchip通过PCB中板连接到前部的模块化托架，托架中容纳了八 个ConnectX-9 SuperNIC和一个BlueField-4 DPU。</p>
+<p><img alt="NVLink交换机托盘的图片，展示了四个NVLink交换机芯片。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/nvidia-vera-rubin-nvlink-switch-tray-1.webp"/><br/>
+<em>图7. NVIDIA Vera Rubin NVLink交换机托盘</em></p>
+<p><strong>机架级弹性</strong>。Vera Rubin NVL72引入了新的机架级弹性功能，旨在最大化大型AI集群的正常运行时间和有效吞吐量（goodput）。NVLink交换机托盘支持操作弹性功能，允许管理员将交换机置于维护模式并进行更换，而机架仍可继续运行。该架构还支持在多个交换机托盘不可用的情况下继续运行，从而最大限度地减少维护期间的中断。</p>
+<p><strong>芯片级弹性</strong>。在芯片层面，NVIDIA Rubin GPU持续运行无中断的健康检查，NVIDIA Vera CPU则具备系统内测试和SOCAMM内存功能，以实现更快的可维护性。这些从芯片到机架的创新共同降低了运营开销，并建立在Blackwell集群已有的弹性改进之上。</p>
+<h4>NVIDIA Vera Rubin Ultra NVL576</h4>
+<p><strong>扩展至576-GPU域</strong>。NVIDIA Vera Rubin Ultra引入了一种新的两层全互联（all-to-all）NVLink拓扑，使开发者能够将规模扩展到576个GPU。Vera Rubin Ultra NVL576将结合八个独立的MGX NVL机架，每个机架配备72个Rubin Ultra GPU，全部通过铜缆和直接光纤连接，构成一个单一的576-GPU NVLink域。它将使用相同的MGX机架级生态系统构建，以实现最快的生产时间。</p>
+<p><strong>Polyphe原型机</strong>。为了展示这种大规模多机架NVLink拓扑，NVIDIA内部构建了名为Polyphe的全功能原型机。这是一个基于GB200的多机架NVL576纵向扩展架构原型。</p>
+<p><img alt="一张展示八个机架连接成一个巨大NVLink域的图片。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/eight-mgx-nvl-racks.webp"/><br/>
+<em>图8. NVIDIA Polyphe原型机，一个基于GB200的全功能多机架NVL576纵向扩展系统</em></p>
+<h4>NVIDIA Kyber NVL1152：下一代</h4>
+<p><strong>下一代MGX NVL机架设计</strong>。为了超越NVL576的规模，将引入一种新的MGX机架，名为NVIDIA Kyber。NVIDIA Kyber是下一代MGX NVL机架设计，它将每个机架的NVLink域加倍，以容纳144个GPU。</p>
+<p><img alt="下一代NVL1152机架架构，将八个Kyber机架连接在一个单一的NVLink域中。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/nvidia-kyber-nvl-1152-prototype-2.webp"/><br/>
+<em>图9. NVIDIA Kyber NVL1152</em></p>
+<p><strong>扩展至1152-GPU</strong>。NVIDIA Kyber将使用类似的直接光纤互连技术进行机架间扩展，形成一个巨大的全互联NVL1152超级计算机。Kyber为使用NVIDIA Feynman的下一代极致纵向扩展AI计算奠定了基础。Kyber将首先与Vera Rubin Ultra一起作为独立的NVL144系统推出，为客户提供三种Vera Rubin Ultra NVLink纵向扩展域的选择：NVL72、NVL144和旗舰级的NVL576。</p>
+<h3>NVIDIA MGX ETL机架</h3>
+<p><strong>支持多样化工作负载</strong>。虽然NVIDIA MGX NVL机架提供了大规模的纵向扩展计算域，但代理式AI工作负载还需要高度专业化的节点，用于极低延迟推理、CPU沙盒和加速KV缓存的上下文内存。为了支持这些多样化的需求，Vera Rubin引入了MGX ETL机架架构，这是一种新的、完全可配置的MGX机架，设计有Spectrum-X以太网背板或直接芯片到芯片背板，并利用与MGX NVL机架相同的机架级生态系统。</p>
+<p><img alt="MGX NVL和MGX ETL机架的并排图片，展示了MGX生态系统支持的共享组件。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/nvidia-mgx-etl-rack-slace-systems.webp"/><br/>
+<em>图10. NVIDIA MGX ETL机架级系统增加了对Spectrum-X以太网的支持，同时利用了相同的MGX机架基础设施，包括容纳铜质背板的电缆盒</em></p>
+<p><strong>共享基础设施</strong>。MGX ETL与MGX NVL机架共享相同的外形和物理基础设施，并被设计在相同的机械、电力和冷却范围内运行。两种机架将共享由经验丰富的MGX生态系统构建的关键机架组件：机架、机箱、托盘、电缆盒、液冷歧管、快速断开接头、汇流条（标准和液冷）、支撑支架、侧轨、电源架、防漏盘、托盘把手等。</p>
+<p><strong>可配置背板</strong>。MGX ETL将使用预集成和预验证的铜缆盒，配备Spectrum-X以太网背板或直接芯片到芯片背板。MGX ETL将利用已建立的MGX生态系统和供应链，这些供应链在多年来大批量构建该机架架构方面经验丰富。</p>
+<h4>NVIDIA Spectrum-X以太网背板</h4>
+<p><strong>ETL机架的基础</strong>。带有Spectrum-X以太网背板的MGX ETL将成为Vera Rubin POD中Vera CPU机架和BlueField-4 STX存储机架的基础。该机架高度可配置，还可以容纳多达256个Rubin GPU（HGX Rubin NVL8系统）、XPU等。</p>
+<p><img alt="1U MGX ETL交换机托盘的图片。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/1u-mgx-etl-switch-tray.webp"/><br/>
+<em>图11. 1U MGX ETL交换机托盘为MGX ETL背板提供Spectrum-X以太网连接</em></p>
+<p><strong>ETL交换机托盘设计</strong>。在这种设计中，1U的MGX ETL交换机托盘（基于Spectrum-6）位于机架中央。后向端口连接到铜质背板，而32个前向OSFP笼则为与POD其余部分的光学收发器连接提供接口。</p>
+<p><strong>多平面拓扑</strong>。MGX ETL利用Spectrum-X多平面（Multiplane）拓扑，将200 Gb/s的通道分散到多个交换机上，在机架内节点之间实现完全的全互联，同时保持单一网络层级。预集成的铜质背板提供了弹性、高能效的连接（使得ETL机架之间只需单层光纤即可连接），并将专用的Spectrum-X以太网扩展到整个256芯片机架，具有零抖动、噪声隔离和负载均衡的特性。</p>
+<h4>直接芯片到芯片背板</h4>
+<p><strong>为极低延迟推理设计</strong>。LPX机架将256个LPU连接成一个整体，专为极低延迟推理而设计。它包含32个计算托盘，每个托盘有8个LPU，通过一个直接芯片到芯片的背板连接。该背板由两个铜缆盒组成，通过数千对铜缆连接创建了一个复杂的点对点拓扑。这些电缆构成了机架背部的直接芯片到芯片背板，其电缆盒的机械外形与其他MGX机架相同。这种大规模互连结构使整个256-LPU机架能够作为一个单一的快速推理引擎，与Vera Rubin NVL72一同部署。</p>
+<p><strong>跨机架扩展</strong>。当在数据中心部署中扩展到多个LPX机架时，直接芯片到芯片的链接在机架间得以保持，使多个LPX机架能够作为一个单一的、速度极快的推理引擎运行。</p>
+<h2>A7 补充细节</h2>
+<h3>NVIDIA Vera Rubin DSX AI工厂平台</h3>
+<p><strong>从芯片到电网的AI基础设施蓝图</strong>。NVIDIA Vera Rubin DSX是AI工厂平台，它为从芯片到电网的协同设计AI基础设施提供了蓝图和参考设计。该平台旨在最大化电网功率到令牌的转换效率、有效吞吐量（goodput），并加速首次投产的时间。</p>
+<p><img alt="展示Vera Rubin DSX参考设计、Omniverse DSX蓝图和NVIDIA DSX库的图表。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/nvidia-vera-rubin-dsx-reference-design.webp"/><br/>
+<em>图12. NVIDIA Vera Rubin DSX的支柱，一个用于AI基础设施建设的开放生态系统</em></p>
+<p><strong>统一架构</strong>。NVIDIA Vera Rubin DSX将芯片、系统、软件库、API以及全球合作伙伴生态系统统一到一个单一架构中，该架构紧密集成了整个AI工厂的计算、网络、存储、电力、冷却和设施控制。这使得生态系统合作伙伴能够快速设计、部署和扩展千兆瓦级的AI工厂，并通过DSX平台端到端内置的弹性和能效，实现每瓦最大的令牌吞吐量和更高的正常运行时间。</p>
+<h2>A4 实验环境</h2>
+<ul>
+<li><strong>模型架构</strong>：设计用于支持万亿参数级别的大型语言模型，特别是采用混合专家模型（MoE）架构的模型。</li>
+<li><strong>数据集</strong>：未提及具体数据集，但系统设计用于处理代理式AI工作负载，包括规划、工具调用、代码执行、数据检索和强化学习（RL）等任务。</li>
+<li>
+<p><strong>硬件配置</strong>：</p>
+<ul>
+<li><strong>平台</strong>: NVIDIA Vera Rubin POD，包含40个机架。</li>
+<li><strong>GPU</strong>: 1,152个NVIDIA Rubin GPU。旗舰配置为Vera Rubin Ultra NVL576（576个GPU）和下一代Kyber NVL1152（1152个GPU）。</li>
+<li><strong>CPU</strong>: NVIDIA Vera CPU，Vera CPU机架中可集成多达256个。</li>
+<li><strong>专用加速器</strong>: NVIDIA Groq 3 LPX机架，每个机架含256个语言处理单元（LPU）。</li>
+<li>
+<p><strong>网络</strong>:</p>
+<ul>
+<li><strong>Scale-Up</strong>: 第六代NVLink，每个GPU带宽3.6 TB/s，每个NVL72机架总带宽260 TB/s。</li>
+<li><strong>Scale-Out</strong>: NVIDIA Spectrum-X以太网，采用102.4 Tb/s的Spectrum-6交换机，集成200 Gb/s共封装光学器件（CPO）。也支持NVIDIA Quantum-X800 InfiniBand。</li>
+<li><strong>DPU/NIC</strong>: BlueField-4 DPU, ConnectX-9 SuperNIC。</li>
+</ul>
+</li>
+<li>
+<p><strong>存储</strong>: NVIDIA BlueField-4 STX机架，搭载NVIDIA CMX上下文内存存储平台。</p>
+</li>
+<li><strong>机架架构</strong>: 第三代NVIDIA MGX，支持NVL（NVLink）和ETL（以太网/直接连接）两种背板配置，采用45°C温水液冷。</li>
+</ul>
+</li>
+<li>
+<p><strong>软件配置</strong>:</p>
+<ul>
+<li><strong>平台软件</strong>: NVIDIA Vera Rubin DSX，一个包含软件库和API的AI工厂平台。</li>
+<li><strong>仿真与设计</strong>: NVIDIA Omniverse DSX Blueprint，用于AI工厂的数字孪生。</li>
+<li><strong>代码实现</strong>: 基于NVIDIA的软件栈，但未提供具体语言或库的细节。</li>
+</ul>
+</li>
+</ul>
+<h2>A4 实验结果</h2>
+<p>本文作为产品发布公告，主要通过与前代产品（NVIDIA Blackwell）和传统方案的对比来展示性能优势，而非传统的实验结果。</p>
+<ul>
+<li>
+<p><strong>Vera Rubin NVL72 vs. NVIDIA Blackwell</strong>:</p>
+<ul>
+<li><strong>训练性能</strong>: 提升高达4倍。</li>
+<li><strong>推理能效</strong>: 每瓦推理性能提升高达10倍。</li>
+<li><strong>令牌成本</strong>: 降低至Blackwell的十分之一。</li>
+</ul>
+</li>
+<li>
+<p><strong>Vera Rubin NVL72 + Groq 3 LPX vs. NVIDIA Blackwell</strong> (针对万亿参数模型):</p>
+<ul>
+<li><strong>令牌吞吐量</strong>: 提升高达35倍。</li>
+<li><strong>收入机会</strong>: 提升高达10倍。</li>
+</ul>
+</li>
+<li>
+<p><strong>Vera CPU机架 vs. 传统机架级CPU</strong> (用于强化学习等任务):</p>
+<ul>
+<li><strong>效率</strong>: 提升2倍。</li>
+<li><strong>速度</strong>: 提升50%。</li>
+</ul>
+</li>
+<li>
+<p><strong>NVIDIA CMX存储 vs. 传统存储方法</strong> (用于KV缓存):</p>
+<ul>
+<li><strong>每秒令牌数（TPS）</strong>: 提升高达5倍。</li>
+<li><strong>能效</strong>: 提升高达5倍。</li>
+</ul>
+</li>
+<li>
+<p><strong>MGX机架架构能效与部署效率</strong>:</p>
+<ul>
+<li><strong>智能功率平滑</strong>: 峰值电流需求降低高达25% (如图3所示)。</li>
+<li><strong>动态Max-Q电源分配</strong>: 在相同功率预算下，可解锁多达30%的额外GPU容量 (如图4所示)。</li>
+<li><strong>45°C温水液冷</strong>: 在相同功率预算下，可额外分配多达10%的Vera Rubin NVL72机架。</li>
+<li><strong>计算托盘组装</strong>: 速度提升20倍，时间从近2小时缩短至5分钟。</li>
+</ul>
+</li>
+<li>
+<p><strong>第三方基准测试参考</strong> (NVIDIA GB300 NVL72 vs. NVIDIA H200, 来源: SemiAnalysis InferenceMax):</p>
+<ul>
+<li><strong>每瓦性能</strong>: 提升50倍。</li>
+<li><strong>每令牌成本</strong>: 降低35倍。</li>
+</ul>
+</li>
+</ul>
+<h2>A5 结论</h2>
+<p>本文的结论指出，AI基础设施正在从分立的芯片、独立的服务器和机架级系统，迅速演变为协同设计的POD级超级计算机和AI工厂。现代代理式AI工作负载的兴起，正在推动行业转向专用的、集成了计算、网络和存储的单一、连贯的超级计算机。</p>
+<p>NVIDIA Vera Rubin POD正是为应对这一趋势而生。它通过将五个专用的机架级系统与第三代NVIDIA MGX机架的机械、电力和冷却创新相结合，统一了整个AI基础设施，提供了前所未有的可扩展性、弹性和能效。</p>
+<p>在AI工厂的宏观尺度上，NVIDIA Vera Rubin DSX参考设计和用于AI工厂数字孪生的NVIDIA Omniverse DSX蓝图，为构建和运营AI工厂提供了一个统一的框架。这些创新共同为代理式应用时代带来了性能、成本效率和能源节约方面的巨大飞跃。</p>
+<h2>A6 附录</h2>
+<p>本文档中没有附录部分。</p>
+<h2>参考文献</h2>
+<p>本文档为一篇博客文章，没有传统的参考文献列表，但文中包含了多个指向NVIDIA产品和技术页面的超链接，作为信息的补充来源。</p>
+<ol>
+<li>
+<p><strong>引用描述</strong>: AI智能体 (AI agents)</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://www.nvidia.com/en-us/glossary/ai-agents/</code></li>
+<li><strong>引用位置</strong>: A3 背景知识，第2段。原文描述为“...在包含众多AI智能体的持续多步工作流中进行协调。”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: NVIDIA Vera Rubin POD</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://nvidianews.nvidia.com/news/nvidia-vera-rubin-platform</code></li>
+<li><strong>引用位置</strong>: A3 背景知识，第3段。原文描述为“本文介绍了NVIDIA Vera Rubin POD...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: NVIDIA MGX</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://www.nvidia.com/en-us/data-center/products/mgx/</code></li>
+<li><strong>引用位置</strong>: A3 背景知识，第3段。原文描述为“...基于第三代NVIDIA MGX机架架构构建...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: NVIDIA Rubin</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://www.nvidia.com/en-us/data-center/technologies/rubin/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第1段。原文描述为“...1,152个NVIDIA Rubin GPU...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: NVIDIA NVLink</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://www.nvidia.com/en-us/data-center/nvlink/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第4段。原文描述为“MGX NVL机架通过NVIDIA NVLink连接...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: NVIDIA Spectrum-X Ethernet</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://www.nvidia.com/en-us/networking/spectrumx/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第4段。原文描述为“...通过NVIDIA Spectrum-X Ethernet...连接。”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: NVIDIA Vera Rubin NVL72</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://www.nvidia.com/en-us/data-center/vera-rubin-nvl72/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第5段。原文描述为“NVIDIA Vera Rubin NVL72是最新AI工厂的核心...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: AI工厂 (AI factory)</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://www.nvidia.com/en-us/solutions/ai-factories/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第5段。原文描述为“...最新AI工厂的核心机架级计算引擎。”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: NVIDIA Blackwell</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://www.nvidia.com/en-us/data-center/technologies/blackwell-architecture/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第5段。原文描述为“...相对NVIDIA Blackwell...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: Inside NVIDIA Groq 3 LPX</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://developer.nvidia.com/blog/inside-nvidia-groq-3-lpx-the-low-latency-inference-accelerator-for-the-nvidia-vera-rubin-platform</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第6段。原文描述为“要了解更多，请参见Inside NVIDIA Groq 3 LPX...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: NVIDIA Vera CPU</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://www.nvidia.com/en-us/data-center/vera-cpu/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第7段。原文描述为“NVIDIA Vera CPU机架在一个密集的液冷机架中集成了多达256个NVIDIA Vera CPU...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: 强化学习 (Reinforcement Learning)</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://www.nvidia.com/en-us/glossary/reinforcement-learning/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第7段。原文描述为“...可以支持超过22,500个并发的强化学习（RL）...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: Vera CPU机架</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://nvidia.com/en-us/data-center/products/vera-rack/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第7段。原文描述为“Vera CPU机架为大规模代理式AI和强化学习提供了基础...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: Vera CPU delivers high-performance...</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://developer.nvidia.com/blog/nvidia-vera-cpu-delivers-high-performance-bandwidth-and-efficiency-for-ai-factories</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第7段。原文描述为“了解更多关于Vera CPU如何为AI工厂提供高性能带宽和效率的信息...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: NVIDIA BlueField-4 STX</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://www.nvidia.com/en-us/data-center/ai-storage/stx/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第8段。原文描述为“NVIDIA BlueField-4 STX机架采用NVIDIA BlueField-4处理器构建...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: NVIDIA CMX context memory storage platform</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://www.nvidia.com/en-us/data-center/ai-storage/cmx/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第9段。原文描述为“该机架托管了NVIDIA CMX上下文内存存储平台...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: NVIDIA Spectrum-6 SPX</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://www.nvidia.com/en-us/networking/spectrumx/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第10段。原文描述为“...是NVIDIA Spectrum-6 SPX网络机架。”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: NVIDIA Quantum-X800 InfiniBand</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://www.nvidia.com/en-us/networking/products/infiniband/quantum-x800/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第10段。原文描述为“...可配置...NVIDIA Quantum-X800 InfiniBand交换机...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: NVIDIA contributes...to Open Compute Project (OCP)</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://developer.nvidia.com/blog/nvidia-contributes-nvidia-gb200-nvl72-designs-to-open-compute-project/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第24段。原文描述为“NVIDIA已将该设计贡献给开放计算项目（OCP）...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: SemiAnalysis InferenceMax benchmarks</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://blogs.nvidia.com/blog/data-blackwell-ultra-performance-lower-cost-agentic-ai/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第25段。原文描述为“正如独立的SemiAnalysis InferenceMax基准测试所展示的...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: NVIDIA GB200 NVL72</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://www.nvidia.com/en-us/data-center/gb200-nvl72/</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第27段。原文描述为“...比NVIDIA GB200 NVL72多近两倍的晶体管...”</li>
+</ul>
+</li>
+<li>
+<p><strong>引用描述</strong>: NVIDIA Vera Rubin superchip</p>
+<ul>
+<li><strong>引用内容</strong>: <code>https://developer.nvidia.com/blog/inside-the-nvidia-rubin-platform-six-new-chips-one-ai-supercomputer/#nvidia_vera_rubin_superchip%C2%A0</code></li>
+<li><strong>引用位置</strong>: A2 方法细节，第30段。原文描述为“每个计算托盘配备两个NVIDIA Vera Rubin superchip...”</li>
+</ul>
+</li>
+</ol>
+</div>
+
+
+</div>
