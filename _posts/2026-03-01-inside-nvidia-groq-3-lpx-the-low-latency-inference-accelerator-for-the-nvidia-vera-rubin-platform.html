@@ -1,0 +1,293 @@
+---
+added_date: '2026-07-24'
+author: shenh10
+categories:
+- mlsys
+- gpu
+comments: true
+date: '2026-03-01'
+layout: post
+mathjax: true
+tag: blog
+title: 'Inside NVIDIA Groq 3 LPX: The Low-Latency Inference Accelerator for the NVIDIA
+  Vera Rubin Platform'
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>Inside NVIDIA Groq 3 LPX: The Low-Latency Inference Accelerator for the NVIDIA Vera Rubin Platform</h1>
+<p><strong>发表时间</strong>: 2026-03 · Blog post by Kyle Aubrey, Farshad Ghodsian (developer.nvidia.com)</p>
+<p><strong>原文</strong>: <a href="https://developer.nvidia.com/blog/inside-nvidia-groq-3-lpx-the-low-latency-inference-accelerator-for-the-nvidia-vera-rubin-platform" rel="noopener" target="_blank">https://developer.nvidia.com/blog/inside-nvidia-groq-3-lpx-the-low-latency-inference-accelerator-for-the-nvidia-vera-rubin-platform</a></p>
+<p><strong>作者/机构</strong>: Kyle Aubrey, Farshad Ghodsian</p>
+<h2>A1 主要贡献</h2>
+<p>本文介绍了NVIDIA Groq 3 LPX，这是一款专为NVIDIA Vera Rubin平台设计的全新机架级推理加速器，旨在满足智能体系统（agentic systems）对低延迟和长上下文的需求。随着AI生成速度接近每用户每秒1000个token，AI系统正从对话式交互转向“思想速度”计算，这使得AI能够进行连续的推理、模拟和响应，从而实现实时协作般的体验。这种转变也推动了多智能体系统的发展，其中协同工作的智能体群体能完成远超单个智能体的任务。</p>
+<p><strong>核心问题与研究目标</strong>:<br/>
+当前AI工作负载对基础设施提出了双重挑战：既要实现高吞吐量以支持大规模后台服务，又要保证低延迟以提供响应迅速的交互体验。传统单一架构难以同时满足这两个要求。为了解决这一问题，本文提出了一种异构加速架构，将专为低延迟、可预测token生成而优化的NVIDIA Groq 3 LPX与作为通用训练和推理引擎的NVIDIA Vera Rubin NVL72相结合。其目标是创建一个既能保持AI工厂高吞吐量，又能为下一代智能体应用提供快速token生成能力的系统。</p>
+<p><strong>主要创新点</strong>:<br/>
+1. <strong>异构推理架构</strong>: 提出了Vera Rubin NVL72与LPX相结合的异构架构。Vera Rubin NVL72作为灵活的通用工作引擎，负责训练和推理中的高吞吐量任务（如预填充、解码注意力、长上下文处理等）；而LPX则作为专用引擎，专注于加速延迟敏感的解码环节（如FFN和MoE专家执行）。<br/>
+2. <strong>NVIDIA Groq 3 LPX系统</strong>: 推出了一款机架级推理加速器，内置256个互连的NVIDIA Groq 3 LPU加速器。该系统强调确定性执行、高片上SRAM带宽（40 PB/s）和高基数片间通信（机架级640 TB/s），以在并发量增加时仍能保持低且稳定的推理延迟。<br/>
+3. <strong>NVIDIA Groq 3 LPU芯片架构</strong>: 详细介绍了作为Vera Rubin平台第七款芯片的LPU。其核心设计理念是通过编译器控制，紧密耦合计算、内存和通信，强调确定性执行和显式数据移动，而非单纯追求峰值算力。这使其特别适合解码密集型、延迟敏感的推理场景。<br/>
+4. <strong>NVIDIA Dynamo软件协同</strong>: 通过NVIDIA Dynamo软件层实现异构解码的落地。Dynamo负责对请求进行分类、在解耦的后端（GPU和LPU）之间进行任务路由和协同（即AFD循环），将预填充和注意力计算分配给Rubin GPU，将延迟敏感的FFN/MoE解码分配给LPU，从而在保证AI工厂高吞-吐量的同时，实现高响应度的交互体验。<br/>
+5. <strong>显著的性能与经济效益</strong>: 该组合架构宣称可为万亿参数模型带来高达35倍的每兆瓦推理吞吐量提升和高达10倍的收入机会。它通过扩展帕累托前沿，创建了一个新的高级性能层级，能够支持多智能体系统和LLM的推测性解码等高级AI用例。</p>
+<figure class="image-figure">
+<img alt="LPX机架的渲染图。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/LPX-Rack-1024x576.png"/>
+<figcaption class="figure-caption">LPX机架的渲染图。</figcaption>
+</figure>
+<h2>A3 背景知识/关键Observation/设计原则</h2>
+<h3>迈向交互式推理的转变</h3>
+<p><strong>AI推理性能谱系的多样性</strong>。AI推理涵盖了广泛的性能范围。一端是吞吐量优化的服务，如批量文档处理、内容审核、嵌入生成和媒体处理流水线，其目标是最大化每GPU的token数、每瓦特的token数或整体成本效益。这些工作负载通常支持大规模共享服务，包括免费层级和后台AI产品，其中高利用率比单用户响应性更重要。另一端是延迟优化的服务，如编程助手、聊天机器人、语音助手、copilots和交互式智能体，其中延迟对用户是立即可见的。在这些工作负载中，最重要的指标是首个token生成时间（time-to-first-token）、每用户每秒token数（tokens per second per user）和尾部延迟。许多现代AI平台必须同时支持这两种模式，既要运行高吞吐量的后端进行大规模处理，又要提供响应迅速的交互式体验。这种分化是异构推理架构日益重要的原因之一。</p>
+<h3>交互式推理的挑战加剧</h3>
+<p><strong>使交互式推理更难高效服务的因素</strong>。多种趋势使得低延迟交互式推理变得越来越重要，同时也更难高效地提供服务，如表3所示。随着模型产生更长的输出和上下文窗口的增长，更多的工作负载转移到解码阶段，其中token是顺序生成的，响应性直接暴露给用户。</p>
+<table>
+<thead>
+<tr>
+<th>驱动力</th>
+<th>重要性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>低延迟作为产品特性</strong></td>
+<td>在交互式应用中，响应性不再仅仅是一个基础设施指标；它已成为用户评估产品的一部分。</td>
+</tr>
+<tr>
+<td><strong>更长的推理输出</strong></td>
+<td>随着模型生成更长的输出和多步思维链，请求中更多的部分转移到顺序token生成。</td>
+</tr>
+<tr>
+<td><strong>前缀缓存</strong></td>
+<td>重用共享的提示状态可以降低预填充成本，但这也增加了必须快速服务的、针对特定请求的解码工作的相对份额。</td>
+</tr>
+<tr>
+<td><strong>更长的上下文</strong></td>
+<td>随着上下文的增长，Transformer的自注意力机制越来越受限于数据移动和内存带宽。</td>
+</tr>
+</tbody>
+</table>
+<p><em>表3. 四个使传统服务技术在低延迟推理中效果不佳的驱动力</em></p>
+<p><strong>长上下文带来的额外压力</strong>。与此同时，更长的上下文增加了对内存带宽和数据移动的压力，而为许多并发用户提供服务则降低了吞吐量优化系统所依赖的批处理效率。因此，为最大化总吞-吐量而优化的系统并不总是最适合需要为每个请求快速、可预测地生成token的工作负载。</p>
+<p><strong>智能体AI中的延迟复合效应</strong>。在智能体AI中，这一挑战变得更加突出，因为系统在推理、检索、工具使用和推理之间反复循环。在这些循环中，延迟在每一步都会累积，使得稳定的每token性能和强大的尾部延迟行为对于响应迅速的用户体验至关重要。</p>
+<h3>智能体推理时代需要新架构</h3>
+<p><strong>推理工作负载的非均一性</strong>。推理并非单一、统一的工作负载。在一次请求中，预填充（prefill）和解码（decode）对硬件有不同的要求，并且这些要求随批处理大小、上下文长度和模型结构而变化。某些阶段，包括自注意力和稀疏MoE，可能对内存带宽和数据移动高度敏感，而其他阶段，如密集投影和前馈层，在有足够并行性的情况下，可以在吞吐量优化的硬件上高效扩展。在交互式解码中，许多操作以非常小的批处理大小运行，使得延迟对停顿、争用和抖动更为敏感。</p>
+<p><strong>单一优化方案的妥协</strong>。为整个流水线仅针对一种模式进行优化会迫使系统做出妥协。为大批量下的峰值吞吐量而调整的硬件对于最延迟敏感的执行路径并不理想，而为低延迟执行而优化的硬件对于计算最密集阶段的效率较低。</p>
+<p><strong>异构系统扩展帕累托前沿</strong>。如图4所示，异构系统结合了两种方法，将低延迟交互性能与高AI工厂吞吐量配对。其结果是一个双引擎架构：GPU为上下文密集的预填充和解码注意力提供高输出，而LPU则加速延迟敏感的解码组件，如FFN/MoE执行。它们共同提高了交互性，而无需放弃AI工厂的吞吐量。</p>
+<p><img alt="一个概念图，展示了吞吐量优化硬件、低延迟硬件和异构组合如何在AI工厂吞-吐量和交互式响应性之间的权衡中占据不同部分。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/Heterogenous-AI.gif"/><br/>
+<em>图4. 异构推理扩展了帕累托前沿</em></p>
+<h2>A2 方法细节</h2>
+<h3>介绍NVIDIA Groq 3 LPX</h3>
+<p><strong>Vera Rubin与LPX的结合优势</strong>。Vera Rubin和LPX联合了Rubin GPU和LPU的极致性能，可为万亿参数模型提供高达35倍的每兆瓦推理吞吐量和高达10倍的收入机会。LPX与NVIDIA MGX ETL机架架构集成，并与更广泛的Vera Rubin平台保持一致，为数据中心提供了一种在通用基础设施设计内，与Vera Rubin NVL72并行部署专用低延迟推理路径的方法。</p>
+<p><strong>LPX系统架构概览</strong>。该系统围绕256个互连的NVIDIA Groq 3 LPU加速器构建。其架构强调确定性执行、高片上SRAM带宽和紧密协调的纵向扩展通信，因此即使在并发量增加和请求形态变化时，交互式推理也能保持响应迅速。</p>
+<p><strong>异构服务路径</strong>。当与Vera Rubin NVL72一同部署时，LPX加速解码循环中对延迟敏感的部分，包括FFN和MoE专家执行，而Rubin GPU则继续处理预填充和解码注意力。它们共同提供了一个异构服务路径，在不牺牲AI工厂吞吐量的情况下提高了交互响应性。</p>
+<p><img alt="一个机架级NVIDIA Groq 3 LPX系统，旁边有一个表格列出了关键规格，包括256个Groq 3 LP30芯片、40 PB/s的片上SRAM带宽、640 TB/s的纵向扩展带宽、128 GB的总SRAM容量和315 PFLOPS的FP8计算能力。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/Groq-3-LPX.webp"/><br/>
+<em>图1. NVIDIA Groq 3 LPX机架级系统</em></p>
+<p><strong>LPX机架级规格</strong>。在机架规模上，LPX提供：</p>
+<table>
+<thead>
+<tr>
+<th>规格</th>
+<th>NVIDIA Groq 3 LPX</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AI推理算力</td>
+<td>315 PFLOPS</td>
+</tr>
+<tr>
+<td>总SRAM容量</td>
+<td>128 GB</td>
+</tr>
+<tr>
+<td>片上SRAM带宽</td>
+<td>40 PB/s</td>
+</tr>
+<tr>
+<td>纵向扩展密度</td>
+<td>256个芯片</td>
+</tr>
+<tr>
+<td>纵向扩展带宽</td>
+<td>640 TB/s</td>
+</tr>
+</tbody>
+</table>
+<p><em>表1. NVIDIA Groq 3 LPX规格</em></p>
+<p><strong>异构架构的价值</strong>。Vera Rubin NVL72和LPX为AI工厂创造了一个更异构的推理架构——一个既能支持高总token产量，又能提供响应迅速的交互式AI体验的架构。</p>
+<h3>深入NVIDIA Groq 3 LPX计算托盘</h3>
+<p><strong>计算托盘设计</strong>。LPX机架级加速器容纳了32个液冷的1U计算托盘，每个托盘都为大规模低延迟推理而设计。每个托盘集成了八个LPU加速器、一个主机处理器和光纤扩展逻辑，采用无电缆设计，简化了机架级部署，并使计算与通信紧密耦合。</p>
+<p><strong>互联与通信</strong>。LPU芯片到芯片（C2C）链路提供了托盘内的直接通信，通过LPU C2C主干网络实现托盘间通信，并随着系统扩展实现机架间通信。连接性至关重要，因为交互式推理不仅仅关乎原始计算能力，还取决于系统移动数据、协调工作以及在请求流经设备时避免可变延迟的效率。</p>
+<p><img alt="一个1U NVIDIA Groq 3 LPX计算托盘，展示了八个Groq 3 LPU模块连接到托盘上的光纤扩展逻辑、DRAM、主机CPU、BlueField-4 DPU以及背板和前面板连接，采用无电缆、液冷设计。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/LPX02-Groq3LPX_Compute_Tray.webp"/><br/>
+<em>图2. NVIDIA Groq 3 LPX计算托盘和模块</em></p>
+<p><strong>每托盘资源</strong>。每个托盘提供：</p>
+<table>
+<thead>
+<tr>
+<th>资源</th>
+<th>每个LPX托盘</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LP30芯片</td>
+<td>8个</td>
+</tr>
+<tr>
+<td>片上SRAM</td>
+<td>4 GB</td>
+</tr>
+<tr>
+<td>SRAM带宽</td>
+<td>1.2 PB/s</td>
+</tr>
+<tr>
+<td>通过光纤扩展逻辑的DRAM</td>
+<td>高达256 GB</td>
+</tr>
+<tr>
+<td>通过主机CPU的DRAM</td>
+<td>高达128 GB</td>
+</tr>
+<tr>
+<td>AI推理算力 (FP8)</td>
+<td>9.6 PFLOPS</td>
+</tr>
+<tr>
+<td>纵向扩展带宽</td>
+<td>20 TB/s</td>
+</tr>
+</tbody>
+</table>
+<p><em>表2. NVIDIA Groq 3 LPX计算托盘规格</em></p>
+<p><strong>系统级设计目标</strong>。在系统层面，LPX专为协调开销和抖动会迅速被用户感知的推理场景而构建。随着更多AI应用从离线或吞吐量导向的服务转向交互式生成，这一点尤其重要。要了解LPX如何为该场景进行优化，有必要审视其系统核心的处理器架构：NVIDIA Groq 3 LPU。</p>
+<h3>NVIDIA Groq 3 LPU架构初探——Vera Rubin平台的第七款芯片</h3>
+<p><strong>LPU核心设计理念</strong>。LPX的核心是NVIDIA Groq 3 LPU，它通过编译器控制，紧密耦合计算、内存和通信，旨在提供快速、可预测的token生成。LPU的架构旨在通过编译器控制，紧密耦合计算、内存和通信，以提供快速、可预测的token生成。LPU不只是为峰值算术吞吐量进行优化，而是强调确定性执行、高片上内存带宽和显式数据移动。这些能力对于以解码为主、对延迟敏感的推理场景尤为重要。</p>
+<p><img alt="NVIDIA Groq 3 LPU的简化图，显示了计算、内存、控制和芯片间通信模块，并突出了张量优先计算、高SRAM带宽和直接芯片间互连。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/Groq-3-Architecture.webp"/><br/>
+<em>图3. NVIDIA Groq 3 LPU芯片架构</em></p>
+<h4>张量优先计算与显式数据移动</h4>
+<p><strong>以向量为单位的工作组织</strong>。LPU中的计算和通信围绕320字节的向量作为工作单元进行组织。算术运算、内存访问和设备间传输都操作于这些固定大小的向量，从而简化了调度和同步。</p>
+<p><strong>专用执行模块</strong>。专门的执行模块处理不同类别的操作：<br/>
+* <strong>矩阵执行模块 (MXM)</strong>：为张量运算提供密集的乘法累加能力，操作于固定的数据类型，具有可预测的吞吐量。<br/>
+* <strong>向量执行模块 (VXM)</strong>：处理逐点算术、类型转换和激活函数，每条通道使用一个算术逻辑单元(ALU)网格。<br/>
+* <strong>交换执行模块 (SXM)</strong>：执行结构化数据移动，包括向量的排列、旋转、分发和转置。</p>
+<p><strong>显式数据移动的优势</strong>。通过使数据移动变得显式和可编程，LPU使得内存访问、计算和通信可以重叠执行，而不是依赖硬件启发式方法。</p>
+<h4>MEM实现极致的片上内存带宽</h4>
+<p><strong>SRAM优先的内存架构</strong>。LPU的一个核心元素是MEM块——一个扁平的、SRAM优先的内存架构，其中500MB的高速片上SRAM作为推理的主要工作存储。编译器和运行时不依赖硬件管理的缓存，而是将活动工作集（包括权重、激活和KV状态）放入片上内存，并显式地移动数据。这减少了不可预测的停顿，并通过将最延迟敏感的数据保持在靠近计算单元的位置，帮助提供低且稳定的延迟。</p>
+<p><strong>跨LPU扩展</strong>。由于片上SRAM容量有限，较大的模型通过并行执行策略（如逐层分区）扩展到多个互连的LPU加速器上，因此整个系统呈现出更大的有效工作集。在这种设计中，性能更多地取决于系统保持计算单元“吃饱”的一致性，而非峰值算术吞吐量。这就是为什么LPX为每个LPU配备了150 TB/s的片上内存带宽和高带宽的纵向扩展芯片间（C2C）通信。</p>
+<h4>具有可预测通信的C2C扩展</h4>
+<p><strong>为确定性数据交换设计</strong>。为了在多个设备间扩展推理，LPU包含专为确定性数据交换设计的高基数、高速C2C链路。每个LPU通过96条C2C链路连接，每条链路运行速度为112 Gbps，从而实现了简化的LPX纵向扩展拓扑，具有2.5 TB/s的高聚合双向I/O带宽和可预测的通信时序。这对于分布式推理流水线尤其重要，因为在这些流水线中，通信开销否则会成为延迟的主要来源。</p>
+<h4>确定性的、由编译器编排的执行</h4>
+<p><strong>空间执行模型</strong>。LPU建立在Groq的空间执行模型之上，其中编译器显式地调度计算、数据移动和同步。编译器不依赖运行时的动态硬件调度器，而是依赖硬件中的近同步（plesiosynchronous）芯片间协议，该协议可以消除自然时钟漂移，并将数百个LPU加速器对齐，使其像一个单一协调的系统一样工作。通过可预测的数据到达和定期的软件同步，开发人员可以更直接地对时序进行推理，系统也能够以更高的确定性来协调计算和网络行为。</p>
+<p><strong>执行模型的优势</strong>。这种执行模型能够实现：<br/>
+* 内存和计算之间的精确协调。<br/>
+* 对指令时序的显式控制。<br/>
+* 在可变工作负载下减少执行抖动。</p>
+<p><strong>对实时推理的意义</strong>。对于实时推理，这种确定性有助于即使在小批量大小下也能保持首个token生成时间和每token延迟的稳定。</p>
+<h3>Vera Rubin NVL72与LPX的相遇</h3>
+<p><strong>推理工作负载的接力赛比喻</strong>。现代推理就像一场接力赛。运行繁重上下文处理环节的硬件不必也负责冲刺到下一个token。Rubin GPU是用于训练和推理的灵活、通用的主力。它们在多种模型大小、批处理方案和服务模式下提供高吞吐量，从长上下文预填充到解码注意力和大规模高并发推理。</p>
+<p><strong>LPX的专业化角色</strong>。LPX增加了一条专门为快速、延迟敏感的token生成而优化的路径。它们共同实现了一种异构推理设计，在不放弃系统级效率的情况下提高了交互响应性。</p>
+<p><img alt="对比NVIDIA Rubin GPU和Groq 3 LPU的图表，突出了Rubin的高FLOPS和大型HBM内存，相对于Groq 3 LPU用于低延迟推理的高带宽片上SRAM。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/LPX05-Rubin_GPU_and_Groq_3_LPU.webp"/><br/>
+<em>图5. 结合极致FLOPS（Rubin GPU）和极致带宽（Groq 3 LPU）的处理器</em></p>
+<h3>解码阶段：一个重复的多引擎循环</h3>
+<p><strong>预填充阶段的特点</strong>。预填充阶段主要由处理大型输入和构建KV缓存主导——这是一个受益于密集并行计算和巨大内存容量的工作负载。Vera Rubin NVL72能高效处理这一阶段，特别是对于长上下文工作负载和MoE模型，其中上下文可能很大且高度可变。</p>
+<p><strong>解码阶段的异构处理</strong>。解码阶段则不同。解码是一个重复的、逐个token的循环，该循环的不同部分会触及不同的瓶颈。在带有LPX的Vera Rubin平台架构中，解码最好被看作一个双引擎循环。GPU处理最能从吞吐量和巨大内存容量中受益的解码工作，例如对累积的KV缓存进行全上下文注意力计算。LPX则加速解码内部的延迟敏感执行部分，例如稀疏MoE专家的前馈网络（FFN）和其他逐点操作。这种划分，通常被称为解码阶段解耦或注意力-FFN解耦（AFD），在解码内部将注意力和FFN分开，并为每个token交换中间激活值，以便每个引擎运行它最适合执行的循环部分。这个AFD循环扩展了帕累托前沿的最高价值操作区域。</p>
+<p><img alt="解释AFD解码的图表，显示解码是一个双引擎循环，其中Rubin GPU处理KV缓存上的注意力，而LPU执行前馈或MoE层，每个token交换中间激活值（中间张量状态）以改善延迟和吞吐量。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/Decode-Loop.webp"/><br/>
+<em>图6. AFD解码解释</em></p>
+<p><strong>LPX在解码中的作用</strong>。在机架规模及以上，LPX被设计为作为一个紧密协调的计算单元来运行，从而最小化协调开销并减少抖动。这在解码密集、智能体工作流中很有价值，因为在这些工作流中，微小的延迟会在许多模型调用和验证循环中累积。</p>
+<h3>NVIDIA Dynamo使异构解码可操作化</h3>
+<p><strong>软件协同的重要性</strong>。要使异构解码变得实用，需要能够对请求进行分类、根据延迟目标路由工作、以低开销移动中间激活值，并在突发、可变的流量下保持尾部延迟稳定的软件。<a href="https://developer.nvidia.com/blog/nvidia-dynamo-1-production-ready/">https://developer.nvidia.com/blog/nvidia-dynamo-1-production-ready/</a>通过协调跨异构后端的解耦服务和解耦解码，提供了这一编排层。</p>
+<p><strong>Dynamo的工作流程</strong>。在实践中，Dynamo将预填充路由到GPU工作节点以处理长上下文并构建KV缓存。在解码期间，Dynamo编排AFD循环，其中GPU在累积的KV缓存上运行注意力，中间激活值被传递给LPU进行FFN/MoE执行，然后输出返回到GPU以继续生成token。结果是一个单一、连贯的服务路径，具有更可预测的尾部延迟，同时保持了高AI工厂吞吐量。</p>
+<p><img alt="图表显示NVIDIA Dynamo在两个机架间协调异构推理。长上下文在VR NVL72 GPU上处理以进行预填充和KV缓存创建。在解码期间，GPU在KV缓存上运行注意力，而LPX运行FFN/MoE执行，中间解码激活值在GPU和LPX之间以重复循环的方式交换以生成token。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/LPX07-NVIDIA_Dynamo_Orchestrates_Disagg_Compute.webp"/><br/>
+<em>图7. Dynamo编排异构计算</em></p>
+<p><strong>Dynamo的功能特性</strong>。通过KV感知路由、低开销传输和延迟目标驱动的调度，Dynamo帮助将交互式会话移出长队列，减少跨租户抖动，并在并发和请求形态变化时保持稳定的尾部延迟。其结果是一个生产就绪的异构服务模型，可在保持大规模AI工厂高吞吐量的同时，提供响应迅速的用户体验。</p>
+<h3>利用LPX加速推测性解码</h3>
+<p><strong>推测性解码的原理</strong>。推测性解码（Speculative decoding）是降低LLM推理延迟的一项日益重要的技术。该方法使用一个较小的草稿模型提前生成多个候选token，而一个较大的目标模型则并行验证和接受这些token。当预测匹配时，可以一次性提交多个token，从而显著提高有效每秒token数并减少响应延迟。</p>
+<p><strong>LPX在推测性解码中的角色</strong>。LPX非常适合在这种架构中充当草稿生成引擎。LPU的确定性执行模型和极高的片上SRAM带宽使其能够非常快速地生成草稿token，从而使草稿模型能够领先于验证器运行。与此同时，像Rubin这样的GPU在大型模型执行任务（如预填充、注意力处理和token验证）方面仍然非常高效。</p>
+<p><strong>异构处理器协同</strong>。通过将两者配对，系统结合了两种处理器的优势：<br/>
+* LPX利用其低延迟架构快速生成草稿token。<br/>
+* Rubin GPU利用高吞吐量计算和巨大的内存容量高效地验证和最终确定token。</p>
+<p><strong>分离执行的优势</strong>。这种分离使得推测性解码可以跨异构处理器运行，而不是在同一硬件上运行草稿和验证模型。其结果是一个能够提供更快草稿生成而又不牺牲基于GPU的验证效率的系统。</p>
+<p><img alt="展示推测性解码的图表，其中一个GPU目标模型验证由运行在LPX上的草稿模型生成的token，允许每步接受多个token并减少推理延迟。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/Speculative-Decoding.gif"/><br/>
+<em>图8. 使用GPU验证和LPU草稿生成的推测性解码</em></p>
+<h2>A4 实验环境</h2>
+<ul>
+<li>
+<p><strong>硬件配置</strong>:</p>
+<ul>
+<li><strong>对比平台</strong>: 实验对比了三种配置：1) NVIDIA GB200 NVL72 系统；2) NVIDIA Vera Rubin NVL72 系统；3) NVIDIA Vera Rubin NVL72 与 NVIDIA Groq 3 LPX 的组合系统。</li>
+<li><strong>LPX系统</strong>: NVIDIA Groq 3 LPX 是一个机架级系统，包含256个互连的NVIDIA Groq 3 LPU加速器。每个LPX计算托盘（共32个）包含8个LPU。</li>
+<li><strong>互连</strong>: LPX内部采用高基数、高速的C2C链路（每个LPU 2.5 TB/s双向带宽），机架级总扩展带宽达到640 TB/s。</li>
+</ul>
+</li>
+<li>
+<p><strong>模型与数据集</strong>:</p>
+<ul>
+<li><strong>模型</strong>: 性能分析主要基于一个“高级”服务层级的模型，具体为一个2万亿参数的混合专家（MoE）模型。</li>
+<li><strong>上下文长度</strong>: 该模型在分析中使用的输入上下文窗口为400K。</li>
+</ul>
+</li>
+<li>
+<p><strong>软件配置</strong>:</p>
+<ul>
+<li><strong>编排软件</strong>: 使用NVIDIA Dynamo 1.0作为编排层，负责在异构硬件（GPU和LPU）之间进行任务路由和协同，实现解耦服务（Attention-FFN Disaggregation, AFD）。</li>
+</ul>
+</li>
+<li>
+<p><strong>性能指标</strong>:</p>
+<ul>
+<li><strong>交互性</strong>: 使用“每用户每秒token数”（TPS per user）来衡量。</li>
+<li><strong>AI工厂效率/吞吐量</strong>: 使用“每兆瓦每秒token数”（TPS per MW）来衡量。</li>
+<li><strong>经济效益</strong>: 使用“每千兆瓦年收入”来评估不同平台的收入潜力。</li>
+</ul>
+</li>
+</ul>
+<h2>A4 实验结果</h2>
+<ul>
+<li><strong>智能体工作负载的需求分析 (图9)</strong>:<ul>
+<li><strong>实验内容</strong>: 图9是一个概念性图表，展示了不同AI工作负载对计算和交互性的相对需求。</li>
+<li><strong>实验结果</strong>: 图表显示，随着AI应用从离线推理、简单聊天机器人向推理工作流、编程助手和自主多智能体系统（智能体蜂群）演进，对交互性（低延迟）和计算能力（高吞吐量）的需求同步增长。</li>
+<li><strong>分析结论</strong>: 智能体蜂群等高级应用位于图表的右上角，同时需要高吞吐量和低延迟，这凸显了传统单一优化架构的局限性和异构架构的必要性。</li>
+</ul>
+</li>
+</ul>
+<p><img alt="各种AI工作负载的相对计算和交互性需求图，突显了智能体蜂群对高吞吐量和低延迟的需求。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/Agentic-Scaling.webp"/><br/>
+<em>图9. 各种AI工作负载的相对计算和交互性需求，突显了智能体蜂群对高吞吐量和低延迟的需求</em></p>
+<ul>
+<li><strong>异构架构的帕累托前沿扩展 (图10)</strong>:<ul>
+<li><strong>实验内容</strong>: 图10通过帕累托前沿图，比较了不同硬件平台在处理一个2万亿参数、400K上下文的MoE模型时，在AI工厂效率（TPS/MW）和用户交互性（TPS/user）之间的权衡。</li>
+<li><strong>实验结果</strong>: 在400 TPS/user的高交互性水平下，Vera Rubin NVL72与Groq 3 LPX的组合平台，其AI工厂效率（TPS/MW）比NVIDIA GB200 NVL72系统高出35倍。</li>
+<li><strong>分析结论</strong>: 异构架构成功扩展了性能的帕累托前沿，能够在保持高AI工厂吞吐量的同时，提供极高的交互响应速度，从而创建了一个新的“高级”性能服务层级，满足了高端AI服务的需求。</li>
+</ul>
+</li>
+</ul>
+<p><img alt="对比AI工厂效率（TPS/兆瓦）与交互性（每用户每秒token数）的图表，显示结合Vera Rubin NVL72与Groq 3 LPX在更高交互性水平下保持了更高的吞吐量，在400 TPS/用户交互性下比Grace Blackwell NVL72系统高35倍。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/Pareto.webp"/><br/>
+<em>图10. 通过Vera Rubin NVL72和Groq 3 LPX解锁一类新的AI体验</em></p>
+<ul>
+<li><strong>经济影响分析 (图11)</strong>:<ul>
+<li><strong>实验内容</strong>: 图11是一个条形图，估算了Blackwell、Rubin以及Rubin+LPX平台在不同服务层级（从免费到超高级）下每千兆瓦的年收入。</li>
+<li><strong>实验结果</strong>: 与GB200 NVL72相比，Vera Rubin平台可将每兆瓦的收入潜力提升高达5倍。当Vera Rubin NVL72与LPX配对用于最高价值的延迟敏感型交互工作负载（如智能体编程和多智能体系统）时，收入潜力可提升高达10倍。</li>
+<li><strong>分析结论</strong>: 更高的响应性使AI工厂能够服务更多的高级体验，从而增加了单位基础设施的价值。Vera Rubin NVL72和LPX的组合显著提升了在高级和超高级服务层级的收入潜力，带来了10倍的收入机会扩展。</li>
+</ul>
+</li>
+</ul>
+<p><img alt="比较Blackwell、Rubin和Rubin+LPX在不同服务层级（免费、中、高、高级、超高级）下每千兆瓦的预估年收入的条形图，显示Rubin+LPX在高级和超高级层级收入更高。右侧的标注总结了总年收入从B（Blackwell）增加到0B（Rubin）再到0B（Rubin+LPX），突显了10倍的增长。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/LPX11-Rubin_plus_LPX_Boosts_Revenues_10X.webp"/><br/>
+<em>图11. NVIDIA Vera Rubin NVL72和LPX提供了10倍的收入机会</em></p>
+<h2>A7 补充细节</h2>
+<h3>NVIDIA Groq 3 LPX为开发者带来的可能性</h3>
+<p><strong>开发者面临的三重需求</strong>。开发者们越来越多地在构建需要同时满足以下三点的系统：</p>
+<ul>
+<li><strong>响应性</strong>：为交互式体验和智能体循环提供低且可预测的延迟。</li>
+<li><strong>能力</strong>：强大的模型质量、推理深度和长上下文理解能力。</li>
+<li><strong>规模</strong>：高吞吐量和成本效益，以服务大量并发用户或智能体。</li>
+</ul>
+<p><strong>为工作负载选择合适的路径</strong>。LPX拓宽了AI工厂能够高效服务的工作负载范围。在可预测的token生成能改善体验的场景中使用低延迟路径，例如编程助手、具有紧密工具调用循环的智能体工作流、语音交互和实时翻译。将吞吐量优先的工作负载保留在Rubin GPU上，例如批量服务、长上下文吞吐量运行，在这些场景中，高并发和批处理能使GPU保持持续繁忙和高成本效益。</p>
+<p><strong>运营思维的转变</strong>。运营上的转变在于思维模式。停止为单一的头条指标进行优化，而是开始为一系列真实世界的操作点进行优化。</p>
+<h2>A5 结论</h2>
+<p>本文论证了随着AI应用从简单的聊天和批处理推理向复杂的多步智能体工作流演进，响应性已成为一项硬性要求。这些高级应用同时需要高token量和紧密的反馈循环，使得延迟问题尤为突出。为了应对这一挑战，本文提出了一个异构推理架构，将用于高吞吐量长上下文处理的NVIDIA Vera Rubin NVL72与用于低延迟解码的NVIDIA Groq 3 LPX相结合。</p>
+<p>该异构方法使得在不牺牲AI工厂整体产出的前提下，显著提升用户交互性成为可能。通过将预填充和注意力计算等任务交由GPU处理，同时将FFN/MoE等延迟敏感的解码部分卸载到专用的LPU上，系统能够扩展性能的帕累托前沿，从而解锁一类全新的高级AI体验。实验结果表明，这种组合在提供高交互性的同时，能实现高达35倍的能效吞吐量提升，并带来高达10倍的收入机会。</p>
+<p>对于开发者而言，这意味着可以根据工作负载的特性（响应性 vs. 吞吐量），将其智能地路由到最合适的硬件上，从而为一系列真实世界的应用场景进行优化，而非局限于单一指标。未来的工作展望在于鼓励开发者和系统架构师深入利用这种异构能力，构建更强大、更高效、响应更迅速的下一代AI系统。</p>
+</div>
+
+
+</div>

@@ -4783,6 +4783,14 @@ mlsys:
       - mlsys
       - gpu
       tag: cgo24
+    - title: 'Inside NVIDIA Groq 3 LPX: The Low-Latency Inference Accelerator for
+        the NVIDIA Vera Rubin Platform'
+      date: '2026-03-01'
+      url: /papers/mlsys/gpu/2026/03/01/inside-nvidia-groq-3-lpx-the-low-latency-inference-accelerator-for-the-nvidia-vera-rubin-platform.html
+      categories:
+      - mlsys
+      - gpu
+      tag: blog
     - title: 'DARM: Control-Flow Melding for SIMT Thread Divergence Reduction'
       date: '2022-01-01'
       url: /papers/mlsys/gpu/2022/01/01/darm-control-flow-melding-for-simt-thread-divergence-reduction.html
