@@ -5718,6 +5718,12 @@ mlsys:
       - compiler
   system:
     posts:
+    - title: Latency Lags Bandwidth
+      date: '2004-10-01'
+      url: /papers/mlsys/system/2004/10/01/latency-lags-bandwidth.html
+      categories:
+      - mlsys
+      - system
     - title: Principles and Methodologies for Serial Performance Optimization
       date: '2025-01-01'
       url: /papers/mlsys/system/2025/01/01/principles-and-methodologies-for-serial-performance-optimization.html
