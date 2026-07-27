@@ -1158,6 +1158,13 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'Kimi K3: Open Frontier Intelligence'
+        date: '2026-07-01'
+        url: /papers/llm/algorithm/models/2026/07/01/kimi-k3-open-frontier-intelligence.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: 'KIMI K2: OPEN AGENTIC INTELLIGENCE'
         date: '2025-08-01'
         url: /papers/llm/algorithm/models/2025/08/01/kimi-k2-open-agentic-intelligence.html
