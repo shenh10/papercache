@@ -5718,6 +5718,12 @@ mlsys:
       - compiler
   system:
     posts:
+    - title: 'DADI: Block-Level Image Service for Agile and Elastic Application Deployment'
+      date: '2020-07-01'
+      url: /papers/mlsys/system/2020/07/01/dadi-block-level-image-service-for-agile-and-elastic-application-deployment.html
+      categories:
+      - mlsys
+      - system
     - title: Latency Lags Bandwidth
       date: '2004-10-01'
       url: /papers/mlsys/system/2004/10/01/latency-lags-bandwidth.html
