@@ -200,6 +200,16 @@ llm:
             - architecture
             - attention
             - ssm
+          - title: 'ReplaySSM: Cache SSM Inputs, Not State'
+            date: '2026-06-01'
+            url: /papers/llm/algorithm/architecture/attention/ssm/2026/06/01/replayssm-cache-ssm-inputs-not-state.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - ssm
+            tag: blog
           - title: Combining Recurrent, Convolutional, and Continuous-time Models
               with Linear State-Space Layers
             date: '2021-10-01'

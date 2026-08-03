@@ -1,0 +1,178 @@
+---
+added_date: '2026-08-03'
+author: shenh10
+categories:
+- llm
+- algorithm
+- architecture
+- attention
+- ssm
+comments: true
+date: '2026-06-01'
+layout: post
+mathjax: true
+tag: blog
+title: 'ReplaySSM: Cache SSM Inputs, Not State'
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>ReplaySSM: Cache SSM Inputs, Not State</h1>
+<p><strong>发表时间</strong>: 2026-06 · Blog post by Tri Dao (tridao.me)</p>
+<p><strong>原文</strong>: <a href="https://tridao.me/blog/2026/replayssm/" rel="noopener" target="_blank">https://tridao.me/blog/2026/replayssm/</a></p>
+<p><a href="https://github.com/Johnny-Liou/ReplaySSM.git">https://github.com/Johnny-Liou/ReplaySSM.git</a></p>
+<h2>主要贡献</h2>
+<p>在强化学习（RL）后训练和推理服务中，由于长思维链追踪，解码成为了主要的瓶颈。尽管Transformer仍然是行业标准，但其KV缓存使得处理长上下文的成本高昂，序列增长会导致内存流量和容量需求线性增加。状态空间模型（State Space Models, SSMs，如Mamba-2、Gated DeltaNet等）旨在解决这一瓶颈，它们将历史信息压缩为固定大小的循环状态，使内存需求保持恒定。然而，SSM将历史记录汇总为单一状态并丢弃输入的机制带来了三大挑战：受限于内存I/O、状态不可逆导致投机解码回滚困难、以及串行状态依赖导致并行性丧失。</p>
+<p>为了解决上述问题，本文提出了<strong>ReplaySSM</strong>。该方法的核心创新在于：不再于每个解码步骤中更新并将循环状态写回高带宽内存（HBM），而是<strong>缓存最近的SSM输入</strong>，仅在需要时才重建状态，其余时间直接从缓存中计算输出。</p>
+<p>这一设计在不改变输出结果的前提下，显著降低了内存流量，使得标准解码速度提升高达1.48倍（在大型MoE模型上为1.43倍）。更重要的突破在于投机解码（Speculative Decoding）领域：现有的vLLM实现在服务批处理大小下，其吞吐量甚至低于标准解码，而ReplaySSM成功解锁了1.87–1.96倍的加速比。</p>
+<figure class="image-figure">
+<img alt="图1a ReplaySSM缓存最近的SSM输入代替每步存储循环状态，仅在缓冲区满时重建状态并写回" class="figure-image" src="https://tridao.me/assets/img/2026-06-15-replayssm/headline_approach.png"/>
+<figcaption class="figure-caption">图1a ReplaySSM缓存最近的SSM输入代替每步存储循环状态，仅在缓冲区满时重建状态并写回</figcaption>
+</figure>
+<figure class="image-figure">
+<img alt="图1b vLLM中的端到端解码吞吐量对比。左图：ReplaySSM在标准解码中加速达1.43倍。右图：ReplaySSM在投机解码中提供1.87-1.96倍加速" class="figure-image" src="https://tridao.me/assets/img/2026-06-15-replayssm/headline_results.png"/>
+<figcaption class="figure-caption">图1b vLLM中的端到端解码吞吐量对比。左图：ReplaySSM在标准解码中加速达1.43倍。右图：ReplaySSM在投机解码中提供1.87-1.96倍加速</figcaption>
+</figure>
+<h2>背景知识与设计原则</h2>
+<h3>内存受限：I/O主导而计算匮乏</h3>
+<p>在每个解码步骤中，SSM重复执行两个操作：用新输入更新状态（摘要），并从中读取输出。在Mamba-2中，步骤$t$的循环形式为：<br/>
+</p>
+$$S_t = a_t S_{t-1} + \Delta_t (v_t k_t^\top) \quad \text{(更新)}, \qquad y_t = S_t q_t \quad \text{(读取)}$$
+<p><br/>
+其中$S$为状态，$y$为输出。$v_t$和$k_t$是时间$t$的新输入，$q_t$是用于读取输出的输入。$a_t = e^{A\Delta_t}$和$\Delta_t$是每步的标量。<br/>
+Delta-rule家族（如Gated DeltaNet, GDN）通过更复杂的计算获得了擦除状态的能力，其循环形式为：</p><div>$$S_t = e^{g_t} S_{t-1} (I - \beta_t k_t k_t^\top) + \beta_t (v_t k_t^\top) \quad \text{(更新)}, \qquad y_t = S_t q_t \quad \text{(读取)}$$</div>
+其中$I - \beta_t k_t k_t^\top$被称为Householder项，用于擦除信息。<p></p>
+<p>在形状方面，$v_t$是头部维度为$d$的向量，$k_t$和$q_t$在一组头之间共享（形状维度为$n$）。每头状态是形状为$(d, n)$的矩阵。状态更新是轻量级的秩1外积更新加累加，无法高效映射到Tensor Cores等现代矩阵乘法加速器上。每个解码步骤都必须加载和存储$(nheads, d, n)$大小的状态，导致算术强度极低（约为1），完全被内存I/O主导。在混合模型（如Nemotron-3、Qwen3.5）中，尽管注意力层的成本随上下文增长，但由于中短上下文中注意力成本适中、SSM层数量通常是注意力层的3到6倍，且SSM内核缺乏优化，SSM状态更新内核在高达100K token的情况下仍然是主要的延迟瓶颈。</p>
+<figure class="image-figure">
+<img alt="图2 Nemotron-3-Super-120B-A12B-NVFP4的延迟细分。尽管注意力随上下文长度缩放，但固定的SSM内核延迟在高达100K tokens时仍是最大组成部分" class="figure-image" src="https://tridao.me/assets/img/2026-06-15-replayssm/motivation-latencybreakdown.png"/>
+<figcaption class="figure-caption">图2 Nemotron-3-Super-120B-A12B-NVFP4的延迟细分。尽管注意力随上下文长度缩放，但固定的SSM内核延迟在高达100K tokens时仍是最大组成部分</figcaption>
+</figure>
+<h3>摘要的反噬：状态无法撤销</h3>
+<p>Transformer在KV缓存中显式存储整个历史，而SSM将历史压缩到固定大小的状态中。这种摘要是有损且不可逆的，一旦状态更新，模型就无法恢复产生它的确切token。这在投机解码中是一个严重问题，因为当草稿token被拒绝时需要回滚。注意力机制只需向后移动KV缓存中的指针，而SSM没有显式的token历史。vLLM中常见的解决方法是为每个投机token存储一个单独的SSM状态快照，在拒绝时恢复。这为本已受内存限制的路径增加了$T$倍（$T$为投机窗口）的内存流量，导致投机解码在服务批处理大小下几乎无法带来加速。</p>
+<figure class="image-figure">
+<img alt="图3 注意力机制通过移动KV缓存指针回滚，而SSM不可逆地将输入汇总到状态中，无法撤销" class="figure-image" src="https://tridao.me/assets/img/2026-06-15-replayssm/rollback.png"/>
+<figcaption class="figure-caption">图3 注意力机制通过移动KV缓存指针回滚，而SSM不可逆地将输入汇总到状态中，无法撤销</figcaption>
+</figure>
+<h3>并行性丧失：串行状态依赖</h3>
+<p>循环SSM状态是顺序依赖的，每个状态依赖于前一个状态。对于Transformer，投机解码可以增加并行性，因为对$T$个草稿token的验证可以批处理为一个大的GEMM。但SSM无法获得这种批处理，因为验证$T$个草稿token需要每个投机位置的状态和输出，计算仍然是一个长度为$T$的循环，无法用一次组合状态转换替换整个窗口。</p>
+<h2>方法细节</h2>
+<h3>核心思想：缓存最近的输入而非存储状态</h3>
+<p>SSM解码步骤包括加载状态、更新状态、生成输出和将更新后的状态存储回内存。但写回状态的唯一消费者是下一步。根据Mamba-2的定义：<br/>
+</p>
+$$S_t = a_t S_{t-1} + \Delta_t (v_t k_t^\top) = \sum_{i \le t} \Big( \textstyle\prod_{i &lt; j \le t} a_j \Big) \Delta_i (v_i k_i^\top)$$
+<p><br/>
+这两个表达式暗示了两种计算状态的方式：<br/>
+1. <strong>摘要路线（左）</strong>：加载摘要$S_{t-1}$并用新输入$v_t, k_t$更新。<br/>
+2. <strong>历史路线（右）</strong>：从最近的输入窗口$(v_i, k_i)$重建$S_t$。</p>
+<p><strong>ReplaySSM</strong>改变了每步存储到内存的内容。它不存储循环状态，而是在小缓冲区中<strong>缓存最近的输入</strong>（对于Mamba-2，存储$(v, k)$对和衰减因子）。当需要状态时，ReplaySSM选择历史路线从缓冲的输入重建状态。当缓冲区足够大，加载它的成本超过写回状态时，ReplaySSM会<strong>刷新（flush）</strong>缓冲区：将缓冲的历史输入汇总到状态中，清空缓冲区，并重新开始缓存。状态写回仅在刷新步骤发生，大多数步骤只缓存小输入。</p>
+<h3>一项改变带来的三大优势</h3>
+<p><strong>减少内存流量</strong><br/>
+在基线解码中，需加载和存储状态，每头的内存流量为$8dn + 2(d + 2n + 1)$（主导项为状态流量$8dn$）。在ReplaySSM中，假设缓冲区已缓存$h$个输入，需加载状态、缓存的$(v, \Delta, k)$及当前输入，并存储当前步输入。总流量为$4dn + 2h(d + n + 1) + 2(d + 2n + 1) + 2(d + n + 1)$。ReplaySSM将主导的状态流量从$8dn$减半至$4dn$。由于SSM解码受内存限制，减少内存流量直接改善了延迟。</p>
+<p><strong>回滚变为缓冲区操作</strong><br/>
+因为ReplaySSM显式缓存了最近的SSM输入（如草稿token），不执行每步的不可逆汇总，因此回滚拒绝的草稿token只需要删除它们的缓冲区条目，即移动指针，无需恢复完整状态。即使在投机解码触发更频繁刷新的情况下，大多数步骤仍避免了写入完整循环状态。</p>
+<figure class="image-figure">
+<img alt="图4 ReplaySSM缓存每个草稿的原始输入，回滚拒绝的草稿只是指针移动，无需状态写回" class="figure-image" src="https://tridao.me/assets/img/2026-06-15-replayssm/rollback_solution.png"/>
+<figcaption class="figure-caption">图4 ReplaySSM缓存每个草稿的原始输入，回滚拒绝的草稿只是指针移动，无需状态写回</figcaption>
+</figure>
+<p><strong>放宽要求与仅输出解码（Output-only decode）</strong><br/>
+在两次刷新之间，检查点状态不改变，最近的历史在缓冲区中，这意味着大多数解码步骤<strong>只需要当前token的输出</strong>。这解锁了新的解码方式：直接从检查点状态和缓存输入计算输出，而不物化状态。<br/>
+假设零初始状态，输出为$y = S q = (v k^\top) q$。这可以有两种结合方式：<br/>
+1. $(v k^\top) q$：构建完整状态然后读取。用于刷新缓冲区时。<br/>
+2. $v (k^\top q)$：先计算标量内积，再缩放$v$，从建物化状态。用于大多数解码步骤。<br/>
+对于非零检查点状态$S_0$和缓冲区，输出为：<br/>
+</p>
+$$y_t = \bar a_t (S_0 q_t) + \sum_{j=1}^{t} s_{j,t} v_j (k_j^\top q_t)$$
+<p><br/>
+该形式不仅避免了物化$d \times n$的状态，还利用了$k$和$q$在头组内共享的特性，预计算$k_j^\top q_t$。在FLOPs方面，外积路线支付$2(h+1)dn$来物化状态，而内积路线将其替换为$2(h+1)(d+n)$，计算量大幅减少。</p>
+<figure class="image-figure">
+<img alt="图5a 两种输出计算路线对比。一种构建完整状态$S = v k^\top$，另一种先形成标量$k^\top q$，从不物化状态" class="figure-image" src="https://tridao.me/assets/img/2026-06-15-replayssm/output_only.png"/>
+<figcaption class="figure-caption">图5a 两种输出计算路线对比。一种构建完整状态$S = v k^\top$，另一种先形成标量$k^\top q$，从不物化状态</figcaption>
+</figure>
+<figure class="image-figure">
+<img alt="图5b ReplaySSM的两种路线与矩阵形状。状态和输出路线物化$S_t$，而仅输出路线先计算$K^\top q_t$" class="figure-image" src="https://tridao.me/assets/img/2026-06-15-replayssm/output_only_general.png"/>
+<figcaption class="figure-caption">图5b ReplaySSM的两种路线与矩阵形状。状态和输出路线物化$S_t$，而仅输出路线先计算$K^\top q_t$</figcaption>
+</figure>
+<h3>算法实现</h3>
+<p><strong>Mamba-2 标准解码</strong><br/>
+- <strong>基线</strong>：每步计算衰减$a \gets e^{A\Delta}$，加载$S$，更新$S \gets a S + \Delta (v k^\top)$，计算$y \gets S q$，并将$S$存回HBM。<br/>
+- <strong>ReplaySSM</strong>：维护检查点$S_0$和容量为$L$的缓冲区$\mathcal{B}$。每步将$(v, \Delta, k)$追加到缓冲区；计算衰减权重$\bar a$和$s_j$；通过$y \gets \bar a (S_0 q) + \sum_{j=1}^{h+1} s_j (k_j^\top q) v_j$计算输出。如果缓冲区满，则执行刷新：$S_0 \gets \bar a S_0 + \sum_{j=1}^{h+1} s_j (v_j k_j^\top)$，并清空缓冲区。</p>
+<p><strong>投机解码</strong><br/>
+- <strong>基线</strong>：为每个草稿位置串行执行状态更新，并为每个草稿存储完整的状态快照以备回滚。<br/>
+- <strong>ReplaySSM</strong>：将草稿输入追加到缓冲区。对每个草稿$s$，计算衰减权重，读取检查点$H_{:,s} \gets \bar a_s (S_0 q_s)$；计算掩码GEMM $M_{j,s} \gets k_j^\top q_s$；计算输出$Y_{:,s} \gets H_{:,s} + \sum_{j \le p_s} w_{j,s} M_{j,s} v_j$。刷新时，仅将已提交的缓存输入汇总到状态中。<br/>
+- <strong>刷新决策机制</strong>：设$h$为当前缓存数，$T$为投机窗口。ReplaySSM在$h + 2T &gt; L$时提前一个窗口刷新，而不是自然的$h + T &gt; L$。这保证了每步至少有$T$个空闲槽，防止因空间不足导致投机窗口被静默截断。</p>
+<p><strong>内核设计细节</strong><br/>
+1. <strong>预计算共享内积</strong>：在Mamba-2中，组内所有头需要相同的内积$k_j^\top q$。ReplaySSM在一个小型的预计算内核中计算它们（每组运行一次），主SSM更新内核读取暂存缓冲区，以降低寄存器压力。<br/>
+2. <strong>环形缓冲区</strong>：为了避免在投机解码中将接受的token重新定位回缓冲区前面，ReplaySSM使用环形缓冲区并在内核中进行索引，使得回滚纯粹变成指针移动。</p>
+<h2>实验环境</h2>
+<ul>
+<li><strong>数据集</strong>：使用GSM8K数据集的提示词评估端到端吞吐量。</li>
+<li>
+<p><strong>模型架构</strong>：</p>
+<ul>
+<li>Nemotron-3家族（Mamba-2）：Nano-4B（4B密集, BF16），Super-120B（A12B MoE, NVFP4），Ultra-550B（A55B MoE, NVFP4）。</li>
+<li>Qwen3.5家族（GDN）：4B（4B密集, BF16），122B（A10B MoE, NVFP4）。</li>
+<li>投机解码使用各自的MTP头作为起草者，投机窗口为4。</li>
+</ul>
+</li>
+<li>
+<p><strong>硬件配置</strong>：4B模型使用1×H100；120B/122B模型使用1×B300；Ultra-550B使用2×B300（张量并行TP2）。</p>
+</li>
+<li><strong>软件配置</strong>：在vLLM上实现，启用CUDA Graph。SSM状态为FP32，缓冲区向量为BF16。</li>
+</ul>
+<h2>实验结果</h2>
+<h3>标准解码</h3>
+<p>在批处理大小256下，测试1K解码步骤。<br/>
+- <strong>结果</strong>：ReplaySSM在Nemotron-3上实现了1.43x至1.84x的内核加速和1.20x至1.48x的端到端加速；在Qwen3.5上实现了1.43x至1.64x的内核加速和1.20x至1.27x的端到端加速（图6）。端到端加速较小是因为仅优化了SSM内核。<br/>
+- <strong>缓冲区容量权衡</strong>：图7显示，中等缓冲区（Nemotron-3为8，Qwen3.5为16）平衡了频繁刷新的高成本和长缓冲区带来的计算瓶颈，呈现最佳的钟形曲线性能。</p>
+<figure class="image-figure">
+<img alt="图6 跨Nemotron-3和Qwen3.5家族的内核级别和端到端每步加速比" class="figure-image" src="https://tridao.me/assets/img/2026-06-15-replayssm/ar-e2espeedup.png"/>
+<figcaption class="figure-caption">图6 跨Nemotron-3和Qwen3.5家族的内核级别和端到端每步加速比</figcaption>
+</figure>
+<figure class="image-figure">
+<img alt="图7 不同缓冲区大小（4, 8, 16, 32）下的内核加速比" class="figure-image" src="https://tridao.me/assets/img/2026-06-15-replayssm/ar-buffersize.png"/>
+<figcaption class="figure-caption">图7 不同缓冲区大小（4, 8, 16, 32）下的内核加速比</figcaption>
+</figure>
+<h3>投机解码</h3>
+<ul>
+<li><strong>端到端吞吐量</strong>：在GSM8K提示词上，扫描批处理大小至512。ReplaySSM在保持相同草稿接受率的情况下，在最大批处理下达到标准解码的1.87–1.96倍，以及基线投机路径的最高2.14倍（图8）。</li>
+<li><strong>更快的解码步骤</strong>：基线验证成本随窗口几乎线性增长（在Qwen3.5-122B上，$T=6$时基线内核成本是标准解码的4.85倍）。而ReplaySSM的内核成本保持平稳（1.27x到1.72x之间，图9）。2.28–3.33倍的内核加速最终转化为完整解码步骤的1.20–1.58倍加速（图10）。</li>
+<li><strong>更高的最大并发性</strong>：在固定HBM预算下，基线预分配的每个草稿状态使最大解码批处理减少约4倍。ReplaySSM缓存小输入向量，恢复了3.0–3.3倍的并发请求容量（图11）。</li>
+</ul>
+<figure class="image-figure">
+<img alt="图8 端到端解码吞吐量与批处理大小的关系。底部显示基线和ReplaySSM接受的token数完全相同" class="figure-image" src="https://tridao.me/assets/img/2026-06-15-replayssm/spec-e2ethroughput.png"/>
+<figcaption class="figure-caption">图8 端到端解码吞吐量与批处理大小的关系。底部显示基线和ReplaySSM接受的token数完全相同</figcaption>
+</figure>
+<figure class="image-figure">
+<img alt="图9 Qwen3.5-122B上投机解码内核延迟与窗口大小的关系" class="figure-image" src="https://tridao.me/assets/img/2026-06-15-replayssm/spec-specwindow.png"/>
+<figcaption class="figure-caption">图9 Qwen3.5-122B上投机解码内核延迟与窗口大小的关系</figcaption>
+</figure>
+<figure class="image-figure">
+<img alt="图10 投机解码在内核、验证前向传递和完整解码步骤级别的加速比细分" class="figure-image" src="https://tridao.me/assets/img/2026-06-15-replayssm/spec-speedupbreakdown.png"/>
+<figcaption class="figure-caption">图10 投机解码在内核、验证前向传递和完整解码步骤级别的加速比细分</figcaption>
+</figure>
+<figure class="image-figure">
+<img alt="图11 固定HBM预算下的最大解码并发性。ReplaySSM支持的并发请求比基线多3.0-3.3倍" class="figure-image" src="https://tridao.me/assets/img/2026-06-15-replayssm/spec-maxconcurrency.png"/>
+<figcaption class="figure-caption">图11 固定HBM预算下的最大解码并发性。ReplaySSM支持的并发请求比基线多3.0-3.3倍</figcaption>
+</figure>
+<h2>结论</h2>
+<p>ReplaySSM通过一个简单的改变——缓存最近的输入而不是存储状态——减少了内存流量，实现了低成本回滚，并解锁了仅输出解码。该方法不仅适用于Mamba-2，也适用于GDN等delta-rule模型。在vLLM中的实现加速了标准解码，并消除了阻碍投机解码的关键障碍。未来计划将ReplaySSM的理念引入Mamba-3和GDN2等更多架构，并探索SSM在选择何时汇总输入和何时显式缓存方面的灵活性。</p>
+<h2>附录细节</h2>
+<h3>Gated DeltaNet (GDN) 算法实现</h3>
+<p><strong>标准解码</strong><br/>
+GDN基线在更新状态时包含一个校正项：$u \gets \beta (v - S k)$（减去状态在$k$处的读出），然后执行$S \gets S + u k^\top$。因为计算$u_t$需要状态$S_{t-1}$，不能直接缓存$(v, k)$。ReplaySSM的策略是<strong>缓存$u$</strong>。一旦$u_t$已知，状态更新变为$S_t = \alpha_t S_{t-1} + u_t k_t^\top$，与Mamba-2历史路线相同。<br/>
+由于GDN步骤需要状态在$k$和$q$处的读出，ReplaySSM采用<strong>状态和输出路线</strong>：从衰减的检查点和外积$u_j k_j^\top$重建状态$S_h \gets \big(\textstyle\prod_j \alpha_j\big) S_0 + \sum_j \big(\textstyle\prod_{i&gt;j}\alpha_i\big) u_j k_j^\top$，计算校正$u \gets \beta (v - \alpha (S_h k))$，然后输出$y \gets \alpha (S_h q) + u (k\!\cdot\! q)$。</p>
+<p><strong>投机解码</strong><br/>
+GDN验证同样存在串行循环和每草稿状态快照问题，且每个校正$u_s$依赖于前一个草稿之后的状态。ReplaySSM应用GDN训练时的<strong>分块并行（chunk-wise parallelism）</strong>方法，将循环展开得到$u_s = R_s - \sum_{s'&lt;s} A_{s,s'} u_{s'}$。通过一次$T \times T$的严格下三角求解矩阵求逆，ReplaySSM可以同时计算所有$T$个校正，将整个验证步骤并行化为GEMM操作，彻底移除了串行循环和状态快照。&lt;/p&gt;
+</p><h3>在vLLM中运行CUDA Graph的补充设计</h3>
+<ul>
+<li><strong>处理批处理分歧</strong>：由于连续批处理和投机解码接受率不同，各序列到达刷新步骤的时间不同。ReplaySSM将刷新决策视为每序列数据，内核在运行时读取并分支，而不是作为编译时常量，从而允许同一个捕获的图处理整个批次。</li>
+<li><strong>设备端提交与回滚</strong>：为了避免将接受的token计数发回主机导致流水线停滞，ReplaySSM使用一个小的提交内核直接在设备上更新缓冲区指针。这使得每种批处理大小只需一个捕获的图即可覆盖投机路径，无需主机同步。</li>
+</ul>
+<h3>与先前SSM投机解码方法的比较</h3>
+<p>先前的SSM投机解码方法（如Mamba-in-the-Llama和STree）虽然避免了为每个草稿保留单独状态，但仍会在每个解码步骤物化并写回至少一个循环状态到HBM，保持了顺序状态依赖。且它们主要在批处理大小为1的Mamba-2上评估。相比之下，ReplaySSM仅在刷新时写回状态，泛化到了GDN，并在服务批处理大小下在vLLM中成功运行。</p>
+</div>
+
+
+</div>
