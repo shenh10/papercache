@@ -4573,6 +4573,14 @@ llm:
         - llm
         - engineering
         - moe
+      - title: Better MoE Model Inference with Warp Decode
+        date: '2026-04-01'
+        url: /papers/llm/engineering/moe/2026/04/01/better-moe-model-inference-with-warp-decode.html
+        categories:
+        - llm
+        - engineering
+        - moe
+        tag: blog
       - title: Scaling Vision-Language Models with Sparse Mixture of Experts
         date: '2023-03-01'
         url: /papers/llm/engineering/moe/2023/03/01/scaling-vision-language-models-with-sparse-mixture-of-experts.html
