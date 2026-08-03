@@ -1030,6 +1030,13 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'System Card: Claude Opus 5'
+        date: '2026-07-01'
+        url: /papers/llm/algorithm/models/2026/07/01/system-card-claude-opus-5.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: 'Introducing Gemma 4 12B: A Unified, Encoder-Free Multimodal Model'
         date: '2026-06-01'
         url: /papers/llm/algorithm/models/2026/06/01/introducing-gemma-4-12b-a-unified-encoder-free-multimodal-model.html
@@ -5807,6 +5814,13 @@ diffusions:
       - diffusions
       - dllm
       tag: nips25
+    - title: 'X-Stage: An Overlooked Pipeline Stage for Communication–Computation
+        Overlap in DiT Inference'
+      date: '2026-07-01'
+      url: /papers/diffusions/dllm/2026/07/01/x-stage-an-overlooked-pipeline-stage-for-communicationcomputation-overlap-in-dit-inference.html
+      categories:
+      - diffusions
+      - dllm
     - title: 'Fast-dLLM: Training-free Acceleration of Diffusion LLM by Enabling KV
         Cache and Parallel Decoding'
       date: '2025-07-01'
