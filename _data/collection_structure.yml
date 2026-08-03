@@ -477,6 +477,14 @@ llm:
           - architecture
           - transformer-variant
           tag: iclr25
+        - title: Tokenizer-Agnostic Engram Module
+          date: '2026-07-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2026/07/01/tokenizer-agnostic-engram-module.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
         - title: Fast-weight Product Key Memory
           date: '2026-01-01'
           url: /papers/llm/algorithm/architecture/transformer-variant/2026/01/01/fast-weight-product-key-memory.html
