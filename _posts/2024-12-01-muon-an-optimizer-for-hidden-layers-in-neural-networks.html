@@ -1,0 +1,237 @@
+---
+added_date: '2026-08-03'
+author: shenh10
+categories:
+- llm
+- algorithm
+- pretrain_sft
+comments: true
+date: '2024-12-01'
+layout: post
+mathjax: true
+tag: blog
+title: 'Muon: An Optimizer for Hidden Layers in Neural Networks'
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>Muon: An Optimizer for Hidden Layers in Neural Networks</h1>
+<p><strong>发表时间</strong>: 2024-12 · Blog post by Keller Jordan (kellerjordan.github.io)</p>
+<p><strong>原文</strong>: <a href="https://kellerjordan.github.io/posts/muon/" rel="noopener" target="_blank">https://kellerjordan.github.io/posts/muon/</a></p>
+<p><strong>作者/机构</strong>: Keller Jordan, Yuchen Jin, Vlado Boza, Jiacheng You, Franz Cesista, Laker Newhouse, Jeremy Bernstein</p>
+<h2>A1 主要贡献</h2>
+<p>本文介绍了一种名为 Muon 的新型优化器，专为神经网络的隐藏层设计。Muon 通过在标准 SGD-momentum 更新之上引入一个高效的矩阵正交化步骤，显著提升了神经网络的训练速度。</p>
+<ul>
+<li>
+<p><strong>核心问题与研究目标</strong>：当前神经网络训练，尤其是大模型训练，计算成本高昂。标准的优化器（如 AdamW）在处理高维参数（如 Transformer 中的权重矩阵）时，其梯度更新可能存在高条件数问题，即更新量集中在少数几个方向上，影响了训练效率。本研究的目标是设计一种能克服此问题、提升训练速度（包括样本效率和墙钟时间）的新优化器。</p>
+</li>
+<li>
+<p><strong>核心创新点（Muon 优化器）</strong>：</p>
+<ol>
+<li><strong>方法论</strong>：Muon 的核心思想是对 SGD-momentum 生成的更新矩阵进行后处理。在将更新应用于模型参数之前，Muon 会先对其进行<strong>近似正交化</strong>。</li>
+<li><strong>高效实现</strong>：该正交化过程并非通过计算成本高昂的 SVD 分解实现，而是采用了一种称为<strong>牛顿-舒尔茨（Newton-Schulz, NS）</strong> 的矩阵迭代方法。这种方法的一大优势是可以在 bfloat16 精度下稳定运行，从而在现代 GPU 上实现高效率。</li>
+<li>
+<p><strong>算法定义</strong>：Muon 优化器的具体算法如下所示，其关键步骤是 <code>NewtonSchulz5</code> 函数，该函数执行 5 次带有特定调优系数的 NS 迭代。</p>
+<figure class="image-figure">
+<img alt="" class="figure-image" src="https://kellerjordan.github.io/images/muon/muon_algo.png"/>
+<figcaption class="figure-caption"></figcaption>
+</figure>
+<p><code>NewtonSchulz5</code> 的 PyTorch 实现如下，其中包含了归一化、矩阵转置处理和 5 步迭代的核心逻辑：</p>
+</li>
+</ol>
+</li>
+</ul>
+<pre><code># Pytorch code
+def newtonschulz5(G, steps=5, eps=1e-7):
+    assert G.ndim == 2
+    a, b, c = (3.4445, -4.7750, 2.0315)
+    X = G.bfloat16()
+    X /= (X.norm() + eps)
+    if G.size(0) &gt; G.size(1):
+        X = X.T
+    for _ in range(steps):
+        A = X @ X.T
+        B = b * A + c * A @ A
+        X = a * X + B @ X
+    if G.size(0) &gt; G.size(1):
+        X = X.T
+    return X</code></pre>
+<p>4. **混合优化策略**：Muon 专门用于优化网络的二维隐藏层参数。对于网络中的标量、向量参数以及输入/输出层，仍需使用标准优化器（如 AdamW）。</p>
+<ul>
+<li><strong>主要成果</strong>：Muon 在多个竞争性训练任务中取得了当前最佳（SOTA）成绩，证明了其有效性。例如，它将 CIFAR-10 达到 94% 准确率的训练速度纪录从 3.3 A100-秒缩短至 2.6 A100-秒，并将 NanoGPT 速度竞赛的训练速度提升了 1.35 倍。</li>
+</ul>
+<h2>A3 设计理念</h2>
+<p>本节描述并分析 Muon 的设计。</p>
+<p><strong>Muon 的核心机制</strong>：Muon（Momentum Orthogonalized by Newton-Schulz，由牛顿-舒尔茨正交化的动量）通过以下方式优化神经网络的二维参数：首先使用带动量的随机梯度下降（SGD-momentum）生成更新，然后在将这些更新应用于参数之前，对每个更新矩阵应用牛顿-舒尔茨（NS）迭代作为后处理步骤。</p>
+<p><strong>NS 迭代的功能</strong>：NS 迭代的作用是近似地<em>正交化</em>更新矩阵，即执行以下操作：<br/>
+</p>
+$$\begin{aligned}
+
+\mathrm{Ortho}(G) = \arg\min_O \\{ \|O - G\|_F : \text{either $O^\top O = I$ or $OO^\top = I$} \\}
+
+\end{aligned}$$
+<p><br/>
+换言之，NS 迭代有效地将 SGD-momentum 的更新矩阵替换为与其最接近的半正交矩阵。这等同于将其奇异值分解（SVD）$USV^\top$ 中的更新替换为 $UV^\top$。</p>
+<p><strong>正交化更新的益处</strong>：我们首先想指出，一个有效的答案可能是：它就是有效，行吗？（Shazeer 2020）【16, Glu variants improve transformer, 2020, arXiv】。<br/>
+<img alt="" class="figure-image" src="https://kellerjordan.github.io/images/muon/divine.png"/><br/>
+不过，一个更具理论色彩的动机源于 Bernstein &amp; Newhouse (2024)【2, Old optimizer, new norm: An anthology, 2024, arXiv】对 Shampoo【1, Shampoo: Preconditioned stochastic tensor optimization, 2018, ICML】的分析，具体见与 Shampoo 的关系部分。而从经验角度看，我们通过手动检查发现，SGD-momentum 和 Adam 为基于 Transformer 的神经网络中的二维参数生成的更新通常具有非常高的条件数。也就是说，它们几乎是低秩矩阵，所有神经元的更新都由少数几个方向主导。我们推测，正交化有效地增大了其他“稀有方向”的尺度，这些方向在更新中的量级很小，但对学习却至关重要。</p>
+<h2>A2 方法细节</h2>
+<h3>替代 NS 迭代方案的排除</h3>
+<p><strong>多种正交化方法的比较</strong>：除了 NS 迭代，还有其他几种方法可以正交化矩阵。在本小节中，我将描述为什么我们没有使用其中的两种。关于可能方法的更完整列表，请参阅 Bernstein &amp; Newhouse (2024)【2, Old optimizer, new norm: An anthology, 2024, arXiv】的附录A。</p>
+<p><strong>SVD的排除</strong>：SVD（即计算更新的 $USV^\top$ 分解，然后用 $UV^\top$ 替换更新）虽然易于理解，但我们没有使用它，因为它速度太慢。</p>
+<p><strong>耦合牛顿迭代的排除</strong>：耦合牛顿迭代（Guo and Higham, 2006【8, A Schur-Newton method for the matrix p’th root and its inverse, 2006, SIAM Journal On Matrix Analysis and Applications】; Iannazzo, 2006【9, On the Newton method for the matrix p-th root, 2006, SIAM journal on matrix analysis and applications】）被用于 Shampoo【1, Shampoo: Preconditioned stochastic tensor optimization, 2018, ICML; 4, Scalable second order optimization for deep learning, 2020, arXiv; 12, A distributed data-parallel pytorch implementation of the distributed shampoo optimizer for training neural networks at-scale, 2023, arXiv】的实现中以执行负四分之一次方根，并且可以很容易地调整用于正交化。但我们没有使用它，因为我们发现它必须至少在 float32 精度下运行以避免数值不稳定性，这使得它在现代 GPU 上速度很慢。</p>
+<p><strong>选择牛顿-舒尔茨迭代的原因</strong>：相比之下，我们发现牛顿-舒尔茨迭代（Bernstein &amp; Newhouse, 2024【2, Old optimizer, new norm: An anthology, 2024, arXiv】; Higham, 2008【13, Functions of Matrices, 2008, Society for Industrial and Applied Mathematics】; Björck and Bowie, 1971【15, An iterative algorithm for computing the best estimate of an orthogonal matrix, 1971, SIAM Journal on Numerical Analysis】; Kovarik, 1970【14, Some iterative methods for improving orthonormality, 1970, SIAM Journal on Numerical Analysis】）可以在 bfloat16 精度下稳定运行。因此，我们选择它作为我们正交化更新的首选方法。</p>
+<h3>证明 NS 迭代能够正交化更新</h3>
+<p><strong>NS 迭代的数学原理</strong>：为了理解为什么 NS 迭代能正交化更新，我们设 $G = USV^\top$ 是由 SGD-momentum 产生的更新矩阵的 SVD 分解。那么，使用系数 $(a, b, c)$ 运行一步 NS 迭代会产生以下输出：<br/>
+</p>
+$$\begin{aligned}
+
+\begin{align*} G’ &amp;:= aG + b(GG^\top)G + c(GG^\top)^2G \\\ &amp;= (aI + b(GG^\top) + c(GG^\top)^2)G \\\ &amp;= (aI + bUS^2U^\top + cUS^4U^\top)USV^\top \\\ &amp;= U(aS + bS^3 + cS^5)V^\top \end{align*}
+
+\end{aligned}$$
+<p><br/>
+通常，如果我们定义五次多项式 $\varphi(x) = ax + bx^3 + cx^5$，那么用系数 $(a, b, c)$ 应用 $N$ 步 NS 迭代会得到输出 $U\varphi^N(S)V^\top$，其中 $\varphi^N(S)$ 表示将 $\varphi$ 函数逐元素地应用于构成 $S$ 对角线的奇异值上 $N$ 次。</p>
+<p><strong>NS 迭代的收敛条件</strong>：因此，为保证 NS 迭代收敛到 $\mathrm{Ortho}(G) = UV^\top$，我们只需要做到两点：（1）确保 $S$ 的初始条目位于 $[0, 1]$ 范围内，以及（2）选择系数使得对于所有 $x \in [0, 1]$，当 $N \to \infty$ 时 $\varphi^N(x) \to 1$。为了满足第一个标准，我们在开始 NS 迭代之前简单地用 $G/|G|_F$ 替换 $G$。这种重新缩放是良性的，因为 $\mathrm{Ortho}(cG) = \mathrm{Ortho}(G)$。为了满足 $\varphi^N(x) \to 1$ 当 $N \to \infty$ 时，我们有一定的自由度，因为有许多可能的 $(a, b, c)$ 选择具有此属性。稍后我们将优化这个选择，但现在我们在下图中展示了简单的基线 $(a, b, c) = (2, -1.5, 0.5)$ 已经可以工作。<br/>
+<img alt="Figure 3. 牛顿-舒尔茨迭代的基线系数。" class="figure-image" src="https://kellerjordan.github.io/images/muon/poly_phi.png"/></p>
+<h3>系数调优</h3>
+<p><strong>调优 NS 系数的动机</strong>：尽管 NS 系数 $(a, b, c) = (2, -1.5, 0.5)$ 对于正交化更新来说工作得很好，但可以进一步调整它们以减少我们需要运行的 NS 迭代步骤数。</p>
+<p><strong>调优的考量因素</strong>：对于调整系数 $(a, b, c)$，我们有以下考虑：<br/>
+1. 我们希望使 $a$ 尽可能大，因为 $\varphi'(0) = a$ 意味着该系数控制着小初始奇异值的收敛速度。<br/>
+2. 对于每个 $x \in [0, 1]$，我们希望当 $N \to \infty$ 时，$\varphi^N(x)$ 收敛到 $[1-\varepsilon, 1+\varepsilon]$ 范围内的值，这样 NS 迭代的结果就不会离 $\mathrm{Ortho}(G)$ 太远。</p>
+<p><strong>最终系数的确定</strong>：令人惊讶的观察是，根据经验，$\varepsilon$ 可以高达约 0.3 而不损害基于 Muon 的训练的损失曲线。因此，我们的目标将是最大化 $a$，同时满足 $\lim_{N \to \infty} \varphi^N(x) \in [0.7, 1.3]$。我们使用一种临时的基于梯度的方法来解决这个约束优化问题，最终得到了系数 $(3.4445, -4.7750, 2.0315)$，这就是我们用于 Muon 最终设计的系数。这些系数的行为可以在下图中看到。注意在 x=0 附近更陡峭的增长。<br/>
+<img alt="Figure 4. 我们的牛顿-舒尔茨迭代的调优系数。" class="figure-image" src="https://kellerjordan.github.io/images/muon/poly_phirho.png"/></p>
+<p><strong>调优结果</strong>：在我们的实验中，当使用这些系数的 Muon 来训练 Transformer 语言模型和小型卷积网络时，只需运行 NS 迭代 5 步就足够了。我们还考虑过使用三阶和七阶多项式进行 NS 迭代，但发现这些并不能进一步改善墙钟时间的开销。</p>
+<h3>运行时间分析</h3>
+<p><strong>内存与计算开销</strong>：在本节中，我们分析 Muon 的运行时间和内存需求。在应用 NS 迭代之前，Muon 就是标准的 SGD-momentum，因此它具有相同的内存需求。对于网络中每个 $n \times m$ 的矩阵参数（不失一般性，设 $m \leq n$），NS 迭代的每一步需要 $2(2nm^2 + m^3)$ 次矩阵乘法浮点运算（matmul FLOPs），在方阵参数的情况下最多为 $6nm^2$。因此，Muon 相对于 SGD 所需的额外 FLOPs 最多为 $6Tnm^2$，其中 $T$ 是 NS 迭代的次数（我们通常使用 $T=5$）。如果参数参数化一个线性层，那么执行一步训练（即一次前向和后向传播）的基线 FLOPs 量是 $6nmB$，其中 $B$ 是在该步骤中通过该层的输入数量。</p>
+<p><strong>FLOP 开销公式</strong>：因此，<strong>Muon 的 FLOP 开销最多为 $Tm/B$，其中 $m$ 是模型维度， $B$ 是批次大小（以 token 计），$T$ 是 NS 迭代步骤数（通常 $T=5$）</strong>。</p>
+<p><strong>具体场景分析</strong>：我们现在为两个具体的训练场景计算这个开销：NanoGPT 速度竞赛和 Llama 405B 训练。<br/>
+1. 对于当前的 NanoGPT 速度竞赛记录，模型维度是 $m=768$，每个批次的 token 数是 $B=524288$。因此，开销是 $5 \times 768 / 524288 = 0.7\%$。<br/>
+2. 对于 Llama 405B 训练，模型维度是 $m=16384$，每个批次的 token 数据报道为 $B=16000000$ (Dubey et al. 2024)【7, The llama 3 herd of models, 2024, arXiv】。因此，在此训练中使用 Muon 的开销将是 $5 \times 16384 / 16000000 = 0.5\%$。</p>
+<p><strong>结论</strong>：我们得出结论，对于典型的小规模和大规模语言模型训练场景，Muon 的 FLOP 开销低于 1%。</p>
+<h3>与先前优化器的关系</h3>
+<h4>Shampoo</h4>
+<p><strong>与 Shampoo 的联系</strong>：Shampoo 优化器定义如下（Gupta et al. 2018）【1, Shampoo: Preconditioned stochastic tensor optimization, 2018, ICML】。<br/>
+<img alt="Shampoo 优化器公式" class="figure-image" src="https://kellerjordan.github.io/images/muon/shampoo.png"/><br/>
+如果移除预处理器累积，Bernstein &amp; Newhouse (2024)【2, Old optimizer, new norm: An anthology, 2024, arXiv】观察到更新变为以下形式（另见 Anil (2024a)【5, "Just some fun linear algebra", 2024, X post】）：<br/>
+</p>
+$$\begin{aligned}
+
+\begin{align*} W_{t+1} &amp;= W_t - \eta (G_tG_t^\top)^{-1/4}G_t(G_t^\top G_t)^{-1/4} \\\ &amp;= W_t - \eta (US^2U^\top)^{-1/4} (USV^\top) (VS^2V^\top)^{-1/4} \\\ &amp;= W_t - \eta (US^{-1/2}U^\top) (USV^\top) (VS^{-1/2}V^\top) \\\ &amp;= W_t - \eta US^{-1/2}SS^{-1/2}V^\top \\\ &amp;= W_t - \eta UV^\top \end{align*}
+
+\end{aligned}$$
+<p><br/>
+这就是正交化梯度。如果我们在正交化之前加入动量，我们就恢复了 Muon 的更新，尽管由于使用负四分之一次方根而不是牛顿-舒尔茨迭代，其墙钟时间和 FLOP 开销更高。因此，可以将关闭动量的 Muon 解释为一种“瞬时”或“无累积”的 Shampoo（Anil 2024b）【6, "Shampoo with no accumulation ❤️", 2024, X post】。</p>
+<h4>Orthogonal-SGDM</h4>
+<p><strong>与 Orthogonal-SGDM 的区别</strong>：Tuddenham et al. (2022)【18, Orthogonalising gradients to speed up neural network optimisation, 2022, arXiv】提出通过 SVD 对梯度进行正交化，对结果应用动量，然后使用该动量项作为更新来优化神经网络，称此优化器为 Orthogonal-SGDM。这与 Muon 相似，不同之处在于 Muon 将动量移至正交化之前，我们发现这在经验上表现更好，并且使用牛顿-舒尔茨迭代代替 SVD 以实现更高效的正交化。在他们表现最佳的实验设置中（表3），Tuddenham et al. (2022) 报告说，他们的方法被一个经过良好调优的标准 SGD-Momentum 所超越，这或许解释了为什么这篇论文在这篇博客文章之前没有被引用。</p>
+<h4>随机谱下降与 RMSspectral</h4>
+<p><strong>与早期正交化方法的比较</strong>：<em>注意：本小节于 2025 年 12 月 7 日添加。</em> 更早的正交化优化例子可以在 Carlson 等人（2015a【21, Stochastic spectral descent for Restricted Boltzmann Machines, 2015, AISTATS】, 2016【23, Stochastic spectral descent for discrete graphical models, 2016, Selected Topics in Signal Processing】）的工作中找到，他们提出通过 SVD 正交化梯度估计并按核范数缩放来优化受限玻尔兹曼机和离散图形模型，称此方法为随机谱下降。此外，Carlson 等人（2015b）【22, Preconditioned spectral descent for deep learning, 2015, NIPS】提出使用随机谱下降和 RMSprop 的混合体（称为 RMSspectral）来优化前馈神经网络。预见到加速正交化的需求，RMSspectral 使用随机化 SVD 而非完全 SVD 来近似正交化操作。与 Muon 相比，这些开创性的早期基于正交化的优化器使用 SVD 变体而非牛顿-舒尔茨迭代进行正交化，并且没有任何形式的动量。我们发现使用动量对于获得最佳经验性能是必要的。</p>
+<h3>经验性考量</h3>
+<p><strong>Muon 的应用范围</strong>：根据设计，Muon 仅适用于二维参数（以及通过展平的卷积滤波器），因此网络中剩余的标量和向量参数必须使用标准方法（例如 AdamW）进行优化。根据经验，我们发现使用 AdamW 优化输入和输出参数也很重要，即使这些参数通常是二维的。特别是在训练 Transformer 时，应为嵌入层和最终分类器头层使用 AdamW，以获得最佳性能。嵌入层的优化动态应与其他层不同，这源于<em>模块化范数</em>理论（Large et al. 2024）【11, Scalable Optimization in the Modular Norm, 2024, arXiv】。而输出层也需要这种不同的动态，这似乎不是理论所能解释的，而是由经验驱动的。</p>
+<p><strong>动量选择</strong>：另一个纯粹的经验结果是，在我们测试的每种情况下，为 Muon 使用 Nesterov 风格的动量都比普通的 SGD-momentum 效果要好一些。因此，我们已将其设为公共 <a href="https://github.com/KellerJordan/Muon">https://github.com/KellerJordan/Muon</a>中的默认设置。</p>
+<p><strong>Transformer 中的应用</strong>：第三个结果是，如果将 Muon 分别应用于 Transformer 的 Q、K、V 参数，而不是像将 QKV 参数化为单个线性层然后分割其输出的默认实现那样一起应用，其优化效果更好。</p>
+<h2>A4 实验环境</h2>
+<ul>
+<li>
+<p><strong>数据集</strong>:</p>
+<ul>
+<li><strong>CIFAR-10</strong>: 用于一项旨在达到 94% 准确率的速度竞赛任务。</li>
+<li><strong>FineWeb</strong>: 用于“NanoGPT 速度竞赛”的竞争性任务，目标验证损失为 3.28。</li>
+<li><strong>HellaSwag</strong>: 用作 1.5B 参数 Transformer 的性能基准。</li>
+</ul>
+</li>
+<li>
+<p><strong>模型架构</strong>:</p>
+<ul>
+<li>用于速度竞赛的 <strong>NanoGPT 模型</strong>，模型维度为 768。</li>
+<li><strong>Transformer 语言模型</strong>，参数量分别为 774M 和 1.5B。</li>
+<li>用于 CIFAR-10 的<strong>小型卷积网络</strong>。</li>
+</ul>
+</li>
+<li>
+<p><strong>硬件配置</strong>:</p>
+<ul>
+<li><strong>GPU</strong>: A100 GPU（用于 CIFAR-10 速度竞赛）和一个 8xH100 GPU 节点（用于训练 1.5B 参数模型）。</li>
+</ul>
+</li>
+<li>
+<p><strong>软件配置</strong>:</p>
+<ul>
+<li><strong>实现</strong>: PyTorch。</li>
+<li><strong>代码库</strong>: 公共实现可在 <code>https://github.com/KellerJordan/Muon</code> 找到。使用示例位于 NanoGPT 速度竞赛记录的代码库中 <code>https://github.com/KellerJordan/modded-nanogpt</code>。</li>
+</ul>
+</li>
+</ul>
+<h2>A4 实验结果</h2>
+<ul>
+<li><strong>CIFAR-10 速度竞赛</strong>: Muon 刷新了在 CIFAR-10 上训练至 94% 准确率的速度记录，将时间从 3.3 A100-秒减少到 2.6 A100-秒。</li>
+<li><strong>NanoGPT 速度竞赛</strong>: Muon 将在 FineWeb 上达到 3.28 验证损失的训练速度记录提高了 1.35 倍。</li>
+<li><strong>扩展性能</strong>: 当扩展到更大的模型（包括 774M 和 1.5B 参数的 Transformer）时，Muon 持续显示出训练速度的提升。</li>
+<li><strong>大模型训练</strong>: 一个 1.5B 参数的 Transformer 使用 Muon 训练，在 8xH100 节点上用 10 小时达到了 HellaSwag 基准测试中 GPT-2 XL 的水平。使用经过调优的 AdamW 优化器达到相同结果需要 13.3 小时。</li>
+<li>
+<p><strong>优化器比较 (NanoGPT)</strong>:</p>
+<ul>
+<li>图1 显示，在样本效率（处理的 token 数量）方面，Muon 比 AdamW、Sophia 和 Lion 更快地达到了更低的验证损失。</li>
+<li>图2 显示了在墙钟时间方面的类似优势。</li>
+</ul>
+</li>
+<li>
+<p><strong>优化器比较 (1.5B 模型)</strong>:</p>
+<ul>
+<li>图3 比较了 Muon 与一个经过调优的 AdamW 在一个 1.5B 参数模型的短期训练中的表现。图表显示，在整个训练过程中，Muon 始终获得更低的验证损失。</li>
+</ul>
+</li>
+</ul>
+<p><img alt="Figure 1. 按样本效率的优化器比较。" class="figure-image" src="https://kellerjordan.github.io/images/muon/nanogpt_speedrun81w.png"/>
+<img alt="Figure 2. 按墙上时钟时间的优化器比较。" class="figure-image" src="https://kellerjordan.github.io/images/muon/nanogpt_speedrun82w.png"/>
+<img alt="Figure 3. Muon 与 AdamW 在 1.5B 短期训练中的比较。" class="figure-image" src="https://kellerjordan.github.io/images/muon/muon15b.jpeg"/></p>
+<h2>A7 补充细节</h2>
+<h3>讨论：用竞争性任务框架解决基线调优不足问题</h3>
+<p><strong>基线调优不足的问题</strong>：作者认为，神经网络优化研究领域充斥着大量声称击败 AdamW 但从未被社区采纳的“死亡优化器”。这主要归咎于一个常见问题：将新方法与未经充分调优的基线进行比较。作者指出，发表此类结果并非无害，它浪费了大量试图复现和基于这些有缺陷的研究进行创新的研究人员和小型实验室的时间、金钱和士气。</p>
+<p><strong>提议的解决方案：竞争性任务框架</strong>：为解决此问题，作者提议研究社区应采纳以下证据标准：只要可能，新的神经网络训练方法都应在“竞争性训练任务”中展示其成功。竞争性任务通过两种方式解决了基线调优不足的问题。首先，竞争性任务中的基线是先前的记录，如果任务流行，这个记录很可能已经被充分调优。其次，即使先前记录未经充分调优，也可以通过新的记录实现自我修正，即恢复使用标准方法。原因在于标准方法通常有硬件优化的快速实现，而新方法通常会引入额外的墙钟时间开销；因此，仅放弃新提出的方法就足以创造新纪录。因此，在一个流行的竞争性任务中，一个对标准方法的巨大但虚假的改进持续存在于记录历史中的可能性很小。</p>
+<p><strong>以 Muon 为例</strong>：Muon 优于 AdamW 的主要证据来自其在“NanoGPT 速度竞赛”这一竞争性任务中的成功。特别是在 2024 年 10 月 15 日，从 AdamW 切换到 Muon 创造了新的 NanoGPT 训练速度记录，将训练速度提高了 35%。自那时以来，在由 7 位不同研究人员创造的全部 12 个新的 NanoGPT 速度竞赛记录中，Muon 一直是首选优化器。Muon 的每步墙钟时间比 AdamW 慢，所以如果存在能够使 AdamW 在样本效率上与 Muon 相媲美的超参数，那么通过简单地抛弃 Muon 并重新使用优秀的 AdamW 就有可能创造新纪录。因此，要相信 Muon 比 AdamW 更好，至少对于训练小型语言模型而言，你实际上根本不需要信任我（Keller Jordan）。相反，你只需要相信社区中存在知道如何调优 AdamW 并有兴趣创造新的 NanoGPT 速度竞赛记录的研究人员。这难道不美妙吗？</p>
+<h2>A5 结论</h2>
+<p>本文最后列出了关于 Muon 的适用性和可扩展性的几个待解决的开放性问题：</p>
+<ul>
+<li><strong>扩展到更大规模的训练</strong>：Muon 的优势是否会持续到更大规模的训练中（例如，参数超过 200 亿、训练数据超过 1 万亿 token 的模型），目前尚不清楚。</li>
+<li><strong>分布式训练</strong>：Muon 的核心组成部分——牛顿-舒尔茨迭代，是否能在大规模 GPU 集群上得到有效分布，这是一个关键问题。</li>
+<li><strong>对其他任务的适用性</strong>：Muon 的有效性是否仅限于预训练，还是也能在微调或强化学习等工作负载中发挥作用，目前尚不确定。</li>
+</ul>
+<p>作者明确表示，在撰写本文时，这些问题的答案都还是未知的。</p>
+<h2>方法细节中的引用汇总</h2>
+<p>本文在方法细节部分引用了多篇文献来支撑其设计选择和理论背景。以下是关键引用的总结：</p>
+<ol>
+<li>
+<p><strong>关于 Shampoo 优化器</strong>:</p>
+<ul>
+<li><strong>引用文献</strong>: 【1】Gupta et al. "Shampoo: Preconditioned stochastic tensor optimization." (2018, ICML); 【2】Bernstein &amp; Newhouse. "Old optimizer, new norm: An anthology." (2024, arXiv); 【4】Anil et al. "Scalable second order optimization for deep learning." (2020, arXiv); 【5】Anil, Rohan. X post. (2024); 【6】Anil, Rohan. X post. (2024); 【12】Shi et al. "A distributed data-parallel pytorch implementation of the distributed shampoo optimizer..." (2023, arXiv).</li>
+<li><strong>引用描述</strong>: Muon 的设计深受 Shampoo 的启发。文章引用【1】定义了 Shampoo 优化器。关键的联系由【2】的工作揭示：当移除 Shampoo 的预处理器累积步骤时，其更新规则简化为对梯度进行正交化，这与 Muon 的核心思想一致。因此，文章将 Muon 描述为一种“瞬时”或“无累积”的 Shampoo【6】。同时，文章指出 Shampoo 的实现依赖于计算成本较高的负四分之一次方根，而 Muon 使用的 NS 迭代更为高效。</li>
+</ul>
+</li>
+<li>
+<p><strong>关于牛顿-舒尔茨 (NS) 迭代</strong>:</p>
+<ul>
+<li><strong>引用文献</strong>: 【2】Bernstein &amp; Newhouse. "Old optimizer, new norm: An anthology." (2024, arXiv); 【13】Higham, Nicholas J. "Functions of Matrices." (2008); 【14】Kovarik, Zdislav. "Some iterative methods for improving orthonormality." (1970, SIAM Journal on Numerical Analysis); 【15】Björck, Åke, and C. Bowie. "An iterative algorithm for computing the best estimate of an orthogonal matrix." (1971, SIAM Journal on Numerical Analysis).</li>
+<li><strong>引用描述</strong>: 文章选择 NS 迭代作为实现正交化的核心技术。引用【2】的附录A作为推荐 NS 迭代用于 Shampoo 计算策略的来源。其他文献【13, 14, 15】则作为 NS 迭代方法的经典出处，证明了该方法的历史和数学基础。文章强调，选择 NS 迭代是因为它能在 bfloat16 精度下稳定运行，相比其他方法（如需要 float32 的耦合牛顿迭代）在现代 GPU 上更具优势。</li>
+</ul>
+</li>
+<li>
+<p><strong>关于其他正交化优化器</strong>:</p>
+<ul>
+<li><strong>引用文献</strong>: 【18】Tuddenham et al. "Orthogonalising gradients to speed up neural network optimisation." (2022, arXiv); 【21】Carlson et al. "Stochastic spectral descent for Restricted Boltzmann Machines." (2015a, AISTATS); 【22】Carlson et al. "Preconditioned spectral descent for deep learning." (2015b, NIPS); 【23】Carlson et al. "Stochastic spectral descent for discrete graphical models." (2016).</li>
+<li><strong>引用描述</strong>: 文章将 Muon 与先前的正交化优化器进行了比较。引用【18】的 Orthogonal-SGDM，指出其与 Muon 的主要区别在于动量的应用顺序和正交化方法（SVD vs NS 迭代），并提到 Orthogonal-SGDM 的性能未超越标准 SGD。引用【21, 22, 23】的随机谱下降和 RMSspectral，将其定位为更早期的正交化方法，指出它们依赖 SVD 且缺少对性能至关重要的动量机制。</li>
+</ul>
+</li>
+<li>
+<p><strong>关于经验性发现的理论支持</strong>:</p>
+<ul>
+<li><strong>引用文献</strong>: 【11】Large et al. "Scalable Optimization in the Modular Norm." (2024, arXiv).</li>
+<li><strong>引用描述</strong>: 在讨论经验性发现时，文章提到一个观察：输入嵌入层需要与隐藏层不同的优化策略（使用 AdamW 而非 Muon）。这一发现与【11】中提出的<em>模块化范数</em>理论相符，为该经验性决策提供了一定的理论依据。</li>
+</ul>
+</li>
+</ol>
+</div>
+
+
+</div>

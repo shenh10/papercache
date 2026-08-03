@@ -1355,6 +1355,211 @@ llm:
         - llm
         - algorithm
         - eval
+    pretrain_sft:
+      posts:
+      - title: 'Muon: An Optimizer for Hidden Layers in Neural Networks'
+        date: '2024-12-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/12/01/muon-an-optimizer-for-hidden-layers-in-neural-networks.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+        tag: blog
+      - title: 'Fusechat: Knowledge Fusion of Chat Models'
+        date: '2024-08-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/08/01/fusechat-knowledge-fusion-of-chat-models.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: On-Policy Distillation
+        date: '2025-10-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/10/01/on-policy-distillation.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'DeepNet: Scaling Transformers to 1,000 Layers'
+        date: '2022-03-01'
+        url: /papers/llm/algorithm/pretrain_sft/2022/03/01/deepnet-scaling-transformers-to-1000-layers.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'UNVEILING THE SECRET RECIPE: A GUIDE FOR SUPERVISED FINE-TUNING SMALL
+          LLMS'
+        date: '2024-12-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/12/01/unveiling-the-secret-recipe-a-guide-for-supervised-fine-tuning-small-llms.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'EvoLM: In Search of Lost Language Model Training Dynamics'
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/11/01/evolm-in-search-of-lost-language-model-training-dynamics.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: WHAT MAKES GOOD DATA FOR ALIGNMENT? A COMPREHENSIVE STUDY OF AUTOMATIC
+          DATA SELECTION IN INSTRUCTION TUNING
+        date: '2013-12-01'
+        url: /papers/llm/algorithm/pretrain_sft/2013/12/01/what-makes-good-data-for-alignment-a-comprehensive-study-of-automatic-data-selection-in-instruction-tuning.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'SampleMix: A Sample-wise Pre-training Data Mixing Strategey by Coordinating
+          Data Quality and Diversity'
+        date: '2025-03-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/03/01/samplemix-a-sample-wise-pre-training-data-mixing-strategey-by-coordinating-data-quality-and-diversity.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: Fewer Truncations Improve Language Modeling
+        date: '2024-04-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/04/01/fewer-truncations-improve-language-modeling.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+        tag: icml24
+      - title: How to Train Long-Context Language Models (Effectively)
+        date: '2024-10-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/10/01/how-to-train-long-context-language-models-effectively.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'Over-Tokenized Transformer: Vocabulary is Generally Worth Scaling'
+        date: '2025-01-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/01/01/over-tokenized-transformer-vocabulary-is-generally-worth-scaling.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'Infini-gram: Scaling Unbounded n-gram Language Models to a Trillion
+          Tokens'
+        date: '2024-01-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/01/01/infini-gram-scaling-unbounded-n-gram-language-models-to-a-trillion-tokens.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+        tag: colm24
+      - title: 'ROFORMER: ENHANCED TRANSFORMER WITH ROTARY POSITION EMBEDDING'
+        date: '2021-04-01'
+        url: /papers/llm/algorithm/pretrain_sft/2021/04/01/roformer-enhanced-transformer-with-rotary-position-embedding.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'Not All Correct Answers Are Equal: Why Your Distillation Source Matters'
+        date: '2025-05-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/05/01/not-all-correct-answers-are-equal-why-your-distillation-source-matters.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: Scaling up Muon for Large-Scale Language Model Training
+        date: '2025-02-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/02/01/scaling-up-muon-for-large-scale-language-model-training.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'Why Muon Outperforms Adam: A Curvature Perspective'
+        date: '2026-06-01'
+        url: /papers/llm/algorithm/pretrain_sft/2026/06/01/why-muon-outperforms-adam-a-curvature-perspective.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: 'Stacking Your Transformers: A Closer Look at Model Growth for Efficient
+          LLM Pre-Training'
+        date: '2024-05-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/05/01/stacking-your-transformers-a-closer-look-at-model-growth-for-efficient-llm-pre-training.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+        tag: nips24
+      - title: Training Compute-Optimal Large Language Models
+        date: '2022-03-01'
+        url: /papers/llm/algorithm/pretrain_sft/2022/03/01/training-compute-optimal-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: How Does Critical Batch Size Scale in Pretraining?
+        date: '2025-04-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/04/01/how-does-critical-batch-size-scale-in-pretraining.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+        tag: iclr25
+      - title: 'Nested Learning: The Illusion of Deep Learning Architectures'
+        date: '2025-11-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/11/01/nested-learning-the-illusion-of-deep-learning-architectures.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: "Tensor Programs V: Tuning Large Neural Networks via Zero-Shot\n  \
+          \    Hyperparameter Transfer"
+        date: '2022-03-01'
+        url: /papers/llm/algorithm/pretrain_sft/2022/03/01/tensor-programs-v-tuning-large-neural-networks-via-zero-shot-hyperparameter-transfer.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+      - title: Knowledge Fusion of Large Language Models
+        date: '2024-01-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/01/01/knowledge-fusion-of-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+        tag: iclr24
+      - title: 'INFERENCE SCALING LAWS: AN EMPIRICAL ANALYSIS OF COMPUTE-OPTIMAL INFERENCE
+          FOR LLM PROBLEM-SOLVING'
+        date: '2024-08-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/08/01/inference-scaling-laws-an-empirical-analysis-of-compute-optimal-inference-for-llm-problem-solving.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+        tag: iclr25
+      - title: 'SkyLadder: Better and Faster Pretraining via Context Window Scheduling'
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/pretrain_sft/2025/12/01/skyladder-better-and-faster-pretraining-via-context-window-scheduling.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
+        tag: nips25
+      pruning:
+        posts:
+        - title: 'Probe Pruning: Accelerating LLMs Through Dynamic Pruning via Model-Probing'
+          date: '2025-04-01'
+          url: /papers/llm/algorithm/pretrain_sft/pruning/2025/04/01/probe-pruning-accelerating-llms-through-dynamic-pruning-via-model-probing.html
+          categories:
+          - llm
+          - algorithm
+          - pretrain_sft
+          - pruning
+          tag: iclr25
+        - title: Beware of Calibration Data for Pruning Large Language Models
+          date: '2025-04-01'
+          url: /papers/llm/algorithm/pretrain_sft/pruning/2025/04/01/beware-of-calibration-data-for-pruning-large-language-models.html
+          categories:
+          - llm
+          - algorithm
+          - pretrain_sft
+          - pruning
+          tag: iclr25
     agent:
       posts:
       - title: 'Tree of Thoughts: Deliberate Problem Solving with Large Language Models'
@@ -1566,203 +1771,6 @@ llm:
         - llm
         - algorithm
         - agent
-    pretrain_sft:
-      posts:
-      - title: 'Fusechat: Knowledge Fusion of Chat Models'
-        date: '2024-08-01'
-        url: /papers/llm/algorithm/pretrain_sft/2024/08/01/fusechat-knowledge-fusion-of-chat-models.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: On-Policy Distillation
-        date: '2025-10-01'
-        url: /papers/llm/algorithm/pretrain_sft/2025/10/01/on-policy-distillation.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'DeepNet: Scaling Transformers to 1,000 Layers'
-        date: '2022-03-01'
-        url: /papers/llm/algorithm/pretrain_sft/2022/03/01/deepnet-scaling-transformers-to-1000-layers.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'UNVEILING THE SECRET RECIPE: A GUIDE FOR SUPERVISED FINE-TUNING SMALL
-          LLMS'
-        date: '2024-12-01'
-        url: /papers/llm/algorithm/pretrain_sft/2024/12/01/unveiling-the-secret-recipe-a-guide-for-supervised-fine-tuning-small-llms.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'EvoLM: In Search of Lost Language Model Training Dynamics'
-        date: '2025-11-01'
-        url: /papers/llm/algorithm/pretrain_sft/2025/11/01/evolm-in-search-of-lost-language-model-training-dynamics.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: WHAT MAKES GOOD DATA FOR ALIGNMENT? A COMPREHENSIVE STUDY OF AUTOMATIC
-          DATA SELECTION IN INSTRUCTION TUNING
-        date: '2013-12-01'
-        url: /papers/llm/algorithm/pretrain_sft/2013/12/01/what-makes-good-data-for-alignment-a-comprehensive-study-of-automatic-data-selection-in-instruction-tuning.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'SampleMix: A Sample-wise Pre-training Data Mixing Strategey by Coordinating
-          Data Quality and Diversity'
-        date: '2025-03-01'
-        url: /papers/llm/algorithm/pretrain_sft/2025/03/01/samplemix-a-sample-wise-pre-training-data-mixing-strategey-by-coordinating-data-quality-and-diversity.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: Fewer Truncations Improve Language Modeling
-        date: '2024-04-01'
-        url: /papers/llm/algorithm/pretrain_sft/2024/04/01/fewer-truncations-improve-language-modeling.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-        tag: icml24
-      - title: How to Train Long-Context Language Models (Effectively)
-        date: '2024-10-01'
-        url: /papers/llm/algorithm/pretrain_sft/2024/10/01/how-to-train-long-context-language-models-effectively.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'Over-Tokenized Transformer: Vocabulary is Generally Worth Scaling'
-        date: '2025-01-01'
-        url: /papers/llm/algorithm/pretrain_sft/2025/01/01/over-tokenized-transformer-vocabulary-is-generally-worth-scaling.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'Infini-gram: Scaling Unbounded n-gram Language Models to a Trillion
-          Tokens'
-        date: '2024-01-01'
-        url: /papers/llm/algorithm/pretrain_sft/2024/01/01/infini-gram-scaling-unbounded-n-gram-language-models-to-a-trillion-tokens.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-        tag: colm24
-      - title: 'ROFORMER: ENHANCED TRANSFORMER WITH ROTARY POSITION EMBEDDING'
-        date: '2021-04-01'
-        url: /papers/llm/algorithm/pretrain_sft/2021/04/01/roformer-enhanced-transformer-with-rotary-position-embedding.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'Not All Correct Answers Are Equal: Why Your Distillation Source Matters'
-        date: '2025-05-01'
-        url: /papers/llm/algorithm/pretrain_sft/2025/05/01/not-all-correct-answers-are-equal-why-your-distillation-source-matters.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: Scaling up Muon for Large-Scale Language Model Training
-        date: '2025-02-01'
-        url: /papers/llm/algorithm/pretrain_sft/2025/02/01/scaling-up-muon-for-large-scale-language-model-training.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'Why Muon Outperforms Adam: A Curvature Perspective'
-        date: '2026-06-01'
-        url: /papers/llm/algorithm/pretrain_sft/2026/06/01/why-muon-outperforms-adam-a-curvature-perspective.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: 'Stacking Your Transformers: A Closer Look at Model Growth for Efficient
-          LLM Pre-Training'
-        date: '2024-05-01'
-        url: /papers/llm/algorithm/pretrain_sft/2024/05/01/stacking-your-transformers-a-closer-look-at-model-growth-for-efficient-llm-pre-training.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-        tag: nips24
-      - title: Training Compute-Optimal Large Language Models
-        date: '2022-03-01'
-        url: /papers/llm/algorithm/pretrain_sft/2022/03/01/training-compute-optimal-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: How Does Critical Batch Size Scale in Pretraining?
-        date: '2025-04-01'
-        url: /papers/llm/algorithm/pretrain_sft/2025/04/01/how-does-critical-batch-size-scale-in-pretraining.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-        tag: iclr25
-      - title: 'Nested Learning: The Illusion of Deep Learning Architectures'
-        date: '2025-11-01'
-        url: /papers/llm/algorithm/pretrain_sft/2025/11/01/nested-learning-the-illusion-of-deep-learning-architectures.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: "Tensor Programs V: Tuning Large Neural Networks via Zero-Shot\n  \
-          \    Hyperparameter Transfer"
-        date: '2022-03-01'
-        url: /papers/llm/algorithm/pretrain_sft/2022/03/01/tensor-programs-v-tuning-large-neural-networks-via-zero-shot-hyperparameter-transfer.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-      - title: Knowledge Fusion of Large Language Models
-        date: '2024-01-01'
-        url: /papers/llm/algorithm/pretrain_sft/2024/01/01/knowledge-fusion-of-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-        tag: iclr24
-      - title: 'INFERENCE SCALING LAWS: AN EMPIRICAL ANALYSIS OF COMPUTE-OPTIMAL INFERENCE
-          FOR LLM PROBLEM-SOLVING'
-        date: '2024-08-01'
-        url: /papers/llm/algorithm/pretrain_sft/2024/08/01/inference-scaling-laws-an-empirical-analysis-of-compute-optimal-inference-for-llm-problem-solving.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-        tag: iclr25
-      - title: 'SkyLadder: Better and Faster Pretraining via Context Window Scheduling'
-        date: '2025-12-01'
-        url: /papers/llm/algorithm/pretrain_sft/2025/12/01/skyladder-better-and-faster-pretraining-via-context-window-scheduling.html
-        categories:
-        - llm
-        - algorithm
-        - pretrain_sft
-        tag: nips25
-      pruning:
-        posts:
-        - title: 'Probe Pruning: Accelerating LLMs Through Dynamic Pruning via Model-Probing'
-          date: '2025-04-01'
-          url: /papers/llm/algorithm/pretrain_sft/pruning/2025/04/01/probe-pruning-accelerating-llms-through-dynamic-pruning-via-model-probing.html
-          categories:
-          - llm
-          - algorithm
-          - pretrain_sft
-          - pruning
-          tag: iclr25
-        - title: Beware of Calibration Data for Pruning Large Language Models
-          date: '2025-04-01'
-          url: /papers/llm/algorithm/pretrain_sft/pruning/2025/04/01/beware-of-calibration-data-for-pruning-large-language-models.html
-          categories:
-          - llm
-          - algorithm
-          - pretrain_sft
-          - pruning
-          tag: iclr25
   engineering:
     train:
       posts:
