@@ -435,6 +435,15 @@ llm:
         - architecture
       transformer-variant:
         posts:
+        - title: How to Implement Sequence Parallelism in DeltaNet
+          date: '2025-11-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2025/11/01/how-to-implement-sequence-parallelism-in-deltanet.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
+          tag: blog
         - title: Attention Is Off By One
           date: '2023-07-01'
           url: /papers/llm/algorithm/architecture/transformer-variant/2023/07/01/attention-is-off-by-one.html

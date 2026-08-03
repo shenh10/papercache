@@ -1,0 +1,115 @@
+---
+added_date: '2026-08-03'
+author: shenh10
+categories:
+- llm
+- algorithm
+- architecture
+- transformer-variant
+comments: true
+date: '2025-11-01'
+layout: post
+mathjax: true
+tag: blog
+title: How to Implement Sequence Parallelism in DeltaNet
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>How to Implement Sequence Parallelism in DeltaNet</h1>
+<p><strong>发表时间</strong>: 2025-11 · Blog post by YyWang (yywangcs.notion.site)</p>
+<p><strong>原文</strong>: <a href="https://yywangcs.notion.site/DeltaNet-2a9fc9f5d8058013a498f34e0b25bd52" rel="noopener" target="_blank">https://yywangcs.notion.site/DeltaNet-2a9fc9f5d8058013a498f34e0b25bd52</a></p>
+<h1>DeltaNet如何做序列并行</h1>
+<h2>A1 主要贡献</h2>
+<p>本文旨在探讨如何对DeltaNet模型实施序列并行化，特别是在单个GPU内部不同流式多处理器（SM）之间的并行计算，其原理同样适用于多GPU间的并行。</p>
+<ul>
+<li>
+<p><strong>核心问题:</strong> DeltaNet的计算主要包含WY表示计算、循环方式的状态（$\mathbf S$）更新和输出（$\mathbf O$）计算三个部分。其中，WY表示计算和输出计算本身不具备循环依赖，可以对序列的不同数据块（chunk）进行并行处理。然而，核心的状态更新步骤存在固有的循环依赖性，即后一个chunk的状态计算依赖于前一个chunk的计算结果，这成为了并行化的主要瓶颈。</p>
+</li>
+<li>
+<p><strong>研究目标:</strong> 针对DeltaNet状态更新的循环依赖特性，设计一种序列并行算法，使得长序列可以被切分成多个子序列，并分配到不同的计算单元（如SM）上并行处理，从而提高计算效率。</p>
+</li>
+<li>
+<p><strong>核心方法:</strong> 本文提出了一种基于“增量计算与后期校正”的序列并行策略。该方法的核心思想如下：</p>
+<ol>
+<li><strong>并行计算增量信息</strong>: 将序列划分为多个子序列，每个子序列由一个独立的计算单元处理。对于非首个子序列，由于其真实的初始状态在计算开始时是未知的，因此使用一个初始的占位符状态（例如零矩阵）进行计算。在计算过程中，每个计算单元不仅计算出一个临时的“增量状态”($\mathbf{S}^{\Delta}$)，还同步计算一个累积的“缩放矩阵”($\mathbf{M}$)。</li>
+<li><strong>串行计算基准状态</strong>: 首个子序列由第一个计算单元按照原始的循环方式进行计算，从而得到其最终状态。这个最终状态恰好是第二个子序列的真实初始状态。</li>
+<li><strong>并行校正</strong>: 一旦第一个子序列计算完成，其结果（即后续子序列的真实初始状态）被广播。其他计算单元利用这个真实初始状态、先前计算出的增量状态和缩放矩阵，通过一个非循环的校正公式（$\mathbf S_{[i]}=\mathbf S_{[i]}^{\Delta} +\mathbf S_{\text{start}}\mathbf M_{i}$）来一次性地计算出所有正确的状态值。这个校正步骤可以与输出$\mathbf O$的计算融合，进一步提升效率。</li>
+</ol>
+</li>
+</ul>
+<p>通过这种方式，算法成功地将原本严格串行的状态更新过程，分解为大部分可并行的“增量计算”阶段和一个同样可并行的“校正”阶段，从而有效利用了并行计算资源。</p>
+<h2>A2 方法细节</h2>
+<h3>DeltaNet的核心计算流程</h3>
+<p><strong>DeltaNet的计算过程</strong>。对于DeltaNet模型，其主要的计算流程可以分解为以下三个步骤：</p>
+<ol>
+<li>WY表示计算。</li>
+<li>通过循环（Recurrent）方式更新状态 $\mathbf S$。</li>
+<li>计算最终输出 $\mathbf O$。<br/>
+在这些步骤中，步骤1和步骤3天然不具备循环依赖，序列中的不同数据块（chunk）之间可以完全并行处理。真正的循环依赖存在于步骤2，即状态 $\mathbf S$ 的更新过程中。</li>
+</ol>
+<h3>状态更新的循环公式</h3>
+<p><strong>状态S的更新公式</strong>。根据博客文章【1，DeltaNet Explained (Part II) (2024) <a href="https://sustcsonglin.github.io/blog/2024/deltanet-2/" rel="noopener noreferrer" target="_blank">https://sustcsonglin.github.io/blog/2024/deltanet-2/</a>】中 的“Chunkwise Parallel Form for DeltaNet”一节，步骤2中状态更新的计算公式如下：</p>
+<p></p>
+$$\begin{aligned}
+
+\begin{align*} \mathbf{S}_{[i+1]} &amp;= \mathbf{S}_{[i]} (\mathbf{I}-\mathbf{W}_{[i]}^\top \mathbf{K}_{[i]}) + \mathbf{U}_{[i]}^\top \mathbf{K}_{[i]} \\ &amp;= \mathbf{S}_{[i]} + \left(\mathbf{U}_{[i]} - \mathbf{W}_{[i]}\mathbf{S}_{[i]}^\top\right)^\top \mathbf{K}_{[i]} &amp;&amp; \in \mathbb{R}^{d\times d}  \end{align*}
+
+\end{aligned}$$
+
+<p>在此公式中，$\mathbf{S}_{[i]} := \mathbf{S}_{iC} \in \mathbb{R}^{d \times d}$ 代表第 $i$ 个chunk的初始状态。</p>
+<h3>序列并行的基本思想与挑战</h3>
+<p><strong>序列并行的挑战与示例</strong>。为了具体说明如何对DeltaNet进行序列并行，我们考虑一个实例：一个长度为8192的序列，使用大小为64的chunk进行分块计算，总共会切分出128个chunk。这些chunk对应的初始状态序列为 $\mathbf{S}_{[0]}, \mathbf{S}_{[1]}, \mathbf{S}_{[2]}, \dots, \mathbf{S}_{[127]}$。在非并行模式下，这128个状态会依据上述公式在同一个SM上循环执行，即通过$\mathbf{S}_{[0]}$ 计算出 $\mathbf{S}_{[1]}$，然后依次向前推进计算。</p>
+<p><strong>CP=2序列并行下的依赖问题</strong>。现在，假设我们要实现 CP=2 的序列并行，即在2个SM上执行计算。这意味着需要将序列拆分为两个子序列，每个子序列长度为4096。其中，状态 $\mathbf{S}_{[0]}, \mathbf{S}_{[1]}, \dots, \mathbf{S}_{[63]}$ 在第一个SM上计算，而状态 $\mathbf{S}_{[64]}, \mathbf{S}_{[65]}, \dots, \mathbf{S}_{[127]}$ 在第二个SM上计算。这里的主要问题是，第二个SM上所有状态的计算都依赖于真实的初始状态 $\mathbf{S}_{[64]}$。然而，在并行计算开始时，由于第一个SM尚未完成计算，真实的 $\mathbf{S}_{[64]}$ 是不可用的。因此，第二个SM只能使用一个不完整的或临时的初始状态，记为 $\mathbf{S}_{[64]}^{\Delta}$。在实际操作中，这个$\mathbf{S}_{[64]}^{\Delta}$ 通常被初始化为一个全零的状态矩阵。</p>
+<h3>并行算法的数学推导</h3>
+<p><strong>真实状态与增量状态的更新关系</strong>。我们分别写出真实状态和使用临时初始状态（增量状态）时的更新公式：<br/>
+</p>
+$$\begin{aligned}
+
+\begin{align*} \mathbf{S}_{[i+1]} &amp;= \mathbf{S}_{[i]} (\mathbf{I}-\mathbf{W}_{[i]}^\top \mathbf{K}_{[i]}) + \mathbf{U}_{[i]}^\top \mathbf{K}_{[i]} \\  \mathbf{S}_{[i+1]}^{\Delta} &amp;= \mathbf{S}_{[i]}^{\Delta} (\mathbf{I}-\mathbf{W}_{[i]}^\top \mathbf{K}_{[i]}) + \mathbf{U}_{[i]}^\top \mathbf{K}_{[i]}  \end{align*}
+
+\end{aligned}$$
+<p><br/>
+将两式相减，可以轻易得到它们之间的差值关系：$\mathbf{S}_{[i+1]} - \mathbf{S}_{[i+1]}^{\Delta} = (\mathbf{S}_{[i]} - \mathbf{S}_{[i]}^{\Delta}) (\mathbf{I}-\mathbf{W}_{[i]}^\top \mathbf{K}_{[i]})$。通过递推，我们可以得到一个更通用的公式，它描述了从某个起始点 $i$ 开始，经过 $k$ 步后，真实状态与增量状态之间的差值：</p><div>$$
+\mathbf{S}_{[i+k]} - \mathbf{S}_{[i+k]}^{\Delta} = (\mathbf{S}_{[i]} - \mathbf{S}_{[i]}^{\Delta}) \prod_{j=0}^{k-1}(\mathbf{I}-\mathbf{W}_{[i+j]}^\top \mathbf{K}_{[i+j]})
+$$</div>
+这个公式是实现序列并行的关键。<p></p>
+<h3>CP=2 序列并行算法实现</h3>
+<p><strong>CP=2并行算法步骤</strong>。基于上述推导，可以设计出如下的序列并行算法：<br/>
+1. <strong>第一个SM的任务</strong>：负责计算第一个子序列（chunks 0-63）。其计算逻辑与原始的串行方式完全一致，通过循环计算最终得到真实的 $\mathbf{S}_{[64]}$。<br/>
+2. <strong>第二个SM的任务</strong>：负责计算第二个子序列（chunks 64-127）。<br/>
+    - 首先，初始化其初始状态为零矩阵，即 $\mathbf{S}_{[64]}^{\Delta}=0$。<br/>
+    - 然后，循环地计算增量状态 $\mathbf{S}_{[i+1]}^{\Delta}=\mathbf{S}_{[i]}^{\Delta} + \left(\mathbf{U}_{[i]} - \mathbf{W}_{[i]}\mathbf{S}_{[i]}^\top\right)^\top \mathbf{K}_{[i]}$。<br/>
+    - 同时，初始化一个缩放矩阵 $\mathbf M_{[64]}=\mathbf I$（单位矩阵），并循环地更新它：$\mathbf M_{[i+1]}=\mathbf M_{[i]}(\mathbf{I}-\mathbf{W}_{[i]}^\top \mathbf{K}_{[i]})$。<br/>
+    - 在计算过程中，将每一时间步的增量状态 $\mathbf{S}_{[i+1]}^{\Delta}$ 和缩放矩阵 $\mathbf M_{[i+1]}$ 存储到全局内存（global memory）中。</p>
+<ol>
+<li><strong>状态校正</strong>：当第一个SM计算完成后，真实的 $\mathbf{S}_{[64]}$ 就绪。此时，可以利用之前存储的增量信息，通过校正公式 $\mathbf S_{[i]}=\mathbf S_{[i]}^{\Delta} +\mathbf S_{[64]}\mathbf M_{i}$ 来计算出第二个子序列所有真实的最终状态 $\mathbf S_{[i]}$。值得注意的是，这个校正步骤本身不是循环的，可以并行地对所有时间步进行计算，并且能够与输出 $\mathbf O$ 的计算过程融合（fuse），以减少访存开销。</li>
+</ol>
+<p>该算法的主要开销在于，会额外增加缩放矩阵 $\mathbf M_{[i]}$ 从全局内存的写出和读入操作。</p>
+<h3>CP=4 序列并行算法实现</h3>
+<p><strong>CP=4并行算法步骤</strong>。对于 CP=4 的情况，计算被分配到4个SM上，每个SM处理32个chunk，其原理与CP=2类似：<br/>
+1. <strong>第一个SM的任务</strong>：负责计算第一个子序列（chunks 0-31），计算逻辑保持不变，最终得到真实的 $\mathbf{S}_{[32]}$。<br/>
+2. <strong>其他三个SM的任务</strong>：分别负责计算后三个子序列。<br/>
+    - 它们的初始状态均被设置为零矩阵：$\mathbf{S}_{[32]}^{\Delta}=\mathbf{S}_{[64]}^{\Delta}=\mathbf{S}_{[96]}^{\Delta}=0$。<br/>
+    - 在每个SM内部，以循环方式计算各自的增量状态 $\mathbf{S}_{[i+1]}^{\Delta}$ 和缩放矩阵 $\mathbf M_{[i+1]}$，其中缩放矩阵的初始值 $\mathbf M_{[32]}=\mathbf M_{[64]}=\mathbf M_{[96]}=\mathbf I$。<br/>
+    - 计算出的 $\mathbf{S}_{[i+1]}^{\Delta}$ 和 $\mathbf M_{[i+1]}$ 被存储到全局内存中。</p>
+<ol>
+<li><strong>状态校正</strong>：此过程存在一个串行的依赖链。<ul>
+<li>当第一个SM计算完成并得到真实的 $\mathbf{S}_{[32]}$ 后，可以利用它和第二个SM计算的增量信息，通过校正公式计算出第二个子序列的真实状态，并得到真实的 $\mathbf{S}_{[64]}$。</li>
+<li>接着，使用刚计算出的真实 $\mathbf{S}_{[64]}$，结合第三个SM的增量信息，计算出第三个子序列的真实状态，并得到真实的 $\mathbf{S}_{[96]}$。</li>
+<li>最后，使用真实的 $\mathbf{S}_{[96]}$ 来校正第四个子序列的状态。</li>
+<li>具体的校正公式为：对于第二个SM上的状态，使用 $\mathbf S{[i]}=\mathbf S_{[i]}^{\Delta} +\mathbf S_{[32]}\mathbf M_{i}$；对于第三个SM上的状态，使用 $\mathbf S_{[i]}=\mathbf S_{[i]}^{\Delta}+\mathbf S_{[64]}\mathbf M_{i}$；对于第四个SM上的状态，使用 $\mathbf S_{[i]}=\mathbf S_{[i]}^{\Delta} +\mathbf S_{[96]}\mathbf M_{i}$。</li>
+<li>同样地，这个校正步骤在每个子序列内部是并行的，并且可以和输出 $\mathbf O$ 的计算融合在一起。</li>
+</ul>
+</li>
+</ol>
+<h2>A4 参考文献</h2>
+<p>[1] DeltaNet Explained (Part II). (2024). Retrieved from <a href="https://sustcsonglin.github.io/blog/2024/deltanet-2/" rel="noopener noreferrer" target="_blank">https://sustcsonglin.github.io/blog/2024/deltanet-2/</a><br/>
+    - <strong>引用位置</strong>: 方法细节 - 状态更新的循环公式<br/>
+    - <strong>引用内容</strong>: 引用了该博客文章中关于DeltaNet分块并行形式（Chunkwise Parallel Form）的状态更新公式。</p>
+</div>
+
+
+</div>
