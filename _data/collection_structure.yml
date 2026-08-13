@@ -2945,6 +2945,15 @@ llm:
           - inference
           - speculative_decoding
           tag: mlsys26
+        - title: 'DSpark: Confidence-Scheduled Speculative Decoding with Semi-Autoregressive
+            Generation'
+          date: '2026-07-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2026/07/01/dspark-confidence-scheduled-speculative-decoding-with-semi-autoregressive-generation.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
         - title: 'LLM-42: Enabling Determinism in LLM Inference with Verified Speculation'
           date: '2026-01-01'
           url: /papers/llm/engineering/inference/speculative_decoding/2026/01/01/llm-42-enabling-determinism-in-llm-inference-with-verified-speculation.html
