@@ -149,7 +149,7 @@ $$s_d = \left\| \sum_{\mathbf{B},\mathbf{S}} s_{:,d} \right\|_2$$
 <p>其中聚合是在批次（B）和序列（S）维度上进行的，同时使用了均值和l2范数度量。接下来，通过在Mamba头通道集上使用l2范数来计算头分数：</p>
 <p>$f_h = |s_{h, m_d}|_2; \quad \forall h \in {1, \dots, m_h},$</p>
 <p>并且头在每个Mamba组$G_g$内进行排序，以保留组感知计算的语义：</p>
-<p>$\mathcal{R}<em>g = \operatorname{argsort}</em> (f_h).$}_g</p>
+<p>$\mathcal{R}_g = \operatorname{argsort}_ (f_h).$}_g</p>
 <p>这确保了剪枝决策尊重模型的结构约束和SSM的序列建模能力。得分最低的头通过从所有受影响的投影、卷积和SSM参数矩阵中修剪相应的行来进行剪枝。这种策略在移除不那么重要的Mamba头的同时，保留了SSM块的完整性。正如Taghibakhshi等人（2025）【索引109，Efficient hybrid language model compression through group-aware ssm pruning，2025】所示，剪枝Mamba头比剪枝头通道能产生更好的准确率-吞吐量权衡；因此，我们在这项工作中专注于头剪枝。</p>
 <h4>轻量级神经架构搜索</h4>
 <p><strong>约束与目标定义</strong>。我们首先为Nano 2模型定义约束和目标，然后描述我们的轻量级神经架构搜索（NAS）框架，该框架能找到满足我们目标和约束的最有希望的架构候选者。</p>

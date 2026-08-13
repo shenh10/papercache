@@ -169,7 +169,7 @@ $$
 以强制调度器选择具有最小 <code>contiguity</code> 系数的最外层循环。<p></p>
 </li>
 <li>
-<p><strong>bigLoopsFirst (BLF) 代价函数</strong>：<strong>设计目标与定义</strong>。<code>bigLoopsFirst</code> (BLF) 代价函数旨在将具有最大域的循环调度到最外层。其设计与 <code>contiguity</code> 代价函数相同，但公式5中使用的系数 $c_i$ 是基于优先考虑具有最高边界的维度。在内核具有大量并行性，而架构只能利用一个或几个层次的外部并行性的场景中，BLF可能很有用。我们尝试最大化并行迭代的次数。例如，关注代码清单1中的内核，两个向量 $\vec{c}<em>{S0}$ 和 $\vec{c}</em>$ 将分别为：<br/>
+<p><strong>bigLoopsFirst (BLF) 代价函数</strong>：<strong>设计目标与定义</strong>。<code>bigLoopsFirst</code> (BLF) 代价函数旨在将具有最大域的循环调度到最外层。其设计与 <code>contiguity</code> 代价函数相同，但公式5中使用的系数 $c_i$ 是基于优先考虑具有最高边界的维度。在内核具有大量并行性，而架构只能利用一个或几个层次的外部并行性的场景中，BLF可能很有用。我们尝试最大化并行迭代的次数。例如，关注代码清单1中的内核，两个向量 $\vec{c}_{S0}$ 和 $\vec{c}_$ 将分别为：<br/>
 </p>
 $$
 \begin{aligned}

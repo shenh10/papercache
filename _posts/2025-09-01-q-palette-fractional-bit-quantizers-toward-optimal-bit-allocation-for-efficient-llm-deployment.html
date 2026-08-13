@@ -125,7 +125,7 @@ $$\begin{aligned}
 <p><strong>融合感知MSQ框架</strong>。我们提出了融合感知MSQ，这是一种新颖的MSQ框架，它将量化与层融合这一额外的设计维度联合优化。融合感知MSQ同时决定1）如何对层进行分组融合，以及2）为每个融合组分配哪个量化器。标准MSQ（公式3）为每个（层，量化器）对引入一个二元决策变量，而融合感知MSQ则为每个（可融合层组，量化器）对定义一个二元变量。这里，一个可融合层组是共享相同输入的一组层。对于通用的Transformer模型，我们可以将每个Transformer块b的所有可融合层组的集合写为{% raw %}
     $G_b = {{q_b, k_b, v_b}, {q_b}, {k_b}, {v_b}, {u_b, g_b}, {u_b}, {g_b}, {o_b}, {d_b}}$
     {% endraw %}
-。可融合层组的总集合是$\mathcal{G} = \cup_{b=1}^{B} \mathcal{G}<em>b$，其中$B$是Transformer块的数量。对于每个$g \in \mathcal{G}$和量化器$Q_q \in \mathcal{Q}$，我们引入一个二元变量$P</em> \in {0, 1}$，表示$g$中的所有层都被融合并由$Q_q$量化。</p>
+。可融合层组的总集合是$\mathcal{G} = \cup_{b=1}^{B} \mathcal{G}_b$，其中$B$是Transformer块的数量。对于每个$g \in \mathcal{G}$和量化器$Q_q \in \mathcal{Q}$，我们引入一个二元变量$P_ \in {0, 1}$，表示$g$中的所有层都被融合并由$Q_q$量化。</p>
 <p><strong>融合感知MSQ的ILP公式</strong>。融合感知MSQ问题被公式化为：</p>
 <p></p>
 $$\min_{P_{g q} \in\{0,1\}} \sum_{g \in \mathcal{G}} \sum_{q=1}^{|\mathcal{Q}|} P_{g q} \cdot \sum_{l \in g} \ell_{l q}$$
@@ -212,8 +212,8 @@ $$\mathcal{L}\left(\left\{b_{l}\right\}, \lambda,\left\{\mu_{l}\right\}\right):=
 <p></p>
 $$\frac{\partial \mathcal{L}}{\partial b_{l}}=-2 \ln (2) a_{l} 2^{-2 b_{l}}+\lambda d_{l}^{\text {in }} d_{l}^{\text {out }}-\mu_{l}=0.$$
 
-<p>由于对所有$l$，$\mu_l \geq 0$且互补松弛性要求$\mu_l(b_l^<em> - \eta) = 0$【4】，我们有两种情况：<br/>
-情况1：如果$b_l^</em> &gt; \eta$，互补松弛性意味着$\mu_l = 0$，因此：</p>
+<p>由于对所有$l$，$\mu_l \geq 0$且互补松弛性要求$\mu_l(b_l^_ - \eta) = 0$【4】，我们有两种情况：<br/>
+情况1：如果$b_l^_ &gt; \eta$，互补松弛性意味着$\mu_l = 0$，因此：</p>
 <p></p>
 $$2^{-2 b_{l}^{*}}=\frac{\lambda d_{l}^{\text {in }} d_{l}^{\text {out }}}{2 \ln (2) a_{l}}.$$
 

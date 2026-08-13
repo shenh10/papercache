@@ -100,7 +100,7 @@ $$\mathrm{ANNA}_{Q, K, V}(X)_i:=\sum_{j=1}^N w_{i, j} v_j \quad \text { for all 
 <p><strong>ANNA权重的约束条件</strong>。以至少 $1 - \eta$ 的概率，对于所有 $i \in [N]$，权重 $w_{i,j}$ 满足：<br/>
 * $w_{i,j} &gt; 0 \implies k_j \in N(q_i, cr)$<br/>
 * $k_j \in N(q_i, r) \implies w_{i,j} \ge \frac{1}{(|N(q_i, cr)|-1)\ell+1}$</p>
-<p>其中 $q_i := Q(X)<em>i$, $k_i := K(X)_i$, $v_i := V(X)_i$，并且 $N(q, t) := {k \in {k_j}</em>^N : |q - k| \le t}$。</p>
+<p>其中 $q_i := Q(X)<em>i$, $k_i := K(X)_i$, $v_i := V(X)_i$，并且 $N(q, t) := {k \in {k_j}_^N : |q - k| \le t}$。</em></p>
 <p><strong>ANNA层与ANNA-Transformer的定义</strong>。我们以与定义（标准）注意力层和Transformer（定理2.1和2.2）完全类似的方式来定义ANNA层和ANNA-Transformer。</p>
 <p><strong>ANNA参数的解释</strong>。参数r和c的语义与ANN搜索中相同。参数ℓ捕捉了“注意力权重”在查询的r-近邻之外的键上的分布程度。失败概率η允许随机化，这在像LSH这样的ANN搜索算法中是典型的。</p>
 <p><strong>ANNA的LSH实现</strong>。上述定义代表了所有ANNA单元必须满足的一组约束，而不是一个特定的算法实现。因此，多种模型都满足该定义，包括具有有界查询和键向量的softmax注意力，以及当且仅当 $q_i = k_j$ 时 $w_{i,j} &gt; 0$ 的精确匹配注意力（EMA）。并非所有这类模型都有计算上高效的实现。为了识别亚二次方的ANNA模型，我们提出了一个基于LSH的ANNA实现，该实现为特定参数r, c, ℓ, η计算满足条件的权重向量 $w_{i,j}$。</p>

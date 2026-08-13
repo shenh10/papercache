@@ -251,7 +251,7 @@ $$\begin{aligned}
 <p></p>
 $$\min _{K_{1}, \alpha_{1}} \operatorname{Huber}_{\delta}\left(K_{1}+\alpha_{1} \log (C), \log \left(N_{\mathrm{nv}}\right)\right),$$
 
-<p>其中$K_1 = \log(k_1)$，Huber$<em>\delta$表示delta值为$\delta$的Huber损失（本文中$\delta$为0.001）。我们使用LBFGS算法找到函数的局部最小值。后面的方法2和3使用相同的优化算法。我们从同一个均匀网格中初始化所有属性，其中$K \in [-20, 15]$和$\alpha \in [0, 1]$，分别有20个初始猜测。拟合过程耗时不到半分钟。为了廉价地获得更多的实验数据点，我们在对数尺度上对($N</em>$, $N_v$, $H$)三元组进行插值，并基于真实数据点预测验证损失。然后，我们使用公式5为每个数据点计算所需的FLOPs。</p>
+<p>其中$K_1 = \log(k_1)$，Huber$_\delta$表示delta值为$\delta$的Huber损失（本文中$\delta$为0.001）。我们使用LBFGS算法找到函数的局部最小值。后面的方法2和3使用相同的优化算法。我们从同一个均匀网格中初始化所有属性，其中$K \in [-20, 15]$和$\alpha \in [0, 1]$，分别有20个初始猜测。拟合过程耗时不到半分钟。为了廉价地获得更多的实验数据点，我们在对数尺度上对($N$, $N_v$, $H$)三元组进行插值，并基于真实数据点预测验证损失。然后，我们使用公式5为每个数据点计算所需的FLOPs。</p>
 <p><strong>方法2</strong>。通过使用不同的$N_{nv}$并基于公式7获得相应的最优$N_v$，我们得到一组${(N_{nvi}, N_{vi})|i = 1, ..., n}$。记$D_{nvi} = N_{nvi}/N_{nv0}$和$D_{vi} = N_{vi}/N_{v0}$，我们通过最小化以下公式来学习缩放比例$\gamma$：</p>
 <p></p>
 $$\min _{\gamma} \operatorname{Huber}_{\delta}\left(\gamma * \log \left(\mathcal{D}^{n v_{i}}\right), \log \left(\mathcal{D}^{v_{i}}\right)\right),$$

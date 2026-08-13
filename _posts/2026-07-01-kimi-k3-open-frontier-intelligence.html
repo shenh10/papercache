@@ -604,10 +604,10 @@ $$
 
 **SiTU-GLU的设计目标**。SiTU-GLU（§2.3.2）的设计目标是在不丢弃Swish特有形状（原点附近的近似线性响应和消失的负尾部）的情况下，对SwiGLU的乘积进行有界限制。图4展示了门控分支和上行分支及其完整的标量响应。
 
-**平滑地限制两个分支**。SiTU对Swish的线性因子进行限制，形式为$\beta_1 \tanh(\mathbf{W}<em>g \pmb{x} / \beta_1)$，同时保留了sigmoid因子【索引60，Kimi Team. Kimi K3: Open Frontier Intelligence. Moonshot AI. July 16, 2026】。由于sigmoid已经将负向的门控响应驱动至零，这一改变主要控制了大的正向激活，而没有移除负尾部。Kimi K3对上行分支应用了相同的构造，形式为$\beta_2 \tanh(\mathbf{W}_u \pmb{x} / \beta_2)$，防止任一分支在乘积中占主导地位。
+**平滑地限制两个分支**。SiTU对Swish的线性因子进行限制，形式为$\beta_1 \tanh(\mathbf{W}_g \pmb{x} / \beta_1)$，同时保留了sigmoid因子【索引60，Kimi Team. Kimi K3: Open Frontier Intelligence. Moonshot AI. July 16, 2026】。由于sigmoid已经将负向的门控响应驱动至零，这一改变主要控制了大的正向激活，而没有移除负尾部。Kimi K3对上行分支应用了相同的构造，形式为$\beta_2 \tanh(\mathbf{W}_u \pmb{x} / \beta_2)$，防止任一分支在乘积中占主导地位。
 
 **局部和极限行为**。对于原点附近的标量$z$，缩放的tanh满足：
-</em></p><em>
+</p><em>
 $$
 \beta \operatorname { t a n h } \left( \frac { z } { \beta } \right) = z + O \left( \frac { z ^ { 3 } } { \beta ^ { 2 } } \right) .
 $$
@@ -622,7 +622,7 @@ $$</div>
 
 ### C 分位数平衡的推导
 
-**从最优平衡分配推导QB**。本附录从最优平衡分配推导了§2.3中使用的分位数平衡（QB）更新，遵循了【索引111，Jianlin Su. Travels in MoE: 6. Promoting Load Balance via Optimal Assignment. Blog post (in Chinese). Feb. 2026】；将专家负载均衡视为分配问题的观点可以追溯到BASE Layers【索引67，Mike Lewis et al. “BASE Layers: Simplifying Training of Large, Sparse Models”. In: Proceedings of ICML. 2021】和BIP【索引116，Yuan Sun. Binary-Integer-Programming Based Algorithm for Expert Load Balancing in Mixture-of-Experts Models. 2025. arXiv: 2502.15451 [cs.LG]】。设$\pmb{s} \in \mathbb{R}^{m \times n}$收集了$m$个令牌对$n$个专家的路由器分数，其中每个令牌选择$k$个专家，$x</em>^} \in {0, 1}$表示令牌$i$是否分配给专家$j$。最大分数平衡分配问题，其中每个专家恰好服务$mk/n$个令牌（假设为整数），是：
+**从最优平衡分配推导QB**。本附录从最优平衡分配推导了§2.3中使用的分位数平衡（QB）更新，遵循了【索引111，Jianlin Su. Travels in MoE: 6. Promoting Load Balance via Optimal Assignment. Blog post (in Chinese). Feb. 2026】；将专家负载均衡视为分配问题的观点可以追溯到BASE Layers【索引67，Mike Lewis et al. “BASE Layers: Simplifying Training of Large, Sparse Models”. In: Proceedings of ICML. 2021】和BIP【索引116，Yuan Sun. Binary-Integer-Programming Based Algorithm for Expert Load Balancing in Mixture-of-Experts Models. 2025. arXiv: 2502.15451 [cs.LG]】。设$\pmb{s} \in \mathbb{R}^{m \times n}$收集了$m$个令牌对$n$个专家的路由器分数，其中每个令牌选择$k$个专家，$x_^} \in {0, 1}$表示令牌$i$是否分配给专家$j$。最大分数平衡分配问题，其中每个专家恰好服务$mk/n$个令牌（假设为整数），是：
 <div>$$
 \operatorname* { m a x } _ { x _ { i , j } \in \{ 0 , 1 \} } \sum _ { i , j } x _ { i , j } s _ { i , j } \qquad \mathrm { s . t . } \qquad \sum _ { j } x _ { i , j } = k , \qquad \sum _ { i } x _ { i , j } = { \frac { m k } { n } } .
 $$</div>
@@ -655,7 +655,7 @@ $$</div>
 <div>$$
 \operatorname* { m i n } _ { \alpha } { k \alpha } + \sum _ { j } \operatorname* { m a x } { \big ( } 0 , \ : s _ { i , j } - \beta _ { j } - \alpha { \big ) } .
 $$</div>
-该目标函数在$\alpha$上是分段线性的，斜率为$k$减去超过$\alpha$的边际值$s_{i,j} - \beta_j$的数量；因此，当有$k$个边际值位于$\alpha$之上时，它被精确最小化，即对于任何介于$s_i - \beta$的第$k$大和第$(k+1)$大条目之间的$\alpha_i^</em>$。按照惯例，我们取第$(k+1)$大的条目，这等价于$(1-k/n)$-分位数：
+该目标函数在$\alpha$上是分段线性的，斜率为$k$减去超过$\alpha$的边际值$s_{i,j} - \beta_j$的数量；因此，当有$k$个边际值位于$\alpha$之上时，它被精确最小化，即对于任何介于$s_i - \beta$的第$k$大和第$(k+1)$大条目之间的$\alpha_i^_$。按照惯例，我们取第$(k+1)$大的条目，这等价于$(1-k/n)$-分位数：
 <div>$$
 \alpha _ { i } ^ { * } = \mathrm { q u a n t i l e } _ { 1 - k / n } \left( \pmb { s } _ { i } - \beta \right) .
 $$</div>
@@ -665,7 +665,7 @@ $$</div>
 $$</div>
 因此，两个更新分别是沿令牌轴和专家轴的相同分位数，这也是该方法名称的由来。图5将专家侧的更新描绘为均衡每个专家边际分布的上尾部，算法1总结了由此产生的交替求解器。
 
-**从分配到路由**。在公式23的最优解处，$x_{i,j}^<em> = 1$当且仅当$s_{i,j} - \alpha_i^</em> - \beta_j^<em> &gt; 0$；结合令牌约束$\sum_j x_{i,j}^</em> = k$，选定的专家恰好是$s_i - \beta^<em>$的Top-k条目。因此，路由只需要专家阈值$\beta \in \mathbb{R}^n$（等价于公式13中的偏置$\boldsymbol{b} = -\boldsymbol{\beta}$），而令牌阈值$\pmb{\alpha} \in \mathbb{R}^m$是与动态训练批次相关的中间变量，并被丢弃。这种不对称性保持了训练-推理的一致性：在部署时，路由是一个带有冻结偏置的固定Top-k选择，不需要计算分位数。
+**从分配到路由**。在公式23的最优解处，$x_{i,j}^<em> = 1$当且仅当$s_{i,j} - \alpha_i^_ - \beta_j^_ &gt; 0$；结合令牌约束$\sum_j x_{i,j}^_ = k$，选定的专家恰好是$s_i - \beta^_$的Top-k条目。因此，路由只需要专家阈值$\beta \in \mathbb{R}^n$（等价于公式13中的偏置$\boldsymbol{b} = -\boldsymbol{\beta}$），而令牌阈值$\pmb{\alpha} \in \mathbb{R}^m$是与动态训练批次相关的中间变量，并被丢弃。这种不对称性保持了训练-推理的一致性：在部署时，路由是一个带有冻结偏置的固定Top-k选择，不需要计算分位数。
 
 **与基于符号的无损失更新的关系**。公式26背后的专家侧子问题的（子）梯度为：
 <div>$$
@@ -675,7 +675,7 @@ $$</div>
 
 ### D 基于直方图的分位数估计
 
-**大规模分位数估计的挑战与解决方案**。公式14中的QB更新要求在整个训练步骤上取分位数：对于$n$个专家中的每一个，取边际值$s_{i,j} - \alpha_i$的$(1-k/n)$-分位数，其中令牌数$m$跨越数百万个令牌，分片在数据并行ranks和梯度累积步骤中。在训练循环内收集$O(mn)$个边际值以进行精确分位数计算是不切实际的。关键的观察是，更新从不需要边际值本身，只需要它们每个专家的分布，而直方图以固定成本总结了这一点。因此，Kimi K3为每个专家维护一个分箱直方图，并从中读取分位数。具体来说，我们对所需的偏置$r_{i,j} := \alpha_i - s_{i,j}$进行直方图统计，这个偏置能将专家$j$恰好置于令牌$i$的截止点；对边际值取反会颠倒它们的顺序，因此公式14中的QB目标$\widehat{b}<em>j$恰好是$r</em>$，我们没有观察到可测量的残余负载不平衡。其次，它成本低廉：唯一的通信是每层每步对$nB$个值进行一次整数all-reduce，与$m$无关，在我们的配置中，这低于每微批次在进程组上交换原始边际值成本的1%，后者是自然的替代方案。第三，它估计了正确的量：因为计数是可加的，所以全局直方图对于令牌如何在ranks或累积步骤之间划分是完全不变的，估计值是汇集的全局批次的分位数，而不是每个rank分位数的平均值，后者通常不同。作为进一步的改进，维护跨步骤估计分位数的指数移动平均可以减少批次间的采样噪声，并能进一步改善负载均衡。
+**大规模分位数估计的挑战与解决方案**。公式14中的QB更新要求在整个训练步骤上取分位数：对于$n$个专家中的每一个，取边际值$s_{i,j} - \alpha_i$的$(1-k/n)$-分位数，其中令牌数$m$跨越数百万个令牌，分片在数据并行ranks和梯度累积步骤中。在训练循环内收集$O(mn)$个边际值以进行精确分位数计算是不切实际的。关键的观察是，更新从不需要边际值本身，只需要它们每个专家的分布，而直方图以固定成本总结了这一点。因此，Kimi K3为每个专家维护一个分箱直方图，并从中读取分位数。具体来说，我们对所需的偏置$r_{i,j} := \alpha_i - s_{i,j}$进行直方图统计，这个偏置能将专家$j$恰好置于令牌$i$的截止点；对边际值取反会颠倒它们的顺序，因此公式14中的QB目标$\widehat{b}_j$恰好是$r</em>$，我们没有观察到可测量的残余负载不平衡。其次，它成本低廉：唯一的通信是每层每步对$nB$个值进行一次整数all-reduce，与$m$无关，在我们的配置中，这低于每微批次在进程组上交换原始边际值成本的1%，后者是自然的替代方案。第三，它估计了正确的量：因为计数是可加的，所以全局直方图对于令牌如何在ranks或累积步骤之间划分是完全不变的，估计值是汇集的全局批次的分位数，而不是每个rank分位数的平均值，后者通常不同。作为进一步的改进，维护跨步骤估计分位数的指数移动平均可以减少批次间的采样噪声，并能进一步改善负载均衡。
 
 ### E MoonEP通用上界证明
 
@@ -691,7 +691,7 @@ $$</div>
 $$</div>
 并且得到的偏置如公式14中一样进行均值中心化。
 
-**估计器的性质**。三个特性使得这个估计器在大规模下实用。首先，它是准确的：累积计数在箱子边缘是精确的，因此真实分位数及其估计值位于同一个箱子内，误差受箱宽$w$的限制；当$B=1000$时，这最多是几个$10^{-3</em>$，使得每个EP rank接收完全相同数量的令牌（$S \times K$），并且每个rank的远程令牌仅来自另一个EP rank。构造如下：最初，每个rank只持有本地令牌，ranks相应地被分类为欠载或过载。我们重复选择一个欠载rank和一个过载rank，并将令牌从过载rank迁移以精确地将欠载rank填充到平衡值$S \times K$；过载rank可能仍然过载，变得恰好平衡，或变得欠载，并被放回相应的集合中。这个过程重复进行，直到所有ranks都完美平衡。每次填充都使一个欠载rank变得平衡，并且之后不再改变，因此该过程在最多$R-1$次填充后终止；同时，每个rank最多被填充一次，因此其远程令牌来自单个rank，这证明了该引理。因此，假设rank $r$的所有远程令牌都来自rank $s$；这些令牌属于rank $s$上最多$E/R$个本地专家，因此$m_r(P^<em>) \leq E/R$，所以：
+**估计器的性质**。三个特性使得这个估计器在大规模下实用。首先，它是准确的：累积计数在箱子边缘是精确的，因此真实分位数及其估计值位于同一个箱子内，误差受箱宽$w$的限制；当$B=1000$时，这最多是几个$10^{-3</em>$，使得每个EP rank接收完全相同数量的令牌（$S \times K$），并且每个rank的远程令牌仅来自另一个EP rank。构造如下：最初，每个rank只持有本地令牌，ranks相应地被分类为欠载或过载。我们重复选择一个欠载rank和一个过载rank，并将令牌从过载rank迁移以精确地将欠载rank填充到平衡值$S \times K$；过载rank可能仍然过载，变得恰好平衡，或变得欠载，并被放回相应的集合中。这个过程重复进行，直到所有ranks都完美平衡。每次填充都使一个欠载rank变得平衡，并且之后不再改变，因此该过程在最多$R-1$次填充后终止；同时，每个rank最多被填充一次，因此其远程令牌来自单个rank，这证明了该引理。因此，假设rank $r$的所有远程令牌都来自rank $s$；这些令牌属于rank $s$上最多$E/R$个本地专家，因此$m_r(P^_) \leq E/R$，所以：
 <div>$$
 M ( I ) = \operatorname* { m i n } _ { P } \operatorname* { m a x } _ { r } \left\{ m _ { r } ( P ) \right\} \leq \operatorname* { m a x } _ { r } \left\{ m _ { r } ( P ^ { * } ) \right\} \leq \frac { E } { R }
 $$</div>
