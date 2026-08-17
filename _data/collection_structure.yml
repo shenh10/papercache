@@ -3104,6 +3104,16 @@ llm:
           - inference
           - kvcache
           tag: mlsys24
+        - title: 'INFERCEPT: Efficient Intercept Support for Augmented Large Language
+            Model Inference'
+          date: '2024-02-01'
+          url: /papers/llm/engineering/inference/kvcache/2024/02/01/infercept-efficient-intercept-support-for-augmented-large-language-model-inference.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
+          tag: icml24
         - title: 'FlexiCache: Leveraging Temporal Stability of Attention Heads for
             Efficient KV Cache Management'
           date: '2025-11-01'
