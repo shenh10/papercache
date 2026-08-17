@@ -2694,6 +2694,13 @@ llm:
         - llm
         - engineering
         - inference
+      - title: 'LLM Inference Unveiled: Survey and Roofline Model Insights'
+        date: '2024-02-01'
+        url: /papers/llm/engineering/inference/2024/02/01/llm-inference-unveiled-survey-and-roofline-model-insights.html
+        categories:
+        - llm
+        - engineering
+        - inference
       - title: 'BOUTE: Cost-Efficient LLM Serving with Heterogeneous LLMs and GPUs
           via Multi-Objective Bayesian Optimization'
         date: '2026-02-01'
