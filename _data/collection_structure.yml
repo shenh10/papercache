@@ -2434,6 +2434,14 @@ llm:
         - llm
         - engineering
         - inference
+      - title: 'Vidur: A Large-Scale Simulation Framework For LLM Inference'
+        date: '2024-05-01'
+        url: /papers/llm/engineering/inference/2024/05/01/vidur-a-large-scale-simulation-framework-for-llm-inference.html
+        categories:
+        - llm
+        - engineering
+        - inference
+        tag: mlsys24
       - title: 'DynaPipe: Dynamic Layer Redistribution for Efficient Serving of LLMs
           with Pipeline Parallelism'
         date: '2025-12-01'
