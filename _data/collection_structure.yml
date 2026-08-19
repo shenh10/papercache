@@ -5193,6 +5193,13 @@ mlsys:
         - compiler
         - tensor
         tag: osdi24
+      - title: Equivalence Checking of ML GPU Kernels
+        date: '2025-11-01'
+        url: /papers/mlsys/compiler/tensor/2025/11/01/equivalence-checking-of-ml-gpu-kernels.html
+        categories:
+        - mlsys
+        - compiler
+        - tensor
       - title: 'Roller: Fast and Efficient Tensor Compilation for Deep Learning'
         date: '2022-07-01'
         url: /papers/mlsys/compiler/tensor/2022/07/01/roller-fast-and-efficient-tensor-compilation-for-deep-learning.html
