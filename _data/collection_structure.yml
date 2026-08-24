@@ -5797,6 +5797,13 @@ mlsys:
       - mlsys
       - gpu
       tag: rtas23
+    - title: 'Hot Chips 2026: Applying High Bandwidth Flash (HBF)'
+      date: '2026-08-01'
+      url: /papers/mlsys/gpu/2026/08/01/hot-chips-2026-applying-high-bandwidth-flash-hbf.html
+      categories:
+      - mlsys
+      - gpu
+      tag: blog
     - title: 'Coruscant: Co-Designing GPU Kernel and Sparse Tensor Core to Advocate
         Unstructured Sparsity in Efficient LLM Inference'
       date: '2025-10-01'
