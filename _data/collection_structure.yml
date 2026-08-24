@@ -5749,6 +5749,13 @@ mlsys:
       - mlsys
       - gpu
       tag: micro25
+    - title: 'Matrix Multiplication on NVIDIA''s Blackwell: A Four-Part Deep Dive'
+      date: '2026-02-01'
+      url: /papers/mlsys/gpu/2026/02/01/matrix-multiplication-on-nvidias-blackwell-a-four-part-deep-dive.html
+      categories:
+      - mlsys
+      - gpu
+      tag: blog
     - title: Improving Real-Time Performance with CUDA Persistent Threads (CuPer)
         on the Jetson TX2
       date: '2018-03-01'
