@@ -20,6 +20,15 @@ title: Scalable Training of Mixture-of-Experts Models with Megatron Core
 <p><strong>发表时间</strong>: 2026-03 · Tech report by NVIDIA (arXiv:2603.07685)</p>
 <p><strong>原文</strong>: <a href="https://arxiv.org/abs/2603.07685" rel="noopener" target="_blank">https://arxiv.org/abs/2603.07685</a></p>
 <p>NVIDIA</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了开源全栈优化框架 Megatron-Core MoE，通过协同设计显存、通信和计算，在 NVIDIA GB300 上训练 685B 参数的 DeepSeek-V3 模型时实现了 1233 TFLOPS/GPU 的极高吞吐量。</p>
+<p><strong>要解决什么问题</strong> 混合专家（MoE）模型的稀疏性导致了根本的“参数-计算不匹配”：总参数量随专家数庞大，但每个 Token 仅激活极少参数。这种机制在训练时撞上了三堵相互耦合的限制墙。首先是显存墙，所有专家的参数、梯度和状态必须常驻显存，带来远超同等计算量密集模型的显存压力；其次是通信墙，为分散显存压力必须引入专家并行（EP），这要求全互联通信，随着并行度增加，通信会从节点内高带宽链路退化为跨节点低带宽互连；最后是计算效率墙，细粒度专家产生大量小型矩阵乘法，无法喂饱 GPU，且动态路由带来的张量形状变化会产生极高的主机端调度开销。此外，注意力层依赖张量并行，MoE 层依赖专家并行，传统框架强制两者共享并行配置，导致显存浪费和次优切分。</p>
+<p><strong>怎么做的</strong> 核心思路是通过解耦和全栈协同设计，打破显存、通信与计算的耦合约束。针对密集层与稀疏层的并行冲突，框架引入并行折叠（Parallel Folding）技术，将注意力层和 MoE 层的并行映射彻底解耦，允许专家并行跨越节点内的高带宽组进行“折叠”，打破了专家并行度必须小于等于数据并行度的限制，避免了跨节点通信。为推倒显存墙，框架设计了内存高效排列技术，将路由器权重 $p_i$ 吸收进激活函数中：$$ \mathbf{y} = \sum_{i \in \mathcal{T}(\mathbf{x})} \mathbf{W}_2^{(i)} (p_i \cdot \phi(\mathbf{W}_1^{(i)} \mathbf{x})) $$这一等价变换消除了反向传播时保存路由器张量的需求，实现零计算开销的显存缩减；同时配合双 DeviceMesh FSDP 架构，为主干密集模块和专家模块分别建立独立的切分网格。在打破通信墙方面，框架集成 DeepEP 和 HybridEP 分派器，摒弃全局排列步骤，直接基于 Token 路由信息通过队列进行点对点传输；并设计 1F1B 前后向重叠机制，将反向传播的权重梯度计算与前向计算重叠，隐藏全互联通信延迟。针对计算效率墙，框架采用 Grouped GEMM 将多个专家的零碎矩阵乘法融合成单次调用；针对动态路由导致无法使用 CUDA Graphs 的卡点，引入分层 CUDA Graphs 仅捕获静态组件；配合热点专家弹性克隆（ECHO）机制，在分派阶段将高负载专家的权重复制到空闲 GPU 上，抹平动态路由带来的计算不平衡与显存碎片化。</p>
+<p><strong>效果如何</strong> 实验在 NVIDIA GB300、GB200（NVL72 拓扑）及扩展至 1024 张卡的 H100（NVL8 拓扑）集群上展开。评估目标为两个最先进的细粒度 MoE 模型：685B 参数的 DeepSeek-V3 和 235B 参数的 Qwen3。由于本文是全栈系统设计，对比基线体现为框架内不同优化路线的消融，如在通信后端上对比 DeepEP 与 HybridEP 路线，在执行模式上对比常规执行与分层 CUDA Graphs 路线。在 256 张 GB300 和 GB200 上，使用 MXFP8 精度训练 DeepSeek-V3 分别达到 1233 和 1048 TFLOPS/GPU 的极高吞吐量；在 1024 张 H100 上使用 FP8-BLK 精度达到 368 TFLOPS/GPU。长上下文压力测试中，128 张 GB300 以 131072 的超长序列训练 Qwen3，维持了 1150 TFLOPS/GPU 的吞吐量。作者也揭示了系统局限：相同模型在不同硬件上需要截然不同的优化栈。在 GB200 上，通信不是瓶颈，系统受限于 CPU 开销，必须采用 HybridEP 配合 CUDA Graphs；而在 H100 上，跨节点通信成为短板，必须切换为 DeepEP 并开启 1F1B 通信重叠隐藏延迟。此外，为满足 CUDA Graphs 对静态形状的要求，系统在某些模式下必须引入 Token 丢弃并填充至最大长度，带来额外开销。</p>
+</div>
+</details>
 <h2>主要贡献</h2>
 <p>扩展混合专家（MoE）模型的训练引入了密集模型中不存在的系统挑战。由于每个Token仅激活专家的一个子集，这种稀疏性使得总参数量的增长速度远快于每个Token的计算量，从而在内存、通信和计算之间产生了耦合约束。优化其中一个维度通常会将压力转移到另一个维度，这要求跨整个系统栈进行协同设计。</p>
 <p>本文通过涵盖内存（细粒度重计算、卸载等）、通信（优化的分派器、重叠等）和计算（Grouped GEMM、内核融合、CUDA Graphs等）的集成优化来解决MoE训练的这些挑战。该框架还提供了用于灵活多维并行的并行折叠（Parallel Folding）技术、对FP8和NVFP4的低精度训练支持，以及高效的长上下文训练。在NVIDIA GB300和GB200上，它在训练DeepSeek-V3-685B时分别达到了1,233和1,048 TFLOPS/GPU，在训练Qwen3-235B时达到了974和919 TFLOPS/GPU。作为一个高性能、可扩展且可用于生产的开源解决方案，它已被学术界和工业界广泛用于在扩展至数千个GPU的集群上训练从数十亿到数万亿参数的MoE模型。</p>

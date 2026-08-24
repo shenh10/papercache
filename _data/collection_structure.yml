@@ -5612,6 +5612,7 @@ mlsys:
       categories:
       - mlsys
       - gpu
+      tag: blog
     - title: 'WASP: Exploiting GPU Pipeline Parallelism with Hardware-Accelerated
         Automatic Warp Specialization'
       date: '2024-03-01'

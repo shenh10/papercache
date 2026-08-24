@@ -18,6 +18,17 @@ title: 'Blink: CPU-Free LLM Inference by Delegating the Serving Stack to GPU and
 <div class="container">
 <h1>Blink: CPU-Free LLM Inference by Delegating the Serving Stack to GPU and SmartNIC</h1>
 <p><strong>作者/机构</strong>: Mohammad Siavashi (KTH Royal Institute of Technology), Mariano Scazzariello (RISE), Gerald Q. Maguire Jr. (KTH Royal Institute of Technology), Dejan Kostić (KTH Royal Institute of Technology), Marco Chiesa (KTH Royal Institute of Technology)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种无 CPU 的大语言模型推理服务架构 Blink，通过将控制平面和数据平面卸载到 GPU 和智能网卡（DPU）上，彻底将主机 CPU 移出推理关键路径，在隔离环境下最高提升 2.1 倍吞吐量，且在严重的 CPU 干扰下依然保持性能零衰减。</p>
+<p><strong>要解决什么问题</strong> 现有的 LLM 服务系统将主机 CPU 放在了每次 token 生成的关键路径上，负责连续批处理、KV 缓存管理和 CUDA 内核分派。在数据中心多租户共存的常态下，这种主机与设备的紧密耦合会导致严重的微架构资源争用。具体而言，干扰程序的频繁内存操作会引发 TLB 失效，迫使 CPU 进行页表遍历，而这又会进一步污染共享的末级缓存（LLC），形成跨地址空间的放大效应。即使采用巨页、绑核或硬件缓存分区等操作系统层面的隔离手段，也无法消除主机端调度抖动和内核分派带来的延迟开销。只要 CPU 还在稳态推理的循环中，任何微小的干扰都会在自回归解码的数百次迭代中累积，最终导致首 token 时间（TTFT）和 token 间延迟（TPOT）出现数量级的恶化。</p>
+<p><strong>怎么做的</strong> 核心思路是将主机 CPU 降级为仅负责初始化的配置平面，而将稳态推理的数据与控制职责完全交接给智能网卡（DPU）和 GPU，从而从根本上绕开主机微架构争用的卡点。系统由前端和后端两个核心部件构成，二者仅通过驻留在 GPU 显存中的无锁环形缓冲区进行通信。前端运行在 DPU 的 ARM 核心上，负责接收请求、执行分词，并通过单边 RDMA 将 prompt 直接零拷贝写入 GPU 显存。为了避免扫描开销，前端维护本地可用性缓存，以 $O(1)$ 的摊销时间找到空闲槽位。后端则是一个完全在 GPU 上运行的推理引擎，其核心是一个占据单个线程块的持久化调度器内核。该调度器执行无限控制循环，通过原子比较并交换指令声明新请求，并驱动环形缓冲区中的槽位状态流转：
+$$ \text{empty} \to \text{prefill\_pending} \to \text{prefill\_processing} \to \text{decode\_processing} \to \text{decode\_completed} \to \text{empty} $$
+在执行层面，调度器利用设备端 CUDA 图启动技术，直接从 GPU 触发预编译的推理计算，彻底消除了主机介导的内核分派开销。针对 CUDA 运行时对即发即忘启动模式最多只能连续调用 120 次的硬性限制，作者设计了基于窗口的尾部启动恢复机制：调度器在共享内存中维护启动计数器，每达到 120 次限制时，便发出一次尾部启动来原子化地替换当前图执行实例，同时保留所有驻留在持久显存中的 KV 缓存和请求状态。这一设计既摊薄了启动延迟，又实现了无上限的 token 生成。此外，调度器还实现了内联预填充的连续批处理，通过在解码计算的后台并行扫描环形缓冲区，将新请求无缝插入正在运行的批次中。</p>
+<p><strong>效果如何</strong> 实验在一台配备单张 H100 GPU 和双路 Intel Xeon CPU 的服务器上进行，前端部署在 BlueField-3 DPU 上。评测使用了 Llama-3 8B、Phi-4 15B、Qwen-3 32B 三个稠密模型以及 Qwen-3 30B-A3B 混合专家（MoE）模型，测试数据为 ShareGPT 真实对话轨迹。对比基线包括代表广泛部署开源路线的 vLLM、代表近期高性能调度路线的 SGLang，以及与本文使用相同底层推理引擎以严格控制变量的 TensorRT-LLM。在无干扰的隔离环境下，Blink 实现了最高 2.1 倍的解码吞吐量提升，其 P99 首 token 时间最多降低了 8.47 倍，P99 token 间延迟最多降低了 3.40 倍；这种优势在 MoE 模型上尤为显著，因为 MoE 的专家路由逻辑放大了 CPU 的调度开销。在引入高强度 CPU 干扰（如并行压缩和编译任务）的共存环境下，所有基线系统均发生性能崩溃，首 token 时间膨胀高达 18.84 倍，吞吐量暴跌至原先的 32% 到 64%；而 Blink 的各项延迟和吞吐量指标波动均在 4% 以内，展现出对主机干扰的绝对免疫，同时每 token 能耗最多降低了 70.7%。作者也指出了当前方案的局限性：目前系统主要针对模型参数能完全放入单张 GPU 显存的场景；如果模型过大需要依赖主机 CPU 和内存进行权重卸载，主机将不可避免地重新回到数据路径中，从而再次面临干扰问题。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题与研究目标</strong>：大型语言模型（LLM）推理正迅速成为数据中心的核心服务，但当前的服务栈将主机CPU置于编排和令牌级控制的关键路径上。这使得LLM的性能对CPU干扰非常敏感，不仅影响了应用程序的共存，还迫使运营商预留CPU空间，导致大量计算能力未被利用。本文的目标是设计一个端到端的LLM服务架构，通过将职责重新分配给智能网卡（SmartNIC）和GPU，将主机CPU从稳态推理路径中移除。</p>
 <p><strong>创新点与主要贡献</strong>：<br/>

@@ -21,6 +21,15 @@ title: 'X-Stage: An Overlooked Pipeline Stage for Communication–Computation Ov
 <p><strong>原文</strong>: <a href="https://arxiv.org/abs/2607.23264" rel="noopener" target="_blank">https://arxiv.org/abs/2607.23264</a></p>
 <p><strong>作者/机构</strong>: Jianwen Xian1, Zhiyuan Xu2,<em>,‡, Yuchen Li2,</em>,‡, Ziliang Lai1, Kang He1, Zhen Huang3, Aichen Feng3, Jinyan Chen3, Yilin Zhang3, Qinqin Chen3, Chengru Song1,†<br/>
 1KlingAI Research, 2清华大学, 3NVIDIA</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文针对分布式扩散变换器推理中的通信瓶颈，提出了量化“发出后”通信进展的X-Stage抽象及Burst-Gap模型，并据此设计了交错调度的MegaMoE与搭载式FlashAttention-A2A内核，在不增加硬件资源的前提下实现了最高1.62倍的内核加速。</p>
+<p><strong>要解决什么问题</strong> 现有的大模型细粒度通信与计算重叠技术（如FLUX、Comet等）普遍采用“完成耦合”模型，即假设通信发出后，发送方必须阻塞等待数据在远端完全可见，或者需要专门的资源来维持通信状态。这种抽象无法真实反映现代GPU的底层机制。实际上，远程存储的“发出”和“远端可见”是两个独立事件，发送方在发出写请求后即可继续执行后续计算。然而，这种“发出后”的推进能力是有限的。如果算子产生密集的远程存储突发，且突发之间的计算间隙太短，未完成的通信请求就会在底层路径中不断累积。当累积量耗尽下游的有效容量时，就会产生反压。这种反压会首先延长发送方的发出时间，随后通过本地的暂存资源向上传导，最终迫使核心的Tensor Core计算流水线停顿。现有的调度系统因为看不见这个反压临界点，导致在处理如MegaMoE这类细粒度内核时，经常因通信突发过于集中而引发严重的计算停顿。</p>
+<p><strong>怎么做的</strong> 核心思路是识别并量化从“请求发出”到“远端可见”之间的这段软件可见的执行区间，即X-Stage。作者通过微基准测试提取了三个平台参数：无反压发出时间$T_{\text{iss}}^0$、有效排空率$\mathcal{R}$和有效未完成容量$Q$。基于此构建了Burst-Gap模型，定义了当发送方注入体积为$\mathcal{V}$的通信突发，并伴随时长为$\mathcal{G}$的计算间隙时，发送方实际感受到的发出时间为：$$T_{\text{iss}}(\mathcal{G}; \mathcal{K}, \mathcal{V}) = \max\left(T_{\text{iss}}^0(\mathcal{K}, \mathcal{V}), \frac{\mathcal{V}}{\mathcal{R}} - \mathcal{G}\right)$$该公式揭示了计算间隙$\mathcal{G}$可以直接用来掩盖通信的排空时间。基于该模型，作者设计了两种内核优化策略。第一种是针对MegaMoE的“重塑注入”策略。原始的专家波次调度会连续执行Linear-2计算，导致通信突发极大且计算间隙极短，必然触发反压。作者设计了交错调度器，在连续的Linear-2通信突发之间，强行插入没有通信依赖的Linear-1计算瓦片。这在不增加总计算量的前提下人为拉长了计算间隙$\mathcal{G}$，让X-Stage有足够时间排空请求，从而消除了Tensor Core的停顿。第二种是针对Ulysses序列并行注意力的“搭载”策略。作者将注意力后的All-to-All通信与FlashAttention在瓦片粒度上融合。因为FlashAttention的Q-loop本身就提供了随序列长度线性增长的巨大计算间隙，完全满足Burst-Gap模型的容量和速率边界。因此，负责输出计算的角色在发出远程存储后，无需交出控制权或分配专用的通信线程束，直接进入下一个Q-loop恢复计算即可，通信请求会自动在X-Stage中被后台排空。</p>
+<p><strong>效果如何</strong> 实验在配备8张最新架构NVIDIA GPU、通过NVLink全连接的系统上进行，采用8路专家并行设置。对于MegaMoE，对比基线是代表传统完成耦合路线的专家波次调度器（Expert-Wave）。在涵盖不同模型形状、精度和路由方式的84种配置下，交错调度器实现了1.18倍的几何平均加速比和最高1.62倍的加速比；在偏斜路由下收益尤为明显，发送方可见的通信跨度从7.9至9.9微秒大幅收窄至3.6至3.9微秒。对于FlashAttention-A2A，对比基线是串行执行路线（先算注意力再通信）。在8,192序列长度下，基于FA3和FA4的融合内核分别达到了1.43倍和1.42倍的最大加速比。更关键的是，发送方侧的残余开销仅为10至14微秒的极小常数，且完全不随序列长度增长，证明通信被完美掩盖。方法的代价与局限在于：MegaMoE的跨专家交错调度有时会破坏专家权重的L2缓存局部性，导致极少数配置下出现约0.94倍的性能回退；此外，当前的X-Stage模型仅针对单边远程存储进行了表征，对于加载、原子操作或跨节点网络等其他通信模式，其有效性仍需独立验证。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文研究了在分布式扩散变换器（DiT）推理中，GPU计算吞吐量与节点内互连带宽之间日益扩大的差距，这一差距使得GPU间的数据移动成为分布式模型执行的关键路径。现有的细粒度、设备发起的通信系统虽然能够调度通信的发出时间和接收数据的可用时间，但忽略了通信发出后、在远端可见完成前的“后发出（post-issue）”进展阶段，这使得发送方反压（backpressure）难以预测。</p>
 <p><strong>核心问题与研究目标：</strong><br/>

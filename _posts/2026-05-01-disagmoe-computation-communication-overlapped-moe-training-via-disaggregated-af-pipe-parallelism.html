@@ -21,6 +21,19 @@ title: 'DisagMoE: Computation-Communication Overlapped MoE Training via Disaggre
 <p><strong>发表时间</strong>: 2026-05 · arXiv:2605.11005</p>
 <p><strong>文章标题</strong>：DisagMoE：通过解耦的AF-Pipe并行实现计算-通信重叠的MoE训练<br/>
 <strong>作者/机构</strong>：Zhichen Zeng1,2, Chi-Chih Chang1,3, Jiayi Wang2, Zezhou Wang2, Ningxin Zheng1, Zheng Zhong1, Cesar A. Stuardo1, Dongyang Wang1, Mohamed S. Abdelfattah3, Haibin Lin1, Banghua Zhu2, Ang Li2, Ziheng Jiang1 (1ByteDance Seed, 2University of Washington, 3Cornell University)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个用于大规模混合专家（MoE）模型训练的系统 DisagMoE，通过将注意力和前馈网络解耦到不同的工作组，并结合多阶段流水线实现计算与通信的深度重叠，在端到端训练中相比 Megatron-1F1B 实现了最高 1.81 倍的加速。</p>
+<p><strong>要解决什么问题</strong> 混合专家（MoE）模型在进行跨节点专家并行训练时，会引入极其沉重的 all-to-all 通信开销。随着专家被分片到更多节点，受限于节点间较低的网络带宽，通信延迟在总训练时间中的占比可高达近八成。现有的优化方案试图在算子级别将这部分通信与前馈网络（FFN）或自注意力计算进行重叠，但这种做法卡在了一个根本性的机制冲突上：注意力和 FFN 的计算-通信比存在严重的不平衡。随着序列长度增加，注意力计算量呈二次方增长，能高效利用计算资源并迅速达到算力瓶颈；而 FFN 的计算量和通信量仅呈线性增长，严重受限于网络带宽。由于两者被绑定在同一组硬件上共享相同的网络和算力上限，导致 FFN 侧始终存在无法被计算隐藏的通信尾部，整个系统的吞吐量被 FFN 的通信开销强行拉低。</p>
+<p><strong>怎么做的</strong> 核心思路是打破传统模型按层切分的物理绑定，将注意力和 FFN 彻底解耦到两组独立的硬件资源上，让它们各自在最优的计算-通信平衡点运行。该方法主要由三个关键设计构成。首先是解耦的组件放置，系统按组件类型对 Transformer 进行划分，将所有的注意力层分配给注意力工作组，组内 GPU 采用数据并行复制模型；将所有的 FFN 层分配给 FFN 工作组，组内 GPU 采用专家并行对专家进行分片。其次是带重叠的多阶段流水线 AF-Pipe，它用组间的“多对多”令牌交换替代了传统的 all-to-all 通信。AF-Pipe 将一个批次划分为多个微批次，在注意力和 FFN 工作组之间进行时间复用级的流水线执行。通过融合传统的点对点和合并操作，它将通信视为一等流水线阶段，并通过专用的异步执行流将通信与前向、后向计算完全重叠。这种设计大幅缩小了流水线气泡，其气泡时间定义为：
+$$T_{bubble\_afpipe} = (2L-1)\max(T_a, T_f) + T_{M2N}$$
+其中 $L$ 为层数，$T_a$ 和 $T_f$ 分别为注意力和 FFN 的计算时间，$T_{M2N}$ 为多对多通信时间。最后是自适应工作组分配，系统引入了一个计算-通信屋顶线模型来指导资源划分。由于注意力是计算密集型而 FFN 是通信密集型，分配器会将更多的网卡带宽倾斜给 FFN 工作组，从而提升其通信屋顶上限。分配策略首先通过调整两组的 GPU 数量来最小化流水线的瓶颈阶段时间：
+$$T^* = \min \max(T_a, T_f)$$
+随后在满足该条件的配置中，进一步微调网卡划分以最大化整体模型的算力利用率。这种联合调度彻底消除了传统方法中因计算-通信比不匹配而遗留的通信尾部。</p>
+<p><strong>效果如何</strong> 实验在一个包含 16 个节点（每节点配备 8 块 80GB 显存的 H800 GPU 和 8 张 400 GbE 网卡）的集群上进行。评估使用了 DeepSeek-MoE、GPT-OSS-120B 和 Qwen3-235B-A22B 三个模型，测试了 4K 到 32K 的序列长度。对比基线包括代表传统 3D 并行路线的 Megatron-LM、代表算子级通信重叠路线的 Tutel 和 Comet，以及代表双向流水线并行路线的 DualPipe。在端到端训练吞吐量上，DisagMoE 相比朴素的 Megatron-1F1B 实现了最高 1.81 倍的加速，相比 Tutel 和 Comet 等前沿重叠方法实现了最高 1.34 倍的加速，相比 DualPipe 也有 1.05 到 1.13 倍的提升。在 8K 序列长度的具体延迟分解中，DisagMoE 相比 Tutel 将未重叠的通信时间大幅减少了 88%。不过该方法也有其局限性和代价：它强依赖于工作负载的稳定性，假设序列长度和微批次大小是固定的，因此无法直接用于强化学习等动态形状的训练场景；此外，为了提高流水线利用率而增加交错虚拟阶段数量时，会导致单个工作组需要囤积大量层的参数和激活值，当虚拟阶段数超过 16 时会直接引发显存溢出。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决混合专家（MoE）模型训练中的一个核心瓶颈：专家并行（Expert Parallelism, EP）策略引入的严重all-to-all通信开销。随着模型规模增长，专家需要分布在多个GPU节点上，有限的节点间网络带宽使得这一问题更加突出。现有的工作主要通过将all-to-all通信与前馈网络（FFN）和自注意力（self-attention）计算重叠来优化，但由于注意力和FFN层在计算-通信比率上存在固有的不平衡，这种方法常常留下无法被隐藏的网络瓶颈。</p>
 <p><strong>研究目标</strong>：为了解决上述不平衡问题并实现可扩展的重叠训练，本文提出了DisagMoE，一个用于大规模MoE训练的系统，它通过联合优化模型放置和调度来最大化训练效率。</p>

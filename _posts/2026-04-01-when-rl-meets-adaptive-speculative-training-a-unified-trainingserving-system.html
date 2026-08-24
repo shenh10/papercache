@@ -18,6 +18,17 @@ title: 'When RL Meets Adaptive Speculative Training: A Unified Training–Servin
 <div class="container">
 <h1>When RL Meets Adaptive Speculative Training: A Unified Training–Serving System</h1>
 <p><strong>作者/机构</strong>: Junxiong Wang, Fengxiang Bie, Jisen Li, Zhongzhu Zhou, Zelei Shao, Qingyang Wu, Yinghui Liu, Yubo Wang, Avner May, Sri Yanamandra, Tri Dao, Percy Liang, Ce Zhang, Ben Athiwaratkun, Shuaiwen Leon Song, Chenfeng Xu, Xiaoxia Wu (<a href="http://together.ai" rel="noopener noreferrer" target="_blank">http://together.ai</a>)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个名为 Aurora 的统一训练-服务系统，将推测式解码的在线训练重构为异步强化学习问题，使推测器能够直接从实时推理数据中持续学习，在无需离线预训练的冷启动下实现了高达 1.57 倍的端到端解码加速。</p>
+<p><strong>要解决什么问题</strong> 现有的推测式解码（Speculative decoding，一种通过轻量级草稿模型预先生成多个 token 并由大模型并行验证来加速推理的技术）通常将推测器的训练与线上服务解耦，视为独立的离线建模任务。这种“先训练后服务”的范式引入了三个致命卡点：首先是高昂的上线时间成本，推测器部署前必须经历漫长的离线预训练；其次是效用反馈严重滞后，真实的端到端加速效果受系统内核、批处理调度和硬件开销综合影响，无法仅靠离线评估的接受率来可靠推断；最后是领域漂移导致的性能骤降，当线上真实请求分布变化时，静态推测器会迅速老化失效。此前虽有在线推测式解码方案尝试通过在线蒸馏缓解，但它们本质上是开环的，既缺乏在严格延迟约束下无中断更新模型的热插拔机制，也未将真实端到端加速效用作为反馈信号，导致训练目标与生产环境实际收益脱节。</p>
+<p><strong>怎么做的</strong> 核心思路是将在线推测器学习重构为一个异步强化学习问题，构建“服务驱动训练”的闭环系统 Aurora。该系统由解耦的推理服务器和训练服务器组成。推理服务器基于 SGLang 运行，使用目标模型和草稿模型处理实时请求，并将推测树中接受和拒绝的 token 及其隐藏状态流式传输到分布式数据缓冲区。训练服务器在独立 GPU 上异步拉取离策略数据，对草稿模型进行持续梯度更新，并通过远程过程调用（RPC）定期将新权重热插拔回推理服务器，全程不中断服务。这种设计之所以能绕开上述卡点，是因为它直接利用实时流量的验证结果作为奖励信号：接受的 token 提供正反馈，拒绝的分支提供隐式负反馈，让模型始终针对当前真实分布优化，且无需重复加载庞大目标模型。为高效处理推测树的复杂分支结构，系统定制了树状注意力机制（Tree Attention），通过构建遵循因果结构的掩码，在单次批处理中同时处理所有接受和拒绝的节点。算法层面，总损失函数结合了对接受 token 的模仿学习和对拒绝 token 的丢弃采样（Discard Sampling），定义为：
+$$ \mathcal{L}=\mathbb{E}_{x \sim p_{\text {accept }}}\left[\operatorname{KL}\left(p_{\text {target }} \| p_{\text {draft }}\right)\right]+\lambda_{\text {discard }} \mathbb{E}_{x \sim p_{\text {discard }}}\left[\operatorname{KL}\left(p_{\text {target }} \| p_{\text {draft }}\right)\right] $$
+公式第一项教导草稿模型重现验证器批准的续写，第二项则通过对拒绝的 token 应用 top-k 过滤，明确教导模型纠正高概率错误预测。此外，系统采用惰性同步策略，容忍一定权重陈旧性，以避免频繁同步带来的延迟抖动。</p>
+<p><strong>效果如何</strong> 实验在包含数学、代码、金融等 4 万条提示词的混合领域数据集上模拟真实在线请求流。硬件采用 H100 和 H200 GPU，通过分离式架构为推理和训练分配独立算力。测试的目标模型涵盖 Qwen3-8B、Llama-3.1-8B-Instruct 及前沿 MoE 模型 MiniMax M2.1（229B 参数）和 Qwen3-Coder-Next（80B 参数）。对比基线包括无推测的纯自回归推理（代表基础底线）、冻结权重的静态预训练推测器（代表传统离线训练路线），以及从零随机初始化的 Aurora 和基于静态权重初始化的 Aurora。量化结果显示，在突发领域漂移场景下，完全未经训练的冷启动推测器能在约 1 万个请求内迅速收敛，接受长度达到 2.46，几乎追平精心预训练的静态基线（2.57）。扩展性测试中，Aurora 为 229B 的 MiniMax M2.1 带来 1.45 倍吞吐量提升（批次大小为 4），为 80B 的 Qwen3-Coder-Next 带来 1.23 倍提升（批次大小为 8）。该方案也存在明确代价与局限：首先，吞吐量收益高度依赖较小批次大小，当批次大小增至 32 时，目标模型的验证开销占主导，推测式解码速度反而略慢于无推测基线；其次，复杂的丢弃采样机制在常规设置下收益微弱，仅在激进的长前瞻步数（如 10 步）场景下才显现明显优势；最后，系统必须在适应速度与服务稳定性间妥协，过于频繁的权重同步会拖垮吞吐量，每 80 个请求更新一次的惰性调度是最佳平衡点。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>推测式解码（Speculative decoding）能够显著加速大语言模型（LLM）的服务，但目前的部署大多将推测器（speculator）的训练与服务解耦，将其视为一个独立的离线建模问题。本文指出这种解耦的范式引入了严重的部署和适应延迟：<br/>
 1. <strong>高昂的上线时间（time-to-serve）</strong>：因为推测器在部署前必须经过长时间的离线训练。<br/>
