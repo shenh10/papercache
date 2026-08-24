@@ -23,6 +23,17 @@ title: Rethinking Expressivity and Efficiency in Test-Time Training
 <p><strong>原文</strong>: <a href="https://arxiv.org/abs/2608.21308" rel="noopener" target="_blank">https://arxiv.org/abs/2608.21308</a></p>
 <p>Zeyun Zhong, Joya Chen, Manuel Martin, Frederik Diederichs, Juergen Gall, Juergen Beyerer<br/>
 Karlsruhe Institute of Technology (KIT), National University of Singapore, Fraunhofer IOSB, Lamarr Institute for Machine Learning and Artificial Intelligence, University of Bonn</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为 E²-TTT 的测试时训练方法，通过推导闭式标量核，在保持分块并行训练高效性的同时，精确还原了逐 Token 更新的表达能力，在 8 倍训练长度的外推检索任务中保持了 90% 以上的准确率。</p>
+<p><strong>要解决什么问题</strong> 测试时训练（TTT）通过在推理阶段持续更新模型权重，把历史信息压缩进固定大小的神经网络状态中以处理长上下文。但现有的 TTT 方法面临表达能力与硬件效率的死结。传统的逐 Token 更新具有极强表达能力，能精细控制每个 Token 的重要性，但受限于严格的时序依赖，无法并行计算，导致训练极慢、硬件利用率极低。近期的分块更新方法（如 LaCT）将序列切成大块并行计算以提速，但代价是过度简化了更新规则，直接把块内的动量和衰减因子做平均。这种粗暴的平均抹除了块内不同 Token 的时序差异和重要性变化，导致模型在处理复杂检索或超出训练长度的序列时，效果大幅衰减甚至完全失效。</p>
+<p><strong>怎么做的</strong> 核心思路是推导出一个闭式的并行标量核，让分块更新能够精确等价于逐 Token 的时序更新。E²-TTT 沿用分块并行框架，但在块内不再粗暴平均，而是保留逐 Token 的学习率 $\eta_t$、动量因子 $\beta_t$ 和衰减因子 $\gamma_t$。标准的逐 Token 动态更新公式为：</p>
+$$ \mathbf{M}_t = \beta_t \mathbf{M}_{t-1} + \eta_t \mathbf{G}_t, \qquad \mathbf{W}_t = \gamma_t \mathbf{W}_{t-1} + \mathbf{M}_t $$
+<p> 为绕开串行计算卡点，作者发现矩阵状态 $\mathbf{W}$ 和 $\mathbf{M}$ 的计算虽昂贵，但动量和衰减因子仅为标量。通过展开递归公式并重排求和顺序，时序动态历史被压缩为标量系数，从而直接从块首状态（$\mathbf{W}_0, \mathbf{M}_0$）一步跳跃计算出块尾状态（$\mathbf{W}_C, \mathbf{M}_C$）。关键设计由两个标量核构成，通过定义后缀乘积 $\tilde{\beta}_t$、$\tilde{\gamma}_t$ 及累积比率和 $R_t$，块尾状态被精确重写为：</p><div>$$ \mathbf{M}_C = \tilde{\beta}_0 \mathbf{M}_0 + \sum_{t=1}^C (\eta_t \tilde{\beta}_t) \mathbf{G}_t $$</div> <div>$$ \mathbf{W}_C = \tilde{\gamma}_0 \mathbf{W}_0 + \tilde{\beta}_0 R_1 \mathbf{M}_0 + \sum_{t=1}^C (\eta_t \tilde{\beta}_t R_t) \mathbf{G}_t $$</div> 动量核 $\eta_t \tilde{\beta}_t$ 衡量第 $t$ 个 Token 的梯度有多少能通过动量衰减存活到块尾；权重核 $\eta_t \tilde{\beta}_t R_t$ 则进一步叠加了权重衰减的影响。这些标量聚合能以极低成本并行计算，且两个核共享同一次反向传播的激活梯度，使得 E²-TTT 在不损失时序精度的前提下，实现了与分块方法相同的硬件并行度。此外，因分块输出机制会使模型对块内最近历史产生盲区，作者采用混合架构，将 E²-TTT 模块（负责长程）与滑动窗口注意力（负责局部）并行结合，通过门控融合输出。<p></p>
+<p><strong>效果如何</strong> 作者在 FineWeb-Edu 上从头训练了 340M 和 1.3B 参数模型，数据量为 15B tokens，硬件为 H100 GPU。对比基线包括全注意力 Transformer++、线性注意力 DeltaNet 与 HQLT、状态空间 Mamba2，以及分块 TTT 路线的 LaCT。在上下文检索中，1.3B 的 E²-TTT 取得 43.6% 的平均准确率，显著超越 HQLT（35.5%）和 LaCT（36.7%）。最能说明问题的是长度外推能力。在“大海捞针”测试中，当长度扩展到 16K 上下文（8 倍训练长度）时，E²-TTT 仍保持 93.6% 准确率，而 LaCT 在 4K 后崩溃至接近 0，HQLT 衰减至 25.2%。在 LongBench 真实长文本基准上，E²-TTT 取得 14.1% 的最高平均分，几乎是 LaCT（7.7%）的两倍。代价方面，E²-TTT 的训练吞吐量与高效的 LaCT 基本持平（1.3B 下仅慢 3.3%）。局限在于，分块输出强制块内所有 Token 使用相同权重状态，导致局部因果依赖缺失，需依赖滑动窗口注意力弥补；且 SwiGLU 变体在大批次推理时显存占用略高。</p>
+</div>
+</details>
 <h2>主要贡献</h2>
 <p>当前的大型语言模型（LLMs）在推理、编码和多模态理解方面表现出色，但其权重在训练后保持冻结状态，仅能依赖累积的记忆（如键值缓存）来处理长上下文任务，这限制了它们在现实场景中从长周期任务中持续学习或跨任务泛化的能力。测试时训练（Test-Time Training, TTT）通过在推理期间进行连续的权重更新来实现长上下文处理，但现有方法在逐Token更新动态的表达能力与逐块（chunk-wise）近似的硬件效率之间难以取得平衡。</p>
 <p>为了弥合这一差距，本文提出了 $\mathrm{E^2}$-TTT（Expressive and Efficient TTT）。在采用块起始权重计算梯度的标准近似下，本文推导出了一个闭式（closed-form）的状态转换，能够精确重现逐Token递归在块末尾（chunk-end）的快速权重和动量状态。这使得完全并行的块级训练成为可能，同时保留了先前逐块方法所抛弃的更新规则的时间结构。通过从头训练高达1.3B参数的模型，验证了 $\mathrm{E^2}$-TTT 的有效性。在语言建模方面，它与之前的TTT和混合注意力基准表现相当，而在上下文检索方面则超越了它们。其优势在长度外推方面最为显著：在标准的“大海捞针”密码测试中，在8倍于训练上下文长度的情况下，它仍保持超过 $90\%$ 的准确率。同时，$\mathrm{E^2}$-TTT 能够匹敌高效逐块方法的训练吞吐量，证明了它有效地调和了表达能力与效率。</p>
