@@ -1240,6 +1240,15 @@ llm:
             - architecture
             - attention
             - linear
+          - title: Rethinking Expressivity and Efficiency in Test-Time Training
+            date: '2026-08-01'
+            url: /papers/llm/algorithm/architecture/attention/linear/2026/08/01/rethinking-expressivity-and-efficiency-in-test-time-training.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - linear
           - title: Linear Transformers Are Secretly Fast Weight Programmers
             date: '2021-06-01'
             url: /papers/llm/algorithm/architecture/attention/linear/2021/06/01/linear-transformers-are-secretly-fast-weight-programmers.html
