@@ -294,6 +294,64 @@ layout: default
   color: #2d3748;
 }
 
+/* 速读块：正文之前的一分钟概览，默认展开、可折叠 */
+.post-content details.tldr-block {
+  margin: 1.5rem 0 2rem;
+  padding: 0 1.25rem;
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #3b82f6;
+  border-radius: 8px;
+}
+
+.post-content details.tldr-block > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 0.9rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #3b82f6;
+  letter-spacing: 0.02em;
+  user-select: none;
+}
+
+.post-content details.tldr-block > summary::-webkit-details-marker {
+  display: none;
+}
+
+.post-content details.tldr-block > summary::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 0.5rem;
+  transition: transform 0.15s ease;
+}
+
+.post-content details.tldr-block[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.post-content details.tldr-block:not([open]) > summary::after {
+  content: "点击展开";
+  margin-left: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #a0aec0;
+}
+
+.post-content details.tldr-block .tldr-body {
+  padding-bottom: 1rem;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 0.9rem;
+}
+
+.post-content details.tldr-block .tldr-body p {
+  margin: 0 0 0.9rem;
+}
+
+.post-content details.tldr-block .tldr-body p:last-child {
+  margin-bottom: 0;
+}
+
 /* 图片响应式样式 */
 .post-content img {
   max-width: 100% !important; /* 不超过容器宽度 */
