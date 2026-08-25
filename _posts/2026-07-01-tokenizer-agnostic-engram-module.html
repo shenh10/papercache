@@ -21,6 +21,15 @@ title: Tokenizer-Agnostic Engram Module
 <p><strong>发表时间</strong>: 2026-07 · arXiv:2607.29065 (SMU/DSO)</p>
 <p><strong>原文</strong>: <a href="https://arxiv.org/abs/2607.29065" rel="noopener" target="_blank">https://arxiv.org/abs/2607.29065</a></p>
 <p>Jia Peng Lim, Hai Leong Chieu / Singapore Management University, DSO National Laboratories</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文通过将 Engram 模块的哈希机制从基于 token 的 XOR 哈希替换为基于字节的多项式哈希，实现了分词器无关的条件记忆嵌入，使得采用不同分词器的语言模型能够无损复用预训练的 Engram 权重。</p>
+<p><strong>要解决什么问题</strong> 原有 DeepSeek 提出的 Engram 模块（一种用于权衡存储与推理能力的条件记忆模块）在查找嵌入时，依赖于 token 级别的 $N$-gram 进行 XOR 哈希计算。这种机制导致 Engram 嵌入与特定的分词器深度绑定。由于不同分词器的词表大小和切词逻辑不同，同一段文本会被切分成数量、顺序截然不同的 token 序列。在原有的 XOR 哈希逻辑下，即使两个不同分词器切分出的 token 序列在底层对应的字节序列完全一致（即字节等价），它们计算出的哈希值也无法对齐。这意味着，一旦模型更换了分词器，就必须从头重新训练庞大的 Engram 嵌入表，不仅造成算力浪费，也阻碍了预训练记忆模块在不同规模或架构模型间的跨分词器复用。因为模型性能通常随词表大小扩展，能够根据模型架构灵活调整分词器同时保留记忆模块，是一个极为重要的工程卡点。</p>
+<p><strong>怎么做的</strong> 核心思路是将哈希计算的基础从 token 级别下沉到字节级别，通过多项式哈希替代原有的 XOR 哈希，从而保证只要底层字节序列相同，不同分词器产生的 token 序列就能映射到同一个哈希键。原有 XOR 哈希由于满足交换律且依赖 token 划分，会丢失位置信息并导致字节等价但切分不同的序列哈希值冲突或不匹配。为了在不增加计算复杂度的情况下实现字节级哈希，作者设计了基于缓存的流式多项式哈希机制。首先，定义基础的字节级多项式哈希公式为 $$Hash_p(S) = [\sum_{i=0}^{|S|-1} h(s_i) \cdot base^{|S|-i}] \mod M$$ 其中 $h(s_i)$ 是字节的哈希映射，$base$ 是超参数，$M$ 是嵌入表大小。为避免逐字节计算的时间开销，系统会预先缓存每个 token 的哈希值 $C(t)$ 以及 $base$ 的指数幂 $B(power)$。在实际计算一段 token 序列 $T(S)$ 的哈希时，采用无长度追踪的流式变体：$$Hash_p(T(S)) = [...(C(T(S)_0) \cdot B(|T(S)_1|) + C(T(S)_1)) \cdot B(|T(S)_2|) \cdot ... + C(T(S)_{|T(S)|-1})) \cdot B(0)] \mod M$$ 这一设计的计算复杂度保持在与原版相同的 $O(|T(S)| \cdot N)$。除了替换哈希函数，该方法还对 Engram 架构做了两处关键修改：一是引入了对 1-gram 的建模，以防止一个分词器中的单 token 在另一个分词器中被切分为多 token 时发生信息丢失；二是打破了原有按 $N$ 值隔离的嵌入表，采用共享的联合嵌入空间，允许不同长度的 $N$-gram 只要字节等价就能互相访问和混合信息。</p>
+<p><strong>效果如何</strong> 实验在 dclm-dedup 数据集上进行了 32B 到 150B tokens 的预训练。模型涵盖了基于 Llama2 架构的 SmolLM2-1.7B、Qwen2-7B 以及 Qwen3.5-0.8B，Engram 模块分配了约 35% 的总参数。对比基线主要有两个：一是不带 Engram 的纯主干网络基线，代表常规语言模型路线；二是使用原始 XOR 哈希的 Engram 模型，代表传统的强耦合记忆路线。同分词器设置下，基于 SmolLM2-1.7B 训练 32B tokens 的结果表明，多项式哈希在多数基准测试上表现与 XOR 哈希相当，且大幅优于无 Engram 基线，证明新机制未带来负面影响。在最关键的跨分词器迁移实验中，作者先用 cl100k_base 分词器在 150B tokens 上预训练了一个带 2B Engram 的 Qwen2-7B 模型，随后将其 Engram 嵌入冻结，直接接入使用 SmolLM2 分词器的 Qwen3.5-0.8B 模型中进行 100B tokens 的训练。结果显示，接入跨分词器 Engram 的模型在多数测试中获得提升，其中 BoolQ 提升了 10%，COPA 提升了 7%。消融实验证实，限制 $N=1$ 时性能几乎无提升，说明效果确实源于高阶 $N$-gram 成功跨分词器查询到了预训练记忆，而非单纯增加参数。该方法的代价是引入 1-gram 会带来少量的参数增加，且多项式哈希在理论上仍存在极小概率的偶然哈希碰撞。</p>
+</div>
+</details>
 <h3>主要贡献</h3>
 <p>DeepSeek的Engram是一个条件记忆模块，被引入用于在大型语言模型中权衡存储与推理能力。然而，该模块依赖于token级别的$N$-gram哈希来进行Engram嵌入的查找，这导致了与所使用的分词器（tokenizer）之间的紧密耦合：如果一个模型使用了不同的分词器，它将不得不从头开始训练自己的Engram嵌入。为了提高Engram嵌入的可重用性，本文提出对哈希例程进行修改，从而实现使用不同分词器的Engram模型之间的兼容性。本文的主要贡献如下：</p>
 <ol>

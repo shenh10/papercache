@@ -21,6 +21,15 @@ title: 'NVIDIA Vera Rubin POD: Seven Chips, Five Rack-Scale Systems, One AI Supe
 <p><strong>原文</strong>: <a href="https://developer.nvidia.com/blog/nvidia-vera-rubin-pod-seven-chips-five-rack-scale-systems-one-ai-supercomputer/" rel="noopener" target="_blank">https://developer.nvidia.com/blog/nvidia-vera-rubin-pod-seven-chips-five-rack-scale-systems-one-ai-supercomputer/</a></p>
 <p><strong>文章标题</strong>: NVIDIA Vera Rubin POD: Seven Chips, Five Rack-Scale Systems, One AI Supercomputer<br/>
 <strong>作者/机构</strong>: Rohil Bhargava, Taylor Allison, Harry Petty (NVIDIA)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> NVIDIA推出了专为代理式AI设计的Vera Rubin POD超级计算机平台，通过协同设计五种专用机架系统，在万亿参数模型推理中实现了数十倍的吞吐量与能效提升。</p>
+<p><strong>要解决什么问题</strong> 原有大模型基础设施在应对现代代理式AI（涉及任务规划、工具调用、代码执行和多智能体协作）时面临系统级卡点。首先，代理式工作流产生海量推理令牌，导致上下文内存（KV缓存）极度膨胀，传统存储和显存架构无法在保持高吞吐量的同时满足极低延迟读取。其次，代理式AI不仅需要GPU生成内容，还需要密集的基于CPU的沙盒环境来测试和验证代码或逻辑结果，传统架构中CPU与GPU的算力配比和数据流转效率成为瓶颈。最后，突发的大规模并发请求会引发剧烈功率波动，对电网造成巨大压力，导致大量静态配置的电力预算被闲置以应对峰值，无法转化为实际算力。</p>
+<p><strong>怎么做的</strong> 核心思路是通过计算、网络和存储领域的七种芯片协同设计，构建由五个专用机架级系统组成的统一超级计算机平台（Vera Rubin POD），并基于第三代NVIDIA MGX机架架构实现物理与能源重构。关键设计由以下五个机架和底层架构构成：第一，NVIDIA Vera Rubin NVL72作为核心计算引擎，单机架集成72个NVIDIA Rubin GPU和36个NVIDIA Vera CPU，通过第六代NVIDIA NVLink铜质背板连接成巨型GPU，专门针对混合专家模型（MoE）路由和计算密集型的上下文阶段优化。第二，NVIDIA Groq 3 LPX推理加速器机架，配备256个仅使用SRAM的语言处理单元（LPU）。它与NVL72配合，将大容量HBM与高带宽SRAM融合，解决长上下文下高交互速度与高吞吐量的矛盾。第三，NVIDIA Vera CPU机架，在密集液冷环境中集成多达256个CPU，专为强化学习和智能体提供海量并发的沙盒测试环境。第四，NVIDIA BlueField-4 STX AI原生存储机架，搭载NVIDIA CMX上下文内存存储平台。它将临时推理上下文视为共享数据类型，把KV缓存卸载到专用高带宽存储层，在整个POD内实现容量扩展。第五，NVIDIA Spectrum-6 SPX网络机架，采用硅光子技术集成共封装光学器件（CPO），为整个POD提供极低延迟横向扩展连接。底层架构上，第三代MGX引入动态Max-Q电源分配和智能功率平滑技术，通过电容器缓冲功率瞬变，将闲置峰值电力重新分配给计算组件；同时采用45°C温水液冷，降低压缩机制冷需求，为计算解锁更大能源预算。</p>
+<p><strong>效果如何</strong> 实验环境基于包含40个机架、1.2千万亿个晶体管、1152个NVIDIA Rubin GPU的Vera Rubin POD平台，总算力达60 exaflops。对比基线包括代表上一代纵向扩展架构的NVIDIA Blackwell、代表上一代独立GPU的NVIDIA H200，以及传统机架级CPU和存储方案。在万亿参数模型测试下，Vera Rubin NVL72联合Groq 3 LPX机架对比NVIDIA Blackwell，实现了高达35倍的令牌吞吐量提升和10倍的每瓦推理性能提升，令牌成本降至十分之一。在强化学习与沙盒任务中，Vera CPU机架对比传统CPU，效率提升2倍，速度加快50%。在KV缓存处理上，搭载CMX平台的存储机架对比传统存储，每秒令牌数和能效均提升高达5倍。此外，第三方基准测试显示，机架级系统对比NVIDIA H200提供50倍的每瓦性能提升。在基础设施收益方面，智能功率平滑技术将峰值电流需求降低25%；动态Max-Q电源分配在同等功率预算下解锁多达30%的额外GPU容量；45°C温水液冷进一步允许额外增加10%的计算机架。系统维护层面，无电缆计算托盘设计将组装时间从近2小时缩减至5分钟。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文介绍了NVIDIA Vera Rubin POD，这是一个专为代理式AI（agentic AI）时代设计的、由五个专用机架级系统组成的AI超级计算机平台。</p>
 <ul>

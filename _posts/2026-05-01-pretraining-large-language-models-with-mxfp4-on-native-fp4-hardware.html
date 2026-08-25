@@ -20,6 +20,25 @@ title: Pretraining Large Language Models with MXFP4 on Native FP4 Hardware
 <p><strong>发表时间</strong>: 2026-05 · arXiv:2605.09825 (AMD)</p>
 <p><strong>作者/机构</strong>: Musa Cim¹, Poovaiah Palangappa², Miro Hodak², Ravi Dwivedula², Meena Arunachalam², Mahmut Taylan Kandemir¹<br/>
 ¹The Pennsylvania State University, ²Advanced Micro Devices, Inc.</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本研究在原生支持 FP4 张量计算的硬件上，通过在矩阵乘法前注入确定性 Hadamard 旋转，成功解决了大语言模型全流程 MXFP4 量化训练发散的问题，在保证收敛的前提下实现了端到端训练吞吐量的净加速。</p>
+<p><strong>要解决什么问题</strong> 原有的大语言模型训练在向更低精度的 FP4 格式迁移时，面临着收敛变慢甚至完全发散的严重卡点。虽然原生 FP4 硬件能大幅降低大批量训练中的内存带宽压力并提升吞吐量，但全流程使用 MXFP4（一种采用微缩放机制的 4 位浮点格式）会导致训练极不稳定。通过分阶段启用量化的受控实验发现，这种不稳定性并非来自前向传播或激活梯度的量化，而是由权重梯度量化时产生的结构化微缩放误差驱动的。传统的随机性干预措施（如随机舍入或随机符号翻转）不仅无法缓解离群值带来的影响，反而会引入额外噪声，进一步放大微缩放误差，导致模型彻底无法收敛。因此，如何控制最敏感的权重梯度路径上的微缩放误差，而不是盲目增加随机性，成为解锁 FP4 硬件加速潜力的关键。</p>
+<p><strong>怎么做的</strong> 核心思路是在 GEMM 操作之前注入确定性的 Hadamard 变换，通过在特征空间中进行正交旋转，将由离群值导致的集中能量均匀分散到更多维度上，从而降低进入量化器的数据分布对微缩放误差的敏感度。MXFP4 格式不同于传统整数量化，它采用了微缩放机制，即为一小块数据（如 32 个元素）共享一个指数，其重建值定义为：
+$$x_{B, reconstructed} = 2^{E_{shared}} \times Q_{FP4}(x_B / 2^{E_{shared}})$$
+其中 $E_{shared}$ 是该数据块内所有元素指数的最大值，$Q_{FP4}$ 表示舍入到最接近的 4 位浮点值的操作。为了在不改变底层线性层算术结果的前提下压制离群值，该方法利用了 Hadamard 矩阵 $H$（元素仅为 +1 或 -1 的正交矩阵）的性质：
+$$H H^T = I$$
+关键设计由前向传播和反向传播中的数学抵消机制构成。在前向传播中，对输入和权重分别应用变换 $\tilde{X} = XH$ 和 $\tilde{W} = WH$，计算输出时 Hadamard 因子自动抵消：
+$$Y = \tilde{X} \tilde{W}^T = X H H^T W^T = X W^T$$
+在反向传播计算激活梯度时，对输出梯度和转置权重应用变换 $\tilde{G} = (\nabla Y)H$ 和 $\tilde{W}_{rot} = W^T H$，计算结果同样完美抵消：
+$$\nabla X = \tilde{G} \tilde{W}_{rot}^T = (\nabla Y) H H^T W = \nabla Y W$$
+在最关键的权重梯度计算中，对转置的输出梯度和转置的输入应用变换 $\tilde{G}^T = (\nabla Y)^T H$ 和 $\tilde{X}^T = X^T H$，抵消过程为：
+$$\nabla W = \tilde{G}^T \tilde{X} = (\nabla Y)^T H H^T X = (\nabla Y)^T X$$
+通过这种确定性的正交旋转，该方法成功绕开了权重梯度量化时的结构化误差卡点，既不引入破坏性的随机噪声，又能在量化前平滑数据分布，从而稳定整个训练流程。</p>
+<p><strong>效果如何</strong> 实验在原生支持 FP4 张量计算的 AMD Instinct MI355X GPU 上进行，避免了软件仿真的偏差。研究采用 Llama 3.1–8B 模型，在 C4 数据集上遵循 MLPerf 预训练设置进行测试，目标是达到 3.3 的验证集困惑度。对比基线为全流程 FP8 训练（代表稳定收敛的标准路线），以及引入随机舍入或随机 Hadamard 旋转的全流程 MXFP4 训练（代表试图通过增加随机性缓解量化误差的传统路线）。结果显示，当在全流程中直接启用 MXFP4 时，收敛所需的 token 开销相比 FP8 基线急剧上升了 26% 至 27%；而采用随机舍入或随机旋转的基线方法则完全发散。相比之下，采用 16x16 确定性 Hadamard 变换的全流程 MXFP4 训练成功恢复了稳定性，将 token 开销降低至 8% 到 9%。在端到端效率方面，由于降低位宽缓解了内存带宽压力，该方法使训练步吞吐量提升了 1.21 倍，扣除 8% 的 token 开销后，最终端到端吞吐量实现了 1.12 倍的净加速。此外，16x16 分块矩阵的内核吞吐量比 32x32 分块快 8%。作者也承认了该方法的局限性：这并非万能方案，MXFP4 的训练行为高度依赖具体设置，在全量预训练中有效的稳定策略未必能直接推广到其他模型结构或微调任务中。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在探究一个核心问题：为何即使前向激活（forward activations）和激活梯度（activation gradients）保持稳定，大型语言模型的全流程FP4训练也常常会发散。为了回答这个问题，研究者们进行了一项关于在Transformer训练中使用MXFP4量化的受控研究。</p>
 <p><strong>研究目标与方法</strong>：<br/>

@@ -19,6 +19,15 @@ title: Scalable Pretraining of Large Mixture of Experts Language Models on Auror
 <div class="container">
 <h1>Scalable Pretraining of Large Mixture of Experts Language Models on Aurora Super Computer</h1>
 <p><strong>作者/机构</strong>: Dharma Teja Vooturi, Dhiraj Kalamkar, Dipankar Das, Bharat Kaul Parallel Computing Lab (India) Intel Corporation</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文基于 Aurora 超级计算机的数千个 Intel PVC GPU 瓦片开发了 Optimus 训练库，通过定制化算子与分片优化策略，成功实现了最高 220B 参数混合专家（MoE）语言模型在万亿 token 级别的大规模预训练，并在万卡规模下保持了约 90% 的扩展效率。</p>
+<p><strong>要解决什么问题</strong> 训练大规模模型面临着严峻的显存容量与并行效率双重瓶颈。使用 AdamW 以 BF16 训练 $P$ 个参数的模型至少需要 $16P$ 字节显存（含权重、梯度及 FP32 状态），导致单张 64 GB 显存的 GPU 连 7B 模型都无法装载。为打破显存限制，业界通常叠加数据并行（DP）、分片优化器（SO）和专家并行（EP）等技术，但这在 MoE 模型中引入了新卡点。一方面，MoE 路由机制导致非均匀的 token 通信，使标准 Hugging Face 实现在 GPU 上存在大量碎片化矩阵乘法，计算极为低效。另一方面，当在 EP 之上应用标准分片优化器时，由于标准优化器仅在 DP 维度切分状态，而 EP 会在各 rank 间复制非专家参数（如注意力层），导致非专家参数的优化器状态被毫无必要地冗余复制了 EP 次，极大浪费显存。此外，万卡集群硬件故障率极高，传统数据加载和单点检查点极易压垮文件系统，导致训练频繁中断。</p>
+<p><strong>怎么做的</strong> 核心思路是针对 MoE 架构的路由特征重构底层 GPU 算子，结合参数复制语义重新设计优化器分片策略，并在基础设施层引入多重容错机制。关键设计由三个部件构成。一是 FastSparseMoE 模块，通过五阶段 GPU kernel 优化替换低效实现：通信阶段放弃不规则的 all2all，改用更高效的 allgather 和 reducescatter；计数与索引阶段利用前缀和在本地计算路由边界；专家计算阶段将同一 rank 上所有专家权重合并，利用分组矩阵乘法（Grouped mm）一次性完成计算，消除碎片化开销。二是 EP 感知的分片优化器（EPSO）。它将模型参数划分为专家参数 $P_E$ 和非专家参数 $P_{NE}$，采用二维分片策略：$P_E$ 的优化器状态仅在 DP 维度分片，而 $P_{NE}$ 的状态在 DP 和 EP 两个维度同时分片，彻底消除冗余复制。三是高可靠容错基础设施。包含将数据预处理为 numpy 数组支持 mmap 懒加载、通过广播机制加载模型避免文件系统挂起，以及设计双检查点（交替保留最近两个以防写入崩溃）和 DP 分散式检查点（将写入负载均匀分散到各节点），确保软硬件故障时能自动剔除坏节点并快速重启。</p>
+<p><strong>效果如何</strong> 实验在 Aurora 超级计算机上搭建，硬件规模从 384 个扩展至 12288 个 Intel PVC GPU 瓦片，使用包含 4 万亿 token 的 OLMoE-Mix-0924 数据集进行预训练。对比基线包含两个明确对象：同等计算量下的 1B 稠密模型 Mula-1B（代表传统稠密扩展路线），以及官方的 allenai/OLMoE-1B-7B-0924 模型（代表开源 SOTA MoE 路线）。量化结果显示，在等计算量设置下，7B MoE 模型仅用 1/8 的训练数据（约 500B tokens）就达到了 1B 稠密模型训练 4 万亿 token 的最终准确率，平均准确率高出 6.7%，在困难的 MMLU 基准上更是打破了稠密模型的随机表现瓶颈。在算子性能上，FastSparseMoE 为前向和后向计算带来最高 2.83 倍加速，EPSO 为优化器步骤带来最高 1.36 倍加速，两者结合使端到端训练速度提升最高 1.71 倍。在极限计算规模扩展测试中，将结合了 8 路流水线并行和 12 路专家并行的 220B 超大 MoE 模型从 384 个 GPU 瓦片扩展到 12288 个时，依然保持了约 90% 的扩展效率。作者也坦承了规模扩展的局限性：当扩展到超过一千个 GPU 瓦片时，扩展效率会出现约 10% 的下降，但通过强制均匀路由（FUR）的消融实验证明，这种效率下降是超大规模分布式系统的固有损耗，而非 MoE 模型专家选择不均匀所导致。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文展示了在拥有127,488个Intel PVC (Ponte Vecchio) GPU瓦片（tiles）的ExaScale级别机器——Aurora超级计算机【1, Aurora: Architecting Argonne’s First Exascale Supercomputer for Accelerated Scientific Discovery, 2025, arXiv】上，进行千级别GPU瓦片规模的大型语言模型（LLM）预训练。为此，研究团队开发了一个名为Optimus的内部训练库，该库支持标准的大模型训练技术。</p>
 <p><strong>核心研究与贡献如下：</strong><br/>

@@ -23,6 +23,19 @@ title: 'DSpark: Confidence-Scheduled Speculative Decoding with Semi-Autoregressi
 <p><strong>原文</strong>: <a href="https://arxiv.org/abs/2607.05147" rel="noopener" target="_blank">https://arxiv.org/abs/2607.05147</a></p>
 <p>Xin Cheng, Xingkai Yu, Chenze Shao, Jiashi Li, Yunfan Xiong, Yi Qian, Jiaqi Zhu, Shirong Ma, Xiaokang Zhang, Jiasheng Ye, Qinyu Chen, Chengqi Deng, Jiping Yu, Damai Dai, Zhengyan Zhang, Yixuan Wei, Yixuan Tan, Wenkai Yang, Runxin Xu, Yu Wu, Zhean Xu, Xuanyu Wang, Muyang Chen, Rui Tian, Xiao Bi, Zhewen Hao, Shaoyuan Chen, Huanqi Cao, Wentao Zhang, Anyi Xu, Huishuai Zhang, Dongyan Zhao, Wenfeng Liang<br/>
 Peking University, DeepSeek-AI</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了结合半自回归生成与置信度调度验证的投机解码框架 DSpark，在无损生成质量的前提下解决了高并发场景的算力浪费，并在 DeepSeek-V4 生产系统中将同等吞吐量下的每用户生成速度提升了 60% 到 85%。</p>
+<p><strong>要解决什么问题</strong> 现有投机解码技术在实际生产中面临两个机制层面的卡点。首先是草稿生成端的接受率衰减：并行草稿模型虽能在单次前向传播中高效生成长序列，但各位置预测相互独立，缺乏 token 间的条件依赖。当上下文允许多种合理续写时，模型会产生不连贯组合，导致草稿块后部的接受率迅速崩塌。其次是系统验证端的算力浪费：传统方法不考虑系统实时负载，盲目让目标模型验证固定长度的完整草稿块。在高并发服务场景中，验证极大概率会被拒绝的低质量后缀 token，会白白占用本可用于处理其他活跃请求的关键批处理容量。这种数据侧低接受率与系统侧高并发的相互作用，严重拖垮了服务系统的高峰吞吐量。</p>
+<p><strong>怎么做的</strong> 核心思路是通过半自回归架构提升草稿质量，并引入硬件感知的动态调度修剪低质量草稿，绕开接受率衰减和算力浪费的卡点。方法由两个关键部件构成。第一是半自回归生成模块，将草稿生成拆分为并行和序列两阶段。先由计算密集的并行主干网络在单次前向传播中输出所有位置的基础对数几率 $U_k$ 和隐藏状态 $h_k$；接着，极其轻量的序列输出头（如马尔可夫头）从左到右依次采样，为每个位置补充依赖于前置 token 的过渡偏差 $B_k$。这种设计诱导出了因果块分布：
+$$p_k(\nu \mid x_0, x_{&lt;k}) = \frac{\exp(U_k(\nu) + B_k(x_0, x_{&lt;k}, \nu))}{\sum_{u \in \mathcal{V}} \exp(U_k(u) + B_k(x_0, x_{&lt;k}, u))}$$
+其中马尔可夫头通过低秩分解 $B(x_{k-1}, \cdot) = W_1[x_{k-1}] W_2$ 实现。这使每个草稿位置能条件依赖于块内先前采样的 token，既保留并行模型的高速，又通过注入局部依赖缓解了后缀衰减。第二是置信度调度验证机制。为避免浪费目标模型算力，置信度头为每个草稿位置预测条件存活概率：
+$$c_k = \sigma\big(\boldsymbol{w}^\top [h_k; W_1[x_{k-1}]]\big)$$
+这些分数经过序列温度缩放（STS）事后校准以对齐经验接受率后，输入给硬件感知前缀调度器。调度器结合实时引擎吞吐量曲线 $\mathrm{SPS}(B)$，计算预期系统级吞吐量 $\Theta = \tau \cdot \mathrm{SPS}(B)$。它通过贪心算法动态决定每个请求的验证长度，当预期吞吐量开始下降时触发早停机制截断后续 token，确保算力只分配给预期回报为正的前缀，同时严格保证无损投机解码的因果性。</p>
+<p><strong>效果如何</strong> 实验在 Qwen3（4B、8B、14B）和 Gemma4-12B 目标模型上展开，草稿模型使用 130 万条混合指令数据训练。对比基线包括代表并行路线的最先进模型 DFlash，代表自回归路线的模型 Eagle3，以及生产环境中的单 token 基线 MTP-1。在离线基准测试中，DSpark 在 Qwen3 系列模型上的宏观平均接受长度比 Eagle3 提升了 26.7% 到 30.9%，比 DFlash 提升了 16.3% 到 18.4%。在接入真实用户流量的 DeepSeek-V4-Flash 生产系统中，与 MTP-1 相比，DSpark 在匹配的实际吞吐量水平下，将每用户生成速度提高了 60% 到 85%；在严格的交互性约束（每秒 120 个 token）下，实现了 661% 的标称吞吐量优势，成功向外推移了系统的帕累托前沿。代价方面，序列头极其轻量，提议长度扩展到 16 仅增加 0.2% 到 1.3% 的整轮延迟。作者也承认了实际部署的局限：在真实基础设施中，严格早停机制与底层零开销调度及离散硬件容量存在冲突。为此必须将调度器改为依赖两步前信息的异步运行模式，利用异步设计形成因果屏障，以此兼顾物理吞吐量最大化与无损分布保证。</p>
+</div>
+</details>
 <h2>主要贡献</h2>
 <p>大型语言模型（LLMs）自回归生成文本时，每个新token都需要基于所有前置token进行完整的前向传播，导致推理延迟与输出长度成正比，造成了生产环境中LLM服务（尤其是对延迟敏感的实时对话和多轮智能体工作流）的低GPU利用率和高用户等待时间。投机解码（Speculative decoding）提供了一种原则性解决方案：由轻量级草稿模型提出候选token块，目标模型通过拒绝采样在单次前向传播中验证整个块，在无损生成质量的前提下加速推理。然而，现有的并行草稿模型虽然能在单次前向传播中高效生成长序列，但由于缺乏token间的依赖关系，面临着严重的接受率衰减问题；此外，在不考虑系统负载的情况下盲目验证过长的草稿块，会浪费关键的批处理容量，严重降低高并发服务系统中的吞吐量。</p>
 <p>为了解决上述问题，本文提出了DSpark，这是一个将高吞吐量并行生成与自适应、负载感知验证相统一的投机解码框架。DSpark的核心创新点包括：<br/>
