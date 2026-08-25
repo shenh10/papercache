@@ -19,6 +19,28 @@ title: 'HelpSteer2: Open-source dataset for training top-performing reward model
 <div class="container">
 <h1 id="helpsteer2-open-source-dataset-for-training-top-performing-reward-models">HelpSteer2: Open-source dataset for training top-performing reward models</h1>
 <p><strong>作者/机构</strong>: Zhilin Wang, Yi Dong, Olivier Delalleau, Jiaqi Zeng, Gerald Shen Daniel Egert, Jimmy J. Zhang, Makesh Narsimhan Sreedhar, Oleksii Kuchaiev, NVIDIA {zhilinw, yidong}@nvidia.com</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文发布了仅包含 1 万条数据的高质量、宽松许可偏好数据集 HelpSteer2，并基于此训练出了在 Reward Bench 上取得 92.0% 准确率的顶尖奖励模型，同时提出了 SteerLM 2.0 对齐方法，证明了极小规模的高质量数据足以完成顶尖的大语言模型对齐。</p>
+<p><strong>要解决什么问题</strong>
+现有大语言模型对齐面临高质量开源偏好数据集短缺的卡点。随着模型能力增强，早期的开源数据集在训练最先进的奖励模型时已显现出性能瓶颈；而利用专有模型蒸馏出的数据集则受限于严格的商业许可，给企业带来法律风险。此外，在机制层面，传统的二元偏好奖励模型（如基于 Bradley-Terry 模型的做法）存在两个致命缺陷：一是容易将“好”与响应长度等表面特征错误绑定，导致模型误以为越长越好；二是奖励值只能在同一提示词的两个响应之间比较，不同提示词之间的奖励偏移量不同，模型在训练损失中无法明确处理这种偏移差异，导致跨提示词的奖励分数缺乏可比性，极大增加了对齐的难度。</p>
+<p><strong>怎么做的</strong>
+核心思路是构建一个多属性标量评分的高质量数据集，并利用回归奖励模型和迭代对齐算法来精准引导模型生成。
+首先，在数据构建上，剔除了包含代码和非英语的提示词，利用主题聚类和复杂性打分确保样本多样性。对于多轮对话，使用专门微调的 22B 内部模型补全中间轮次。响应生成阶段使用了多个不同规模的内部模型和 Mixtral 模型，以保证数据分布的多样性。标注阶段摒弃了简单的二元偏好，要求标注员在 5 分制量表上对有益性、正确性、连贯性、复杂性和冗长性 5 个独立属性进行打分。通过引入多名标注员并剔除低一致性样本，最终保留了 1 万对高质量响应。
+其次，在奖励模型训练上，采用回归方式预测这 5 个属性的标量分数。这种设计让模型明确区分了“冗长”和“有益”，绕开了二元偏好容易被长度欺骗的卡点；同时，绝对分数的预测也解决了跨提示词奖励不可比的问题。
+最后，提出了 SteerLM 2.0 对齐方法。它通过最小化当前策略 $Q_{\theta}(y|a, x)$ 与最优条件分布 $P(y|a, x)$ 之间的 KL 散度，引导模型生成符合目标属性 $a$ 的响应。最优分布由无条件语言模型 $P(y|x)$ 和奖励模型 $P(a|x, y)$ 结合贝叶斯公式推导得出：
+$$P(y|a, x) = \frac{P(a|x, y)P(y|x)}{P(a|x)}$$
+为了高效优化，方法从初始模型 $Q'$ 中采样响应，并引入归一化的重要性权重 $w'_i$ 和用于降低方差的基线 $b'_i$，其梯度估计式为：
+$$\nabla_{\theta} L(\theta) \approx - \sum_{i=1}^n (w'_i - b'_i) \nabla_{\theta} \log Q_{\theta}(y_i|a, x)$$
+在推理时，只需将复杂性和冗长性设为 2，其他属性设为 4，即可生成高质量回复。</p>
+<p><strong>效果如何</strong>
+实验基于 Llama 3 70B 和 Nemotron-4 340B 基础模型，在 H100 和 A100 集群上展开。在奖励模型评估中，对比基线包括使用 Open Assistant、HH-RLHF 和初代 HelpSteer 训练的模型，它们代表了使用现有开源数据训练的路线。在 Reward Bench 基准测试上，基于 HelpSteer2 训练的 340B 奖励模型取得了 92.0% 的总体准确率，超越了所有开源和专有模型；70B 版本也达到了 88.8%，尤其在区分优秀与良好响应的困难聊天类别中领先第二名 6.5%。
+在对齐效果评估中，对比基线是使用了 1000 万条数据训练的强基线 Llama 3 70B Instruct 以及 GPT-4-0613。仅使用 1 万对 HelpSteer2 偏好数据和 10 万条监督微调数据（数据量仅为基线的 1%），对齐后的 70B 模型在所有指标上均击败了 GPT-4-0613，并持平或超越了 Llama 3 70B Instruct。不同对齐路线各有所长：DPO 在侧重事实性的 TruthfulQA 和高难度编码的 Arena Hard 上表现最好；PPO 在侧重指令遵循的 AlpacaEval 2.0 上得分最高；而 SteerLM 2.0 在包含复杂多需求指令的 MT Bench 上表现最佳。消融实验表明，即使使用质量参差不齐的开源微调数据，该奖励模型依然能大幅提升最终性能。
+方法的局限性在于，数据集仅包含英文，难以直接用于改进其他语言的模型；此外，PPO 路线在训练后出现了 TruthfulQA 性能严重下降的代价，作者归因于数据集中选择题比例过低导致了策略漂移；同时，该奖励模型在 Reward Bench 的先验数据集类别上表现不佳。</p>
+</div>
+</details>
 <h3 id="a1">A1 主要贡献</h3>
 <p>本文介绍并发布了HelpSteer2，一个高质量、遵循宽松许可（CC-BY-4.0）的偏好数据集，旨在解决当前大型语言模型（LLM）对齐领域中高质量、开放数据集的短缺问题。</p>
 <ul>

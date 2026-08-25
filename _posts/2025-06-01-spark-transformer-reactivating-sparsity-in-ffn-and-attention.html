@@ -19,6 +19,25 @@ title: 'Spark Transformer: Reactivating Sparsity in FFN and Attention'
 <div class="container">
 <h1>Spark Transformer: Reactivating Sparsity in FFN and Attention</h1>
 <p><strong>作者/机构</strong>: Chong You, Kan Wu, Zhipeng Jia, Lin Chen, Srinadh Bhojanapalli, Jiaxian Guo, Utku Evci, Jan Wassenberg, Praneeth Netrapalli, Jeremiah J. Willcock, Suvinay Subramanian, Felix Chern, Alek Andreev, Shreya Pathak, Felix Yu, Prateek Jain, David E. Culler, Henry M. Levy, and Sanjiv Kumar (Google, xAI, Anthropic)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了 Spark Transformer 架构，通过引入低成本预测器和高效的基于统计的近似排序算子，在不损失模型质量的前提下重新激活了前馈网络和注意力机制的高水平稀疏性，将大语言模型的计算量减少了 2.5 倍，并在 CPU 和 GPU 上实现了高达 1.79 倍的推理加速。</p>
+<p><strong>要解决什么问题</strong>
+现代大语言模型通常采用 GELU 等门控非 ReLU 激活函数，这导致早期 Transformer 模型中自然存在的“懒惰神经元”现象（即激活高度稀疏）彻底消失，模型在推理时必须计算所有神经元，造成了巨大的计算冗余和内存带宽压力。现有的稀疏化路线面临三个具体的机制卡点：第一是质量与效率的权衡卡点，直接将激活函数切换回 ReLU 或强制应用传统的 top-k 掩码，要么会导致严重的模型质量下降，要么无法充分减少浮点运算次数；第二是训练速度卡点，传统的 top-k 算子需要执行高成本的排序操作，这会导致 10 倍以上的训练减速，在工程上极不实用；第三是参数量卡点，部分方法为了预测哪些神经元该被激活，引入了额外的路由参数，增加了训练复杂度和模型体积。因此，如何在不增加参数量、不拖慢训练速度且不损害模型质量的前提下，在最新的 Transformer 架构中重新引入极高水平的激活稀疏性，成为了提升推理效率的核心阻碍。</p>
+<p><strong>怎么做的</strong>
+核心思路是将前馈网络（FFN）和注意力机制统一视为键值查找表，并通过复用部分现有参数构建一个低成本的预测器，提前筛选出需要激活的条目，从而绕开全量计算的卡点。该方法由两个关键设计构成。首先是架构层面的 Spark FFN 和 Spark Attention。对于输入向量 $q$，方法将其拆分为前 $r$ 个维度的 $q[:r]$ 和剩余维度的 $q[r:]$。以 FFN 为例，其定义为：
+$$ \text{Spark-FFN}(\boldsymbol{q}; K_1, K_2, V, k, r) \stackrel{\text{def}}{=} V \cdot \left( \sigma(\text{Top}_k(K_1^\top \cdot \boldsymbol{q}[:r])) \odot (K_2^\top \cdot \boldsymbol{q}[r:]) \right) $$
+在这里，$K_1^\top q[:r]$ 充当了一个低秩预测器，它不引入新参数，而是利用拆分后的部分输入和权重来预测非零条目的位置。只有被 $\text{Top}_k$ 选中的约 $k$ 个重要条目，才会继续参与后续与 $K_2$ 和 $V$ 的稀疏矩阵乘法，从而将计算量大幅降低。注意力机制也采用了完全对称的设计，利用 softmax 和 softplus 激活函数实现稀疏的 token 关注：
+$$ \text{Spark-Attention}(\boldsymbol{q}; K, V, k, r) \stackrel{\text{def}}{=} V \cdot \left( \sigma_1 \left( \text{Top}_k^{(-\infty)} (K_1^{\top} \boldsymbol{q}[:r]) \right) \odot \sigma_2 (K_2^{\top} \boldsymbol{q}[r:]) \right) $$
+其次是算法层面的 Statistical Top-k 算子，它解决了传统排序极度拖慢训练的问题。由于模型随机初始化时激活图近似服从高斯分布，该算子通过计算输入 $x$ 的样本均值和标准差，结合标准高斯分布的分位数函数 $Q(\cdot)$，直接估算出一个阈值 $\theta$：
+$$ \theta(x, k) \stackrel{\text { def }}{=} \operatorname{mean}(x)+\operatorname{std}(x) \cdot Q(1-\frac{k}{d}) $$
+随后，它使用软阈值算子将低于阈值的值设为零。这种基于统计的近似算法具有线性时间复杂度，仅需极小的计算开销，并且软阈值处理保证了算子几乎处处可微，完美兼容基于梯度的标准训练流程。</p>
+<p><strong>效果如何</strong>
+实验基于 2B 参数的 Gemma-2 架构，在 2T tokens 的数据上进行了完整的预训练，并在 4 核/16 核 CPU 以及 NVIDIA T4 GPU 上测试了推理性能。对比基线包括无激活稀疏性的标准 Gemma-2，以及代表强制稀疏化路线的三个变体：将激活函数替换为 ReLU 的方法、替换为 ReLU2 的方法，以及采用 Top-k 结合 GELU 的方法。量化结果显示，Spark Transformer 在各项下游任务中保持了与标准 Gemma-2 几乎无差别的模型质量，同时实现了极高的稀疏度：仅有 8% 的 FFN 神经元被激活，且每个 token 最多只关注 256 个上下文 token。这种稀疏性使得单 token 的浮点运算次数大幅减少了 2.5 倍。在实际硬件测试中，批大小为 1 的解码阶段在 16 核 CPU 上获得了最高 1.79 倍的加速，在 GPU 上获得了最高 1.40 倍的加速；在 prefill 阶段也实现了 1.86 倍的耗时缩短。此外，Statistical Top-k 算子在训练时的开销微乎其微，完全避免了标准 top-k 算子导致的 10 倍训练减速。该方法的主要代价在于需要从头开始进行完整的预训练，其训练成本高于仅在预训练后进行微调的稀疏化方法；同时消融实验表明，单独引入 Spark FFN 会带来极其微小的质量下降，但得益于低秩预测器的补偿作用，模型整体依然维持了高质量的输出。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决现代 Transformer 模型中激活稀疏性缺失的问题。随着模型从 ReLU 激活函数转向门控非 ReLU 激活函数（如 GELU），在训练好的 Transformer 中观察到的“懒惰神经元”现象【索引62，The lazy neuron phenomenon: On emergence of activation sparsity in transformers+2022+ICLR】消失了，这使得利用激活稀疏性提升模型效率变得困难。</p>
 <p><strong>核心问题</strong>: 我们能否在不损害模型质量的前提下，在最新的 Transformer 模型中重新引入高水平的激活稀疏性？</p>

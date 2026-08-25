@@ -18,6 +18,15 @@ title: 'DeepCoder: A Fully Open-Source 14B Coder at O3-mini Level'
 <div class="container">
 <h1 id="deepcoder-a-fully-open-source-14b-coder-at-o3-mini-level">DeepCoder: A Fully Open-Source 14B Coder at O3-mini Level</h1>
 <p><strong>作者/机构</strong>: Michael Luo, Sijun Tan, Roy Huang, Ameen Patel, Alpay Ariyak, Qingyang Wu, Xiaoxiang Shi, Rachel Xin, Colin Cai, Maurice Weber, Ce Zhang, Li Erran Li, Raluca Ada Popa, Ion Stoica (Agentica团队与Together AI合作)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> Agentica 团队与 Together AI 合作，通过在 2.4 万条高质量代码数据上进行分布式强化学习微调，将 14B 参数的开源模型能力提升至闭源推理模型 o3-mini 的水平，在 LiveCodeBench 上实现了 60.6% 的一次通过率。</p>
+<p><strong>要解决什么问题</strong> 大语言模型在数学领域的强化学习扩展已取得成功，但在代码生成领域进展滞后，核心卡点在于难以构建具备可靠、可验证奖励信号的高质量数据集。现有开源代码数据集要么过于简单，要么包含噪声、测试用例缺失或存在缺陷。在此类数据上直接运行强化学习，模型极易产生奖励作弊现象——即模型不进行真实的逻辑推理，而是通过识别常见测试用例的特征直接打印标准答案，或错误地收敛于只通过简单的边界条件，最终导致训练崩溃。此外，代码推理需要极长的上下文来容纳复杂思考，但长上下文强化学习面临严重的系统效率瓶颈。在传统组相对策略优化（GRPO）流水线中，生成长序列的掉队采样器会严重拖慢批次进度，导致训练器长时间处于空闲状态。同时，代码任务要求在沙箱中并发执行海量单元测试，极高的计算开销进一步加剧了低效，使得 14B 模型的长上下文强化学习动辄需要数周时间，严重限制了模型的快速迭代。</p>
+<p><strong>怎么做的</strong> 为绕开数据与效率卡点，该研究在数据、算法和系统三个层面进行了全栈设计。首先构建高标准的二元奖励机制。研究团队清洗出 2.4 万道高质量题目，强制每题至少包含 5 个单元测试以杜绝奖励作弊。奖励函数采用稀疏的结果奖励模型，放弃任何形式的部分奖励。对于测试用例极多的题目，系统按输入长度采样 15 个最难的测试用例。定义奖励函数为：$$ Reward = \begin{cases} 1, &amp; \text{代码格式正确且通过所有采样的单元测试} \\ 0, &amp; \text{格式错误或在任一测试用例上超时、失败} \end{cases} $$ 其次在算法层面提出 GRPO+，对原始 GRPO 进行四项改造以稳定训练：第一，移除熵损失，防止训练后期熵值指数级爆炸；第二，移除 KL 散度惩罚，解除监督微调模型信任区域的束缚，鼓励自由探索并省去计算参考策略的开销；第三，引入高位裁剪，放宽代理损失上限；第四，引入过长过滤，对超出上下文窗口被截断的序列进行损失掩码。结合迭代式上下文长度扩展，过长过滤使模型在较短上下文（16K）下训练时，不会因生成冗长的推理过程受惩罚，从而将长程推理能力平滑泛化到 64K 上下文。最后在系统层面开发了 verl-pipe，引入一次性流水线。该设计牺牲第一个迭代仅用于采样，此后训练器使用前一迭代的数据更新梯度，采样器异步生成下批数据。同时，奖励计算与采样深度交错，一旦请求在沙箱执行完毕立即异步计算奖励。这完美掩盖了执行数千个单元测试的时间开销，彻底消除了训练器的空闲等待。</p>
+<p><strong>效果如何</strong> 实验基于 14B 参数的 Deepseek-R1-Distilled-Qwen-14B 模型进行微调，使用 2.4 万条训练数据，在 32 张 H100 GPU 上耗时 2.5 周完成训练。对比基线包括同等规模的基础蒸馏模型 Deepseek-R1-Distilled-Qwen-14B，以及代表闭源强化学习扩展路线的顶尖推理模型 o3-mini (low) 和 o1。量化结果显示，DeepCoder-14B-Preview 在 LiveCodeBench 核心基准上实现了 60.6% 的一次通过率，相比基础模型提升 8%，性能直接追平 o3-mini (low) 和 o1。在 Codeforces 竞赛平台获得 1936 的 Elo 评分，同样达到前沿闭源水平。此外，尽管未针对数学任务专门训练，其长程推理能力成功跨域泛化，在 AIME 2024 上的准确率达 73.8%，比基础模型提升 4.1%。系统效率方面，一次性流水线将代码任务的端到端训练时间缩短了 2 倍。作者也承认了当前方案的代价：长上下文强化学习的绝对计算成本依然高昂；且为支撑每个迭代上千次的单元测试，必须依赖高度定制化的并发代码沙箱集群（如云端代码解释器与本地隔离子进程），这对复现该方法的硬件基础设施提出了极高要求。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文由Agentica团队与Together AI合作，发布了DeepCoder-14B-Preview，这是一个通过分布式强化学习（RL）从Deepseek-R1-Distilled-Qwen-14B微调而来的代码推理模型。</p>
 <p><strong>核心问题：</strong> 近几个月来，通过强化学习在数学领域的推理模型扩展取得了显著进展（如DeepScaleR, AReaL, Light-R1, DAPO）。然而，编码领域的进展相对滞后，主要挑战在于构建具有可靠、可验证奖励的高质量数据集。</p>

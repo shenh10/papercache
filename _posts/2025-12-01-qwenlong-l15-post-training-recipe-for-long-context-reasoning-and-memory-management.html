@@ -20,6 +20,15 @@ title: 'QwenLong-L1.5: Post-Training Recipe for Long-Context Reasoning and Memor
 <h1>QwenLong-L1.5: Post-Training Recipe for Long-Context Reasoning and Memory Management</h1>
 <p><strong>发表时间</strong>: 2025-12 · arXiv 2512.12967 by Weizhou Shen et al. (Alibaba Qwen Team)</p>
 <p><strong>作者/机构</strong>: Weizhou Shen∗, Ziyi Yang∗, Chenliang Li∗, Zhiyuan Lu, Miao Peng, Huashan Sun, Yingcheng Shi, Shengyi Liao, Shaopeng Lai, Bo Zhang, Dayiheng Liu, Fei Huang, Jingren Zhou, Ming Yan† (Tongyi Lab, Alibaba Group)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了 QwenLong-L1.5，通过一套统一数据合成、强化学习优化和内存智能体架构的完整后训练方案，将 30B 参数模型的长上下文推理能力提升至 GPT-5 和 Gemini-2.5-Pro 等顶级闭源模型水平，并能处理高达 4M 词元的超长任务。</p>
+<p><strong>要解决什么问题</strong> 当前长上下文推理在后训练阶段缺乏成熟的端到端系统，具体卡在三个机制瓶颈上。首先是数据层面，现有长上下文数据多为简单的信息检索，缺乏需要跨文档多跳定位和复杂计算的高质量推理数据。其次是强化学习的训练不稳定性。一方面，长上下文任务中正确与错误的响应通常基于相同的长输入，导致它们在短语级别的重叠度极高，这引发了严重的奖励信用分配问题，负梯度极易惩罚模型的探索行为并导致梯度方差过大或熵崩溃；另一方面，混合多任务训练时，不同任务的奖励分布差异巨大（如密集奖励与稀疏奖励混杂），传统的随机采样会导致批次内分布漂移，进而引发训练崩溃。最后是架构层面的物理限制，由于显存容量和注意力机制的二次计算复杂度，全注意力机制在处理超过物理窗口（如 256K 词元）的超长序列时在计算上完全不可行，模型无法直接摄入任意长度的信息流。</p>
+<p><strong>怎么做的</strong> 本方法通过三大核心设计绕开了上述卡点。第一是长上下文数据合成流水线，利用知识图谱提取多跳路径、通过 SQL 执行模拟语料库级数值计算，并引入提议者、解决者、验证者组成的多智能体自进化框架生成复杂问答，最后故意插入无关文档扩展长度，强制模型学习全局多跳定位。第二是针对长上下文的稳定强化学习方案，基于组相对策略优化（GRPO）进行改进。为解决多任务分布漂移，引入任务平衡采样，并提出任务特定优势估计，将优势计算中的标准差归一化严格限制在同任务批次内：$$A_{i}^{\text {task }}=\frac{r_{i}^{\text {task }}-\operatorname{mean}\left(\left\{r_{k}^{\text {task }}\right\}_{k=1}^{G}\right)}{\operatorname{std}\left(r^{\text {task }} | r^{\text {task }} \in \mathcal{B}^{\text {task }}\right)}$$ 为解决负梯度导致的熵崩溃，提出自适应熵控制策略优化（AEPO）。该机制动态调节探索与利用：设定目标熵的上下界，当批次平均熵高于上限时，直接屏蔽具有负优势的生成序列（仅用正样本更新以降低熵）；当熵低于下界时，重新引入负梯度以防止模型失去探索能力。第三是处理超长上下文的内存智能体架构，将单遍推理重构为顺序决策过程。模型将长文档切块，在每步读取当前块 $x_t$ 时，不仅更新压缩内存 $m_t$，还生成指导下一步阅读的导航计划 $p_t$：$$(m_t, p_t) \sim \pi_{\theta}(\cdot \mid m_{t-1}, p_{t-1}, x_t, q_{\text{core}})$$ 最终基于累积的完整内存生成答案。在训练路径上，采用多阶段长度扩展策略，先进行全上下文强化学习，接着基于此训练一个专门的内存管理专家模型，最后通过 SCE 算法将两者合并，使模型无缝集成 256K 内的单遍推理与 4M 词元的迭代内存处理能力。</p>
+<p><strong>效果如何</strong> 实验基于 30B 参数的 Qwen3-30B-A3B-Thinking 模型搭建，使用 VeRL 框架进行纯在线策略强化学习，最大输入长度设为 128K 词元，最大生成长度 50K 词元。对比基线包括旗舰级闭源路线的 GPT-5 和 Gemini-2.5-Pro，轻量级推理路线的 DeepSeek-R1-0528 和 Gemini-2.5-Flash-Thinking，以及直接基线 Qwen3-30B-A3B-Thinking。在包含 LongBench-V2、MRCR、CorpusQA 等六个长上下文推理基准的测试中，QwenLong-L1.5 平均得分 71.82，比直接基线大幅提升 9.90 分，全面超越轻量级基线并追平 Gemini-2.5-Pro。在平均长度 36.5K 词元的 MRCR 任务上取得 82.99 分的最佳成绩；在 1M 到 4M 词元的 CorpusQA 超长任务上，内存智能体框架得分 14.29，比其他智能体基线高出 9.48 分。此外，长上下文能力的增强带来了正向泛化，模型在 AIME25 数学推理上提升 3.65 分，在 LongMemEval 对话记忆上提升 15.60 分，未出现灾难性遗忘。作者承认的局限在于，当前数据合成仅限于文本模态且缺乏长输出任务，同时 GRPO 为整个序列分配统一优势信号的机制仍不够精细，未来需要开发词元级别的信用分配机制以进一步彻底解决训练不稳定性。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文介绍了 QwenLong-L1.5，这是一个通过系统的后训练创新实现卓越长上下文推理能力的模型。该模型建立在 Qwen3-30B-A3B-Thinking 之上，并通过内存机制进行增强，以处理超出其物理窗口的长输入任务。其核心贡献是一套完整的后训练方案，统一了数据合成、训练方法和智能体架构。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

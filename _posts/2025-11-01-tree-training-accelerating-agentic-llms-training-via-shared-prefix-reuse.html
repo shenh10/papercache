@@ -18,6 +18,17 @@ title: 'Tree Training: Accelerating Agentic LLMs Training via Shared Prefix Reus
 <div class="container">
 <h1>Tree Training: Accelerating Agentic LLMs Training via Shared Prefix Reuse</h1>
 <p>Shaojie Wang * † 1 Jinghui Wang * † 1 Yinghan Cui * 1 Xuxing Chen * 1 Chao Wang * 1 Liang Huang 1 Xiaojiang Zhang 1 Junyi Peng 1 Li Wan 1 Haotian Zhang 1 Bin Chen 1</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文针对代理式大语言模型训练中多轮交互产生的树状轨迹，提出了一种基于梯度恢复和树打包的 Tree Training 框架，在不损失模型精度的前提下消除了共享前缀的冗余计算，实现了高达 6.2 倍的端到端训练加速。</p>
+<p><strong>要解决什么问题</strong> 代理式大语言模型（Agentic LLM）在训练时，因并发工具调用、思维模式（Think-mode）等机制，其轨迹天然呈现带有大量共享前缀的树状结构。现有做法是将树状轨迹线性化，把每条从根到叶的路径拆解为独立序列训练。其卡点在于前向与后向传播的因果不对称性导致的巨大计算冗余。前向传播中因果掩码使注意力矩阵呈下三角，相同前缀在不同分支输出相同，让推理时的前缀缓存（Prefix Caching）成为可能。但在后向传播中，值梯度 $dV = P^T \times dO$，转置使 $P^T$ 变为反因果的上三角矩阵。这意味着前缀 Token 的梯度必须聚合其后所有后缀 Token 的梯度贡献。即使前缀相同，只要后缀不同，回传给前缀的梯度就不同。若在训练中强行缓存，必须在显存中存储所有分支的后缀信息，直接导致显存爆炸。因此现有框架只能让每个分支独立重算共享前缀，在面对大量重叠前缀的数据时造成严重算力浪费。</p>
+<p><strong>怎么做的</strong> 核心思路是摒弃线性化拆解，采用树状序列化输入，让共享前缀仅保留一份并被所有子节点复用。为绕开后缀状态导致显存爆炸的卡点，作者提出梯度恢复（Gradient Restoration）方案。其洞察在于梯度传递具线性可加性，只要保证前缀在树训练中获得的输入梯度，等于基线方法中所有对应前缀分支的梯度之和，就能实现参数更新的严格等价。关键不变量为：
+$$d Y_{P}^{ours} = \sum_{i=1}^{n} d Y_{p_{i}}^{base}$$
+基于此理论，系统由四个关键部件构成。一是共享前缀注意力掩码（Shared Prefix Attention Mask），它修改标准因果掩码，限制 Token 的注意力可见范围，确保不同分支能安全读取共享前缀且彼此隔离，防止信息泄露。二是位置嵌入（Position Embedding）恢复模块，树状数据打包会打乱物理位置，该模块强制为每个 Token 恢复其在原始树结构中的真实 Position ID，保证旋转位置编码（RoPE）等依赖位置的操作计算无误。三是梯度缩放器（Gradient Scaler），这是核心部件。它提前计算每个前缀节点被下游轨迹复用的次数。在反向传播前，将该节点的初始梯度乘以复用次数。这在数学上等价于将前缀独立计算多次并累加梯度，彻底免去存储多份后缀状态的显存开销。四是树打包（Tree Packing）策略，针对单棵树可能撑爆显存的问题，采用基于启发式深度优先搜索（DFS）的分区算法，优先分配最深叶节点并将深度相似节点分组，在满足显存上限时将大树切分为多个子树序列，最大化前缀重用率。</p>
+<p><strong>效果如何</strong> 实验在 64 张 NVIDIA Hopper GPU 集群上基于 Megatron-Core 框架搭建。评测模型为 32B 参数密集模型（Qwen3-32B）和 30B 参数混合专家模型（Qwen3-30B MoE）。数据包含来自 Terminus 和 Claude code 的真实多轮强化学习轨迹，以及重叠率 20% 到 92% 的合成数据。对比基线是标准的 Sequence Packing 策略，代表将树状数据完全展平、线性化拼接的传统路线。量化结果显示，在真实数据上，Tree Training 在 32B 密集模型实现 6.3 倍端到端加速，在 30B MoE 模型实现 6.2 倍加速，达理论上限 95% 以上。在合成数据高重叠率理想设置下，加速比最高达 8.7 倍。正确性方面，训练 Loss 曲线与基线完全重合，相对误差小于 1%。在 Terminal Bench 2.0 任务中，全树数据训练使模型得分从 20.9 提升至 28.8。该方法代价极低，掩码、位置 ID 和缩放器带来的额外显存开销不到 1MB，相比基线 64GB 的激活显存需求可忽略不计。局限在于，当单棵树过大必须依赖树打包切分时，加速比会略低于全树放入显存的理想状态。</p>
+</div>
+</details>
 <h1>A1 主要贡献</h1>
 <p>本文针对Agentic LLM（代理式大语言模型）训练中普遍存在的多轮交互和分支路径问题，提出了一种高效的训练框架——<strong>Tree Training</strong>。主要贡献如下：</p>
 <ol>

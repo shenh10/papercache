@@ -20,6 +20,15 @@ title: 'SageAttention3: Microscaling FP4 Attention for Inference and An Explorat
 <div class="container">
 <h1 id="sageattention3-microscaling-fp4-attention-for-inference-and-an-exploration-of-8-bit-training">SageAttention3: Microscaling FP4 Attention for Inference and An Exploration of 8-bit Training</h1>
 <p><strong>作者/机构</strong>: Jintao Zhang∗, Jia Wei∗, Pengle Zhang, Xiaoming Xu, Haofeng Huang, Haoxu Wang, Kai Jiang, Jun Zhu, Jianfei Chen, 清华大学 {zhang-jt24@mails., jianfeic@, dcszj@}tsinghua.edu.cn</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文针对大模型长序列计算瓶颈，提出了首个用于推理加速的微缩放FP4 Attention架构SageAttention3，以及首个用于训练加速的可训练8-bit Attention架构SageBwd，在完全保持各类生成模型端到端精度的前提下，实现了底层核函数与端到端计算的数倍提速。</p>
+<p><strong>要解决什么问题</strong> 现有大模型在处理长序列时，Attention机制的二次时间复杂度会带来严重的计算瓶颈，而利用GPU底层低比特张量核心进行量化加速是破局关键。然而，将Attention压缩至极低比特面临三个致命卡点。首先是FP4数据类型的值域极度受限，其仅能表示15个离散值，传统的逐张量或逐令牌量化根本无法维持模型精度，极易被离群值破坏。其次是Attention概率图矩阵的量化灾难，该矩阵主要由0到1之间的微小值构成，若直接量化为FP4，会迫使硬件要求的FP8格式缩放因子被压缩在极窄的动态范围内，造成严重的数值表示误差与精度损失。最后是在探索大模型训练阶段的低比特Attention时，反向传播中的梯度对量化误差极为敏感，量化带来的微小偏差会在长序列的循环计算中不断向输入梯度累积，导致序列越长误差越大，最终引发训练崩溃或精度断崖式下跌。</p>
+<p><strong>怎么做的</strong> 针对推理和训练的双重卡点，作者分别设计了SageAttention3和SageBwd两套架构。在推理端，核心思路是引入微缩放量化，将量化组大小严格限制在1x16的微小块内，以此控制离群值的破坏力。为了解决Attention概率图矩阵缩放因子精度丢失的问题，作者设计了巧妙的两级量化机制。具体而言，先通过逐令牌量化将每个令牌的数值范围归一化放大，提取出第一级浮点缩放因子，随后再对放大后的矩阵应用标准的FP4微缩放量化，提取出第二级FP8缩放因子。其核心更新式为 $\hat{P}_2, s_{P2} = \phi(P^e / s_{P1})$，其中 $s_{P1} = \max(P^e_{ij}) / (448 \times 6)$。这一设计完美撑开了FP8数据类型的表示区间，大幅削减了量化误差。在底层工程上，作者通过置换键矩阵的列来对齐硬件累加器内存布局，将量化操作与在线Softmax融合以复用最大值并减少50%的冗余线程洗牌，还首创了生产者线程束间的乒乓调度，在严苛的寄存器限制下实现了计算与全局内存存储的掩盖。在训练端，前向传播对概率图矩阵采用逐令牌INT8量化，对值矩阵采用逐块INT8量化；而在反向传播的5个矩阵乘法中，作者精准定位了误差放大的元凶，即输出梯度与值矩阵转置的乘积。只要将这个对精度最敏感的矩阵乘法强行保持在FP16精度，就能彻底阻断误差向查询和键梯度的累积链路，而其余4个矩阵乘法均可安全降级为INT8逐块量化，从而在不掉点的前提下吃满低比特算力。</p>
+<p><strong>效果如何</strong> 实验在RTX5090和RTX4090硬件上展开，覆盖了Qwen2.5、Llama3.2等语言模型，以及CogVideoX、HunyuanVideo、Flux、Stable-Diffusion3.5等主流视频与图像生成模型。对比基线选择了代表当前工程优化极致的FlashAttention2、xformers，以及同系列的SageAttention和SageAttention2。量化测试表明，在RTX5090上，SageAttention3的算力突破了1000 TOPS，核函数速度比FlashAttention快5倍，比xformers快11倍；在端到端生成任务中，HunyuanVideo和CogVideoX的推理速度分别提升了3倍和2.4倍，且在各项对齐度与保真度指标上均未出现质量衰减。在训练场景下，SageBwd在RTX4090上的核函数速度比FlashAttention快1.67倍，在Qwen2.5和Llama3.2的微调任务中，其损失曲线与全精度BF16完美重合，实现了真正的无损加速。不过作者也坦诚了该方法的局限性：一方面，当前的8-bit Attention在从头预训练任务中收敛速度较慢，目前仅适用于微调阶段；另一方面，受限于Triton算子的实现水平，训练端的实际加速比距离理论上限仍有一定优化空间。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p><strong>研究动机</strong>: Attention机制的效率对于生成模型至关重要，特别是其二次时间复杂度在处理长序列时成为瓶颈。量化是利用GPU中低比特张量核心（Tensor Cores）加速推理的有效方法。NVIDIA Blackwell GPU中新的FP4 Tensor Cores相比FP16提供了显著的性能提升。因此，本文旨在提出一种新颖的FP4 Attention实现，为推理加速提供即插即用的兼容性。此外，训练效率同样重要，但以往工作未曾探索过用于训练大型模型的低比特Attention。为填补这一空白，本文设计了一种可训练的8-bit Attention，以探究其在训练任务中的可行性。</p>
 <p><strong>核心挑战</strong>:<br/>

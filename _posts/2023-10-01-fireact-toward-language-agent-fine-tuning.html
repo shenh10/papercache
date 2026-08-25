@@ -18,6 +18,19 @@ title: 'FIREACT: TOWARD LANGUAGE AGENT FINE-TUNING'
 <div class="container">
 <h1 id="fireact-toward-language-agent-fine-tuning">FIREACT: TOWARD LANGUAGE AGENT FINE-TUNING</h1>
 <p><strong>作者/机构</strong>: Baian Chen (System2 Research), Chang Shu (University of Cambridge), Ehsan Shareghi (Monash University), Nigel Collier (University of Cambridge), Karthik Narasimhan (PLI, Princeton University), Shunyu Yao (PLI, Princeton University)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一种名为 FireAct 的语言模型微调方法，通过混合多种提示策略生成的代理轨迹对较小模型进行微调，显著提升了语言代理在问答任务中的性能、推理效率和鲁棒性。</p>
+<p><strong>要解决什么问题</strong>
+现有的语言代理主要依赖对大型语言模型进行少样本提示（few-shot prompting）来执行任务，这种做法存在几个致命卡点。首先，少样本提示在上下文中提供的学习支持极为有限，导致代理在面对复杂任务或干扰信息时性能和鲁棒性不佳。其次，为了弥补提示方法的不足，高级代理严重依赖像 GPT-4 这样参数量巨大的闭源商业模型，直接带来了极高的单次推理成本和高昂的系统延迟。最后，过度依赖闭源大模型使得代理系统的可控性和可复现性难以保障。虽然对较小规模模型进行微调是降低延迟、摆脱大模型依赖的有效路径，但此前语言代理领域缺乏系统性的微调研究。如何构建高质量微调数据以覆盖代理所需的多样化推理和动作能力，并证明微调确实优于提示方法，是亟待解决的空白。</p>
+<p><strong>怎么做的</strong>
+核心思路是通过“蒸馏”强模型的代理轨迹，利用多样化的任务和提示策略构建微调数据，将较小规模的语言模型训练成高效的独立代理。作者提出的 FireAct 方法由数据生成与统一格式微调两个环节构成。在数据生成阶段，FireAct 利用强大的大型语言模型（如 GPT-4）作为教师模型，针对不同数据集生成任务解决轨迹。为保证数据多样性，生成过程混合了三种提示方法：第一种是 ReAct，由多个“思考-行动-观察”循环组成，模型生成自由形式的思考来规划行动，并根据调用外部工具返回的观察结果进行下一步决策；第二种是思维链（CoT），用于生成中间推理步骤以解决无需外部工具的简单问题；第三种是 Reflexion，在 ReAct 基础上加入反馈和自我反思机制，允许模型在长轨迹中调整失败策略。在微调阶段，FireAct 将这三种方法生成的成功轨迹全部统一转换为 ReAct 的数据格式，并以此对较小模型进行微调。这种设计不仅让模型内化了调用工具和多步推理的能力，还赋予了模型隐式的方法选择机制。推理时，微调后的模型无需输入冗长的少样本提示，就能根据问题复杂程度，自动决定是采用 CoT 的单步直达、标准的 ReAct 搜索，还是触发 Reflexion 进行策略调整，从而彻底绕开少样本提示带来的上下文长度限制。</p>
+<p><strong>效果如何</strong>
+实验在 HotpotQA、Bamboogle、StrategyQA 和 MMLU 四个问答数据集上展开，代理统一配备基于 SerpAPI 构建的谷歌搜索工具。训练数据由 GPT-4 生成，微调基础模型包括 175B 的 GPT-3.5 以及开源的 Llama-2（7B、13B）和 CodeLlama（7B、13B、34B）系列，主要采用 LoRA 方法在 A100 等 GPU 上微调。对比基线主要是<strong>依赖少样本提示的同尺寸或更大尺寸模型</strong>（代表传统的提示驱动路线，如提示式 GPT-3.5 和提示式 Llama-2）。量化结果显示微调带来显著提升：在 HotpotQA 任务上，仅用 500 条轨迹微调，Llama-2-7B 的精确匹配率从 14.8% 飙升至 26.2%（提升 77%），微调后的 Llama-2-13B 甚至超越了提示路线的更强商业模型 GPT-3.5。效率方面，微调版 GPT-3.5 的单次推理时间从 9.0 秒缩减至 2.7 秒，降低 70%。鲁棒性测试中，面对返回空值的干扰性工具输出，提示式基线性能暴跌 33.8%，而微调模型仅下降 14.2%。此外，多任务联合微调证明增加其他任务数据不损害原有任务表现。作者也坦承了局限与代价：全量参数微调性能优于 LoRA 但计算资源消耗巨大；微调模型向任务形式差异巨大的新任务泛化效果不佳；在相对简单的 MMLU 任务上，所有复杂代理机制表现反不如最简单的直接输入输出提示；且当前研究仅局限于问答场景和单一搜索工具。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文探讨了通过微调语言模型（LMs）来构建语言代理这一被忽视的研究方向。</p>
 <ul>

@@ -20,6 +20,21 @@ title: Scaling Embeddings Outperforms Scaling Experts in Language Models
 <p><strong>发表时间</strong>: 2026-01 · arXiv:2601.21204 (Meituan LongCat)</p>
 <p><strong>文章标题</strong>: 扩展嵌入优于扩展专家在语言模型中的表现<br/>
 <strong>作者/机构</strong>: Hong Liu, Jiaqi Zhang∗, Chao Wang, Xing Hu, Linkun Lyu, Jiaqi Sun, Xurui Yang, Bo Wang, Fengcun Li, Yulei Qian, Lingtong Si, Yerui Sun, Rumei Li, Peng Pei∗, Yuchen Xie, Xunliang Cai / Meituan LongCat Team</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出在大型语言模型中通过扩展 N-gram 嵌入参数来替代传统的混合专家（MoE）扩展路线，并基于此训练了 68.5B 参数的 LongCat-Flash-Lite 模型，在保持极低激活参数的同时，在智能体和编码任务上超越了同等规模的 MoE 基线模型。</p>
+<p><strong>要解决什么问题</strong>
+随着模型规模和稀疏度增加，主流的混合专家（MoE）架构面临严重的系统级瓶颈：增加专家数量不仅带来节点间通信开销，还会加剧内存带宽压力，且性能收益呈现明显递减趋势。具体而言，在模型处于高稀疏度阶段时，单纯增加专家参数对降低训练损失的贡献微乎其微。相比之下，嵌入层具有查找复杂度为 O(1) 的固有优势，允许在不增加路由开销和激活参数的前提下进行大规模参数扩展。然而，过去对于嵌入参数与专家参数的扩展效率对比不够清晰，嵌入扩展的系统性约束（如参数预算、哈希碰撞、初始化方案及模型宽深度的权衡）也缺乏系统性描述，导致这一正交的稀疏化维度未能被充分利用。</p>
+<p><strong>怎么做的</strong>
+核心思路是引入 N-gram 嵌入（N-gram embedding）机制，通过扩展无词汇表的 n-gram 嵌入表来增强表示能力，将参数从 MoE 层转移到嵌入空间，绕开 MoE 的通信与内存 I/O 瓶颈。对于序列中的第 $i$ 个 token $t_i$，其增强后的嵌入由基础嵌入和多个 n-gram 扩展嵌入组合而成。为减少哈希碰撞，该方法将每个 n-gram 嵌入表分解为 $K$ 个具有不同词汇量大小的子表，并引入线性投影映射回原始嵌入空间，最终形式定义为：
+$$e_i = \frac{1}{(N-1)K+1} \left( E_0(t_i) + \sum_{n=2}^{N} \sum_{k=1}^{K} W_{n,k} E_{n,k} (\mathcal{H}_{n,k}(t_{i-n+1}, ..., t_i)) \right)$$
+其中 $E_0$ 是基础嵌入表，$E_{n,k}$ 是子表，$W_{n,k}$ 是线性投影矩阵，$\mathcal{H}_{n,k}$ 是多项式滚动哈希函数。关键设计包含四个维度的架构约束：第一，集成时机。N-gram 嵌入必须在基础 MoE 模型的专家数量超过其扩展“最佳点”（即高稀疏度水平）时引入。第二，参数预算。分配给 N-gram 嵌入的总参数预算不应超过模型总参数的 50%，否则性能会被同等参数的 MoE 基线反超。第三，哈希碰撞缓解。N-gram 词汇量大小必须显著偏离基础词汇量的整数倍，以防止哈希碰撞导致的语义歧义，超参建议设为 $N \in [3, 5]$ 且 $K \ge 2$。第四，嵌入放大（Embedding Amplification）。由于训练初期注意力模块输出的范数远大于嵌入分支，会导致嵌入信号被残差流“淹没”，需在合并前对嵌入输出乘以缩放因子或应用 LayerNorm 进行放大。在系统实现上，为解决 N-gram 查找带来的额外开销，设计了专门的 N-gram 缓存（N-gram Cache）和同步内核，并与推测解码结合，确保激活参数的减少能转化为更低的延迟。</p>
+<p><strong>效果如何</strong>
+实验基于 8 张 H800-80G GPU，从头训练了总参数量为 68.5B 的 LongCat-Flash-Lite 模型（其中 31.4B 为 N-gram 嵌入参数），每个 token 动态激活 2.9B 到 4.5B 参数。训练数据含 11T tokens 预训练和 1.5T tokens 中期训练，使用 YARN 支持 256K 上下文。对比基线首先是同等参数规模的纯 MoE 路线代表 LongCat-Flash-Lite-Vanilla（将所有 N-gram 嵌入参数转换为额外专家），其次是 Qwen3-Next-80B-A3B-Instruct、Gemini 2.5 Flash-Lite 等前沿模型。量化结果显示，引入 N-gram 嵌入的模型在整个训练过程中的损失始终低于纯 MoE 基线。在对话评估中，该模型在智能体工具使用（Vita Bench 得分 7.00）和智能体编码（SWE-Bench 等）任务上大幅超越所有对比基线，MATH500 准确率达 96.80%。在代价与局限性方面，增加模型深度会削弱 N-gram 嵌入的相对优势（超过 20 层后性能优势明显收缩）；此外，尝试的逐层 N-gram 嵌入（PLNE）路线因增加激活参数且无一致优势而未被采用。同时，该架构的极端激活稀疏性高度依赖大批量大小和推测解码来饱和 GPU 内存带宽，对底层内核融合提出了极高的工程要求。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文探讨了在大型语言模型中，除了主流的混合专家（Mixture-of-Experts, MoE）架构外，另一种正交的稀疏化扩展维度——嵌入扩展（embedding scaling）。随着模型规模和稀疏度的增加，MoE架构面临着性能收益递减和系统级瓶颈（如通信开销和内存带宽压力）的问题。与此相对，嵌入层提供了一个被忽视的、固有的稀疏维度，其查找复杂度为O(1)，允许在不增加路由开销的情况下进行大规模参数扩展。</p>
 <p>尽管近期对扩展嵌入参数的兴趣渐增，但仍有几个关键挑战未被充分探索：1）专家参数和嵌入参数之间的扩展效率比较尚不明确；2）嵌入扩展的系统性约束（如参数预算、词汇量大小、初始化方案、模型宽度与深度的权衡）尚未被系统地描述；3）在不同情况下，哪种嵌入扩展策略更有效率尚不清楚；4) 扩展嵌入对端到端推理性能的影响及其优化仍未得到充分分析。</p>

@@ -23,6 +23,15 @@ title: 'Not All Heads Matter: A Head-Level KV Cache Compression Method with Inte
 <ul>
 <li><strong>作者/机构</strong>: Yu Fu (University of California, Riverside), Zefan Cai (University of Wisconsin-Madison), Abedelkadir Asi (Microsoft), Wayne Xiong (Microsoft), Yue Dong (University of California, Riverside), Wen Xiao (Microsoft)</li>
 </ul>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为 HeadKV 及其进阶版 HeadKV-R2 的头级别 Key-Value 缓存压缩方法，通过联合评估注意力头的检索与推理能力来动态分配缓存预算，在仅保留 1.5% 缓存的条件下能在长上下文问答任务中达到完整缓存 97% 的性能。</p>
+<p><strong>要解决什么问题</strong> 大语言模型处理长文本时，自注意力机制中的 Key-Value 缓存（KV 缓存）占用的显存会随输入长度呈线性增长，造成严重的显存瓶颈。现有 KV 缓存压缩方法大多停留在层级别进行预算分配，即对同一层内的所有注意力头一视同仁，或仅在单层固定总预算的前提下微调。这种机制的卡点在于，多头注意力机制中各个头的职责差异巨大——极少部分头负责关键的上下文识别或知识召回，大部分头则是冗余的。固定的层级分配策略无法打破层间硬性隔离，导致在极低显存预算下，真正起关键作用的头分不到足够缓存，不重要的头却占着宝贵资源，最终造成模型在长文本推理时丢失关键信息。</p>
+<p><strong>怎么做的</strong> 该方法的核心思路是打破层级预算约束，在全局视角下根据每个注意力头的重要性分数进行头级别的 KV 缓存预算分配。它能绕开层级分配卡点，是因为允许跨层调度资源，让承担重任的头获得充足缓存，将冗余头的缓存极度压缩。关键设计由三个部件构成：重要性分数评估、头级别预算分配以及缓存条目选择。首先是重要性分数评估部件，负责识别关键头。以往方法仅通过精确匹配寻找“检索头”，找出的重要头分布极稀疏且忽略了逻辑推理能力。为此，作者设计了检索-推理评估机制，构建带有干扰项的“大海捞针”测试，将包含推理步骤、错误答案和正确答案的复合信息插入长文本，迫使模型推理锁定正确答案。某个头的重要性分数不再仅看最高注意力权重的词，而是考察对整个正确答案片段的关注度。定义性公式为：$$S_{h}=\sum_{t=1}^{N} \sum_{i=1}^{N} \mathcal{M}_{i}^{t}, \quad \text { where } \mathcal{M}_{i}^{t}= \begin{cases}\frac{a_{i}}{N} &amp; \text { if top-} i\left(\boldsymbol{a}_{h}^{t}\right) \in \boldsymbol{c}^{2} \\ 0 &amp; \text { otherwise }\end{cases}$$其中 $a_i$ 表示来自头 $h$ 的第 $i$ 高的注意力分数，$\boldsymbol{c}^2$ 代表完整正确答案。对正确答案关注度越高的头，重要性分数 $S_h$ 越大。其次是头级别预算分配部件，在预填充阶段切分显存。系统从每个头的初始固定预算 $b$ 中抽取一部分，汇聚成跨层的全局共享预算池 $B$。随后根据归一化重要性分数 $S_h$，将全局预算池按比例发放到各头。更新式为：$$B = \frac{b}{\beta} \times L \times H; \quad \boldsymbol{b}_h = (b - \frac{b}{\beta}) + S_h \times B$$其中 $\beta$ 控制全局预算池大小，$L$ 和 $H$ 为层数和头数。最后是缓存条目选择部件，决定各头内部保留哪些词的特征。确定各头容量上限后，利用输入序列末尾的指令词作为局部观察窗口，计算对历史词的注意力分数，得分最高的词被保留在缓存中。</p>
+<p><strong>效果如何</strong> 实验基于 Llama-3-8B-Instruct 和 Mistral-7B-Instruct 模型，最大序列长度设为 32K 并启用 FlashAttention。评估数据采用 LongBench（单文档与多文档问答）和 LooGLE（长依赖问答）基准。对比基线点名了三种代表性路线：SnapKV 代表利用末尾局部窗口注意力筛选的路线，PyramidKV 代表底层分配更多缓存的金字塔注意力路线，Ada-SnapKV 代表单层内部根据注意力集中度动态分配预算的路线。量化结果显示，在极低资源设置下该方法优势显著。当 KV 缓存大小极限压缩至 64（仅保留总词数的 0.7%）时，HeadKV-R2 在长文本问答上的平均准确率大幅领先所有强基线。在 Llama-3-8B-Instruct 模型上，当 KV 缓存大小为 1024 时，HeadKV-R2 平均得分达 32.95，逆势超越了完整缓存基线的 32.90，证明剔除冗余头干扰能提升关键信息聚焦能力。在长上下文“大海捞针”和“草堆中的推理”测试中，该方法也取得最高分。代价方面，其解码延迟和峰值内存占用与先进压缩基线持平。但作者承认，细粒度的头级别动态管理会引入额外同步与计算成本，在多 GPU 并行执行环境下可能会拖累整体解码速度。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文针对大型语言模型（LLM）中常见的Key-Value（KV）缓存技术因输入长度增加而导致内存开销迅速增长的问题，提出了一种新的解决方案。先前的工作表明，并非所有token对文本生成都同等重要，并提出了层级的KV缓存压缩方法。本文认识到注意力头（attention heads）在生成过程中扮演着不同角色，因此提出了一个头级别（head-level）的KV缓存压缩方法，名为HeadKV，以及其改进版HeadKV-R2，该版本利用一种新颖的上下文推理能力评估方法进行压缩。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

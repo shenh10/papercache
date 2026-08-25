@@ -20,6 +20,15 @@ title: 'Mamba: Linear-Time Sequence Modeling with Selective State Spaces'
 <div class="container">
 <h1 id="mamba-linear-time-sequence-modeling-with-selective-state-spaces">Mamba: Linear-Time Sequence Modeling with Selective State Spaces</h1>
 <p><strong>作者/机构</strong>: Albert Gu (卡内基梅隆大学机器学习系), Tri Dao (普林斯顿大学计算机科学系)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为 Mamba 的线性时间序列模型，通过引入依赖输入的动态选择机制和硬件感知的并行扫描算法，在保持计算量随序列长度线性扩展的同时，首次在语言建模等密集信息任务上达到了与同等规模 Transformer 相当的卓越性能。</p>
+<p><strong>要解决什么问题</strong> 主流的基础模型骨干架构 Transformer 严重受限于注意力机制，其计算复杂度随序列长度呈二次方增长，且自回归推理时需要维护庞大的 KV 缓存，导致处理长上下文时显存匮乏且并行度极低。为解决此效率卡点，此前涌现了许多具备亚二次方时间复杂度的结构化状态空间模型（如 S4）。然而，这些原有做法卡在了一个致命缺陷上：它们严格遵循线性时间不变性（LTI），即模型的动态转移参数在整个时间序列上是固定死板的。这个机制卡点导致模型完全缺乏基于内容进行推理的能力，无法像注意力机制那样根据当前输入动态地关注相关信息或过滤无关噪声。在处理文本这种信息密集的离散数据时，原有 SSM 无法有效地将关键上下文压缩到有限的隐藏状态中，导致模型在语言等重要模态上的精度大幅掉点，始终无法超越 Transformer。</p>
+<p><strong>怎么做的</strong> 核心思路是为状态空间模型引入选择机制，让模型参数成为输入数据的函数，从而打破线性时间不变性的约束。这种动态机制能绕开上述卡点，是因为它赋予了模型上下文感知能力，使其能根据当前词元，选择性地在序列维度上传播有用信息或遗忘无关噪声，实现高效的状态压缩。关键设计由三个部件构成。首先是选择性状态空间模型（S6），它将影响序列交互的关键参数改写为随时间变化的输入函数：$$ \mathbf{B}(x_t) = \text{Linear}_N(x_t) $$ $$ \mathbf{C}(x_t) = \text{Linear}_N(x_t) $$ $$ \Delta_t = \text{softplus}(\text{Broadcast}_D(\text{Linear}_1(x_t))) $$ 其中 $\Delta$ 承担类似 RNN 门控的职责，控制模型对当前输入的关注或重置程度；$\mathbf{B}$ 和 $\mathbf{C}$ 分别负责调节当前输入是否进入隐藏状态，以及隐藏状态是否输出。其次是硬件感知的高效并行算法。由于参数变成时变形态，模型无法再使用高效的全局卷积。为克服此瓶颈，作者设计了并行扫描算法，巧妙利用 GPU 内存层级：直接将参数从慢速的高带宽内存（HBM）加载到极速的 SRAM 中执行离散化和循环计算，最后将输出写回 HBM。配合反向传播的状态重计算技术，该算法避免了在 HBM 中物化庞大的扩展状态，彻底消除显存 IO 瓶颈。最后是极简的 Mamba 架构，它摒弃了注意力机制和独立的多层感知机，将选择性 SSM 与门控 MLP 融合为同质化的 Mamba 模块并进行端到端堆叠。</p>
+<p><strong>效果如何</strong> 实验在 A100 GPU 上搭建，模型从 1.25 亿覆盖到 69 亿参数，数据包含 800GB 文本、45 亿碱基对 DNA 及音频波形。对比基线包括标准 Transformer、采用现代配方的 Transformer++，以及点名代表全局卷积的 Hyena、早期 SSM 的 H3、线性注意力的 RetNet、现代 RNN 的 RWKV 和音频模型 SaShiMi。在语言建模零样本评估中，Mamba-3B 的常识推理得分不仅碾压同规模 Transformer，更超越了两倍体量的 Pythia-7B，成为首个在扩展定律上匹敌 Transformer++ 的线性时间模型。在长上下文设置下，Mamba 在归纳头任务中完美外推至 100 万词元长度，而 Transformer 基线直接失效。硬件代价方面，得益于抛弃 KV 缓存，Mamba 推理吞吐量比同规模 Transformer 暴涨 4 到 5 倍，扫描算法训练速度比标准实现快 40 倍，显存占用与 FlashAttention 相当。作者也坦诚了局限性：处理音频波形这种纯连续信号时，原有时间不变模型（S4）在底层特征提取上比选择性模型表现更好；此外，Mamba 在 70 亿参数以上的扩展性仍有待验证。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决现有主流基础模型（Foundation Models）骨干架构 Transformer 在处理长序列时计算效率低下的问题。Transformer 的核心注意力机制虽然效果强大，但其在上下文窗口内的密集信息路由能力导致了两个根本性缺陷：无法对窗口外的内容进行建模，以及计算复杂度随序列长度呈二次方增长。尽管已有许多亚二次方时间复杂度的架构（如线性注意力、门控卷积、循环模型和结构化状态空间模型SSM）被提出，但它们在语言等重要模态上的性能未能超越注意力机制。</p>
 <p><strong>核心问题</strong>: 现有高效的序列模型（如SSM）缺乏一种关键能力——基于内容进行推理（content-based reasoning），这限制了它们在信息密集型数据（如文本）上的表现。</p>

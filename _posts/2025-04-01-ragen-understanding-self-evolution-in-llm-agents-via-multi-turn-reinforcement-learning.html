@@ -21,6 +21,15 @@ title: 'RAGEN: Understanding Self-Evolution in LLM Agents via Multi-Turn Reinfor
 <p><strong>发表时间</strong>: 2025-04 · arXiv:2504.20073 (Northwestern / Stanford / Microsoft / UW)</p>
 <p><strong>作者/机构</strong>: Zihan Wang*1, Kangrui Wang*1, Qineng Wang*1, Pingyue Zhang*1, Linjie Li*2, Zhengyuan Yang4, Xing Jin6, Kefan Yu1, Minh Nhat Nguyen7, Licheng Liu1, Eli Gottlieb1, Yiping Lu1, Kyunghyun Cho5, Jiajun Wu3, Li Fei-Fei3, Lijuan Wang4, Yejin Choi3, Manling Li1<br/>
 (1Northwestern University 2University of Washington 3Stanford University 4Microsoft 5New York University 6University of British Columbia 7Singapore Management University)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个支持多轮交互与轨迹级优化的强化学习框架 StarPO 及其系统实现 RAGEN，通过引入基于不确定性的轨迹过滤和非对称梯度裁剪，成功解决了大语言模型智能体在多轮强化学习中容易陷入局部最优的“回声陷阱”问题，实现了稳定有效的自我演进。</p>
+<p><strong>要解决什么问题</strong> 原有针对大语言模型的强化学习方法大多假设任务是单轮静态的，目标是最大化给定提示下的单次响应奖励。然而，当智能体被置于需要多轮交互且反馈具有随机性的动态环境中时，直接套用单轮强化学习算法会遭遇严重的训练不稳定问题。具体而言，模型在训练中极易陷入一种被称为“回声陷阱”的机制卡点：智能体会过度拟合那些在局部获得高奖励的特定推理模板，导致探索能力被抑制。表现在训练指标上，就是输出熵骤降、组内奖励变异性消失，随后引发剧烈的梯度尖峰，最终导致模型性能不可逆地崩溃。此外，在多轮长时程任务中，如果仅仅依靠最终的任务成功与否来分配奖励，模型会逐渐暴露出“思考”与环境状态脱节的问题，甚至产生幻觉式的推理，最终退化为直接输出动作的捷径行为，导致推理能力在多轮交互中不断衰退。</p>
+<p><strong>怎么做的</strong> 为了绕开多轮交互中的梯度崩溃与推理退化卡点，本文的核心思路是将智能体与环境交互的完整历史（包括状态、思考、动作和奖励）作为一个连贯的整体进行轨迹级优化，并针对性地重塑梯度更新机制。首先，方法将多轮交互建模为马尔可夫决策过程，提出了 StarPO 框架。与以往优化单轮输出的方法不同，StarPO 的目标是最大化整条交互轨迹的总奖励，其定义性公式为：$$J_{\text{StarPO}}(\theta) = \mathbb{E}_{\mathcal{M}, \tau \sim \pi_\theta} [R(\tau)]$$在每次训练迭代中，智能体根据当前状态生成包含中间推理和可执行动作的结构化输出，环境则返回新状态和奖励，交错进行部署与策略更新。为了解决“回声陷阱”导致的崩溃，作者在 StarPO 基础上设计了稳定变体 StarPO-S，它由三个关键部件构成。第一是基于不确定性的轨迹过滤，这是最核心的防御机制。系统会计算同一提示下多次部署的奖励标准差，直接丢弃那些奖励变异性低（即模型已经确信或陷入重复）的轨迹，只保留高方差的实例进行训练，从而强制模型保持探索。第二是移除 KL 散度惩罚，进一步释放模型在多轮交互中的探索空间。第三是非对称的解耦梯度裁剪，通过设置更高的裁剪上界，允许模型更激进地从高奖励的优质部署中学习。此外，为了保证部署轨迹的质量，系统要求在训练时保持高频率的在线数据更新，并限制每轮的动作预算以平衡规划深度与噪声。</p>
+<p><strong>效果如何</strong> 实验基于 Qwen-2.5 Instruct 0.5B 模型（用于符号任务）和 3B 模型（用于真实网页任务），在 H100 GPU 上借助 veRL 库搭建训练流水线。测试环境包含双臂赌博机 Bandit、推箱子 Sokoban、网格导航 Frozen Lake 以及网页购物 WebShop 四个复杂度递增的任务。对比基线为标准强化学习路线的两个代表方法：代表演员-评论家路线、能提供稳定 token 级信号的 PPO，以及代表无评论家、基于组相对奖励路线的 GRPO。量化结果表明，基线方法在符号任务中均出现了先上升后崩溃的现象，而 StarPO-S 显著延迟甚至消除了崩溃。例如在 Frozen Lake 任务中，StarPO-S 仅保留 50% 的高方差轨迹进行训练，就完全避免了模型崩溃，同时缩短了训练时间并提升了最终成功率。消融实验进一步指出，每轮分配 5 到 6 个动作预算能为多步规划提供最佳平衡，而每次更新都重新收集轨迹的在线部署策略收敛最快。不过作者也承认了该方法的局限与代价：如果缺乏针对推理质量本身的细粒度奖励，模型在多轮任务中的思考长度会随训练步数持续缩短，推理能力依然会衰退；同时，当前验证主要集中在较小规模模型和纯文本任务上，尚未引入经验重放缓冲区等成熟的强化学习机制，也未扩展到多模态场景。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在系统性地研究如何使大型语言模型（LLM）智能体在多轮交互和随机环境反馈下能够稳定有效地自我演进。传统强化学习（RL）在静态任务上取得了进展，但在交互式智能体的多轮训练中仍面临训练不稳定、奖励信号复杂和泛化能力有限等挑战。</p>
 <p>为解决这一问题，研究者们提出了一个通用的智能体强化学习框架 StarPO（State-Thinking-Actions-Reward Policy Optimization），并基于此开发了 RAGEN，一个用于训练和评估 LLM 智能体的模块化系统。该系统支持完整的训练循环，包括多轮部署（rollout）生成、轨迹级奖励分配和策略优化。</p>

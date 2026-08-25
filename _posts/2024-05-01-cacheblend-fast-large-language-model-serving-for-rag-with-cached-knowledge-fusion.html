@@ -22,6 +22,23 @@ title: 'CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowle
 <h1 id="cacheblend-fast-large-language-model-serving-for-rag-with-cached-knowledge-fusion">CacheBlend: Fast Large Language Model Serving for RAG with Cached Knowledge Fusion</h1>
 <p><strong>文章标题</strong>: CacheBlend: 通过缓存知识融合实现检索增强生成（RAG）的快速大语言模型服务<br/>
 <strong>作者/机构</strong>: Jiayi Yao (University of Chicago/CUHK Shenzhen), Hanchen Li (University of Chicago), Yuhan Liu (University of Chicago), Siddhant Ray (University of Chicago), Yihua Cheng (University of Chicago), Qizheng Zhang (Stanford University), Kuntai Du (University of Chicago), Shan Lu (Microsoft Research / University of Chicago), Junchen Jiang (University of Chicago)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一种名为 CacheBlend 的键值缓存融合机制，通过选择性重计算少量令牌并与存储加载流水线化，在多文本块输入场景下将大语言模型的首字生成时间降低了 2.2 至 3.3 倍，同时保持了与完全重计算相当的生成质量。</p>
+<p><strong>要解决什么问题</strong>
+在检索增强生成（RAG）等场景中，大语言模型的输入通常由多个检索到的独立文本块拼接而成，导致预填充阶段计算量巨大，成为首字生成时间和吞吐量的瓶颈。现有键值缓存重用技术在处理多文本块时存在严重机制缺陷。代表性的前缀缓存技术只能重用严格作为输入前缀的文本块缓存，拼接多个上下文时，只有首个文本块能被加速。完全KV重用技术虽通过位置拼接强行重用了所有非前缀文本块的预计算缓存，但各文本块在预计算时相互独立，彻底丢失了文本块间的“交叉注意力”，即后续文本块中的令牌无法对前面文本块中的令牌产生注意力交互。这种缺失会导致前向注意力矩阵产生巨大偏差，使模型在综合多个上下文推理时出现严重幻觉或错误答案。现有系统卡在了要么只能加速极少部分前缀、要么强行加速但牺牲正确性的两难境地。</p>
+<p><strong>怎么做的</strong>
+CacheBlend 的核心思路是“选择性KV重计算”与“计算加载流水线化”，既绕开前缀缓存的命中率限制，又修复完全KV重用丢失交叉注意力的缺陷。为恢复交叉注意力，CacheBlend 逐层挑出一小部分（通常少于 15%）关键令牌重新计算其 KV 值，对剩余令牌直接重用预计算缓存。对于第 $i$ 层、令牌 $t$，其 KV 偏差为当前缓存与完全预填充缓存的绝对差值：
+$$ \Delta_{kv}(KV_i, KV_{full_i})[t] $$
+注意力偏差则是当前前向注意力矩阵与完全预填充矩阵差异的 L2 范数：
+$$ \Delta_{attn}(A_i, A_{full_i}) $$
+交叉注意力具高度稀疏性，优先重计算具有最高 KV 偏差的令牌，能最大幅度消除注意力偏差。由于无法提前得知真实的完全预填充缓存，CacheBlend 利用输入嵌入在层间变化缓慢的特性，采用渐进式过滤方案：在第一层根据注意力偏差选出比例为 $r_1\%$ 的令牌，在第二层重计算后，再从中筛选出比例更小的 $r_2\%$ 作为下一层的重计算目标，依此类推，精准锁定需更新的令牌。为隐藏重计算开销，CacheBlend 设计了流水线化架构，由加载控制器、KV 缓存存储和融合器构成。KV 缓存存储负责哈希管理并执行最近最少使用淘汰策略。加载控制器实时评估从存储设备将上一层 KV 缓存加载到显存的延迟，及当前层选择性重计算的延迟，动态计算出最佳重计算比例 $r\%$，使重计算耗时刚好等于或略小于加载耗时。融合器则按此比例，在等待上一层缓存加载期间，同步执行当前层的选择性重计算。通过该机制，CacheBlend 能将 KV 缓存存在容量大但速度慢的固态硬盘上，而不增加推理延迟。</p>
+<p><strong>效果如何</strong>
+实验在 2 张 NVIDIA A40 显卡、128GB 内存和 1TB NVME SSD 环境下进行，基于 vLLM 框架实现。测试模型涵盖 Mistral-7B、8 位量化的 Yi-34B 及 Llama-70B。数据集使用 2WikiMQA、Musique、SAMSum、MultiNews 及合成的 RAG 扩展数据集。对比基线包括：代表绝对正确但极慢路线的完全KV重计算、代表 vLLM 等主流框架路线的前缀缓存，以及代表 PromptCache 路线的完全KV重用。量化结果表明，在所有数据集和模型上，使用 5% 到 18% 的选择性重计算比例时，CacheBlend 相比完全KV重计算，生成质量（F1 或 Rouge-L 分数）下降幅度严格控制在 0.02 以内，但首字生成时间降低了 2.2 至 3.3 倍。在合成 RAG 场景下，CacheBlend 实现了比所有保证质量的基线低 2.8 至 5 倍的延迟，吞吐量同等提升。与完全KV重用相比，CacheBlend 绝对速度略慢，但生成质量稳定且大幅超越前者，多跳推理得分超 2 倍以上。局限性方面，CacheBlend 的收益依赖批处理大小，批处理越大预填充开销占比越高，延迟降低越显著。当使用极慢磁盘时，总延迟被加载时间主导，其与完全KV重用的延迟差距会缩小。此外，执行高偏差令牌计算时，当前层会短暂同时持有更新后和预计算的 KV，存在微小瞬时显存开销。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决一个核心挑战：当一个大型语言模型（LLM）的输入包含多个文本块时，如何快速地组合它们各自预计算的键值缓存（KV Caches），以达到与昂贵的完全预填充（full prefill）相同的生成质量。这个问题在检索增强生成（RAG）等应用中尤为突出，因为这类应用的输入通常由多个检索到的文本块作为上下文。</p>
 <p><strong>核心问题</strong>: 现有的KV缓存重用方法存在局限性。<br/>

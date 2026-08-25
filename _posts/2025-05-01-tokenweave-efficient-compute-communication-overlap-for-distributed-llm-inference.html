@@ -19,6 +19,15 @@ title: 'TokenWeave: Efficient Compute-Communication Overlap for Distributed LLM 
 <div class="container">
 <h1>TokenWeave: Efficient Compute-Communication Overlap for Distributed LLM Inference</h1>
 <p><strong>作者/机构</strong>: Raja Gond, Nipun Kwatra, and Ramachandran Ramjee (Microsoft Research India)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了TokenWeave，通过粗粒度令牌分割和融合通信与归一化算子的技术，在分布式大语言模型推理中实现了高效的计算与通信重叠，最高降低1.29倍延迟并提升1.26倍吞吐量。</p>
+<p><strong>要解决什么问题</strong> 在大型语言模型的张量并行推理中，由于前馈网络和注意力层的切分，每个Transformer块都在关键路径上引入两次AllReduce通信，即使拥有NVLink等高速互连硬件，通信开销仍可能占总延迟的20%。为了隐藏这部分开销，现有的计算-通信重叠技术（如Flux、TileLink）通常将计算分解为细粒度的微小任务（如在矩阵乘法的分块级别），以便让已完成子任务的通信与剩余子任务的计算重叠。然而，这种细粒度分解会打破现代GPU的高度并行性，引发波次量化效应。例如当计算任务被强行切小时，最后一波计算可能只能填满一小部分流式多处理器，导致大量计算资源闲置。此外，细粒度融合内核会增加寄存器和共享内存的占用，且只有在批次包含大量令牌时才能有效隐藏通信，对小批次极不友好。同时，现有方法完全忽略了紧随通信之后的RMSNorm操作，该操作在内存带宽受限的情况下会带来5%到9%的不可忽视的延迟开销。</p>
+<p><strong>怎么做的</strong> TokenWeave的核心思路是放弃细粒度切分，改用粗粒度的令牌分割配合极低资源占用的融合算子来实现重叠。方法由三个关键部件构成。首先是感知波次的智能分割，它将传入的推理批次划分为前缀和后缀两个大致相等的子集，使得一个子集的通信可以与另一个子集的计算在独立的CUDA流中流水线重叠。针对注意力机制的序列依赖问题，该方法确保前缀分割的操作始终先于后缀分割执行。为了消除分割带来的波次量化开销，智能分割策略会精确计算流式多处理器的分配，确保两个子任务所需的总波次数不超过原始完整计算的波次数，其核心不变量为：$Waves(Split_1) + Waves(Split_2) \le Waves(Original)$。其次是RMSNorm重排序，标准做法是在AllReduce通信完成后，所有GPU各自对完整张量进行冗余的RMSNorm计算。TokenWeave将AllReduce拆解为ReduceScatter和AllGather，并把RMSNorm插在两者之间。此时每个GPU只需对自己负责的 $1/p$ 数据块进行归一化，彻底消除了冗余计算。最后是新颖的融合AllReduce-RMSNorm内核，它利用Hopper架构的Multimem指令和PyTorch的SymmetricMemory接口，将上述重排序后的操作融为一体，其数据流定义为：$Output = AllGather(RMSNorm(ReduceScatter(Input)))$。该融合内核直接在网络内归约后的结果上计算方差并输出到多播地址，省去了多次显存读写。更关键的是，这个内核仅需占用2到8个流式多处理器即可跑满通信带宽，从而将绝大部分计算资源让给另一个子集的计算任务，完美实现了计算与通信的深度重叠。</p>
+<p><strong>效果如何</strong> 实验在8xH100和4xH100 DGX硬件上基于vLLM框架搭建，测试了Llama-3.3-70B、Qwen2.5-72B等密集模型以及Mixtral-8x22B混合专家模型。对比基线包括无重叠的vLLM-multimem、代表细粒度算子融合路线的TileLink、代表系统级调度路线的NanoFlow，以及一个移除了所有通信的理论上限基线vLLM-nocomm。在密集模型上，TokenWeave在不同序列长度下稳定实现了1.18倍至1.29倍的延迟降低和最高1.26倍的吞吐量提升。特别是在1024令牌的短序列场景下，TileLink等细粒度方法会出现性能退化，而TokenWeave依然能获得1.18倍的加速。在序列长度大于4K时，TokenWeave的端到端性能甚至超越了零通信开销的vLLM-nocomm基线，消融实验证明这得益于其融合内核不仅完全掩盖了通信耗时，还倒赚了RMSNorm的计算时间。相比之下，NanoFlow在其自定义框架下仅带来约1.08倍的提升。不过该方法也有局限，对于通信开销本身较小的混合专家模型，由于其前馈网络计算被分散到多个专家，小请求的计算会变成内存密集型，此时粗粒度分割引入的开销无法被抵消，导致在短序列长度下会产生净性能损失。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>: 大型语言模型（LLM）的分布式推理即使在使用如NVLink等高速互连的GPU上，也可能引入高达20%的通信开销。现有缓解这些开销的技术通常将计算分解为更细粒度的任务，并将通信与子任务重叠，但这种细粒度分解会在GPU上因波次量化效应（wave quantization effects）而产生额外开销，同时通信本身也占用大量流式多处理器（SM），进一步增加了开销。因此，目前主流的开源服务系统（如vLLM、SGLang、TensorRT-LLM）均不支持对张量并行（tensor-parallel）模式下的大模型进行计算-通信重叠。</p>
 <p><strong>研究目标</strong>: 本文旨在提出一种高效的方法TokenWeave，以最小化LLM推理中的通信开销，特别是在中等规模token批次下也能实现显著性能提升，并解决现有细粒度分解方法带来的计算效率低下和资源竞争问题。</p>

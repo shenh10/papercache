@@ -20,6 +20,17 @@ title: 'Tapered Off-Policy REINFORCE: Stable and Efficient Reinforcement Learnin
 <div class="container">
 <h1>Tapered Off-Policy REINFORCE: Stable and Efficient Reinforcement Learning for LLMs</h1>
 <p><strong>作者/机构</strong>: Nicolas Le Roux∗,∇,1, Marc G. Bellemare∗,2, Jonathan Lebensold†,3, Arnaud Bergeron†,1, Joshua Greaves3, Alex Fréchette2, Carolyne Pelletier2, Eric Thibodeau-Laufer2, Sándor Toth2, Samantha Work2 (1Mila 2Reliant AI)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为 TOPR 的非对称截断重要性采样强化学习算法，解决了大语言模型离线策略微调的不稳定性，使 8B 参数模型在数学推理任务上达到了 70B 模型的性能。</p>
+<p><strong>要解决什么问题</strong> 原有的大语言模型强化学习微调通常依赖在线策略，即训练数据分布必须与模型当前分布匹配。一旦转向离线策略以复用历史数据，传统的 REINFORCE 算法在处理负面奖励时会遭遇严重的机制卡点。具体而言，负面奖励对应的更新项在参数空间中是无上界的，它会驱使模型尽可能远离生成数据的参考分布，通过将某些轨迹的生成概率压缩至零来让目标函数无限变大。这种机制会破坏模型参数，导致模型退化和崩溃。现有的缓解方案代价高昂：引入 KL 正则化会拖慢学习；监督式微调直接丢弃负面样本，导致严重的推理浪费并丢失试错信息；截断重要性采样虽能缓解方差，但当重要性比率接近零时梯度也趋零，导致模型极难提高那些初始概率低的正面轨迹的生成概率。</p>
+<p><strong>怎么做的</strong> TOPR 的核心思路是采用非对称的锥形重要性采样机制，对正面和负面样本实行区别对待。它之所以能绕开上述卡点，是因为它在保证负面样本梯度有界的同时，解除了对正面样本的梯度抑制。该方法的关键设计由两套截断逻辑构成。对于正面样本，TOPR 采用类似监督式微调的策略，将其重要性比率的截断下界设为 1。这意味着无论该正面轨迹在当前策略下的概率多低，都能获得一个保底的较大梯度，使模型快速提高优秀轨迹的生成概率。对于负面样本，TOPR 采用截断重要性采样，将重要性比率严格限制在 0 到 1 之间。这使得负面轨迹在概率极低时能优雅地衰减至零，彻底消除了导致崩溃的无界惩罚项。TOPR 的核心更新式定义如下：
+$$\nabla J_{\text{TOPR}}(\pi) = \sum_{\tau \in T^+} \mu(\tau) R(\tau) \nabla \log \pi(\tau) + \sum_{\tau \in T^-} \mu(\tau) \left[ \frac{\pi(\tau)}{\mu(\tau)} \right]_0^1 R(\tau) \nabla \log \pi(\tau)$$
+其中，$\pi$ 是当前优化的策略，$\mu$ 是生成离线数据的参考策略，$\tau$ 是轨迹，$R(\tau)$ 是奖励，$[x]_0^1$ 表示将数值裁剪到 0 和 1 之间。第一项负责对正面样本加速学习，第二项负责对负面样本进行安全的降权惩罚。此外，作者揭示了 REINFORCE 中基线参数的新职责：在离线学习中，基线参数本质上在隐式调节正面与负面样本的有效比例，充当了一种柔和的 KL 正则化器。</p>
+<p><strong>效果如何</strong> 实验在单节点 H100 上进行，主要使用 Llama 3 8B 模型，在 GSM8K 和 MATH 数据集上展开。训练数据由模型自身生成，正确奖励为 +1，错误为 -1。对比基线选取了三条路线的代表：直接应用离线策略的朴素 REINFORCE（无约束路线）、采用截断目标函数的 PPO（在线转离线路线），以及基于偏好优化的 DPO（对比学习路线）。量化结果表明，在 GSM8K 测试中，随着训练偏离初始策略，朴素 REINFORCE 发生崩溃，PPO 很快停滞，DPO 表现尚可但显著落后于 TOPR。TOPR 实现了最快的准确率爬升，并大幅减少了模型输出无效格式的比例。在 MATH 数据集上，相比仅使用正面样本，TOPR 充分利用负面样本将单次推理准确率几乎翻倍。在多轮迭代下，结合安娜·卡列尼娜采样（每个问题仅保留一个正面样本，其余用随机负面样本填充），对 DeepSeek-R1 8B 模型进行 TOPR 微调，其 16 次多数投票准确率略微超越了 Llama 3 70B 模型。该方法的局限在于，性能对数据集中正面样本的有效比例非常敏感，最佳比例在 10% 到 20% 之间，过高或过低都会导致性能下降。此外，目前的验证仅限于参考策略是迭代初始模型的情况，若使用完全不同的外部模型生成数据，可能面临数值挑战。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文提出了一种名为 Tapered Off-Policy REINFORCE (TOPR) 的新算法，用于通过强化学习对大型语言模型进行微调。传统的REINFORCE算法在处理负面奖励时，本质上是一种在线（on-policy）算法，其良好表现依赖于训练数据分布与模型自身分布的匹配。这限制了其复用历史数据的能力，并且在离线（off-policy）训练中容易出现不稳定的问题，文献中普遍存在此类证据。虽然KL正则化可以缓解这种不稳定性，但它会减慢学习速度并引入额外的超参数。</p>
 <p>为了解决这些问题，TOPR算法被提出，它旨在实现即使在模型与数据分布差异显著的情况下，也能稳定地利用正面和负面样本。TOPR的核心创新在于使用了一种非对称、锥形（tapered）的重要性采样变体，通过以下策略梯度来改进语言模型π（或策略）：</p>

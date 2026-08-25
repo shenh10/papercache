@@ -20,6 +20,19 @@ title: 'Step-3 is Large yet Affordable: Model-system Co-design for Cost-effectiv
 <h1 id="step-3-is-large-yet-affordable-model-system-co-design-for-cost-effective-decoding">Step-3 is Large yet Affordable: Model-system Co-design for Cost-effective Decoding</h1>
 <p><strong>作者/机构</strong>: StepFun Inc.</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文通过模型架构与推理系统的深度协同设计，推出了拥有3210亿参数的视觉语言模型Step-3，在保持极高吞吐量的同时，大幅降低了长上下文解码的硬件成本。</p>
+<p><strong>要解决什么问题</strong> 现有大型语言模型在解码阶段，尤其是处理长上下文推理任务时，面临硬件效率低下和单次解码成本高昂的核心卡点。当前开源模型在探索新架构时普遍陷入了两个次优的工程实践：第一，过度强调压缩KV缓存的体积。这种做法虽然缓解了显存容量焦虑，却导致注意力层的计算负载急剧飙升，使得模型在算力有限的平价硬件上运行时，计算时间大幅拖长，反而损害了整体的成本效益；第二，盲目追求极度稀疏的MoE（混合专家）架构，而没有评估其稀疏度是否与底层硬件的网络带宽和计算能力相匹配。由于大模型的Attention层（显存密集型）和FFN层（计算密集型）具有截然不同的内存访问模式，传统的将两者绑定在同一GPU上的同构部署方式，会导致长上下文下Attention层算力吃紧，而FFN层因等待数据或网络拥塞而利用率不足。这种算力与显存的错配，加上极度稀疏MoE带来的跨节点通信瓶颈，最终导致模型浮点运算利用率极低，参数量看似不大，但实际解码成本居高不下。</p>
+<p><strong>怎么做的</strong> 本文的核心思路是模型-系统协同设计，通过在算法层重构注意力机制、在系统层解耦计算模块，彻底绕开了显存与算力的错配卡点。关键设计由两个部件构成。首先是模型层的多矩阵分解注意力（MFA）。MFA在Query-Key电路中引入低秩矩阵分解，在保持高注意力表达能力的同时，将算术强度（每访问一字节内存对应的计算量）精准控制在128。这个数值完美契合了主流平价硬件的计算带宽比，既避免了像MLA架构那样算术强度过高导致在普通硬件上算力受限，又避免了像GQA架构那样算术强度过低导致极度依赖高带宽。其次是系统层的注意力-FFN解耦（AFD）分布式推理架构。AFD将需要存KV缓存的Attention层和参数量巨大的FFN层拆分，部署到各自专用的GPU集群上，通过高速网络传输隐藏状态。这种解耦使得两边都能贴近硬件极限运行，其理论解码成本由下式定义：
+$$Cost_{attention} = \max(FLOPs_{attn\_core} \times UFLOP, Mem_{attn\_core} \times Ubyte) + FLOPs_{linear} \times UFLOP$$
+为了让FFN层达到高浮点运算利用率，AFD构建了一个严格的三阶段流水线（Attention计算、网络通信、FFN计算），目标是每输出一个token耗时50毫秒，即每个阶段必须在16.6毫秒内完成。这就要求MoE的稀疏度 $S$ 必须与硬件网络带宽 $Net$ 严格对齐，其下界公式为：
+$$S \geq \frac{3 \times L \times H \times Roofline}{2 \times 16.6ms \times Net}$$
+基于此，Step-3将MoE稀疏度设定在0.08左右，避免了过度稀疏带来的网络拥塞。为了支撑这种极速流水线，作者还开发了专用的StepMesh通信库，将所有通信操作放在CPU上执行，实现了GPU流式多处理器（SM）的零占用，完美掩盖了网络延迟。</p>
+<p><strong>效果如何</strong> 实验基于3210亿总参数、380亿激活参数的Step-3模型，在H800、H20等GPU硬件和RoCE网络环境下进行，全模型采用FP8量化。对比的基线模型涵盖了当前主流路线：代表大规模专家并行（EP）和MLA路线的DeepSeek-V3，代表GQA路线的Qwen3-MoE-235B，以及采用混合注意力路线的MiniMax M1和Llama 4 Maverick。量化结果显示，在H800硬件、4096上下文长度且满足50毫秒延迟目标的严苛设置下，Step-3的峰值吞吐量达到4039 TGS（每秒每卡token数），比DeepSeek-V3高出74%。在解码成本上，当上下文长度为8K时，Step-3（采用H800与H20混合部署）每百万token解码成本仅为0.055美元，低于DeepSeek-V3的0.068美元和Qwen3-MoE-235B的0.062美元；当上下文拉长至32K时，Step-3的成本优势进一步扩大至0.129美元，远低于DeepSeek-V3的0.211美元。此外，消融实验证明MFA在H20等非旗舰硬件上的延迟显著低于MLA和GQA。不过，该方案也存在局限与代价：AFD架构对网络通信延迟极其敏感，必须依赖定制的StepMesh库和拓扑感知的网络部署来维持流水线平衡；同时，如果未来引入多Token预测（MTP）技术，虽然能提升吞吐量，但在AFD架构下会无条件增加FFN层的计算负载，可能导致整体成本上升，需要谨慎权衡。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文介绍了Step-3的模型-系统协同设计，该设计专门为测试时扩展范式（test-time scaling paradigm）而工程化，主要优化目标是最小化解码成本。Step-3是一个拥有3210亿总参数的视觉语言模型（VLM），每次解码一个token会激活380亿参数。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

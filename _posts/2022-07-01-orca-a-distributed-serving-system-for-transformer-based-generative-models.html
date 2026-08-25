@@ -20,6 +20,15 @@ title: 'Orca: A Distributed Serving System for Transformer-Based Generative Mode
 <h1 id="orca-a-distributed-serving-system-for-transformer-based-generative-models">Orca: A Distributed Serving System for Transformer-Based Generative Models</h1>
 <p><strong>论文标题</strong>：Orca：一种用于基于 Transformer 的生成式模型的分布式服务系统<br/>
 <strong>作者/机构</strong>：Gyeong-In Yu and Joo Seong Jeong, Seoul National University; Geon-Woo Kim, FriendliAI and Seoul National University; Soojeong Kim, FriendliAI; Byung-Gon Chun, FriendliAI and Seoul National University</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了名为 ORCA 的分布式推理服务系统，通过引入迭代级调度与选择性批处理技术，解决了自回归模型生成长度不一导致的计算资源浪费，在 175B 参数的 GPT 模型上实现了同等延迟下较现有基线 36.9 倍的吞吐量提升。</p>
+<p><strong>要解决什么问题</strong> 现有推理服务系统在处理基于 Transformer 的生成式模型时，面临调度粒度与计算效率不匹配的卡点。生成式模型的推理具有自回归特性，需多次迭代逐个生成 token。现有系统（如 Triton）与底层引擎（如 FasterTransformer）采用请求级调度，将多个请求打包成固定批次，必须等批次内所有请求生成完毕才能返回结果。这导致两个核心问题：第一，各请求生成长度不同，提前完成的请求必须在 GPU 中原地等待，引擎甚至要为非活跃请求执行无效计算，既浪费算力又增加已完成请求的延迟；第二，新到达的请求必须苦等当前整个批次处理结束，导致排队时间急剧上升。请求长度的异构性使得传统的请求级批处理成为了限制吞吐量和延迟的最大瓶颈。</p>
+<p><strong>怎么做的</strong> 为绕开请求级调度的卡点，本文提出了迭代级调度和选择性批处理，并构建了 ORCA 分布式系统。核心思路是将调度粒度降至迭代级。调度器每次只调用引擎运行模型的一次迭代（生成一个 token）。每次迭代后引擎立即返回结果，调度器借此动态更新请求池：已完成的请求立刻返回给客户端，新请求只需等待当前迭代结束即可无缝插入下一次批次。这消除了无谓等待和排队延迟。但迭代级调度引入了新卡点：批次内请求处于不同生成阶段，已处理 token 数不同，导致依赖历史信息的 Attention 状态张量形状各异。传统批处理要求输入张量形状严格对齐，这在迭代级调度下无法实现。为此，本文提出选择性批处理。其关键洞察是：并非所有操作都受制于不规则张量。对于矩阵乘法和层归一化等操作，系统将不同请求的输入张量在 token 维度上展平拼接成一个二维大张量 $[\sum L, H]$ 进行批处理。而对于形状不规则的 Attention 操作，系统在进入计算前将大张量按请求分割，对每个请求单独计算 Attention，完成后再合并回大张量送入后续层。因为 Attention 不含模型参数，单独计算对内存读取效率影响极小。在架构上，ORCA 结合层内与层间并行支持大模型。为消除分布式同步开销，ORCA 实现了控制与数据平面分离：GPU 仅通过 NCCL 交换张量数据，CPU 控制线程通过独立 gRPC 通道发送指令，避免了每次迭代的 CPU-GPU 同步。调度器还根据请求的最大 token 数预留显存槽位防止死锁，并自然实现了多批次流水线并行，无需切分微批次。</p>
+<p><strong>效果如何</strong> 实验在配备 8 块 40GB A100 GPU 的虚拟机集群上进行，节点间通过 200Gbps Infiniband 互联。测试涵盖 13B 到 341B 参数的 GPT 模型。评估使用合成的客户端请求追踪数据，输入和输出 token 长度均服从均匀分布以模拟异构负载。对比基线是 NVIDIA 的 FasterTransformer，代表采用请求级调度和微批次流水线并行的主流路线。结果表明，在处理异构请求时 ORCA 优势显著。在 175B 模型上，当设定中位数端到端延迟约为 190 毫秒时，FasterTransformer 吞吐量仅为 0.185 req/s，而 ORCA 达到 6.81 req/s，实现了 36.9 倍的提升。随着负载增加，ORCA 能通过增大批次大小有效提升吞吐量且延迟平缓；基线系统因无法处理异构长度，增加批次大小反而受限。代价与局限在于：在单机处理输入输出长度完全一致的同构请求时，ORCA 执行时间与基线相当或略慢，因为此时不存在提前完成问题，不对 Attention 批处理会带来微小性能折损。此外，ORCA 调度器需在请求初始化时按其最大可能生成的 token 数一次性预留显存，在显存极度紧张时，这种保守策略可能限制系统支持的最大并发批次大小。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决现有推理服务系统在处理基于 Transformer 的生成式模型（如 GPT-3）时遇到的性能瓶颈。这类模型的自回归特性要求为单个推理请求多次运行模型，每次迭代生成一个 token。现有系统采用请求级调度，即一个批次（batch）中的所有请求必须全部完成后才能返回结果，这导致了两个核心问题：1) 提前完成的请求必须等待批次中其他请求，增加了不必要的延迟；2) 新到达的请求必须等待整个当前批次处理完毕，增加了排队时间。</p>
 <p>为解决这些问题，本文提出了以下核心贡献：</p>

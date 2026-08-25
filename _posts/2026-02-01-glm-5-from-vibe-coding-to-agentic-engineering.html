@@ -19,6 +19,21 @@ title: 'GLM-5: From Vibe Coding to Agentic Engineering'
 <h1>GLM-5: From Vibe Coding to Agentic Engineering</h1>
 <p><strong>GLM-5 Team</strong><br/>
 <strong>Zhipu AI &amp; Tsinghua University</strong></p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+GLM-5 是一款拥有 744B 参数的开源基础模型，它通过引入动态稀疏注意力机制和完全异步的强化学习基础设施，大幅降低了长上下文代理任务的计算成本，在端到端软件工程等复杂任务上达到了与 Claude Opus 4.5 等顶尖闭源模型相匹敌的水平。</p>
+<p><strong>要解决什么问题</strong>
+大语言模型在向主动解决复杂软件工程任务的代理（Agent）转变时，面临着计算成本和训练效率的双重卡点。首先是长上下文推理的显存与计算瓶颈：代理任务通常需要处理 128K 以上的超长上下文，传统的密集注意力机制计算复杂度随序列长度呈平方级增长，导致成本极高；同时，多潜在注意力（MLA）在解码阶段的点积维度过大带来了高昂的计算开销，且用于推测解码的多 token 预测（MTP）层会导致显存随预测步数线性膨胀。其次是强化学习后训练的并行度与对齐失效问题：在处理长视界任务时，传统的同步强化学习框架会因为环境交互耗时过长，导致训练引擎出现巨大的 GPU 空闲气泡；此外，在异步离线策略下，重新分词会引入 token 边界不匹配，破坏动作与奖励的精确对齐，且跟踪精确的行为概率计算成本过高，导致模型在动态环境中的自我修正能力难以提升。</p>
+<p><strong>怎么做的</strong>
+为了绕开上述卡点，GLM-5 在架构和强化学习基础设施上进行了深度改造。在模型架构层面，GLM-5 扩展至 744B 参数和 256 个混合专家，并采用 DeepSeek Sparse Attention (DSA) 架构。DSA 通过一个轻量级索引器动态检索最相关的键值条目，实现了 token 级别的稀疏性，在不丢失长距离依赖的前提下，将长序列的注意力计算开销降低了 1.5 到 2 倍。针对 MLA 解码成本高的问题，设计了 MLA-256 变体，通过增加注意力头维度并减少三分之一的头数，在保持参数量不变的同时降低了解码计算量；配合改进的 Muon Split 优化器，对不同注意力头的投影矩阵进行独立正交化更新，成功弥补了性能差距。对于 MTP 模块，GLM-5 在训练期间让 3 个 MTP 层共享参数，既控制了显存占用，又提高了推测解码的接受率。在强化学习层面，基于 slime 框架构建了完全异步的代理强化学习系统。该系统通过中央多任务编排器将推理引擎和训练引擎解耦到不同的 GPU 上，彻底消除了长视界任务带来的同步气泡。为了保证异步训练的稳定性，引入了 Token-in-Token-out (TITO) 网关来拦截请求并记录原始 token ID，消除了重新分词带来的微小错位。同时，采用直接双侧重要性采样，直接复用生成期间的对数概率作为行为代理，免去了旧策略推理的开销。其核心优化目标通过双侧校准的 token 级掩码策略将信任区域限制在 $[1 - \epsilon_l, 1 + \epsilon_h]$ 内，更新式定义为：
+$$ J(\theta) = \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi_{old}} \left[ \sum_{t=1}^T \min \left( r_t(\theta) \hat{A}_t, f(r_t(\theta); \epsilon_l, \epsilon_h) \hat{A}_t \right) \right] $$
+其中 $r_t(\theta)$ 为重要性采样比率，$\hat{A}_t$ 为优势函数。此外，在推理强化学习阶段，模型结合了交错思维（在响应前进行思考）和保留思维（在多轮对话中重用已有推理块）模式，并采用确定性的 top-k 算子来保证 DSA 索引器在训练过程中的稳定性。</p>
+<p><strong>效果如何</strong>
+实验基于 744B 参数、经历 28.5T tokens 训练的 GLM-5 模型展开，并在 Ascend 等七款国产芯片上完成了 W4A8 量化及底层算子融合适配。对比基线不仅包括上一代 GLM-4.7 和开源标杆 DeepSeek-V3.2，还直接对标了代表闭源最强路线的 Claude Opus 4.5、Gemini 3 Pro 和 GPT-5.2 (xhigh)。在量化结果上，GLM-5 在 SWE-bench Verified 软件工程基准上取得 77.8 分，超越 Gemini 3 Pro 并逼近 GPT-5.2 (xhigh)；在 Humanity’s Last Exam 上以 50.4 分击败 Claude Opus 4.5；在 BrowseComp 搜索代理任务中配合分层上下文管理策略拿到了 75.9 分的成绩。在真实的 CC-Bench-V2 代理工程测试中，GLM-5 的前端构建成功率达到 98.0%，后端表现与 Claude Opus 4.5 相当。但作者也承认了模型的局限性：在 CC-Bench-V2 的端到端实例成功率以及多步链式长视界任务（52.3%）上，GLM-5 依然落后于 Claude Opus 4.5（61.6%），且高效注意力机制在极细粒度的检索任务上仍存在不可避免的轻微精度损失。</p>
+</div>
+</details>
 <h1>A1 主要贡献</h1>
 <p>本文推出了 <strong>GLM-5</strong>，这是一个旨在将"氛围编码（vibe coding）"范式转变为"代理工程（agentic engineering）"的下一代基础模型。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

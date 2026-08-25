@@ -22,6 +22,23 @@ title: 'SeerAttention: Self-distilled Attention Gating for Efficient Long-contex
 <ul>
 <li><strong>作者/机构</strong>: Yizhao Gao (University of Hong Kong), Zhichen Zeng (University of Washington), Dayou Du (University of Edinburgh), Shijie Cao (Microsoft Research), Peiyuan Zhou (NVIDIA), Jiaxing Qi (NVIDIA), Junjie Lai (NVIDIA), Hayden Kwok-Hay So (University of Hong Kong), Ting Cao (Tsinghua University), Fan Yang (Microsoft Research), Mao Yang (Microsoft Research)</li>
 </ul>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一种名为 SeerAttention 的后训练自蒸馏方法，通过为大语言模型引入可学习的注意力门控来动态预测块级稀疏性，在 128K 长上下文预填充阶段实现了 7.3 倍的底层加速且几乎不损失精度。</p>
+<p><strong>要解决什么问题</strong>
+大语言模型在处理长上下文时，全注意力机制面临 $O(n^2)$ 的计算和显存复杂度瓶颈。虽然注意力图中天然存在大量可以被忽略的稀疏极小值（由 softmax 函数产生），且上下文越长稀疏性越显著，但这种稀疏分布是高度动态的，会随着输入内容和不同的注意力头剧烈变化。现有的稀疏化方案卡在两头：要么依赖预定义的固定模式或人工设计的启发式规则，缺乏通用性，难以真正拟合动态变化的稀疏特征；要么需要从头预训练一个稀疏注意力模型，算力成本极高，且无法直接复用现有的密集预训练模型权重。</p>
+<p><strong>怎么做的</strong>
+核心思路是通过后训练的自蒸馏机制，为现有的全注意力模型外挂一个轻量级的可学习门控网络（AttnGate），让模型自己从数据中学会识别动态的注意力稀疏模式，从而绕开人工设计规则的局限。关键设计由三个部件构成。首先是 AttnGate 模块，它负责以极低的计算开销预测块级稀疏性。该模块接收去除了位置编码的查询和键张量，在序列维度上进行非重叠的池化下采样。为了捕获极端激活值，最佳实践是对查询张量应用平均池化，对键张量应用最大、最小和平均池化的拼接。下采样后的张量通过线性层处理，并重新应用缩放了角度参数的块级旋转位置编码（RoPE）以支持长度外推。其输出的软分数矩阵大小仅为原始注意力图的几千分之一，定义为：
+$$ \mathbf{O} = \text{softmax}(\mathbf{Q}_c \mathbf{K}_c^\top / \sqrt{d}) $$
+其次是自蒸馏训练方案，负责让门控网络模仿原始模型的注意力分布。训练时冻结大模型原有参数，仅更新门控网络。为了在长上下文中避免计算完整注意力图导致显存爆炸，作者修改了 FlashAttention 内核，利用其局部最大值迭代的特性，在几乎不增加开销的情况下直接输出二维最大池化结果作为真值，并使用 KL 散度约束门控网络的输出：
+$$ \text{loss} = D_{KL}\left(\text{MaxPool2D} \left( \text{softmax} \left( \frac{\mathbf{Q}_{rope} \mathbf{K}_{rope}^{T}}{\sqrt{d}} \right) \right) \parallel \mathbf{O}\right) $$
+最后是推理阶段的二元掩码与稀疏计算。门控网络输出的分数会通过 TopK 或阈值法（例如 $b = \mathbf{O} &gt; threshold$）转化为二元掩码，随后交由专门开发的块稀疏 FlashAttention 内核执行。该内核在块级别跳过未激活区域的计算和显存读写，将预测出的稀疏度直接转化为硬件上的真实加速。</p>
+<p><strong>效果如何</strong>
+实验在 A100 GPU 上进行，主要评估了 Llama-3.1 系列（8B、70B）和 Qwen2.5 系列（7B、14B、32B）模型。对比基线点名了三个代表性路线：代表离线搜索静态稀疏模式的 MoA、代表基于预定义模式和启发式规则动态生成稀疏索引的 MInference，以及代表将注意力头划分为流式头和密集头的 DuoAttention。在长上下文基准 RULER（测试长度 4K 到 128K）中，SeerAttention 实现了最高的平均准确率，仅比全注意力密集基线低 0.41%，同时获得了 1.41 倍的平均端到端预填充加速。在 128K 序列长度和 90% 稀疏度的极限设置下，其块稀疏内核相比 FlashAttention-2 实现了 7.3 倍的底层加速。在短上下文任务（如 GSM8K）中，即使稀疏度达到 52%，准确率也仅下降 0.1%。可视化结果表明，门控网络无需先验知识就能自动学习到流式头、垂直线、斜线等多种复杂的稀疏模式。该方法的代价是需要适中的训练成本（8B 模型约需 40 个 GPU 小时）并引入约 1.3% 的额外参数量，推理时门控模块会带来不到 5% 的显存和延迟开销。作者承认的局限在于，当前成熟的设计主要用于加速长上下文的预填充阶段，若要将其应用于解码阶段（如长思维链任务），则必须移除查询张量的序列级池化以适应逐词元生成，这部分仍处于初步探索阶段。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决现代大语言模型（LLM）中注意力机制的二次复杂度问题，该问题尤其在处理长上下文时严重制约了模型的效率和可扩展性。现有利用注意力稀疏性的方法大多依赖于预定义的模式或启发式规则，难以高效地动态适应不同上下文。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

@@ -20,6 +20,23 @@ title: 'TileLink: Generating Efficient Compute-Communication Overlapping Kernels
 <h1 id="tilelink-generating-efficient-compute-communication-overlapping-kernels-using-tile-centric-primitives">TileLink: Generating Efficient Compute-Communication Overlapping Kernels using Tile-Centric Primitives</h1>
 <p><strong>文章标题</strong>：TileLink：使用以 Tile 为中心的原语生成高效的计算-通信重叠内核<br/>
 <strong>作者/机构</strong>：Size Zheng, Jin Fang, Xuegui Zheng, Qi Hou, Wenlei Bao, Ningxin Zheng, Ziheng Jiang, Dongyang Wang, Jianxi Ye, Haibin Lin, Li-Wen Chang, Xin Liu (均来自 ByteDance Seed)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一个名为 TileLink 的编译框架，通过引入以 Tile 为中心的原语将通信与计算的设计空间解耦，从而自动化生成高效的计算-通信重叠内核，在 8 卡 H800 上实现了最高 20.76 倍的单层加速和平均 1.32 倍的端到端模型加速。</p>
+<p><strong>要解决什么问题</strong>
+大型模型分布式训练中，通信开销常占总执行时间的 10% 到 50%，严重限制计算效率，而现有计算与通信重叠技术在机制上均存在卡点。第一条路线是算子分解，即将算子切分为更细粒度的单元，让无数据依赖的计算与通信并行。此做法虽易实现，但算子过小会导致 L2 缓存利用率低及计算资源量化效率变差；且细粒度内核间的同步需主机频繁干预，引入了不可忽视的同步开销。第二条路线是核融合，即在同内核中划分部分核心用于通信，剩余用于计算，通过设备端屏障同步状态。此法无需主机干预且缓存利用率高，但开发门槛极高，需深通底层硬件指令；若融合设计不当，通信与计算核心间会发生资源冲突导致性能下降。此外，现有的代码生成编译器虽能生成重叠内核，但受限于固定的重叠模式，缺乏算子级别的编程灵活性，无法跟上算法的快速迭代。</p>
+<p><strong>怎么做的</strong>
+TileLink 的核心思路是放弃计算与通信紧密耦合的传统优化，转而通过一套“以 Tile 为中心（Tile-centric）”的原语，将两者的设计空间彻底解耦，由编译器后端自动处理底层同步与映射。这种解耦设计允许通信和计算组件在三个子空间中独立做出最优选择：首先是 Tile 大小子空间，通信和计算可采用不同的分块大小（例如通信按 128x128 传输以占满带宽，计算按 128x256 消耗以对齐计算核心）；其次是 Tile 顺序子空间，通信可采用环形或全网状顺序，而计算可灵活决定等待单个或多个节点的数据以平衡缓存效率与等待延迟；最后是资源绑定子空间，通信可映射到复制引擎（DMA）以避免核心冲突，也可映射到计算核心以消除主机开销。为了在解耦后维持正确的生产者-消费者依赖关系，TileLink 在前端设计了两类原语。第一类是信号原语（如 `producer_tile_notify`、`consumer_tile_wait`），用于管理通信与计算之间的屏障。这些原语带有严格的内存一致性语义（Release/Acquire），确保在后端编译进行多级流水线展开和算子重排序时，内存访问操作不会被错误地重排到屏障之前或之后。第二类是数据原语（如 `tile_push_data`），控制数据传输的资源映射和模式。在后端，TileLink 通过以 Tile 为中心的映射策略将前端原语编译为底层硬件指令。对于数据分片固定的工作负载，框架采用静态映射，通过仿射运算在编译期确定映射关系。例如生产者 Tile 的形状映射定义为：
+$$f_S(\text{tile\_id}_p) = [\text{tile\_id}_p \times T_{mp} : (\text{tile\_id}_p + 1) \times T_{mp}, 0 : K]$$
+对于需要动态路由的工作负载（如混合专家模型 MoE），由于编译期无法确定数据来源，框架采用动态映射，将其转换为在运行时由动态逻辑填充的查找表：
+$$f_S(\text{tile\_id}) = [f_{S\_low}[\text{tile\_id}] : f_{S\_high}[\text{tile\_id}]]$$
+通过这种前后端配合，开发者只需编写少量 Python 代码，即可自动生成包含复杂同步逻辑的底层 PTX 汇编代码。</p>
+<p><strong>效果如何</strong>
+实验在单节点 8 卡和双节点 16 卡 H800 集群上进行，输入配置取自 LLaMA、Gemma 和 Qwen 等真实模型。对比基线明确划分为三类：代表无重叠路线的 cuBLAS+NCCL、代表算子分解路线的 Async-TP PyTorch，以及代表核融合路线的 FLUX 库。在单层性能测试中，对于多层感知机（MLP）的 GEMM+ReduceScatter 阶段，TileLink 凭借解耦优化表现最佳，分别比 cuBLAS+NCCL、Async-TP PyTorch 和 FLUX 加速 1.25 倍、2.22 倍和 1.28 倍，且仅需约 200 行 Python 代码（FLUX 需要约 2000 行 CUDA 代码）。对于现有库无法支持动态映射的 MoE 层，TileLink 成功重叠了三个内核，完整 MoE 层平均比 vLLM 快 1.14 倍，最大比 cuBLAS+NCCL 加速 20.76 倍。在 16K 到 128K 长序列自注意力测试中，TileLink 平均比 PyTorch 快 5.04 倍，比 RingAttention 快 1.97 倍，有效隐藏了 43.9% 的通信开销。在端到端评估中，将 TileLink 集成到 PyTorch 后，8 卡 H800 上 8 种大模型平均加速 1.32 倍（MoE 模型达 1.54 倍）。作者也指出了局限性：端到端加速幅度低于单层 MoE 加速，因为模型中未被极致优化的 MLP 层仍占约 50% 的执行时间；此外在 16 卡双节点环境下，由于额外的跨节点通信开销，整体平均加速微降至 1.29 倍。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决大型深度学习模型分布式训练中，通信开销（占总执行开销的10%-50%）限制计算效率的<strong>核心问题</strong>。提升性能最有效的方法是计算与通信的重叠（Overlapping），现有技术主要分为两种：算子分解（operator decomposition）和核融合（kernel fusion）。算子分解易于实现，但常因内核分解过细、缓存利用率低和主机干预同步开销大而导致性能不佳。核融合性能更优，但需要深厚的硬件专业知识，开发难度大且难以跟上算法的快速迭代。</p>
 <p>为了应对这些挑战，本文提出<strong>TileLink框架，其研究目标是</strong>通过编译技术高效地开发和生成计算-通信重叠内核。</p>

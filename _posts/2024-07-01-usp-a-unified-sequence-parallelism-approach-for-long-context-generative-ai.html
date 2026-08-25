@@ -19,6 +19,15 @@ title: 'USP: A Unified Sequence Parallelism Approach for Long Context Generative
 <h1>USP: A Unified Sequence Parallelism Approach for Long Context Generative AI</h1>
 <p><strong>USP：一种用于长上下文生成式AI的统一序列并行方法</strong><br/>
 <strong>作者/机构</strong>: Jiarui Fang, Shangchun Zhao (Tencent)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种统一序列并行方法 USP，通过将 DeepSpeed-Ulysses 和 Ring-Attention 结合为二维网格通信拓扑，打破了原有序列并行在注意力头数和计算效率上的限制，并在 4D 混合并行系统中实现了更高效的长上下文模型训练。</p>
+<p><strong>要解决什么问题</strong> 现有主流序列并行方法在处理长上下文时存在严重的机制卡点。由于序列维度在 softmax 后是矩阵乘法中的公共维度，切分序列极易导致冗余显存或低效通信。当前两大主流方案各自受限：DeepSpeed-Ulysses 的并行度严格受限于模型注意力头的数量，这导致它在分组查询注意力（GQA）和多查询注意力（MQA）架构下极度受限。例如 Llama3-8B 采用 GQA 时键值头仅有 8 个，最大并行度只能是 8，若采用 MQA 则完全失效，且该方法与同样需要切分注意力头维度的张量并行存在冲突。另一种主流方法 Ring-Attention 虽然没有头数限制，但它将矩阵乘法细分为小块，破坏了注意力融合算子的计算效率，即使通信与计算重叠，总执行时间依然落后；更致命的是，在应用因果掩码时，由于只需计算下三角矩阵，Ring-Attention 会产生极端的负载不均衡，部分计算设备的负载可能是其他设备的数倍。</p>
+<p><strong>怎么做的</strong> 核心思路是将上述两种相互排斥的序列并行方法整合为一个统一的二维混合并行架构。具体而言，将序列并行进程组划分为二维网格，在行方向运行 Ulysses 并行，在列方向运行 Ring 并行。输入张量 Q、K、V 沿序列维度切片后，其大小为 $(bs, L/N, h_c, h_s)$。在前向传播时，Ulysses 组通过 AllToAll 通信合并序列维度并切分注意力头维度，将其转换为 $(h_c/N_{ulysses}, bs, L, d)$，而 Ring 组则负责处理剩余的序列切片。该设计使总序列并行度等于两者并行度的乘积，彻底绕开单一 Ulysses 方法的头数限制，并允许在异构网络中将 AllToAll 置于高带宽互连层，点对点通信置于低带宽层。为了解决 Ring 并行在因果掩码下的负载不均衡问题，方法引入了全局输入序列重排序机制，将序列维度的 token 按照首尾交替的模式重新分配给各个设备，使得每个设备处理的上下三角矩阵计算量完美平衡，该重排序同样适用于旋转位置编码（RoPE），且由于仅作用于长度为 $bs \times L$ 的整数向量，额外开销可忽略不计。在系统层面，作者将该方法置于 4D 混合架构中进行成本分析，指出在通信成本上，序列并行的大规模扩展性优于张量序列并行（TP-sp），其激活通信成本可由 GQA 进一步降低，例如 Ring 的激活通信成本降至 $4 \times (bs \times L \times d/G)$；但在显存成本上，序列并行的参数显存占用高于 TP-sp，必须结合 ZeRO-3 才能达到相近的显存效率。作者最终给出了 4D 混合并行的最佳进程组维度顺序：TP、SP-Ulysses、SP-Ring、ZeRO-DP、PP。</p>
+<p><strong>效果如何</strong> 实验在 L20 PCIe 异构集群、单节点 8 卡 A100 NVLink 以及双节点 16 卡 A800 RDMA 集群上展开，评测模型为 LLAMA2-7B 和 LLAMA3-8B。对比基线包括代表数据并行路线的 DP、代表张量序列并行路线的 TP-sp（Megatron-LM 原生方案），以及作为单一序列并行路线的 SP-Ring 和 SP-Ulysses。在 L20 异构网络下处理 32K 和 128K 长序列时，Ulysses 并行度为 4、Ring 并行度为 2 的统一方法吞吐量最高，证明了其对网络拓扑的适应性；而在高带宽 A100 节点上，纯 Ulysses 并行度为 8 时吞吐量最高，印证了 Ring 方法存在计算效率下降的缺陷。在双节点 A800 上训练 LLAMA3-8B 时，面对 64K 和 80K 序列长度，Ulysses 与 Ring 并行度均为 4 的统一方法比纯 SP-Ring 基线快 12% 到 13%。在探索极限上下文时，将张量并行度设为 8、Ring 并行度设为 2 的混合策略成功跑通了 208K 的最长序列，模型算力利用率（MFU）达到 0.47。收敛性实验表明，在 10K 次迭代中统一方法与数据并行的损失曲线完全重合，验证了重排序机制的正确性。但作者也明确指出了该方法的局限性与代价：在显存效率方面，序列并行本质上不如 TP-sp，在处理 120K 以上极长序列时纯序列并行极易触发显存溢出；简单地将 TP-sp 替换为序列并行并不能直接增加可训练的序列长度，必须将受限于注意力头数的并行度优先分配给 TP-sp，或者引入 ZeRO-3 策略。此外，当全局批次大小足够进行切分时，数据并行的吞吐量始终优于序列并行。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决生成式AI模型中日益增长的长上下文处理需求所带来的挑战。随着Claude、GPT-4、Gemini 1.5 Pro和Sora等模型将上下文长度推向新的极限，序列并行（Sequence Parallelism, SP）成为一项关键技术。然而，现有的主流SP方法，即DeepSpeed-Ulysses和Ring-Attention，各自存在局限性。DeepSpeed-Ulysses的并行度受限于注意力头的数量，且不适用于分组查询注意力（GQA）和多查询注意力（MQA）；而Ring-Attention因将矩阵乘法细分而导致计算效率下降。这些问题阻碍了SP技术的广泛应用。</p>
 <p>本文的核心研究目标是提出一种更通用、更高效的SP方法，并系统性地分析其如何与现有的并行策略（数据并行、张量并行、ZeRO、流水线并行）结合，以构建一个强大的4D混合并行系统。</p>

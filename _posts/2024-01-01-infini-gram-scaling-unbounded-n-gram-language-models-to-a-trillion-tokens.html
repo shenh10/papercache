@@ -21,6 +21,15 @@ title: 'Infini-gram: Scaling Unbounded n-gram Language Models to a Trillion Toke
 <p><strong>发表时间</strong>: 2024-01 · arXiv:2401.17377 · COLM 2024 (UW + Allen AI)</p>
 <p><strong>文章标题</strong>：Infini-gram: 将无界n-gram语言模型扩展至万亿级词元<br/>
 <strong>作者/机构</strong>：Jiacheng Liu, Sewon Min, Luke Zettlemoyer, Yejin Choi, Hannaneh Hajishirzi, 来自华盛顿大学保罗·艾伦计算机科学与工程学院 (Paul G. Allen School of Computer Science &amp; Engineering, University of Washington) 和艾伦人工智能研究所 (Allen Institute for Artificial Intelligence)。</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文通过开发基于后缀数组的高效引擎 infini-gram，将经典的 n-gram 语言模型扩展至 5 万亿词元规模和无界 n 值（∞-gram），在揭示机器生成文本缺陷的同时，通过与最高 70B 参数的神经语言模型插值，将其困惑度最高降低了 73%。</p>
+<p><strong>要解决什么问题</strong> 传统的 n-gram 语言模型受限于底层数据结构，通常通过构建和存储 n-gram 计数表来实现。这种计数表的体积随 n 值呈指数级膨胀，例如仅在 1.4 万亿词元语料上构建 5-gram 计数表就需要 28TB 磁盘空间。极高的存储代价导致过去的 n-gram 模型只能将 n 值设定得非常小（通常 n≤5）并仅记录高频片段。然而，过小的 n 值会直接丢弃长距离的丰富上下文，导致模型对未来词元的预测能力大幅衰减。此外，当遇到未见过的 n-gram 时，传统模型会出现分子为零的稀疏性问题，导致困惑度趋于无穷大；而常规的回退机制（如 Katz 回退）又无法自然产生有效的概率分布，必须依赖复杂的概率折扣操作。因此，如何突破存储瓶颈，利用海量语料实现无限上下文长度的 n-gram 模型并输出有效概率分布，是本文要解决的核心卡点。</p>
+<p><strong>怎么做的</strong> 核心思路是彻底抛弃 n-gram 计数表，转而使用后缀数组（suffix array）作为底层数据结构，实现上下文长度无界的 ∞-gram 语言模型。∞-gram 的机制是从无穷大的 n 开始回退，只要在训练数据中找到匹配的上下文（即分母大于零），就立刻停止回退。具体而言，模型寻找当前提示文本在训练集中出现过的最长后缀，将其长度加一作为实际生效的 n 值。其概率分布定义为：$$P_\infty(w_i | w_{1:i-1}) = \frac{cnt(w_{i-(n-1):i-1}w_i | D)}{cnt(w_{i-(n-1):i-1} | D)}$$其中 n 是使得分母 $cnt(w_{i-(n-1):i-1} | D) &gt; 0$ 的最大整数。这种构造天然是有效的概率分布，无需概率折扣。为让包含零概率的 ∞-gram 实际应用，作者将其与神经语言模型进行线性插值：$$P(w_i | w_{1:i-1}) = \lambda P_\infty(w_i | w_{1:i-1}) + (1-\lambda) P_{\text{neural}}(w_i | w_{1:i-1})$$为支撑庞大计算，作者开发了 infini-gram 引擎。该引擎将分词后的语料转为字节数组并构建后缀数组，记录所有后缀按字典序排列的起始位置。查询任意长度 n-gram 时，引擎通过二分查找在后缀数组中定位首次和末次出现位置，索引差值即为出现次数。此设计将存储开销压缩至极致：每个词元仅需 7 字节。推理时索引完全保留在磁盘上，无需 GPU，仅依赖 CPU 即可在低于 20 毫秒的延迟下完成任意长度的 n-gram 计数。</p>
+<p><strong>效果如何</strong> 实验构建了迄今最大的 5 万亿词元 n-gram 模型（整合 Dolma、RedPajama、Pile 和 C4）。索引构建在单台 128 核 CPU 节点完成，推理仅需单台 8 核 CPU 节点且全程在磁盘运行。对比基线包括代表传统统计路线的 5-gram 模型、代表标准自回归路线的 GPT-2/Neo/J 和 Llama-2 系列（最高至 70B 参数），以及代表检索增强路线的 SILO 模型（对比了 kNN-LM 和 RIC-LM）。量化结果显示，在 Pile 验证集上，∞-gram 预测人类文本下一个词元的准确率达 47%，当有效 n 值大于 16 时准确率超 75%，远超 5-gram。在改善神经语言模型方面，与 ∞-gram 插值使所有测试模型的困惑度显著下降，GPT-2 1.6B 降低了 34%；强大的 Llama-2 70B 引入 ∞-gram 后困惑度也获得 12% 相对改善，且 Llama-2 13B 结合 ∞-gram 的表现直接超越了原生的 70B 模型。对于受限数据训练的 SILO 模型，∞-gram 的提升全面超越了 kNN-LM 等基线。此外，∞-gram 揭示了机器生成文本的缺陷：贪心解码下，Llama-2 7B 生成文本与 ∞-gram 的一致性在特定 n 值（如 20、24、28）处出现周期性剧烈下降，暴露了 Transformer 位置编码的不足。局限性在于，该插值模型尚不能直接替代神经语言模型用于开放式文本生成，否则易产生不相关的发散内容。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在探究在大型神经网络语言模型（LLM）时代，经典的n-gram语言模型是否仍具价值。研究通过两个方面对n-gram语言模型进行了现代化改造，并证明了其在文本分析和改进神经LLM方面的作用。</p>
 <ol>

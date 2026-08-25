@@ -18,6 +18,21 @@ title: 'PyTorch FSDP: Experiences on Scaling Fully Sharded Data Parallel'
 <div class="container">
 <h1 id="pytorch-fsdp-experiences-on-scaling-fully-sharded-data-parallel">PyTorch FSDP: Experiences on Scaling Fully Sharded Data Parallel</h1>
 <p><strong>作者/机构</strong>: Yanli Zhao, Andrew Gu, Rohan Varma, Liang Luo, Chien-Chin Huang, Min Xu, Less Wright, Hamid Shojanazeri, Myle Ott, Sam Shleifer, Alban Desmaison, Can Balioglu, Pritam Damania, Bernard Nguyen, Geeta Chauhan, Yuchen Hao, Ajit Mathews, and Shen Li (Meta AI)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文介绍了 PyTorch 原生的完全分片数据并行（FSDP）方案，通过将模型参数、梯度和优化器状态进行分片并在计算时按需通信，成功打破单卡显存限制，在千亿参数大模型训练上实现了近线性的算力扩展。</p>
+<p><strong>要解决什么问题</strong>
+原有的分布式数据并行（DDP）采用模型复制路线，要求所有参数、梯度和优化器状态必须完整装入单张 GPU 显存。当模型参数量突破十亿级别时（如在 40GB 显存设备上），这种全量驻留机制会直接导致显存溢出。为绕开显存瓶颈，现有的流水线并行或 Tensor RPC 方案虽能跨设备扩展，但要么强迫用户大幅修改模型源码以插入远程计算，要么将模型结构局限于严格的串行阶段，对工业界广泛使用的单程序多数据（SPMD）基础设施极不友好。另一方面，早期的参数分片方法往往将通信僵硬地插入关键计算路径，极难实现通信与计算的重叠。因此，亟需一种既能打破显存天花板，又能保持非侵入式用户体验，且具备极高通信效率的原生解决方案。</p>
+<p><strong>怎么做的</strong>
+核心思路是将模型拆解为更小的 FSDP 单元，在训练全过程中让参数、梯度和优化器状态保持分片状态，仅在前向和反向计算到达某单元时，才通过通信按需恢复完整参数，计算完毕后立即丢弃。该机制使任何时刻显存中只需物化一个单元的参数，彻底绕开了单卡容量卡点。关键设计由以下五个部件构成：第一，<strong>FlatParameter 内存重组</strong>。为满足 NCCL 通信库对输入张量尺寸均匀的要求并最大化带宽，FSDP 将单元内所有参数展平拼接成一个一维张量 `FlatParameter`，补齐后均匀切分给各 rank。假设模型被划分为 $K$ 个 `FlatParameter`，元素数量分别为 $p_1, \dots, p_K$，分片因子为 $S$，则峰值参数显存占用被严格控制为：
+$$ O(\sum_{i=1}^{K} \frac{p_i}{S} + \max_{i=1}^{K} p_i) $$
+此设计避免了通信前后的额外内存拷贝。第二，<strong>延迟初始化（deferred initialization）</strong>。针对超大模型连初始化都会撑爆显存的问题，允许在虚拟设备上创建模型并记录初始化操作，随后在真实 GPU 上逐单元重放并立即分片。第三，<strong>混合分片</strong>。针对跨节点带宽受限问题，允许在节点内（如 $k$ 张卡）分片，在节点间复制。对于大小为 $M$ 的模型，这能将跨节点通信量降至 $2 \frac{M}{S} \frac{k-1}{k}$。第四，<strong>激进的通信与计算重叠</strong>。开启独立 CUDA 流执行 `AllGather`。为防反向传播中单流顺序执行导致通信阻塞，引入反向预取机制，通过记录前向执行逆序，在当前 `ReduceScatter` 发出前提前发起下个单元的 `AllGather`。第五，<strong>显存速率限制器</strong>。当 CPU 调度过快时，过多在途通信会导致 PyTorch 缓存分配器无法复用显存块，引发极度拖慢训练的碎片整理。该限制器通过将未分片参数内存块数量限制为最多两个，在必要时主动阻塞 CPU。</p>
+<p><strong>效果如何</strong>
+实验在最多 512 块 A100 80GB GPU（2Tb/s RoCE 网络）上进行，测试了 T5（611M 到 11B 参数）、minGPT-175B 及包含 7680 亿稀疏参数的 DHEN 推荐模型，开启了激活检查点和 BF16 混合精度。对比基线是代表模型复制路线的 DDP。结果显示，在 611M 和 2.28B 模型上 FSDP 性能与 DDP 相当；当模型超过 2.28B 时 DDP 触发显存溢出，而 FSDP 轻松支持 11B 模型。在 minGPT-175B 训练中，FSDP 展现了线性扩展能力，单卡算力达 173 至 186 TFLOPS（A100 峰值的 55% 到 60%）。消融实验表明，反向预取稳定带来约 18% 提速；速率限制器在 T5 模型上实现 5 倍加速，但在未发生显存碎片的 DeepViT 模型上引入了 5% 损耗。该方法有明确局限性：首先，优化器在展平的分片参数上工作，破坏了原始张量结构，导致依赖未分片张量结构（如近似二阶优化器）或全局状态的计算失去数学等价性；其次，共享参数必须放置在最低共同祖先单元中，否则极易引发存储丢失错误，或导致参数长时间未分片而白白占用显存。</p>
+</div>
+</details>
 <h2 id="_1">主要贡献</h2>
 <p>本文介绍了PyTorch的完全分片数据并行（Fully Sharded Data Parallel, FSDP），这是一个用于大规模模型训练的工业级解决方案。FSDP旨在解决现有分布式训练方法在通用性、与框架核心功能的耦合性以及对社区创新友好性方面的挑战。其核心研究目标是提供一个与PyTorch核心组件（如Tensor实现、分发器系统和CUDA内存缓存分配器）紧密协同设计的原生解决方案，以实现非侵入式的用户体验和高训练效率。</p>
 <p>FSDP的核心算法源于DeepSpeed的Zero-RedundancyOptimizer技术，但经过了重新设计和实现。其工作原理是将模型实例分解为更小的单元，并将每个单元内的所有参数展平并分片。在计算前，分片的参数会按需被通信和恢复成未分片形式，计算后立即被丢弃。这使得FSDP在任何时候只需要在内存中物化一个单元的参数，从而显著降低峰值内存消耗。</p>

@@ -20,6 +20,15 @@ title: Efficient Memory Management for Large Language Model Serving with PagedAt
 <h1 id="efficient-memory-management-for-large-language-model-serving-with-pagedattention">Efficient Memory Management for Large Language Model Serving with PagedAttention</h1>
 <p><strong>高效管理大型语言模型服务内存的 PagedAttention</strong><br/>
 作者/机构: Woosuk Kwon, Zhuohan Li, Siyuan Zhuang, Ying Sheng, Lianmin Zheng, Cody Hao Yu, Joseph E. Gonzalez, Hao Zhang, Ion Stoica (UC Berkeley, Stanford University, Independent Researcher, UC San Diego)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文针对大型语言模型服务中键值缓存内存浪费导致的吞吐量瓶颈，提出了受操作系统虚拟内存启发的 PagedAttention 算法及 vLLM 推理引擎，在保持延迟不变的前提下将主流大模型的服务吞吐量提升了 2 到 4 倍。</p>
+<p><strong>要解决什么问题</strong> 大型语言模型在自回归生成阶段必须逐个生成词元，每个新词元都依赖先前所有词元的键值向量，这些历史状态构成了键值缓存。随着并发请求和序列长度增加，键值缓存规模急剧膨胀。现有深度学习框架要求张量连续存储，主流服务系统只能根据模型支持的最大序列长度，为每个请求静态预分配连续显存。由于用户实际输入输出长度差异巨大且输出长度未知，静态分配导致了严重浪费：系统不仅为未生成的未来词元预留大量空间，还因过度分配产生内部碎片，底层分配器也会产生外部碎片。这些浪费使实际用于存储有效状态的显存比例低至 20.4%。极低的内存利用率卡死了系统能同时处理的批处理大小，导致计算资源闲置，成为限制吞吐量的绝对瓶颈。此外，强制连续分配也使系统无法在并行采样或波束搜索等复杂解码中跨序列共享键值缓存。</p>
+<p><strong>怎么做的</strong> 为打破连续内存分配瓶颈，本文借鉴操作系统虚拟内存技术提出了 PagedAttention 算法与 vLLM 引擎。核心思路是将键值缓存划分为多个固定大小的非连续物理内存块。PagedAttention 将每个序列的键值缓存按固定词元数切分为逻辑块，注意力计算不再依赖连续张量，而是通过内核获取散落的物理块。其核心计算逻辑为先计算查询向量与第 $k$ 个物理块中键向量的注意力分数 $S_{i,k}$，再将其与该块中的值向量相乘得到最终输出。为管理这些块，vLLM 引入键值缓存管理器，实现逻辑块与物理块分离。系统为每个请求维护一个块表，记录逻辑块到物理显存块的映射及填充进度。解码时，仅当当前逻辑块填满才动态申请新物理块并更新映射。这种按需分配消除了预留空间浪费，将单请求的内存碎片限制在一个块内。逻辑与物理分离天然支持内存共享，在并行采样、波束搜索或共享前缀场景下，vLLM 将不同序列的逻辑块映射到同一物理块，并引入引用计数。当序列需修改共享块且引用计数大于一时，触发块粒度的写时复制机制，动态分配新块并拷贝内容，安全实现跨分支显存共享。分布式执行上，vLLM 支持张量模型并行，中心化调度器统一管理键值缓存，每步迭代前将块表广播给 GPU 工作节点。节点根据块表独立读取非连续缓存并执行计算，无需在内存管理层面进行同步。</p>
+<p><strong>效果如何</strong> 实验在 NVIDIA A100 GPU 上进行，评估了 13B 到 175B 参数的 OPT 模型及 13B 参数的 LLaMA 模型。测试使用真实对话数据集 ShareGPT 和指令微调数据集 Alpaca。对比基线包括 FasterTransformer 以及代表迭代级调度路线的 Orca 系统（细分为 Oracle、Max 和 Pow2 三种连续分配策略）。结果显示，在单序列生成任务中，面对序列较长的 ShareGPT，vLLM 在同等延迟下支持的请求速率比 Orca 最优版本高 1.7 到 2.7 倍，比 FasterTransformer 最高提升 22 倍。在复杂解码下内存共享收益巨大：波束宽度为 6 时，vLLM 相比 Orca 的吞吐量优势扩大到 2.3 倍，并节省 37.6% 到 55.2% 显存；在共享 5 个示例前缀的翻译任务中，吞吐量达 Orca 的 3.58 倍。作者也承认了方法的代价与局限：PagedAttention 因频繁访问块表和处理分支引入了动态映射开销，导致底层注意力算子延迟比极度优化的 FasterTransformer 慢 20% 到 26%，尽管端到端吞吐量依然占优。此外，系统对块大小敏感，块太小限制 GPU 并行度，太大增加内部碎片，设为 16 是较好平衡。当显存耗尽需抢占请求时，vLLM 提供交换到 CPU 和重新计算两种恢复策略，前者在大块尺寸时更优，后者在小块尺寸时因避免小数据传输而表现更好。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决大型语言模型（LLM）服务中的一个核心瓶颈：KV缓存（KV cache）的内存管理。现有系统由于将每个请求的KV缓存存储在连续的内存空间中，导致了严重的内存浪费，主要表现为内部碎片化（为请求预留最大长度的内存，但实际使用远小于此）和外部碎片化，这极大地限制了服务批处理大小（batch size），从而影响吞吐量。此外，现有系统无法有效利用并行采样、波束搜索等解码算法中存在的内存共享机会。</p>
 <p>为解决这些问题，本文提出了以下核心贡献：<br/>

@@ -20,6 +20,15 @@ title: 'GLaM: Efficient Scaling of Language Models with Mixture-of-Experts'
 <h1 id="glam-efficient-scaling-of-language-models-with-mixture-of-experts">GLaM: Efficient Scaling of Language Models with Mixture-of-Experts</h1>
 <p><strong>作者/机构:</strong> Nan Du, Yanping Huang, Andrew M. Dai, Simon Tong, Dmitry Lepikhin, Yuanzhong Xu, Maxim Krikun, Yanqi Zhou, Adams Wei Yu, Orhan Firat, Barret Zoph, Liam Fedus, Maarten Bosma, Zongwei Zhou, Tao Wang, Yu Emma Wang, Kellie Webster, Marie Pellat, Kevin Robinson, Kathleen Meier-Hellstern, Toju Duke, Lucas Dixon, Kun Zhang, Quoc V Le, Yonghui Wu, Zhifeng Chen, Claire Cui</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种基于稀疏激活混合专家（MoE）架构的仅解码器语言模型家族 GLaM，在将总参数量扩展至 1.2 万亿的同时，相比 GPT-3 将推理计算量减半、训练能耗降至三分之一，并在 29 个自然语言处理任务的少样本学习中取得了更优的平均性能。</p>
+<p><strong>要解决什么问题</strong> 原有大语言模型（如 GPT-3）主要依赖密集架构，核心卡点在于模型容量与计算成本的强绑定。在密集模型中，每一个输入 token 都必须经过模型的所有参数矩阵进行计算。当为追求更强的少样本学习能力将参数量扩展至千亿级别时，全量激活机制会导致单次预测的浮点运算量（FLOPs）呈线性爆炸。这使得进一步扩容的训练成本和能耗极其高昂，也让推理延迟和算力需求逼近硬件极限。如何在不显著增加单步计算量的前提下继续扩大模型知识容量，成为大模型扩展的关键阻碍。</p>
+<p><strong>怎么做的</strong> 核心思路是引入条件计算，通过稀疏激活的混合专家（MoE）架构，将总参数量与单次激活参数量解耦。这既能利用海量参数存储知识，又能保证每个 token 只触发极少量计算，从而绕开密集模型算力爆炸的卡点。关键设计由以下部件构成：首先是交替式 MoE 层，GLaM 是仅解码器（decoder-only）模型，将标准 Transformer 中每隔一层的前馈神经网络替换为 MoE 层，每个 MoE 层包含 $E$ 个独立的前馈神经网络作为“专家”。其次是稀疏门控路由机制，每个 MoE 层设有一个可学习的门控网络，通过 softmax 函数为当前输入 token 计算在所有专家上的概率分布，并动态挑选出最匹配当前 token 的两个专家。对于拥有 $E$ 个专家的层，这种 Top-2 路由机制能为每个 token 提供 $O(E^2)$ 种不同的计算路径组合，最终 token 表示由这两个专家的输出加权平均得到。最后是架构微调与分布式设计，模型将绝对位置编码替换为逐层相对位置偏置，并在非 MoE 层引入门控线性单元（GLU）和 GELU 激活函数；为支撑万亿参数显存开销，采用 2D 分片算法将不同 MoE 层中索引相同的专家放置在同一 TPU 设备上，并对专家权重和激活张量沿不同维度切分，确保集群设备间无数据和计算冗余。</p>
+<p><strong>效果如何</strong> 实验训练了参数规模从 1.3 亿到 1.2 万亿不等的 GLaM 家族模型，最大的 GLaM (64B/64E) 模型（基础密集参数约 640 亿，每隔一层设 64 个专家）总参数量达 1.2 万亿，在 1024 个 Cloud TPU-V4 芯片上使用 1.6 万亿 token 的高质量过滤数据进行训练。对比基线是代表密集模型扩展路线的 GPT-3（1750 亿参数），以及同等计算量的 GLaM 密集版本。在涵盖问答、完形填空等 29 个自然语言处理基准测试中，GLaM (64B/64E) 在零样本、一样本和少样本设置下的平均性能均优于 GPT-3。在 TriviaQA 开放域问答一样本测试中，它比之前融合知识图谱的微调 SOTA 模型高出 8.6%。效率方面，该模型推理时每个 token 仅激活 966 亿参数（约占总数 8%），所需 FLOPs 仅为 GPT-3 的一半；训练 6000 亿 token 总能耗为 456 兆瓦时，约为 GPT-3 的三分之一。若仅需达到与 GPT-3 持平的性能，只需训练 2800 亿 token，能耗降至 GPT-3 的六分之一。该方法的代价在于，万亿级参数的静态显存占用并未减少，要求极高的硬件设备量来容纳模型，导致低并发流量下服务成本高昂。此外，虽在 WinoGender 测试中消除了部分性别刻板印象的性能差距，但在毒性退化测试中，依然表现出大语言模型易受提示词引导而生成有害内容的通病。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文提出并开发了一个名为GLaM（Generalist Language Model）的语言模型家族，旨在解决扩大语言模型（如GPT-3）带来的高昂计算资源和能源消耗问题。通过采用稀疏激活的混合专家（Mixture-of-Experts, MoE）架构，GLaM在扩大模型容量的同时，显著降低了训练成本。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

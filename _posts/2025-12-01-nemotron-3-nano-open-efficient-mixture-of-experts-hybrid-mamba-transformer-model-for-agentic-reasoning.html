@@ -19,6 +19,25 @@ title: 'Nemotron 3 Nano: Open, Efficient Mixture-of-Experts Hybrid Mamba-Transfo
 <div class="container">
 <h1>Nemotron 3 Nano: Open, Efficient Mixture-of-Experts Hybrid Mamba-Transformer Model for Agentic Reasoning</h1>
 <p><strong>作者/机构</strong>: NVIDIA</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文推出了具备智能体与推理能力的混合专家模型 Nemotron 3 Nano，通过结合 Mamba-2、分组查询注意力与稀疏激活机制，在保持 31.6B 总参数规模的同时仅需 3.2B 激活参数，实现了推理准确率与吞吐量的大幅双重提升。</p>
+<p><strong>要解决什么问题</strong>
+现有大型语言模型在追求更强的复杂推理能力时，面临着几个关键的机制性卡点。首先是底层架构的计算效率卡点，稠密架构在扩展参数时，每次前向传播都需要激活全部参数，导致显存占用极高且推理吞吐量严重受限。其次是强化学习阶段的扩展与遗忘卡点，当把强化学习扩展到多个环境时，仅在单一环境中训练往往会导致模型在其他基准测试中出现不可恢复的性能下降。再次是基于人类反馈的强化学习（RLHF）中的奖励作弊卡点，模型倾向于通过无限拉长推理轨迹来骗取更高的奖励分数，为简单指令生成冗余思考。最后是智能体工具调用的幻觉卡点，模型经常会在系统未声明任何工具的情况下，尝试调用工具，导致推理过程偏离纯内部逻辑。</p>
+<p><strong>怎么做的</strong>
+为绕开上述卡点，该方法在架构与后训练机制上进行了深度设计。在核心架构上，模型采用了混合 Mamba-Transformer 架构，并将标准前馈网络替换为稀疏的混合专家（MoE）层。该设计包含 128 个专家并引入共享专家机制，每次前向传播仅通过学习型 MLP 路由器激活 6 个专家，从而用极小的激活参数量换取了 31.6B 规模的模型容量，直接突破了计算效率瓶颈。在后训练的监督微调阶段，设计了支持推理模式控制的聊天模板，允许在多步任务中保留推理 token，而在多轮对话中丢弃历史推理。在多环境强化学习（RLVR）阶段，依托分离了智能体、模型与资源服务器的底层框架，模型在数学、代码等所有环境中同步进行训练。为了避免对过易或过难样本的过拟合，采用高斯采样策略，使目标通过率分布的均值随训练步骤线性减小，实现任务难度的动态爬升。在 RLHF 阶段，为了解决冗余思考的卡点，模型采用生成式奖励模型（GenRM），并引入了组内相对长度控制机制。将每个候选响应分解为推理部分和答案部分，在组内进行长度归一化：
+$$ \tilde{\ell}_i^{(think)} = \frac{\ell_i^{(think)} - \ell_{min}^{(think)}}{\ell_{max}^{(think)} - \ell_{min}^{(think)} + 10^{-5}} $$
+随后对权重进行中心化处理，确保调整在组内是零和的：
+$$ \tilde{w}_i^{(think)} = \frac{1}{N} \sum_{j=1}^N \tilde{\ell}_j^{(think)} - \tilde{\ell}_i^{(think)} $$
+最终奖励结合了基础成对比较奖励与长度惩罚，并为达到顶级质量得分的最短响应提供额外的简洁性奖励：
+$$ R_i = R_i^{(base)} + \lambda^{(think)} \tilde{w}_i^{(think)} + \lambda^{(answer)} \tilde{w}_i^{(answer)} $$
+此外，为了降低成对比较的计算成本，采用循环比较策略，将 $N$ 个响应的比较次数从二次方降至 $O(N)$。</p>
+<p><strong>效果如何</strong>
+实验基于 31.6B 参数规模的模型，在 25 万亿 token 上进行预训练，并在单个 H200 GPU 上测量吞吐量。对比基线明确选取了 Qwen3-30B-A3B-Thinking-2507（代表同等规模的开源强推理与 MoE 路线）和 GPT-OSS-20B（代表高性能闭源路线）。在量化结果上，Nemotron 3 Nano 在数学推理任务 AIME25（带工具）上得分 92.17（注：原文为 99.17），超越 GPT-OSS 的 98.7 和 Qwen3 的 85.0；在智能体软件工程任务 SWE-Bench 上取得 38.76 分，显著高于 Qwen3 的 22.00；在 1M 超长上下文的 RULER 测试中得分 86.34，远超 Qwen3 的 77.50。在效率方面，在 8K 输入/16K 输出设置下，其推理吞吐量是 Qwen3 的 3.3 倍、GPT-OSS 的 2.2 倍。针对工具幻觉问题，仅需 50 步的直接偏好优化（DPO）训练，就能将 AIME25 上的幻觉率从 1.25% 降至 0%，GPQA 上的幻觉率从 8.33% 降至 0.7%。代价方面，采用选择性 FP8 量化（仅保留最敏感的自注意力及前置 Mamba 层为 BF16）后，模型恢复了 99% 准确率，吞吐量再升 3.5 倍。作者承认的局限在于，预对齐基础模型在长上下文性能上相比前代略有下降，且在多语言 MMLU Global Lite 任务上仍落后于 Qwen3 基线。</p>
+</div>
+</details>
 <h3>A1 主要贡献</h3>
 <p>本文介绍了NVIDIA Nemotron 3 Nano，这是一款具备智能体、推理和聊天能力的混合专家（MoE）混合Mamba-Transformer模型。Nemotron 3 Nano在前几代模型的基础上，结合了Mamba-2和分组查询注意力（GQA），并引入了混合专家（MoE）层来稀疏地扩展模型参数，从而在推理吞吐量与准确率之间取得了显著的平衡。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

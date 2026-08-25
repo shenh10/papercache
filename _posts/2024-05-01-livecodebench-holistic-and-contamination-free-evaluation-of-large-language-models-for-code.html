@@ -20,6 +20,19 @@ title: 'LiveCodeBench: Holistic and Contamination Free Evaluation of Large Langu
 <h1>LiveCodeBench: Holistic and Contamination Free Evaluation of Large Language Models for Code</h1>
 <p><strong>文章标题</strong>: LiveCodeBench: 对代码大型语言模型的全面无污染评估 (LiveCodeBench: Holistic and Contamination Free Evaluation of Large Language Models for Code)<br/>
 <strong>作者/机构</strong>: Naman Jain†, King Han†, Alex Gu*$, Wen-Ding Li*‡, Fanjia Yan*†, Tianjun Zhang*†, Sida I. Wang, Armando Solar-Lezama$, Koushik Sen†, Ion Stoica† († 加州大学伯克利分校 $ 麻省理工学院 ‡ 康奈尔大学)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了 LiveCodeBench，一个通过持续收集最新编程竞赛题目来实施时间隔离，并从代码生成、自我修复、代码执行和测试输出预测四个维度全面、无污染地评估大语言模型代码能力的动态基准测试。</p>
+<p><strong>要解决什么问题</strong>
+现有的代码大语言模型评估基准（如 HumanEval、MBPP 和 APPS）面临三个阻碍模型真实能力评测的核心卡点。首先是评估维度过于单一，仅关注从自然语言到代码的单步生成任务，完全忽略了真实软件工程中不可或缺的代码修复、现有代码理解和测试用例编写等复杂能力。其次是极其严重的数据污染风险，由于现代大语言模型在海量且不透明的语料库上进行预训练，现有静态基准的测试样本极大概率已被模型见过，导致评估分数虚高；常规的去污染策略极易被简单的文本改写规避。最后是问题质量与难度分布极不均衡，部分基准测试用例不足或描述模糊，而纯粹的竞赛级编程问题对当前绝大多数模型而言又过于困难（例如 GPT-4 在 CodeForces 上的积分仅处于垫底的 5%），导致模型得分扎堆趋近于零，无法在细粒度上对不同架构和规模的模型进行有意义的性能区分。</p>
+<p><strong>怎么做的</strong>
+核心思路是构建一个动态更新且多维度的评估框架，通过时间滚动机制绕开数据污染卡点，并引入软件工程全生命周期任务。关键设计由四个部件构成。第一是基于时间窗口的动态题库，系统每周从 LeetCode、AtCoder 和 CodeForces 抓取新比赛题目，并严格标记发布日期 $D$。在评估知识截止日期为 $T$ 的模型时，仅使用 $D &gt; T$ 的题目子集进行测试，从物理时间上阻断训练数据泄露。第二是多维度的场景构建，包含四个核心任务：<strong>代码生成</strong>要求模型根据自然语言描述和示例生成正确代码；<strong>自我修复</strong>将生成的错误代码与具体的错误反馈（语法错误、运行时错误、错误答案或超时）作为输入，要求模型输出修复后的代码；<strong>代码执行</strong>输入代码片段 $f$ 和测试输入 $x$，要求模型预测输出 $y$，通过执行 $assert f(x) == y$ 验证正确性；<strong>测试输出预测</strong>给定自然语言题目和特定测试输入，要求模型推理出预期输出，这巧妙解耦了测试输入生成这一难以自动化评估的任务。第三是高质量的测试用例保障，对于平台未公开的隐藏测试，系统不依赖模型直接生成，而是利用上下文学习构建随机与对抗性输入生成器，按问题规范采样输入并在基准代码上验证，确保每道题平均拥有 17 个高质量测试用例。第四是难度均衡与样本过滤，利用竞赛平台原生的难度评级剔除极端难题，将剩余题目划分为简单、中等和困难三个等级；同时针对代码执行场景，严格过滤出长度适中、无浮点运算且执行步数在 1000 步以内的代码片段。</p>
+<p><strong>效果如何</strong>
+实验在 52 个不同规模（1.3B 到 70B 参数）的模型上展开，涵盖 18 个基础模型与 34 个指令微调模型。评估采用核采样（温度 0.2，top_p 0.95，生成 10 个候选答案计算 Pass@1）。对比基线包括代表闭源 API 路线的 GPT 系列（GPT-4-Turbo、GPT-4-O）、Claude-3 系列、Gemini 系列，以及代表开源路线的 LLaMa-3、DeepSeek、CodeLLaMa 和 StarCoder2 家族。量化结果首先证实了污染的普遍性：DeepSeek 和 GPT-4-O 在其知识截止日期之后发布的 LeetCode 题目上，代码生成通过率出现断崖式下跌，Codestral 在新题上的 Pass@1 也从 36.5 跌至 28.3。在与静态基线的对比中，揭示了严重的 HumanEval 过拟合现象：大量开源微调模型（如 DS-Ins-1.3B 和 CodeQwen）在 HumanEval+ 上表现优异，但在 LiveCodeBench 简单难度子集上落后超过 20 个百分点，泛化能力极差。在多维度能力对比下，闭源模型展现出压倒性优势，GPT-4-Turbo 和 Claude-3-Opus 在所有场景中登顶；这种差距在复杂推理任务中被急剧放大，例如在带有思维链提示的代码执行和测试输出预测任务中，GPT-4-Turbo 领先开源强基线 DS-Ins-33B 分别高达 134% 和 96%。开源阵营中，仅有 30B 参数以上的强指令微调变体（如 L3-Ins-70B、Mixtral）能勉强缩小与闭源模型的差距。作者也承认了该方法的局限性：为了规避污染而严格过滤时间窗口，导致针对最新模型的可用测试样本量缩减（约 349 题），引入了 1% 到 1.5% 的性能评估噪音；此外，当前基准仅支持 Python 语言，且开源模型在代码执行场景中对思维链提示的鲁棒性极差。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>应用于代码相关应用的大型语言模型（LLM）已成为一个突出领域，吸引了学术界和工业界的极大兴趣。然而，随着新的、更强大的LLM的开发，现有的评估基准（如HumanEval, MBPP）已不足以评估其能力。本文针对这些不足，提出了LiveCodeBench，一个全面且无数据污染的代码LLM评估基准。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

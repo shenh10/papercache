@@ -19,6 +19,19 @@ title: Enabling Efficient GPU Communication over Multiple NICs with FuseLink
 <div class="container">
 <h1 id="enabling-efficient-gpu-communication-over-multiple-nics-with-fuselink">Enabling Efficient GPU Communication over Multiple NICs with FuseLink</h1>
 <p><strong>作者和机构：</strong> Zhenghang Ren, Yuxuan Li, Zilong Wang, Xinyang Huang, Wenxue Li, Kaiqiang Xu, Xudong Liao, Yijun Sun, Bowen Liu (Hong Kong University of Science and Technology); Han Tian (University of Science and Technology of China); Junxue Zhang (Hong Kong University of Science and Technology); Mingfei Wang (MetaX Integrated Circuits); Zhizhen Zhong (Massachusetts Institute of Technology); Guyue Liu (Peking University); Ying Zhang (Meta); Kai Chen (Hong Kong University of Science and Technology)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+FuseLink 是一种无需修改应用代码的动态网络调度框架，它通过显存重映射技术将高速 NVLink 作为跨节点网络的扩展，打破了传统的静态 GPU 与网卡绑定限制，将多网卡间的不均衡流量动态路由至空闲网卡，使跨服务器 GPU 通信带宽提升至 212GBps，并显著加速了大语言模型推理、混合专家模型训练和推荐模型训练。</p>
+<p><strong>要解决什么问题</strong>
+在分布式机器学习集群中，为了满足极高的跨节点通信需求，单台服务器通常会配置多张网卡（例如 8 张 GPU 对应 8 张 400Gbps 网卡），并采用静态绑定的方式让每张 GPU 独占一张直连网卡的 PCIe 带宽。然而，在实际的动态负载场景下，GPU 间的通信流量极不均衡。例如在大语言模型解耦服务中，请求长度不一导致预填充与解码阶段传输量随机波动；在混合专家模型 MoE 训练中，稀疏激活机制导致非对称的全连接通信；在推荐模型 DLRM 中，不同工作节点拉取的嵌入向量大小不一。这种静态绑定机制导致传输任务被死死绑定在特定网卡上，流量大的热点网卡严重拥塞，而其他网卡却处于闲置状态。如果直接让 GPU 跨 PCIe 甚至跨 NUMA 节点去调用其他闲置网卡，又会受限于低效的 PCIe 拓扑带宽，无法真正提升跨服务器的吞吐量。因此，如何绕过 PCIe 瓶颈、在不干扰原有任务的前提下榨干所有网卡的闲置带宽，成为了动态流量机器学习任务的重大卡点。</p>
+<p><strong>怎么做的</strong>
+FuseLink 的核心思路是将服务器内的高速互连（如 NVLink）作为跨服务器网络的延伸，通过动态感知网卡负载，将拥塞 GPU 的流量经由 NVLink 中继到拥有空闲网卡的 GPU 上发送，从而高效聚合多张网卡的带宽。该框架主要由三个关键机制构成。首先是基于显存重映射的高效服务器内中继。传统的跨 GPU 数据中继需要 CPU 介入发起显存拷贝，这会带来频繁的设备同步和极高的延迟。FuseLink 利用 GPU 的虚拟地址系统，将发送端的网络缓冲区直接重映射到中继 GPU 的物理显存上。当应用向缓冲区写入数据时，数据会直接通过 NVLink 流向中继 GPU，彻底去除了多余的显存拷贝和 CPU 调度开销，实现了极高的间接网卡吞吐量。其次是无中断的中继与防争用调度。为了防止中继流量挤占目标 GPU 的显存导致内存溢出（OOM），FuseLink 设定了动态的显存使用上限，并在资源紧张时优先释放中继显存让步给计算任务。同时，它采用基于优先级的调度策略，通过拦截 RDMA 连接上的工作请求来监控网卡负载，并在接收端发放的通信信用（Credit，一种包含启动 RDMA 所需资源的控制数据结构）中编码网卡空闲状态。一旦检测到某张网卡的主人（直连 GPU）发起通信，FuseLink 会立即将中继流量调度回其他空闲网卡或直连网卡，确保高优先级任务的绝对隔离。最后是无缝集成的工程实现。FuseLink 被封装为一个约 3000 行 C++ 代码的 NCCL 插件，通过拦截 NCCL 代理线程的网络层函数调用，接管了连接建立、缓冲区注册和收发操作，使得上层机器学习应用无需修改任何代码即可享受多网卡动态调度的红利。</p>
+<p><strong>效果如何</strong>
+实验在配备 8 张 Nvidia Hopper GPU、8 张 400Gbps ConnectX-7 网卡以及 200GB/s NVLink 的服务器上进行。对比的基线方法是 NCCL 默认的静态 GPU 与网卡绑定策略（开启 PXN 优化，代表传统的单网卡直连路线）。在微基准测试中，FuseLink 成功聚合了多张网卡，将单 GPU 的跨服务器通信带宽从基线的约 50GBps 提升至最高 212GBps。在解耦架构的大语言模型服务（OPT 30B 模型，模拟泊松分布请求）中，首令牌延迟降低了 1.04 至 2.73 倍；在 MoE 模型（Mixtral 8x22B，专家并行度 8）训练中，吞吐量提升了 1.3 倍；在 DLRM 推荐模型（Criteo 数据集，32 个 GPU 工作者）训练中，迭代速度加快了 1.2 倍。该方法的代价主要在于控制平面的调度开销，包括微秒级的网卡状态监控延迟和约 95 至 193 微秒的显存重映射延迟，但在大流量的机器学习任务中这些开销基本可以忽略。作者也承认其局限性：在 MoE 训练的后期，由于门控层会倾向于平衡专家间的负载，网卡流量逐渐趋于均衡，此时 FuseLink 带来的性能增益会有所减少；此外，在网卡状态突变时，可能会出现短暂的次优路径传输。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>论文从引言中提取的核心问题是：在分布式机器学习任务中，GPU间通信效率对性能至关重要，但现有系统在处理不均衡通信流量时无法充分利用多个NIC，导致热点NIC成为瓶颈。具体而言，机器学习集群中每个服务器堆叠多个NIC以提升服务器间GPU通信带宽，但静态GPU-NIC绑定导致不均衡流量（如大语言模型服务、专家并行训练和推荐模型训练）下热点NIC拥塞，而其他NIC闲置。研究目标是设计一种框架，使任意机器学习负载能有效利用所有可用RDMA NIC进行数据传输，将多个NIC聚合为“FuseLink”以提升服务器间通信带宽，而无需调整并行策略或修改应用代码。</p>
 <p>创新点包括：FuseLink通过整合高速服务器内连接（如NVLink）作为服务器间网络的扩展，实现动态NIC利用；它利用GPU高效中继流量到闲置NIC，并在NCCL中集成，实现无缝部署；FuseLink显著提升服务器间GPU通信带宽至212GBps，并加速动态流量机器学习任务，如LLM服务的首令牌生成延迟降低1.04-2.73倍、MoE模型训练吞吐量提升1.3倍，以及DLRM训练加速1.2倍。</p>

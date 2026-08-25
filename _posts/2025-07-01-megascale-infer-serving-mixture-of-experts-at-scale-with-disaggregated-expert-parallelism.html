@@ -20,6 +20,17 @@ title: 'MegaScale-Infer: Serving Mixture-of-Experts at Scale with Disaggregated 
 <h1 id="megascale-infer-serving-mixture-of-experts-at-scale-with-disaggregated-expert-parallelism">MegaScale-Infer: Serving Mixture-of-Experts at Scale with Disaggregated Expert Parallelism</h1>
 <p><strong>作者和机构：</strong> Ruidong Zhu1,2,◦,∗, Ziheng Jiang1,◦, Chao Jin1,2,◦,∗, Peng Wu1, Cesar A. Stuardo1, Dongyang Wang1, Xinlei Zhang1, Huaping Zhou1, Haoran Wei1, Yang Cheng1, Jianzhe Xiao1, Xinyi Zhang1, Lingjun Liu1, Haibin Lin1, Li-Wen Chang1, Jianxi Ye1, Xiao Yu1, Xuanzhe Liu2,†, Xin Jin2,†, Xin Liu1,†<br/>
 1ByteDance Seed, 2Peking University ◦Equal Contribution, ∗Work done at ByteDance Seed, †Corresponding authors</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 提出大规模混合专家（MoE）模型推理系统 MegaScale-Infer，通过解聚合专家并行与定制 M2N 通信库，在同构集群实现比最优基线高 1.90 倍的单卡吞吐量，在异构集群提升 1.7 倍单位成本吞吐量，使生产服务成本降低 1.5 至 2.0 倍。</p>
+<p><strong>要解决什么问题</strong> MoE 模型在推理的解码阶段面临严重的 GPU 算力闲置。传统稠密模型中，解码期的注意力模块因读取历史键值缓存（KV Cache）成为访存密集型，而前馈网络（FFN）只需加载一次权重，属计算密集型，可通过增大请求批次提升 GPU 利用率。但 MoE 的稀疏路由打破了此优势：每个令牌只分配给少数专家，原本聚合的全局大批次被打散，导致每个专家分到的微批次极小。根据屋顶线模型，批次过小无法吃满 GPU 矩阵乘法算力。若要强行增大全局批次，又会撞上注意力模块 KV 缓存的显存容量上限与严格的低延迟要求。这导致 FFN 模块始终处于饥饿状态，造成极大资源浪费。</p>
+<p><strong>怎么做的</strong> 核心思路是将注意力模块与 FFN 模块在物理节点上解聚合，允许两者独立扩展并采用不同并行策略。注意力节点保留参数与 KV 缓存，采用数据并行；专家节点分布式存储不同专家参数。此架构将多个注意力节点的请求汇聚到专家节点池，为 FFN 拼凑出足以打满算力的大批次。为使架构高效运转，系统设计了三个关键部件。第一是乒乓流水线并行。因模块物理拆分，令牌在节点间往返易导致一侧计算时另一侧闲置。系统将全局批次切分为 $m$ 个微批次，使其在两类节点间交替穿梭，用前向计算掩盖通信开销。为完全隐藏通信时间，微批次数量需满足：
+$$m \ge 2 \times (1 + \frac{T_c}{T_f})$$
+其中 $T_c$ 为单向通信时间，$T_f$ 为两类节点中较大的前向计算时间。第二是定制的高性能 M2N 通信库。传统 NCCL 在处理多对多动态路由时，存在大量 GPU 到 CPU 数据拷贝、组初始化与同步开销。新通信库改用 CPU 驱动的 RDMA 直接传输数据，通过 CUDA 事件阻塞流保证显存一致性，完全释放 GPU 流多处理器资源用于计算，大幅降低小包延迟。第三是异构部署与负载均衡。解聚合后，注意力节点部署在显存大、带宽高的 GPU 上，专家节点部署在算力性价比高的 GPU 上。针对真实流量中专家激活频率不一的问题，系统根据历史流量热度为高频专家部署设备冗余，实现计算负载均衡。</p>
+<p><strong>效果如何</strong> 实验在两套硬件展开：配备 NVIDIA 80GB Ampere 的同构集群，以及由 H20（注意力节点）和 L40S（专家节点）组成的异构集群。测试模型包括 Mixtral 8x22B、DBRX 及 317B 的 ScaledMoE。对比基线为 vLLM 和 TensorRT-LLM，代表支持 FlashAttention、PagedAttention 与连续批处理的业界最强单体服务路线。同构部署下，MegaScale-Infer 在 317B 模型上的单卡解码吞吐量比 vLLM 高 7.11 倍，比 TensorRT-LLM 高 1.90 倍。异构部署下，系统充分利用 H20 的访存与 L40S 的算力优势，单位成本解码吞吐量比在 H20 上运行的 vLLM 高 3.24 倍，比 TensorRT-LLM 高 1.86 倍。微基准测试显示，定制 M2N 通信库在 256KB 传输下，比 NCCL 的 P99 尾延迟降低 92.9%，吞吐量提升 4.2 倍。代价与局限在于：微批次切分数量不能无限增加，切分过多会降低专家节点矩阵乘法效率并增加延迟；此外，真实流量波动会导致预填充阶段延迟抖动，且专家负载不均衡必须依赖历史流量剖析进行冗余配置才能缓解。</p>
+</div>
+</details>
 <h2 id="_1">主要贡献</h2>
 <p>MegaScale-Infer 是一个高效且成本有效的系统，用于服务大规模混合专家（MoE）模型。核心问题是：MoE的稀疏激活架构在推理过程中将前馈网络（FFN）从计算密集型转变为内存密集型，导致GPU利用率大幅降低和运营成本增加。具体而言，LLM推理的解码阶段主导过程，注意力模块因访问所有先前令牌的中间状态（键值缓存）而GPU利用率低，而FFN模块在令牌数量增加时利用率高；但MoE的稀疏性导致每个专家分配的令牌减少，FFN利用率降低，无法充分利用GPU计算能力。研究目标是：通过解聚合注意力与FFN模块，实现独立扩展、定制并行策略和异构部署，以提高GPU利用率并降低成本。创新点包括：引入解聚合专家并行（disaggregated expert parallelism），允许注意力使用数据并行复制，FFN使用专家并行扩展；设计乒乓流水线并行（ping-pong pipeline parallelism），将请求批次分割为微批次，在注意力与FFN间穿梭以隐藏通信开销；开发高性能M2N通信库，消除不必要的GPU到CPU数据复制、组初始化开销和GPU同步。实验结果显示，MegaScale-Infer在每GPU吞吐量上比最先进解决方案高1.90倍，并在异构集群中实现1.7倍的每单位成本吞吐量提升，已在公司推理服务中部署，降低服务成本1.5–2.0倍。</p>
 <h2 id="observation">背景知识/关键Observation/设计原则</h2>

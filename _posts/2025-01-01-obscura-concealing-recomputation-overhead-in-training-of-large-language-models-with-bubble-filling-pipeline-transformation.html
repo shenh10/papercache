@@ -20,6 +20,15 @@ title: 'Obscura: Concealing Recomputation Overhead in Training of Large Language
 <div class="container">
 <h1 id="obscura-concealing-recomputation-overhead-in-training-of-large-language-models-with-bubble-filling-pipeline-transformation">Obscura: Concealing Recomputation Overhead in Training of Large Language Models with Bubble-filling Pipeline Transformation</h1>
 <p><strong>作者/机构</strong>: Yuzhou Huang and Yapeng Jiang, Sun Yat-sen University; Zicong Hong, Hong Kong University of Science and Technology; Wuhui Chen, Sun Yat-sen University; Bin Wang and Weixi Zhu, Huawei Technologies; Yue Yu, Peng Cheng Laboratory; Zibin Zheng, Sun Yat-sen University</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个名为 Obscura 的计算高效流水线并行训练系统，通过将未被利用的前向气泡转换为后向气泡来完美隐藏重计算开销，在训练大语言模型时实现了最高 1.33 倍的吞吐量提升。</p>
+<p><strong>要解决什么问题</strong> 在大语言模型的 1F1B 流水线并行训练中，早期阶段因为需要缓存大量微批次的激活值，极易触发显存溢出。为了打破这个显存瓶颈，常规做法是引入重计算技术，即在前向传播时丢弃部分激活值，等反向传播时再重新计算生成。但这会带来显著的额外计算开销，严重拖慢整体训练速度。现有的解决方案往往顾此失彼：如果对所有阶段进行全阶段重计算，会导致极低的执行效率；如果采用按需的选择性重计算，在严格的显存限制下依然会产生高昂的计算延迟；而结合 CPU 卸载或激活交换的方法，又会受限于 PCIe 带宽，引入巨大的通信开销。因此，如何在不增加额外训练时间、不引入高昂通信代价的前提下，以极低的成本解决流水线早期阶段的显存瓶颈，成为了大语言模型高效训练的核心卡点。</p>
+<p><strong>怎么做的</strong> 核心思路是利用流水线并行中天然存在的“气泡”（GPU 空闲等待时间）来吸收重计算带来的额外耗时。作者观察到，反向传播之间的“后向气泡”能掩盖重计算开销，但第一个前向和第一个反向传播之间的“前向气泡”不仅时间更长，且完全未被利用。为此，Obscura 系统设计了三个关键部件。第一是依赖松弛，系统首先进行流水线转换，将超出显存限制的阶段设为调整阶段，并把前向传播任务向左侧的前向气泡中迁移，将其转化为后向气泡；接着打破微批次间严格的数据依赖，将剩余的前向传播继续左移，反向传播右移并交错执行，从而让重计算任务完美嵌入到后向气泡中。第二是感知交换的重计算，单纯依赖重计算仍会溢出气泡容量，因此系统引入了激活值交换机制，将部分激活值卸载到外部存储。系统将执行时间建模为最小化初始阶段耗时 $T_0$ 的优化问题：$$\min_{\lambda_s, \beta, a_{adj}, r} T_0 \quad \text{s.t. } M_s \le M_{limit}, a_{adj}\beta \le (3f+r) \times B$$ 其中 $f$ 和 $r$ 分别为前向与重计算时间，$B$ 为通信带宽，$a_{adj}$ 为存储的激活值大小，$\beta$ 为传输比例。通过求解该整数规划问题，系统能找到重计算开销与通信开销的最优平衡点。第三是分区调整，由于按需重计算会导致调整阶段与非调整阶段的计算量不平衡，系统引入阶段分区调整算法，将部分计算层从耗时最长的调整阶段重新分配给较快的非调整阶段，彻底消除非调整阶段产生的额外气泡。此外，系统在识别调整阶段前，会优先对空间复杂度高、计算复杂度低的算子进行重计算，以此减少需要调整的阶段总数，最大化气泡的隐藏能力。</p>
+<p><strong>效果如何</strong> 实验在配备 8 张 A100 80GB 显卡且通过 NVLink 全互联的硬件平台上进行，评估了 13B 到 28B 参数规模的 Llama-2 和 GPT-3 模型，输入上下文长度固定为 4096，微批次大小设为 1。对比基线包括代表最先进 1F1B 调度的 DAPPLE、代表全阶段重计算路线的 DAPPLE+、代表成本效益算子重计算路线的 OHP-CMB，以及代表激活交换与显存平衡路线的 BPipe。结果显示，当模型规模超过 13B 时，无重计算的 DAPPLE 会直接显存溢出，而 Obscura 能够充分利用可用显存，在各种大模型配置下均实现了显著的吞吐量提升，最高加速比达到 1.33 倍。具体而言，在 Llama-2 的 18B 和 23B 模型上实现了 29% 到 31% 的加速，在 28B 模型上实现了 22% 到 27% 的加速；在 GPT-3 的各尺寸模型上稳定获得 30% 到 33% 的性能提升。此外，在一个没有 NVLink、节点间 PCIe 带宽较低的 4 卡 A800 平台上，由于 Obscura 不引入额外的阶段间通信，依然稳定取得了 27% 到 31% 的加速，证明了其在低带宽环境下的鲁棒性。作者也指出了方法的局限场景，消融实验表明，当全局批次大小激增至 128 时，仅靠气泡隐藏开销的能力会下降，此时必须依赖系统内置的计算平衡策略重新分配网络层，才能缓解性能衰退。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决流水线并行训练大语言模型（LLM）时，早期阶段面临的内存瓶颈问题。虽然重计算（recomputation）可以缓解此问题，但会引入额外的计算开销。</p>
 <p><strong>核心问题</strong>: 传统方法在流水线并行训练中为解决内存瓶颈而引入重计算，但这会带来显著的计算开销，延长训练时间。现有方法或者对所有阶段进行重计算（All-Stage Recomputation），效率低下；或者选择性重计算（selective recomputation），但在严格内存限制下仍有较高开销。</p>

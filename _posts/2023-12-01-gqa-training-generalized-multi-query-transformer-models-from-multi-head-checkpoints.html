@@ -18,6 +18,18 @@ title: 'GQA: Training Generalized Multi-Query Transformer Models from Multi-Head
 <div class="container">
 <h1 id="gqa-training-generalized-multi-query-transformer-models-from-multi-head-checkpoints">GQA: Training Generalized Multi-Query Transformer Models from Multi-Head Checkpoints</h1>
 <p><strong>作者/机构</strong>: Joshua Ainslie∗, James Lee-Thorp∗, Michiel de Jong∗ Yury Zemlyanskiy, Federico Lebrón, Sumit Sanghai (Google Research)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种将现有多头注意力模型低成本转换为多查询注意力模型的增量训练方法，并引入了分组查询注意力（GQA）机制，在保持极快推理速度的同时实现了接近原始多头注意力模型的生成质量。</p>
+<p><strong>要解决什么问题</strong> 自回归解码器的推理过程是 Transformer 模型的一个严重瓶颈。在每个解码步骤中，模型都需要加载解码器权重及所有历史生成的注意力键（keys）和值（values），这带来了巨大的内存带宽开销。多查询注意力（MQA）通过让多个查询头共享单一的键头和值头，大幅减少了内存带宽压力。然而，MQA 存在两个缺陷：一是会导致模型质量下降并在微调阶段引发训练不稳定（如频繁的损失尖峰和长输入任务发散）；二是为追求推理速度而从头专门训练一个独立 MQA 模型的成本过高。同时，大量开源预训练模型（如 T5 和 LLaMA）仍采用标准的多头注意力（MHA）。因此，如何以极低成本将现有 MHA 模型改造为既具备 MQA 的推理速度，又能维持 MHA 质量且训练稳定的模型，是本文要解决的核心问题。</p>
+<p><strong>怎么做的</strong> 为了绕开上述卡点，本文提出了两项核心设计：增量训练（Uptraining）与分组查询注意力（Grouped-query attention, GQA）。首先，增量训练提供了一种经济高效的模型转换途径，分为两步：第一步是检查点转换，将现有 MHA 模型中所有头的键和值投影矩阵进行均值池化（mean pooled），融合成单一的投影矩阵。相比随机初始化或仅保留第一个头，均值池化能最大程度保留预训练信息。第二步是增量预训练，在原始数据集上使用与原模型相同的训练方案，仅花费原始预训练步数 5% 的计算成本让模型适应新结构。其次，为弥补 MQA 的质量损失，本文提出 GQA，它是 MHA 和 MQA 的插值方案。核心思路是将所有查询头划分为 $G$ 个组，每组内的查询头共享专属的键头和值头。假设模型原有 $H$ 个头，第 $h$ 个头的键投影矩阵为 $W_K^{(h)}$，值投影矩阵为 $W_V^{(h)}$。转换为 GQA 时，第 $g$ 组的键和值投影矩阵由该组内原始头的矩阵均值池化而来：
+$$W_{K, GQA}^{(g)} = \frac{1}{|S_g|} \sum_{h \in S_g} W_K^{(h)}$$
+$$W_{V, GQA}^{(g)} = \frac{1}{|S_g|} \sum_{h \in S_g} W_V^{(h)}$$
+其中 $S_g$ 为属于第 $g$ 组的原始头集合。当 $G=1$ 时 GQA 退化为 MQA，当 $G=H$ 时等同于 MHA。GQA 能绕开内存带宽卡点，是因为它将键值缓存的大小和加载数据量减少了 $H/G$ 倍。随模型尺寸增加，KV 缓存随维度线性扩展，而计算量随维度平方扩展，GQA 允许在保持带宽和容量同比例减少的同时，避免标准分片技术复制单个键值头产生的分区浪费。注意，因编码器表示是并行计算的，内存带宽通常不是瓶颈，故 GQA 和 MQA 仅应用于解码器的自注意力和交叉注意力层。</p>
+<p><strong>效果如何</strong> 实验基于 T5.1.1 架构，对比了代表传统高质量但高开销路线的基线模型（使用 MHA 的 T5-Large 和 T5-XXL），以及经过 5% 步数增量训练的 T5-XXL 模型（采用 MQA 和 GQA）。硬件使用 TPUv3 训练，在 8 个 TPUv4 芯片上测试推理时间。评估涵盖摘要（CNN/Daily Mail 等）、翻译（WMT 2014）和问答（TriviaQA）任务。量化结果表明，增量训练的 MQA-XXL 模型在质量和推理速度上均优于 MHA-Large 基线。更重要的是，采用 8 个分组的 GQA-8 XXL 模型在此基础上实现了显著质量提升，其平均性能逼近参数量庞大的 MHA-XXL，而推理速度与极简的 MQA 相当。消融实验指出，GQA 在转换后（增量训练比例为 0）即具备合理性能，而 MQA 必须经增量训练才生效；两者在 5% 增量训练后收益最大。将分组数从 1（MQA）增至 8 只带来适度推理耗时增加，继续增加则成本急剧上升。局限性在于：缓解内存带宽开销在生成长序列时最关键，但长序列质量评估（如 ROUGE）存在缺陷；受限算力，未将增量训练的 GQA 与从头训练的同类模型对比；实验仅在编码器-解码器架构上进行，尽管预期 GQA 在仅解码器模型上优势更强。此外，MQA 微调长输入任务时表现出高方差，而 GQA 天然保持了稳定。</p>
+</div>
+</details>
 <h3 id="a1">A1 主要贡献</h3>
 <p>自回归解码器的推理过程是Transformer模型的一个严重瓶颈，主要因为在每个解码步骤都需要加载解码器权重以及所有的注意力键（keys）和值（values），这带来了巨大的内存带宽开销【Shazeer, 2019, Fast transformer decoding: One write-head is all you need, arXiv preprint】。多查询注意力（Multi-query attention, MQA）通过使用多个查询头（query heads）但共享单一的键和值头，可以显著减少加载键和值所带来的内存带宽。然而，MQA可能会导致模型质量下降和训练不稳定，并且为追求更快的推理速度而专门训练一个独立的模型在实践中可能并不可行。此外，尽管像PaLM【Chowdhery et al., 2022, Palm: Scaling language modeling with pathways】这样的一些语言模型已经采用了MQA，但许多公开可用的模型，如T5【Raffel et al., 2020, Exploring the limits of transfer learning with a unified text-to-text transformer, JMLR】和LLaMA【Touvron et al., 2023, Llama: Open and efficient foundation language models】，仍然使用多头注意力（Multi-head attention, MHA）。</p>
 <p>针对以上问题，本文提出了两大贡献以加速大型语言模型的推理速度：<br/>

@@ -18,6 +18,15 @@ title: 'LAPS: A Length-Aware-Prefill LLM Serving System'
 <div class="container">
 <h1>LAPS: A Length-Aware-Prefill LLM Serving System</h1>
 <p><strong>作者/机构</strong>: Jianshu She 1, Zonghang Li 1, Hongchao Du 1, Shangyu Wu 1, Wenhao Zheng 2, Eric Xing 1, Zhengzhong Liu 1, Huaxiu Yao 2, Jason Xue 1, Qirong Ho 1</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了 LAPS 系统，通过在 Prefill 阶段对长短请求进行时空隔离并结合 CUDA Graph 优化短请求，在真实多轮对话场景下将吞吐量最高提升 33% 且实现了更低的首字延迟。</p>
+<p><strong>要解决什么问题</strong> 现有的大语言模型服务系统虽然采用了 prefill-decoding 分离架构，但在 Prefill（预填充）阶段内部仍然存在严重的计算与内存干扰。在多轮对话或检索增强生成等真实场景中，工作负载高度异构：大部分是需要读取大量历史 KV 缓存的短请求（内存密集型），少部分是首次输入的长文本请求（计算密集型）。当现有的先进先出调度策略将这两类请求打包进同一个批次时，会引发排队论中的队头阻塞效应。具体而言，短请求必须等待长请求耗时的矩阵乘法运算完成，导致首个 token 生成时间大幅飙升；而长请求也会因为短请求产生的大量 KV 缓存读写流量，损失有效的浮点运算性能。这种长短混合批处理机制使得系统在高并发下的延迟急剧恶化，成为限制服务并发度与响应速度的核心卡点。</p>
+<p><strong>怎么做的</strong> 核心思路是将长短 Prefill 请求在执行层面进行彻底的物理或时间隔离，从而消除计算与内存的资源争抢。首先，系统通过统一延迟模型界定请求是计算密集型还是内存密集型，总延迟建模为计算与内存之和 $T(L, H) = T_{comp}(L, H) + T_{mem}(L, H)$，由此计算出长短请求的长度边界。在隔离机制上，系统设计了两种模式：时间分离是在单个实例上按时间顺序交替执行长短批次，空间分离则是将长短请求路由到不同的专用实例上。这种互斥执行彻底消除了混合批处理带来的队头阻塞惩罚 $\Delta W_{\text{HoL}} = \frac{\lambda p(1-p)}{2(1-\rho)}(S_{\ell} - S_{s})^2$。在隔离的基础上，系统针对短请求引入了基于 CUDA Graph 的执行加速。由于多轮对话的新输入通常较短且长度分布稳定，系统预先捕获了一系列基于长度和批次大小的图结构。为了最大化图的重用率并分摊启动开销，系统设计了自适应等待深度调度器。该调度器在每个决策时刻动态计算等待窗口 $W(t)=\operatorname{clip}\left(\min \left\{W_{\mathrm{SLA}}(t), W_{\mathrm{GR}}(t)\right\},\left[W_{\min }, W_{\max }\right]\right)$，其中 SLA 窗口是满足服务水平目标的极限时间，Graph 窗口是凑齐目标批次大小的预期时间。调度器会稍微延迟执行以聚合更多短请求，填满预定义的图形状。对于多实例部署，系统还配备了一个轻量级控制器，根据各实例的队列积压和利用率动态迁移长短实例的配额，防止负载不均。</p>
+<p><strong>效果如何</strong> 实验在单张和 8 张 H200 GPU 集群上展开，采用 Qwen2.5-7B/14B/32B 模型，测试数据为真实多轮对话数据集 LMsys-Chat-1M 和 ShareGPT。对比基线为 SGLang 和 vLLM，两者均开启了 prefill-decoding 分离，代表了依赖可用内存容量进行统一批处理且不支持 CUDA Graph 的传统路线。在 ShareGPT 数据集的高并发测试中，LAPS 在 8 实例空间分离设置下的每秒请求数比 SGLang 基线最高提升了 33%，同时平均延迟降低了 20%。在首字延迟要求为 0.4 秒的严格设置下，LAPS 在 8 实例下实现了零违规，而带路由器的 SGLang 仍有 4.7% 的违规率。在无截止日期约束的离线数据集蒸馏任务中，LAPS 也能将端到端耗时减少约 8%。该方法的代价主要在于 CUDA Graph 的显存占用（每个图约 228MB 至 277MB，对模型规模不敏感）以及系统启动时每个图 8 到 12 秒的捕获开销，因此必须限制预捕获图的数量。此外，作者承认该系统强依赖于 prefill-decoding 分离架构，如果回退到将 Prefill 和 Decode 混合调度的非分离模式，由于缺乏连续批处理会引入额外的批次间延迟，短请求的吞吐量优势会完全丧失，整体性能反而会下降。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>现代大语言模型（LLM）服务栈，如 vLLM 和 SGLang，通常结合 <strong>prefill-decoding (PD) 分离</strong> 和 <strong>连续批处理（continuous batching）</strong> 技术以满足低延迟、高并发的服务水平目标（SLO）。其中，Prefill 阶段（计算第一个 token）主要受计算限制，而 decoding 阶段（自回归生成）主要受内存限制。PD 分离将这两个阶段解耦到不同的实例上，以避免跨阶段的资源争抢。然而，研究发现，即使进行了 PD 分离，当计算密集型的长 prefill 请求与内存密集型的短 prefill/re-prefill 请求混合在一起时，prefill 阶段内部仍然存在干扰。</p>
 <p><strong>核心问题与观察</strong>:<br/>

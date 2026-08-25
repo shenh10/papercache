@@ -21,6 +21,15 @@ title: 'ECHO-2: A Large-Scale Distributed Rollout Framework for Cost-Efficient R
 <p>作者/机构：Jie Xiao1∗, Meng Chen2∗, Qingnan Ren1∗, Jingwei Song3∗, Jiaqi Huang1, Yangshen Deng4, Chris Tong1, Wanyi Chen5, Suli Wang6, Ziqian Bi1, Shuo Lu1, Yiqun Duan1, Xu Wang1, Rymon Yu1, Ween Yang1, Lynn Ai1, Eric Yang1, Bill Shi1†</p>
 <p>1Gradient, 2Fudan University, 3The University of Hong Kong, 4University of Edinburgh, 5 Soochow University 6Technical University of Darmstadt tianyu@gradient.network</p>
 <p>∗共同贡献, †通讯作者</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个名为 ECHO-2 的分布式强化学习框架，通过将集中式策略学习与广域网上的分布式 rollout 推理相解耦，在保持大语言模型强化学习后训练质量的同时，显著降低了整体训练成本。</p>
+<p><strong>要解决什么问题</strong> 现有的大语言模型强化学习后训练（如使用 PPO 或 GRPO 算法）通常在集中的数据中心 GPU 集群上运行。当尝试利用广域网上更廉价、异构的分布式推理算力来生成 rollout（策略采样）时，原有的同步执行机制会成为严重卡点。因为分布式节点在吞吐量和可用性上存在差异，且广域网传输模型快照会产生不可忽略且波动的网络延迟。如果强制要求严格的同策略同步执行，会导致昂贵的中心训练节点或边缘推理节点陷入长时间的空闲等待（即训练气泡）。这种互相等待不仅浪费了数据中心高昂的算力，也完全抵消了引入廉价分布式计算资源所带来的成本优势。如何在存在广域网延迟和节点异构性的情况下，保持中心学习器的持续高利用率，是必须解决的核心问题。</p>
+<p><strong>怎么做的</strong> 核心思路是将策略延迟视为一种可利用的系统预算，允许中心学习器消费由旧版本策略生成的 rollout，为广域网通信和异构推理提供时间上的“松弛”，从而让 rollout 生成、策略分发和模型训练能够完全重叠。该方法由三个关键机制构成。首先是三平面解耦架构，将系统划分为负责策略更新的学习平面、负责异步生成的分布式 Rollout 平面，以及负责任务适配和奖励计算的数据平面。其次是有界延迟执行模型，用户设定一个最大延迟预算 $S$，学习器每 $\kappa$ 步更新发布一次策略快照，并只接受落后当前版本不超过 $S$ 步的轨迹数据。这使得系统不再受限于硬同步，而是转化为一个资源配置问题，必须满足重叠条件以避免训练气泡：$$ \kappa T_{\text{train}} \geq T_{\text{bcast}} + \frac{\kappa R}{\sum_{i \in \mathcal{A}} \mu_i} $$ 其中 $T_{\text{train}}$ 是单次训练耗时，$T_{\text{bcast}}$ 是广播延迟，$R$ 是单步所需 rollout 数量，$\mu_i$ 是活跃工作者 $i$ 的吞吐量。第三是对等辅助流水线广播，为防止中心节点的上行带宽成为分发瓶颈，系统将模型快照切分为多个条带，在工作者之间构建多层树状拓扑进行存储转发。工作者收到数据块后立即向下游中继，并在本地安装完毕后瞬间切换版本开始生成，利用集群聚合带宽减少尾部延迟。最后是闭环的成本感知调度器，它根据重叠条件计算出所需的总吞吐量底线，并按单位吞吐量成本从低到高贪心激活分布式工作者，在确保中心学习器持续饱和的前提下将算力开销降到最低。</p>
+<p><strong>效果如何</strong> 实验在 Qwen3-4B 和 Qwen3-8B 两个基础模型上展开，主要任务为 AIME24 数学推理数据集，采用 GRPO 算法进行优化。硬件配置上，中心学习器运行在 4 张 A100 80GB 显卡上，分布式 Rollout 工作者池由广域网上的 RTX 5090 消费级显卡组成。对比基线包括两个数据中心内的集中式框架：代表同步流水线路线的 Centralized-Sync（基于 verl 框架，8 张 A100 统筹训练和推理），以及代表数据中心内异步流式路线的 Centralized-Async（基于 verl-async 框架，4 张 A100 训练，其余推理）。量化结果显示，在网络带宽受限（中心上行 100Mbps、工作者下行 1Gbps）的设置下，ECHO-2 在达到相同的 AIME 准确率时，将总体训练成本降低了 33.3% 到 36.3%；而在相同成本下，最终达到的准确率与基线的差距保持在正负 0.03 个百分点以内。消融实验证明，移除对等辅助广播会导致通信延迟和气泡时间大幅增加。在扑克游戏对齐的沙盒实验中，ECHO-2 也成功将 Qwen3-0.6B 对抗大语言模型对手的结果从净亏损扭转为净利润。作者承认的局限性在于，系统高度依赖于现代强化学习目标对策略延迟的经验性鲁棒性。当延迟预算 $S$ 小于等于 6 时模型性能稳健，但如果设置过大的延迟（如 $S=11$），陈旧的数据会严重偏离当前策略分布，最终导致训练发散。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文探讨了如何通过将 rollout 生成从集中的 GPU 集群转移到分布式推理资源，从而在保持中央学习器（learner）持续利用的同时，降低强化学习（RL）后训练（post-training）的成本。</p>
 <p>为解决此问题，本文提出了 ECHO-2，这是一个基于“集中学习与分布式 rollout”架构原则的分布式 RL 框架。该框架将策略优化（policy optimization）运行在一小组稳定的数据中心 GPU 上，而将 rollout 生成卸载到通过广域网连接的异构 Parallax 推理工作者（worker）池中。通过将 rollout 生成与集中式训练基础设施解耦，ECHO-2 为降低成本创造了新的机会。</p>

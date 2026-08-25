@@ -22,6 +22,15 @@ title: 'Jamba: A Hybrid Transformer-Mamba Language Model'
 <p><strong>文章标题</strong>: Jamba: 一种混合Transformer-Mamba语言模型<br/>
 <strong>作者/机构</strong>: Opher Lieber∗, Barak Lenz∗, Hofit Bata, Gal Cohen, Jhonathan Osin, Itay Dalmedigos, Erez Safahi, Shaked Meirom, Yonatan Belinkov, Shai Shalev-Shwartz, Omri Abend, Raz Alon, Tomer Asida, Amir Bergman, Roman Glozman, Michael Gokhman, Avshalom Manevich, Nir Ratner, Noam Rozen, Erez Schwartz, Mor Zusman, Yoav Shoham - Al21labs</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种融合 Transformer、Mamba 与混合专家（MoE）模块的混合语言模型 Jamba，在保持与同等规模模型相当的顶尖性能的同时，大幅降低了长上下文的显存占用并实现了三倍的吞吐量提升。</p>
+<p><strong>要解决什么问题</strong> 现有的主流语言模型架构各自存在难以克服的机制卡点。纯 Transformer 架构在处理长上下文时，其键值（KV）缓存的显存占用会随序列长度呈线性甚至二次方增长，成为扩展上下文长度的核心显存瓶颈；同时，由于缺乏单一的摘要状态，每次生成新词元都需要对整个历史上下文进行重新计算，导致推理速度极慢、吞吐量难以提升。另一方面，虽然现代状态空间模型（如 Mamba）通过压缩状态有效解决了长上下文的推理效率和显存问题，但它们在训练并行度上受限，且在同等规模下捕捉长距离依赖的能力较弱。更致命的是，纯 Mamba 模型在上下文学习能力上存在严重缺陷，难以像 Transformer 那样在训练中涌现出执行复制操作的“归纳头”，导致其在需要严格遵循输入输出格式的任务（如多分类选择）中频繁失效。因此，如何打破 KV 缓存的显存墙，同时保留 Transformer 强大的上下文学习与格式遵循能力，成为了长文本大模型发展的关键卡点。</p>
+<p><strong>怎么做的</strong> 核心思路是构建一种交错排布 Transformer 注意力层、Mamba 层与混合专家（MoE）模块的混合解码器架构。该设计将大部分计算和状态维护交给 Mamba 层以压缩 KV 缓存，同时保留少量注意力层提供上下文学习所需的归纳机制。关键设计由可重复的 Jamba 块构成，其搜索空间由五个超参数定义：$\text{Config} = (l, a:m, e, n, K)$。第一，注意力与 Mamba 层的混合比例 $a:m$。在包含 $l$ 层的块中，每 $m$ 个 Mamba 层对应 $a$ 个注意力层。因 Mamba 层几乎无 KV 缓存，模型整体缓存大小严格受制于注意力层占比：$\text{KV\_Size}_{\text{Jamba}} \approx \text{KV\_Size}_{\text{Transformer}} \times \frac{a}{a+m}$。实验表明 $1:7$ 的比例在效率和性能上达到最佳平衡，使 KV 缓存比纯 Transformer 缩小八倍，且成功保留了格式遵循和上下文学习能力。第二，MoE 模块的集成。为在不显著增加推理计算量的前提下扩充容量，Jamba 每 $e$ 层将多层感知机替换为 MoE 层。每层设 $n$ 个专家，路由器每词元激活前 $K$ 个专家，以此在显存、计算和通信成本间取得最优解。第三，训练稳定性与位置编码设计。扩展到百亿参数时，Mamba 层内部激活值波动会导致损失尖峰，Jamba 为此强制引入 RMSNorm 稳定训练。此外，因前置 Mamba 层已提供隐式位置信息，架构完全抛弃了 RoPE 等显式位置编码。最终生产级配置为 $l=8$、$a:m=1:7$、$e=2$、$n=16$、$K=2$。基础组件采用分组查询注意力、SwiGLU 激活，并将数字作为独立词元进行 BPE 分词。</p>
+<p><strong>效果如何</strong> 实验基于 NVIDIA H100 GPU 集群，使用支持多维并行的专有框架，在包含网页、书籍和代码的内部数据集上训练。对比基线选择了代表纯 Transformer 密集路线的 Llama-2 13B、Llama-2 70B、Gemma 7B，以及代表纯 Transformer 稀疏路线的 Mixtral-8x7B。量化结果显示，Jamba 模型（12B 活跃参数，52B 总参数）在常识推理等学术基准上，性能与同等活跃参数的 Mixtral 及更大规模的 Llama-2 70B 相当。在长上下文设置下，Jamba 优势压倒性：支持 256K 词元上下文，在“大海捞针”测试中精准检索；处理 256K 上下文仅需 4GB 的 KV 缓存（Mixtral 需 32GB），处理 140K 词元时仍能单卡（80GB）运行。吞吐量方面，无论是单卡 8K 上下文大批次，还是四卡 128K 超长上下文单批次，Jamba 均达 Mixtral 的 3 倍。在多样本分类和长上下文问答任务中，其 F1 分数也普遍优于 Mixtral。作者坦承的局限性在于：作为全新混合架构，Jamba 暂无法享受社区多年来为纯 Transformer 量身定制的底层工程优化，但随着后续开发，其吞吐量优势将进一步扩大。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文介绍了Jamba，一种新型的、公开可用的大型语言模型。Jamba基于一种创新的混合架构，该架构融合了Transformer层、Mamba层（一种最新的状态空间模型SSM）以及专家混合（MoE）模块。这种设计结合了两种正交的架构思想，共同提升了模型的性能和吞吐量，同时保持了可管理的内存占用。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

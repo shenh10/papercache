@@ -20,6 +20,15 @@ title: 'TileLang: A Composable Tiled Programming Model for AI Systems'
 <p><strong>文章标题</strong>：TileLang: 面向AI系统的可组合分块编程模型<br/>
 <strong>作者/机构</strong>：LEI WANG§ (北京大学), YU CHENG§ (北京大学), YINING SHI§ (北京大学), ZHENGJU TANG (北京大学), ZHIWEN MO (帝国理工学院), WENHAO XIE (北京大学), LINGXIAO MA (微软亚洲研究院), YUQING XIA (微软亚洲研究院), JILONG XUE (微软亚洲研究院), FAN YANG (微软亚洲研究院), ZHI YANG (北京大学)</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个面向 AI 系统的可组合分块编程模型 TileLang，通过将数据流与底层调度解耦，在保持 Pythonic 易用性的同时暴露了线程级控制接口，在 NVIDIA 和 AMD GPU 上的真实 AI 核函数测试中达到了甚至超越手写优化库的顶尖性能。</p>
+<p><strong>要解决什么问题</strong> 现代 AI 工作负载严重依赖高度优化的计算核函数，但编写高性能核函数需要进行细致的、以硬件为中心的优化，门槛极高。现有的领域特定编译器（DSL）在易用性和表达能力上存在难以调和的矛盾：以 Triton 为代表的框架虽然提供了直观的块级原语，但完全隐藏了线程行为和内存布局等底层细节，导致专家开发者在遇到性能瓶颈时无法进行极致优化（例如难以实现复杂的混合精度转换或精细的流水线控制）；而像 TVM 这样的传统机器学习编译器虽然将调度与计算分离，却要求用户手动注册新的张量指令并指定缓冲区布局，编写和理解调度程序的难度依然很大。这种抽象层级的固化，使得开发者要么受限于编译器的默认优化策略，要么只能退回到编写复杂的 C++ 代码，严重卡住了新硬件特性和复杂算子的高效开发。</p>
+<p><strong>怎么做的</strong> TileLang 的核心思路是将数据流逻辑与底层调度（如线程绑定、内存布局、张量化和流水线）完全解耦。开发者只需使用类 Python 语法和可组合的块操作符来定义数据流，编译器会负责探索和应用调度策略；当默认策略不足时，专家可以通过定制化的注解和原语进行精确干预，从而完美绕开了传统 DSL 表达能力不足的卡点。该方法由四个关键机制构成：首先是显式的硬件内存分配，TileLang 允许用户直接将数据块放置在特定的硬件内存层级中，例如使用 `T.alloc_shared` 分配共享内存，或使用 `T.alloc_fragment` 在寄存器文件中分配累加器。其次是核心的布局推断（Layout Inference）机制，TileLang 引入了 `Layout` 抽象，将多维数组的高级索引转换为物理内存地址，其本质是一个代数映射函数：$$f: \mathbb{K}^m \rightarrow \mathbb{K}^n$$ 对于寄存器文件，TileLang 扩展出了 `Fragment` 布局，强制输出维度为二维（分别代表线程在寄存器文件中的位置和本地索引）：$$f: \mathbb{K}^m \rightarrow \mathbb{K}^2$$ 基于这些布局对象，系统采用多阶段、基于优先级的推断方案，自动推导未确定缓冲区的布局和线程绑定策略（例如优先满足矩阵乘法对布局的严格约束，再推导逐元素操作的布局）。第三是软件定义流水线，编译器会自动分析计算块与内存拷贝之间的依赖关系，交错执行任务，并自动插入异步拷贝指令和内存屏障，甚至在 Hopper 架构上自动执行 warp specialization（将线程划分为专门的生产者和消费者）。最后，TileLang 提供了两种调用高性能硬件指令的途径，既可以通过内置原语直接发射内联 PTX 指令，也可以无缝集成底层 Tile 库（如 NVIDIA 的 `cute` 或 AMD 的 `ck`），从而在保持代码简洁的同时榨干硬件算力。</p>
+<p><strong>效果如何</strong> 实验在 NVIDIA H100、A100 和 AMD MI300X 硬件平台上进行，涵盖多头注意力、线性注意力、通用矩阵乘法（GEMM）及去量化 GEMM 等核心算子。对比基线包括手工优化的 CUDA 实现 FlashAttention-3、开源 GPU 核函数生成框架 Triton、供应商高性能库 cuBLAS 和 rocBLAS，以及专用的量化核函数库 BitsandBytes 和 Marlin。在 H100 上的 FlashAttention 测试中，TileLang 相比 FlashAttention-3、Triton 和 PyTorch 分别实现了 1.36 倍、1.41 倍和 1.70 倍的加速，尤其在较短序列长度上克服了 FlashAttention-3 固定块大小导致的性能衰减。在多头潜在注意力（MLA）任务中，TileLang 仅用约 70 行 Python 代码就达到了手写优化库 FlashMLA 98% 的性能，相比 PyTorch 原生实现加速 1075.9 倍。在 A100 上的去量化矩阵乘法测试中，TileLang 在 INT4-FP16 格式下比 Marlin 平均快 1.04 倍，在 NF4-FP16 格式下比 BitsandBytes 平均快 1.62 倍，证明了其细粒度控制在复杂精度转换中的优势。在常规 GEMM 任务上，TileLang 也在各平台上全面匹敌或超越了 cuBLAS/rocBLAS 和 Triton。作者也坦承了当前方法的局限性：目前系统仍部分依赖 CUTLASS 等底层库或手动包装的 C++ 代码，且如果用户为了追求极致编译速度而放弃调用底层 Tile 库，就必须在 TileLang 内部为每个目标硬件手动实现完整的指令集。</p>
+</div>
+</details>
 <h3>A1 主要贡献</h3>
 <p>现代AI工作负载严重依赖优化的计算核函数（kernel）进行训练和推理。尽管这些核函数遵循明确的数据流模式（如在DRAM和SRAM之间移动数据块并进行计算），但编写高性能核函数仍然是一项复杂的任务，需要进行细致的、以硬件为中心的优化。现有的领域特定编译器（DSL）虽然简化了这一过程，但在易用性和表达能力上仍有不足。例如，Triton虽然提供了直观的块级原语，但隐藏了线程行为和内存布局等细节，限制了专家开发者追求极致性能。</p>
 <p>为了解决这些限制，本文提出了TileLang，一个通用的分块编程模型，旨在提高AI核函数编程的效率。TileLang的核心思想是<strong>将数据流与调度（线程绑定、内存布局、张量化和流水线）解耦</strong>。用户只需使用可组合的块（tile）操作符来定义数据流，而编译器负责探索和应用调度策略。当编译器的默认优化不足时，用户可以通过一组定制化的注解和原语在前端进行精确控制。</p>

@@ -23,6 +23,15 @@ title: 'ThunderAgent: A Simple, Fast and Program-Aware Agentic Inference System'
 <p><strong>作者/机构</strong>: Hao Kang∗1, Ziyang Li $^ { * 2 }$ , Xinyu Yang∗3, Weili Xu $^ { \dag 4 }$ , Yinfang Chen $^ 4$ , Junxiong Wang $^ { 5 }$ , Beidi Chen $^ 3$ , Tushar Krishna1, Chenfeng Xu $^ { 5 }$ , and Simran Arora $^ { 5 }$</p>
 <p>$^ { 1 }$ Georgia Institute of Technology, 2Individual Researcher, $^ 3$ Carnegie Mellon University, $^ 4$ University of Illinois Urbana-Champaign, 5Together AI</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> ThunderAgent 提出了一个端到端的代理推理系统，通过将工作流抽象为带有状态的程序并引入全局调度与生命周期管理，在多轮代理服务和强化学习数据收集任务中实现了比现有基线高 1.48 到 3.92 倍的吞吐量。</p>
+<p><strong>要解决什么问题</strong> 现有系统（如 vLLM 结合 Kubernetes）将代理工作流的每一步视为独立的无状态请求，导致三个严重卡点。第一是 KV 缓存颠簸。代理在执行外部工具时，系统为了接纳新到达的请求会过早驱逐其 KV 缓存，等工具执行完毕后，又必须重新运行预填充来恢复整个交互历史，导致延迟激增。第二是跨节点显存不平衡。为了最大化缓存命中率，现有路由策略会将同一工作流的所有请求固定发往同一个 GPU 节点。由于代理工作流的上下文长度增长极快且不可预测，这种静态绑定会导致部分节点显存耗尽触发颠簸，而其他节点却大量闲置，峰值显存不平衡度可达 51%。第三是工具生命周期无感知。编排器无法判断何时释放沙箱和网络端口等环境资源，导致未使用的资源持续泄漏并最终引发系统崩溃，同时漫长的环境初始化时间也严重阻塞了推理进程。</p>
+<p><strong>怎么做的</strong> 核心思路是将代理工作流抽象为“代理程序”（Agentic Program），作为跨越多次模型调用和工具执行的头等调度单元，并向系统暴露其上下文长度、执行阶段（推理或行动）和调度状态。基于这一抽象，ThunderAgent 将调度转化为在显存限制下最小化重计算和缓存开销的约束优化问题。总成本被建模为：$$ \mathrm { C o s t _ { \mathrm { t o t a l } } \approx C o s t _ { \mathrm { d e c o d e } } + C o s t _ { \mathrm { p r e f i l } } + C o s t _ { \mathrm { r e c o m p u t e } } + C o s t _ { \mathrm { u n u s e d } } + C o s t _ { \mathrm { c a c h i n g } } } $$ 为消除颠簸，系统引入了状态感知的暂停机制。调度器会以 5 秒为周期检测显存压力，当颠簸即将发生时，优先暂停正处于“行动”阶段（即正在调用工具）的程序。由于重计算成本与上下文长度的平方成正比，系统会贪婪地优先驱逐上下文最短的程序。同时，为了平衡空闲缓存成本与重计算成本，系统引入了时间衰减函数 $f(t) = 2^{-t}$，随工具执行时间动态降低行动程序的显存权重，防止不可预测的长时间工具调用无限期占用显存。程序的暂停优先级由下式决定：$$ S _ { \mathrm { p a u s e } } ( P ) = { \frac { 1 } { c _ { P } } } + \mathbb { I } ( \tau = \mathbf { A } ) $$ 为了解决跨节点显存不平衡，ThunderAgent 打破了强制绑定节点的限制，让所有数据并行节点共享一个全局的程序感知等待队列。被暂停的程序可以被动态迁移并恢复到任何有可用显存的节点上，在不牺牲局部性的前提下实现了全局负载均衡。最后，系统通过生命周期钩子将工具资源与程序状态严格绑定，在程序终止时立即触发垃圾回收清理沙箱，并在程序即将恢复执行前异步准备环境，将 I/O 开销与推理过程重叠。</p>
+<p><strong>效果如何</strong> 实验在 8 卡 H100 节点上进行，模型采用 GLM-4.6（355B 参数）和 Qwen-3（235B 参数），并在 SWEBench-Lite、HLE 等数据集上运行 SWE-Agent、OpenHands 和 ToolOrchestra 等工作流。对比基线包括代表无状态推理路线的 vLLM、代表基于存活时间机制固定 KV 缓存路线的 Continuum，以及代表分布式强化学习数据收集路线的 vLLM 结合 SGLang Gateway。量化结果显示，在高并发服务场景下，ThunderAgent 相比 vLLM 实现了 1.48 到 3.58 倍的吞吐量加速，相比 Continuum 实现了 1.17 到 3.31 倍的加速；在双节点强化学习数据收集任务中，相比 vLLM 结合 Gateway 实现了 1.79 到 3.92 倍的吞吐量提升。即使并发数超出显存限制，ThunderAgent 依然能维持最大吞吐量而不崩溃。在工具执行时间极具随机性的场景下，ThunderAgent 会动态牺牲一部分 KV 缓存命中率来换取空闲缓存的减少，从而保持整体吞吐量最优。该方法的局限在于对超参数敏感：若调大检测间隔会导致颠簸在间隙发生，若调大衰减函数底数会导致程序被过早驱逐，两者均会降低吞吐量。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>大型语言模型（LLMs）现已广泛应用于驱动复杂的多轮代理（agentic）工作流。然而，随着并行处理的代理请求数量增加，现有推理系统的吞吐量会下降。同时，在强化学习（RL）中，rollout（数据收集）过程占用了超过70%的总时长。对于大规模自主运行的代理工作流，系统效率由持续吞吐量决定，而非单次请求的尾部延迟。高吞吐量能通过分摊硬件成本来降低服务费用，并在异步强化学习中减轻策略滞后，从而提高收敛速度和最终策略质量。</p>
 <p>当前代理推理系统吞吐量不佳，因为它们是松散地组合了独立的组件：一个现成的模型推理引擎（如vLLM）和一个通用的工具编排器（如Kubernetes）。这些组件在没有整个工作流端到端知识的情况下，按单个请求来调度和分配资源。这种设计导致了三个关键挑战：<br/>

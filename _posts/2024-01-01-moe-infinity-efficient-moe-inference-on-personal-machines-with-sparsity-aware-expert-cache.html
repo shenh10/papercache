@@ -21,6 +21,15 @@ title: 'MOE-INFINITY: Efficient MoE Inference on Personal Machines with Sparsity
 <p><strong>发表时间</strong>: 2024-01 · arXiv:2401.14361 (University of Edinburgh)</p>
 <p><strong>原文</strong>: <a href="https://arxiv.org/abs/2401.14361" rel="noopener" target="_blank">https://arxiv.org/abs/2401.14361</a></p>
 <p><strong>作者/机构</strong>: Leyang Xue 1, Yao Fu 1, Zhan Lu 1, Chuanhao Sun 1, Luo Mai 1, Mahesh Marina 1</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文针对个人设备显存受限导致的大型专家混合模型推理极慢的问题，提出了一种基于请求级稀疏激活追踪的专家缓存系统 MOE-INFINITY，在单 GPU 环境下将各类大型模型的单 Token 生成延迟降低了 3.1 到 16.7 倍。</p>
+<p><strong>要解决什么问题</strong> 现有支持参数卸载的推理系统在处理专家混合模型（MoE）时面临严重性能瓶颈。个人设备的 GPU 显存通常仅 24 到 48GB，运行上百 GB 的 MoE 模型必须将参数卸载到主机内存并按需加载。然而，现有系统大多基于计算图执行顺序进行预测，错误假设所有潜在专家都需要加载到 GPU。这种机制忽略了 MoE 的稀疏激活特性，导致大量 PCIe 总线 I/O 拥塞和 GPU 空闲等待，极大增加单 Token 延迟。更深层原因是，传统缓存替换策略无法适应 MoE 的动态路由。在批处理大小为 1 的个人解码场景下，专家重用模式在单请求内部极度偏斜（少数专家被反复调用），但观察多个请求时，激活分布又趋于全局均匀。这种全局均匀性使传统策略在缓存满载时，无法准确判断当前解码阶段哪个专家最不可能被重用，从而做出错误驱逐决策，引发频繁缓存未命中。</p>
+<p><strong>怎么做的</strong> 核心思路是利用 MoE 模型在单请求解码阶段高度偏斜的稀疏激活特性，将专家激活预测转化为在线模式匹配问题，构建稀疏性感知的专家缓存。该方法能绕开 PCIe I/O 瓶颈，是因为每次解码迭代仅有极小的专家“工作集”被激活，精准预测并将其锁定在 GPU 缓存即可消除绝大部分按需加载开销。关键设计由三个部件构成。首先是专家激活矩阵（EAM），用于形式化追踪激活状态。对于 $L$ 层、每层 $E$ 个专家的模型，EAM 是一个 $L \times E$ 的矩阵 $M$，$M[i][j]$ 记录路由到特定专家的 Token 数量。系统会在单次迭代（iEAM）和单请求（rEAM）层级构建该矩阵。其次是专家激活矩阵集合（EAMC），用于在线保存历史请求级 EAM。由于不同请求间的模式转换不可预测，但历史请求中存在有限数量的相似激活组，新请求到来时，系统将当前 iEAM 展平为向量，通过计算余弦距离在 EAMC 中寻找最匹配的历史 EAM。最后是结合预取的缓存替换引擎。引擎聚合匹配到的历史 EAM 并按行归一化，计算专家未来的激活概率。缓存满时，系统为缓存中的专家计算优先级分数 $p$：$$p = \frac{p\_eam[e.layer\_idx] + \epsilon}{n\_token} \cdot (1 - \frac{e.layer\_idx}{L})$$ 引擎驱逐分数最低的专家。此外，系统利用模型逐层执行顺序，提前将下一层专家预取到缓存；并为初始几层专家分配更高缓存优先级，以抵消请求初期预测置信度低带来的预取失败风险。</p>
+<p><strong>效果如何</strong> 实验在单张 NVIDIA RTX A5000 GPU（通过 PCIe 4.0 连接主机内存）上搭建，评估了 Switch Transformers、DeepSeek-V2-Lite、Mixtral-8x7B 及 900GB 的 Snowflake-Arctic 等模型，测试数据覆盖 BIG-Bench 等 290 个任务。对比基线包括代表主流高效卸载路线的 DeepSpeed-Inference、代表资源受限 GPU 优化路线的 Llama.cpp、代表 MoE 专用卸载路线的 Mixtral-Offloading，以及代表动态神经网络统计计数路线的 BrainStorm。在提示词长度 512、解码长度 32 的设置下，MOE-INFINITY 将单 Token 延迟降低了 3.1 到 16.7 倍。对于 Mixtral 模型，延迟低至 836 毫秒，比次优的 BrainStorm 快 1.4 倍；对于激活率更低的 DeepSeek 等模型，延迟降至 155 毫秒，几乎媲美完整模型常驻 GPU 的性能；它更是唯一能在单 GPU 上流畅运行 900GB Arctic 模型的系统。在高达 128K 的长上下文任务中，随 GPU 内 KV 缓存占用增加、专家缓存空间被压缩，系统会平滑退化为按需获取，但因避免了 KV 缓存卸载导致的 PCIe 竞争，延迟表现依然显著优于 vLLM。代价方面，在线匹配 EAM 需消耗少量 CPU 资源，但在 1000 个历史记录下每次查询仅耗时 21 微秒；此外，面临全新工作负载切换时系统存在短暂适应期，平均需处理 30 到 50 个请求才能通过更新 EAMC 恢复到最低延迟。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决在个人设备上高效运行大型专家混合（MoE）模型的问题。个人设备通常GPU显存有限（24-48GB），而大型MoE模型（如超过100GB的DeepSeek-MoE）必须依赖将模型参数卸载（offloading）到主机内存的方案。</p>
 <p><strong>核心问题</strong>: 现有支持卸载的推理系统（如DeepSpeed, Mixtral-Offloading, vLLM）在处理MoE模型时性能不佳。其根本原因在于缓存设计未能考虑MoE模型在推理过程中的<strong>稀疏激活</strong>特性。这些系统通常基于计算图中的执行顺序进行预测，假设所有潜在的专家都需要被加载到GPU，这导致了大量的PCIe总线I/O瓶颈和GPU空闲时间，从而增加了每个输出Token的时间（TPOT）。如表1所示，与MOE-INFINITY相比，其他系统延迟显著更高。即便是为动态神经网络设计的BrainStorm系统，也因无法适应MoE模型的路由机制而表现不佳。</p>

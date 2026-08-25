@@ -17,6 +17,15 @@ title: The Entropy Mechanism of Reinforcement Learning for Reasoning Language Mo
 
 <div class="container">
 <h1 id="the-entropy-mechanism-of-reinforcement-learning-for-reasoning-language-models">The Entropy Mechanism of Reinforcement Learning for Reasoning Language Models</h1>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文揭示了强化学习在提升大语言模型推理能力时遭遇的“策略熵崩溃”现象及其背后的协方差机制，并提出了通过限制高协方差词元更新的 Clip-Cov 和 KL-Cov 方法，成功缓解了探索能力衰退，在数学和代码任务上显著提升了模型的最终性能。</p>
+<p><strong>要解决什么问题</strong> 在使用强化学习提升大语言模型推理能力的大规模实验中，普遍存在一个严重的卡点：策略熵崩溃。在没有任何干预的情况下，策略模型在训练早期的前三分之一阶段就会急剧消耗掉超过94%的策略熵，导致模型迅速变得过度自信，丧失探索新推理路径的能力。这种探索能力的减弱总是伴随着下游性能的提前饱和。作者发现，策略的验证性能与策略熵之间存在一个极其规律的指数转换方程，即性能是以消耗熵为代价换来的。这意味着当策略熵耗尽降为零时，模型的性能就触及了完全可预测的绝对上限，极大地限制了通过持续增加强化学习计算量来扩展大模型推理能力的潜力。</p>
+<p><strong>怎么做的</strong> 为了打破熵耗尽的瓶颈，作者首先从理论上推导了策略熵动态变化的底层机制。对于大语言模型这类基于 softmax 的策略，其策略熵在连续两个训练步之间的变化，由动作的对数概率与对数变化之间的协方差决定。在使用策略梯度算法时，这个对数变化与动作的优势值成正比。具体而言，策略熵的变化满足公式：$$H(\pi_{\theta}^{k+1} | s) - H(\pi_{\theta}^{k} | s) \approx -\eta \sum_{a} \pi_{\theta}^{k}(a|s) \left( \log \pi_{\theta}^{k}(a|s) + H(\pi_{\theta}^{k} | s) \right) A_{\pi_{\theta}^{k}}(s, a)$$这意味着，当模型生成了一个高概率且具有高优势值的动作时，会产生极高的正协方差，从而导致策略熵迅速减少。基于这一机制，作者提出通过直接限制高协方差词元的更新来控制策略熵，设计了两种简单有效的方法。首先是定义词元级协方差，即对数概率与优势值之间的中心化叉积：$$\text{Cov}(y_i) = \left( \log \pi_{\theta}(y_i) - \frac{1}{N} \sum_{j=1}^{N} \log \pi_{\theta}(y_j) \right) \left( A(y_i) - \frac{1}{N} \sum_{j=1}^{N} A(y_j) \right)$$第一种方法是 Clip-Cov，它在计算策略梯度时，根据协方差值随机挑选出一小部分协方差极高（远超平均值数百倍）的离群词元，并将其从梯度更新中裁剪剥离，防止它们过度拉低熵值。第二种方法是 KL-Cov，它对协方差排在最前列的一小部分词元施加 KL 惩罚，即在原始损失函数中加入当前策略与采样策略之间的 KL 散度约束。这两种方法都只干预极少量的关键词元，就能精准抑制导致熵崩溃的元凶，迫使模型在训练中维持较高的熵水平，从而绕开性能过早触顶的卡点，实现持续的探索。</p>
+<p><strong>效果如何</strong> 实验基于 veRL 框架搭建，覆盖了 Qwen2.5、Mistral、LLaMA 和 DeepSeek-Math 等4个模型家族的11个基础模型，参数规模从 0.5B 到 32B 不等。训练数据使用了 Eurus-2-RL-Math、GSM8K 等数学数据集以及 AceCode 等编程数据集，并在 MATH500、AIME 2024 等权威基准上进行评估。对比基线包括原始的 GRPO 算法（代表主流的无价值网络强化学习路线），以及带有 clip-higher 技术的 GRPO（代表通过提高重要性采样比率上限来增加低概率词元更新、间接提升熵的路线）。量化结果显示，在数学推理任务上，Clip-Cov 和 KL-Cov 均显著优于基线。在 Qwen2.5-7B 模型上，新方法相比 GRPO 平均性能提升了 2.0%；而在更大的 Qwen2.5-32B 模型上，增益更为惊人，平均提升达到 6.4%，特别是在最具挑战性的 AIME 2024 和 AIME 2025 测试集上，相比 GRPO 分别取得了 15.0% 和 14.6% 的大幅改进。训练动态表明，新方法成功将策略熵维持在基线平台期的 10 倍以上，激励模型生成了更长的响应并持续突破性能天花板。相比之下，clip-higher 虽然在早期能提升性能，但后期会变得不稳定并出现性能下降。作者也坦承了该方法的局限性：策略熵对超参数设置非常敏感，仅干预万分之一到千分之一的词元就会完全改变熵曲线，且目前在探索能力与训练稳定性之间是否存在一个最优的绝对熵值来做平衡，仍然是一个悬而未决的开放问题。</p>
+</div>
+</details>
 <h2 id="_1">强化学习用于推理语言模型的熵机制</h2>
 <p><strong>作者/机构</strong>: Ganqu Cui, Yuchen Zhang, Jiacheng Chen, Lifan Yuan, Zhi Wang, Yuxin Zuo, Haozhan Li, Yuchen Fan, Huayu Chen, Weize Chen, Zhiyuan Liu, Hao Peng, Lei Bai, Wanli Ouyang, Yu Cheng, Bowen Zhou, Ning Ding (上海人工智能实验室, 清华大学, 伊利诺伊大学厄巴纳-香槟分校, 北京大学, 南京大学, 香港中文大学)</p>
 <p><strong>代码</strong>: <a href="https://github.com/PRIME-RL/Entropy-Mechanism-of-RL" rel="noopener noreferrer" target="_blank">https://github.com/PRIME-RL/Entropy-Mechanism-of-RL</a></p>

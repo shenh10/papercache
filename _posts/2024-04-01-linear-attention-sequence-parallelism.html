@@ -21,6 +21,23 @@ title: Linear Attention Sequence Parallelism
 <h1>Linear Attention Sequence Parallelism</h1>
 <p><strong>文章标题</strong>: 线性注意力序列并行 (Linear Attention Sequence Parallelism)<br/>
 <strong>作者/机构</strong>: Weigao Sun (上海人工智能实验室), Zhen Qin (TapTap), Dong Li (上海人工智能实验室), Xuyang Shen (上海人工智能实验室), Yu Qiao (上海人工智能实验室), Yiran Zhong (上海人工智能实验室)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一种专为线性序列建模设计的序列并行方法 LASP，通过利用线性注意力的右乘特性实现了与序列长度无关的通信开销，在 128 张 GPU 上成功将 1B 参数模型的训练序列长度扩展至 4096K。</p>
+<p><strong>要解决什么问题</strong>
+随着大语言模型和输入序列长度的不断增加，单张 GPU 的显存容量成为训练长序列的显著瓶颈。现有的序列并行方法主要针对标准 Softmax 注意力的左乘机制设计，存在根本性的机制卡点：例如 Megatron-SP 和 DeepSpeed-Ulysses 需要划分注意力头，导致最大并行度受限于注意力头的数量；而 Ring Attention 虽然采用了环式通信，但在设备间传递的是键值块状态，其通信量与序列长度成正比。对于具有线性复杂度的线性注意力模型，其核心优势在于可以通过“右乘”技巧将计算复杂度降为线性，但现有的序列并行方法完全未能利用这一特性，导致在处理超长序列时通信开销巨大，无法在大型集群上实现高效的分布式训练。</p>
+<p><strong>怎么做的</strong>
+LASP 的核心思路是将输入序列切分为多个数据块分布到不同 GPU 上，并将带因果掩码的线性注意力计算拆解为“块内计算”和“块间计算”两部分，通过点对点环式通信传递固定大小的中间状态。具体而言，对于分配到第 $t$ 个数据块的 GPU，块内计算（当前块内 token 之间的注意力）采用传统的左乘方式独立完成；块间计算（历史块对当前块的影响）则利用线性注意力的右乘核技巧。其前向输出由两部分相加构成：
+$$O_t = [(Q_t K_t^\top) \odot M]V_t + \Lambda Q_t KV_{t-1}$$
+其中第一项为块内计算，第二项为块间计算，$Q_t, K_t, V_t$ 分别是当前块的查询、键、值矩阵，$M$ 是因果掩码矩阵，$\Lambda$ 是衰减矩阵，$KV_{t-1}$ 是前一个数据块传来的激活状态。计算完成后，当前 GPU 会更新状态并将其发送给下一个 GPU：
+$$KV_t = \lambda^C KV_{t-1} + (\lambda^C \Lambda^{-1} K_t)^\top V_t$$
+这一设计的关键在于，设备间传递的 $KV$ 状态矩阵的维度是 $d \times d$（$d$ 为隐藏层维度），完全独立于序列长度。相比于传递 $N \times d$ 矩阵的现有方法，LASP 彻底绕开了序列长度带来的通信瓶颈。在系统实现上，LASP 包含两个关键部件：一是核函数融合，将块内、块间计算以及状态更新在底层算子层面合并以提升执行效率；二是 KV 状态缓存，在前向传播时直接将 $d \times d$ 的 $KV$ 状态存入 GPU 高带宽内存，反向传播时直接读取，免去了重算开销且几乎不增加显存负担。此外，该方法与所有批次级别的数据并行方法（如 FSDP、ZeRO）完全兼容，构成了数据-序列混合并行策略。</p>
+<p><strong>效果如何</strong>
+实验在最多 128 张 A100 80G GPU 的集群上进行，使用 The Pile 数据集训练 TransNormerLLM 和 Linear Transformer 模型。对比基线包括代表点对点环式通信路线的 Ring Attention、代表 all-to-all 序列切分路线的 DeepSpeed-Ulysses，以及代表张量切分路线的 Megatron-SP。在 64 张 GPU 上训练 1B 和 7B 参数模型的吞吐量测试中，由于 LASP 的通信量仅由批量大小和隐藏层维度决定，其训练速度显著超越了所有基线方法。在极致扩展性测试中，LASP 结合 FSDP 后端在 128 张 GPU 上成功将 1B 模型的最大可训练序列长度推高至 4096K，且最大序列长度随 GPU 数量呈完美线性增长。在 0.4B 规模模型上进行 5 万步和 30 万步的收敛性及下游任务（如 HellaSwag、PIQA）评估表明，LASP 不会对模型的收敛轨迹和最终精度产生任何负面影响。消融实验证实，核函数融合与 KV 状态缓存技术在几乎不增加显存的前提下大幅提升了吞吐量，且 LASP 能与激活重计算技术叠加，在单节点 8 张 GPU 上即可实现 768K 的序列长度。作者也坦承了该路线的局限性：线性注意力在捕捉复杂依赖关系时可能略逊于 Softmax 注意力，因此在实际应用中往往需要采用两者交替的混合架构，而 LASP 能够与现有的 Ring Attention 混合使用，在混合模型的不同层中各自独立运作互不干扰。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文针对线性序列建模方法（如线性注意力）提出了一种名为<strong>线性注意力序列并行（Linear Attention Sequence Parallelism, LASP）</strong>的高效序列并行（SP）方法，旨在解决现有SP方法未能利用线性注意力“右乘优先”特性而导致的通信效率和可用性欠佳的问题。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

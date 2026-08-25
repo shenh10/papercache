@@ -20,6 +20,27 @@ title: 'Asymmetric Proximal Policy Optimization: Mini-critics Boost LLM Reasonin
 <p><strong>发表时间</strong>: 2025-10 · arXiv:2510.01656 (HKUST / Alibaba / Mila)</p>
 <p><strong>文章标题</strong>：非对称近端策略优化：迷你critics增强大语言模型推理能力<br/>
 <strong>作者/机构</strong>：Jiashun Liu (香港科技大学, 阿里巴巴集团), Johan Obando-Ceron (Mila, 蒙特利尔大学), Han Lu (阿里巴巴集团), Yancheng He (阿里巴巴集团), Weixun Wang (阿里巴巴集团), Wenbo Su (阿里巴巴集团), Bo Zheng (阿里巴巴集团), Pablo Samuel Castro (Mila, 蒙特利尔大学), Aaron Courville (Mila, 蒙特利尔大学), Ling Pan (香港科技大学)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了非对称近端策略优化方法，通过引入多个在不重叠数据上训练的轻量级迷你critic模型来指导大型actor模型，在大幅降低显存和计算开销的同时，显著提升了大语言模型在复杂推理任务上的准确率与训练稳定性。</p>
+<p><strong>要解决什么问题</strong>
+将近端策略优化应用于大语言模型时，面临着严重的计算与显存瓶颈。传统算法采用对称的actor-critic架构，即两者参数规模相同。在百亿参数场景下，部署同等规模的critic会带来极高的计算成本和显存占用，且在长推理时域和稀疏奖励下，庞大的critic往往面临训练不稳定和价值估计不准确的问题。为规避此卡点，当前主流方法（如GRPO）大多放弃critic，转而使用平均优势基线。然而，放弃critic意味着失去了对生成轨迹的细粒度价值引导，限制了复杂推理任务的策略优化上限。如何在不引入巨大开销的前提下，恢复critic的细粒度估计能力，是当前亟待解决的核心问题。</p>
+<p><strong>怎么做的</strong>
+为绕开对称架构的资源卡点，本文提出了非对称近端策略优化方法。核心思路是利用预训练模型的初始表征能力，使用一组极小的迷你critic（如0.6B参数）指导庞大的actor（如14B参数），直接消除critic的过参数化问题。该方法由三个关键设计构成：
+第一，基于提示词级别不重叠的数据划分。常规集成中，同源初始化的critic行为高度同质化。该方法将同提示词下的回复划分为不相交子集，每个critic仅在专属子集上训练。这既强制critic从不同轨迹学习以保证多样性，又确保它们在同问题上感知同步，输出高鲁棒的集成优势估计：
+$$ \bar{A}_t = \frac{1}{M} \sum_{m=1}^M A_t(s_t, a_t; \phi_m) $$
+第二，基于价值一致性的优势掩码。当多个critic对某状态的价值估计高度一致（标准差极低）时，说明该状态信息量低。为防过拟合，该方法计算critic输出的标准差，掩盖标准差最低状态的优势值，阻止其参与更新。裁剪后的策略目标函数为：
+$$ L^{clip}(\theta) = \hat{\mathbb{E}}_t \left[ \mathbb{I}(\sigma_t &gt; P_{mask}) \min\left(IS_t \bar{A}_t, \text{clip}(IS_t, 1-\epsilon, 1+\epsilon)\bar{A}_t\right) \right] $$
+第三，基于价值分歧的熵过滤。当critic对某状态估计分歧巨大（标准差极高）时，通常意味该状态与推理无关（如副词）或充满噪声。该方法在计算熵正则化项时过滤掉这些状态，抑制虚假探索。完整的策略损失函数为：
+$$ L^{AsyPPO}(\theta) = L^{clip}(\theta) + \beta \hat{\mathbb{E}}_t \left[ \mathbb{I}(\sigma_t &lt; P_{filter}) H(\pi_\theta(\cdot|s_t)) \right] $$</p>
+<p><strong>效果如何</strong>
+实验基于Qwen3系列搭建，actor规模为4B、8B和14B参数，critic采用0.6B至8B参数版本。训练数据为5000条采样自DeepMath-103K的困难数学题，全局批次大小1024。硬件上，14B策略模型使用32张GPU（actor与critic各占一半）。对比基线包括代表无critic路线的强基线GRPO、代表单小模型指导路线的朴素非对称方法，以及经典对称方法。
+在MATH-500等6个数学基准测试中，该方法在Qwen3-4B-Base上相比基线提升超6%；在8B和14B模型上，相比经典方法和GRPO提升约3%的准确率。其峰值显存和平均训练时间显著低于经典方法，并保持在GRPO的极低水平。消融表明，仅需2个迷你critic即可实现性能质变，优势掩码和熵过滤比例设为20%时效果最佳。
+局限性在于：实验仅在Qwen3系列上初始化，未在Llama等其他家族验证泛化性；受限于计算预算，最大生成长度固定为8000个token，超长推理预算下的表现仍待评估。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决将近端策略优化（PPO）应用于大规模语言模型（LLM）时遇到的计算瓶颈和性能问题。传统的PPO采用与actor同样大小的对称critic，这在LLM规模下计算成本高昂，且在稀疏奖励和长推理时域下训练不稳定且不准确。因此，当前的RL4LLM方法大多放弃了critic，转而使用平均优势基线。本文重新审视了这一瓶颈，并提出一个核心问题：<strong>我们能否通过重新设计PPO，摒弃标准的对称actor-critic架构，来实现轻量级且鲁棒的价值估计，从而实现稳定高效的学习？</strong></p>
 <p>为解决此问题，本文提出<strong>非对称近端策略优化（Asymmetric Proximal Policy Optimization, AsyPPO）</strong>，一个简单且可扩展的框架，在保持大模型环境下高效的同时，恢复了critic的作用。其核心创新点如下：</p>

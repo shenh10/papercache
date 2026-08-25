@@ -19,6 +19,20 @@ title: Shortcut-connected Expert Parallelism for Accelerating Mixture of Experts
 <div class="container">
 <h1 id="shortcut-connected-expert-parallelism-for-accelerating-mixture-of-experts">Shortcut-connected Expert Parallelism for Accelerating Mixture of Experts</h1>
 <p><strong>作者/机构</strong>: Weilin Cai, Juyong Jiang, Le Qin, Junwei Cui, Sunghun Kim, Jiayi Huang</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种快捷连接混合专家（ScMoE）架构及自适应重叠并行策略，通过解耦专家并行中的通信与计算，在保持模型质量的同时，实现了最高1.49倍的训练加速和1.82倍的推理加速。</p>
+<p><strong>要解决什么问题</strong> 现有混合专家（MoE）模型在扩展时严重依赖专家并行策略，即将不同的专家分配给不同的计算设备，并通过跨设备的 All-to-All 通信将输入分发给对应的专家。然而，这种通信会产生巨大的时间开销，在单节点 PCIe 或跨节点以太网环境中甚至可占总耗时的50%以上。原有的优化做法（如流水线并行）之所以卡壳，是因为主流 MoE 模块直接替代了原有的多层感知机（MLP）来顺序处理中间表征。这导致专家并行的工作流存在严格的串行依赖：门控路由、输入编码、All-to-All 分发、专家计算、All-to-All 合并、输出解码必须依次进行。这种顺序依赖性使得系统内部缺乏足够的交互空间来隐藏网络传输延迟。流水线并行虽然能将输入分割成细粒度块并发执行，但始终无法重叠初始的数据分发和最终的数据合并传输。只要串行依赖不打破，通信开销就会持续阻塞计算。</p>
+<p><strong>怎么做的</strong> 核心思路是通过重构 MoE 层的输入，打破通信与计算的顺序依赖，创造出两条可并行执行的独立数据流。具体而言，本文提出了快捷连接混合专家（ScMoE）架构。传统 MoE 只处理当前层的表征，而 ScMoE 引入一条快捷连接，利用一个 top-1 的门控路由专家处理前一层的表征，同时利用一个固定的稠密多层感知机（即共享专家）处理当前层的表征。这两个过程完全解耦并并行独立进行，最后将结果整合到当前层的输出中。以效果最佳的配置（快捷连接到前一层的注意力层和多层感知机之间）为例，其核心更新式定义为：
+$$H_{\text{ScMoE}}^{l+1} = SE_{(l+1)}(H_{\text{MH}}^{l+1}) + \sum_{i=1}^N G(H_{\text{MLP}}^l)_i E_i(H_{\text{MLP}}^l)$$
+$$H_{\text{MLP}}^{l+1} = MLP_{(l+1)}(H_{\text{MH}}^{l+1} + H_{\text{ScMoE}}^{l+1})$$
+其中 $SE$ 代表共享专家，$E_i$ 代表门控路由专家，$G$ 为门控网络。这种设计能绕开原有卡点，是因为相邻 Transformer 块的中间表征具有极高的余弦相似度（接近1.0），门控网络本就倾向于为它们选择同一个专家。ScMoE 分别用共享专家和路由专家处理这两个相似表征，既模拟了标准 top-2 门控的行为，又将耗时的路由专家计算提前，换取了巨大的重叠时间窗口。在架构解耦的基础上，关键设计还包括一套自适应重叠并行策略。该策略在两个独立的流上异步执行操作，将门控路由和编码算子安排在最早位置，解码算子推迟到最晚位置，并在共享专家流的四个潜在位置中动态调度专家计算算子。其目标是最小化总时间成本：
+$$\min_{K \in \{1,2,3,4\}} \max(T_{disp}, \sum T_{\text{precomp}}) + T_{expert} + \max(T_{comb}, \sum T_{\text{postcomp}})$$
+通过这种自适应调度，ScMoE 能提供比传统流水线更长的重叠窗口。此外，由于专家选择被提前到了前一层，该架构天然支持在内存受限的推理场景下进行确定性的专家参数提前迁移，无需像现有方法那样进行有损精度的推测性预取。</p>
+<p><strong>效果如何</strong> 实验覆盖了视觉模型（SwinV2-MoE-S/B）和语言模型（GPT2-MoE、GPT3-MoE-XL、LLaMA2-MoE），并在高通信开销的 8×A30-PCIe、低通信开销的 8×A800-NVLink 及跨节点的 16×A800-NVLink 硬件上进行。对比基线明确选取了三个：代表模型质量和速度基准的“标准 top-2 MoE”、代表减少通信量路线的“共享专家 MoE”，以及代表现有重叠优化路线的“基于 Tutel 实现的流水线优化 top-2 MoE”。量化结果显示，在高通信开销的 8×A30-PCIe 场景下，SwinV2-MoE-S 采用 ScMoE 架构达到了与标准 top-2 MoE 相当的 79.3% 准确率，并实现了 1.49 倍的训练加速和 1.82 倍的推理加速。在跨节点 16×A800-NVLink 场景中，ScMoE 实现了通信时间的完全重叠，运行速度比共享专家 MoE 快 24%，比流水线优化的 top-2 MoE 快 43%。在单卡内存受限推理测试中，ScMoE 的确定性专家迁移策略将 GPT3-MoE-XL 的峰值显存使用量降低了 60%，并将阻塞式迁移的延迟开销减少了 75%。该方法也存在代价和局限。在视觉任务中，ScMoE 需引入额外的系数门控网络才能维持最佳性能。此外，随着模型规模从 Medium 扩大到 XL，自回归生成任务中逐 token 解码的内存传输时间成比例增加，导致专家迁移成本占比显著上升。最后，若为提升精度而激活更多专家，绝对时间成本仍会不可避免地增加。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p><strong>核心问题</strong>: 专家并行（Expert Parallelism）是分配稀疏门控混合专家（MoE）模型计算负载的关键策略，但其固有的All-to-All通信会产生巨大开销，成为扩展MoE模型的主要瓶颈。现有优化方法（如分层All-to-All和流水线）虽然能部分缓解此问题，但仍受限于通信与计算操作之间的顺序依赖性。如下图所示，在分布式环境中，All-to-All通信开销可占总时间的50%左右。</p>
 <p><figure class="image-figure">

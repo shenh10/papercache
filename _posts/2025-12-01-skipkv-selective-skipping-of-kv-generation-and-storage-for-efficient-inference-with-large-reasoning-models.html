@@ -22,6 +22,15 @@ title: 'SkipKV: Selective Skipping of KV Generation and Storage for Efficient In
 <h1>SkipKV: Selective Skipping of KV Generation and Storage for Efficient Inference with Large Reasoning Models</h1>
 <p><strong>作者/机构</strong>: Jiayi Tian, Seyedarmin Azizi, Yequan Zhao, Erfan Baghaei Potraghloo, Sean McPherson, Sharath Nittur Sridhar, Zhengyang Wang, Zheng Zhang, Massoud Pedram, Souvik Kundu</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种免训练的句子感知键值（KV）缓存压缩框架 SkipKV，通过在句子层面选择性地跳过冗余 KV 的生成与存储，在固定显存预算下解决了多批次推理的性能衰退，显著提升了思维链任务的准确率并缩短了生成长度。</p>
+<p><strong>要解决什么问题</strong> 大型推理模型在思维链推理时会生成极长轨迹，导致键值缓存（KV Cache）开销巨大，限制了显存和吞吐量。现有压缩方法在长思维链上面临两个致命卡点：首先，像 R-KV 这种基于词元（token）级别的驱逐策略会破坏语义完整性，例如从关键计算中移除数字或仅保留答案碎片，这种碎片化会导致模型陷入“过度思考”，被迫反复重新推导或检查答案，反而生成更长且冗余的非执行性推理轨迹；其次，在多批次（multi-batch）推理中，为对齐不同样本预填充（prefill）长度而引入的填充（padding）词元会白白挤占固定的 KV 预算，导致有效上下文减少并扭曲注意力分布，使多批次解码准确率断崖式下降。</p>
+<p><strong>怎么做的</strong> 核心思路是将 KV 缓存压缩粒度提升到句子级别，通过联合跳过冗余句子的 KV 生成与存储来保持推理连贯性并释放显存。方法由三个关键部件构成。第一是句子优先的评分与驱逐机制，负责在存储阶段移除冗余上下文。它利用最后一层隐藏状态的均值作为句子向量计算成对句子相似度，相似度超阈值时将较早句子标记为冗余。为决定最终驱逐内容，方法将词元注意力重要性 $I^{h_k}_\alpha$、词元冗余度 $R^{h_k}$ 与句子冗余度得分 $\lambda_{i,j}$ 结合，定义总驱逐得分：$$I_{final} = \sigma I^{h_k}_\alpha - (1-\sigma)R^{h_k} - \lambda_{i,j}$$ 其中 $\sigma$ 控制权重。因句子冗余得分量级远高于词元级得分，该公式确保高度相似的冗余句子被优先且完整驱逐，避免语义碎片化，并配合缓存范围监控逻辑追踪生成与缓存空间的索引映射。第二是自适应引导机制，在生成阶段直接跳过无用思考。它通过计算执行性与非执行性思考（如自我反思）的平均潜在表示差异构建引导向量 $V$。推理时将该向量注入特定层隐藏状态，引导强度 $\alpha_t$ 根据已生成的非执行性思考数量 $N_o$ 动态放大：$$\alpha_t \leftarrow \alpha_0 + \gamma \cdot N_o$$ 从而强制模型精确作答。第三是批次分组策略，在推理前将样本按预填充长度升序排列后划分批次，大幅减少批次内长度差异，降低对齐所需的填充词元数量，将节省的空间转化为有效 KV 预算。</p>
+<p><strong>效果如何</strong> 实验在单张 NVIDIA A100 GPU 上进行，评测了 DeepSeek-R1-Distill 系列的 Qwen-7B、Qwen-14B 和 Llama-8B 模型，数据覆盖数学推理（MATH-500、AIME-24、GSM8K）和代码生成（LiveCodeBench）。对比基线包括代表注意力驱逐路线的 H2O、代表词元级冗余驱逐路线的 R-KV、代表引导式缩短生成路线的 SEAL，以及不压缩的 FullKV。量化结果显示，SkipKV 在极端显存限制下优势显著。在 AIME-24 任务中，SkipKV 在 R1-Qwen-14B 上仅用 FullKV 约 15% 的 KV 预算就达到了无损准确率；在 LiveCodeBench 上，使用一半 KV 显存，准确率反超 FullKV 5.2%。生成效率方面，SkipKV 相比 FullKV 总生成词元数最多减少 28%，相比 R-KV 最多减少 48%。在 GSM8K 吞吐量测试中，SkipKV 凭借极小缓存支持了更大批次，吞吐量达 FullKV 的 9.6 倍，同批次下比 R-KV 快 1.7 倍。局限在于，解码时需持续追踪句子边界映射并动态计算隐藏状态相似度，引入了调度复杂度和计算开销，且依赖标点符号等启发式规则切分句子。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决大型推理模型（LRMs）在进行思维链（CoT）推理时，因生成冗长轨迹而导致的键值（KV）缓存开销巨大的问题。这一开销构成了内存和吞吐量的瓶颈，限制了模型的有效部署。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

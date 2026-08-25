@@ -18,6 +18,15 @@ title: Scaling Laws for Neural Language Models
 <div class="container">
 <h1>Scaling Laws for Neural Language Models</h1>
 <p><strong>发表时间</strong>: 2020-01 · arXiv:2001.08361 (OpenAI / Johns Hopkins)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文通过对 Transformer 语言模型进行跨越七个数量级的超大规模实证研究，发现模型的交叉熵损失与非嵌入参数量、数据集大小和计算预算之间存在精确且平滑的幂律缩放关系，证明了模型性能主要取决于整体规模，而与具体的网络形状参数关系微弱。</p>
+<p><strong>要解决什么问题</strong> 在深度学习语言建模领域，研究者通常习惯于将较小的模型在给定的数据集上训练至完全收敛，但这种做法在计算效率上是否最优一直缺乏定量的理论指导。原有做法的核心卡点在于，面对有限的算力、数据和时间，开发者无法精确预测应该如何分配资源（是加深网络层数、加宽隐藏层维度、增加训练数据，还是单纯放大模型体积）才能实现模型损失的最大幅下降。此外，随着模型参数量的不断增加，如何精准控制数据量的同步增长以避免模型陷入过拟合，以及不同架构超参数对最终性能的真实影响权重，都缺乏清晰的机制级解释。这导致在扩展大模型时，工程团队往往只能依赖直觉和高昂的试错成本，无法在算力受限的客观条件下实现性能收益的最大化。</p>
+<p><strong>怎么做的</strong> 核心思路是通过控制变量的大规模实证实验，剥离次要的架构细节，直接建立测试损失与核心规模要素之间的底层数学关系。首先，方法明确了规模的三个核心要素：非嵌入参数量 $N$（特意排除了词表和位置嵌入参数，因为这能让缩放趋势变得明显更加清晰）、数据集大小 $D$（以 token 数计）和训练计算量 $C$。研究发现，在 $N$ 固定的前提下，大幅改变 Transformer 的层数、宽度或注意力头数等形状参数，对最终性能的影响微乎其微。其次，为了绕开盲目增加模型大小导致过拟合的卡点，方法构建了一个联合预测方程，将有限模型大小和有限数据量对损失 $L$ 的影响统一起来：$$L(N, D) = \left( \frac{N_c}{N} \right)^{\frac{\alpha_N}{\alpha_D}} + \frac{D_c}{D}$$该公式揭示了过拟合程度并不依赖于绝对规模，而是仅取决于比率 $N^{0.74}/D$。这意味着模型参数量每增加 8 倍，数据量只需增加约 5 倍即可维持相同的过拟合水平，从而给出了数据与模型协同放大的精确比例。最后，为了解决算力分配的效率问题，方法引入了临界批量大小 $B_{crit}$ 的概念，发现它仅与当前达到的损失值呈幂律关系。基于此，推导出了在固定计算预算 $C_{min}$ 下的最优资源分配策略：$$N \propto C_{min}^{0.73}, \quad B \propto C_{min}^{0.24}, \quad S \propto C_{min}^{0.03}$$这一设计彻底颠覆了小模型训练到收敛的传统路线，证明了计算效率最高的做法是直接训练一个极大的模型，并在其远未收敛时就提前停止。大部分新增算力应投入到增加模型参数和批量大小上，而串行的训练步数几乎不需要增加。</p>
+<p><strong>效果如何</strong> 实验在 WebText2 数据集上搭建，训练了非嵌入参数量从 768 到 15 亿、数据量从 2200 万到 230 亿 token 的纯解码器 Transformer 模型。对比基线为代表循环神经网络路线的 LSTM 和代表参数共享路线的 Universal Transformer。量化结果显示，在同等参数量下，Transformer 的性能渐进地优于 LSTM（尤其在处理长距离依赖的后续 token 时优势显著）；Universal Transformer 虽然在同等参数量下表现略好，但在同等计算量下表现更差。实验证明，上述幂律关系在计算量跨越 8 个数量级、参数量跨越 6 个数量级、数据量跨越 2 个数量级的范围内均严格成立。大模型展现出了极高的样本效率，达到相同性能所需的训练数据和步骤远少于小模型。此外，模型在未见过的其他数据分布（如维基百科、书籍语料）上的泛化性能，与训练集验证损失高度相关，仅存在一个固定的损失偏移量。代价与局限性在于，作者通过外推发现，当计算预算达到约 $10^4$ PF-days、模型参数达到 $10^{12}$ 时，计算高效训练所需的数据缓慢增长率将与避免过拟合所需的数据增长率产生数学上的矛盾。这预示着当前的缩放定律在该极限点必然会失效，可能代表了当前 Transformer 架构从自然语言中提取信息的理论天花板。</p>
+</div>
+</details>
 <h1>神经语言模型的缩放定律</h1>
 <h2>A1 主要贡献</h2>
 <p>语言为人工智能研究提供了一个天然的领域，因为绝大多数推理任务都可以用语言高效地表达和评估，而世界上的文本通过生成式建模为无监督学习提供了丰富的数据。深度学习最近在语言建模方面取得了快速进展，最先进的模型【RNSS18, Improving language understanding by generative pre-training, 2018】, 【DCLT18, Bert: Pre-training of deep bidirectional transformers for language understanding, 2018, arXiv:1810.04805】, 【YDY+19, Xlnet: Generalized autoregressive pretraining for language understanding, 2019, arXiv:1906.08237】, 【LOG+19, Roberta: A robustly optimized BERT pretraining approach, 2019, arXiv:1907.11692】, 【RSR+19, Exploring the limits of transfer learning with a unified text-to-text transformer, 2019, arXiv:1910.10683】在许多特定任务【WPN+19, Superglue: A stickier benchmark for general-purpose language understanding systems, 2019, 1905.00537】上已接近人类水平，包括生成连贯的多段落提示文本样本【RWC+19, Language models are unsupervised multitask learners, 2019】。</p>

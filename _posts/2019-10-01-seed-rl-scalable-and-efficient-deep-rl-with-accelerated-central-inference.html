@@ -18,6 +18,15 @@ title: 'SEED RL: SCALABLE AND EFFICIENT DEEP-RL WITH ACCELERATED CENTRAL INFEREN
 <div class="container">
 <h1 id="seed-rl-scalable-and-efficient-deep-rl-with-accelerated-central-inference">SEED RL: SCALABLE AND EFFICIENT DEEP-RL WITH ACCELERATED CENTRAL INFERENCE</h1>
 <p><strong>作者/机构</strong>: Lasse Espeholt∗, Raphaël Marinier∗, Piotr Stanczyk∗, Ke Wang &amp; Marcin Michalski, Brain Team, Google Research</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为 SEED 的可扩展分布式强化学习架构，通过将神经网络推理任务从环境执行端剥离并集中到中心加速器上，大幅提升了计算资源利用率，在显著降低实验成本的同时，在多个主流基准测试上实现了数倍于现有方法的训练速度。</p>
+<p><strong>要解决什么问题</strong> 传统的分布式强化学习通常采用 Actor-Learner 架构（如 IMPALA 算法），其机制是让大量 Actor 节点在本地拉取最新模型参数，与环境交互生成轨迹后再发回 Learner 优化。这暴露了严重的效率卡点。首先是计算设备错配，Actor 通常部署在 CPU 上，而 CPU 执行神经网络推理效率极低，模型增大时推理耗时远超环境步进，若要维持吞吐量只能盲目增加 Actor 数量，既拉高成本又破坏收敛性。其次是资源利用率低，Actor 在单线程环境步进和高并行矩阵运算间切换，导致设备经常闲置。最后是极高的网络带宽开销，庞大的模型参数、循环状态及观测数据需在两端频繁双向传输，基于记忆的模型发送的海量状态极大地挤占了带宽，限制了系统横向扩展。</p>
+<p><strong>怎么做的</strong> 为绕开上述卡点，SEED 架构提出了中心化推理的核心思路。它将所有神经网络推理和轨迹累积任务转移到中心的 Learner 节点，Actor 被精简为只负责运行环境的小循环。Actor 在每个步骤中仅将轻量级观测数据发给 Learner，Learner 利用 TPU 运行推理后再将动作传回 Actor。这消除了 Actor 端的计算负担，且因模型参数和循环状态保留在 Learner 端，网络带宽需求降低了 99%。为解决中心化推理引入的网络延迟，SEED 构建了基于 gRPC 的快速流式通信层，两端保持长连接，并在 Learner 端集成高效批处理模块将多个 Actor 请求打包，其端到端延迟甚至低于本地 CPU 推理。Learner 内部由三种线程构成：推理线程负责接收观测、加载循环状态、调用 TPU 推理并返回动作；数据预取线程从队列或经验回放缓冲区采样完整轨迹；训练线程获取预取数据，调用训练 TPU 计算梯度并同步更新所有核心的模型参数。这种架构改变了轨迹的离策略特性，IMPALA 中轨迹生成依赖固定策略即 $\tau \sim \pi_{\theta_t}$，而 SEED 中由于模型异步优化，展开轨迹中的动作由不断更新的最新策略采样，即 $a_i \sim \pi_{\theta_{t+i}}$，使行为策略更接近目标策略。该架构不仅支持 V-trace 算法，还能通过在 Learner 端维护中心化经验回放缓冲区来支持 R2D2 等 Q-learning 算法。</p>
+<p><strong>效果如何</strong> 实验在 3D 导航 DeepMind Lab、足球游戏 Google Research Football 及 Atari-57 基准测试中展开。硬件上，SEED 主要使用 TPU v3 核心配合多核 CPU，对比基线是代表分布式策略梯度路线的 IMPALA 和代表分布式 Q-learning 路线的 R2D2，基线均使用 Nvidia P100 GPU 训练且在 CPU 上推理。结果显示，在 DeepMind Lab 中，SEED 使用 2个 TPU 核心的速度是 IMPALA 的 2.5倍，扩展到 8核后提速达 11倍，且成本降至 1/4。在足球任务困难设置下，SEED 的高效计算允许其处理更大尺寸输入地图，训练 40亿帧后将平均得分从 0.46提升至 4.76，刷新了最佳记录。在 Atari-57 中，SEED 仅用 1.8天就达到 1880% 的人类归一化得分中位数，比 R2D2 快 3.1倍。作者也指出其局限性，系统虽能扩展到每秒数百万帧的吞吐量，但这需要增加环境数量和批次大小，在极大批次下模型样本效率会受严重损害，且中心化经验回放缓冲区大小受制于 Learner 的物理内存上限。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决强化学习（RL）中的两大挑战：扩展性问题和现代计算资源（特别是加速器）的有效利用问题。当前先进的分布式算法在处理RL固有的异构任务（环境运行、模型推理、模型训练、经验回放等）时，计算资源利用效率低下，导致实验成本过高。</p>
 <p>为应对这些挑战，本文提出了一种名为SEED（Scalable, Efficient, Deep-RL）的现代可扩展强化学习代理。其核心贡献与创新点如下：</p>

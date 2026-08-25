@@ -19,6 +19,15 @@ title: 'P-EAGLE: Parallel-Drafting EAGLE with Scalable Training'
 <div class="container">
 <h1>P-EAGLE: Parallel-Drafting EAGLE with Scalable Training</h1>
 <p><strong>Mude Hui * 1 2 Xin Huang * 3 Jaime Campos Salas 3 Yue Sun 3 Nathan Pemberton 3 Xiang Song 3 Ashish Khetan 3 George Karypis 3</strong></p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为 P-EAGLE 的并行投机解码架构及配套的长上下文训练框架，将 EAGLE 的草稿生成过程从串行自回归升级为单次前向并行的多 token 预测，在不牺牲生成质量的前提下，使 120B 级别大模型在 vLLM 中的端到端推理速度提升了 1.10 至 1.36 倍。</p>
+<p><strong>要解决什么问题</strong> 推理能力模型在生成长序列时面临效率瓶颈。现有的 EAGLE 投机解码方法虽能加速推理，但其草稿模型（Drafting）的生成过程仍是自回归的，即生成每个 token 必须等待上一步完成，串行开销限制了加速上限。为打破此限制，业界提出了 ParallelSpec 和 PARD 等并行草稿生成方法，但它们在训练阶段遇到了致命的显存溢出（OOM）问题。在并行预测训练中，序列总位置数等于原始序列长度 $n$ 乘以预测深度 $K$，导致注意力显存和计算复杂度呈 $O((nK)^2)$ 二次方爆炸。处理 8K 甚至 20K tokens 时，单卡无法容纳单条序列的前向传播；同时，现有方法为减少位置数引入的随机采样机制，要求为每个样本单独构建复杂的注意力掩码，构建成本高达 $O((nK)^2)$，导致长上下文训练在算力和显存上均不可行。</p>
+<p><strong>怎么做的</strong> P-EAGLE 的核心思路是通过一次前向传播并行生成 $K$ 个草稿 tokens，并用一套可扩展框架绕开长序列显存与耗时卡点。在架构设计上，P-EAGLE 摒弃了串行依赖。对于首个预测位置，它接收目标模型的真实隐藏状态和当前 Token Embedding；对于后续并行位置，由于缺乏前序真实输出，P-EAGLE 引入两个可学习参数：替代未知 token 的 Mask Token Embedding，以及替代前序隐藏向量的共享隐藏状态（Shared Hidden State）。理论证明，由于 RoPE 旋转位置编码已能让模型唯一恢复绝对位置信息，因此无需为不同预测深度设计专属编码或注入复杂上下文，所有并行位置共享同一个隐藏状态即可。为解决训练复杂度卡点，框架包含两个关键设计。一是摊销掩码构建（Amortized Mask Construction）。利用因果注意力跨深度的位置不变性，初始化时一次性预计算最大长度掩码，训练时通过常数时间复杂度的张量切片操作获取子矩阵，消除每样本构建开销。二是序列分块（Sequence Partitioning）。为解决单条长序列超显存问题，算法将序列切分为 $S$ 个分块，使峰值注意力显存大幅降低：$$ Memory \propto O\left(\frac{L^2}{S^2}\right) $$ 为不破坏跨深度的因果依赖，算法采用迭代传播机制，关键不变量为：$$ Chunk(p, d) = Chunk(p-1, d-1) \quad \text{for } d \ge 2 $$ 即深度 $d$ 的位置 $p$ 强制分配到与其依赖项相同的分块中，并在边界进行因果补全，从而在单卡实现序列内梯度累积。</p>
+<p><strong>效果如何</strong> 实验在 8 张 H200 GPU 上进行，使用 UltraChat、GSM-8K 等数据集，目标模型为 GPT-OSS 120B/20B 和 Qwen3-Coder 30B。对比基线有两个阵营：一是代表串行路线的强基线自回归 EAGLE-3（单层结构，高度优化）；二是代表并行路线的 ParallelSpec 和 PARD（因在 8K 以上长上下文训练中直接显存溢出，仅用于可扩展性对比）。在 8192 tokens 训练设置下，P-EAGLE 成功扩展至 20K tokens 长度。生成质量上，P-EAGLE 的平均每步接受长度在所有测试集均匹配或超越自回归 EAGLE-3，如在 GPT-OSS 120B 提升 4.5%。在 vLLM 端到端吞吐量实测中（并发度为 2），P-EAGLE 相比 EAGLE-3 显著加速：GPT-OSS 20B 提速 1.27 至 1.36 倍，120B 提速 1.04 至 1.10 倍，Qwen3-Coder 30B 提速 1.04 至 1.17 倍。该方法也有代价与局限。首先，为补偿并行预测的信息缺失，P-EAGLE 需要更深的网络容量（推荐 4 层），若为追求极低延迟缩减至 2 层，在 20B 模型上的接受率会大幅下降 12.4%。其次，在并发度较高（如并发度为 4）时，由于目标模型的验证阶段成为新算力瓶颈，120B 大模型的加速比会受限而略有下降。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文主要解决的问题是大型语言模型（LLM）推理中的效率瓶颈，特别是针对推理能力模型（Reasoning LLMs）产生长输出序列的场景。现有的EAGLE方法虽然通过投机解码加速了推理，但其Drafting过程仍是自回归的（串行生成）。现有的并行Drafting方法（如ParallelSpec和PARD）在处理长上下文训练时，由于注意力机制的二次方复杂度，面临显存溢出（OOM）或计算不可行的问题。</p>
 <p><strong>主要贡献如下：</strong></p>

@@ -19,6 +19,19 @@ title: 'Helix Parallelism: Rethinking Sharding Strategies for Interactive Multi-
 <div class="container">
 <h1 id="helix-parallelism-rethinking-sharding-strategies-for-interactive-multi-million-token-llm-decoding">Helix Parallelism: Rethinking Sharding Strategies for Interactive Multi-Million-Token LLM Decoding</h1>
 <p><strong>作者/机构</strong>: Nidhi Bhatia, Ankit More, Ritika Borkar, Tiyasa Mitra, Ramon Matas, Ritchie Zhao, Max Golub, Dheevatsa Mudigere, Brian Pharris, Bita Rouhani (NVIDIA Corporation)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了 Helix Parallelism 混合执行策略，通过在时间维度上解耦注意力和前馈网络的并行映射，解决了大语言模型在百万级长上下文解码时的显存读取瓶颈，在严格的延迟约束下大幅提升了系统的吞吐量与并发批处理能力。</p>
+<p><strong>要解决什么问题</strong>
+在处理百万级词元长上下文的自回归解码时，严格的词元到词元延迟约束暴露了两个核心卡点。首先是前馈网络（FFN）的权重读取，生成每个新词元都需要从显存中加载庞大的 FFN 权重，在小批量下这部分开销无法被摊销，直接成为主导延迟的因素；其次是长 KV 缓存读取，自注意力计算中读取的 KV 缓存量随上下文长度和批量大小呈线性增长，极易耗尽显存容量与带宽。现有的张量并行（TP）策略虽然能缓解 FFN 权重读取成本，但在注意力计算上扩展性极差，一旦张量并行的宽度超过了 KV 头的数量，就会导致低效的 KV 缓存完全复制，从而锁死了并行度和批量大小的上限。为了解决缓存扩展问题，近期如 Medha 等工作采用了 KV 并行（KVP）来分片缓存，但这类耦合式方案将注意力和 FFN 的张量并行宽度强行绑定，在后续的 FFN 计算中没有重新配置并充分复用这些 GPU，导致 FFN 权重加载依然是拖慢整体速度的致命瓶颈。</p>
+<p><strong>怎么做的</strong>
+核心思路是在同一个 Transformer 层内引入时间流水线，将注意力和 FFN 的并行策略完全解耦，让同一组 GPU 在不同计算阶段动态切换到最适合的并行布局。具体而言，系统首先将 $N$ 个可用 GPU 配置为 $N = KVP \times TPA$ 的拓扑结构，其中注意力张量并行度 $TPA$ 必须小于等于 KV 头数。在注意力阶段，Helix 沿序列维度将 KV 缓存分片到 $KVP$ 个 GPU 上，彻底消除了缓存复制。为了避免在注意力计算前跨 GPU 进行昂贵的查询同步，每个 GPU 会接收完整的输入批次，独立计算出完整的 QKV 投影，并在各自的 KV 分片上运行 FlashAttention，生成局部的注意力输出和 log-sum-exp 标量。随后，各 GPU 沿查询头维度执行一次 All-to-All 通信交换片段，重新缩放并求和，在一个通信回合内重构出精确的全局注意力结果。进入 FFN 阶段后，Helix 立即将这同一组 $N$ 个 GPU 重新配置：对于密集型模型，直接切换为纯张量并行，即 $TPF = N$；对于混合专家（MoE）模型，则重组为张量并行与专家并行的二维网格 $TPF \times EP$。这种动态重配使得 FFN 的并行宽度可以突破 KV 头数的限制，同时又不会在注意力阶段引发缓存复制。为了掩盖 All-to-All 带来的通信开销，Helix 引入了 HOP-B 批处理维度重叠流水线，当批次中第一个查询词元的注意力计算完成时，立即启动其通信，同时并行计算下一个词元的注意力。此外，在解码更新 KV 缓存时，Helix 采用轮询机制，将固定数量（如 16 个词元）的新生成词元交替追加到不同 GPU 的分片上，确保显存均衡增长。从机制上看，单层 KV 缓存读取时间 $T_{KV} = \frac{2 \times B \times S \times \lceil K / TPA \rceil \times Hsz \times bytes_{param}}{KVP \times MemBW}$，而 FFN 权重读取时间 $T_{FFN} = \frac{3 \times H \times F \times bytes_{param}}{TPF \times MemBW}$，Helix 正是通过独立最大化分母中的 $KVP$ 和 $TPF$，在不增加分子冗余的前提下，从根本上压榨了硬件带宽。</p>
+<p><strong>效果如何</strong>
+实验基于精确建模计算与 NVLink 通信延迟的高保真模拟器，在 GB200 NVL72 硬件平台上以 FP4 精度扫描了超过十万种配置。测试模型包括 405B 参数的密集型模型 Llama-405B 和 671B 参数的 MoE 模型 DeepSeek-R1，上下文长度均设定为 100 万词元及以上。对比基线涵盖了纯张量并行（TP）、流水线并行（PP）、专家并行（EP）以及将注意力和 FFN 并行度强绑定的普通 KV 并行（代表路线为 Medha）。量化结果显示，在服务 DeepSeek-R1 时，Helix 将用户交互性提升了最高 1.5 倍，并在同等延迟预算下支持了 32 倍的并发用户数。这是因为 DeepSeek-R1 采用多头潜在注意力（MLA），所有查询头共享 1 个等效 KV 头，传统 TP 只要大于 1 就会导致缓存复制，Medha 那种绑定策略在此完全失效，而 Helix 的解耦设计完美避开了这一限制。在 Llama-405B 上，相比纯 TP 基线，Helix 将最大交互性提升了 1.13 倍，吞吐量和批容量提升了 4 倍。消融实验表明，HOP-B 优化在通信占比较高的 Llama-405B 上能挽回 12% 的性能损失，但在通信占比仅 1% 的 DeepSeek-R1 上影响微弱。作者也指出了当前的局限性，即方法主要针对密集注意力架构和 MoE 模型进行了验证，未来还需进一步扩展以支持原生稀疏注意力等能减少读取带宽但无法降低容量需求的新兴机制。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决大型语言模型（LLM）在处理百万级Token上下文时，在严格的“词元到词元延迟”（Token-to-Token Latency, TTL）约束下进行实时自回归解码所面临的挑战。随着上下文历史变长，解码过程面临两大核心瓶颈：<br/>
 1.  <strong>前馈网络（FFN）权重读取</strong>：生成每个新词元都需要从DRAM中加载巨大的FFN权重，在小批量下此开销无法被摊销，成为延迟主导因素。<br/>

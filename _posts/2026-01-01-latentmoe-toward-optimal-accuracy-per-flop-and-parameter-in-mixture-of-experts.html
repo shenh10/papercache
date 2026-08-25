@@ -19,6 +19,15 @@ title: 'LatentMoE: Toward Optimal Accuracy per FLOP and Parameter in Mixture of 
 <h1>LatentMoE: Toward Optimal Accuracy per FLOP and Parameter in Mixture of Experts</h1>
 <p><strong>发表时间</strong>: 2026-01 · arXiv:2601.18089 (NVIDIA)</p>
 <p><strong>作者/机构</strong>: Venmugil Elango, Nidhi Bhatia, Roger Waleffe, Rasoul Shafipour, Tomer Asida, Abhinav Khattar, Nave Assaf, Maximilian Golub, Joey Guman, Tiyasa Mitra, Ritchie Zhao, Ritika Borkar, Ran Zilberstein, Mostofa Patwary, Mohammad Shoeybi, Bita Rouhani</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为 LatentMoE 的新型专家混合架构，通过将输入特征投影到低维潜在空间来成倍降低路由通信与权重加载开销，并将节省的资源复用于增加专家数量和激活比例，在保持总体推理成本近似不变的前提下，显著提升了模型每浮点运算和每参数的准确度。</p>
+<p><strong>要解决什么问题</strong> 现有的专家混合（MoE）架构主要针对离线、高吞吐量场景优化，忽视了在线部署中严格的延迟、内存带宽和通信约束。这种传统做法在实际服务中会遭遇两个致命卡点。第一是内存带宽瓶颈：在低延迟、小批量的高交互推理场景下，分配给每个专家的 token 数量极少，导致计算的算术强度远低于硬件的计算密集型阈值。此时，MoE 专家的运行完全受限于加载模型权重的内存带宽，而非计算能力。第二是通信瓶颈：在吞吐量导向的大批量场景下，为了保证专家并行，token 需要在多个 GPU 间进行全对全（all-to-all）路由分发。这种跨设备的通信开销会急剧攀升，其耗时甚至可达计算耗时的九倍，成为主导端到端执行时间的最大阻碍。若采用直接减少隐藏维度或激活专家数的常规手段来缓解瓶颈，会直接削减每个 token 的有效非线性预算，导致模型准确度断崖式下跌。因此，如何在不牺牲质量的前提下打破内存与通信的双重枷锁，是 MoE 落地面临的核心挑战。</p>
+<p><strong>怎么做的</strong> 为了绕开上述卡点，LatentMoE 的核心思路是将专家路由与计算过程同模型的原始隐藏维度解耦，在低维潜在空间中完成核心操作。具体而言，该方法由三个关键部件构成。首先是降维投影：使用一个可学习的下投影矩阵，将输入 token 从原始隐藏维度 $h$ 压缩到共享的低维潜在空间 $\ell$ 中。其次是潜在空间专家：所有被路由专家完全在该低维空间内运行，其权重矩阵维度均适配 $\ell$ 而非 $h$。最后是升维投影：专家计算完成后，通过可学习的上投影矩阵将聚合结果还原回原始维度 $h$。由于 token 数据量变小且专家权重尺寸缩减，这种设计将跨设备的全对全通信量以及加载权重的内存带宽需求同比例降低了 $\gamma = h/\ell$ 倍。为弥补维度压缩带来的信息损失，LatentMoE 将节省的资源“再投资”到模型表达能力上。基于组合稀疏性原理，作者提出了两种配置。第一种是 $\ell$-MoE_eff，它将总专家数 $N$ 扩大 $\gamma$ 倍至 $N'$，以指数级扩展专家组合多样性，其更新式为 $\ell\text{-MoE}_{eff}(x) = W_{\uparrow} \sum_{j \in \text{TOP}_{k, N'}(g')} g'_j E_j(W_{\downarrow} x; \ell) + E_s(x; h)$。第二种是性能更优的 $\ell$-MoE_acc，它不仅将总专家数扩大 $\gamma$ 倍，还将每个 token 激活的 top-k 专家数也同步扩大 $\gamma$ 倍至 $k'$，在维持推理成本不变的情况下恢复并增强了有效非线性预算，其定义式为 $\ell\text{-MoE}_{acc}(x) = W_{\uparrow} \sum_{j \in \text{TOP}_{k', N'}(g')} g'_j E_j(W_{\downarrow} x; \ell) + E_s(x; h)$。通过这种机制，LatentMoE 成功在不增加推理负担的前提下提升了模型有效容量。</p>
+<p><strong>效果如何</strong> 实验在高达 95B 总参数量和 1T tokens 的训练规模上展开，涵盖了纯 Transformer 架构（基于 DeepSeek-v2-lite 的 16B 和 95B 模型）以及 73B 的混合 Mamba-Attention MoE 模型。硬件测试基于 H100 GPU 和 GB200 性能模拟器。对比的核心基线是标准 MoE 架构，代表不进行潜在空间压缩的传统路由路线；此外也与 MoLAE 进行了机制对比，后者代表了仅对专家权重进行低秩近似的后训练压缩路线，但因未能减少 token 分发通信量而效率增益受限。量化结果显示，在采用四倍压缩率时，$\ell$-MoE_acc 配置在代码、数学和常识理解等所有下游任务上的准确度均显著超越了同等参数规模的标准 MoE 基线。在实际推理代价方面，由于引入了投影计算，$\ell$-MoE_acc 在 H100 上的实测高并发吞吐量相比标准 MoE 仅出现最高 6% 的微小下降。但在万亿参数规模的预测服务模拟中，LatentMoE 展现出巨大系统级优势：为达到与 1T 参数 LatentMoE 相同的准确度，标准 MoE 模型需将参数量膨胀至 1.35T，导致标准 MoE 在实际服务时的速度比 LatentMoE 慢 1.24 到 3.46 倍。该方法的局限性在于，隐藏维度的压缩存在一个由任务内在特征秩决定的下限，当压缩率过大（如超过四倍）时，模型质量会发生不可逆的下降。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文的核心研究目标是解决现有专家混合（MoE）架构在推理成本方面（以每浮点运算（FLOP）和每参数的准确度衡量）的次优问题。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

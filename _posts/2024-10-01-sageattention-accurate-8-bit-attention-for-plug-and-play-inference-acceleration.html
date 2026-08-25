@@ -19,6 +19,19 @@ title: 'SageAttention: Accurate 8-Bit Attention for Plug-and-Play Inference Acce
 <div class="container">
 <h1>SageAttention: Accurate 8-Bit Attention for Plug-and-Play Inference Acceleration</h1>
 <p><strong>作者/机构</strong>: Jintao Zhang, Jia Wei, Pengle Zhang, Jun Zhu, Jianfei Chen∗, Dept. of Comp. Sci. &amp; Tech., Institute for AI, BNRist Center, Tsinghua-Bosch Joint ML Center, THBI Lab, Tsinghua University</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了 SageAttention，一种即插即用且无需重新训练的 8-bit 注意力机制量化方法，通过 K 矩阵平滑化和混合精度累加技术，在几乎不损失端到端指标的前提下，使注意力计算速度比 FlashAttention2 提升了约 2.1 倍。</p>
+<p><strong>要解决什么问题</strong> 原有大模型推理中，注意力机制的计算复杂度随序列长度呈平方级增长，在处理 8K 到 128K 的长序列时，其计算成本和全局内存读写开销远超其他操作，成为核心性能卡点。尽管动态量化是加速矩阵乘法的常规手段，但现有工作多集中在线性层的量化，注意力机制通常仍以 FP16 等高精度格式计算。如果直接对注意力机制进行 8-bit 量化，会面临两个机制上的致命问题：第一，K 矩阵存在显著的通道级离群值（channel-level outliers），且由于注意力计算是在 token 维度上进行内积，无法使用常规的逐通道量化来消除影响，直接量化会导致严重的精度损失，甚至在图像或视频生成任务中产出完全模糊的结果；第二，简单地将 P 矩阵和 V 矩阵量化为 INT8 格式，无法在各种模型层和场景下稳定保证 P 和 V 矩阵乘法结果的准确性。此外，许多现有的量化方法需要高昂的重新训练成本，而直接使用针对特定硬件架构的低精度算子又会导致性能下降。</p>
+<p><strong>怎么做的</strong> 核心思路是将注意力机制中的核心矩阵乘法转换为 INT8 或更高效的低精度计算，同时通过数学等价变换和硬件指令优化来绕开离群值带来的精度崩塌，且在线 softmax 部分仍保留全精度计算。关键设计由三个部件构成。首先是 K 矩阵平滑化技术。作者观察到 K 矩阵的通道离群值主要源于所有 token 共享的一个大偏差，而非 token 间的剧烈变化。因此，在量化前让 K 矩阵减去所有 token 的均值，即可消除离群值：
+$$\gamma(K)=K-\operatorname{mean}(K)$$
+这一步变换在数学上不改变最终的注意力输出，却能让量化后的精度大幅提升，且时间开销不到 0.2%。其次是针对 P 和 V 矩阵乘法的混合精度方案。由于直接将 P 和 V 量化为 INT8 会在某些层带来不可接受的误差，该方法选择将它们保持在 FP16 格式，但在执行矩阵乘法时，调用硬件的 FP16 累加器（而非默认的 FP32 累加器）。这种设计在不损失任何精度的情况下，将矩阵乘法速度翻倍，并节省了寄存器资源。最后是自适应量化策略与算子融合。作者基于 Q 和 K 的逐块或逐词元量化，以及 P 和 V 的不同精度，实现了四种具有不同速度与精度权衡的注意力核。对于模型的每一层，系统会自适应测试，当纯 8-bit 版本的余弦相似度大于 99.8% 时采用最快的纯 8-bit 核，否则退回使用 FP16 累加器的版本。整个量化注意力计算的内积部分可表示为：
+$$S = \psi^{-1}_{\delta_Q \delta_K}(\hat{Q}\hat{K}^\top)$$
+其中 $\psi^{-1}$ 为反量化操作。为了进一步掩盖量化带来的额外计算开销，该方法还将量化过程与注意力层之前的 ROPE（旋转位置嵌入）算子进行了底层融合，并在芯片上提前将缩放系数融入 Q 矩阵，避免了额外的内存读写。</p>
+<p><strong>效果如何</strong> 实验在 RTX 4090 和 RTX 3090 硬件平台上进行，测试了包括 Llama2（7B 参数）、CogvideoX、Unidiffuser、UltraPixel 和 TIMM 在内的多种语言、图像和视频生成模型。对比基线主要选择了当前主流的标准注意力实现 Torch attention，以及代表高效注意力计算路线的 xformers 和 FlashAttention2；同时在系统层面也与代表线性层量化路线的 AWQ、Q-diffusion 等方法进行了正交对比。量化结果表明，SageAttention 在 RTX 4090 上达到了 341 TOPS 的峰值性能，逼近理论 INT8 吞吐量的 52%；其算子速度平均比 FlashAttention2 快 2.1 倍，比 xformers 快 2.9 倍。在端到端实际运行中，该方法在各类模型上平均实现了 2.83 倍的加速。在 WikiText、ImageNet 和 COCO 等数据集上的评估显示，文本、图像和视频生成任务的端到端指标平均下降仅为 0.2%，在部分视觉模型上甚至略微超越了全精度基线。关于代价与局限性，作者坦承量化和反量化本身会带来计算开销，必须依赖算子融合来掩盖；此外，采用 FP16 累加器带来的 2 倍吞吐量提升主要体现在 RTX 4090 等边缘加速卡上，在大多数数据中心级计算卡上可能无法获得同等的吞吐量收益。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决Transformer模型中注意力机制的计算效率问题。注意力机制是Transformer的核心，但其计算复杂度为$O(N^2)$，在处理长序列（如8K~128K）时，其计算成本远超其他操作，成为性能瓶颈（如图2所示）。尽管量化是提升神经网络效率的有效方法，但现有工作主要集中在线性层的量化，而注意力机制通常仍以FP16等高精度格式计算，缺乏系统性的注意力机制量化研究。此外，许多量化方法需要额外的训练，对于大规模模型来说成本高昂。虽然最近发布的FlashAttention3提供了FP8版本，但它仅限于Nvidia Hopper架构，且直接使用可能导致性能下降（如表1所示）。</p>
 <p>量化注意力机制面临两大挑战：<br/>

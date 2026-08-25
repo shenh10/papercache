@@ -19,6 +19,19 @@ title: 'Leave No Context Behind: Efficient Infinite Context Transformers with In
 <h1 id="leave-no-context-behind-efficient-infinite-context-transformers-with-infini-attention">Leave No Context Behind: Efficient Infinite Context Transformers with Infini-attention</h1>
 <p><strong>文章标题</strong>: 不遗漏任何上下文：基于 Infini-attention 的高效无限上下文 Transformer<br/>
 <strong>作者/机构</strong>: Tsendsuren Munkhdalai, Manaal Faruqui and Siddharth Gopal, Google</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出 Infini-attention 注意力机制，通过将长期压缩记忆与局部因果注意力结合，使 Transformer 能以恒定的内存和计算资源处理百万词元级别的无限长上下文。</p>
+<p><strong>要解决什么问题</strong> 现有 Transformer 在扩展到百万词元级别的长序列时，面临严重的内存和计算瓶颈。标准多头注意力是无状态的，同一层内没有任何状态会传递给下一个输入片段。为捕捉连续片段间的长距离依赖，模型必须将所有历史片段拼接起来同时处理，导致注意力键值（KV）状态的内存占用随序列长度呈二次方急剧膨胀，使得训练和流式推理成本高昂。另一方面，传统循环神经网络（RNN）虽通过维持固定大小的隐藏状态实现了高计算效率，但将全部历史上下文强行压缩进单一的定长向量中，严重限制了长序列任务中的表达能力；即使是引入外部可读写记忆组件的 RNN 变体，其记忆容量依然有界。因此，如何在不牺牲注意力机制表达能力的前提下，打破 KV 缓存的容量限制，实现对无限长历史的高效流式处理，成为了核心卡点。</p>
+<p><strong>怎么做的</strong> 核心思路是提出 Infini-attention 循环注意力机制，将局部因果注意力与长期压缩记忆模块无缝结合。它绕开内存膨胀卡点的方法是放弃缓存所有历史 KV 状态，改用分段处理策略：在每个固定长度的输入片段内，计算标准的局部点积注意力；在片段之间，不丢弃旧的 KV 状态，而是将其压缩更新到一个固定大小的全局记忆矩阵中。由于单层每个注意力头存储压缩上下文的内存复杂度仅为常数级，模型从而以有界的内存实现了无界的上下文窗口。该机制由三个关键部件构成。首先是状态复用与压缩记忆。模型直接复用局部点积注意力中的查询（Q）、键（K）和值（V）状态，不为记忆模块计算新特征。记忆模块采用关联矩阵参数化，模型使用当前片段的查询向量从上一片段的记忆矩阵中检索长期内容：
+$$A_{\text{mem}} = \frac{\sigma(Q) M_{s-1}}{\sigma(Q) z_{s-1}}$$
+其中 $\sigma$ 是非线性激活函数，$z_{s-1}$ 是保证训练稳定的归一化项。其次是基于 Delta 规则的记忆更新。为避免重复存储已有的键值绑定，模型在加入新绑定前，先用当前键向量检索出记忆中已有的值，并从新值中将其减去。更新公式为：
+$$M_s = M_{s-1} + \sigma(K)^T \left( V - \frac{\sigma(K) M_{s-1}}{\sigma(K) z_{s-1}} \right)$$
+这确保了当特定 KV 绑定已存在时关联矩阵保持不变，大幅提升了记忆的有效容量。最后是长短期上下文注入。模型通过一个可学习的门控标量，动态聚合局部的点积注意力状态和全局检索出的长期内容，允许模型在长短期信息流之间自适应权衡，最终投影为该层的注意力输出。</p>
+<p><strong>效果如何</strong> 实验在长上下文语言建模和大型语言模型（LLM）持续预训练两类场景下展开。模型涵盖 12 层小型网络及 1B、8B 参数量级的 LLM。对比基线代表了三种长上下文路线：缓存上一片段 KV 状态的 Transformer-XL、存储全部历史 KV 状态并用 kNN 检索的 Memorizing Transformers，以及将输入压缩为摘要向量作软提示的 RMT。在语言建模任务中，Infini-Transformer 全面优于前两者。与采用 65K 长度外部检索记忆的 Memorizing Transformers 相比，本方法在记忆参数量减少 114 倍的情况下实现了更优的困惑度；当训练序列拉升至 100K 时，困惑度降至 2.20。在 1B 模型的 Passkey 检索任务中，模型展现了极强的长度外推能力：仅在 5K 长度输入上微调，就能完美解决高达 1M 长度的检索任务。在 8B 模型的 BookSum 书籍摘要任务中，模型在 32K 长度下微调后，直接在 500K 长度的整本书籍上评估，刷新了该任务的 SOTA 成绩，超越 BART 等专为摘要构建的编码器-解码器模型，且 Rouge 得分随输入文本量增加而稳定提升。在代价方面，模型训练时需跨片段执行随时间反向传播（BPTT），必须引入梯度检查点技术控制显存；此外，为确保长期记忆仅存储全局上下文，压缩记忆的键和查询向量必须剥离位置嵌入，位置信息只能在记忆读写后单独注入。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决 Transformer 及基于 Transformer 的大型语言模型（LLMs）因注意力机制的二次复杂度而在处理长序列时面临的内存和计算瓶G颈问题。现有模型在扩展到如 1M 词元这类长序列时，其注意力键值（KV）状态的内存占用变得极其巨大，导致训练和服务的成本高昂。</p>
 <p>为应对此挑战，本文提出了一种名为 <strong>Infini-attention</strong> 的新颖注意力机制，其核心目标是让 Transformer 模型能够以有界的内存和计算资源高效处理无限长的输入。</p>

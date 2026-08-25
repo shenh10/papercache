@@ -18,6 +18,15 @@ title: 'RLHFless: Serverless Computing for Efficient RLHF'
 <div class="container">
 <h1>RLHFless: Serverless Computing for Efficient RLHF</h1>
 <p>Rui Wei (Stevens Institute of Technology), Hanfei Yu (Stevens Institute of Technology), Shubham Jain (Stevens Institute of Technology), Yogarajan Sivakumar (Stevens Institute of Technology), Devesh Tiwari (Northeastern University), Jian Li (Stony Brook University), Seung-Jong Park (Missouri University of Science &amp; Technology), Hao Wang (Stevens Institute of Technology)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了首个基于无服务器（serverless）计算环境的同步人类反馈强化学习（RLHF）训练框架 RLHFless，通过动态资源分配、去重预填充和工作负载调度，在加速模型对齐训练的同时最高降低了 44.8% 的计算成本。</p>
+<p><strong>要解决什么问题</strong> 现有的同步 RLHF 框架依赖静态分配资源的“有服务器”（serverful）架构，在面对大语言模型动态工作负载时存在严重的资源浪费卡点。首先，RLHF 的生成、准备和学习阶段相互依赖，现有的模型放置策略陷入了两难：分开部署会导致不同组件在等待期间显存和算力处于空闲状态，而共置部署又极易引发显存溢出或性能干扰。其次，随着训练轮次推进，模型生成的响应长度会发生动态变化，且同一批次内响应长度存在长尾分布，导致生成阶段出现“掉队者”，使得提前完成生成的计算资源只能闲置等待最长响应完成。最后，许多 RLHF 算法（如 GRPO）会为同一提示生成多个响应，且训练集中的提示常带有共享前缀，现有的并行生成策略会让不同的工作节点独立重复计算相同的 KV 缓存，白白消耗了大量显存带宽和计算算力。</p>
+<p><strong>怎么做的</strong> 核心思路是引入无服务器计算的弹性机制，将静态的资源独占转变为按需分配和动态释放，从而绕开组件空闲和重复计算的卡点。该框架由四个关键部件构成。第一是去重预填充机制，它将预填充与解码阶段分离，专门分配一个预填充 Actor。系统会寻找一个目标共享前缀长度，使得去重后的提示数量 $D(L)$ 刚好填满预填充的最大批次容量 $B_{\text{prefill}}$，即满足 $$D(L) \leq B_{\text{prefill}}$$ 从而确保共享前缀的 KV 缓存只被计算一次，供后续多个解码 Actor 复用。第二是基于动态排序的提示分配，为了避免单个 Actor 内部因响应长度不一造成的等待，系统利用指数加权移动平均算法，根据上一轮训练的历史数据低成本预测当前提示的响应长度，将长度相近的提示分发到同一个解码 Actor 中。如果预测出现误差导致某个长响应拖慢了进度，系统会触发剪切-迁移策略：当一个 Actor 内完成生成的响应比例达到阈值 $\tau$ 时，直接中断并把未完成的长响应迁移到其他已空闲的 Actor 上。第三是成本感知的 Actor 扩展，系统会根据预测的工作负载，在候选的 Actor 数量范围内寻找执行时间与计算成本的加权最优解，其核心更新式为 $$N^{\prime}:=\underset{N \in\left[N_{\min }, N_{\max }\right]}{\arg \min }\left\{\lambda \cdot \tilde{T}^{\text {total }}(N)+(1-\lambda) \cdot \tilde{C}(N)\right\}$$ 其中 $\lambda$ 用于权衡速度与成本。第四是局部性感知的放置策略，将预填充 Actor 与学习器部署在同一物理节点，并将负载最重的解码 Actor 也放在此处，利用计算的时间窗口来掩盖模型权重和 KV 缓存的跨节点传输延迟。</p>
+<p><strong>效果如何</strong> 实验在配备 L40S GPU 的物理集群以及模拟的 20 节点 H100 大规模集群上进行，使用了 3B 到 7B 参数的 Qwen2.5 模型和 70B 参数的 Llama 模型，在 GSM8k、GPQA 和 LiveCodeBench 数据集上测试了 PPO 和 GRPO 算法。对比的最主要基线是代表当前最先进同步 RLHF 路线的 VERL 框架，以及代表全局剪切-迁移路线的 RLHFuse 方法。量化结果显示，在物理集群上，该方法相比 VERL 最高实现了 1.35 倍的训练加速和 44.8% 的成本降低；在模拟的大规模集群中也保持了平均 1.23 倍的加速和 38.7% 的成本节约。在消融对比中，仅靠提示分配机制就比 RLHFuse 的全局迁移策略进一步降低了 12.8% 的端到端成本，而去重预填充在 GRPO 算法下理论上减少了 66% 的预填充开销。此外，该框架表现出极强的鲁棒性，即使在使用准确率仅约 44% 的低精度长度预测器时，依然能实现 1.22 倍的加速，且其引入的调度开销在单步训练中保持在 30 毫秒以内，几乎可以忽略不计。作者也承认了该方法的局限性，目前框架仅针对同步训练设计，虽然其动态扩展和分配机制在正交维度上具备潜力，但尚未实际集成到异步系统中进行验证。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题与动机</strong>：大型语言模型(LLM)通常通过人类反馈强化学习(RLHF)进行后训练，以使其输出与人类偏好对齐。RLHF训练比传统RL资源消耗更大、更复杂，尤其在模型规模增大、分布式训练时，数据传输和模型权重同步成为主要瓶颈。现有的RLHF框架依赖于“有服务器” (serverful) 的基础设施，这种静态资源分配方式难以应对RLHF工作流中动态的资源需求，导致在同步训练过程中，不同组件之间或内部经常出现空闲时间，造成开销和资源浪费。此外，异步或离策略的RLHF方法虽然能提高利用率，但可能因使用过时数据而损害收敛稳定性和最终训练质量。</p>
 <p><strong>研究目标与关键洞察</strong>：本文旨在解决同步RLHF训练中的资源效率问题。通过分析同步RLHF工作负载，我们发现了三个关键洞察：<br/>

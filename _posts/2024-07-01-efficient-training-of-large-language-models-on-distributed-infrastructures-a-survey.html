@@ -18,6 +18,19 @@ title: 'Efficient Training of Large Language Models on Distributed Infrastructur
 
 <div class="container">
 <h1 id="efficient-training-of-large-language-models-on-distributed-infrastructures-a-survey">Efficient Training of Large Language Models on Distributed Infrastructures: A Survey</h1>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文系统性综述了在分布式基础设施上高效训练大型语言模型（LLM）的最新进展，全面梳理了旨在突破可扩展性、计算效率和系统可靠性瓶颈的基础设施设计、并行策略、资源优化及容错机制。</p>
+<p><strong>要解决什么问题</strong>
+大型语言模型的训练面临前所未有的规模和时长，导致原有深度学习训练范式在可扩展性、效率和可靠性上遭遇严重卡点。首先是显存与计算瓶颈，千亿参数模型的状态和激活值远超单卡显存上限，且由于频繁的高带宽内存（HBM）访问和流水线气泡，计算资源的实际利用率极低（例如在 16K 个 GPU 上仅能实现 38% 到 41% 的模型 FLOPs 利用率）。其次是通信墙问题，在数万张 GPU 间同步梯度和中间激活时，网络通信开销可能占据高达 90% 的训练时间，传统的哈希负载均衡在面对少数大象流（单次同步产生的大规模突发流量）时极易引发网络拥塞。最后是系统可靠性崩溃，由于训练的同步性，任何单点硬件故障（如 GPU 掉线、显存错误）或网络超时都会导致整个集群停转。在数万张卡的规模下，日故障率极高（如长达 54 天的预训练中可能遭遇数百次中断），传统的同步检查点保存机制会带来巨大的 I/O 停顿，导致超过一半的算力被浪费在故障诊断与恢复上。</p>
+<p><strong>怎么做的</strong>
+本文通过解构分布式训练的底层架构与软件栈，梳理出了一套应对上述卡点的系统性优化框架。关键设计由基础设施、并行方案、核心资源优化和容错机制四个部件构成。第一，在基础设施层，除了采用高带宽的 NVLink 和 InfiniBand 互连，还针对大象流引入了增强型等价多路径路由和包喷射技术以解决网络拥塞，并采用 rail-optimized 拓扑减少网络干扰。第二，在并行方案上，采用混合 3D 并行（数据、张量、流水线并行）将模型切分到集群中；针对长上下文引入序列并行分摊显存，针对专家混合（MoE）模型引入专家并行并结合细粒度任务调度隐藏节点间通信开销。第三，在资源优化层面，计算上通过 FlashAttention 等 IO 感知算子将矩阵乘法与 Softmax 融合在一个 CUDA 内核中，减少慢速 HBM 读写，并广泛采用 FP16/BF16 乃至 FP8 的混合精度计算；显存上，通过 ZeRO 系列技术在数据并行组内分片优化器状态、梯度和参数，将单卡显存消耗从 $16\Phi$ 降至 $16\Phi/N$（$N$ 为并行度），并辅以激活重计算和 CPU/SSD 动态卸载；通信上，通过优先级队列和细粒度操作分解，将 AllReduce 等集体通信与反向传播计算深度重叠，甚至利用交换机硬件执行网络内聚合。第四，在容错机制上，将传统的同步检查点解耦为快照和持久化两个异步阶段，或利用内存中检查点和实时迁移技术，在不阻塞训练的情况下实现高频状态备份与快速恢复。</p>
+<p><strong>效果如何</strong>
+由于本文为综述，其有效性通过各代表性路线在顶级硬件集群（如包含上万张 A100/H100 GPU 或 TPUv4 的超级计算机）上的量化指标来证明。在显存优化方面，对比完全复制模型状态的 PyTorch-DDP 基线（代表传统数据并行路线），ZeRO-3 路线成功将千亿参数模型的显存占用降低了数个数量级，结合 ZeRO-Infinity 的 CPU/SSD 卸载技术，可在 512 张 V100 上支撑高达 32T 参数模型的训练。在计算与通信优化方面，对比标准注意力机制，FlashAttention 系列显著提升了长序列训练的吞吐量；而采用通信-计算重叠调度和网络内聚合（如 SHARP）后，有效缓解了 90% 的通信时间占比。在容错方面，对比传统的同步检查点基线（代表阻塞式 I/O 路线），采用快照-停顿解耦和异步持久化路线的方法，将故障恢复导致的 GPU 空闲时间从数分钟缩短至单次迭代的计算时间内，大幅挽回了因频繁中断（如 54 天内 466 次故障）导致的算力浪费。作者也指出了现有体系的局限与代价：极端的显存卸载会受限于 PCIe 带宽，低精度（如 1-bit）训练可能带来模型能力折损，且传统硅基计算在应对未来需求时面临物理极限，未来可能需要向光子计算和光网络架构演进。</p>
+</div>
+</details>
 <h3 id="_1">高效训练分布式基础设施上的大型语言模型：一篇综述</h3>
 <p><strong>作者/机构</strong>: Jiangfei Duan<em>, Shuo Zhang</em>, Zerui Wang*, Lijuan Jiang, Wenwen Qu, Qinghao Hu, Guoteng Wang, Qizhen Weng, Hang Yan, Xingcheng Zhang, Xipeng Qiu, Dahua Lin, Yonggang Wen, Xin Jin, Tianwei Zhang and Peng SunB</p>
 <hr/>

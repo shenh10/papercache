@@ -19,6 +19,15 @@ title: 'DuoAttention: Efficient Long-Context LLM Inference with Retrieval and St
 <div class="container">
 <h1>DuoAttention: Efficient Long-Context LLM Inference with Retrieval and Streaming Heads</h1>
 <p><strong>作者/机构</strong>: Guangxuan Xiao (MIT), Jiaming Tang (MIT), Jingwei Zuo (Tsinghua University), Junxian Guo (MIT, SJTU), Shang Yang (MIT), Haotian Tang (MIT), Yao Fu (University of Edinburgh), Song Han (MIT, NVIDIA)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了 DuoAttention 框架，通过将注意力头区分为保留完整键值缓存的检索头和仅保留局部缓存的流式头，在几乎不损失长上下文处理能力的前提下，大幅降低了大型语言模型推理的显存占用与延迟，使 8B 参数规模的模型在单张 A100 显卡上能处理高达 330 万词元的上下文。</p>
+<p><strong>要解决什么问题</strong> 现有的长上下文大语言模型在推理时面临严重的显存和计算瓶颈。随序列长度增加，标准全注意力要求在所有头中缓存全部键（Key）和值（Value）状态，导致解码延迟线性增长、预填充延迟二次方增长，键值缓存显存线性暴涨。处理一百万词元时，8B 模型使用 FP16 精度需至少 137GB 显存，超出单张 80GB GPU 容量。现有方案均有局限：修改架构（如分组查询注意力）或系统优化（如 FlashAttention）无法消除显存线性增长；近似注意力（如 H2O、StreamingLLM）通过丢弃词元降低显存，却严重破坏长上下文准确性。如何在不损害长程理解力的前提下，打破全注意力在超长序列下的显存与计算壁垒，是当前部署的核心卡点。</p>
+<p><strong>怎么做的</strong> 核心思路基于一个关键观察：模型注意力头在功能上存在严重分化，可划分为“检索头”和“流式头”。检索头占比极小，但专门负责跨越长距离捕获上下文强相关词元，对长文本理解至关重要，压缩其缓存会导致关键信息丢失；而占绝大多数的流式头，仅关注初始的“注意力池”（文本开头的词元）和最近局部词元，丢弃中间词元缓存不影响输出。基于此，该方法采用差异化缓存策略：仅为检索头保留完整历史缓存，对流式头只维持极小且固定长度的轻量级缓存。这使大部分注意力头的内存需求从线性增长降维到常数级别，同时避开了对长程记忆力的破坏。关键设计由两个部件构成。首先是基于优化的检索头识别算法，直接测量“丢弃中间词元”对输出造成的偏差。算法为每个键值头分配介于 0 到 1 的可训练门控值 $\alpha_{i,j}$，在冻结模型参数的状态下，将全注意力与流式注意力（仅关注注意力池和最近词元）输出进行加权混合：$$ \text{attn}_{i,j} = \alpha_{i,j} \cdot \text{full\_attn} + (1 - \alpha_{i,j}) \cdot \text{streaming\_attn} $$作者构建了在长文本中随机插入短密钥的合成数据集，要求模型在末尾回忆。优化目标是最小化混合模型与全注意力模型输出隐藏状态的 L2 距离，并引入 L1 正则化迫使门控值稀疏。其次是部署阶段的二值化与分块预填充机制。推理时，根据稀疏度阈值 $\tau$ 对门控值进行二值化硬截断，决定每个头的策略：$$ \operatorname{attn}_{i,j}=\begin{cases}\texttt{full\_attn} &amp; \text{if } \alpha_{i,j}&gt;\tau \\ \texttt{streaming\_attn} &amp; \text{otherwise}\end{cases} $$系统在预处理时重排权重通道，将两类头聚集到连续内存块。解码时查询向量被切分送入不同缓存计算再拼接。预填充阶段结合分块预填充技术，流式头处理完一个输入块后立即修剪缓存，只保留注意力池和最近词元。这使流式头预填充时间复杂度从 $O(L^2)$ 降至 $O(LK)$（$L$ 为序列长度，$K$ 为分块大小），显存复杂度降至 $O(K)$，且无需编写底层自定义算子。</p>
+<p><strong>效果如何</strong> 实验在 A100 GPU 上评估了 Llama-2-7B、Llama-3-8B/70B 及 Mistral-7B 模型。对比基线为代表近似注意力路线的方法，包括基于分数或模式动态丢弃词元的 H2O、TOVA、FastGen，以及保留局部窗口的 StreamingLLM。在长上下文评估中，序列拉伸至 1048K 词元时，H2O、TOVA 和 StreamingLLM 因丢弃关键缓存导致检索准确率彻底崩溃；而该方法在仅保留 25%（MHA 模型）或 50%（GQA 模型）检索头时，依然维持与全注意力几乎一致的极高准确率，且在 MMLU 等短上下文任务上近乎无损。效率方面，MHA 模型的解码显存最高减少 2.55 倍，速度最高提升 2.18 倍；预填充延迟最高降低 1.73 倍。叠加 8 位权重和 4 位缓存量化后，Llama-3-8B 在单张 80GB 显卡上能承载 330 万词元，容量比 16 位浮点全注意力部署高出 6.4 倍。代价方面，部署前需冻结参数并用合成数据进行两千步寻优训练，存在前置工程成本。消融实验指出流式头缓存存在饱和点（16 个注意力池加 64 个最近词元），继续增加无收益；此外，H2O 和 TOVA 等基线在预填充阶段天然不兼容 FlashAttention，测试时不得不进行修改，侧面反映了动态丢弃策略的落地阻力。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>部署长上下文大型语言模型（LLM）至关重要，但也带来了巨大的计算和内存挑战。在所有注意力头中缓存所有键（Key）和值（Value）状态（KV缓存）会消耗大量内存。现有的KV缓存剪枝方法要么损害了LLM的长上下文能力，要么效率提升有限。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

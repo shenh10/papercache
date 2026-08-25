@@ -20,6 +20,15 @@ title: 'Jet-RL: Enabling On-Policy FP8 Reinforcement Learning with Unified Train
 <h1>Jet-RL: Enabling On-Policy FP8 Reinforcement Learning with Unified Training and Rollout Precision Flow</h1>
 <p><strong>作者/机构</strong>: Haocheng Xi (NVIDIA, UC Berkeley), Charlie Ruan (UC Berkeley), Peiyuan Liao (Stanford University), Yujun Lin (NVIDIA), Han Cai (NVIDIA), Yilong Zhao (UC Berkeley), Shuo Yang (UC Berkeley), Kurt Keutzer (UC Berkeley), Song Han (NVIDIA, MIT), Ligeng Zhu (NVIDIA)</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了 Jet-RL 框架，通过在强化学习的训练和生成阶段统一使用 FP8 精度流，解决了混合精度策略导致的训练不稳定问题，在保持与全精度基线相当准确率的同时，实现了 16% 的端到端训练加速。</p>
+<p><strong>要解决什么问题</strong> 强化学习训练的性能瓶颈在于生成（Rollout）阶段，当生成长度超过 8K 时，该阶段耗时占总训练时间的 70% 以上。为加速生成，现有方案通常采用 BF16 训练配合 FP8 生成的混合精度策略，但这会破坏强化学习极其依赖的“在策略（on-policy）”假设，即模型必须从遵循其当前策略收集的数据中学习。具体而言，由于训练前向传播使用 BF16 精度，而生成阶段使用 FP8 精度，两者在相同输入下会产生不同的输出分布，引入了显著的数值不匹配。这种策略在短序列或简单任务中尚可维持，但在长序列生成中，误差会随解码步数不断累积；在面对高难度推理任务时，基础模型置信度较低，对量化引起的微小数值扰动更加敏感。这两种情况都会导致训练分布与生成分布的差异急剧放大，引发严重的训练不稳定和灾难性的准确率崩溃。同时，如果在每次权重同步时引入离线量化校准来弥补精度损失，其巨大的时间开销又会完全抵消量化带来的加速收益。</p>
+<p><strong>怎么做的</strong> 核心思路是为训练的前向传播和生成阶段强制执行统一的 FP8 精度流，使推理计算图成为训练计算图的严格子图，从而从根本上消除策略不匹配。量化过程将高精度张量映射为低精度，定义为：$$ \hat{X} = \left\lfloor \frac{X}{S_X} \right\rfloor, \quad S_X = \frac{\max(|X|)}{\Delta_{\text{max}}} $$ 其中 $\hat{X}$ 是量化张量，$S_X$ 是缩放因子，本文采用最大表示值为 448 的 E4M3 格式。该方法由三个关键设计构成：首先是前向精度统一，训练时的主权重仍以 BF16 格式保存以稳定优化，但在执行前向传播时，激活值和权重均被量化为 FP8，确保训练计算的输出与生成阶段完全一致，维持了严格的“在策略”特性。其次是反向传播的精度控制，为反向传播保存的激活值直接以 FP8 存储，而算子间传递的梯度保留为 BF16 以避免梯度下溢或量化噪声。最后是针对线性层三大矩阵乘法（前向传播、输入梯度、权重梯度）的细粒度量化设计。由于粗粒度的逐张量量化会导致训练不稳定，方法对权重采用 128×128 的逐块量化，对激活和梯度采用 1×128 的逐组量化。在前向传播和输入梯度计算中，输入矩阵均采用 1×128 配合 128×128 的量化规格；而在权重梯度计算中，为进一步稳定训练，两个输入矩阵分别采用 1×128 和 128×1 的细粒度量化。通过在反向传播中融合量化与转置操作，该设计在不损失精度的前提下实现了全流程的计算加速。</p>
+<p><strong>效果如何</strong> 实验在 NVIDIA H100 GPU 上进行，选用了 Llama3.1-8B、Qwen2.5-7B 和 Qwen3-8B-Base 模型，在 GSM8K 与 MATH 混合数据集（8K 生成长度）以及高难度的 DeepMATH 数据集（16K 生成长度）上展开。对比基线包含代表全精度性能上限的 BF16 训练方法，以及代表朴素混合精度路线的 BF16 训练配合 FP8 生成方法（BF16-train-FP8-rollout）。量化结果显示，在 8K 生成长度下，朴素混合精度路线在 Qwen2.5-7B 上完全无法收敛，在 Llama3.1-8B 上准确率暴跌 9.8%；而 Jet-RL 在所有场景下均稳健收敛，在 Qwen2.5-7B 上性能仅下降 1.0%，在 Llama3.1-8B 上甚至反超全精度基线 2.0%。在更严苛的 16K 长序列和 DeepMATH 任务中，朴素路线在 Qwen3-8B-Base 上直接崩溃，而 Jet-RL 成功将准确率差距缩小至 0.9%。在效率方面，FP8 生成阶段实现了 1.07 至 1.33 倍的吞吐量提升，在 Qwen3-8B 模型的 8K 生成设置下，端到端单步训练时间加速达 1.16 倍（其中 Actor 模型更新加速 1.54 倍，Reference 模型推理加速 1.80 倍）。作者也承认了该方法的局限性：由于资源限制，尚未完成 14B 至 32B 大规模模型的端到端扩展研究；此外，当模型分布在更多 GPU 上导致张量并行度较高时，通信开销会显著稀释 FP8 带来的加速收益。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决强化学习（RL）训练流程中计算效率低下和资源密集的问题，特别是 rollout 阶段消耗了超过70%的总训练时间。FP8 量化提供了一个有前景的解决方案，通常采用的方法是在 rollout 阶段使用 FP8 精度以缓解瓶颈，同时在训练阶段保留 BF16 精度。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

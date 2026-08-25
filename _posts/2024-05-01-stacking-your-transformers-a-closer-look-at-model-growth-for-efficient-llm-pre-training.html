@@ -20,6 +20,15 @@ title: 'Stacking Your Transformers: A Closer Look at Model Growth for Efficient 
 <div class="container">
 <h1 id="stacking-your-transformers-a-closer-look-at-model-growth-for-efficient-llm-pre-training">Stacking Your Transformers: A Closer Look at Model Growth for Efficient LLM Pre-Training</h1>
 <p><strong>作者/机构</strong>: Wenyu Du (The University of Hong Kong), Tongxu Luo (HKUST, USTB), Zihan Qiu (Tsinghua University), Zeyu Huang (University of Edinburgh), Yikang Shen (MIT-IBM Watson AI Lab), Reynold Cheng (The University of Hong Kong), Yike Guo (HKUST), Jie Fu (HKUST)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文系统评估了大语言模型预训练中的模型增长技术，发现一种名为 Gstack 的简单深度堆叠算子能以极低成本初始化大模型，在 7B 规模下相比从头训练节省了 54.6% 的训练数据，并显著提升了下游任务性能。</p>
+<p><strong>要解决什么问题</strong> 大语言模型预训练的计算成本极为高昂，利用已训练好的小模型来初始化并加速大模型训练的“模型增长”技术是一条极具潜力的降本路径。然而，原有的模型增长做法卡在三个关键瓶颈上。首先是缺乏在主流架构上的验证，现有方法大多在 BERT 等编码器模型或预训练早期阶段进行评估，缺乏在 Llama 等主流仅解码器架构上的标准对比。其次是可扩展性未经检验，在模型参数量扩展到数十亿、训练数据量扩展到数千亿 tokens 的真实场景下，这些方法是否会像某些高效训练算法一样出现“初期学得快，后期掉点”的现象尚无定论。最后是缺乏经验性指导，与拥有明确缩放定律的常规预训练不同，模型增长技术在给定计算预算下，完全不知道该如何分配算力——即小模型该训练多久（增长时机）以及该放大多少倍（增长因子），这导致工程师在实际操盘时无从下手，严重阻碍了该技术的工业落地。</p>
+<p><strong>怎么做的</strong> 核心思路是将现有的各类模型增长技术解构为四种原子算子，并在统一的测试平台上进行横向对比，最终筛选出并优化了一种极简的深度方向直接堆叠算子 Gstack。这四种原子算子分别代表了不同的参数扩展路线：直接复制旧参数的 G_direct、通过矩阵变换生成新参数的 G_learn、将新参数设为零的 G_zero，以及随机初始化新参数的 G_random。作者发现，在深度方向上直接复制并堆叠旧层的 Gstack（即 G_direct 的深度版本）效果最好。它能绕开以往方法效果不佳的卡点，关键在于它摒弃了以往模型增长中被奉为圭臬的“函数保持”原则。函数保持要求大模型在初始化时的输出必须与小模型完全一致，但实验证明，适度破坏这种严格的等价性反而能释放模型更大的学习潜力。Gstack 的关键设计由单跳堆叠机制和超参预测公式两个部件构成。在单跳堆叠机制中，首先使用 $d$ 个 tokens 训练一个小型的基础模型 $M_{base}$，然后直接将其作为一个整体复制 $g$ 次（$g$ 为增长因子），首尾相接拼成目标大模型 $M_{target}$，其定义式为：$$M_{target} = M_{base} \circ M_{base} \circ \dots \circ M_{base}$$这种整体复制保留了极高的层间连接率，避免了插值堆叠或部分堆叠带来的连接破坏。在超参预测部件中，为了在总计算预算 $C$ 下平衡小模型与大模型的训练开销，作者通过拟合等微小操作曲线，给出了确定最佳增长时机 $d$ 的经验公式：$$d = a \cdot \log(N) \cdot \log(C) + c$$其中 $N$ 为目标模型参数量，$a$ 和 $c$ 为拟合常数。通过这一套组合拳，Gstack 既明确了网络结构该怎么长，又给出了算力该怎么分配的量化指南。</p>
+<p><strong>效果如何</strong> 实验基于类似 Llama 的仅解码器架构，在 NVIDIA Hopper 硬件集群上使用 Slimpajama-627B 开源数据集进行预训练，底层集成了 FSDP 分布式并行和 FlashAttention 2.0 加速。对比基线除了标准的从头训练路线外，还包括代表学习映射路线的 G_learn（如 LiGO）、代表零初始化路线的 G_zero（如 Lemon）以及代表掩码随机初始化路线的 G_random（如 MSG）。量化结果显示，在训练 7B 参数模型至 300B tokens 时，Gstack 相比从头训练在达到相同损失时加速了 54.6%，并在 ARC、PIQA、Wikitext PPL 等八个标准自然语言处理基准测试中全面领先。在极限外推设置下，将 410M 模型“过训练”至 750B tokens（超常规推荐数据量近百倍），Gstack 在 700B tokens 时依然保持了 31.0% 的加速，证明其不会在长程训练中失效。消融实验进一步证实，单次整体堆叠所有层远优于渐进式多阶段堆叠或只堆叠部分层。该方法的局限在于，受限于庞大的计算成本，作者目前推导出的 Gstack 缩放定律仍是初步估算，且最优增长因子 $g$ 尚未得出精确的预测方程，仅能基于经验建议从业者将其设定在 2 到 4 之间。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决大语言模型（LLM）预训练成本高昂的问题，通过一种名为“模型增长”的方法来加速训练过程。模型增长的核心思想是利用已训练好的小模型来初始化并加速大模型的训练。然而，现有模型增长方法在LLM预训练中的可行性尚未得到充分探索。作者指出了阻碍其应用的三个关键障碍（Obstacles）：<br/>
 *   <strong>O1: 缺乏全面评估</strong>：现有方法大多在BERT等编码器模型上进行评估，缺乏在Llama等主流解码器LLM上的标准比较，或比较不充分。<br/>

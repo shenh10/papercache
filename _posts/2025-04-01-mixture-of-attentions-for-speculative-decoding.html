@@ -20,6 +20,20 @@ title: Mixture of Attentions for Speculative Decoding
 <div class="container">
 <h1>Mixture of Attentions for Speculative Decoding</h1>
 <p><strong>作者/机构</strong>: Matthieu Zimmer<em>, Milan Gritta</em>, Gerasimos Lampouras (Huawei Noah’s Ark Lab); Haitham Bou Ammar‡ (Huawei Noah’s Ark Lab, UCL Centre for Artificial Intelligence); Jun Wang‡ (UCL Centre for Artificial Intelligence)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种用于推测解码的注意力混合架构，通过结合层自注意力、交叉注意力与目标层推理机制，在单设备和客户端-服务器部署场景下均实现了业界领先的解码加速与接受长度提升。</p>
+<p><strong>要解决什么问题</strong> 现有的推测解码方法（如 EAGLE 和 MEDUSA）虽然利用大型语言模型的激活值来加速草稿模型生成，但在架构上卡在两个机制瓶颈。首先是部分可观测性，草稿模型通常只能接收大型语言模型最后一层的激活值，这只是整个动态系统状态的部分观测，导致草稿模型缺乏完整上下文，预测并非最优。其次是缺乏在策略性，草稿模型通常在理想的完美输入条件下训练，但在实际推理中，它必须处理由自身生成的、可能包含误差的词元，随着生成长度增加，累积误差会导致模型严重偏离训练分布。此外，现有草稿模型多为单步有界，即每次只能预测一个未来词元，若要预测多个词元需进行多次昂贵的前向传播，且它们固执地假设必须预测大型语言模型语言头之前的最后一层激活值，限制了在计算效率与预测准确性之间进行灵活权衡的空间。</p>
+<p><strong>怎么做的</strong> 核心思路是重构草稿模型的注意力架构并改变其预测目标，使其在单次前向传播中能感知全局状态并容忍自身生成的误差。该方法由三个关键部件构成。第一是层自注意力，用于打破部分可观测性。它接收大型语言模型所有层的历史键值张量作为输入，在层的维度上执行自注意力计算并进行均值聚合，将庞大的多层状态压缩降维，使草稿模型在每个起草周期初能获取全局综合信息。第二是自注意力与交叉注意力的组合，用于实现高效的在策略训练。自注意力层处理草稿模型自身生成的词元序列，使其感知历史起草内容；交叉注意力层则以这些词元特征为查询，以层自注意力输出的全局激活值为键和值。这种设计让草稿模型在单次前向传播中能预测多个未来词元（即具备 T 步有界性），在训练时通过改变交叉注意力层的掩码来采样不同的预测长度，从而模拟推理时只能访问历史激活值的真实场景。第三是目标层推理，它打破了必须预测最后一层激活值的假设。该机制让草稿模型转而预测大型语言模型倒数第 TLI 层的激活值，随后直接复用大型语言模型最后 TLI 层的解码器和缓存来输出最终结果。其推理过程定义为：
+$$ \boldsymbol{\hat{o}}_{T+1}^{L+1-\mathrm{TLI}} = \mathcal{M}_{\mathrm{Small}}^{\mathrm{Ours}}\left(\boldsymbol{h}_{\leq t}, \text{token\_embed}\left(y_{1}, \cdots, y_{t}, \hat{y}_{t+1}, \cdots, \hat{y}_{T}\right)\right) $$
+$$ \hat{\boldsymbol{h}}_{T+1}^{l}, \boldsymbol{\hat{o}}_{T+1}^{l+1} = f_{\text{decoder}}^{l}\left(\left(\boldsymbol{h}_{\leq t}^{l}, \hat{\boldsymbol{h}}_{&gt;t, \leq T}^{l}\right), \boldsymbol{\hat{o}}_{T+1}^{l}\right), \quad l=L-\mathrm{TLI}, \ldots, L $$
+训练时，模型通过最小化前向 KL 散度与目标层激活值的平滑 L1 损失来优化参数：
+$$ \arg \min_{\boldsymbol{\theta}} \lambda_{0} \mathrm{KL}\left[\mathcal{M}_{\text{Large}} \| \mathcal{M}_{\text{Small}}(\boldsymbol{\theta})\right] + \lambda_{1} \mathcal{L}\left(\hat{\boldsymbol{o}}^{L+1-\mathrm{TLI}}, \boldsymbol{o}^{L+1-\mathrm{TLI}}\right) $$
+通过这套机制，模型不仅绕开了状态观测不全和误差累积的卡点，还能通过调整 TLI 参数在起草速度与准确性之间灵活权衡。</p>
+<p><strong>效果如何</strong> 实验基于 8B 参数的 Llama3-8B-Instruct 作为大型语言模型，草稿模型规模为 1.3B 参数，在包含 2.4 亿词元的 Ultrachat 数据集上进行训练。对比基线包括代表当前自起草路线最先进水平的 EAGLE-2、代表独立蒸馏路线的 Independent 模型，以及 Glide 和代表免训练路线的 Ouroboros。在单设备部署的 SpecBench 基准测试中，本方法相比最强基线 EAGLE-2 将解码速度提升了 9.5%，平均接受长度增加了 25%。在创新的客户端-服务器部署场景下（草稿模型在客户端，大模型在服务器，模拟 4G 和 5G 网络），本方法相比 EAGLE-2 速度提升高达 84%，在 5G 环境下达到每秒 34.1 个词元的生成速度，甚至超越了仅传输文本 ID 的独立小模型。该方案最大的优势在于极强的网络断连鲁棒性：在完全断开服务器连接后，依赖 API 调用的传统方法会直接瘫痪，而本方法在 HumanEval 编程任务中生成 50 个新词元后断连，仍能保持 31.67% 的成功率，继续在本地生成有效响应。不过作者也承认该方法存在局限与代价，增加目标层推理的层数虽然能稳定提升草稿的接受长度和断网时的响应质量，但由于增加了本地起草的计算耗时，并不总是能转化为端到端的生成速度提升，需要在实际部署中根据网络状况寻找平衡点。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决大型语言模型（LLM）因参数量巨大而导致的计算需求激增和部署成本高昂的问题。研究聚焦于一种名为“推测解码”（Speculative Decoding, SD）的加速技术，该技术利用一个更小、更高效的模型（草稿模型）来起草未来词元（tokens），然后由大型语言模型（LLM）并行验证。</p>
 <p><strong>核心问题与现有方法局限性：</strong><br/>

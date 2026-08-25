@@ -18,6 +18,21 @@ title: 'SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Pr
 <div class="container">
 <h1 id="sarathi-efficient-llm-inference-by-piggybacking-decodes-with-chunked-prefills">SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked Prefills</h1>
 <p><strong>作者/机构</strong>: Amey Agrawal (佐治亚理工学院), Ashish Panwar, Jayashree Mohan, Nipun Kwatra, Bhargav S. Gulavani, and Ramachandran Ramjee (微软印度研究院)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了名为 SARATHI 的大语言模型推理优化技术，通过分块预填充和解码最大化批处理机制，解决了解码阶段 GPU 利用率低和流水线并行气泡严重的问题，将端到端推理吞吐量最高提升了 1.91 倍。</p>
+<p><strong>要解决什么问题</strong>
+大语言模型推理面临两个机制层面的效率卡点。首先，推理分为处理输入提示的预填充（prefill）和自回归生成输出的解码（decode）两个阶段。预填充并行处理所有输入 token，算术强度极高，即使批量大小为 1 也能让 GPU 计算饱和。而解码阶段每次只处理一个 token，算术强度比预填充低两个数量级以上，属于内存密集型操作。在批量大小为 1 时，解码的单 token 计算成本高达预填充的 200 倍，导致 GPU 计算资源严重闲置。其次，跨节点部署依赖流水线并行（Pipeline Parallelism）。在流水线并行中，由于预填充和解码请求被混合调度，且不同请求累积的上下文长度不同，导致相邻微批次（micro-batch）间的执行时间存在巨大差异。这种计算时间的不平衡使得流水线中产生大量等待气泡，严重拖慢了整体推理效率。</p>
+<p><strong>怎么做的</strong>
+核心思路是通过构造计算密集且耗时均匀的混合批次，让解码操作“搭便车”共享预填充加载的模型权重，同时抹平流水线微批次间的耗时差异。该方法由两个关键部件构成。第一是分块预填充（Chunked-prefills）。作者观察到预填充吞吐量在达到一定 token 数量后就会饱和，因此将一个大的预填充请求切分成多个大小均等、刚好能让计算饱和的块。为保证数学等效性，系统会精细设置注意力掩码，确保每个后续块的查询 token 只能看到它之前的所有键值。第二是解码最大化批处理（Decode-maximal batching）。系统构建一个混合批次，包含单个预填充块，并用解码请求填满剩余槽位。最大允许的批次大小 $B$ 由可用 GPU 显存 $M_G$、模型参数显存 $M_S$、最大序列长度 $L$ 和单 token 键值缓存大小 $m_{kv}$ 决定：
+$$B = \lfloor \frac{M_G - M_S}{L \times m_{kv}} \rfloor$$
+由于预填充块占用一个槽位，最多可让 $B-1$ 个解码请求搭便车。执行时，该机制将预填充和解码的线性操作融合为单一的矩阵乘法操作。由于两者共享权重张量，解码 token 直接复用为预填充获取的模型权重，免去了单独加载权重的庞大内存访问开销，使解码从内存密集型转变为计算密集型。此外，为避免 GPU 矩阵分块计算时的瓦片量化（Tile quantization）效应导致算力浪费，预填充块的大小必须经过设计，确保预填充块大小与搭便车的解码 token 数量之和保持为 GPU 瓦片大小的整数倍。通过这种混合批处理，不仅单次计算的 GPU 利用率被打满，每个微批次的计算需求也变得高度统一，从根本上消除了流水线并行中的气泡。</p>
+<p><strong>效果如何</strong>
+实验在 LLaMA-13B、LLaMA-33B 和 GPT-3 模型上展开，硬件覆盖单卡 A6000、A100 及模拟的 64 张 A100 集群。对比基线包括采用请求级调度的传统方案 FasterTransformer，以及代表当前最先进迭代级调度路线的 Orca。在单卡设置下，SARATHI 将 LLaMA-13B 的仅解码阶段效率相比分离处理基线提升了最高 10 倍，端到端峰值吞吐量提升 1.33 倍，且在不同序列长度下均稳定超越 Orca 的最佳情况。在 64 卡集群（8 路张量并行加 8 路流水线并行）部署 GPT-3 的大规模设置下，SARATHI 将每个请求的中位流水线气泡时间大幅减少了 6.29 倍，使端到端吞吐量相比采用 Orca 调度的流水线基线提升了 1.91 倍。该方法的代价在于分块预填充会带来额外的注意力计算开销，因为后续块必须重复从显存读取先前 token 的键值缓存，当块大小过小（如 64）时会导致整体预填充时间增加 5 倍，必须在预填充效率和解码搭便车收益间寻找平衡。作者承认的局限性包括：目前难以在预填充与解码比例未知时动态选择最优块大小，尚未解决批次内请求序列长度差异极大的情况，且在数十万 token 的超长上下文场景下，注意力计算成本将成为主导，该方法的优势可能会受限。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决大型语言模型（LLM）推理中的两大效率瓶颈：1）解码（decode）阶段由于每次只生成一个token，导致GPU计算利用率低下；2）在使用流水线并行（pipeline parallelism）时，预填充（prefill）和解码阶段计算时间的差异导致微批次（micro-batch）间不平衡，产生大量流水线气泡（pipeline bubbles），进一步降低效率。</p>
 <p><strong>核心问题与研究目标</strong>：LLM推理包含两个阶段：处理输入提示的prefill阶段和自回归生成输出token的decode阶段。Prefill阶段即使在小批量下也能有效利用GPU算力，而decode阶段则计算利用率极低。这两种阶段计算时间的巨大差异，在流水线并行场景下会造成严重的流水线气泡，浪费GPU资源。本文的目标是通过优化调度方式，解决decode阶段的低效问题和流水线并行中的气泡问题。</p>

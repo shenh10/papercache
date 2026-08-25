@@ -19,6 +19,15 @@ title: 'Previewing UCCL-EP: Flexible and Efficient Expert Parallelism for Cloud 
 <div class="container">
 <h1>Previewing UCCL-EP: Flexible and Efficient Expert Parallelism for Cloud and Beyond</h1>
 <p><strong>作者/机构</strong>: Ziming Mao (加州大学伯克利分校), Yang Zhou (加州大学戴维斯分校), Yihan Zhang (加州大学戴维斯分校), Chihan Cui (威斯康星大学麦迪逊分校), Zhongjie Chen (清华大学), Zhiying Xu (AWS) 等 UCCL-EP 贡献者</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个灵活且高效的专家并行通信库 UCCL-EP，通过将 GPU 发起通信与 CPU 执行网络控制解耦，在打破 NVIDIA 软硬件生态绑定的同时，在 AWS EFA 等异构云平台上实现了接近 50 GB/s 的分发吞吐量，甚至在特定架构下超越了原生 DeepEP 的性能。</p>
+<p><strong>要解决什么问题</strong> 大规模混合专家模型（MoE）的专家并行（EP）需要跨节点频繁进行 token 的分发（dispatch）和合并（combine）。这种通信涉及海量小消息（如推理 7 KB，训练 256 KB），导致以大负载为目标的通用通信库（如 NCCL）因延迟和同步开销过大而效率低下。现有方案 DeepEP 通过 IBGDA 技术将网卡驱动逻辑下放至 GPU 核心，让 GPU 绕过 CPU 直接与网卡通信。但这带来两个致命卡点：一是严重的厂商锁定，深度绑定 NVIDIA 的 GPU、网卡及专有网络栈，无法在 AWS EFA 等异构硬件或公有云上运行；二是控制与可观察性缺失，GPU 线程盲目发出单边 RDMA 操作，缺乏 CPU 主机对流量和拥塞的精细控制，极易引发网络拥塞或高尾延迟。</p>
+<p><strong>怎么做的</strong> UCCL-EP 的核心思路是实现 GPU 与 CPU 职责的清晰分离：GPU 依然负责发起通信以掩盖计算延迟，但实际的 RDMA 网络操作交由轻量级的多线程 CPU 代理池通过标准化的 `libibverbs` 接口执行。该设计能绕开硬件锁定，是因为利用了所有 RDMA 网卡均支持的中立标准接口，且现代 PCIe Gen5 等互连技术的微秒级延迟让 CPU-GPU 指令转发成本微乎其微。关键设计由三个部件构成：首先是高效的 GPU-CPU 转发通道，实现为无锁 FIFO 共享内存队列。每个 GPU 配置多个通道和专用 RDMA 队列对，GPU 将仅占 128 位的控制命令入队，CPU 线程出队执行。通道尾指针在主机内存由 CPU 读取，头指针在设备内存由 GPU 更新并在本地缓存尾指针，此机制可支撑每秒超 5000 万次 RDMA 请求。其次是软件层面的消息重排，针对 AWS EFA 网卡不保证包内有序的缺陷，UCCL-EP 在控制消息的 RDMA 写操作中嵌入携带序列号的立即数（immediate data），由接收方 CPU 进行软件重排。最后是软件模拟的 RDMA 原子操作，针对部分网卡不支持硬件原子操作，发送方写入数据后追加一个携带立即数的小型 RDMA 写操作作为原子信号，接收方 CPU 据此更新本地完成计数器。得益于双边通信模型，UCCL-EP 能将原子信号直接附加在数据写操作中，将 DeepEP 的两次操作合并为一次，并彻底移除 `nvshmem` 依赖。</p>
+<p><strong>效果如何</strong> 实验在三种硬件下搭建：配备 H200 GPU 和 400 Gbps AWS EFA 网卡的双节点与多节点集群（最高 32 专家并行度），以及具备 NVLink-C2C 互连的 GH200 测试平台。模型对齐 DeepSeek-V3 预训练设置（批次 4096 个 token，隐藏层维度 7168，FP8 分发与 BF16 合并）。对比基线包括基于常规集合通信路线的 Torch AlltoAll、NVSHMEM AlltoAll，以及代表特定内核优化的 PPLX。在双节点 EFA 平台上，UCCL-EP 的分发吞吐量随 token 数量线性增长，在 4096 个 token 时接近 50 GB/s，而 Torch 和 NVSHMEM 均停滞在 10 GB/s 以下，PPLX 直接运行出错。在多节点扩展性测试中（16 至 32 专家并行），节点间分发带宽稳定超过 50 GB/s。在 GH200 平台上与原生 DeepEP 直接对比时，UCCL-EP 凭借极低的 CPU-GPU 通信延迟和移除 `nvshmem` 的开销，性能甚至实现反超。作者承认的局限在于，多节点下的合并（Combine）带宽仅维持在 40 GB/s 左右，略低于分发带宽，这可能是因合并操作包含加权求和的计算开销，或本地聚合导致 RDMA 消息量减少未能填满流水线，该拥塞问题仍在调查中。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文针对专家并行（Expert Parallelism, EP）中存在的通信效率和平台可移植性问题，提出了UCCL-EP，一个灵活且高效的专家并行解决方案，旨在推动EP在公有云和异构设备（包括不同厂商的GPU和NIC）上的普及。</p>
 <p><strong>核心问题：</strong><br/>

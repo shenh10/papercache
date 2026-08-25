@@ -21,6 +21,17 @@ title: 'BLASST: Dynamic Blocked Attention Sparsity via Softmax Thresholding'
 <div class="container">
 <h1>BLASST: Dynamic Blocked Attention Sparsity via Softmax Thresholding</h1>
 <p><strong>作者/机构</strong>: Jiayi Yuan, Cameron Shinn, Kai Xu, Jingze Cui, George Klimiashvili, Guangxuan Xiao, Perkz Zheng, Bo Li, Yuxin Zhou, Zhouhai Ye, Weijie You, Tian Zheng, Dominic Brown, Pengbo Wang, Richard Cai, Julien Demouth, John D. Owens, Xia Hu, Song Han, Timmy Liu, Huizi Mao</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为 BLASST 的插入式动态稀疏注意力机制，通过在计算过程中复用 softmax 统计量零开销地跳过不重要的注意力块，在保持极低精度损失的前提下，在现代 GPU 上实现了最高 1.62 倍的推理加速。</p>
+<p><strong>要解决什么问题</strong> 大语言模型在处理长上下文时，标准注意力机制的计算复杂度和内存访问量均与序列长度呈二次方关系，导致严重的计算和内存瓶颈。现有的 FlashAttention 等技术虽然通过分块和内核融合优化了内存带宽利用率，但仍需计算完整的注意力矩阵，没有解决根本的二次复杂度问题。而现有的稀疏注意力方法要么依赖静态模式导致灵活性差，要么需要昂贵的预计算和不准确的代理分数，其实际加速效果往往被调度开销所抵消。此外，针对内存优化的 Token 或 KV 缓存稀疏性方法主要集中在解码阶段，无法同时兼顾 prefill（计算密集型）和 decode（内存密集型）双阶段的效率。因此，如何在不引入额外选择开销或重新训练的前提下，动态且准确地剔除注意力矩阵中贡献可忽略的部分，成为长上下文模型部署的关键卡点。</p>
+<p><strong>怎么做的</strong> BLASST 的核心思路是在 FlashAttention 的逐块在线 softmax 计算过程中，利用已有的统计信息动态识别并跳过对最终输出贡献极小的注意力块。在标准注意力机制中，softmax 的计算公式为：
+$$ \text{Attention}(Q, K, V) = \text{softmax} \left( \frac{QK^\top}{\sqrt{d_k}} \right) V $$
+BLASST 在前向传播中维护一个跨块的行方向运行最大值 $m_i^{(j)}$。当处理一个新块时，如果该块的局部最大值 $\tilde{m}_i^{(j)}$ 显著小于当前的运行最大值，即满足 $\tilde{m}_i^{(j)} - m_i^{(j)} &lt; \ln(\lambda)$（其中 $\lambda$ 为设定的阈值），那么该块在经过 softmax 指数化后的值将趋近于零。基于这一判断条件，BLASST 能够安全地跳过三项昂贵操作：softmax 的指数计算、从 HBM 加载相应的 Value 块以及后续的矩阵乘法。为了最大化硬件效率，BLASST 针对不同阶段设计了专门的 CUDA 内核：在计算密集型的 prefill 阶段，内核动态跳过被剪枝块的 softmax 计算和注意力-值矩阵乘法，释放 CUDA 核心和张量核心；在内存密集型的 decode 阶段，内核则跳过从 HBM 加载 Value 矩阵的操作，直接缓解内存带宽瓶颈。此外，由于最优阈值与上下文长度 $L$ 存在反比关系 $\lambda = a/L$，作者提出了一种自动校准程序来寻找模型特定的常数 $a$，从而在不同上下文长度下维持固定的稀疏度。作为自然扩展，BLASST 还支持稀疏感知训练，通过在微调的前向传播中应用该机制，鼓励模型将重要信息集中在能通过阈值测试的块中，进一步提升极高稀疏度下的准确性。</p>
+<p><strong>效果如何</strong> 实验在 H200 和 B200 GPU 上进行，评估了支持 128K 上下文的 Llama-3.1-8B-Instruct 和 Qwen3-8B-Instruct 模型。对比基线包括代表 prefill 动态稀疏注意力路线的 MInference、FlexPrefill、XAttention，以及代表 decode 阶段 KV 缓存压缩路线的 Quest 和 RocketKV。在 RULER 和 LongBench 等长上下文任务中，BLASST 在约 50% 稀疏度下不仅保持了与密集注意力极度接近的准确率，甚至在 MATH500 和 AIME 2024 等推理任务上超越了密集基线（例如 Qwen3-8B 在 MATH500 上得分 96.23，高于基线的 95.87）。在硬件加速方面，BLASST 在 H200 上于 74.7% 稀疏度下实现了 1.62 倍的 prefill 加速，在 B200 上于 73.2% 稀疏度下实现了 1.48 倍的 decode 加速，且在 0% 稀疏度时几乎不引入额外延迟开销。在 200K 极长序列的代码库理解任务中，BLASST 仍能以极小的准确率下降实现约 58% 的 prefill 稀疏度。该方法的局限在于，当稀疏度超过 60% 至 70% 的临界值后，模型准确性会发生急剧下降；同时，当前的 prefill 内核设计优先考虑了计算密集型场景，并未跳过 Value 加载，如果未来硬件架构转向内存带宽密集型，则需要进一步调整加载策略。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>: 随着大语言模型（LLM）对长上下文处理能力的需求日益增长，标准注意力机制的计算和内存瓶颈问题变得愈发严重。注意力机制的计算复杂度和内存访问量均与序列长度n成二次方关系（$O(n^2)$），这使得即使在最先进的硬件上部署长上下文模型也极具挑战性。尽管FlashAttention等技术通过分块和内核融合优化了内存带宽利用率，但它们仍需计算完整的注意力矩阵，并未解决根本的二次复杂度问题。</p>
 <p><strong>研究目标</strong>: 本文旨在提出一种简单而有效的稀疏注意力方法，以动态地修剪（prune）注意力矩阵中贡献可忽略的部分，从而加速长上下文推理，同时避免现有稀疏方法中存在的预计算开销大、依赖不准确的代理分数或模式僵化等问题。</p>

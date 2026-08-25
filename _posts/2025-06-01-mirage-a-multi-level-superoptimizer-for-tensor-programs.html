@@ -19,6 +19,17 @@ title: 'Mirage: A Multi-Level Superoptimizer for Tensor Programs'
 <div class="container">
 <h1 id="mirage-a-multi-level-superoptimizer-for-tensor-programs">Mirage: A Multi-Level Superoptimizer for Tensor Programs</h1>
 <p><strong>作者/机构</strong>: Mengdi Wu, Xinhao Cheng, Shengyu Liu†, Chunan Shi†, Jianan Ji, Man Kit Ao, Praveen Velliengiri‡, Xupeng Miao♯, Oded Padon⋄, Zhihao Jia (卡内基梅隆大学, 北京大学†, 宾夕法尼亚州立大学‡, 普渡大学♯, 魏茨曼科学研究所⋄)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了首个能够跨越 GPU 计算层级自动发现并验证复杂张量程序优化的多级超级优化器 Mirage，在主流深度学习模型上实现了最高 3.3 倍的性能提升。</p>
+<p><strong>要解决什么问题</strong> 现有的张量程序自动化优化方法存在根本性的搜索空间割裂：基于调度的优化器（如 TVM）只能在固定算法下寻找最优执行方案，而基于代数变换的优化器（如 TASO、PET）虽然能在数学层面重组算子，但严重依赖预先写好的底层核函数（kernel）实现。由于不同的核函数无法在 GPU 的寄存器或共享内存中直接共享数据，中间结果必须频繁读写速度较慢的设备全局显存。当面对 FlashAttention 这类需要跨越 GPU 的核函数、线程块（block）和线程（thread）三个计算层级进行协同变换，甚至需要凭空生成全新自定义核函数来消除显存读写瓶颈的高级优化时，现有方法就超出了搜索能力边界，导致开发者只能退回到耗时且容易错失优化机会的手动编写规则阶段。</p>
+<p><strong>怎么做的</strong> 核心思路是构建一个统一的分层图表示法，将代数变换和调度变换放在同一空间内探索，并自动生成底层的自定义核函数。方法由四个关键部件构成。首先是微图（µGraphs）表示法，它将 GPU 程序拆解为核图、块图和线程图。块图通过 imap（输入分区）、omap（输出拼接）和 fmap（循环切片）精确描述张量在网格维度和循环迭代中的映射关系，这种统一表示让系统能直接在图上同时做数学等价替换和执行调度。其次是表达式引导的生成器，为了应对三层图带来的爆炸级搜索空间，Mirage 以增量方式生成图，并将张量计算抽象为逻辑表达式。它利用 SMT 求解器判断当前生成的子图是否为目标程序的抽象子表达式，从而在理论保证不漏掉最优解的前提下剪枝掉大量无效前缀。第三是概率性等价验证器，用于确保生成的图与原程序功能一致。由于包含除法和指数运算的程序无法直接用常规随机测试，Mirage 将多项式恒等式检验推广到了包含线性、除法和有限指数运算的 LAX 程序，其输出元素的计算可表示为：
+$$ \sum_{i=1}^{k} \frac{f_i}{g_i} e^{\frac{h_i}{h'_i}} + \sum_{j=1}^{k'} \frac{f'_j}{g'_j} $$
+验证器在两个有限域上进行随机测试（分别处理指数内外），规避了浮点误差，并保证错误率可被压低到任意阈值以下。最后是后验证优化器，对通过验证的微图使用整数线性规划和动态规划进行张量内存布局、算子执行顺序和内存分配的求解，通过最小化线程级同步来进一步压榨硬件性能。</p>
+<p><strong>效果如何</strong> 实验在配备 40GB 显存的 NVIDIA A100 和 H100 GPU 上进行。对比基线涵盖了不同路线的代表：代数优化器 TASO 和 PET、调度优化器 Triton、依赖手动优化核函数的 TensorRT/TensorRT-LLM 以及 FlashAttention/FlashDecoding，外加开启编译优化的 PyTorch。在微基准测试中，Mirage 在 GQA、RMSNorm 等 6 个核心算子上比现有最佳方法最高提速 3.3 倍。特别是在 GQA 任务上，它不仅自动找出了专家手写的 FlashAttention 策略，还通过自动搜索最佳网格维度和并行化策略，将设备显存访问减少最高 7 倍，比 FlashAttention 还要快 2.2 倍。它还能自动发现全新的算子融合策略，例如将 LoRA 中的三个矩阵乘法和一个加法融合到单个核函数中，提速 1.1 到 2.4 倍。在端到端评估中，将生成的核函数无缝接入 PyTorch 后，LLaMA-3、Chameleon 等 4 个模型的推理延迟降低了 0.9 到 1.9 倍。消融实验证明，独立禁用任何一项后验证优化都会导致 5% 到 70% 的性能下降。该方法的代价是部署前需要较长的搜索时间，优化一个程序最长耗时约 4 小时。此外作者承认，在处理计算量极小的核函数（如 nTrans）时，Mirage 的性能略低于 TensorRT，原因是当前机制强制数据在全局显存和共享内存之间搬运带来了额外开销，尚未支持直接绕过共享内存的策略。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文介绍了一种名为Mirage的多级张量程序超级优化器。当前用于深度神经网络（DNN）的框架，如PyTorch和TensorFlow，通常依赖手动设计的规则将张量程序映射到专家编写的GPU核函数，这不仅需要大量的工程努力，还可能错失优化机会。为解决此问题，自动化方法应运而生，主要分为两类：第一类是基于调度（schedule）的优化器（如Halide, TVM, Ansor），它们在固定算法下搜索最优的执行方案，但无法探索数学上等价的不同算法；第二类是基于代数变换（algebraic transformation）的优化器（如TASO, PET），它们利用数学等价性在算法层面重组或融合算子，但受限于预先提供的核函数实现性能。</p>
 <p>现有方法都要求程序员手动指定一组核函数，并在代数或调度变换的空间内进行探索。然而，一些高级性能优化（如FlashAttention）需要跨越GPU计算层次结构（核、线程块、线程级别）进行协同变换，并涉及生成全新的自定义核函数，这些优化超出了现有自动化方法的搜索范围。</p>

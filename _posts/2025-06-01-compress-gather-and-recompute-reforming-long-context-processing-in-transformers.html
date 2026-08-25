@@ -21,6 +21,15 @@ title: 'Compress, Gather, and Recompute: REFORMing Long-Context Processing in Tr
 <h1>Compress, Gather, and Recompute: REFORMing Long-Context Processing in Transformers</h1>
 <p><strong>作者</strong>: Woomin Song¹,†, Sai Muralidhar Jayanthi², Srikanth Ronanki², Kanthashree Mysore Sathyendra², Jinwoo Shin¹, Aram Galstyan², Shubham Katiyar², Sravan Babu Bodapati²<br/>
 <strong>机构</strong>: ¹KAIST, ²Amazon AGI</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个名为 REFORM 的长上下文推理框架，通过“压缩-收集-重计算”的两阶段流水线，在极低内存开销下实现了对极长输入的高保真处理，在 1M 上下文长度的复杂推理基准测试中性能大幅超越现有基线。</p>
+<p><strong>要解决什么问题</strong> 大型语言模型在处理超出其预训练长度的极长上下文时，面临着严峻的计算和内存双重瓶颈。现有的免训练上下文外推方法主要分为两条路线，但都存在致命卡点。第一条是循环压缩路线，这类方法通过驱逐策略只保留部分关键 token 的键值缓存以节省显存，但直接丢弃中间 token 会导致关键信息永久丢失，引发严重的“遗忘”问题，根本无法应对需要精确检索早期输入的复杂任务。第二条是随机访问路线，这类方法在内存中保留完整的键值缓存以供动态检索，虽然召回率高，但带来了极高的显存开销。在实际部署中，这种庞大的缓存往往需要卸载到 CPU 上，频繁的内存传输会导致极其严重的推理延迟。如何在不全局保留完整键值缓存的前提下，依然能够精准且高效地召回早期输入信息，是当前长上下文推理亟待解决的核心卡点。</p>
+<p><strong>怎么做的</strong> REFORM 的核心思路是摒弃“直接用压缩缓存生成”或“全局保留完整缓存”的传统做法，改用“压缩-收集-重计算”的两阶段流水线。首先是编码阶段，模型将长输入分割成较大的块并进行循环前向传播，利用现有的缓存驱逐策略压缩键值缓存。但与现有方法不同，这个压缩后的稀疏缓存不用于最终生成，而是专门用来提取轻量级的跨层上下文嵌入。由于实验发现最具检索价值的注意力头往往分布在中低层，该阶段引入了早退策略，在提取完所需层的嵌入后直接跳过后续较高网络层的计算，从而大幅削减了显存和计算量。为了构建高保真的检索特征，方法直接提取特定注意力层的查询和键值状态，将其归一化后拼接成全局 token 级嵌入：$$e_{\mathtt{comb}} = \mathtt{concat} \left( \left\{ \frac{e_{\mathtt{i}}}{\| e_{\mathtt{i}} \|}, \mathtt{i} \in \mathtt{selected\_heads} \right\} \right)$$ 其次是重计算阶段，当需要生成响应时，模型利用查询（即输入的最后一部分）的嵌入，与存储的全局上下文嵌入进行 token 级别的余弦相似度搜索。为了保证召回片段的语义连贯性，查询 token 的相似度得分会先进行最大池化，再与相邻的 128 个 token 进行池化平滑。最后，模型仅挑出得分最高的相关 token 及其上下文，将它们重新输入模型进行一次完整的前向传播，按需重计算出这部分 token 在所有层的完整键值缓存，并基于此进行后续解码。这种机制使得时间复杂度保持在 $O(L)$，同时用极小的嵌入存储代价换取了等价于全量缓存的检索精度。</p>
+<p><strong>效果如何</strong> 实验在单张 H100 或 H200 GPU 上进行，评估了 Mistral-NeMo-Instruct-2407、Qwen2.5 系列以及多模态模型 Pixtral-12B。对比基线涵盖了代表循环压缩路线的 StreamingLLM、TOVA、H2O、InfiniPot，代表随机访问路线的 InfLLM，以及检索增强生成方法。在扩展至 1M 上下文长度的 RULER 和 BABILong 复杂推理基准上，REFORM 的平均性能分别比表现最好的基线高出 52% 和 34%，并在 1M 长度的“大海捞针”测试中保持了完美的检索准确率。在真实世界的长篇书籍、代码仓库补全以及多模态任务中，该方法也持续超越所有基线。在效率方面，处理 256K token 输入时，相比于 InfLLM 和 InfiniPot，该方法将推理时间减少了 30%，峰值内存使用量降低了 5%。作者承认的局限性在于，最终效果高度依赖收集阶段识别高价值 token 的能力，在某些极端边缘场景下可能存在召回失效的风险；同时，当前实现中用于缓存驱逐的注意力分数计算仍存在冗余，未来有待将驱逐分数计算直接集成到底层算子中以进一步提升效率。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>：大型语言模型（LLM）在处理超出其预训练上下文长度的极长上下文时面临严峻挑战。现有方法主要分为两类：循环压缩方法和随机访问方法。循环方法虽然节省计算资源，但因压缩或丢弃部分键值（KV）缓存而导致信息丢失（“遗忘”问题）；随机访问方法虽然保留了完整的上下文信息，但需要巨大的内存资源，导致高昂的内存开销和延迟，尤其是在需要CPU卸载的实际部署中。</p>
 <p><strong>研究目标</strong>：为了解决上述挑战，本文提出了一种名为 REFORM（REcurrent chunked Forwarding with On-demand cache RecoMputation）的新型推理框架，旨在结合循环方法的效率和随机访问方法卓越的召回能力。</p>

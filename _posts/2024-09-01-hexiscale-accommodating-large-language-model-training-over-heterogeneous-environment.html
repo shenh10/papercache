@@ -21,6 +21,15 @@ title: 'HexiScale: Accommodating Large Language Model Training over Heterogeneou
 <h1>HexiScale: Accommodating Large Language Model Training over Heterogeneous Environment</h1>
 <p><strong>作者/机构</strong>: <br/>
 Ran Yan∗ (The Hong Kong University of Science and Technology), Youhe Jiang∗ (The Hong Kong University of Science and Technology), Xiaonan Nie (Peking University), Fangcheng Fu (Peking University), Bin Cui (Peking University), Binhang Yuan (The Hong Kong University of Science and Technology)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个支持非对称并行的分布式大语言模型训练框架 HexiScale，通过将训练计算在异构 GPU 和复杂网络拓扑中进行细粒度划分与高效调度，在异构环境下实现了与同构数据中心先进系统相当的模型算力利用率。</p>
+<p><strong>要解决什么问题</strong> 现有大语言模型分布式训练系统大多专为同构高性能 GPU 集群设计，依赖完全对称的训练计算划分。当这种对称策略直接部署到算力、显存及网络带宽差异巨大的异构 GPU 环境时，会遇到严重卡点。由于必须保持各节点并行维度和计算负载一致，系统不得不将高配 GPU 降级当作弱 GPU 使用，导致算力闲置；同时，对称策略受限于集群中最慢的网络连接，使高速互联设备必须长时间等待低速设备的通信同步。这种强制对称的划分不仅引发极大的流水线气泡开销和通信延迟，还会因显存分配不均直接导致低配节点内存溢出，彻底锁死异构算力集群的整体吞吐量上限。</p>
+<p><strong>怎么做的</strong> 核心思路是彻底打破对称并行的硬性约束，允许在数据并行、流水线并行和张量模型并行三个维度上对训练计算进行完全非对称的划分，并配合两阶段图划分算法搜索全局近似最优的调度策略。该方法由非对称并行执行引擎和两阶段迭代调度器两个关键部件构成。非对称并行执行引擎负责在底层实现灵活的负载分配与通信。在计算划分上，它允许不同流水线分配不同批次大小，各流水线阶段可包含不同数量的 Transformer 层，并初始化不同的张量模型并行度。在梯度同步上，非对称张量并行会导致模型参数和梯度被切分成不同大小，常规数据并行无法直接工作。引擎会先识别全局最小梯度尺寸，将较大梯度切块对齐，随后在数据并行组的不同 GPU 子集中分别同步这些梯度块，在不增加额外通信开销的前提下完成非对称同步。两阶段迭代调度器则负责解决异构设备分配这个 NP 难问题，其目标是在显存约束下最小化单次迭代的通信与计算总耗时：$$ \sigma^* = \arg \min_\sigma \quad \text{\textsc{Comm-Cost}} (\sigma) + \text{\textsc{Comp-Cost}} (\sigma) $$ 第一阶段采用多级图划分算法，将所有 GPU 抽象为以算力为顶点权重、以带宽为边权重的全局图，通过粗化、划分、投影和细化四个步骤，将设备划分为多个独立的流水线组。划分过程通过优化两级 Cut 目标函数来最小化或最大化组间的网络带宽分配：$$ \text{Cut}(P) = \sum_{i=1}^{D_{dp}} \sum_{j=i+1}^{D_{dp}} \text{Cut}(D_i, D_j) $$ 第二阶段在每个流水线组内生成具体的并行布局，先将组内高带宽连接的 GPU 再次聚类，利用成本模型独立搜索局部的最优并行策略，最后通过贪心算法在异构网络连接下确定流水线阶段的执行顺序。整个调度过程会根据历史成本的移动平均值进行多次迭代，自适应地调整流水线数量和带宽分配倾向，最终收敛到一个能充分压榨异构硬件潜力的并行执行计划。</p>
+<p><strong>效果如何</strong> 实验在 7B、13B 和 30B 参数规模的 Llama 模型上展开。硬件对比了由 A800 组成的同构集群，以及由 3080Ti、3090、4090 和 A800 混搭且仅通过低速以太网连接的异构集群。对比基线包括代表完全对称三维并行的 Megatron、代表自动对称流水线并行的 Galvatron、代表一维完全分片数据并行的 FSDP，以及代表当前异构训练先进路线的 Metis。结果表明，在总峰值算力相近时，HexiScale 在异构环境下的模型算力利用率与同构环境下的 Megatron 相当，差距最低仅 0.3%，平均 3.5%。面对 30B 模型和极端异构设置时，Megatron 和 Galvatron 因显存分配不均直接内存溢出，而 HexiScale 依然稳定运行，算力利用率最高达 Galvatron 的 2.5 倍。与专门针对异构环境设计的 Metis 相比，由于 Metis 倾向于在流水线阶段使用高数据并行度，导致了极大的流水线气泡开销，HexiScale 通过减少流水线阶段数有效缓解了气泡问题，算力利用率最高达到了 Metis 的 1.9 倍。消融实验证实，如果关闭非对称并行支持，系统性能最多会下降 23%；如果关闭梯度累积，受限于异构显存导致的较小批次大小，频繁的通信会使性能下降 15%。作者也承认，为了换取流水线气泡的大幅减少，HexiScale 的非对称设计在某些切分下会带来略微高于 Metis 的纯通信开销，但整体端到端耗时依然显著占优。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>：训练大型语言模型（LLM）是计算密集型任务，通常在具有同构高性能GPU的数据中心进行。然而，这种同构集群的部署成本高昂，限制了LLM的发展。因此，研究旨在探索一种替代方法，即将训练计算分布在异构GPU上，以实现更灵活高效的资源利用。</p>
 <p><strong>研究目标与挑战</strong>：在异构GPU上部署大规模LLM训练面临两大挑战：<br/>

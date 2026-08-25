@@ -21,6 +21,15 @@ title: 'DistServe: Disaggregating Prefill and Decoding for Goodput-optimized Lar
 <h1 id="distserve-disaggregating-prefill-and-decoding-for-goodput-optimized-large-language-model-serving">DistServe: Disaggregating Prefill and Decoding for Goodput-optimized Large Language Model Serving</h1>
 <p><strong>文章标题</strong>：DistServe：解耦预填充（Prefill）和解码（Decoding）以优化大型语言模型服务的良率（Goodput）<br/>
 <strong>作者/机构</strong>：Yinmin Zhong1, Shengyu Liu1, Junda Chen3, Jianbo Hu1, Yibo Zhu2, Xuanzhe Liu1, Xin Jin1, Hao Zhang3 (1北京大学计算机学院, 2StepFun, 3加州大学圣迭戈分校)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了将大型语言模型推理中的预填充（Prefill）和解码（Decoding）阶段解耦到不同 GPU 上的服务系统 DistServe，在满足严格延迟要求的前提下，相比现有系统能支持高达 7.4 倍的请求率或承受 12.6 倍更严格的延迟目标。</p>
+<p><strong>要解决什么问题</strong> 现有的大型语言模型服务系统通常将预填充（处理输入提示并生成首个 token）和解码（逐个生成后续 token）阶段放在同一 GPU 上进行连续批处理，这种资源共存会导致严重的计算干扰与资源耦合。具体而言，预填充是计算密集型任务，耗时较长，而解码是显存带宽密集型任务；当两者被打包在同一批次时，解码任务必须等待漫长的预填充计算完成，导致每个输出 token 的时间（TPOT）显著增加，反之解码任务也会拖慢预填充生成首个 token 的时间（TTFT）。此外，共存迫使这两个计算特征迥异的阶段共享同一种并行策略，例如预填充更需要算子内并行来降低延迟，而解码更需要算子间并行来提升吞吐量。这种耦合导致系统为了同时满足两者的延迟目标而不得不陷入过度配置资源的困境。即使是现有的分块预填充技术，也只是用增加预填充延迟和 $O(N^2)$ 级别 KV 缓存重复加载开销的代价来换取解码延迟的降低，并未从根本上消除干扰。</p>
+<p><strong>怎么做的</strong> 核心思路是将预填充和解码阶段彻底解耦，分配到不同的 GPU 节点上独立执行，让每个阶段专注于自身的延迟优化目标。预填充实例在收到请求后，仅负责并行计算输入序列生成首个 token，随后将中间状态（KV 缓存）发送给解码实例；由于解码计算的 GPU 利用率较低，系统可为每个解码实例分配多个预填充实例，在专属 GPU 上累积更大的解码批处理大小以提升利用率。为了绕开资源耦合的卡点，系统设计了基于排队论和模拟器的放置算法，为两个阶段分别搜索最优的并行策略。对于预填充阶段，其平均首个 token 时间可以通过 M/D/1 队列模型建模为执行时间与排队延迟之和：$$Avg\_TTFT = D + \frac{R D^2}{2(1-RD)}$$ 其中 $D$ 为单次执行时间，$R$ 为请求到达率。当引入加速比为 $K$ 的算子内并行时，执行时间缩短为 $D/K$，公式变为：$$Avg\_TTFT = \frac{D}{K} + \frac{R (D/K)^2}{2(1-R(D/K))}$$ 这表明在低并发下算子内并行能有效降低执行时间，而在高并发下算子间并行更能缓解排队延迟。针对不同集群网络，系统设计了两种放置策略：在高节点亲和性集群中，算法直接枚举并模拟并行配置寻找全局最优良率；在跨节点带宽受限的低节点亲和性集群中，算法强制将预填充和解码实例的相同算子间流水线阶段部署在同一物理节点内，确保庞大的 KV 缓存仅通过高速 NVLINK 进行节点内传输。此外，系统在运行时采用拉取式的 KV 缓存传输机制，解码实例按需从预填充实例的显存中获取数据，避免了突发流量导致的显存溢出，并通过基于序列长度的批处理调度来最小化流水线气泡。</p>
+<p><strong>效果如何</strong> 实验在 4 个节点共 32 张 80GB A100 GPU 上进行，节点内使用 NVLINK，节点间为 25Gbps 低带宽网络。测试模型选用 13B、66B 和 175B 参数规模的 OPT 模型，对比基线为代表连续批处理共存路线的 vLLM 和代表分块预填充路线的 DeepSpeed-MII。在 ShareGPT 聊天机器人工作负载下，在 90% 的服务等级目标达成率下，该系统支持的请求率比 vLLM 高 2.0 至 4.6 倍，比 DeepSpeed-MII 高 1.6 至 7.4 倍，并且能承受比 vLLM 严格 1.8 至 3.2 倍的延迟要求。在输入极长的 LongBench 摘要生成任务中，由于共存架构下长预填充会严重拖慢解码，该系统能承受的延迟目标比 vLLM 严格了 12.6 倍。得益于带宽感知的节点内部署约束，即使是 175B 模型，KV 缓存的传输时间也仅占总延迟的不到 0.1%。作者也承认了该方法的局限性：在对延迟完全不敏感的离线高吞吐场景下，带有搭载机制的分块预填充技术能把批次填得更满，反而更具优势；在单 GPU 等资源受限环境中，解耦失去了调度空间；此外，预填充和解码的强依赖性引入了故障传播风险，单个解码实例的崩溃可能会导致整个服务瘫痪。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决现有大型语言模型（LLM）服务系统中预填充（Prefill）和解码（Decoding）两个计算阶段共存（colocation）所引发的性能问题。</p>
 <p><strong>核心问题</strong>：<br/>

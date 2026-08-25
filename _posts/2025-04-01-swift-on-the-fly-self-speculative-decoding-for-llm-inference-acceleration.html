@@ -20,6 +20,15 @@ title: 'SWIFT: On-the-Fly Self-Speculative Decoding for LLM Inference Accelerati
 <div class="container">
 <h1>SWIFT: On-the-Fly Self-Speculative Decoding for LLM Inference Acceleration</h1>
 <p><strong>作者/机构</strong>: Heming Xia1, Yongqi Li1∗, Jun Zhang2, Cunxiao Du3, Wenjie Li1 (1Department of Computing, The Hong Kong Polytechnic University; 2College of Computer Science and Technology, Zhejiang University; 3Sea AI Lab)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为SWIFT的基于层稀疏性的即插即用自推测解码算法，在无需辅助模型或额外训练的前提下，通过推理时动态优化跳层策略，实现了大语言模型1.3倍至1.6倍的无损推理加速。</p>
+<p><strong>要解决什么问题</strong> 大语言模型的自回归解码效率低下，而现有的推测解码加速方案存在明显的机制卡点。需要额外训练的路线（如Medusa和Eagle）依赖引入额外参数和高昂的训练成本，导致在面对未受支持的模型或仅需小规模评估时，面临算力门槛高、灵活性差的困境。无需训练的自推测解码（Self-SD）虽然通过跳过目标模型自身的中间层来构建草稿模型，但严重依赖极其耗时的离线贝叶斯优化来确定跳层集合，例如在70B模型上仅处理8个样本就需要耗费近20小时。更致命的机制缺陷在于，大语言模型的层稀疏性具有强烈的任务特定性。为一个特定任务（如故事生成）离线寻找的最优跳层配置，一旦迁移到另一个任务（如数学推理），加速比会从1.47倍断崖式跌落至1.01倍。这种静态离线跳层机制无法应对真实业务中由摘要、翻译、问答等混合而成的动态输入数据流，导致加速失效，严重限制了层跳过推测解码的普适性。</p>
+<p><strong>怎么做的</strong> 核心思路是将层集合的优化过程从离线彻底转移到推理阶段动态进行（on-the-fly），从而绕开离线优化耗时极长且无法泛化到动态数据流的卡点。该方法由两个关键部件构成。首先是基于上下文的层集合优化机制，职责是在给定输入流时快速识别出当前最优的跳层集合。它利用大语言模型在推理初期生成的先前输出token作为基准，让跳层后的草稿模型去并行预测这些已知的上下文token。通过计算预测结果与真实上下文的精确匹配率，来实时验证草稿模型预测未来步骤的准确性：$$\text{matchness} = \frac{\sum_{i} \mathbb{I}\left(y_{i}=y_{i}^{\prime}\right)}{\gamma}, 1 \leq i \leq \gamma$$其中$\gamma$代表上下文窗口大小。为兼顾搜索效率，该机制将随机搜索与区间贝叶斯优化结合，以固定的优化步数$\beta$为间隔交替提出新的跳层组合候选：$$z = \begin{cases} \text{Bayesian\_Optimization}(l) &amp; \text{if } o \ \% \ \beta = 0 \\ \text{Random\_Search}(l) &amp; \text{otherwise} \end{cases}$$其次是置信度感知的推理加速策略，职责是在确定跳层配置后最大化草稿token的验证通过率。草稿模型自回归预测时，将top-1预测的概率值作为置信度分数。若该分数低于指定阈值，系统会提前终止草稿生成以避免无效计算；同时，系统根据置信度分数所在的区间，动态决定每个草稿步骤需要扩展的top-k候选数量。最终，所有草稿候选被线性化为一个单一序列，交由目标大语言模型使用特殊的因果注意力掩码进行一次性并行验证，在保证输出分布与原始模型一致的前提下提升效率。</p>
+<p><strong>效果如何</strong> 实验在配备4块NVIDIA RTX A6000 GPU的硬件上开展，评估了LLaMA-2系列、CodeLLaMA系列以及Yi-34B和DeepSeek-Coder-33B等模型，数据覆盖摘要、数学推理、故事生成和代码生成任务。对比基线选择了Parallel Decoding和Lookahead Decoding，这两者代表了无需训练、基于Jacobi解码生成草稿的即插即用路线；同时也对比了代表离线层跳过路线的Self-SD。量化结果显示，在贪心解码和推测采样设置下，SWIFT在各类任务中均实现了1.3倍至1.6倍的稳定加速，在LLaMA-2系列上token接受率稳定在98%到100%之间。在处理由指令遵循、翻译、问答混合的动态数据流测试中，Self-SD因领域漂移导致加速比跌至1.05倍，而SWIFT展现出强大的自适应能力，依然保持1.3倍至1.6倍的加速。代价方面，SWIFT在每个实例推理初期需要交替进行上下文积累和层集合优化，虽然额外优化步骤仅占总推理延迟的0.8%，但对于极短文本生成任务，其加速收益会受限；此外作者承认，当前实际加速比距离理论预期加速比仍有差距，工程实现层面还有进一步优化的空间。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文探讨了一种新颖的、基于层稀疏性的即插即用（plug-and-play）推测解码（Speculative Decoding, SD）方案，以解决现有SD方法大多需要额外参数或大量训练的局限性。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

@@ -22,6 +22,24 @@ title: Cost-Efficient Large Language Model Serving for Multi-turn Conversations 
 <h1 id="cost-efficient-large-language-model-serving-for-multi-turn-conversations-with-cachedattention">Cost-Efficient Large Language Model Serving for Multi-turn Conversations with CachedAttention</h1>
 <p><strong>论文标题</strong>: 借助缓存注意力机制实现经济高效的多轮对话大规模语言模型服务<br/>
 <strong>作者/机构</strong>: Bin Gao (新加坡国立大学), Zhuomin He (上海交通大学), Puru Sharma (新加坡国立大学), Qingxuan Kang (新加坡国立大学), Djordje Jevdjic (新加坡国立大学), Junbo Deng (华为云), Xingkun Yang (华为云), Zhou Yu (华为云), and Pengfei Zuo (华为云)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一种名为 CachedAttention 的新型注意力机制，通过在多轮对话中跨轮次复用历史 token 的键值缓存，彻底消除了大语言模型服务引擎的重复计算开销，将首个 token 生成时间最多缩短 87%，端到端推理成本最多降低 70%。</p>
+<p><strong>要解决什么问题</strong>
+现有大语言模型服务引擎在处理多轮对话时存在严重效率瓶颈。为回收有限的 GPU 显存（HBM），引擎会在单轮对话结束后直接丢弃已生成的键值（KV）缓存。当下一轮对话到来时，必须对所有历史 token 重新进行预填充计算。随着轮次增加，历史 token 占比常超过 99%，导致重复计算占据新对话预填充阶段 99% 的时间。若直接将 KV 缓存卸载到外部存储并在需要时加载，会面临四个卡点：一是访问开销高，从主机内存向 GPU 加载 KV 缓存的耗时极长，会直接阻塞推理计算；二是容量需求大，KV 缓存生成极快，几十秒即可撑爆 GPU 显存，一分钟内填满主机内存；三是放置策略难，为扩容引入的磁盘速度极慢，活跃缓存若落在磁盘会严重拖慢推理；四是截断失效，当历史 token 超过上下文窗口限制时，引擎必须截断早期 token，导致剩余 token 位置偏移。因传统 KV 缓存已融合位置编码，位置偏移会直接导致已保存的缓存全部失效。</p>
+<p><strong>怎么做的</strong>
+为绕开上述卡点，本文设计了 CachedAttention 机制。核心思路是构建包含主机内存和磁盘的分层 KV 缓存系统（AttentionStore），在会话休眠时保存缓存，激活时重新加载，使预填充只需计算新 token。该机制由三个关键部件构成：
+首先是重叠的 KV 缓存访问部件，用于掩盖数据传输延迟。它采用分层预加载方案，利用 Transformer 模型逐层计算的特性，在 GPU 计算第 $i$ 层注意力时，并发地从主机内存将第 $i+1$ 层缓存加载到 GPU 执行缓冲区。为应对传输时间大于计算时间导致的不完美重叠，系统预留了读取缓冲区，大小设定为：
+$$S_{buf} = B(T_{load}L_{hist} - T_{pref}L_{new})$$
+其中 $B$ 为 PCIe 带宽，$T_{load}$ 和 $T_{pref}$ 分别为单个 token 的加载和预填充时间，$L_{hist}$ 和 $L_{new}$ 分别为历史和新 token 的长度。同时该部件采用异步保存方案，将预填充和解码阶段生成的缓存逐层回写，避免阻塞后续作业。
+其次是分层 KV 缓存放置部件，负责在内存和磁盘间智能调度。它摒弃仅依赖历史访问记录的传统策略，采用调度器感知的获取与驱逐方案。通过读取推理作业调度器队列，系统维护前瞻预取窗口 $L_{pw} = C_{mem}/S_{kv}$（$C_{mem}$ 为可用内存，$S_{kv}$ 为平均缓存大小），提前将待执行作业的缓存从磁盘拉取到内存；同时维护前瞻驱逐窗口，优先将不在未来队列或处于队列尾部的缓存驱逐到磁盘，确保慢速介质不阻塞关键路径。
+最后是位置编码解耦的 KV 缓存截断部件，解决上下文溢出导致的失效问题。该部件要求模型使用相对位置编码（RPE），并将缓存时间点提前到 RPE 注入位置信息之前。此时 AttentionStore 保存的是无位置信息的纯粹张量。触发截断时，系统可直接丢弃头部的旧缓存，将剩余缓存加载到 GPU 后再动态注入新的相对位置编码。此解耦设计使截断后的缓存依然有效，并支持选择性丢弃不重要 token 以实现压缩。</p>
+<p><strong>效果如何</strong>
+实验在 4 块 80GB 显存的 NVIDIA A100 GPU、128GB 主机内存和 10TB 固态硬盘上进行，测试了 LLaMA-1 65B、LLaMA-2 13B/70B、Falcon 40B 及 32K 上下文的 Mistral-7B 模型。数据使用 ShareGPT 的 9000 个真实多轮对话。对比基线包括：代表每次清空并重新计算历史 token 的标准重计算路线（RE），代表传统缓存淘汰路线的 LRU 和 FIFO，以及代表上下文溢出时直接重计算（OF）或朴素截断（NKVT）的路线。结果显示，CachedAttention 实现了 71% 到 90% 的高缓存命中率（LLaMA-65B 因缓存体积大导致命中率最低为 71%）。与 RE 基线相比，首个 token 生成时间缩短了 61% 到 87%，预填充吞吐量提升 2.6 倍到 7.8 倍，GPU 总耗时加快 1.9 倍到 4.0 倍。调度方面，调度器感知策略的内存命中率达 99.6%，而 LRU 和 FIFO 仅约 0.5%，整体命中率高出 27% 到 31%。截断处理上，解耦位置编码法在困惑度（PPL）和准确率上与标准 token 截断一致，而 NKVT 基线因位置错乱导致性能崩溃。该方法的代价是引入了额外存储成本，主机内存和固态硬盘开销占总推理成本的 9.0% 到 16.4%，但因 GPU 计算时间锐减，整体端到端推理成本仍节省 43% 到 70%。此外作者承认，在极高并发场景下（如会话到达率升至每秒 2.0 个），缓存命中率会受轻微挤压（从 82% 降至 77%），但系统依然保持了显著加速效果。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决现有大型语言模型（LLM）服务引擎在执行多轮对话时效率低下的问题。核心问题在于，这些引擎需要重复计算历史token的键值（KV）缓存，从而导致高昂的服务成本。为了解决这一问题，本文提出了CachedAttention，这是一种新的注意力机制，它能够在多轮对话中复用KV缓存，从而显著减少重复计算的开销。</p>
 <p>本文的主要贡献如下：<br/>

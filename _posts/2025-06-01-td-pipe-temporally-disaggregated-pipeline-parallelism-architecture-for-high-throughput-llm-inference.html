@@ -20,6 +20,15 @@ title: 'TD-Pipe: Temporally-Disaggregated Pipeline Parallelism Architecture for 
 <div class="container">
 <h1>TD-Pipe: Temporally-Disaggregated Pipeline Parallelism Architecture for High-Throughput LLM Inference</h1>
 <p><strong>作者/机构</strong>: Hongbin Zhang, Taosheng Wei, Zhenyi Zheng, Jiangsu Du, Zhiguang Chen, Yutong Lu (Sun Yat-sen University)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个基于时间维度解耦的流水线并行架构 TD-Pipe，通过在时间上分离 prefill 和 decode 阶段以消除流水线气泡，在仅有 PCIe 互连的商用 GPU 节点上实现了高吞吐量的离线大语言模型推理，相比现有并行方法吞吐量最高提升了 2.73 倍。</p>
+<p><strong>要解决什么问题</strong> 现有大语言模型推理在多 GPU 扩展时面临严重的通信或调度瓶颈，尤其在缺乏 NVLINK 等高速互连的商用 PCIe 节点上难以实现高吞吐量。高吞吐推理需要极大的显存容量来维持大批次，例如 30B 模型处理 400 个请求仅 KV 缓存就需要约 178GB，单卡无法满足。若采用 CPU 卸载策略，极低的 PCIe 带宽会造成严重的协调开销；若采用张量并行（TP），极频繁的层间 all-reduce 通信在 PCIe 节点上耗时占比可达一半以上，导致计算资源严重闲置。而传统的流水线并行（PP）虽然通信量小，但由于 prefill（计算密集、耗时长）和 decode（访存密集、单步耗时短）两阶段的负载极度不平衡，以及层间、解码步间和分块间存在复杂的数据依赖，无论是采用分离批处理还是混合批处理，都会产生大量的流水线气泡，导致 GPU 利用率极低。因此，如何在低带宽硬件上消除流水线气泡并充分利用计算与显存资源，是离线高吞吐推理的核心卡点。</p>
+<p><strong>怎么做的</strong> 核心思路是将 prefill 和 decode 阶段在时间维度上彻底解耦，让整个流水线在较长时间内只执行同一种阶段，从而规避两阶段混合带来的数据依赖和负载不平衡。为了让这个架构高效运转，TD-Pipe 设计了层次化控制器和三个关键调度部件。首先是层次化控制器，它将中心化引擎的批处理调度与分布式运行时的单程序多数据执行解耦，实现多设备的异步协调。其次是基于 AI 的贪婪 prefill 方法，用于决定何时从 prefill 切换到 decode。由于盲目执行 prefill 会导致后续 decode 阶段显存溢出，该方法引入一个开销极小的 BERT 分类器预测每个请求的输出长度，并通过动态规划算法模拟未来特定解码步（如第 32、64 步）的 KV 缓存占用，在不超过显存容量的前提下尽可能多地塞入 prefill 任务。再次是批间工作窃取方法，用于解决 decode 阶段因请求随机完成导致的批次间负载不均。它通过长度等于 GPU 数量的滑动窗口实时计算全局平均批次大小，将未完成请求从重载批次动态扣留并迁移到轻载批次，确保各流水线阶段的计算量一致。最后是时空强度对比方法，用于决定何时从 decode 切换回 prefill。随着 decode 批次变小，计算效率会下降，但频繁切换又会引入气泡。该方法定义了空间强度（当前 decode 性能与峰值性能之比）和时间强度（切换带来的无气泡时间占比）：$$Spatial\ Intensity = \frac{Achieved}{Peak}$$ $$ \text{Temporal Intensity} = 1 - \frac{bubble}{total} $$ 当空间强度小于时间强度时，系统判定继续 decode 的收益已低于切换的代价，从而触发向 prefill 的切换。</p>
+<p><strong>效果如何</strong> 实验在仅通过 PCIe 交换机互连的 4 卡 L20（48GB）和 4 卡 A100（80GB）节点上进行，测试模型包括 Llama2-13B-chat、Qwen2.5-32B-Instruct 和 Llama2-70B-chat，使用 shareGPT V3 对话数据集抽取 5000 个长文本请求进行半小时的离线吞吐量测试。对比基线包含四种路线：张量并行结合分离批处理（TP+SB）、张量并行结合混合批处理（TP+HB）、流水线并行结合分离批处理（PP+SB）以及流水线并行结合混合批处理（PP+HB）。结果表明，在 4 卡扩展下，TD-Pipe 的吞吐量全面超越基线，相比 TP 路线最高提升 1.91 倍，相比 PP 路线最高提升 2.73 倍，并在 L20 节点上展现出从 2 卡到 4 卡 2.97 倍的超线性加速比。消融实验证明，基于 AI 的动态切换点显著优于固定显存阈值，时空强度对比也优于固定的请求完成率阈值。在算力更强的 A100 节点上，由于 TP 路线受限于 PCIe 带宽瓶颈，TD-Pipe 的无通信等待优势进一步放大。代价方面，引入的长度预测器会产生极小的计算开销（占比不到 0.16%）和轻微的累积预测误差（约 2.84% 到 6.18%）。此外，作者明确指出该架构专为缺乏高速互连的商用硬件和无严格延迟约束的离线高吞吐场景（如强化学习微调的数据生成）设计，并不适用于对延迟敏感的在线服务。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决流水线并行在以吞吐量为导向的大型语言模型（LLM）推理中面临的核心问题：由于prefill和decode阶段的工作负载不平衡以及复杂的数据依赖性，导致了大量的流水线气泡（pipeline bubbles），从而严重降低了性能。</p>
 <p><strong>核心问题</strong>:<br/>

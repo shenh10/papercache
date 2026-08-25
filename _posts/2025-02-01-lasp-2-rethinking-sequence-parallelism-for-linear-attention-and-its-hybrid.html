@@ -18,6 +18,15 @@ title: 'LASP-2: Rethinking Sequence Parallelism for Linear Attention and its Hyb
 <div class="container">
 <h1>LASP-2: Rethinking Sequence Parallelism for Linear Attention and its Hybrid</h1>
 <p><strong>作者/机构</strong>: Weigao Sun 1, Disen Lan 1 2, Yiran Zhong 1, Xiaoye Qu 1, Yu Cheng 3</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种专为线性注意力及其混合架构设计的序列并行方法 LASP-2，通过重构通信与计算工作流，在 2048K 超长序列训练中实现了比现有序列并行方案更显著的速度与可扩展性提升。</p>
+<p><strong>要解决什么问题</strong> 标准 Transformer 的自注意力机制具有关于序列长度的二次复杂度，导致长文本训练成本高昂。虽然线性注意力通过右乘技巧将复杂度降为线性，但现有的序列并行（Sequence Parallelism）方法（如 LASP-1）在处理线性注意力时，采用的是环式（ring-style）点对点通信策略。这种机制要求在设备之间逐一顺序传输键值激活状态，不仅通信过程缓慢，而且难以与块内（intra-chunk）的计算充分重叠。这种顺序依赖导致了较低的计算并行度，使得分布式系统在处理超长输入序列时，无法充分利用硬件资源，严重限制了模型向更长上下文扩展的能力。</p>
+<p><strong>怎么做的</strong> 核心思路是摒弃低效的环式顺序通信，重组线性注意力的计算顺序，并采用单一的 AllGather 集体通信来处理与序列长度无关的中间内存状态。具体而言，输入序列被划分为多个数据块分发到各个设备，每个设备并行计算本地的查询、键、值矩阵，并生成局部的内存状态 $\mathbf{M}_t = \mathbf{K}_t^\top \mathbf{V}_t$。随后，LASP-2 启动一次 AllGather 操作，让所有设备并发获取完整的内存状态集合：$$[\mathbf{M}_t]_1^T = \text{AllGather}([\mathbf{M}_t]_1^T)$$。在自回归任务中，为了处理因果掩码带来的二次复杂度限制，方法将计算拆解为块内（intra-chunk）和块间（inter-chunk）两部分。块内计算保留传统的掩码操作以满足因果约束：$$\mathbf{O}_{t, \text{intra}} = [(\mathbf{Q}_t \mathbf{K}_t^\top) \odot \boldsymbol{\Psi}] \mathbf{V}_t$$。而块间计算则完全摆脱了掩码限制，设备在收集到所有内存状态后，通过并发的前缀和操作累加历史状态：$$\mathbf{M}_{1:t-1} = \text{PrefixSum}([\mathbf{M}_t]_1^{t-1})$$。最终的注意力输出由块内和块间结果相加得到。这种设计不仅让通信成本只与设备数呈线性关系而与序列长度无关，还使得 AllGather 通信能够与块内计算在不同线程上高度重叠。此外，累加的中间状态会被缓存在高带宽内存中，直接用于反向传播以避免重复计算。针对同时包含线性和标准注意力层的混合模型，作者进一步提出了 LASP-2H。该方案在线性层保持上述机制，在标准注意力层则采用基于 AllGather 的上下文并行（Context Parallelism），通过全局收集键值张量来替代环式策略，从而灵活支持文档级掩码等复杂注意力模式。</p>
+<p><strong>效果如何</strong> 实验基于 1B 参数的 Linear-Llama3 模型（包含纯线性版本和保留 1/4 标准注意力层的混合版本）展开，训练数据取自 SlimPajama 语料库的 50B tokens 子集，硬件最多使用 128 张 A100 GPU。对比基线包括代表标准注意力序列并行的 Megatron-SP 和 Ring Attention，以及代表早期线性注意力序列并行的 LASP-1。在 64 张 GPU 上处理 2048K 超长序列时，LASP-2 的训练吞吐量比 Ring Attention 提升了 36.6%，比 LASP-1 提升了 15.2%，且优势随序列长度增加而持续扩大。在可扩展性方面，该方法实现了显存的线性扩展，128 张 GPU 可稳定训练 2048K 序列而不会触发显存溢出。在 16K 序列长度的预训练收敛性测试中，纯线性模型在保持高吞吐量的同时取得了与基线相近的损失值，而 1/4 混合模型则在速度与收敛性之间取得了最佳平衡，部分变体甚至达到了比标准 Transformer 更低的损失。不过作者也指出了一些局限与代价：理论上 LASP-2 的通信流量比 LASP-1 减少了 W-1 倍，但由于通信在总成本中占比有限，实际端到端加速达不到理论倍数，其优势在慢速互联集群或极大集群中才最明显；此外，在混合模型的标准注意力层使用 AllGather 收集键值张量时，其基础延迟高于环式方法，且将内存状态切分得过小也会导致吞吐量轻微下降。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>: Transformer模型的核心自注意力机制具有关于序列长度的二次复杂度，导致训练成本高昂。虽然线性注意力等方法将复杂度降至线性，但现有的序列并行（Sequence Parallelism, SP）方法并未充分利用线性注意力的“右乘优先”特性，或者采用环式（ring-style）通信策略，这导致了较低的计算并行度，限制了其在分布式系统中处理更长序列时的可扩展性。</p>
 <p><strong>研究目标</strong>: 本文旨在提出一种新的SP方法LASP-2，以提升训练具有超长输入序列的线性注意力Transformer模型时的通信和计算并行性。同时，将该方法扩展到包含线性和标准注意力层的混合模型中。</p>

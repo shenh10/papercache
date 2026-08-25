@@ -23,6 +23,15 @@ title: 'SuffixDecoding: Extreme Speculative Decoding for Emerging AI Application
 <li><strong>文章标题</strong>：SuffixDecoding: 面向新兴 AI 应用的极端推测解码</li>
 <li><strong>作者/机构</strong>：Gabriele Oliaro§,†, Zhihao Jia†, Daniel Campos§, Aurick Qiao§ (§Snowflake AI Research, †Carnegie Mellon University)</li>
 </ul>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种专为重复性 AI Agent 工作负载设计的无模型推测解码方法 SuffixDecoding，通过基于后缀树的模式匹配和自适应推测长度机制，在零 GPU 额外开销的前提下，于 Agent 任务中实现了高达 5.3 倍的推理加速。</p>
+<p><strong>要解决什么问题</strong> 大型语言模型在标准自回归解码时，每个 token 的生成都依赖前一个输出，这种顺序执行机制限制了吞吐量并造成并行硬件利用率低下。推测解码通过引入轻量级草稿模型快速生成多个候选 token，再交由主模型并行验证来缓解延迟。然而，在自动化编码助手、多 Agent 工作流等新兴应用中，系统会频繁发出包含长且可预测重复序列的推理请求。现有的推测解码方法（无论是基于模型还是无模型）在此类场景下卡在两个关键瓶颈：第一，草稿模型本身仍需消耗 GPU 计算资源并带来编排开销，生成草稿的速度不够快，无法以极低成本最大化利用 Agent 任务中极长的可预测序列；第二，现有方法缺乏自适应性，无法根据当前上下文的接受概率动态调整推测长度，导致在预测置信度低时生成过多无效草稿 token，使主模型的验证计算被大量浪费，验证环节反而成为新的性能瓶颈。</p>
+<p><strong>怎么做的</strong> SuffixDecoding 的核心思路是摒弃神经网络草稿模型，转而使用高效的后缀树数据结构缓存和匹配历史 token 序列，实现极速且零 GPU 开销的无模型推测。该方法由四个关键部件构成。首先是双后缀树缓存机制，系统在 CPU 上同时维护一棵记录所有历史请求输出的全局后缀树，以及一棵记录当前请求提示词和已生成内容的独立请求树，节点代表 token，路径代表子序列。其次是基于模式匹配的推测树构建，截取最新生成的长度为 $p$ 的后缀作为模式序列，在两棵树中查找匹配节点并贪心扩展出推测树。扩展时利用历史频率统计对节点评分，节点 N 的得分 $D(N)$ 基于其在语料库中出现的次数计算，代表该节点最终被主模型验证接受的概率，系统优先将高分节点加入推测树。第三是自适应推测长度机制，为避免低置信度下盲目推测导致验证浪费，系统根据模式匹配长度 $p$ 动态限制推测树的最大节点数，定义为 $\text{MAX\_SPEC}(p) = \alpha p$，其中 $\alpha$ 为最大推测因子。匹配到的历史模式越长，推测序列就越长，反之则保守推测。最后是混合推测回退机制，系统计算推测树的期望接受 token 数 $\text{SCORE}(T_{spec}) = \sum_{N \in T_{spec}} D(N)$，若得分低于设定阈值，说明当前处于缺乏重复模式的开放式生成场景，系统会回退到 EAGLE-3 等基于模型的推测解码方法，兼顾 Agent 任务的极致加速与开放任务的通用性。</p>
+<p><strong>效果如何</strong> 实验在配备 8 块 H100 GPU 和 2TB 内存的硬件上运行，模型选用 Llama-3.1-8B-Instruct 和微调后的 32B 编码模型。对比基线包括代表基于模型路线的 EAGLE-2 和 EAGLE-3，以及代表无模型路线的 Prompt-Lookup Decoding 和 Token Recycling。在 AgenticSQL 多 Agent 工作流任务中，SuffixDecoding 取得 5.3 倍平均加速，比 EAGLE-2/3 快 2.8 倍，比 Token Recycling 快 1.9 倍，平均每步接受 6.3 个 token。在 SWE-Bench 真实代码任务中，EAGLE-2/3 因序列长度限制运行失败，SuffixDecoding 实现 2.5 倍加速，比次优的 Prompt-Lookup Decoding 快 1.7 倍，且作为无损方法保持了原模型 37.2% 的任务解决率。在 Spec-Bench 开放式非 Agent 任务中，单独的 SuffixDecoding 表现不及基线，但结合 EAGLE-3 的混合方法实现 2.5 倍加速，反超所有独立基线。该方法的代价是全局后缀树需占用大量 CPU 内存，长期运行需引入淘汰策略；此外它强依赖输出分布的稳定性，当输入任务分布发生剧烈突变时，加速效果会短暂下降，需等待系统在线收集新分布输出并更新后缀树后才能恢复。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>：大型语言模型（LLMs）是 AI Agent 应用（如自动化编码助手、多 Agent 工作流、检索系统）的基础。与基础聊天机器人不同，这些工作负载会发出重复且可预测的推理请求。例如，多 Agent 系统会重复执行相似任务，而推理循环会重新生成相似的 token 序列。尽管存在这种可预测的重复性，但现有方法未能充分利用这些重复模式，导致延迟成为一个瓶颈。推测解码是缓解推理延迟的常用策略，但现有方法无法满足 Agent 驱动应用中高效处理长重复序列的两个关键要求：1）需要以最小开销快速生成草稿 token，以最大化利用长推测长度；2）必须具备自适应性，只在接受可能性高时生成更多草稿 token，在可能性低时生成较少 token，以避免验证成为瓶颈。</p>
 <p><strong>研究目标与创新点</strong>：为了解决上述限制，本文引入了 SuffixDecoding，这是一种专为重复性、Agent 驱动工作负载设计的无模型推测解码方法。其核心创新点如下：<br/>

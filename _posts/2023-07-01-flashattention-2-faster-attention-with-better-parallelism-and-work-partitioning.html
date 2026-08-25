@@ -20,6 +20,15 @@ title: 'FlashAttention-2: Faster Attention with Better Parallelism and Work Part
 <p><strong>文章标题</strong>: FlashAttention-2：通过更好的并行性和工作分区实现更快的注意力机制<br/>
 <strong>作者</strong>: Tri Dao<br/>
 <strong>机构</strong>: 1. 普林斯顿大学计算机科学系 2. 斯坦福大学计算机科学系</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> FlashAttention-2 通过重构注意力机制在 GPU 上的并行策略与工作分区，大幅减少了非矩阵乘法运算和共享内存的读写，在 A100 GPU 上实现了比初代 FlashAttention 快 2 倍的加速，并将前向传播计算效率提升至理论峰值的 73%。</p>
+<p><strong>要解决什么问题</strong> Transformer 处理长序列时，注意力层的运行时间和内存占用随序列长度呈二次方增长。初代 FlashAttention 通过分块计算和在线 softmax 技术，将内存占用降至线性并实现 2 到 4 倍加速，但存在一个致命卡点：计算效率极低，仅能达到 GPU 理论峰值算力的 25% 到 40%。导致该卡点的机制有两方面：第一，GPU 上不同线程块和线程束（warp）之间的工作分区不合理，导致在处理长序列且批次较小时 GPU 占用率低下，并产生大量不必要的共享内存（SRAM）读写与同步开销；第二，算法包含过多非矩阵乘法浮点运算。现代 GPU 配备的 Tensor Cores 使矩阵乘法吞吐量达非矩阵乘法的 16 倍，过多的非矩阵乘法严重拖慢了整体执行速度。</p>
+<p><strong>怎么做的</strong> FlashAttention-2 的核心思路是重构算法逻辑、全局并行维度与线程块内部的任务分配，最大化矩阵乘法单元利用率并消除多余内存通信。该方法由三个关键设计构成。首先是算法微调以减少非矩阵乘法运算。在初代在线 softmax 中，每次更新输出块需对历史和当前结果同时缩放。FlashAttention-2 改为在内层循环中仅维护“未缩放”的输出版本，并只保存局部最大值与指数和的对数（logsumexp），直到循环结束才进行最终缩放。其前向传播更新输出的核心公式为：$O_i^{(j)} = \text{diag}(e^{m_i^{(j-1)} - m_i^{(j)}})^{-1} O_i^{(j-1)} + \tilde{P}_{ij}^{(j)} V_j$。这使得计算时间更多让渡给高效的矩阵乘法。其次是增加序列长度维度的并行性。初代仅在批次大小和头数量上分配线程块，处理长序列（此时批次较小）时无法填满 GPU。FlashAttention-2 在前向传播中将外层循环（遍历序列长度的行块）调度到不同线程块上无通信并行；反向传播则为每个列块调度一个线程块，通过原子加法更新梯度，显著提升了长序列下的 GPU 占用率。最后是优化线程块内 warp 间的工作分区。初代采用“split-K”方案，将键 K 和值 V 划分给不同 warp，查询 Q 共享，导致 warp 必须将中间结果写入共享内存进行同步累加。FlashAttention-2 将 Q 划分给不同 warp，而 K 和 V 对所有 warp 可见。每个 warp 计算完负责的 $QK^\top$ 局部矩阵后，直接与共享的 V 相乘得到输出，彻底消除了 warp 间的通信与共享内存读写。</p>
+<p><strong>效果如何</strong> 实验在单张及 8 张 A100 80GB SXM4 GPU 上搭建，端到端测试训练了 1.3B 和 2.7B 参数的 GPT-style 模型，序列长度覆盖 2k 到 16k。对比基线点名了四种路线：代表标准实现的 PyTorch 原生注意力、代表 IO 感知优化的原始 FlashAttention、代表编译器自动优化的 Triton 版 FlashAttention，以及代表底层算子库优化的 xformers 库 FlashAttention（cutlass 版本）。量化结果显示，在注意力基准测试中，FlashAttention-2 速度是原始 FlashAttention 和 xformers 版的 2 倍，是 Triton 版的 1.3 到 1.5 倍，最高达 PyTorch 标准实现的 10 倍。在 A100 上，前向传播速度最高达 230 TFLOPs/s，触及硬件理论峰值的 73%。端到端训练中，相比不使用 FlashAttention 的基线提速 2.8 倍，单卡吞吐量达 225 TFLOPs/s，模型 FLOPs 利用率达 72%。该方法的局限在于工程代价：为平衡寄存器溢出和共享内存容量，必须针对不同注意力头维度手动调整分块大小（如 64x64 或 128x128），尚未实现自动调优。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文的核心问题是解决 Transformer 模型在处理长序列时的性能瓶颈。注意力层的运行时间和内存占用随序列长度呈二次方增长，这限制了模型处理长文档、高分辨率图像或长视频的能力。尽管 FlashAttention 通过优化 GPU 内存使用，将内存占用从二次方降低到线性，并实现了2-4倍的加速，但其计算效率（FLOPs/s）仍远低于优化后的矩阵乘法（GEMM）操作，仅达到理论峰值的25-40%。</p>
 <p>本文通过分析发现，FlashAttention 效率不高的主要原因是 GPU 上不同线程块和 warp 之间的工作分区不理想，导致了低占用率或不必要的共享内存读写。</p>

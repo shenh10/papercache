@@ -20,6 +20,23 @@ title: 'Skrull: Towards Efficient Long Context Fine-tuning through Dynamic Data 
 <h1>Skrull: Towards Efficient Long Context Fine-tuning through Dynamic Data Scheduling</h1>
 <p><strong>作者/机构</strong>: Hongtao Xu1,2,3, Wenting Shen3, Yuanxin Wei4, Ang Wang3, Guo Runfan2, Tianxing Wang3, Yong Li3, Mingzhen Li2†, Weile Jia2†<br/>
 1School of Advanced Interdisciplinary Sciences, University of Chinese Academy of Sciences 2State Key Lab of Processors, Institute of Computing Technology, CAS 3Alibaba Group 4Sun Yat-sen University † Corresponding authors</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一个专为长上下文微调设计的动态数据调度器 Skrull，通过在全局批次和上下文并行组内动态调度长短序列，解决了异构数据分布带来的负载不均问题，在真实数据集上实现了平均 3.76 倍的训练加速。</p>
+<p><strong>要解决什么问题</strong>
+长上下文微调面临的核心卡点是训练数据中极度不均衡的序列长度分布（如长尾或双峰分布）。为了防止长序列引发显存溢出，现有的分布式训练框架通常会按照数据集中最长的序列来统一设定上下文并行度和显存削减策略。这种“就高不就低”的静态配置对占比极高的短序列极不友好：一方面，过高的上下文并行度会引入不必要的跨节点通信开销，并严重拖慢短序列在 Attention 算子层面的执行效率；另一方面，为长序列定制的显存策略会导致在处理短序列时 GPU 显存利用率严重不足。此外，由于 Attention 模块的计算复杂度随序列长度呈二次方增长，而显存消耗仅呈线性增长，这种异构序列混合在一起时，极易在各个计算节点间引发严重的负载不均衡，导致端到端训练效率低下。</p>
+<p><strong>怎么做的</strong>
+核心思路是放弃静态的并行配置，转而从数据调度的视角，根据序列长度动态决定数据的分布与计算方式。Skrull 的关键设计由两个相互配合的组件构成：全局数据调度（GDS）和分布式感知上下文并行（DACP）。首先，在微批次级别，DACP 负责将序列动态划分为两类：需要切片并跨节点通信的“分布式序列”（通常是长序列），以及完整保留在单一设备上处理的“本地序列”（通常是短序列）。通过这种分类，DACP 既保留了处理长序列的能力，又避免了短序列参与不必要的上下文并行通信。更重要的是，DACP 能够将分布式序列的通信时间与本地序列的计算时间进行重叠掩盖。其核心目标是最小化所有上下文并行节点 $j$ 中的最大执行时间，定义为：
+$$ \text{Time}_j = \max \left( T_{comm} \left( \text{V} \right), T_{comp} \left( \text{Local}_j \right) \right) + T_{comp} \left( \text{Dist} \right) $$
+同时，调度必须严格遵守基于离线分析得出的单节点序列长度容量（BucketSize $C$）的显存约束：
+$$ \sum_{k} S_{k} \cdot P_{k j}+\frac{D_{k} \cdot S_{k}}{\mathrm{N}} \leq C $$
+其次，仅靠 DACP 无法解决微批次之间的负载不均，因此 GDS 在全局批次级别进行粗粒度调度。GDS 采用箱柜打包算法在数据并行节点间平衡计算量，并刻意将长短序列交错组合成微批次。这种长短搭配为 DACP 提供了充足的调度空间，既避免了全长序列导致的显存溢出，又防止了全短序列造成的算力闲置。为了在训练运行时实现极低开销的在线调度，Skrull 放弃了耗时的精确求解器，设计了轻量级的启发式算法。算法遵循“尽量不切片序列”和“计算负载均衡优先”的原则。由于 Attention 的二次方计算复杂度和线性的显存消耗无法同时完美平衡，算法引入了关键的回滚机制：在持续监控预估显存消耗的过程中，一旦发现某次调度可能打破显存约束引发显存溢出，就会撤销决策，强制对序列进行切片或增加微批次数量，从而在确保显存安全的前提下逼近最优的计算效率。</p>
+<p><strong>效果如何</strong>
+实验在 4 个节点（每节点 8 张 H100 GPU，通过 NVLink 和 InfiniBand 互连）上进行，评估了 Qwen2.5-0.5B 和 Qwen2.5-7B 模型。对比基线包括代表主流分布式训练框架路线的 DeepSpeed（开启 Zero-2 优化），以及代表数据工程路线、采用按长度排序批处理策略的 LongAlign。在包含长尾分布（Wikipedia、LMsysChat1M）和双峰分布（ChatQA2-long-SFT）的真实数据集上，Skrull 相比 DeepSpeed 实现了平均 3.76 倍、最高 7.54 倍的端到端训练加速；相比 LongAlign 的排序批处理方法，平均提速 3.45 倍，最高提速 6.85 倍。实验表明，Skrull 在短序列占绝对主导的长尾分布数据集上优化潜力最大。方法的局限性在于，其加速上限受限于硬件显存决定的 BucketSize 容量。在双峰分布数据集中，当大量长序列的长度逼近或超过 BucketSize 时（例如在训练 7B 模型时），可供调度的空间被严重压缩，加速比会回落至 2.03 倍。此外，盲目增大 BucketSize 虽然能提升调度带来的性能收益，但会直接增加显存溢出的风险，高度依赖离线性能建模的准确性。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文提出了一种从数据调度的新视角来解决长上下文微调（Long-SFT）中异构数据分布带来的挑战。长上下文微调通常需要在包含长短序列的混合数据集上进行训练，以平滑地使大语言模型（LLM）适应长上下文场景。然而，现有的训练系统无法同时为长序列和短序列实现高训练效率，导致端到端系统性能不佳。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

@@ -21,6 +21,15 @@ title: Towards Optimal Multi-Draft Speculative Decoding
 <h1>Towards Optimal Multi-Draft Speculative Decoding</h1>
 <p><strong>作者/机构</strong>: Zhengmian Hu, Tong Zheng, Vignesh Viswanathan, Ziyi Chen, Ryan A. Rossi, Yihan Wu, Dinesh Manocha, Heng Huang<br/>
 (1Department of Computer Science, University of Maryland, College Park, MD, USA; 2Adobe Research, San Jose, CA, USA; 3Manning College of Information &amp; Computer Sciences, University of Massachusetts Amherst, MA, USA; 4Department of Electrical and Computer Engineering, University of Maryland, College Park, MD, USA)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文首次提出了计算多草稿推测解码理论最优接受率的高效方法，在真实文本分布上量化了现有验证算法与理论上限之间的巨大差距，并提出了一种能在多数场景下达到更高接受率且完美贴合理论上限的贪心草稿采样方法。</p>
+<p><strong>要解决什么问题</strong> 多草稿推测解码（MDSD）是一种新兴的大型语言模型加速技术，它通过让小型草稿模型在生成每个 token 时一次性并行生成多个候选草稿，再由目标大模型并行验证，从而打破自回归生成的效率瓶颈。在这个过程中，给定一种草稿采样策略，其理论上能达到的最高接受率本质上是一个最优传输问题。然而，现代大语言模型的词表规模动辄数千甚至数万，导致该最优传输问题的变量和约束数量呈指数级爆炸。传统的线性规划求解器只能处理极小词表的玩具模型，根本无法在真实场景下计算出这个最优接受率。这个卡点非常致命：因为不知道理论上限在哪里，工程师们就无法准确评估现有的各类验证算法（如递归拒绝采样）到底有多低效，也无从知晓当前的接受率是否还有进一步优化的空间，更无法在不同的草稿采样策略之间做出绝对客观的优劣评判。</p>
+<p><strong>怎么做的</strong> 核心思路是通过引入对偶理论和全幺模性，将原本指数级复杂度的最优传输问题，巧妙地等价转化为一个多项式时间可解的子集选择问题。具体而言，作者证明了最优接受率 $\alpha^*(p, p_{draft})$ 可以被精确地表示为：$$ \alpha^*(p, p_{\text{draft}}) = 1 + \min_{H \subset \Sigma} \left( \sum_{i \in H} p(i) - \sum_{\bar{i} \in H^n} p_{\text{draft}}(\bar{i}) \right) $$ 其中 $p$ 是目标大模型的概率分布，$p_{draft}$ 是草稿模型生成的联合分布，$\Sigma$ 是整个词表，$H$ 是词表的任意子集。为了高效求解这个式子，作者深入挖掘了草稿分布的数学结构，发现对于常见的有放回采样和无放回采样，其草稿概率分布的集合函数都具有一种特殊的 q-凸性。利用这种类凸结构性质，只需要按照草稿概率与目标概率的比值对词表中的元素进行降序排序，再配合一次简单的线性扫描（针对有放回采样）或动态规划（针对无放回采样），就能在 $O(|\Sigma| \log |\Sigma|)$ 的时间复杂度内算出理论上限，彻底绕开了高维张量的线性规划求解。在明确了如何计算上限后，作者进一步提出了一种全新的贪心草稿采样方法：前 $n-1$ 个草稿直接确定性地选取草稿模型给出的最高概率 token，只有最后一个草稿在剩余词表中无放回地随机采样。这种设计的精妙之处在于，由于只有一个 token 是随机的，它对应的最优传输问题变得极其简单。作者顺势为其设计了一个专属的验证算法，该算法在数学上被证明能够完美达到其对应的理论接受率上限：$$ \alpha^{\text{Greedy}}(p, p_{\text{draft}}) = \sum_{i \in \text{Top}_{n-1}(q)} p(i) + \sum_{i \in \Sigma} \min(p(i), q^{\neg \text{Top}_{n-1}(q)}(i)) $$ 这一套组合拳既给出了衡量所有多草稿解码方法的绝对标尺，又提供了一个开箱即用且效率极高的极优解。</p>
+<p><strong>效果如何</strong> 实验在单张 RTX A6000 GPU 上进行，总计算成本极低。测试覆盖了指令遵循、翻译、摘要和对话生成等多个真实任务数据集，使用了 LLaMA-7B、OPT-6.7B、Vicuna-7B 和 Qwen2-7B 作为目标模型，并搭配 68M 到 0.26B 参数量不等的小型草稿模型。对比基线包括代表有放回采样路线的 K-SEQ 方法，以及代表有放回和无放回采样路线的递归拒绝采样（RRS）方法。量化结果显示，现有验证算法与理论上限存在显著差距，且随着草稿数量的增加，这个差距会越来越大。同时，无论是在理论上限还是现有验证算法上，无放回采样的接受率均全面优于有放回采样，因为后者容易产生冗余的重复草稿。作者提出的贪心草稿方法在绝大多数测试中取得了最高的接受率，例如在温度为 0.1 的低温场景下，其接受率显著高于无放回的 RRS，从而在 MT-Bench 数据集上带来了更快的实际生成速度。不过作者也坦承了该方法的局限性：温度对接受率的影响是非单调的，随着生成温度的升高（例如温度达到 1.0 时），概率分布变得更加平坦，贪心方法的性能增益会逐渐减弱，此时有放回与无放回采样之间的差距也会随之缩小。此外，贪心方法在草稿数量为 2 时本质上等价于现有的 SpecHub 方法，只是拥有更简单的验证逻辑。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>大型语言模型（LLM）已成为自然语言处理任务中不可或缺的一部分，但其自回归采样过程已成为效率瓶颈。多草稿推测解码（Multi-Draft Speculative Decoding, MDSD）是一种新兴的加速方法，在生成每个token时，由一个小型草稿模型生成多个草稿，然后由目标LLM并行验证，以确保最终输出符合目标模型的分布。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

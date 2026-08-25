@@ -19,6 +19,19 @@ title: Scattered Mixture-of-Experts Implementation
 <h1>Scattered Mixture-of-Experts Implementation</h1>
 <p><strong>作者</strong>: Shawn Tan, Yikang Shen, Rameswar Pandarpanda, Aaron Courville<br/>
 <strong>机构</strong>: mila.quebec, <a href="http://ibm.com" rel="noopener noreferrer" target="_blank">http://ibm.com</a>, <a href="http://iro.umontreal.ca" rel="noopener noreferrer" target="_blank">http://iro.umontreal.ca</a></p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一种名为ScatterMoE的稀疏专家混合模型高效实现方法，通过引入全新的底层原语融合分组与线性变换步骤，在保持数值精度的同时显著降低了显存占用并提升了模型的训练与推理吞吐量。</p>
+<p><strong>要解决什么问题</strong>
+现有的稀疏专家混合（SMoE）模型在GPU上的高效实现面临严重的显存开销与架构扩展性卡点。以广泛应用于Megatron-LM模型的Megablocks为代表的现有实现，在计算前需要对输入执行分散到分组的复制操作，这在训练阶段为了保存反向传播所需的张量，会产生巨大的显存分配开销。同时，为了迎合GPU的底层计算特性，现有方法通常会将路由到各个专家的张量块强制填充到相同大小，这种不必要的填充进一步加剧了高带宽内存的浪费。此外，将SMoE转化为稀疏矩阵格式的做法虽然在多层感知机上高效，但其固化的中间表示形式极难扩展到注意力机制等其他类型的专家模块上。早期的TPU实现甚至要求在编译时定死张量容量，一旦专家负载不均，要么丢弃超出容量的令牌，要么对空闲专家进行无效填充，造成严重的算力浪费。</p>
+<p><strong>怎么做的</strong>
+核心思路是通过融合分组与线性变换步骤，彻底避免对输入进行显式填充和冗余复制，从而绕开显存分配的卡点。标准SMoE的计算需要先根据令牌嵌入分配权重并选择头部专家、将分配给同专家的令牌分组并产生扇出、执行专家线性变换、将令牌分散回原时间步，最后进行加权求和，其输出定义为 $$\mathbf{Y}_t = \sum_{e \in \text{topk}(g(\mathbf{X}_t))} g_e(\mathbf{X}_t) \cdot f_e(\mathbf{X}_t)$$ 传统方法会在高带宽内存中实例化整个填充数组并按排序复制数据，而ScatterMoE仅根据专家对令牌排序并对索引进行填充，在加载到静态RAM时直接根据填充后的索引读取，避免了全局显存占用。关键设计是由Triton编写的新原语ParallelLinear，其底层依赖一个名为scatter2scatter的核函数，能在分散的向量上直接执行分组矩阵运算。该原语支持输入和输出在分组与分散状态之间的四种任意组合，其产生的中间表示是标准的PyTorch张量，极大地提升了扩展性。在反向传播计算梯度 $$\nabla \mathbf{X} = \nabla \mathbf{Y} \mathbf{W}^{\top}, \quad \nabla \mathbf{W} = \mathbf{X}^{\top} \nabla \mathbf{Y}$$ 时，ParallelLinear在嵌入未分组时对其进行分组以计算权重梯度，并通过复用数组来最小化显存使用，例如将输出梯度的数组直接用作后续计算的输出。在具体实现多层感知机时，ScatterMoE将两次线性变换配置为先从分散到分组、再从分组到分散，使得反向传播只需一次分组操作。而在扩展到多头注意力混合模块时，由于应用位置编码需要保持令牌的时间顺序，ParallelLinear可以直接执行从分散到分散的变换，无需像现有方法那样分配额外的数组来回倒腾数据。该注意力实现类似于分组查询注意力，每个专家拥有特定数量的键头，并从中选择对应比例的查询头，从而实现高效的注意力混合计算。</p>
+<p><strong>效果如何</strong>
+实验在同一计算节点上的8张Nvidia A100 GPU上搭建了1.5B参数的Mixtral配置模型，训练数据设置为有效批量大小256、序列长度2048个令牌，并在单卡上进行了多层感知机和注意力模块的单元测试。对比基线包括代表基础实现的HuggingFace朴素版本、代表当前高效稀疏路线的Megablocks稀疏模式及其内存高效模式，以及一种高效的PyTorch实现。在整体训练吞吐量上，ScatterMoE比稀疏Megablocks基线高出38.1%。在多层感知机单元测试中，ScatterMoE的训练显存占用仅为Megablocks的66.2%，推理显存占用更是低至53.6%。在测试细粒度专家设置时，随着粒度的增加，ScatterMoE展现出比Megablocks更好的吞吐量扩展性，特别是在批处理推理中优势明显。在降低稀疏性的实验中，即使将选中的专家数量增加到30个，ScatterMoE的吞吐量依然优于Megablocks，且两者均高于等效参数的密集模型。在注意力混合模块的测试中，当每次激活8个专家时，其推理吞吐量比Megablocks高出24.0%，且性能差距随粒度增加而拉大。此外，在winogrande、hellaswag等十余个语言模型评估基准上，ScatterMoE与HuggingFace标准实现的数值精度完全一致，绝对误差可忽略不计。作者也承认了当前方法的局限性，目前尚未实现用于加速解码的专用内核，且在多节点环境下的并行化支持仍需进一步开发。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>: 尽管稀疏专家混合（SMoE）模型在扩展Transformer方面越来越受欢迎，但其在GPU上的高效实现仍面临挑战。现有的实现方式存在一些局限性：<br/>
 1. <strong>内存开销大</strong>: 现有的SMoE实现（如Megablocks）通常需要在计算前对输入进行<code>scatter-to-group</code>的复制操作，这在训练中会因为存储用于反向传播的张量而产生显著的内存分配开销。<br/>

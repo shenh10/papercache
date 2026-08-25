@@ -20,6 +20,21 @@ title: 'MiniMax-01: Scaling Foundation Models with Lightning Attention'
 <div class="container">
 <h1 id="minimax-01-scaling-foundation-models-with-lightning-attention">MiniMax-01: Scaling Foundation Models with Lightning Attention</h1>
 <p><strong>作者/机构</strong>: MiniMax1</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文通过将闪电注意力（Lightning Attention）与专家混合（MoE）架构深度结合，构建了千亿参数规模的 MiniMax-01 系列模型，在保持与顶尖闭源模型相当的通用性能的同时，成功将上下文窗口扩展至 400 万 tokens。</p>
+<p><strong>要解决什么问题</strong>
+现有大语言模型处理长文本的核心卡点在于标准 Transformer 架构中 softmax 注意力机制固有的二次计算复杂度，导致上下文长度增加时，计算量呈爆炸式增长。为打破此瓶颈，研究者曾尝试引入线性注意力机制，利用右积技巧将复杂度降为线性。然而，在因果语言建模任务中，为防止未来信息泄露，线性注意力的右积计算必须依赖累加求和（cumsum）操作。这种 cumsum 操作本质上是串行的，严重阻碍了 GPU 硬件层面的高效并行计算。这导致现有线性注意力模型在实际训练中速度极慢，甚至不如高度优化的标准注意力机制，这也是主流开源大模型均未采用线性注意力的根本原因。因此，如何既享受线性复杂度红利，又绕开 cumsum 带来的并行化障碍，是实现百万级上下文窗口必须解决的关键机制问题。</p>
+<p><strong>怎么做的</strong>
+核心思路是采用混合注意力机制与专家混合（MoE）架构，主体使用优化的闪电注意力降低计算复杂度，辅以少量 softmax 注意力弥补线性模型在检索能力上的先天缺陷。首先，为绕开 cumsum 的并行化障碍，闪电注意力引入分块（tiling）技术。它将查询、键、值矩阵沿序列维度划分为多个块，将注意力计算拆解为块内和块间两部分：
+$$ \begin{bmatrix} O_0 \\ O_1 \end{bmatrix} = \begin{bmatrix} (Q_0 K_0^\top \odot M) V_0 \\ Q_1 (K_0 V_0) + (Q_1 K_1^\top \odot M) V_1 \end{bmatrix} $$
+其中 $M$ 为因果掩码。块内计算保留传统的左积形式以确保局部信息精确提取；块间计算利用右积的线性特性传递全局状态。通过递归划分，整体时间复杂度降至线性。其次，作者从理论上证明，softmax 注意力的记忆容量随序列长度线性增长 $O(N)$，而线性注意力的容量受限于特征维度 $O(d^2/h)$，导致纯线性模型在长文本检索中表现极差。为此，模型每七层闪电注意力后插入一层 softmax 注意力，既维持了整体线性复杂度，又继承了 softmax 的长程检索能力。最后，在系统级并行优化上，针对长序列训练提出了 LASP+ 算法。原序列并行在交换键值块时存在串行依赖，LASP+ 让每个计算节点先独立计算局部前缀和，再通过 AllGather 全局同步，最后并行计算全局前缀和，彻底将串行计算转化为并行。同时，MoE 层面引入全局路由器，通过跨专家并行组同步 token 数量，解决大模型扩展时的负载不均衡问题。</p>
+<p><strong>效果如何</strong>
+实验基于 1500 到 2500 张 H800 GPU 集群，训练了总参数量 4560 亿（单 token 激活 459 亿参数）的 MiniMax-Text-01 模型。在注意力机制对比上，选取了代表标准 softmax 路线的 FlashAttention-2、代表线性与 RNN 路线的 HGRN2 和 Mamba2，以及代表局部注意力路线的滑动窗口注意力（SWA）。在综合能力上，直接对标代表最强闭源路线的 GPT-4o 和 Claude-3.5-Sonnet。量化结果显示，闪电注意力实现了与序列长度无关的恒定训练吞吐量，在 64K 长度下是唯一超越 FlashAttention-2 的线性模型。在长上下文评估中，模型在高达 100 万 tokens 的 MR-NIAH（大海捞针）任务中保持极高检索准确率，在 Ruler 基准 100 万 token 设置下处于领先。在 MMLU 等核心学术基准上，通用性能与 GPT-4o 相当。在局限性方面，作者承认由于预训练代码数据有限，模型在高级复杂编程任务上表现不足；且当前架构依然妥协性地保留了八分之一的 softmax 层，尚未实现真正零额外开销的无限上下文窗口。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在构建一个性能媲美顶尖商业模型，同时上下文窗口长度大一个数量级的模型。这一目标需要在网络架构、数据和计算之间进行仔细权衡。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

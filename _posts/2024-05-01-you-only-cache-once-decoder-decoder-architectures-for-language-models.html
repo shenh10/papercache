@@ -22,6 +22,19 @@ title: 'You Only Cache Once: Decoder-Decoder Architectures for Language Models'
 <li><strong>作者</strong>: Yutao Sun, Li Dong, Yi Zhu, Shaohan Huang, Wenhui Wang, Shuming Ma, Quanlu Zhang, Jianyong Wang, Furu Wei</li>
 <li><strong>机构</strong>: Microsoft Research, Tsinghua University</li>
 </ul>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 提出了一种名为 YOCO（You Only Cache Once）的解码器-解码器架构，通过仅缓存一次全局键值对，在保持与标准 Transformer 相当的语言建模性能的同时，将长上下文推理的 KV 缓存显存消耗降低了一个数量级，并大幅缩短了预填充延迟。</p>
+<p><strong>要解决什么问题</strong> 标准的仅解码器（decoder-only）Transformer 架构在进行自回归生成时，必须缓存所有先前计算过的键值（KV）向量，以避免重复计算。当处理长序列时，这部分 KV 缓存的体积会随着输入序列长度和模型层数的增加而线性膨胀。这种庞大的显存占用最终会成为推理过程中的核心物理瓶颈。例如，一个 65B 参数的模型在处理 512K 个 token 时，单单是 KV 缓存就需要占用约 86GB 的 GPU 显存，直接超出了单张主流计算卡的显存上限。这种机制不仅限制了长上下文语言模型在有限硬件上的实际部署，导致批处理大小无法提升，还会导致预填充（prefilling）阶段的计算耗时极长。因为在生成第一个 token 之前，模型必须完整穿透所有网络层来计算并存储整段长提示词的 KV 状态，这严重拖慢了系统的整体吞吐量，使得超长文本的实时交互变得极不现实。</p>
+<p><strong>怎么做的</strong> 核心思路是摒弃传统的同质化 Transformer 层堆叠，提出一种由自解码器（self-decoder）和跨解码器（cross-decoder）上下拼接而成的全新架构。具体而言，模型总共有 L 层，前一半为自解码器，后一半为跨解码器。自解码器负责高效编码输入序列，它摒弃了全局注意力，转而采用推理显存复杂度仅为常数级别的高效自注意力机制。例如，可以使用将注意力限制在固定窗口大小内的滑动窗口注意力，或者使用结合了数据控制门控机制的门控保持机制（gated retention）。门控保持机制统一了并行、循环和分块循环三种计算范式，在推理时通过循环状态传递，使得缓存大小仅取决于层数而非序列长度。随后，自解码器最后一层的输出向量 $X^{L/2}$ 被专门用来生成全局共享的键值缓存：
+$$ \hat{K}=\operatorname{LN}(X^{L/2})W_K, \quad \hat{V}=\operatorname{LN}(X^{L/2})W_V $$
+紧接着，后一半的跨解码器不再各自计算和维护自己的键值对，而是通过标准的交叉注意力机制，统一复用上述由自解码器生成的全局缓存：
+$$ Y^l = \text{Attention}(\hat{Q}^l, \hat{K}, \hat{V}) + X^l $$
+这一设计之所以能绕开显存卡点，是因为全局缓存被所有跨解码器层共享，使得整个模型的 KV 缓存大小与模型层数彻底解耦。推理时的缓存显存复杂度从传统 Transformer 的 $O(N \times L \times D)$ 骤降至约 $O(N \times D)$，真正实现了“只缓存一次”。此外，这种计算依赖关系的改变带来了一个关键的预填充提前退出（Early Exit）机制：在处理输入提示词的预填充阶段，由于后续的跨解码器仅依赖自解码器生成的全局缓存，模型只需完成前一半自解码器的前向计算即可提前结束预填充，从而将预填充延迟至少砍半。</p>
+<p><strong>效果如何</strong> 实验在 H100 GPU 上进行，研究团队训练了从 160M 到 13B 参数量的多个模型以验证扩展性，并使用 1.6T tokens 的语料从头预训练了一个 3B 规模的模型（YOCO-3B），将其上下文逐步扩展至 1M。对比基线主要选择了代表标准 Transformer 路线的强力开源模型，如 OpenLLaMA-v2-3B 和 StableLM-3B-4E1T。量化结果显示，在常规语言建模的零样本评估中，YOCO-3B 取得了与同等规模 Transformer 基线相当的成绩；在 160M 到 13B 的扩展曲线上，YOCO 的验证损失下降趋势与 Llama 架构完全对齐。在长上下文能力上，该模型在 1M 长度的“大海捞针”测试中实现了近乎完美的检索准确率，且在 128K 长度的多针检索中，其 3B 参数的性能直接对齐了 7B 规模的 LWM-1M-text，并击败了 YaRN-Mistral-128K 等基线。最显著的突破在于推理效率：在 1M 上下文长度下，YOCO 的总推理显存占用仅为 12.4GB，是结合了 Flash-Decoding 优化技术的 Transformer 的九分之一；对于 65B 规模的模型，KV 缓存显存节省了约 80 倍。在 512K 上下文的预填充测试中，YOCO 将延迟从 180 秒压缩至不足 6 秒，加速比高达 30.3 倍，同时将吞吐量提升了 9.6 倍（从 4.5 token/s 升至 43.1 token/s）。作者也坦承，若要将大语言模型的部署成本再降低几个数量级，未来仍需探索与模型权重压缩技术（如 BitNet）或 SRAM 硬件（如 Groq）进行深度结合。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文针对大型语言模型（LLM）中随着输入序列增长而导致的KV缓存（KV Cache）占用大量GPU内存和预填充（prefilling）延迟过高的问题，提出了一种名为YOCO（You Only Cache Once）的新型解码器-解码器（decoder-decoder）架构。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

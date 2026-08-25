@@ -19,6 +19,23 @@ title: 'INTELLECT-2: A Reasoning Model Trained Through Globally Decentralized Re
 <div class="container">
 <h1>INTELLECT-2: A Reasoning Model Trained Through Globally Decentralized Reinforcement Learning</h1>
 <p><strong>作者/机构</strong>: Prime Intellect Team (Sami Jaghouar, Justus Mattern, Jack Min Ong, Jannik Straube, Manveer Basra, Aaron Pazdera, Kushal Thaman, Matthew Di Ferrante, Felix Gabriel, Fares Obeid, Kemal Erdem, Michael Keiblinger, Johannes Hagemann)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文通过构建专为去中心化环境设计的异步强化学习基础设施，在一个无需许可、全球分布的异构节点网络上成功训练了320亿参数的推理模型 INTELLECT-2，证明了强化学习可以摆脱中心化算力集群的物理束缚。</p>
+<p><strong>要解决什么问题</strong>
+传统的强化学习训练高度依赖中心化架构，要求集中部署的 GPU 集群与节点间的高速互联网络。这种强同步和高通信带宽的硬性需求，导致大模型训练面临极高的算力门槛。随着模型规模增长，单一数据中心的物理上限很快将无法满足需求。若将训练任务分发到全球去中心化的异构网络中，会面临三大机制卡点：首先是通信开销，在低带宽广域网下频繁同步庞大的模型权重会拖垮训练效率；其次是节点异构与不可靠，消费级 GPU 算力参差不齐且随时可能掉线，传统同步屏障无法运作；最后是信任危机，不受信的边缘节点可能为骗取奖励而伪造计算结果或使用低精度模型。因此，如何设计一套既能掩盖通信延迟、兼容异构节点，又能以极低成本验证计算完整性的系统，是去中心化强化学习的核心挑战。</p>
+<p><strong>怎么做的</strong>
+核心思路是将强化学习的训练与推理过程完全解耦，采用去中心化的两步异步强化学习范式。受信任的中心化节点专职负责模型更新，不受信任的去中心化节点独立生成推理轨迹。关键设计由三个基础设施部件和一套改进算法构成。首先是 PRIME-RL 框架，由于权重广播存在延迟，推理节点会使用两步或更早之前的旧权重生成轨迹，这种异步设计消除了通信瓶颈，允许异构节点按自身节奏工作。其次是策略权重广播组件 SHARDCAST，它采用类似内容分发网络的中继服务器架构，将检查点文件分片并流水线式流传输。客户端通过指数移动平均动态评估各服务器带宽和成功率，进行概率性抽样连接以最大化吞吐量。第三是实现无需信任推理的 TOPLOC 验证器。它在解码过程中捕获最终隐藏状态，增量生成局部敏感哈希的加密承诺。验证节点仅需在预填充阶段重建激活值并比对，即可极低开销地检测出篡改或量化作弊。算法层面，为控制思考预算，引入了结合任务奖励与长度惩罚的双重目标。设 $y$ 为模型输出，$l_y$ 为其长度，$l_{target}$ 为目标长度，$r_{task}$ 为任务奖励，总奖励为：
+$$r_{\text {total }}\left(y, l_{\text {target }}\right)=r_{\text {task }}(y)-\alpha *\left|l_{\text {target }}-l_{y}\right|$$
+此外，针对大规模训练中因负优势值和极大令牌概率比率导致的梯度尖峰，引入了双边 GRPO 裁剪机制。原始 GRPO 仅对正优势值裁剪，改进后的目标函数通过超参数 $\delta$ 为负优势情况下的概率比率增加上限：
+$$\mathcal{J}_{\text{GRPO}}(\theta) = \mathbb{E}_{q, \{o_i\} \sim \pi_{\theta_{\text{old}}}} \left[ \frac{1}{G} \sum_{i=1}^G \frac{1}{|o_i|} \sum_{t=1}^{|o_i|} \left[ \min \left( \min \left( \frac{\pi_{\theta}}{\pi_{\theta_{\text{old}}}}, \delta \right) \hat{A}_{i,t}, \text{clip} \left( \frac{\pi_{\theta}}{\pi_{\theta_{\text{old}}}}, 1-\varepsilon, 1+\varepsilon \right) \hat{A}_{i,t} \right) \right] \right]$$
+配合离线难度过滤、确保批次内存在非零优势的在线过滤，以及低至 0.05 的激进梯度裁剪，有效压制了梯度范数升级，保障了 320 亿参数下的训练稳定。</p>
+<p><strong>效果如何</strong>
+实验基于 320 亿参数的 QwQ-32B 作为基础模型，使用 28.5 万个数学和编码任务进行训练。硬件由一个受信任的训练集群和大量社区贡献的异构推理节点组成。对比基线为基础模型 QwQ-32B，代表已历经大量强化学习优化的强推理模型路线。量化结果显示，两周训练后，INTELLECT-2 在 AIME24 和 LiveCodeBench 等基准测试中均超越了 QwQ-32B。系统效率上，去中心化架构展现了极高资源利用率：训练与推理的浮点运算比例达 1:4.5；SHARDCAST 广播平均耗时 14 分钟，吞吐量达 590 Mb/s；TOPLOC 验证在 1 分钟内完成。训练节点执行一个完整步骤耗时约 21 到 22 分钟，与去中心化网络准备批次数据的时间几乎同步，实现了计算完美重叠。该方法也存在局限：因训练时间短，模型未能学会严格遵守指定的思考预算；因训练数据仅限数学和编码，模型在 IFEval 等通用指令遵循任务上出现轻微退化。作者承认，在已深度强化学习的 QwQ-32B 上继续训练极易引发优化不稳定，未来获取更大幅度泛化提升可能需依赖纯预训练基础模型。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题与研究目标</strong><br/>
 - <strong>核心问题</strong>: 传统的强化学习（RL）训练通常是中心化的，需要大型、集中部署的GPU集群和高速互联网络，这限制了其可扩展性和可及性。<br/>

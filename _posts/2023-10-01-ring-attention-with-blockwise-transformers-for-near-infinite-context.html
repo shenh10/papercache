@@ -18,6 +18,15 @@ title: Ring Attention with Blockwise Transformers for Near-Infinite Context
 <div class="container">
 <h1>Ring Attention with Blockwise Transformers for Near-Infinite Context</h1>
 <p><strong>作者/机构</strong>: Hao Liu, Matei Zaharia, Pieter Abbeel, UC Berkeley hao.liu@cs.berkeley.edu</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为 Ring Attention 的内存高效方法，通过将分块计算与设备间的环形通信完全重叠，消除了单设备内存对 Transformer 上下文长度的限制，使模型支持的序列长度能随设备数量线性扩展，成功在无近似、零额外开销下实现超一亿 token 的极长上下文训练与推理。</p>
+<p><strong>要解决什么问题</strong> 原有 Transformer 架构处理长序列时卡在单设备显存瓶颈上。虽现有分块并行技术（如 Blockwise Parallel Transformer）已降低注意力和前馈网络的显存开销，但因自注意力机制要求所有元素交互，模型仍需完整存储每层输出激活值。具体到机制层面，当序列达一亿 token 时，即使隐藏维度仅 1024，单层输出也需超 1000GB 显存，远超现代 GPU 和 TPU 不足 100GB 的容量。若简单将长序列切分并分布到多设备，计算自注意力内层循环时，设备需不断从其他设备获取键值块，这不仅因等待传输引入严重计算延迟，还会因累积接收键值块导致显存激增，使极长上下文扩展失效。</p>
+<p><strong>怎么做的</strong> 本文核心思路是利用自注意力计算中键值块操作的排列不变性，将长序列的分块计算与设备间的环形通信完全重叠，把单设备显存瓶颈转移到集群总显存上。方法由分块计算和环形通信拓扑构成。首先，将输入序列沿序列维度切分成块，均匀分布到多个设备上，每个设备负责计算本地查询块的注意力外层循环。其次，所有设备逻辑上连成一个环，计算内层循环时，每个设备在用当前查询块与一个键值块计算注意力分数的同时，会将正使用的键值块发给环中下一个设备，并从上一个设备接收新键值块。标准 Transformer 注意力计算为 $$ \text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d}}\right)V $$ Ring Attention 巧妙利用了公式中键值对可按任意顺序计算并组合的特性。为绕开显存和通信卡点，关键设计在于实现计算与通信完全重叠。假设设备算力为 $F$ FLOPS，单向带宽为 $B$，块大小为 $c$，隐藏维度为 $d$。计算一个块的注意力需 $4dc^2$ FLOPs，传输键值块需 $4cd$ 字节，要完美隐藏通信开销，必须满足计算时间大于等于传输时间，即 $$ \frac{4dc^2}{F} \ge \frac{4cd}{B} $$ 这推导出关键不变量：块大小 $c$ 必须大于等于算力与带宽比值 $F/B$。此设计下，每个设备只需在显存中维持六个块的容量（当前查询块、当前键值块、接收中的键值块及输出块），最大激活显存开销被严格限制在 $6bch$ 字节（$b$ 为批量大小，$h$ 为隐藏维度）。这意味着显存需求只与块大小成正比，只要每个设备分配的序列长度达最小块大小六倍，就能在零额外开销下实现上下文长度随设备数的线性扩展。</p>
+<p><strong>效果如何</strong> 实验在单台及分布式 A100 GPU 集群和多代 TPU 上搭建，涵盖 3B 到 30B 参数的 LLaMA 架构语言模型及 350M 参数的强化学习模型，结合了完全分片数据并行（FSDP）和张量并行。对比基线选取三条路线代表：实例化完整注意力矩阵的标准 Vanilla Transformer、代表高效显存注意力路线的 Memory Efficient Attention，以及对注意力和前馈网络均分块计算的 Blockwise Parallel Transformer (BPT)。在最大上下文尺寸评估中，Ring Attention 展现出随设备数线性扩展的优势：在 32 个 A100 GPU 上，7B 模型上下文突破 100 万 token，是此前最强基线 32 倍；在 512 个 TPUv4 上，上下文超 3000 万 token，达基线 256 倍，且模型 FLOPS 利用率（MFU）几乎未降。具体任务中，将 LLaMA-13B 在 125K 条真实对话上微调至 512K 上下文后，在长程行检索任务中保持极高精确度，成功处理了 GPT-3.5-turbo-16K 和 Claude-2-100K 因截断而失效的极长文本；在强化学习 ExoRL 基准中，利用该方法将处理轨迹数从 32 提升至 128 条后，总平均回报从 111.13 升至 113.66。作者也承认了局限与代价：低带宽互连环境（如部分 InfiniBand 连接的 GPU）对最小块大小要求更苛刻；此外，随上下文极度扩大，训练绝对计算量依然显著上升，如将 170B 模型的上下文从 4K 扩展到 1000 万时，每个数据集的训练 FLOPs 成本会增加 162.6 倍。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>: Transformer架构在处理长序列时面临严峻的内存挑战。其自注意力机制的内存成本与序列长度成二次方关系，导致难以扩展到长序列输入。此外，即使采用内存优化技术，存储每一层的输出激活值仍然是巨大的瓶셔颈，例如，处理一个包含1亿个token的序列，即使模型隐藏维度仅为1024，也需要超过1000GB的内存，这远超现代GPU和TPU不足100GB的高带宽内存（HBM）容量。</p>
 <p><strong>研究目标</strong>: 本文旨在消除单个设备内存容量对Transformer模型上下文长度的限制，提出一种新方法，使得上下文长度能够随着设备数量线性增长，从而处理极长的序列，同时不引入额外的通信和计算开销，也不对注意力机制进行近似处理。</p>

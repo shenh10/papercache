@@ -21,6 +21,17 @@ title: 'Kitty: Accurate and Efficient 2-Bit KV Cache Quantization with Dynamic C
 <div class="container">
 <h1>Kitty: Accurate and Efficient 2-Bit KV Cache Quantization with Dynamic Channel-wise Precision Boost</h1>
 <p>Haojun Xia, Xiaoxia Wu, Jisen Li, Robert Wu, Junxiong Wang, Jue Wang, Chenxi Li, Aman Singhal, Alay Dilipbhai Shah, Alpay Ariyak, Donglin Zhuang, Zhongzhu Zhou, Ben Athiwaratkun, Zhen Zheng, Shuaiwen Leon Song</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为 Kitty 的混合精度 KV 缓存量化与端到端推理系统，通过动态信道级精度提升技术和页面中心化的内存布局，在将 KV 缓存压缩至接近 2-bit 的同时几乎无损地保持了模型准确率，并在相同显存预算下实现了最高 4.1 倍的吞吐量提升。</p>
+<p><strong>要解决什么问题</strong> 大语言模型在处理长上下文推理时，KV 缓存的显存占用远超模型权重，成为限制吞吐量和批处理大小的核心瓶颈。例如 70B 模型处理 32 个 128K 请求时，KV 缓存需消耗超 1.2TB 显存，远超单卡容量。将全精度 KV 缓存压缩到低比特是有效途径，但现有策略卡在了 2-bit 精度上。KV 缓存量化必须在运行时动态执行，通常对 Key 缓存采用跨 token 共享缩放因子的逐信道量化。虽然 4-bit 量化能保持准确率，但像 KIVI 这样的先进方法在进一步压缩到 2-bit 时，会导致模型在数学推理等任务上出现严重的准确率崩塌。现有混合精度方案要么引入稀疏密集乘法导致硬件效率低下，要么在极低比特下依然掉点严重。如何在逼近 2-bit 压缩率的同时消除准确率损失，并设计出硬件友好的底层系统，是本文要解决的核心卡点。</p>
+<p><strong>怎么做的</strong> 核心思路是采用混合精度策略，为极少数关键的 Key 缓存信道分配 4-bit 精度，其余绝大多数信道积极压缩至 2-bit，并配合初始 token 全精度保留机制。该设计能绕开 2-bit 准确率崩塌的卡点，是因为 Key 缓存中不同信道对量化误差的敏感度存在巨大差异。极少数信道始终表现出较高的激活量级，将它们量化到 2-bit 会对注意力分数造成极大的均方误差，而其余信道即使被激进量化，带来的失真也微乎其微。关键设计由三个部件构成。首先是初始 token 保护，将序列最开始的少量 token 在 Key 和 Value 缓存中均保持为 FP16 全精度。其次是动态信道级精度提升，系统在运行时通过轻量级启发式方法评估信道重要性，将得分最高的少量信道提升至 4-bit。重要性分数定义为信道 $i$ 在所有 token 上的平均绝对量级：
+$$s_{i}=\frac{1}{T}\sum_{t=1}^{T}|x_{i,t}|$$
+最后是面向混合精度的页面中心化内存布局与三阶段执行流水线。为在 GPU 上高效反量化并避免显存离散访问，Kitty 将包含混合精度的 Key 缓存页面拆解为一个密集矩阵和一个结构化稀疏矩阵。密集矩阵统一存储所有信道的低 2 位数据，稀疏矩阵紧凑存储被提升至 4-bit 信道的高 2 位数据，并辅以索引张量映射物理偏移量。运行时，新生成的 KV 向量先以全精度插入静态缓冲区；随后 GPU 核函数并行读取纯 2-bit 张量，在片上无缝重构出 FP16 页面并完成注意力计算；当缓冲区填满一个量化组（如 128 个 token）时，系统才启动量化和打包过程，将开销有效摊销。</p>
+<p><strong>效果如何</strong> 实验在 Qwen3 和 LLaMA 3 系列模型上展开，硬件使用 A100 和 H100，测试任务涵盖 GSM8K、MATH-Algebra、HumanEval 及最高 32K 上下文的 AIME 长文本推理。对比基线包括代表不量化路线的 Hugging Face 动态与静态 FP16、代表 4-bit 路线的 HF KIVI INT4，以及代表激进低比特路线的 2-bit KIVI 及其保留初始 token 变体。量化结果显示，在常规长度下，2-bit KIVI 会导致 Qwen3-8B 平均准确率下降 15.23，而保留 25% 信道为 4-bit 的 Kitty-Pro 成功将准确率恢复至与 FP16 基线相当的水平。在 32K 长上下文设置下，2-bit KIVI 落后基线约 13 个百分点，Kitty 则将差距大幅缩小至 3 到 4 个百分点。消融实验证明，准确率随信道提升比例增加而单调提高，且基于量级的启发式选择显著优于随机选择。系统效率方面，在相同显存预算下，Kitty-Pro 能支持比 FP16 基线大 8 倍的批处理大小，从而在生成 8192 个 token 时实现 2.1 倍至 4.1 倍的吞吐量提升。作者承认的局限在于，当前基于量级的信道选择启发式方法较简单，未来需探索更具自适应性的策略；同时，当前 GPU 核函数基于 Triton 实现，若改用更底层的 CUDA 语言进行细粒度优化，系统效率还有进一步提升空间。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决大型语言模型（LLM）在长上下文推理中，由KV缓存（KV cache）引起的巨大内存占用瓶颈。虽然4-bit KV量化能保持准确率，但2-bit量化通常会导致性能下降，尤其是在长上下文推理任务上。本文通过算法-系统协同设计，提出了一种名为 Kitty 的混合精度KV缓存方案，以弥合2-bit量化的准确率差距。</p>
 <p><strong>核心问题与研究目标：</strong><br/>

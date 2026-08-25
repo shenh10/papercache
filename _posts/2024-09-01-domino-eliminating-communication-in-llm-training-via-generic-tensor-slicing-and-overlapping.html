@@ -21,6 +21,17 @@ title: 'Domino: Eliminating Communication in LLM Training via Generic Tensor Sli
 <h1 id="domino-eliminating-communication-in-llm-training-via-generic-tensor-slicing-and-overlapping">Domino: Eliminating Communication in LLM Training via Generic Tensor Slicing and Overlapping</h1>
 <p>Guanhua Wang, Chengming Zhang, Zheyu Shen∗, Ang Li∗, Olatunji Ruwase  </p>
 <p>Microsoft DeepSpeed</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> Domino 是一种用于大语言模型张量并行训练的通用张量切片与流水线调度方案，通过将计算分解为独立片段来隐藏通信开销，在 Nvidia DGX-H100 集群上实现了相比 Megatron-LM 高达 1.3 倍的训练加速。</p>
+<p><strong>要解决什么问题</strong> 在大模型分布式训练中，张量并行（TP）因其在高带宽互连环境下的极高系统效率而日益普及。随着最新硬件（如配备 400 GB/s InfiniBand 链路的 DGX-H100）逐渐抹平节点内与节点间的带宽差异，TP 正成为跨节点训练的标准实践。然而，TP 的核心卡点在于其全局通信完全阻塞在执行的关键路径上。在标准的 Transformer 块中，自注意力层和多层感知机（MLP）层在正向和反向传播时共需要触发 4 次 AllReduce 集合通信。由于这些通信与后续计算存在严格的数据依赖，传统的数据并行或流水线并行策略无法将其隐藏到侧信道。即使在极高带宽的加持下，随着 GPU 单卡算力的激增，这种无法掩盖的通信开销仍会占据端到端训练迭代时间的 17% 到 47%。现有的算子融合方案（如将通用矩阵乘法与 NCCL 通信融合）重叠范围极其有限，当通信耗时大于单个矩阵乘法时，大部分通信时间依然会暴露。因此，如何打破 TP 训练中的数据依赖，实现通用且细粒度的计算与通信重叠，是进一步提升大模型训练吞吐量的关键。</p>
+<p><strong>怎么做的</strong> Domino 的核心思路是在原有张量并行切片的基础上，引入额外的通用张量切片策略，将原本庞大且存在依赖的计算图拆解为无数据依赖的微小片段，进而通过流水线调度实现细粒度的计算与通信重叠。对于 Transformer 层的标准计算，可以抽象为输入数据 $X$ 与两组权重 $A_{FULL}$ 和 $B_{FULL}$ 的乘积：
+$$X \otimes A_{FULL} \otimes B_{FULL} = Y_{FULL}$$
+为兼容 FlashAttention 等高度优化的注意力算子，Domino 保持第一组权重 $A_{FULL}$ 不变，仅对输入 $X$ 和第二组权重 $B_{FULL}$ 进行切片。首先是输入数据的行切片。Domino 将输入张量 $X$ 沿着批次维度切分为多个微批次。因为诸如 GeLU、Dropout 以及注意力机制中的 Softmax 操作在批次维度上是完全独立的，这种切片在数学上与不切片完全等价。切片后，系统可以先执行第一个微批次的计算并异步触发其 AllReduce 通信，同时立即启动第二个微批次的计算。这种机制不仅实现了层内的计算通信重叠，还能将通信隐藏在后续的 LayerNorm 或残差连接背后。在反向传播中，Domino 巧妙地设计了一个无操作模块来接管 PyTorch 的自动求导图，从而精确控制梯度通信的触发时机，实现子模块级别的重叠。其次是权重的列切片。为了避免通信量爆炸，Domino 将权重张量 $B_{FULL}$ 沿着列维度切分。系统先使用第一个权重分区计算出部分结果并触发异步 AllReduce，同时无缝衔接第二个权重分区的计算。这种切片的代价是需要在层计算结束时，在隐藏维度上对所有部分结果进行拼接同步。对于极大型模型，单独的行切片或列切片会导致张量形状过于狭长，Domino 会采用混合切片策略，同时对 $X$ 和 $B_{FULL}$ 进行划分以榨取极限的重叠空间。在工程实现上，Domino 结合了多 CUDA 流并行执行独立操作，并利用 CudaGraph 与 torch.compile 技术来消除切片后细碎算子间的调度气泡。</p>
+<p><strong>效果如何</strong> 实验在 1 到 4 个 Nvidia DGX-H100 节点（含 8 到 32 张 H100 GPU，节点间通过 400 GB/s InfiniBand 连接）上进行。评估对象涵盖了 2.7B 到 30B 参数规模的 GPT-3 模型以及 7B 和 13B 参数规模的 Llama-2 模型，序列长度设置为 512 和 1K。对比的基线方法为英伟达官方的 Megatron-LM，分别测试了其同步版本（代表标准张量并行路线）和异步版本（代表仅在反向传播中开启粗粒度重叠的优化路线，该路线仅带来 2% 到 5% 的提升）。在 GPT-3 模型的单节点和多节点训练中，Domino 相比 Megatron-LM 基线实现了最高 1.3 倍的吞吐量加速。在部分大批次设置下，Domino 的吞吐量达到了理论最优值（即完全剔除通信开销的理想情况）的 90% 以上，甚至得益于底层的算子图优化，在个别场景下超越了该理论上限。作者还模拟了未来 800 GB/s 带宽的硬件环境，预测 Domino 可实现高达 1.5 倍的加速。该方法也存在一定的局限与代价。在 Llama-2 模型的测试中，由于其特有的旋转位置编码在输入批次切片之间引入了额外的数据依赖，限制了重叠空间的展开，导致加速比回落至 1.08 倍到 1.17 倍之间。此外，当训练批次较小时，张量切片带来的算子启动开销会变得显著，从而削弱吞吐量增益；而在权重列切片后的结果拼接阶段，为了规避内存溢出而预分配的连续显存缓冲区，依然会引入少量的内存拷贝开销。</p>
+</div>
+</details>
 <h2 id="_1">摘要</h2>
 <p>鉴于生成式AI的流行，大型语言模型（LLM）通常消耗数百或数千个GPU来并行化和加速训练过程。在大规模训练LLM时，通信开销变得更加显著。为了消除分布式LLM训练中的通信开销，我们提出Domino，这是一种通过将单个批次训练分解为更小的独立片段来隐藏通信于计算背后的通用方案。Domino对这些独立片段的训练进行流水线处理，并提供细粒度通信和计算重叠的通用策略。广泛的结果显示，与Megatron-LM相比，Domino在Nvidia DGX-H100 GPU上实现了高达1.3倍的LLM训练加速。</p>
 <h2 id="_2">主要贡献</h2>

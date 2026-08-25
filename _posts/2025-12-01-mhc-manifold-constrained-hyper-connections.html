@@ -20,6 +20,19 @@ title: 'mHC: Manifold-Constrained Hyper-Connections'
 <h1>mHC: Manifold-Constrained Hyper-Connections</h1>
 <p><strong>作者/机构</strong>: Zhenda Xie*†, Yixuan Wei*, Huanqi Cao*, Chenggang Zhao, Chengqi Deng, Jiashi Li, Damai Dai, Huazuo Gao, Jiang Chang, Liang Zhao, Shangyan Zhou, Zhean Xu, Zhengyan Zhang, Wangding Zeng, Shengding Hu, Yuqing Wang, Jingyang Yuan, Lean Wang, Wenfeng Liang, DeepSeek-AI</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了流形约束超连接（mHC）框架，通过将残差映射投影到双随机矩阵流形上并辅以底层系统优化，在仅增 6.7% 耗时的代价下，解决了超连接（HC）在大规模训练中的信号发散与显存墙瓶颈，提升了稳定性与推理性能。</p>
+<p><strong>要解决什么问题</strong> 传统残差连接以“恒等映射”保证深层网络训练稳定，但限制了表达能力。超连接（HC）通过将残差流宽度扩展多个倍数（如 4 倍）并引入可学习映射矩阵来管理多流信息，提升了性能。然而，这种无约束设计遭遇两个致命卡点。首先是训练不稳定性。HC 中负责残差流信息交换的矩阵是无约束的，网络加深时，多层矩阵的复合映射无法保持特征全局均值，导致信号幅度和梯度范数极易发生指数级爆炸或消失，复合映射的最大增益幅度甚至飙升至 3000，引发突发性损失激增。其次是严峻的系统开销与内存墙问题。加宽残差流使每个 token 的内存访问成本成倍增加；可学习映射在反向传播时需保存大量中间激活值，导致显存暴涨；在流水线并行中，多流设计还会带来成倍的跨节点通信延迟，产生巨大气泡。</p>
+<p><strong>怎么做的</strong> 核心思路是将无约束的残差映射矩阵严格投影到由双随机矩阵构成的伯克霍夫多胞体（Birkhoff polytope）上。双随机矩阵要求所有元素非负，且行列和均为 1。其定义性约束为：
+$$ \mathcal{P}_{\mathcal{M}^{\text{res}}}(\mathcal{H}_l^{\text{res}}) := \{\mathcal{H}_l^{\text{res}} \in \mathbb{R}^{n \times n} \mid \mathcal{H}_l^{\text{res}} \mathbf{1}_n = \mathbf{1}_n, \mathbf{1}_n^\top \mathcal{H}_l^{\text{res}} = \mathbf{1}_n^\top, \mathcal{H}_l^{\text{res}} \geqslant 0 \} $$
+这一设计巧妙绕开了信号发散卡点：行列归一化使残差映射等效于对输入特征进行凸组合，严格保证了特征均值守恒；其谱范数被约束在 1 以内，防止了梯度爆炸；且双随机矩阵在矩阵乘法下具封闭性，确保复合映射在极深网络中始终保持稳定。具体实现上，模型先计算无约束映射，再通过 Sinkhorn-Knopp 算法进行流形投影。该算法先对矩阵取指数使其非负，再交替进行行列归一化：
+$$ \mathbf{M}^{(t)}=\mathcal{T}_{r}\left(\mathcal{T}_{c}\left(\mathbf{M}^{(t-1)}\right)\right) $$
+针对系统开销卡点，作者设计了三项基础设施优化。一是核函数融合（Kernel Fusion），利用 TileLang 开发混合精度算子，将层归一化、矩阵乘法等共享内存访问的操作融合成统一计算核，削减内存带宽瓶颈。二是选择性重计算（Recomputing），前向传播后丢弃超连接算子的中间激活值，反向传播时即时重计算，并推导出最优重计算块大小 $L_r^* \approx \sqrt{\frac{nL}{n+2}}$，将其边界与流水线阶段对齐。三是通信重叠，扩展了 DualPipe 调度，将多层感知机的超连接算子置于高优先级计算流，使注意力计算可被抢占，掩盖了多流残差的通信延迟。</p>
+<p><strong>效果如何</strong> 实验基于受 DeepSeek-V3 启发的混合专家（MoE）架构，残差流扩展率设为 4。主要评测在 27B 参数模型上进行，并辅以 3B 和 9B 模型的计算扩展性分析。对比基线有两个：代表传统路线的标准残差连接（强稳定性、低开销），以及代表无约束多流路线的超连接（HC，高表达能力、高不稳定性）。量化结果显示，mHC 彻底消除了 HC 在 12k 步左右的损失激增现象，复合映射的最大增益幅度从 HC 的近 3000 降至 1.6 左右，最终训练损失比标准残差基线低 0.021。在下游任务中，mHC 全面超越标准基线，并在多数任务上击败 HC，例如在 BBH 上比 HC 提升 2.1%，在 DROP 上提升 2.3%。代价方面，mHC 在 27B 模型上仅引入 6.7% 的额外训练耗时。作者承认的局限是：Sinkhorn-Knopp 算法在工程中为保效率必须截断迭代次数（实验设为 20 次），导致求得的矩阵只是近似双随机，反向梯度增益会略微偏离 1（最大约 1.6），但该偏差安全有界，未破坏整体传播稳定性。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文探讨了深度神经网络中残差连接的演进。传统的残差连接（图 1a）在过去十年中已成为基础设计，尤其是在大型语言模型中，其成功关键在于简洁的形式和“恒等映射”特性，这保证了大规模训练的稳定性和效率。然而，以超连接（Hyper-Connections, HC）为代表的新研究（图 1b）通过扩展残差流的宽度和多样化连接模式来提升性能，但这种无约束的设计从根本上破坏了恒等映射属性。</p>
 <p><strong>核心问题：</strong><br/>

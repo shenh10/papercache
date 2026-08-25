@@ -20,6 +20,15 @@ title: 'Twilight: Adaptive Attention Sparsity with Hierarchical Top-p Pruning'
 <div class="container">
 <h1>Twilight: Adaptive Attention Sparsity with Hierarchical Top-p Pruning</h1>
 <p><strong>作者/机构</strong>: Chaofan Lin, Jiaming Tang, Shuo Yang, Hanshuo Wang, Tian Tang, Boyu Tian, Ion Stoica, Song Han, Mingyu Gao (清华大学, 麻省理工学院, 加州大学伯克利分校)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个名为Twilight的分层KV缓存剪枝框架，通过引入Top-p采样机制为现有稀疏注意力算法提供自适应的Token预算决策能力，在几乎无精度损失的前提下剪枝高达98%的冗余Token，并在端到端解码中实现最高3.9倍的加速。</p>
+<p><strong>要解决什么问题</strong> 现有大语言模型处理长上下文时，通常采用Top-k稀疏注意力机制加速推理，但该做法卡死在固定的Token预算（即k值）上，无法适应真实场景中注意力权重的动态分布。具体而言，遇到权重高度集中的“集中式注意力”分布时，只需极少量Token就能累积足够权重，固定k值会导致严重“过度选择”，白白浪费计算和显存资源；遇到权重分布平缓的“分散式注意力”时，固定k值又会导致“选择不足”，丢失关键信息从而损害模型精度。此外，不同稀疏算法为弥补自身估计误差，往往需要不同程度的过度选择，导致开发者必须针对每个算法进行繁琐的离线校准才能确定预算大小，极大限制了稀疏注意力在不同注意力头、网络层及任务中的泛化与部署效率。</p>
+<p><strong>怎么做的</strong> 核心思路是摒弃固定数量的Top-k截断，将大语言模型生成阶段常用的Top-p采样（即核采样，通过设定累积概率阈值动态选择集合）引入稀疏注意力中，让模型根据当前注意力权重的实际分布自适应决定保留的Token数量。在稀疏注意力中，输出结果计算方式定义为 $$\hat{\mathbf{o}}=\mathbf{W} \boldsymbol{\Lambda}_{\mathcal{I}} \mathbf{V} \in \mathbb{R}^{1 \times d}$$ 其中 $\mathbf{W}$ 是注意力权重，$\boldsymbol{\Lambda}_{\mathcal{I}}$ 是选中索引的对角掩码矩阵。为将误差控制在理论上界内，Top-p稀疏注意力的优化目标转变为寻找满足权重总和阈值 $p$ 的最小Token集合，即 $$\mathcal{I}=\arg\min_{\mathcal{I}}|\mathcal{I}|\quad\text{s.t.}\sum_{i\in\mathcal{I}}\mathbf{W}[i]\geq p$$ 该机制能自然地在集中式分布下收紧预算，在分散式分布下放宽预算。为兼容现有稀疏算法，方法设计了名为Twilight的“先选择后剪枝”分层架构，由两个部件构成。首先是Token选择器，将现有稀疏算法视为黑盒，用相对保守且较大的预算（如四分之一稀疏度）初步筛选出候选Token子集。其次是Twilight剪枝器，在候选子集上执行Top-p阈值精炼，剔除冗余Token。在底层工程实现上，由于Top-p对数值精度要求高于Top-k，直接加载完整键缓存会导致极大显存带宽开销，因此设计了带有4位量化键缓存的高效稀疏矩阵向量乘算子，保证精度的同时将全局内存访问量降至四分之一。同时，为适应GPU并行计算特性，摒弃低效的降序排序，采用二分查找法实现Top-p核函数，并将张量操作融合在单一循环中。最后，针对各注意力头计算负载不均衡问题及分组查询注意力架构，通过扁平化头维度和在查询组粒度上共享预算，实现高效的变长注意力计算。</p>
+<p><strong>效果如何</strong> 实验在单张A100 GPU上进行，评估了Longchat-7B-v1.5-32k、LLaMA2-7B-Chat及具备128K长上下文的LLaMA-3.1-8B-Instruct模型。对比基线包括代表最先进Top-k稀疏路线的Quest和DS方法、代表非Top-k路线的MagicPIG方法，以及作为全注意力密集计算基准的FlashAttention2和FlashInfer。在Longbench长上下文基准测试中，结合该框架的DS-Twilight和Quest-Twilight在Longchat模型上分别将平均得分提升5.7%和2.5%，成功剪枝高达98%的冗余Token，在LLaMA-3.1模型上仅以微小预算增加就实现不到1%的精度损失。在RULER基准上，DS-Twilight超越所有现有方法创造新纪录。效率方面，自注意力算子相较于FlashAttention2实现最高15.8倍加速，相较于基础算法Quest提升1.4倍；在批量大小从32到256的端到端解码服务场景中，每输出Token时间相较于FlashInfer实现最高3.9倍加速。在内存卸载场景下，由于大幅减少从CPU加载Token的数量，加速比可达16倍。该方法也存在代价与局限性：需维护额外的4位量化键缓存，带来八分之一的额外显存开销；其引入的注意力权重估计开销不可忽略，更适合大批量服务或内存卸载等加载成本占主导的场景；此外，头级别的动态预算机制与分组查询注意力架构存在天然不契合，适配最新模型架构时仍面临工程挑战。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文深入探讨了在长上下文大语言模型（LLMs）中，利用注意力稀疏性进行加速的一个核心挑战：现有的大多数稀疏注意力算法采用固定的预算（即top-k方法中的k值）来选择计算中使用的token数量。这种静态决策在实际部署中存在严重问题，因为它无法适应真实场景的动态性，即在准确性和效率之间的最佳平衡点是不断变化的。</p>
 <p><strong>核心问题与研究目标：</strong><br/>

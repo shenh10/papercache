@@ -24,6 +24,19 @@ title: 'LIA: A Single-GPU LLM Inference Acceleration with Cooperative AMX-Enable
 - Hyungyo Kim, Nachuan Wang, Qirong Xia, Jinghan Huang, Nam Sung Kim (伊利诺伊大学厄巴纳-香槟分校)<br/>
 - Amir Yazdanbakhsh (Google DeepMind)</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了 LIA 单 GPU 大语言模型推理加速框架，通过动态调度英特尔 CPU 的 AMX 加速模块与 GPU 协同计算，并利用 CXL 内存扩展容量，实现了相比现有卸载方案最高 19 倍的延迟降低和 5.1 倍的吞吐量提升。</p>
+<p><strong>要解决什么问题</strong> 单 GPU 推理大语言模型时，因显存无法容纳庞大参数和 KV 缓存，常采用系统级卸载方案，但这面临三大机制卡点。首先是内存卸载的传输瓶颈：将参数存放在 CPU 内存并按需通过 PCIe 传输给 GPU 时，缓慢的带宽导致极高延迟，小批量时传输时间占总延迟 98% 以上。其次是计算卸载的吞吐量受限：为避免 KV 缓存跨设备传输，现有框架（如 FlexGen）将依赖 KV 缓存的注意力得分子层交由 CPU 计算。但传统 CPU 基于 AVX 指令集的矩阵吞吐量极低（不到 A100 的 1%），导致 CPU 计算时间远超直接传输 KV 缓存的时间，反而拖慢推理。最后是大批量推理的内存容量墙：高吞吐量场景下会产生海量 KV 缓存（如 OPT-175B 在批量 256 时需 1.6TB 内存），超出常规 DDR 内存物理极限，使单 GPU 无法支持大批量推理。</p>
+<p><strong>怎么做的</strong> LIA 核心思路是利用英特尔 CPU 集成的 AMX（先进矩阵扩展）加速器提供媲美部分 GPU 的吞吐量，结合低成本 CXL 内存，构建 CPU 与 GPU 协同的动态卸载架构，绕开 PCIe 瓶颈和 CPU 计算孱弱卡点。方法由三个部件构成。第一是算法前端，将解码器层拆分为六个子层，构建最优化问题决定子层 $i$ 在 CPU（$p_i=1$）还是 GPU（$p_i=0$）计算。目标是最小化单层延迟：
+$$ \mathbf{p}_{opt} = \arg\min_{\mathbf{p} \in \{0,1\}^6} L(\mathbf{p}) $$
+总延迟由加载、计算和存储组成。计算延迟直接关联设备吞吐量 $T_{CPU}$、$T_{GPU}$ 及计算量 $C_i$：
+$$ L_{i,compute}(\mathbf{p}) = p_i \frac{C_i}{T_{CPU}} + (1 - p_i) \frac{C_i}{T_{GPU}} $$
+前端根据批量大小、序列长度及计算访存比，动态生成最优卸载向量。第二是执行后端，负责显存管理和流水线重叠。LIA 在未使用的 GPU 显存中尽可能缓存完整的解码器层，大幅减少层间数据搬运；在解码阶段，放弃传统小批次切分，将整批次计算与参数传输直接重叠，避免小批次计算无法线性缩放带来的流水线气泡。第三是 CXL 内存卸载策略。为打破容量墙，LIA 引入退役 DDR4 构成的 CXL 内存。因 CXL 带宽足以跑满 PCIe，将参数存入 CXL 不会对 GPU 拉取造成降速。但 CXL 延迟高，若存入 KV 缓存会导致 CPU AMX 吞吐量暴跌最高 82%。因此 LIA 强制将 KV 缓存保留在高速 DDR 内存由 CPU 直接访问，在极低成本下实现容量翻倍且不损耗计算效率。</p>
+<p><strong>效果如何</strong> 实验在配备英特尔 SPR（40 核）或 GNR（128 核）CPU、NVIDIA A100 或 H100 GPU、512GB DDR 及 CXL 扩展器的系统上进行。测试 OPT 系列及 Llama2-70B 等模型，精度为 BF16。对比基线为代表纯 CPU AMX 路线的 IPEX 框架，以及代表 GPU 结合 AVX CPU 卸载路线的 FlexGen 框架。批量为 1 时，LIA 在 SPR-H100 上运行 OPT-175B 的延迟比 FlexGen 降低 4.0 至 5.1 倍，比 IPEX 降低 1.1 至 1.5 倍。在批量为 64 或 900 的离线测试中，吞吐量比 FlexGen 提高 1.5 至 3.7 倍。引入 CXL 卸载后，LIA 在性能损失不到 1% 下将 DDR 占用减少 43%，或利用释放的空间支持更大批量，使吞吐量再提升 1.45 倍。此外，LIA 每令牌能效比 FlexGen 高 1.6 至 10.3 倍，系统成本仅为 8 卡 DGX 的 10%。代价是 CXL 存在 140 至 170 纳秒额外延迟和较低带宽，盲目将 KV 缓存存入 CXL 会引发 CPU 性能衰退，必须依赖非对称内存放置策略规避。</p>
+</div>
+</details>
 <h3 id="a1">A1 主要贡献</h3>
 <p><strong>核心问题</strong>:<br/>
 大型语言模型（LLM）的参数规模持续增长，导致在单块GPU上进行推理变得不可行，因为模型参数和中间值（如KV缓存和激活值）的存储需求超过了高端GPU（如H100）的显存容量。现有解决方案，如多GPU部署，成本高昂；而将模型参数卸载到CPU内存并通过PCIe传输的系统级卸载方法，则受到PCIe带宽的限制，导致推理延迟显著增加。此外，以往的CPU-GPU协作框架因CPU计算吞吐量远低于GPU而效果有限，并且未能根据不同的批量大小（batch size）和序列长度动态调整计算卸载策略，导致资源利用不佳。</p>

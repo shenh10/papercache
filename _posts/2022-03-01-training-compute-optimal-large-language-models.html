@@ -19,6 +19,15 @@ title: Training Compute-Optimal Large Language Models
 <h1>Training Compute-Optimal Large Language Models</h1>
 <p><strong>作者</strong>: Jordan Hoffmann, Sebastian Borgeaud, Arthur Mensch, Elena Buchatskaya, Trevor Cai, Eliza Rutherford, Diego de Las Casas, Lisa Anne Hendricks, Johannes Welbl, Aidan Clark, Tom Hennigan, Eric Noland, Katie Millican, George van den Driessche, Bogdan Damoc, Aurelia Guy, Simon Osindero, Karen Simonyan, Erich Elsen, Jack W. Rae, Oriol Vinyals and Laurent Sifre</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文通过大规模实证研究推翻了大型语言模型“优先扩大参数量”的旧有缩放法则，提出在固定计算预算下模型参数量与训练数据量应等比例扩大的新法则，并据此训练了 70B 参数的 Chinchilla 模型，在同等算力下全面超越了 280B 的 Gopher 等更大规模的模型。</p>
+<p><strong>要解决什么问题</strong> 过去几年，大型语言模型的参数量急剧膨胀。这种趋势受早期缩放法则指导，旧法则认为当计算预算增加 10 倍时，模型参数量应增加 5.5 倍，而训练数据量只需增加 1.8 倍。这导致了一个严重的卡点：当前的大型语言模型普遍处于“训练不足”的状态。像 GPT-3 或 Gopher 这样参数量高达 175B 到 280B 的模型，通常只在约 300B 个 token 上训练。由于相对于巨大的模型尺寸，训练数据量严重匮乏，导致模型在巨大的计算开销下性能远未达到最优。此外，一味追求庞大参数量不仅造成预训练算力低效分配，还导致模型推理和微调成本急剧上升。因此，如何在固定的浮点运算预算约束下，精准估计模型参数量与训练数据量之间的最优权衡，成为了突破大模型能效瓶颈的核心问题。</p>
+<p><strong>怎么做的</strong> 核心思路是将预训练损失建模为模型参数量和训练 token 数的函数，并在给定计算预算约束下求解最优参数量和数据量。为绕开以往仅凭少量外推的局限，研究团队训练了超过 400 个参数量从 70M 到 16B、token 数从 5B 到 500B 不等的语言模型。关键设计由三种独立的估计方法构成，交叉验证了最优分配比例：第一种是固定模型大小并改变训练数据量。对每个参数量级的模型设置不同训练步数，提取每个 FLOPs 对应的最小损失包络线，建立算力到最优配置的映射。第二种是等算力曲线分析。固定 9 个不同的总计算量预算，在每个预算下改变模型大小，寻找使损失达到谷底的最优参数量。第三种是拟合参数化损失函数。将最终损失分解为自然文本的固有熵、受限于模型大小的函数逼近误差、以及受限于数据量的优化误差，提出定义性公式：$$ \hat{L}(N, D) \triangleq E + \frac{A}{N^{\alpha}} + \frac{B}{D^{\beta}} $$ 其中 $N$ 为参数量，$D$ 为 token 数。在 $FLOPs \approx 6ND$ 约束下最小化该损失，可求得闭式高效计算边界。这三种方法得出了全新缩放法则：最优模型大小和数据量与计算预算 $C$ 的关系分别为 $N_{opt} \propto C^a$ 和 $D_{opt} \propto C^b$，指数 $a$ 和 $b$ 均约为 0.5。这意味着模型大小和训练 token 数应等比例缩放——算力每增一倍，参数量和数据量都应增一倍。基于此法则，若使用与 280B 的 Gopher 相同的算力，最优配置应是 70B 参数配合 1.4T 的 token，这便是 Chinchilla 的诞生依据。</p>
+<p><strong>效果如何</strong> 实验基于 TPUv3 和 TPUv4 硬件，使用 1.4T 个 token 的 MassiveText 数据集训练了 70B 参数的自回归 Transformer 模型 Chinchilla。对比基线选取了代表“优先扩大参数量”旧路线的巨型模型，包括 Gopher（280B）、GPT-3（175B）、Jurassic-1（178B）以及 Megatron-Turing NLG（530B）。量化结果显示，Chinchilla 在广泛下游任务中取得压倒性优势。在包含 57 个学科的 MMLU 基准测试中，其 5-shot 平均准确率达 67.6%，比 Gopher 高出 7.6%。在 BIG-bench 任务集中，平均准确率比 Gopher 提升 10.7%。在 Natural Questions 闭卷问答任务上，创造了 31.5% 的新记录，远超 GPT-3 和 Gopher。这证明同等算力下，更优的数据配比能大幅提升常识推理和事实召回能力。该方法也存在局限与代价。首先，由于训练成本极高，实验在小模型和巨型模型间缺乏中等规模验证点。其次，分析基于幂律假设，但在高算力预算下存在凹性，暗示真正的最优模型尺寸可能比预测更小。最后，使用数万亿 token 训练放大了数据质量隐患，尽管 Chinchilla 在性别偏见测试上略有改善，但生成文本的毒性得分与 Gopher 几乎无异，表明单纯优化计算配比不能消除网络抓取数据带来的安全风险。</p>
+</div>
+</details>
 <h3>A1 主要贡献</h3>
 <p><strong>核心问题与研究目标</strong>:<br/>
 近期，大型语言模型（LLM）的参数量急剧增长，最大的密集模型已超过5000亿参数。训练这些模型的计算和能源成本巨大，因此在给定的计算预算下准确估计最佳模型超参数至关重要。先前的工作（如【索引23，Scaling laws for neural language models，2020，arXiv】）表明，模型性能与参数量之间存在幂律关系，推动了训练更大模型的趋势。然而，许多近期的大型模型（如GPT-3、Gopher）都在约3000亿个token上进行训练，这主要是遵循了在增加计算量时优先增加模型规模的思路。本文的核心问题是：<strong>在固定的浮点运算（FLOPs）预算下，应如何在模型大小（参数量）和训练数据量（token数）之间进行权衡？</strong></p>

@@ -20,6 +20,15 @@ title: 'ProRL: Prolonged Reinforcement Learning Expands Reasoning Boundaries in 
 <h1 id="prorl-prolonged-reinforcement-learning-expands-reasoning-boundaries-in-large-language-models">ProRL: Prolonged Reinforcement Learning Expands Reasoning Boundaries in Large Language Models</h1>
 <p><strong>ProRL：持续强化学习扩展大型语言模型的推理边界</strong><br/>
 作者/机构: Mingjie Liu, Shizhe Diao, Ximing Lu, Jian Hu, Xin Dong, Yejin Choi, Jan Kautz, Yi Dong (NVIDIA)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了持续强化学习方法 ProRL，通过解决长时间训练中的熵崩溃问题，使模型能够进行深度的推理策略探索，最终训练出的 1.5B 参数模型在数学、代码和逻辑等多个领域的推理能力大幅超越基础模型，证明了强化学习能实质性扩展模型的推理边界。</p>
+<p><strong>要解决什么问题</strong> 业界普遍怀疑强化学习究竟是解锁了模型新的推理能力，还是仅优化了已有解决方案的采样效率。以往“强化学习无法扩展推理边界”的结论，多源于训练过度依赖已过拟合的特定领域且训练时间过短。在长时间策略优化中，核心卡点是“熵崩溃”。训练早期，模型输出分布会变得过于尖锐，导致熵急剧下降。一旦发生熵崩溃，策略会过早锁定在一小部分输出模式上，严重限制探索。对于依赖多样化采样来估计相对优势的强化学习算法（如 GRPO）而言，缺乏探索会导致策略更新产生偏差，最终造成训练停滞。常规的提高采样温度等手段只能短暂延迟熵崩溃，无法从根本上维持长时间训练所需的探索能力。</p>
+<p><strong>怎么做的</strong> 为突破长程训练限制，本文提出 ProRL（持续强化学习）方法。核心思路是构建维持输出多样性、防止策略过早收敛的机制，支持模型在数千步训练中持续探索新推理模式。该方法以 GRPO 为基础，通过三个关键设计绕开熵崩溃卡点：第一，引入 DAPO 算法的解耦裁剪与动态采样。更新策略时，将目标函数中的下限和上限裁剪边界作为独立超参数，设定较低下限和较高上限（如 $\epsilon_{low} = 0.2$、$\epsilon_{high} = 0.4$）。这种“更高裁剪”能提升低概率 token 的生成概率，鼓励广泛探索。核心裁剪机制为：$$ \text{clip}\left(\frac{\pi_{\theta}(\tau)}{\pi_{old}(\tau)}, 1-\epsilon_{low}, 1+\epsilon_{high}\right) $$同时，动态采样过滤掉准确率持续为 1 或 0 的提示词，保留中等难度样本以维持学习信号多样性。第二，施加 KL 散度控制。ProRL 在当前策略 $\pi_{\theta}$ 和参考策略 $\pi_{ref}$ 间引入 KL 散度惩罚项：$$ \text{KL}(\pi_{\theta} || \pi_{ref}) $$该惩罚项不仅能维持输出熵，还能防止在线策略偏离稳定参考点太远，减轻对虚假奖励信号的过拟合。对于已具备连贯思维链输出能力的模型，保留 KL 惩罚对长期稳定性至关重要。第三，执行参考策略重置。随着训练深入，KL 惩罚项可能主导损失函数导致策略更新减弱。ProRL 周期性地将参考策略 $\pi_{ref}$ 硬重置为当前策略 $\pi_{\theta}$ 的较新快照，并重新初始化优化器状态。这使模型既能享受正则化益处，又能打破停滞继续探索。此外，ProRL 采用包含 13.6 万个样本的多样化任务套件进行训练，强制模型学习可迁移的抽象推理模式。</p>
+<p><strong>效果如何</strong> 实验基于 1.5B 参数的基础模型 DeepSeek-R1-Distill-Qwen-1.5B 展开，在 32 块 H100 GPU 上耗时约 1.6 万个 GPU 小时，训练后期将上下文窗口扩展至 16K。对比基线包括三个方向：代表起点的基础模型 DeepSeek-R1-Distill-Qwen-1.5B、代表参数规模扩展路线的 7B 模型 DeepSeek-R1-Distill-Qwen-7B，以及代表领域专用路线的 DeepScaleR-1.5B（数学）和 DeepCoder-1.5B（代码）。量化结果显示，ProRL 训练的 Nemotron-Research-Reasoning-Qwen-1.5B 模型实现全方位提升：数学基准 pass@1 平均提升 15.7%，代码提升 14.4%，STEM 推理（GPQA Diamond）提升 25.9%，指令遵循（IFEval）提升 22.0%，逻辑谜题（Reasoning Gym）提升 54.8%。该模型不仅媲美甚至超越 7B 模型，还在数学和代码上分别以 4.6% 和 6.5% 的优势击败领域专用基线。在分布外测试中，模型成功解决了基础模型成功率为 0 的全新逻辑任务（如 boxnet）。深入分析表明，强化学习增益与基础模型初始能力呈负相关：基础模型表现越差的任务，ProRL 提升越大。该方法的代价是极高的计算资源消耗，且能否扩展到更大参数模型仍是未知数。此外，周期性硬重置增加了训练复杂性；在某些极具挑战性的逻辑任务上模型依然无法取得进展，表明当模型完全缺乏核心技能或背景知识时，仅靠强化学习无法实现冷启动，仍需微调数据介入。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文探讨了强化学习（RL）在提升大型语言模型（LLM）推理能力方面的核心问题：RL究竟是解锁了模型新的推理能力，还是仅仅优化了基础模型中已存在的解决方案的采样效率。研究者们挑战了“RL无法扩展模型推理边界”的普遍观点，认为以往的结论可能源于方法上的限制，如过度依赖模型已过拟合的特定领域（如数学）以及RL训练时间过短。</p>
 <p>为了解决这些限制，本文提出了<strong>ProRL（Prolonged Reinforcement Learning，持续强化学习）</strong>，一种新的训练方法论，其核心贡献和发现如下：</p>

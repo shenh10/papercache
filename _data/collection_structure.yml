@@ -779,6 +779,14 @@ llm:
         - llm
         - algorithm
         - rl
+      - title: 'RollPacker: Mitigating Long-Tail Rollouts for Fast, Synchronous RL
+          Post-Training'
+        date: '2025-09-01'
+        url: /papers/llm/algorithm/rl/2025/09/01/rollpacker-mitigating-long-tail-rollouts-for-fast-synchronous-rl-post-training.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: 'SKYRL-AGENT: Efficient RL Training for Multi-Turn LLM Agent'
         date: '2025-11-01'
         url: /papers/llm/algorithm/rl/2025/11/01/skyrl-agent-efficient-rl-training-for-multi-turn-llm-agent.html
@@ -1913,14 +1921,6 @@ llm:
       - title: 'DeepCoder: A Fully Open-Source 14B Coder at O3-mini Level'
         date: '2025-04-01'
         url: /papers/llm/engineering/rl/2025/04/01/deepcoder-a-fully-open-source-14b-coder-at-o3-mini-level.html
-        categories:
-        - llm
-        - engineering
-        - rl
-      - title: 'RollPacker: Mitigating Long-Tail Rollouts for Fast, Synchronous RL
-          Post-Training'
-        date: '2025-09-01'
-        url: /papers/llm/engineering/rl/2025/09/01/rollpacker-mitigating-long-tail-rollouts-for-fast-synchronous-rl-post-training.html
         categories:
         - llm
         - engineering
@@ -5765,6 +5765,14 @@ mlsys:
       - mlsys
       - gpu
       tag: micro25
+    - title: 'Jalapeno''s First Results: Industry-Leading Speed and Efficiency in
+        AI Inference'
+      date: '2026-08-01'
+      url: /papers/mlsys/gpu/2026/08/01/jalapenos-first-results-industry-leading-speed-and-efficiency-in-ai-inference.html
+      categories:
+      - mlsys
+      - gpu
+      tag: blog
     - title: 'Matrix Multiplication on NVIDIA''s Blackwell: A Four-Part Deep Dive'
       date: '2026-02-01'
       url: /papers/mlsys/gpu/2026/02/01/matrix-multiplication-on-nvidias-blackwell-a-four-part-deep-dive.html

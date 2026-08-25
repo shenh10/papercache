@@ -23,6 +23,15 @@ title: The Devil in Linear Transformer
 <strong>作者/机构</strong>：Zhen Qin¹, Xiaodong Han¹, Weixuan Sun²,³, Dongxu Li², Lingpeng Kong⁴,⁵, Nick Barnes², Yiran Zhong⁴<br/>
 ¹SenseTime Research, ²Australian National University, ³OPPO Research Institute, ⁴Shanghai AI Laboratory, ⁵The University of Hong Kong</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文揭示了导致线性 Transformer 性能劣于标准 Transformer 的两个根本机制缺陷，并提出结合对角注意力和归一化注意力的新架构 TRANSNORMER，在保持线性复杂度的同时，在语言建模和长序列任务上全面超越了现有线性基线。</p>
+<p><strong>要解决什么问题</strong> 标准 Transformer 的自注意力机制包含 Softmax 操作，会带来与序列长度呈平方关系的二次时空复杂度，难以处理长文本。现有线性 Transformer 通过核函数分解 Softmax，先计算键和值的乘积，将理论复杂度降为线性。然而这种做法往往牺牲了性能。本文发现该性能掉点源于两个机制缺陷。第一是梯度无界。现有线性 Transformer 沿用标准注意力公式中的缩放操作（即除以分母项），理论推导表明，由于核函数映射后的内积可以任意小，该缩放操作在线性注意力反向传播时会产生没有上下界的梯度，引发训练收敛极度不稳定。第二是注意力稀释。标准 Transformer 的 Softmax 机制天生具有局部性，倾向于关注当前词附近的上下文；但线性 Transformer 丢失了此特性，其注意力分数平庸且均匀地分散在整个长序列上。即使在极需捕捉局部特征的网络浅层，线性模型也会被远距离无关词分散注意力，无法有效保留关键的局部语义信息，最终损害任务表现。</p>
+<p><strong>怎么做的</strong> 为根除上述缺陷，作者为网络不同阶段定制了两种全新的注意力部件，拼接为 TRANSNORMER 架构。首先，针对梯度无界问题，作者提出归一化注意力机制 NORMATTENTION。其核心思路是直接移除线性注意力中导致梯度爆炸的缩放分母操作。但仅去掉缩放会使前向传播的注意力矩阵失去约束，因此作者在无缩放的线性注意力层后，强制接入一个层级归一化操作（如 RMSNorm）。其定义公式为：$$ \text{NORMATTENTION}(Q, K, V) = \text{RMSNorm}(\phi(Q)(\phi(K)^T V)) $$ 这一设计在理论上被证明能将反向传播梯度限制在有界范围内，实际训练中也展现出极高的梯度稳定性。其次，针对注意力稀释问题，作者设计了对角注意力机制 DIAGATTENTION。该机制强行施加局部性约束，采用严格的非重叠块状对角模式，将注意力计算限制在以当前词为中心的局部邻域块内。由于只在块内计算，其复杂度为 $O(nwd)$（$n$ 为序列长度，$w$ 为块大小，$d$ 为特征维度），只要块大小远小于序列长度，整体仍保持线性复杂度。在架构组装上，TRANSNORMER 采取混合策略：在模型浅层部署 DIAGATTENTION，强制模型优先聚合局部上下文，避免浅层注意力稀释；在模型深层切换为 NORMATTENTION，利用其全局感受野整合长程信息，并靠归一化确保深层梯度稳定回传。此外，模型将传统前馈网络替换为了效果更好的 GLU 模块。</p>
+<p><strong>效果如何</strong> 实验在自回归语言建模、双向语言建模及长序列建模三个场景下展开。模型训练在 8 块 V100 GPU 上进行，速度测试在单块 48G 显存的 A6000 GPU 上完成。对比基线涵盖了代表高效 Transformer 路线的 Performer、1+elu、Transformer-LS，以及最新的线性时间模型 FLASH 和 FLASHquad。在 WikiText-103 自回归任务中，TRANSNORMER 困惑度显著优于所有线性基线，相比前最优线性方法降低了 2.31。在基于 RoBERTa-base 的 GLUE 双向微调中，它在 SST-2、MRPC 和 CoLA 等任务上全面碾压线性竞争者（如 CoLA 领先 4.62 分）。在 Long-Range Arena 基准的五个长程任务中，该模型均斩获前两名，综合得分超越标准模型及所有高效变体。硬件效率上，当序列长度超 3000 时标准 Transformer 会显存耗尽，而 TRANSNORMER 在同等显存下，训练速度比最强基线 FLASHquad 快 300% 以上，推理速度快 150% 以上。作者也通过消融指出了代价与局限：两种注意力必须按“浅层局部、深层全局”顺序串联，同层内并行使用会让复杂度翻倍且无收益；DIAGATTENTION 的块大小需在性能与算力间权衡（实验取值 64）。此外，目前结论仅在自然语言处理中得到验证，能否平移解决视觉 Transformer 的同类问题仍是未知。</p>
+</div>
+</details>
 <h3 id="a1">A1 主要贡献</h3>
 <p>本文旨在解决现有基于核（kernel-based）的线性 Transformer 相较于标准 Transformer 性能下降的问题。作者通过深入分析，指出现有线性 Transformer 存在两个核心缺陷，并提出了相应的解决方案，构建了一个名为 TRANSNORMER 的新型线性 Transformer 模型。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

@@ -21,6 +21,15 @@ title: 'Muon: An Optimizer for Hidden Layers in Neural Networks'
 <p><strong>发表时间</strong>: 2024-12 · Blog post by Keller Jordan (kellerjordan.github.io)</p>
 <p><strong>原文</strong>: <a href="https://kellerjordan.github.io/posts/muon/" rel="noopener" target="_blank">https://kellerjordan.github.io/posts/muon/</a></p>
 <p><strong>作者/机构</strong>: Keller Jordan, Yuchen Jin, Vlado Boza, Jiacheng You, Franz Cesista, Laker Newhouse, Jeremy Bernstein</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种专为神经网络隐藏层设计的新型优化器 Muon，它在标准 SGD-momentum 基础上引入了基于牛顿-舒尔茨迭代的高效矩阵正交化后处理步骤，在多个竞争性训练任务中显著提升了训练速度并刷新了多项性能纪录。</p>
+<p><strong>要解决什么问题</strong> 当前大模型训练中，标准的优化器（如 AdamW）在处理高维的二维参数（例如 Transformer 中的权重矩阵）时，其生成的梯度更新矩阵往往存在极高的条件数。这意味着更新矩阵几乎是低秩的，所有神经元的更新量都高度集中在少数几个主导方向上。这种现象导致更新矩阵中那些量级很小、但对模型学习至关重要的“稀有方向”被掩盖。由于这些稀有方向无法得到充分的更新，模型在探索参数空间时受到了严重限制，从而拖慢了模型的样本学习效率和实际的墙钟训练时间。为了实质性地提升训练速度，就必须找到一种机制来放大这些稀有方向的尺度，解决高维参数更新方向过度集中的底层卡点。</p>
+<p><strong>怎么做的</strong> Muon 的核心思路是在将带动量的随机梯度下降（SGD-momentum）生成的更新矩阵应用到模型参数之前，对其进行近似正交化处理。正交化操作等价于将更新矩阵奇异值分解 $USV^\top$ 中的奇异值矩阵 $S$ 替换为单位矩阵，从而得到 $UV^\top$。这一机制能够有效放大更新矩阵中原本量级微小的稀有方向，绕开了更新方向过度集中的卡点。在具体设计上，Muon 放弃了计算极其缓慢的精确 SVD 分解，也没有采用容易出现数值不稳定、必须依赖 float32 精度的耦合牛顿迭代，而是采用了一种名为牛顿-舒尔茨（Newton-Schulz，简称 NS）的矩阵迭代方法。NS 迭代的最大优势是可以在 bfloat16 精度下稳定且高效地运行在现代 GPU 上。其核心正交化更新公式定义为：$$ G_{new} = aG + b(GG^\top)G + c(GG^\top)^2G $$为了保证该迭代收敛，Muon 首先将输入的更新矩阵 $G$ 除以其 Frobenius 范数进行缩放，确保其奇异值落在 $[0, 1]$ 范围内。随后，算法执行 5 步 NS 迭代。作者通过求解约束优化问题，将迭代系数精心调优为 $a=3.4445, b=-4.7750, c=2.0315$。这一组系数既能最大化控制小奇异值收敛速度的 $a$ 值，又能保证无限次迭代后的奇异值收敛在 $[0.7, 1.3]$ 范围内，从而在仅需 5 步迭代的情况下就能达到理想的正交化效果。在实际应用中，Muon 采用混合优化策略：它专门负责优化网络中的二维隐藏层参数（包括展平的卷积滤波器），并且配合 Nesterov 动量使用效果最佳；在 Transformer 中，将 Muon 分别独立应用于 Q、K、V 参数比合并应用效果更好。而对于网络中的标量、向量参数以及输入嵌入层和输出分类头，则继续交由 AdamW 优化器处理，以顺应不同网络层对优化动态的不同需求。从理论视角看，关闭动量的 Muon 可以被视为一种去除了预处理器累积步骤的、瞬时的 Shampoo 优化器。</p>
+<p><strong>效果如何</strong> 实验在多个规模的架构上展开，包括用于 CIFAR-10 任务的小型卷积网络（单张 A100）、768 维的 NanoGPT 模型（在 FineWeb 数据集上训练），以及 774M 和 1.5B 参数规模的 Transformer 语言模型（在 8xH100 节点上训练）。为了避免基线调优不足的通病，作者特意选择了竞争性速度竞赛作为测试基准。对比的基线方法主要包括代表当前标准路线且经过充分调优的 AdamW，以及同期的 Sophia 和 Lion 优化器；在正交化路线内部，还点名对比了基于精确 SVD 分解且动量后置的 Orthogonal-SGDM、基于负四分之一次方根的 Shampoo 优化器，以及基于随机化 SVD 且无动量的早期方法 RMSspectral。量化结果显示，Muon 在样本效率和墙钟时间上均全面胜出：在 CIFAR-10 速度竞赛中，Muon 将达到 94% 准确率的时间从 3.3 A100-秒缩短至 2.6 A100-秒；在 NanoGPT 速度竞赛中，达到 3.28 验证损失的训练速度提升了 1.35 倍；在 1.5B 参数 Transformer 的短期训练中，Muon 仅用 10 小时就达到了 HellaSwag 基准测试中 GPT-2 XL 的水平，而经过调优的 AdamW 则需 13.3 小时。在代价方面，Muon 的计算开销极低，其额外引入的浮点运算量占比最多为 $Tm/B$（$T$ 为迭代步数，$m$ 为模型维度，$B$ 为批次 token 数），在 NanoGPT 和 16384 维的 Llama 405B 训练场景下，计算开销均低于 1%。作者也坦承了目前的局限性：Muon 的优势能否保持到 200 亿参数和万亿 token 以上的超大规模训练尚不清楚；其核心的牛顿-舒尔茨迭代能否在大规模 GPU 集群上实现高效的分布式计算仍是关键疑问；此外，目前 Muon 仅在预训练阶段证明了有效性，是否适用于微调或强化学习等下游任务还有待验证。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文介绍了一种名为 Muon 的新型优化器，专为神经网络的隐藏层设计。Muon 通过在标准 SGD-momentum 更新之上引入一个高效的矩阵正交化步骤，显著提升了神经网络的训练速度。</p>
 <ul>

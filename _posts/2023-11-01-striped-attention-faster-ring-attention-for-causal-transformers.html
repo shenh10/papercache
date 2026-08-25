@@ -18,6 +18,15 @@ title: 'STRIPED ATTENTION: FASTER RING ATTENTION FOR CAUSAL TRANSFORMERS'
 <div class="container">
 <h1 id="striped-attention-faster-ring-attention-for-causal-transformers">STRIPED ATTENTION: FASTER RING ATTENTION FOR CAUSAL TRANSFORMERS</h1>
 <p><strong>作者</strong>: William Brandon, Aniruddha Nrusimha, Kevin Qian, Zachary Ankner, Tian Jin, Zhiye Song, Jonathan Ragan-Kelley</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为 Striped Attention 的精确注意力算法，通过对输入序列进行交错置换，解决了 Ring Attention 在处理因果 Transformer 时的计算负载不平衡问题，在超长序列训练中实现了最高 1.65 倍的端到端加速。</p>
+<p><strong>要解决什么问题</strong> 现有的分布式注意力算法 Ring Attention 在处理因果自注意力时存在严重的计算负载不平衡卡点。因果注意力具有天然的下三角掩码结构，每个查询只与序列中较早出现的键交互，理论上能将总浮点运算量减少约一半。Ring Attention 通过将输入序列切分成连续的词元块并分配给多个设备，在设备间环形传递键和值块来完成计算。然而，在这种连续分块策略下，除了第一轮迭代外，后续迭代中总会出现部分设备分配到的查询与键交互完全被因果掩码遮蔽（无需计算），而另一些设备分配到的交互则完全未被遮蔽（必须计算满载工作量）。由于分布式计算中每一轮的整体延迟取决于耗时最长的设备，这种负载不平衡导致整个系统的运行速度受限于满载设备，使得 Ring Attention 的实际耗时与完全没有掩码的普通注意力工作负载相当，无法真正利用因果结构来节省计算资源。</p>
+<p><strong>怎么做的</strong> 核心思路是通过对输入序列进行交错置换，将原本集中的计算压力均匀分摊到所有设备上。具体而言，Striped Attention 放弃了将连续词元切块的传统做法，改为根据词元在序列中的位置索引对设备数量取模，将词元划分为均匀间隔的条带集合。例如在四个设备下，第一个设备分配到第 0、4、8 个词元，第二个设备分配到第 1、5、9 个词元。这种置换在模型的第一个嵌入层之前完成，位置编码和目标标签也同步置换。分区后，算法流程与 Ring Attention 保持一致：每个设备固定持有分配到的查询块，并在环形拓扑中接收相邻设备传来的键和值块进行计算。它能绕开负载不平衡卡点的关键在于，注意力计算的因果性是基于词元在原始序列中的绝对顺序，而非置换后的顺序。因果自注意力的核心计算式为：$$ \text{Softmax}(QK^\top + C)V $$ 其中 $C$ 是对角线以上为 $-\infty$ 的因果掩码矩阵。在 Striped Attention 的交错分配下，每个设备在每次迭代中遇到的掩码矩阵都会呈现出近似的上三角结构。为了适配这种交错，算法调整了掩码的生成逻辑，其关键不变量定义为：$$ \text{MASK}[x, y] = \begin{cases} -\infty, &amp; \text{if } j &lt; k \text{ and } y \le x \\ -\infty, &amp; \text{if } j \ge k \text{ and } y &lt; x \\ 0, &amp; \text{otherwise} \end{cases} $$ 其中 $j$ 和 $k$ 分别代表查询块和键块的索引，$x$ 和 $y$ 是块内的局部坐标。这意味着在任何一轮迭代中，所有设备都有大致相等比例的交互被掩码抑制，从而可以同步跳过这些无效计算。相比于 Ring Attention 每次迭代总有设备要处理大小为 $c^2$（$c$ 为块大小）的满载工作量，新方法让所有设备在每一轮的计算耗时基本一致，彻底消除了延迟瓶颈。</p>
+<p><strong>效果如何</strong> 实验基于 JAX 框架搭建，在 8 张 A100 80GB GPU 以及包含 4 块芯片的 TPU v3 和 16 块芯片的 TPU v4 环境下进行。测试对象为 1B、3B 和 7B 参数规模的因果语言模型，训练序列长度从 8K 扩展至 256K 甚至更高。对比的唯一基线是原始的 Ring Attention 方法，它代表了通过环形通信实现精确分布式注意力的技术路线。量化结果显示，在处理 256K 长度的长序列训练时，Striped Attention 在 A100 集群上实现了最高 1.45 倍的端到端加速；而在 16 块 TPU v4 芯片上处理超过 50 万词元的序列时，加速比进一步提升至 1.65 倍。实验也揭示了该方法的几个局限与代价：首先，由于实现中采用了粗粒度的瓦片化策略来跳过掩码计算（例如 GPU 上的瓦片尺寸为 2048 乘 4096），当每个设备分配到的块尺寸较小时，算法无法在足够细的粒度上剔除无效计算，导致小块尺寸下的加速效果大打折扣；其次，非注意力计算的固定开销以及计算与通信重叠的不完美，使得实际测得的加速比始终未能达到理论上的 2 倍上限。尽管如此，随着序列长度的增加，每个块包含的瓦片数量增多，该方法带来的性能收益会愈发显著。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p><strong>核心问题与研究目标</strong>：<br/>
 为了满足Transformer模型【22, Attention is all you need, 2017, NIPS】对日益增长的序列长度的需求，Liu等人近期提出了Ring Attention【13, Ring attention with blockwise transformers for near-infinite context, 2023】，这是一种精确的注意力算法，通过将自注意力计算分布到多个设备上，克服了单设备内存瓶颈。本文专注于因果Transformer模型这一重要特例，研究了Ring Attention的性能特点，并发现因果注意力计算的三角结构导致了关键的工作负载不平衡问题。在因果自注意力中，每个查询只与序列中较早出现的键进行交互，这原则上能将总操作数减少约一半。然而，现有的Ring Attention算法无法有效利用这一结构来提升吞吐量。</p>

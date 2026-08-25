@@ -21,6 +21,25 @@ title: 'MEDUSA: Simple LLM Inference Acceleration Framework with Multiple Decodi
 <h1 id="medusa-simple-llm-inference-acceleration-framework-with-multiple-decoding-heads">MEDUSA: Simple LLM Inference Acceleration Framework with Multiple Decoding Heads</h1>
 <p><strong>MEDUSA：一个带有多个解码头的简单LLM推理加速框架</strong><br/>
 作者/机构: Tianle Cai * 1 2, Yuhong Li * 3, Zhengyang Geng 4, Hongwu Peng 5, Jason D. Lee 1, Deming Chen 3, Tri Dao 1 2</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一个名为 MEDUSA 的多解码头大语言模型推理加速框架，通过在主干模型上附加额外解码头并行预测多个后续 token，在不引入独立草稿模型且不损失生成质量的前提下，实现了 2.3 到 2.8 倍的推理加速。</p>
+<p><strong>要解决什么问题</strong>
+传统大语言模型在自回归解码时面临严重的延迟瓶颈，其根源在于内存带宽受限。在每一步前向传播中，系统都需要将完整的模型参数从高带宽内存搬运到加速器的缓存中，却仅仅为了生成一个 token。这种顺序计算模式导致算术强度（总浮点运算次数与总数据移动量的比率）极低，现代加速器的强大算力被严重闲置。现有的推测解码（Speculative Decoding）路线试图通过引入一个独立的小型草稿模型来并行生成多个候选 token，以此缓解该问题。然而，这种做法卡在了工程实现与模型对齐上：单独预训练一个草稿模型不仅需要耗费大量额外算力，还容易与主模型产生输出分布偏移，导致候选 token 接受率低下；同时，在分布式系统中同时部署和维护两个独立模型也带来了极大的系统复杂性。</p>
+<p><strong>怎么做的</strong>
+核心思路是摒弃独立的草稿模型，直接在现有大语言模型的最后隐藏状态之上，附加多个轻量级的解码头（MEDUSA heads）来并行预测未来的多个 token。这种设计将原本受限于内存带宽的顺序生成，转化为算术强度更高的并行验证，且因为与主模型同源，天然绕开了分布偏移和双模型部署的卡点。关键设计由四个部件构成。首先是 MEDUSA 头，它由带有残差连接的单层前馈网络组成。给定主模型在位置 $t$ 的最后隐藏状态 $h_t$，第 $k$ 个头负责预测第 $t+k+1$ 个位置的 token，其输出分布由权重矩阵和 SiLU 激活函数计算得出：
+$$p_t^{(k)} = \text{Softmax}(W_2^{(k)} \text{SiLU}(W_1^{(k)} h_t) + h_t)$$
+其次是树状注意力机制（Tree Attention）。各个 MEDUSA 头会输出多个顶部预测，将它们通过笛卡尔积组合后会形成多条长度不同的候选序列。该机制通过修改注意力掩码，让每个 token 只能看到自己所在分支的前驱节点，从而在单次解码步骤中并行处理所有候选序列，无需扩大批处理大小。第三是微调策略，分为冻结主干仅训练解码头的 MEDUSA-1，以及联合微调的 MEDUSA-2。为了在联合训练中保持主模型原有能力，MEDUSA-2 引入了组合损失函数，将主模型的下一 token 预测损失 $L_{LM}$ 与各个头的预测损失 $L_k$ 按权重结合：
+$$L = \lambda_0 L_{LM} + \sum_{k=1}^K \lambda_k L_k$$
+最后是典型接受方案（Typical Acceptance Scheme）。传统推测解码严格要求候选 token 匹配主模型分布，导致拒绝采样开销大。该方案改为基于主模型预测概率和分布熵设定动态阈值，只要候选 token 的概率满足以下条件即被接受：
+$$\min(-\log p(x_{n+k+1} | x_1, \dots, x_{n+k}), H(p(\cdot | x_1, \dots, x_{n+k}))) \leq \epsilon + \delta$$
+这使得在较高采样温度下，模型能接受更多合理的候选序列，进一步提升了加速效率。</p>
+<p><strong>效果如何</strong>
+实验在 NVIDIA A100、A40 和 A6000 硬件上进行，选用了 7B 到 33B 参数规模的 Vicuna 模型以及 Zephyr-7B 模型，使用 ShareGPT 等对话数据进行训练，并在 MT-Bench 等基准上评估。对比基线主要有两个：代表传统自回归路线的默认 Huggingface 实现，以及代表传统推测解码路线的 SpecDecoding（使用 Llama-68M、Tiny-Vicuna 等开源微型模型作为草稿模型）。量化结果显示，在 Vicuna-7B 和 13B 上，MEDUSA-1 实现了 2.18 倍到 2.33 倍的加速，而 MEDUSA-2 进一步将加速比提升至 2.83 倍。在具体的 MT-Bench 任务中，信息提取任务的加速比最高达到了 3.62 倍，代码编写任务也达到了 3.29 倍。与 SpecDecoding 相比，MEDUSA 在所有模型尺寸上都取得了更高的加速比。针对缺乏开源训练数据的模型，作者采用自蒸馏生成数据进行训练，依然能在不掉点的情况下实现 2.32 倍以上的加速。不过，该方法也存在代价与局限：首先，树状注意力中候选 token 数量并非越多越好，当节点过多时，矩阵乘法的计算开销会超过并行带来的收益，导致实际生成速度下降；其次，在典型接受方案中，提高阈值虽然能提升生成质量，但会牺牲部分加速率；最后，当批处理大小超过 32 或上下文序列过长时，线性层会从内存带宽受限转变为计算受限，注意力机制的开销也会显著增加，从而导致加速效果大打折扣。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决大型语言模型（LLM）自回归解码过程中的一个核心瓶颈：由于每个token的生成都依赖于前一个token的输出，这种顺序计算导致推理延迟较高。从系统角度看，LLM推理主要是内存带宽受限的，因为每一步前向传播都需要将完整的模型参数从高带宽内存（HBM）传输到加速器的缓存中，而这个过程仅生成一个token，严重未充分利用现代加速器的算术计算能力。</p>
 <p>为了应对这一挑战，研究目标是提高解码过程的算术强度（总浮点运算次数与总数据移动量的比率）并减少解码步骤的数量。现有的推测解码（speculative decoding）方法虽然遵循此思路，但获取和维护一个独立的、小型的草稿模型（draft model）非常困难，且在分布式系统中的集成也充满挑战。</p>

@@ -21,6 +21,18 @@ title: Scaling TransNormer to 175 Billion Parameters
 <h1>Scaling TransNormer to 175 Billion Parameters</h1>
 <p><strong>文章标题</strong>：将TransNormer扩展至1750亿参数<br/>
 <strong>作者/机构</strong>：Zhen Qin, Dong Li, Weigao Sun, Weixuan Sun, Xuyang Shen, Xiaodong Han, Yunshen Wei, Baohong Lv, Fei Yuan, Xiao Luo, Yu Qiao, Yiran Zhong (1上海人工智能实验室, 2OpenNLPLab)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了首个在准确性和效率上均超越传统 softmax 注意力模型的线性大型语言模型 TransNormerLLM，并成功将其参数规模扩展至 175B，实现了更快的训练速度与恒定的推理资源消耗。</p>
+<p><strong>要解决什么问题</strong> 传统基于 Transformer 的大型语言模型严重依赖 softmax 注意力机制，这带来了与序列长度呈二次方相关的计算时间和显存开销，极大限制了模型在长上下文场景下的训练与推理扩展性。为了打破这一卡点，业界探索了多种线性复杂度替代方案，但均存在致命缺陷。例如，线性 Transformer 虽然理论复杂度低，但在处理因果注意力时需要进行累加求和（cumsum）操作，导致实际并行计算效率极低；长卷积模型在因果推理时需要缓存所有历史计算，内存需求巨大；状态空间模型和线性 RNN 虽然在特定场景下表现尚可，但在通用语言建模任务上往往难以完全匹敌传统 Transformer 的性能。因此，如何设计一个既能保持线性复杂度、解决因果预测并行性瓶颈，又能在语言建模准确度上不掉价的架构，是当前大模型提效的核心难题。</p>
+<p><strong>怎么做的</strong> 核心思路是基于线性注意力架构进行深度改造，通过算法与工程的协同设计，在消除 softmax 瓶颈的同时补足线性模型在全局交互和并行效率上的短板。方法主要由四个关键部件构成。第一是带有指数衰减的线性化相对位置编码（LRPE-d）。传统线性注意力容易出现注意力稀释，而该设计通过引入层级递减的衰减率，既保留了底层网络的局部感受野，又允许顶层网络进行全局 Token 交互。第二是门控机制与张量归一化。模型在 Token 混合层引入了门控线性注意力（GLA），并在通道混合层提出了移除激活函数的简单门控线性单元（SGLU）以加速计算；同时，采用去除了 softmax 和缩放操作的 SimpleRMSNorm（SRMSNorm）进行归一化，在不损失性能的前提下提升了整体运算速度。第三是闪电注意力（Lightning Attention）。这是为了绕开线性注意力在因果预测时累加求和操作导致的并行度卡点。它采用分块计算策略，将输入从慢速的高带宽内存（HBM）加载到快速的静态随机存取存储器（SRAM）中完成注意力计算与累加。这种对 IO 友好的设计大幅释放了硬件的并行计算能力。第四是鲁棒的推理算法。线性注意力可以转化为 RNN 形式进行常数复杂度的自回归推理，但由于位置编码中衰减因子 $\lambda &lt; 1$，原始状态更新式中包含的 $\lambda^{-t}$ 项会随着序列变长而导致数值溢出或精度丢失。为此，作者重构了推理算法，提取出关键的不变量，将更新式改写为：
+$$[\widetilde{kv}]_t = \lambda [\widetilde{kv}]_{t-1} + k_t v_t^T$$
+$$o_t = q_t [\widetilde{kv}]_t$$
+从而彻底消除了随时间步指数增长的项，保证了长序列推理的数值稳定性。</p>
+<p><strong>效果如何</strong> 实验基于 NVIDIA A100 80G 集群展开，研究团队构建并使用自清洁策略处理了一个包含 2万亿 tokens（约 6TB）的高质量语料库，将模型规模从 385M 一路扩展至 175B 参数。对比基线主要包括代表传统路线的标准 Transformer（使用 softmax 注意力）以及代表早期线性路线的原始 TransNormer。量化结果显示，在同等配置下，TransNormerLLM 在 385M 和 1B 规模下的性能分别比标准 Transformer 高出 5% 和 9%。在训练效率上，得益于闪电注意力的加持，其前向与后向传播速度至少是基线方法的 2 倍；在 8192 的长上下文设置下，内存占用节省高达 4 倍。在推理阶段，TransNormerLLM 展现出了完美的 RNN 特性，其推理时间和显存消耗不随序列长度的增加而增长，始终保持恒定。在系统级压力测试中，结合完全分片数据并行（FSDP）和模型并行策略，7B 模型在 8 卡并行下的单卡显存消耗骤降 62.3%（仅需 24.1GB），且在同等算力下能支持比 Transformer 更长的上下文窗口。不过，该方法也存在一定的工程局限，例如在位置编码的设计中，衰减率参数如果设置为可学习状态会导致梯度不稳定并出现 NaN 值，因此只能作为固定超参使用。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决传统Transformer模型中softmax注意力机制带来的二次方时间复杂度问题，该问题限制了模型在训练和推理阶段的可扩展性和效率。尽管已有研究提出了多种高效的序列建模方法以将复杂度降至线性，但它们在语言建模任务上性能不佳或在实际应用中未展现出速度优势，因此难以应用于大型语言模型（LLM）。</p>
 <p>为应对这些挑战，本文提出了<strong>TransNormerLLM</strong>，这是首个在准确性和效率上均超越传统softmax注意力模型的、基于线性注意力的LLM。该模型基于先前的线性注意力架构TransNormer【32，The devil in linear transformer，2022，EMNLP】，并进行了一系列关键改进：</p>

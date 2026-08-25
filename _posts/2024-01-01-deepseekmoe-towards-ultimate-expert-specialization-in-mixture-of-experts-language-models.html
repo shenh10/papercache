@@ -21,6 +21,15 @@ title: 'DeepSeekMoE: Towards Ultimate Expert Specialization in Mixture-of-Expert
 <p><strong>文章标题</strong>：DeepSeekMoE：迈向混合专家语言模型中的极致专家特化<br/>
 <strong>作者/机构</strong>：Damai Dai∗1,2, Chengqi Deng1, Chenggang Zhao∗1,3, R.X. Xu1, Huazuo Gao1, Deli Chen1, Jiashi Li1, Wangding Zeng1, Xingkai Yu∗1,4, Y. Wu1, Zhenda Xie1, Y.K. Li1, Panpan Huang1, Fuli Luo1, Chong Ruan1, Zhifang Sui2, Wenfeng Liang1<br/>
 1DeepSeek-AI 2北京大学多媒体信息处理全国重点实验室 3清华大学交叉信息研究院 4南京大学软件新技术全国重点实验室</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出 DeepSeekMoE 混合专家语言模型架构，通过细粒度专家切分和共享专家隔离实现极致专家特化，在仅用约 40% 甚至更低计算量下，达到与同级别密集型大模型相当或更优的性能。</p>
+<p><strong>要解决什么问题</strong> 现有混合专家（MoE）架构（如采用 top-2 路由的 GShard）在扩展参数时，面临难以保证专家特化的机制卡点。具体受困于两个维度的低效：一是知识混合。传统 MoE 通常只设置少量且参数庞大的专家（如 8 或 16 个），导致分配给特定专家的 token 涵盖了多样的知识类型。这迫使专家在其参数中强行汇集截然不同、难以同时利用的知识，导致不够“专”。二是知识冗余。分配给不同专家的 token 在处理不同上下文时，往往依赖共同的基础知识。在传统路由下，多个专家会在各自参数中重复学习这些共享知识，造成参数冗余。这两个缺陷共同限制了各专家对独特知识的专注度。</p>
+<p><strong>怎么做的</strong> 为绕开知识混合与知识冗余的卡点，DeepSeekMoE 的核心思路是在不增加总参数量和计算成本的前提下，通过重构专家的组织和路由方式实现极致的专家特化。关键设计由两个部件构成：细粒度专家切分和共享专家隔离。针对知识混合，模型采用细粒度专家切分。在保持总参数量不变时，将前馈网络（FFN）的中间隐藏维度缩小到原来的 $1/m$，把每个传统大专家切分为 $m$ 个更小的细粒度专家。为维持相同计算成本，每次激活的专家数也增加到 $m$ 倍。这种切分使激活专家组合的灵活性呈指数级激增，让多样化知识能被更精细拆解，并精确路由到不同细粒度专家中学习。针对知识冗余，模型引入共享专家隔离。在细粒度切分基础上，强制隔离出 $K_s$ 个专家作为共享专家。无论路由模块如何决策，每个 token 都必定被分配给它们。其职责是专门捕获和巩固跨上下文的通用基础知识。将通用知识压缩到共享专家后，其余路由专家被卸下学习基础知识的负担，从而能专注于处理独特的特化知识，减轻参数冗余。结合两大策略，DeepSeekMoE 层的输出隐藏状态 $\mathbf{h}_{t}^{l}$ 计算公式如下：$$ \mathbf{h}_{t}^{l}=\sum_{i=1}^{K_{s}} \mathrm{FFN}_{i}\left(\mathbf{u}_{t}^{l}\right)+\sum_{i=K_{s}+1}^{m N}\left(g_{i, t} \mathrm{FFN}_{i}\left(\mathbf{u}_{t}^{l}\right)\right)+\mathbf{u}_{t}^{l} $$其中前一项为确定性激活的共享专家输出，后一项为条件激活的路由专家输出。门控值 $g_{i,t}$ 由亲和度得分 $s_{i,t}$ 决定，仅激活得分最高的 $mK-K_s$ 个专家：$$ g_{i,t} = \begin{cases} s_{i,t}, &amp; s_{i,t} \in \mathrm{Topk}(\{s_{j,t}|K_s+1 \le j \le mN\}, mK-K_s), \\ 0, &amp; \text{otherwise} \end{cases} $$此外，为防止总是只选择少数专家的路由崩溃问题，并缓解多设备部署时的计算瓶颈，模型引入了专家级平衡损失和设备级平衡损失，以确保跨 GPU 的计算负载均衡。</p>
+<p><strong>效果如何</strong> 实验在 NVIDIA A100 或 H800 GPU 集群上进行，训练数据为 100B 到 2T token 的中英多语言语料。对比基线涵盖代表密集型路线的标准 Transformer（Dense 模型）、代表 top-1 路由稀疏路线的 Hash Layer 和 Switch Transformer，以及代表 top-2 路由稀疏路线的 GShard。在 2B 规模验证实验中，DeepSeekMoE 2B 性能与包含 1.5 倍专家参数和计算量的 GShard 相当，并逼近拥有 16 倍 FFN 参数的 Dense 模型的理论上限。扩展到 16B 规模（训练 2T token）后，DeepSeekMoE 16B 仅用约 40% 的计算量，就在绝大多数基准（尤其是数学、代码和中文任务）上超越了 LLaMA2 7B，并取得与内部同源数据训练的 DeepSeek 7B 相当的整体性能。在 145B 规模初步探索中，DeepSeekMoE 145B 仅用 28.5% 的计算量就达到 DeepSeek 67B 的水平；其激活专家减半的版本更是仅用 18.2% 的计算量就达到了 67B 密集模型的水平。在局限性方面，作者承认 DeepSeekMoE 16B 在多选任务（如 MMLU）上表现相较于同级别密集模型稍弱，这主要受限于该模型在同等激活参数下分配给注意力机制的参数相对较少。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>在大语言模型时代，混合专家（MoE）架构是扩展模型参数同时控制计算成本的有前途的方案。然而，传统的MoE架构（如GShard）在激活N个专家中的前k个时，面临确保专家特化（即每个专家获得不重叠且专注的知识）的挑战。为应对这些挑战，本文提出了DeepSeekMoE架构，旨在实现极致的专家特化。</p>
 <p><strong>核心问题</strong>：<br/>

@@ -20,6 +20,15 @@ title: 'DynaPipe: Dynamic Layer Redistribution for Efficient Serving of LLMs wit
 <div class="container">
 <h1>DynaPipe: Dynamic Layer Redistribution for Efficient Serving of LLMs with Pipeline Parallelism</h1>
 <p><strong>作者/机构</strong>: Hongxin Xu∗1, Tianyu Guo∗1, Xianwei Zhang†1, 1CSE, Sun Yat-Sen University</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个名为 DynaPipe 的动态层重分配方案，通过在运行时自适应平衡流水线各阶段的前向计算与采样工作负载，将大型语言模型推理的平均端到端延迟降低了 8% 至 41%。</p>
+<p><strong>要解决什么问题</strong> 传统流水线并行（Pipeline Parallelism）通常在多个设备间均匀分配模型层，但这种策略忽略了流水线最后一个阶段（尾部阶段）的额外计算负载：采样（sampling）操作。在自回归生成中，上游阶段仅执行层的前向计算，而尾部阶段在完成前向计算后还必须处理采样任务。统计表明，平均而言采样开销大约是单层前向计算延迟的 3.09 倍。这种工作负载的不平衡会导致严重的流水线气泡，使得上游阶段被迫空闲等待，显著降低整体硬件利用率。更棘手的是，采样时间随解码请求数量近似线性增长，而前向计算时间与批处理中预填充和解码 token 的总数正相关。由于每次批处理中预填充与解码 token 的动态比例不断变化，采样时间与单层前向时间的比率并非定值。这使得传统的静态层重分配策略无法在动态工作负载下维持负载均衡，尾部阶段的采样延迟最终会向上传播，成为拖累整个系统吞吐量的核心瓶颈。</p>
+<p><strong>怎么做的</strong> 核心思路是打破静态的均匀层分配，在运行时根据实时的前向计算和采样工作负载，动态地将部分模型层从尾部阶段迁移至上游阶段，从而抹平阶段间的执行时间差。DynaPipe 框架由三个关键部件构成。首先是执行时间预测器，由于系统采用了将预填充和解码合并在同一个计算块中执行的分块预填充（chunked prefill）策略，预测器需要分别估算单层前向时间和采样时间。单层前向延迟被建模为块内所有请求计算成本的总和：$$T_{\text {layer }}=\sum_{i=1}^N\left(\phi_1 n_i+\phi_2 n_i L_i+\epsilon\right)$$其中 $N$ 为请求数，$n_i$ 为处理的 token 数，$L_i$ 为序列长度，$\phi_1, \phi_2, \epsilon$ 为拟合参数。采样开销则被建模为随解码请求数 $N_{\text{decode}}$ 线性增长：$$T_{\text{sample}} = \alpha \cdot N_{\text{decode}} + \beta$$其次是气泡感知调度器，它基于上述预测值评估流水线的不平衡度。若从尾部阶段移除 $k$ 个层并均匀分配给 $m$ 个上游阶段，调度器会计算重分配后的不对齐量化指标：$$\Delta = \left| T_{\text{sample}} - k \cdot T_{\text{layer}} - \frac{k}{m} \cdot T_{\text{layer}} \right|$$调度器旨在寻找使 $\Delta$ 接近 0 的分配方案。为避免频繁重分配带来的抖动，调度器引入了稳定性窗口阈值机制，仅当某种分配配置在滑动窗口内持续出现时才触发调整。最后是迁移协调器，负责在不中断推理的情况下完成层迁移。系统在初始化时会为可能被重分配的层预加载权重，当触发迁移时，源阶段在完成待迁移层的计算后，会异步地将对应的键值缓存（KV 缓存）传输到目标阶段。目标阶段在接收缓存的同时继续执行未受影响层的前向计算，仅在执行到新分配的层时才等待缓存，从而实现了计算与通信的深度重叠，避免了流水线停顿。</p>
+<p><strong>效果如何</strong> 实验在一台配备 4 块 NVIDIA A100-PCIe-40GB GPU 的系统上进行，评估了 Qwen2.5-14B 和 Qwen2.5-32B 模型。对比基线包括代表张量并行路线的 SGLang，以及代表流水线并行路线的 vLLM 和 gLLM。其中 vLLM 存在批处理间的流水线气泡，而 gLLM 虽缓解了批处理间气泡但忽略了采样开销导致的阶段间气泡。在 ShareGPT（真实对话）和 Azure-Conv（输入长于输出的生产数据）数据集上的测试表明，DynaPipe 在所有工作负载下均实现了最低的平均端到端延迟，在 ShareGPT 上最高可降低 40%，在 Azure-Conv 上最高降低 34%。在高吞吐量场景下，由于预填充完成更快、解码请求比例增加，采样开销成为更显著的瓶颈，DynaPipe 的性能增益尤为明显。在服务等级目标（SLO）达成率方面，DynaPipe 在 90% 的合规率要求下，比 gLLM 能多承受 19% 的请求率。在代价与局限性方面，作者承认动态层重分配不可避免地会引入跨设备的 KV 缓存迁移通信开销；同时，为支持运行时的快速切换，系统必须为未来可能分配的层预先加载权重，这导致单张 GPU 的显存占用增加了约 7.5%，降低了显存利用效率。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决大型语言模型（LLM）推理中流水线并行（Pipeline Parallelism, PP）的一个关键性能瓶颈。</p>
 <ul>

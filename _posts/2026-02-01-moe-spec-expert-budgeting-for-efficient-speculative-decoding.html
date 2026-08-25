@@ -19,6 +19,15 @@ title: 'MoE-Spec: Expert Budgeting for Efficient Speculative Decoding'
 <div class="container">
 <h1>MoE-Spec: Expert Budgeting for Efficient Speculative Decoding</h1>
 <p><strong>作者/机构</strong>: Bradley McDanel 1 2, Steven Li 2, Sruthikesh Surineni 2, Harshit Khaitan 2</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出名为 MoE-Spec 的免训练推测解码加速方法，通过在验证阶段强制设定专家加载预算，解耦了草稿树复杂度与内存带宽开销，使主流混合专家模型的推理吞吐量相比最优基线提升了 10% 到 30%。</p>
+<p><strong>要解决什么问题</strong> 现有的推测解码通过轻量级草稿模型生成草稿树，再由目标模型并行验证以加速推理。对于稠密模型，验证成本是恒定的。但应用于混合专家模型（MoE）时遇到了严重的内存带宽瓶颈。MoE 模型中每个词元独立路由到极少数专家，在验证包含几十个词元的草稿树时，目标模型必须加载所有被选中专家的并集。随着草稿树变大，这个并集会迅速膨胀，甚至接近模型全部专家的总和。例如验证 127 个词元时，单层 64 个专家中可能激活 54 个。这破坏了 MoE 的稀疏激活优势，导致验证过程的内存带宽压力急剧增加，其开销甚至高于传统的逐词元自回归解码，完全抵消了并行验证的速度收益。</p>
+<p><strong>怎么做的</strong> 核心思路是利用专家激活的重尾分布特性来限制内存带宽开销。在草稿树验证中，少数专家占据了绝大部分路由权重，大量长尾专家对输出贡献极小。MoE-Spec 提出在验证期间强制执行严格的专家预算，只加载得分最高的少数专家，将验证成本与草稿树复杂性解耦。该方法由两个关键部件构成。首先是专家重要性排序，采用基于路由器的动态聚合。对于包含 $M$ 个词元的草稿树，提取目标模型路由器为每个词元 $\mathbf{h}_t$ 计算的原始路由概率 $g_i(\mathbf{h}_t)$，将整棵树中所有词元对专家 $i$ 的概率求和，得到重要性得分 $s_i$：$$s_i = \sum_{t=1}^M g_i(\mathbf{h}_t)$$ 系统根据预算 $B$，挑选得分最高的 $B$ 个专家形成候选列表 $\mathcal{S}$。此步骤复用路由器已有计算，无需额外训练。其次是专家覆盖策略，用于处理自然路由到候选列表外专家的词元。MoE-Spec 采用替换策略：若词元路由包含未加载专家，则将其强制限制在候选列表 $\mathcal{S}$ 内，用列表内得分最高的可用专家替代。前向传播改写为：$$\mathrm{MoE}_{\mathcal{S}}^{\text{sub}}(\mathbf{h}_t) = \sum_{i \in \mathcal{T}_k^{\mathcal{S}}(\mathbf{h}_t)} \bar{g}_i^{\mathcal{S}}(\mathbf{h}_t) \cdot E_i(\mathbf{h}_t)$$ 其中 $\mathcal{T}_k^{\mathcal{S}}(\mathbf{h}_t)$ 表示在 $\mathcal{S}$ 内重新排序的前 $k$ 个专家，$\bar{g}_i^{\mathcal{S}}$ 是受限集合上的路由概率。这样每个词元仍分配到足量专家，而单层加载的专家总数被严格锁定在预算内，绕开了全量加载的带宽卡点。</p>
+<p><strong>效果如何</strong> 实验在单张 80GB NVIDIA A100 上进行，测试了 OLMoE-1B-7B、Qwen3-30B-A3B 和 Mixtral-8x7B（需双卡）三种模型。任务涵盖数学推理（GSM8K、MATH500）、代码生成（HumanEval、MBPP）和摘要（CNN/DailyMail）。对比基线为自回归解码（AR，代表标准逐词元生成路线）以及 EAGLE 和 EAGLE-3（代表最先进的树状推测解码路线）。结果显示，在 30 个配置中，MoE-Spec 有 27 个的吞吐量超越 EAGLE，且保持同等质量。以 Mixtral 模型在 MBPP 任务的贪心解码为例，MoE-Spec 实现 2.3 倍加速比，而 EAGLE 为 1.7 倍，相对提升 35%。模型活动参数越大，加速收益越明显（Mixtral 相对提升 27%，OLMoE 仅 6%）。局限性在于：引入了需人为调节的预算超参数，设置过激会导致质量下降；排序带来 2% 到 3% 的额外计算开销；当前仅评估单请求推理，在多请求批处理场景下，因请求间可共享专家，加速红利可能削弱。此外，当前的独立评分机制忽略了专家间的共激活关联，相比理想的先知排序仍有 25% 的冗余优化空间。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决在混合专家（Mixture-of-Experts, MoE）模型上应用推测解码（Speculative Decoding）时遇到的一个严重瓶颈：在并行验证多个草稿（draft）词元时，大型的草稿树会激活大量不同的专家（expert），这极大地增加了内存压力，从而削弱了推测解码相对于自回归解码（autoregressive decoding）的速度优势。</p>
 <p><strong>核心问题与观察</strong><br/>

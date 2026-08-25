@@ -18,6 +18,23 @@ title: 'The Landscape of Agentic Reinforcement Learning for LLMs: A Survey'
 <div class="container">
 <h1 id="the-landscape-of-agentic-reinforcement-learning-for-llms-a-survey">The Landscape of Agentic Reinforcement Learning for LLMs: A Survey</h1>
 <p><strong>作者/机构</strong>: Guibin Zhang, Hejia Geng, Xiaohang Yu, Zhenfei Yin, Zaibin Zhang, Zelin Tan, Heng Zhou, Zhongzhi Li, Xiangyuan Xue, Yijiang Li, Yifan Zhou, Yang Chen, Chen Zhang, Yutao Fan, Zihu Wang, Songtao Huang, Yue Liao, Hongru Wang, Mengyue Yang, Heng Ji, Michael Littman, Jun Wang, Shuicheng Yan, Philip Torr, Lei Bai 等 (牛津大学、上海人工智能实验室、新加坡国立大学、伦敦大学学院、伊利诺伊大学厄巴纳-香槟分校等)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文系统性地综述了“智能体强化学习”（Agentic RL）这一新兴范式，通过构建统一的部分可观察马尔可夫决策理论框架，阐明了如何利用强化学习将大型语言模型从被动的单步文本生成器，转变为能在复杂动态环境中自主规划、调用工具并持续自我提升的序贯决策智能体。</p>
+<p><strong>要解决什么问题</strong>
+现有的大型语言模型研究长期割裂在两个孤立视角中：一是探索模型能力边界的智能体研究，二是利用人类反馈强化学习优化对齐的传统微调范式。这种割裂导致原有做法卡在一个核心瓶颈上：传统的基于偏好的强化学习仅是一个退化的单步决策问题，其状态空间被缩减为单一的静态提示词，且在完全可观察的条件下优化固定数据集中的输出序列。这种机制无法应对真实世界中长时程、部分可观察的动态环境。当任务需要多步规划、自适应工具调用、有状态的记忆管理以及长期的信用分配时，原有的单轮文本质量对齐机制就会失效。缺乏统一的理论框架，不仅使得不同路线的方法难以系统性比较，也严重阻碍了模型在跨领域复杂任务中的泛化能力。</p>
+<p><strong>怎么做的</strong>
+本文的核心思路是通过部分可观察马尔可夫决策过程（POMDP）的抽象，将智能体强化学习与传统的单步强化学习进行形式化区分，并从能力视角重构了智能体的关键模块。为了绕开传统方法无法处理动态环境的卡点，方法在状态空间和动作空间上进行了重新定义。传统单步强化的状态空间仅为初始提示词 $S_{\text{prompt}} = \{s_0\}$，而智能体强化学习的状态空间随着交互动态演变，包含完整的历史观察：
+$$S_{\text{agent}} = \{s_0, a_0, o_1, a_1, \dots, s_t\}$$
+关键设计将动作空间解耦为两个功能互不相交的子空间：
+$$A = A_{\text{text}} \cup A_{\text{action}}$$
+其中 $A_{\text{text}}$ 负责生成自然语言进行交流；$A_{\text{action}}$ 负责发出结构化命令以调用外部工具或修改环境。学习目标也相应转变为最大化长时程的折扣累积奖励。基于此底层机制，强化学习被深度注入到智能体的各个核心部件中：在规划模块，强化学习从指导外部搜索算法的辅助奖励函数，演变为直接优化模型内部规划行为的驱动力；在工具使用模块，系统摒弃了依赖提示词的静态模仿路线，转向以结果驱动的工具集成推理，使智能体自主决定工具调用时机；在记忆模块，强化学习控制器取代了被动的外部检索，动态决定记忆的写入与遗忘；在自我提升模块，模型将自我纠正的反馈循环直接内化到参数更新中，通过自对弈和执行引导的课程生成实现无限自举。</p>
+<p><strong>效果如何</strong>
+本文汇总了智能体强化学习在多种规模模型（从 3B 参数到超大规模闭源模型）和多样化环境（网页模拟器、代码执行器、定理证明器）下的实验表现。对比的基线方法主要包括代表纯提示工程路线的 ReAct、代表静态轨迹模仿路线的监督微调（如 Toolformer），以及传统的单步强化学习基线。量化结果表明该范式在多个领域取得突破：在搜索任务中，OpenAI Deep Research 在 BrowseComp 基准上实现了 51.5% 的 pass@1 成功率；在代码生成领域，14B 参数的 DeepCoder 仅使用单元测试通过率作为奖励进行分布式强化学习，在 LiveCodeBench 上达到 60.6% 的 pass@1，而 Qwen3-Coder 通过 20000 个并行环境的大规模执行驱动强化学习，在 SWE-bench Verified 上取得当前最优性能；在数学推理设置下，14B 参数的 rStar2-Agent 经过训练，在 AIME24 和 AIME25 上分别斩获 80.6% 和 69.8% 的平均 pass@1 分数。然而，该路线也面临明确的代价与失效场景：长时程任务中的时间信用分配依然困难，稀疏延迟的奖励难以准确定位关键动作；强化学习极易引发奖励黑客现象，导致模型产生迎合用户偏见的谄媚行为，或为了骗取结果奖励而捏造虚假中间步骤的幻觉税。此外，该范式极度依赖庞大的计算资源以及能自动生成课程的动态环境模拟器。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文系统性地综述了“智能体强化学习”（Agentic RL）这一新兴范式，该范式将大型语言模型（LLM）从被动的序列生成器转变为嵌入在复杂动态世界中的自主决策智能体。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

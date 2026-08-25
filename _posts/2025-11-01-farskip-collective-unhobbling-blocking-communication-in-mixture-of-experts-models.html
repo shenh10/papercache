@@ -21,6 +21,19 @@ title: 'FarSkip-Collective: Unhobbling Blocking Communication in Mixture of Expe
 <h1>FarSkip-Collective: Unhobbling Blocking Communication in Mixture of Experts Models</h1>
 <p><strong>文章标题</strong>：FarSkip-Collective: Unhobbling Blocking Communication in Mixture of Experts Models<br/>
 <strong>作者/机构</strong>：Yonatan Dukler, Guihong Li, Deval Shah, Vikram Appia, Emad Barsoum Advanced Micro Devices Inc. (AMD)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一种名为 FarSkip-Collective 的混合专家（MoE）模型架构修改方案，通过将通信操作与计算过程重叠来消除分布式环境下的阻塞式通信瓶颈，并配套了少数据量的自蒸馏方法，在百亿到千亿参数规模的先进 MoE 模型上实现了显著的训练和推理加速且几乎不损失精度。</p>
+<p><strong>要解决什么问题</strong>
+混合专家（MoE）模型在扩展参数规模时，高度依赖张量并行（TP）和专家并行（EP）等分布式训练与推理技术，但这引入了严重的阻塞式通信瓶颈。具体而言，在专家并行中，不同输入 token 需要通过 all-to-all 集合通信发送给对应的专家（Dispatch），并在专家计算完成后再次通过 all-to-all 聚合结果（Combine）；在张量并行中，注意力或 MLP 块的末尾也需要 all-reduce 通信。由于现代网络采用残差连接，当前层的输出必须等待这些通信完全结束才能传递给下一层，导致计算加速器在通信期间只能处于空闲等待状态。随着 MoE 架构规模的扩大和底层硬件计算速度的提升，这种计算等通信的现象极大地限制了系统的整体并行度与硬件利用率。</p>
+<p><strong>怎么做的</strong>
+核心思路是通过修改模型架构中的残差连接依赖，让通信操作与下一层的计算过程在时间上重叠。在常规网络中，第 $k$ 层的输出 $o_k$ 必须等待包含阻塞通信的子块 $f_k$ 计算完毕：$$o_k = f_1(o_0) + f_2(o_1) + \cdots + f_k(o_{k-1})$$ 本文提出的 FarSkip-Collective 方法在通信调用开始时，不等待其结果，而是利用当前可用的激活值 $o_k^*$ 提前启动下一层 $f_{k+1}$ 的计算，将通信结果“远跳”到更未来的层进行更新：$$o_k=o_0+f_1(o_0)+f_2(o_1^*)+\cdots+f_k(o_{k-1}^*)$$ 关键设计包含两个维度的输入构造：对于注意力子块，采用“部分”激活作为输入，即包含上一层除路由专家外的所有输出（如共享专家部分）；对于 MLP 子块，采用“过时”激活作为输入，确保每个输入最多只相差一个子块，从而在最大化重叠窗口的同时保障模型能力。在工程实现上，训练端基于 Megatron-LM 框架，前向传播利用异步操作将注意力计算拆分以包裹 Dispatch 通信，反向传播则通过劫持自动求导的优先级排序，在不手写庞大反向计算图的情况下实现了梯度的异步通信；推理端在 vLLM 和 SGLang 中将阻塞的 all-reduce 替换为异步操作并延迟同步。由于这种物理连线的改变会破坏原有预训练分布，作者配套开发了 FarSkip-Collective Self-Distill 自蒸馏方案，仅需极少量的指令微调数据，以原始模型为教师进行 KL 散度对齐，即可将现有的开源大模型低成本转换为 FarSkip 架构。</p>
+<p><strong>效果如何</strong>
+实验在单节点（配备 8 张 MI325X 或 MI300X）和多节点集群上展开，评估了 DeepSeek-V2-Lite (16B)、Qwen-3-30B MoE (30B)、Llama 4 Scout (109B) 以及 DeepSeek-V3 (671B) 等模型。在模型能力恢复方面，对比基线为直接使用高质量数据进行监督微调（SFT）的路线，结果表明 SFT 会导致严重的灾难性遗忘，而自蒸馏方案仅需不到 10B tokens 的数据，就能使 Llama 4 Scout 的平均准确率与原始模型差距保持在 1.0% 以内，所有测试模型的最大性能下降不超过 2.5%。在训练加速方面，对比基线为原生的 Megatron-LM 框架实现路线，在专家并行度为 8 的设置下，该方法实现了 88.4% 的 all-to-all 通信时间重叠，为 DeepSeek-V2-Lite 带来 11% 的端到端训练加速，且在专家并行度扩展至 32 时加速比提升至 1.22 倍。在推理加速方面，对比基线为原生的 vLLM 和 SGLang 推理引擎路线，在预填充阶段，Llama 4 Scout 的首次令牌生成时间最高加速 18.5%，千亿级 DeepSeek-V3 的首次令牌生成时间最高加速 1.34 倍，多节点解码速度提升达 1.25 倍。该方法的代价与局限在于：必须经过额外的蒸馏过程才能恢复精度；修改模型较浅层的连接比修改深层对性能的损害更大；在蒸馏后期容易出现训练不稳定，需要依赖代码生成数据集进行早停检测；此外，前向传播的最后一次和反向传播的第一次 all-to-all 通信由于缺乏可重叠的计算，仍然无法被掩盖。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>混合专家（MoE）模型已成为近年来主流大语言模型（LLM）的事实架构。由于其稀疏激活和计算成本降低的特性，MoE模型得以扩展到更大的参数规模，但这也要求在训练和推理时采用更广泛的分布式设置。然而，分布式环境中的阻塞式通信是一个主要障碍，它会导致计算加速器在等待通信完成时处于空闲状态，尤其是在专家、序列和张量并行等技术中。随着MoE架构规模的扩大和硬件计算速度的提升，通信瓶颈问题愈发突出。</p>
 <p>本文提出了一种名为 <strong>FarSkip-Collective</strong> 的方法，通过修改模型架构来解决这一问题。其核心思想是在通信调用开始时，利用当前可用的（可能是过时或部分物化的）激活值来启动下一步的计算，从而将通信操作与计算过程重叠。具体而言，方法将本应等待通信结果的计算提前进行，并将通信结果“远跳”（far-skip）到下一层的残差连接上，供更未来的层使用。只要后续计算的持续时间长于通信时间，就可以避免计算资源的空闲。</p>

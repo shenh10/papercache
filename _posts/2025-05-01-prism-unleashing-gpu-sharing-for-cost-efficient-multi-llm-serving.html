@@ -19,6 +19,15 @@ title: 'Prism: Unleashing GPU Sharing for Cost-Efficient Multi-LLM Serving'
 <div class="container">
 <h1>Prism: Unleashing GPU Sharing for Cost-Efficient Multi-LLM Serving</h1>
 <p><strong>作者/机构</strong>: Shan Yu (UCLA), Jiarong Xing (UC Berkeley, Rice University), Yifan Qiao (UC Berkeley), Mingyuan Ma (Harvard University), Yangmin Li (Carnegie Mellon University), Yang Wang (Intel), Shuo Yang (UC Berkeley), Zhiqiang Xie (Stanford University), Shiyi Cao (UC Berkeley), Ke Bao (LMSYS), Ion Stoica (UC Berkeley), Harry Xu (UCLA), Ying Sheng (UCLA)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> Prism是一个面向多大语言模型（LLM）服务的系统，它通过按需分配显存和需求感知的两级调度机制实现了灵活的GPU共享，在相同GPU数量下比现有系统节省了超过2倍的成本，并将延迟服务水平目标（SLO）达成率提升了3.3倍。</p>
+<p><strong>要解决什么问题</strong> 在多模型共存的服务场景中，真实请求往往呈现长尾分布且波动剧烈，大量非热门模型长期闲置，而热门模型的请求量又会在几分钟内突增数倍。现有的GPU共享系统通常采用静态显存分配或固定的共享策略，导致物理显存被死板地绑定在特定模型上。当某个模型请求激增而显存不足时，它无法借用同GPU上其他空闲模型占用的显存，这直接限制了用于存放上下文状态（KV缓存）的显存大小，进而卡死了推理的并行批处理规模，导致吞吐量无法提升、延迟服务水平目标严重违规。而如果采用粗暴的模型换入换出策略，又会因为加载权重和初始化引擎的巨大开销导致系统周期性停摆。因此，如何让多个模型在显存层面实现真正灵活、能随请求波动即时调整的动态共享，是降低多模型服务成本的核心卡点。</p>
+<p><strong>怎么做的</strong> Prism通过按需显存分配和两级调度机制来彻底解耦显存与模型的绑定关系。首先，为了打破现有推理引擎在初始化时就静态霸占物理显存的限制，Prism引入了一个名为kvcached的轻量级中间层。它利用CUDA虚拟内存管理接口，将虚拟地址与物理显存解耦：推理引擎在启动时只保留一大块连续的虚拟地址空间，而真正的物理显存页只有在处理请求时才按需分配和映射。这种设计让同一GPU上的不同模型可以像用水用电一样动态瓜分物理显存。为了配合这种动态性，Prism设计了快速模型激活机制，在GPU上维护一个预先初始化好虚拟地址空间的引擎池，当需要唤醒被驱逐的空闲模型时，直接复用池中的引擎并动态对齐内存布局，同时将模型权重切块后通过NVLink在多卡间并行流式加载，从而将模型切换时间压缩到一秒左右。在调度层面，Prism采用两级架构来最大化SLO达成率。全局调度器负责决定模型应该放在哪张GPU上，它使用一个名为KV压力比（KVPR）的核心指标来衡量GPU的拥挤程度，其计算公式为 $$KVPR = \frac{req\_rate / SLO}{shared\_kv}$$ 其中分子是经过SLO加权后的请求率，代表单位时间内的显存需求，分母是GPU上当前可用的KV缓存大小。全局调度器会持续将模型迁移到能使该比值最小化的GPU上，以实现全局负载均衡。而在单张GPU内部，本地调度器不再让各个模型各自维护队列，而是建立一个全局共享的请求队列。它基于Moore-Hodgson算法进行准入控制，先将所有请求按预填充完成的截止时间（即到达时间 $a_i$ 加上首字延迟目标 $s_i$）升序排列，然后逐一评估请求的预填充耗时 $e_r$（由提示词长度 $p_r$ 除以处理速度 $c_r$ 得出）。如果发现接纳当前请求会导致超时，即 $current\_time + e_r &gt; a_r + s_r$，系统就会从已接纳的队列中踢出执行时间最长的请求。这种严格的优先级准入机制有效防止了低优先级或超长请求恶意挤占宝贵的KV缓存。</p>
+<p><strong>效果如何</strong> 实验在配备NVIDIA H100 GPU和NVLink互连的集群上进行，使用了包含58个不同规模（1B到70B参数）大语言模型的真实生产环境请求数据。对比基线包括代表静态显存分配路线的S-Partition、代表灵活显存复用路线的MuxServe++，以及代表基于模型换入换出进行时间共享路线的QLM。在端到端性能测试中，Prism在相同请求率下能维持极高的首字延迟达标率，在实现99% SLO达成率时，其支持的请求量分别是MuxServe++和静态分区的2.3倍和3.5倍。在大规模部署测试中，服务全部58个模型并要求达到99%的首字延迟达标率时，Prism仅需16张GPU，而MuxServe++需要32张，静态分区需要的数量更多，QLM则因为频繁的模型交换开销直接导致严重的延迟违规，这证明Prism实现了超过2倍的硬件成本节省。在微观指标上，得益于并行加载优化，Prism激活一个8B模型仅需0.7秒，70B模型仅需1.5秒。不过作者也承认了该方法的局限性：对于首字延迟要求极其苛刻的极端场景，0.7到1.5秒的激活延迟仍然不可接受，此时只能选择关闭模型驱逐功能，牺牲部分成本效益；此外，当前系统假设模型权重都缓存在CPU内存中，尚未针对从固态硬盘加载权重的场景进行流水线优化。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>: 服务大型语言模型（LLM）成本高昂，特别是对于托管成千上万个基础模型和用户微调模型的服务提供商而言。现有的GPU共享系统（如MIG、MuxServe、QLM）由于采用静态资源分配或固定的共享策略，无法在快速波动的负载下有效满足延迟服务水平目标（SLO），导致资源利用率低下和成本高昂。</p>
 <p><strong>研究目标</strong>: 本文旨在设计一个名为Prism的多LLM服务系统，以充分发挥GPU共享的潜力，从而在满足SLO的同时实现成本效益。核心挑战在于实现灵活且需求感知的跨模型内存协调，以适应动态工作负载。</p>

@@ -18,6 +18,18 @@ title: Robust LLM Training Infrastructure at ByteDance
 <div class="container">
 <h1>Robust LLM Training Infrastructure at ByteDance</h1>
 <p><strong>作者/机构</strong>: Borui Wan, Gaohong Liu, Zuquan Song, Jun Wang, Yun Zhang, Guangming Sheng, Shuguang Wang, Houmin Wei, Chenyuan Wang, Weiqiang Lou, Xi Yang, Mofan Zhang, Kaihua Jiang, Cheng Ren, Xiaoyun Zhi, Menghan Yu, Zhe Nan, Zhuolin Zheng, Baoquan Zhong, Qinlong Wang, Huan Yu, Jinxin Chi, Wang Zhang, Yuhan Li, Zixian Du, Sida Zhao, Yongqiang Zhang, Jingzhe Tang, Zherui Liu, Chuan Wu, Yanghua Peng, Haibin Lin, Wencong Xiao, Xin Liu, Liang Xiang (香港大学, 字节跳动)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个专为万卡规模大语言模型训练设计的GPU基础设施管理系统ByteRobust，通过优先快速隔离故障和受控快速恢复机制，在一个包含9600个GPU的三个月训练任务中实现了97%的有效训练时间比率（ETTR）。</p>
+<p><strong>要解决什么问题</strong> 现有分布式训练严重依赖故障后的日志分析和离线压力测试，在万卡规模下遭遇效率瓶颈。首先，隐式故障难以定位。作业挂起、性能抖动及GPU硬件引起的静默数据损坏（SDC）通常无明确错误日志，传统系统依赖长达数十分钟的超时机制（如NCCL超时）才能察觉，浪费海量算力。其次，分布式集体通信会放大排查难度，单个损坏梯度会污染全局参数更新，掩盖真实故障源。此外，长达数月的预训练中，工程师需频繁进行代码迭代（如内核融合），用户代码演进与基础设施故障交织，导致根本原因极度复杂。一旦故障，传统流程需重新调度资源并从远程存储重载TB级检查点，耗费数小时甚至数天，导致有效训练时间比率大幅下降。</p>
+<p><strong>怎么做的</strong> ByteRobust的核心思路是“优先快速隔离而非精确定位”，并将人为代码错误纳入自动化容错设计。系统由控制平面和数据平面构成，包含四个关键部件。第一是自动化容错框架，通过轻量级巡检实时监控硬件，发现损失突增或NaN等异常即触发分层停机检查。若机内和机间通信测试通过，系统依次尝试原地重试和代码回滚，以排除瞬时故障和近期代码更新引入的人为错误。第二是针对隐式故障的数据驱动过度驱逐机制。当检测到作业挂起或算力利用率（MFU）下降时，系统抓取所有训练进程的堆栈跟踪，通过字符串匹配聚合成组。主导堆栈组视为健康，其余标记为异常。系统不强求定位具体故障节点，而是找出异常节点共享的并行组（如流水线并行组），将其作为整体过度驱逐。第三是针对极端SDC的双阶段回放测试。为在不破坏数据依赖前提下定位SDC，系统保持张量和流水线并行大小不变，仅改变数据并行大小，将机器划分为水平和垂直两组局部回放。设流水线并行大小为 $\text{PP\_size}$，数据并行大小为 $\text{DP\_size}$，系统配置水平组数 $k$ 和垂直组数 $m$ 满足：
+$$k = n \cdot \text{PP\_size}$$
+$$m = \text{DP\_size} / n$$
+其中 $n \in \mathbb{N}^+$ 且 $n \le m$。两组中报错机器的交集即为精准故障节点。第四是受控快速恢复机制。不改变机器分配的代码调整采用原地热更新；节点驱逐则直接唤醒预先配置的温备机（数量设为单机日故障率二项分布的P99水位）。同时，检查点管理器利用计算间隙将状态异步保存到CPU内存。为防止过度驱逐干掉备份，系统强制采用跨并行组备份策略，每个节点必须将状态备份到自身3D并行组之外的机器，消除对远程存储的依赖。</p>
+<p><strong>效果如何</strong> 实验在生产级GPU集群上展开，最大使用1200台机器（9600个NVIDIA Hopper 80GB GPU）进行70B密集模型和200B稀疏MoE模型预训练，并在16384个NVIDIA L20 GPU集群上评估效率。对比基线包括代表传统日志分析与压力测试路线的 SuperBench，代表传统恢复路线的完全重新排队（requeue）和仅替换故障机（reschedule），以及代表传统检查点路线的 Megatron save 和 Gemini。结果显示，ByteRobust在两个9600卡任务中均维持了97%的累计ETTR，将CUDA错误解决时间相比压力测试基线缩短84.5%。恢复方面，原地热更新比requeue快11.04倍；温备机比requeue快10.87倍，比reschedule快5.36倍。检查点效率上，相比 Megatron save 和 Gemini 分别减少99.69%和95.10%的阻塞时间，MFU损失仅0.71%。作者承认的局限包括：过度驱逐会产生假阳性（如为加速恢复驱逐8台机器的流水线组，实际仅1-2个节点故障）；现有硬件诊断工具（如NVIDIA EUD）召回率仅70%且偶发导致GPU降频；面对频发的SDC问题，双阶段回放测试开销依然巨大。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文介绍了ByteRobust，一个为大规模语言模型（LLM）的稳健和稳定训练量身定制的大规模GPU基础设施管理系统。当前LLM的训练规模已达数万个GPU，伴随而来的是故障（如CUDA错误、NaN值、作业挂起等）的普遍发生，这对训练稳定性构成了重大挑战。现有故障处理方法依赖于故障停止后的日志分析和压力测试，恢复过程（重新调度资源、重载TB级检查点）会产生数小时甚至数天的开销，严重影响有效训练时间比率（ETTR）。</p>
 <p><strong>核心问题与挑战：</strong><br/>

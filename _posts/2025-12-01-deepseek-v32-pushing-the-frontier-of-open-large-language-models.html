@@ -17,6 +17,21 @@ title: 'DeepSeek-V3.2: Pushing the Frontier of Open Large Language Models'
 
 <div class="container">
 <h1>DeepSeek-V3.2: Pushing the Frontier of Open Large Language Models</h1>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文推出了兼顾高计算效率与强大推理及智能体能力的开源大语言模型 DeepSeek-V3.2，通过引入稀疏注意力机制和可扩展的强化学习框架，在多项基准测试中达到了与 GPT-5 和 Gemini-3.0-Pro 相当的顶尖水平。</p>
+<p><strong>要解决什么问题</strong> 开源模型处理复杂任务时面临三个核心卡点。首先是架构效率瓶颈，传统注意力机制计算复杂度极高，严重限制长上下文处理效率，阻碍了可扩展部署与有效后训练。其次是资源分配失衡，开源模型后训练阶段计算投入不足，导致困难任务上的潜力无法释放。最后是智能体能力短板，在复杂工具调用场景中，开源模型缺乏将推理过程与工具执行有效融合的机制，泛化与指令遵循表现明显落后于闭源模型。</p>
+<p><strong>怎么做的</strong> 核心在于底层架构与后训练强化学习（RL）协议的升级。为绕开长序列计算卡点，引入 DeepSeek 稀疏注意力（DSA）。它由闪电索引器和细粒度令牌选择组成。闪电索引器利用极少计算头和 ReLU 激活，快速计算查询令牌 $h_t$ 与前置令牌 $h_s$ 的索引得分：
+$$I_{t,s} = \sum_{j=1}^{H^I} w_{t,j}^{I} \cdot \text{ReLU} \left( \mathbf{q}_{t,j}^{I} \cdot \mathbf{k}_{s}^{I} \right)$$
+随后仅检索得分 top-k 的键值对计算注意力输出，将复杂度从 $O(n^2)$ 降至 $O(nk)$：
+$$ \mathbf{u}_t = \text{Attn}(\mathbf{h}_t, \{ \mathbf{c}_s | I_{t,s} \in \text{Top-k}(I_{t,:}) \}) $$
+DSA 基于 MLA 的 MQA 模式实例化，使键值对在多查询间共享，大幅提升吞吐量。为突破后训练算力瓶颈，开发了可扩展 RL 框架，将后训练预算提升至预训练成本 10% 以上。框架基于 GRPO 算法，针对原 K3 估计器在策略偏离时导致梯度充满噪声的问题，引入无偏 KL 估计，利用重要性采样比率消除系统性误差：
+$$ \mathbb{D}_{\mathrm{KL}}(\pi_{\theta}(o_{i,t}) \| \pi_{\mathrm{ref}}(o_{i,t})) = \frac{\pi_{\theta}(o_{i,t}|q, o_{i,&lt;t})}{\pi_{\mathrm{old}}(o_{i,t}|q, o_{i,&lt;t})} \left( \frac{\pi_{\mathrm{ref}}(o_{i,t}|q, o_{i,&lt;t})}{\pi_{\theta}(o_{i,t}|q, o_{i,&lt;t})} - \log \frac{\pi_{\mathrm{ref}}(o_{i,t}|q, o_{i,&lt;t})}{\pi_{\theta}(o_{i,t}|q, o_{i,&lt;t})} - 1 \right) $$
+配合离策略序列掩码（屏蔽策略散度过大的负优势样本）、保持路由（固定混合专家激活路径）和保持采样掩码，稳住了大规模 RL 训练动态。针对智能体能力，设计了定制化上下文管理：工具调用期间保留推理轨迹，仅在引入新用户消息时丢弃历史推理，避免反复重新推理的冗余消耗。随后通过冷启动提示将推理与工具统一在单轨迹中，并利用自动化流水线合成超 1800 个环境和 85000 个复杂提示的大规模智能体任务驱动 RL，激活了指令遵循与泛化能力。</p>
+<p><strong>效果如何</strong> 实验基于 128K 上下文窗口，在 H800 GPU 集群上评估。对比基线包括代表顶尖闭源路线的 GPT-5 和 Gemini-3.0-Pro、代表开源推理路线的 Kimi-k2-thinking，以及 Claude Code 等智能体框架。结果显示，DeepSeek-V3.2 在多项推理基准上达到与 GPT-5 相当水平；在 SWE-bench Verified 等代码智能体任务上显著超越其他开源模型，大幅缩小与闭源差距。为探索极限，高算力变体 DeepSeek-V3.2-Speciale 性能追平 Gemini-3.0-Pro，并在 2025 年 IMO、IOI 和 ICPC 世界总决赛中取得金牌水平成绩。局限性在于：因总训练计算量较少，世界知识广度不及顶尖专有模型；Token 效率较低，需生成更长轨迹才能达到同等质量；在长链条智能体任务中极易触及 128K 上下文上限导致中断，需依赖丢弃全部历史等强硬上下文管理策略维持运行。</p>
+</div>
+</details>
 <h2>文章标题和作者/机构</h2>
 <p><strong>文章标题</strong>：DeepSeek-V3.2：推动开放大语言模型的前沿<br/>
 <strong>作者/机构</strong>：DeepSeek-AI</p>

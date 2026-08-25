@@ -20,6 +20,15 @@ title: Accelerating the Training of Large Language Models using Efficient Activa
 <div class="container">
 <h1>Accelerating the Training of Large Language Models using Efficient Activation Rematerialization and Optimal Hybrid Parallelism</h1>
 <p>Tailing Yuan, Yuliang Liu, Xucheng Ye, Shenglong Zhang, Jianchao Tan, Bin Chen, Chengru Song, and Di Zhang, Kuaishou Technology</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文针对大语言模型训练中的显存与计算资源瓶颈，提出了一种结合流水线感知卸载、计算-内存平衡检查点以及高效混合并行参数搜索的无损加速方法，在 175B 规模模型和 32K 长上下文设置下将模型算力利用率显著提升至 42.7%。</p>
+<p><strong>要解决什么问题</strong> 大语言模型在进行长上下文训练时，面临极其严峻的激活显存瓶颈。以训练 32K 上下文的 Llama-175B 模型为例，无论如何调整混合并行参数，首个计算节点上至少需要 171.5 GB 的激活显存，远超主流单张 GPU 的物理容量。现有缓解手段均存在致命副作用：采用全检查点（Full checkpointing）策略会强制重计算所有层，带来三分之一的额外计算开销；若为降低单卡显存压力而强行增大张量或上下文并行规模，又会引入海量跨节点通信开销并拉低计算强度。此外，在给定集群和模型下，想在张量、上下文、流水线和数据并行构成的巨大搜索空间中，找到既不内存溢出又能最大化吞吐量的参数是一项极具挑战的任务。现有调优缺乏高效评估手段，导致大规模分布式训练往往只能采用次优妥协配置，造成算力浪费。</p>
+<p><strong>怎么做的</strong> 为了彻底绕开上述卡点，本文设计了包含三个核心部件的系统方案。首先是流水线并行感知卸载（Pipeline-Parallel-Aware Offloading），核心思路是利用交错流水线并行的执行间隙，将暂时不用的激活值转移到主机（CPU）内存。为掩盖传输延迟，该策略遵循“尽早卸载”和“尽早重载”原则，在每个流水线阶段前向传播结束后立即触发卸载，并在上一个阶段反向传播开始时提前拉回数据。由于前向速度通常是反向的两倍，流水线稳定阶段有充足时间让计算与内存拷贝重叠。通过引入卸载比率 $\alpha$，峰值 GPU 显存占用被严格控制为：$$M_{gpu} = (1-\alpha)(vp+p-3)M_a + M_a + 2M_a$$其中 $v$ 是虚拟阶段数，$p$ 是流水线并行度，$M_a$ 是单个激活块大小。其次是计算-内存平衡检查点（Compute-Memory Balanced Checkpointing）。现有算子级检查点对并行配置变化过于敏感且搜索开销大，本文转而从 Transformer 层级出发，通过枚举存储的激活集合，推导出内存与计算成本的帕累托前沿。该设计的关键不变量是：绝对不重计算任何计算密集型算子（如 Linear 和 Attention），仅重计算 RMSNorm 和 SiLU 等轻量级算子。这种策略仅引入占总步时 1.5% 的极小重计算开销，就能将每层激活显存压缩至：$$M_{ckpt} = \frac{2bsh}{tc} + \frac{2bsH}{tc}$$最后是高效的混合并行参数搜索方法。为避免在真实集群上盲目试错，该方法通过在单层模型或少数节点上测量原语信息（如前向时间、点对点通信带宽、优化器耗时），构建了精准的分析型性能模型。总迭代时间估算为：$$T_{model} = T_{warm} + T_{steady} + T_{cool} + T_{opt} + T_{slowdown}$$基于此公式，系统能在毫秒级时间内穷举所有并行组合，并在满足显存约束下输出理论吞吐量最高的完美配置。</p>
+<p><strong>效果如何</strong> 实验在 32 个节点共 256 张 NVIDIA H800 80GB GPU 组成的集群上进行，节点内通过 NVLink 互连，节点间配备 100 Gbps 网络，测试涵盖 Llama-175B、Llama-65B 和 Llama2-70B 模型。对比基线是经过工业级改进的 Megatron-LM，代表采用传统 3D 混合并行与全检查点策略的经典路线。量化结果表明，在 32K 长上下文的 Llama-175B 训练中，基线方法受限于显存墙只能采用次优并行策略，而本文方法得益于卸载与平衡检查点释放的显存，能够探索更优配置，将模型算力利用率（MFU）从 32.3% 跃升至 42.7%。在 Llama-65B 的 8K 上下文设置下，基线若不开启全检查点会直接内存溢出，而本文方法仅需设置 0.3 的卸载比率即可流畅训练。此外，本文的最佳扩展算法在 24 个节点上达到 1.8e5 TPS 吞吐量，碾压了需 20 个节点才达到 1.48e5 TPS 的传统数据并行扩展路线。作者也坦诚了局限性：由于平衡检查点保留了部分激活值以换取计算效率，其支持的最大序列长度仍小于牺牲全部计算效率的全检查点方法。</p>
+</div>
+</details>
 <h1>A1 主要贡献</h1>
 <p>本文针对大语言模型（LLM）训练中计算资源和内存消耗巨大的问题，提出了无损加速训练的新方法。现有的工作主要集中在优化激活策略（如卸载和重计算）以及探索各种并行训练选项上，但在平衡计算与内存利用率，以及高效搜索最佳并行配置方面仍有改进空间。</p>
 <p>本文的主要贡献如下：<br/>

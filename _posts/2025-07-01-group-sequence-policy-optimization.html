@@ -19,6 +19,15 @@ title: Group Sequence Policy Optimization
 <h1 id="group-sequence-policy-optimization">Group Sequence Policy Optimization</h1>
 <p><strong>文章标题</strong>：组序列策略优化 (Group Sequence Policy Optimization)<br/>
 <strong>作者/机构</strong>：Chujie Zheng∗, Shixuan Liu, Mingze Li, Xiong-Hui Chen, Bowen Yu∗, Chang Gao, Kai Dang, Yuqiong Liu, Rui Men, An Yang, Jingren Zhou, Junyang Lin (Qwen Team, Alibaba Inc.)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文针对大语言模型强化学习中 GRPO 算法存在的严重崩溃问题，提出了组序列策略优化（GSPO）算法，通过将重要性采样和裁剪机制从 token 级别提升到序列级别，实现了更稳定高效的训练，并为 Qwen3 模型带来了显著的性能提升。</p>
+<p><strong>要解决什么问题</strong> 现有的强化学习算法（如 GRPO）在训练大语言模型时，常面临严重的稳定性问题，极易导致灾难性且不可逆的模型崩溃。这个卡点的核心机制在于 GRPO 对重要性采样权重的误用。为了最大化硬件利用率，强化学习通常采用大批量采样并切分为多个小批量进行梯度更新，这不可避免地引入了离策略学习设置。在处理新旧策略分布不匹配时，GRPO 错误地在单个 token 级别应用重要性采样权重。由于奖励是针对整个序列发放的，在 token 级别进行离策略校正不仅目标错位，还会引入极高方差的训练噪声。这种噪声会随着响应长度的增加而不断累积，并被裁剪机制进一步放大，最终摧毁模型。此外，在训练混合专家（MoE）模型时，由于梯度更新前后激活的专家会发生显著变化，token 级别的重要性比率会剧烈波动并彻底失效，以往只能依赖引入额外内存和通信开销的复杂策略来勉强维持稳定。</p>
+<p><strong>怎么做的</strong> 方法的核心思路是将优化目标的粒度与奖励发放的粒度严格对齐，彻底放弃 token 级别的重要性权重，转而在完整的序列级别计算重要性比率并执行裁剪与优化。为了绕开 token 级噪声累积的卡点，GSPO 首先采用基于组的优势估计，计算同一查询下多个响应的相对优势：$$A_i = \frac{r_i - \text{mean}(r)}{\text{std}(r)}$$接着，GSPO 摒弃了逐 token 计算的做法，基于完整的序列似然来定义重要性比率，并引入长度归一化以控制数值范围、降低方差，防止少数 token 的似然变化导致整体比率剧烈波动：$$s_i(\theta) = \exp \left( \frac{1}{|y_i|} \sum_{t=1}^{|y_i|} \log \frac{\pi_{\theta}(y_{i,t}|x, y_{i,&lt;t})}{\pi_{\theta_{old}}(y_{i,t}|x, y_{i,&lt;t})} \right)$$最终的序列级优化目标函数通过对整个响应应用裁剪机制，将过于偏离旧策略的样本排除在梯度估计之外：$$J_{GSPO}(\theta) = \mathbb{E}_{x \sim D, y \sim \pi_{\theta_{old}}} \left[ \frac{1}{G} \sum_{i=1}^G \min \left( s_i(\theta) A_i, \text{clip}(s_i(\theta), 1-\epsilon, 1+\epsilon) A_i \right) \right]$$这一设计的关键在于，在计算对数似然梯度时，GSPO 对同一个响应中的所有 token 赋予了完全相同的权重。相比之下，GRPO 会根据每个 token 自身的重要性权重对其梯度进行缩放，导致权重在极小值到极大值之间剧烈震荡。GSPO 的等权设计彻底消除了这种不稳定性。此外，针对多轮强化学习等场景，作者设计了 GSPO-token 变体，允许在保持序列级重要性比率稳定的前提下引入 token 级别的优势定制。由于 GSPO 只关注序列似然，它对训练和推理引擎间的精度差异容忍度极高，系统可直接使用推理引擎返回的似然进行优化，省去了用训练引擎重新计算的繁琐步骤，大幅简化了基础设施。</p>
+<p><strong>效果如何</strong> 实验基于从 Qwen3-30B-A3B-Base 微调的冷启动模型进行，在 AIME’24、LiveCodeBench 及 CodeForces 等基准上测试了生成能力。对比的核心基线是 GRPO 算法，它代表了当前主流的基于 token 级别相对优势的强化学习路线。在相同的训练计算量和查询消耗下，GSPO 展现出了显著优于 GRPO 的训练效率和最终性能，且训练全程保持稳定。实验中出现了一个反直觉的量化结果：GSPO 和 GRPO 在被裁剪 token 的比例上存在 2 个数量级的巨大差异。尽管 GSPO 触发裁剪机制的频率远高于 GRPO，导致实际参与训练的 token 数量更少，但其训练效率依然更高。这直接证明了 GRPO 的 token 级梯度估计存在固有的高噪声，样本利用率极其低下。在混合专家模型的设置下，GSPO 的优势更为明显：基线 GRPO 必须绑定 Routing Replay 策略（即强制重放旧策略的路由模式）才能勉强收敛，而 GSPO 完全不需要这种复杂的变通方法就能稳定训练，从根本上解决了专家激活波动带来的崩溃问题。作者也提到，由于重要性比率定义的改变，GSPO 的裁剪范围超参（如 3e-4 到 4e-4）与 GRPO（如 0.2 到 0.27）在数量级上完全不同，实际应用中需重新调整。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文针对现有强化学习（RL）算法在训练大型语言模型时（特别是GRPO算法）存在的严重稳定性问题，提出了<strong>组序列策略优化（Group Sequence Policy Optimization, GSPO）</strong>算法。</p>
 <ul>

@@ -18,6 +18,15 @@ title: 'KIMI K2.5: VISUAL AGENTIC INTELLIGENCE'
 <div class="container">
 <h1>KIMI K2.5: VISUAL AGENTIC INTELLIGENCE</h1>
 <p><strong>Kimi Team</strong></p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文推出了拥有 1.04T 参数的开源多模态模型 Kimi K2.5，通过文本与视觉的联合优化以及引入支持动态并发的 Agent Swarm 编排框架，在数学、代码和长视界任务上取得了比肩甚至超越顶尖闭源模型的通用智能体性能。</p>
+<p><strong>要解决什么问题</strong> 大模型向多模态智能体演进面临三个核心机制卡点。首先是预训练融合时机，传统做法在训练后期高比例注入视觉数据，会引发模态迁移的表征空间冲击，导致文本能力暂时下降；且预训练视觉语言模型天然缺乏视觉工具调用能力和高质量多模态思维链数据。其次是长视界任务的执行瓶颈，现有智能体高度依赖单线程顺序推理与工具调用，在处理需广度搜索或多分支深度推理的任务时，极易耗尽推理深度和工具预算，导致极高的端到端延迟。最后是效率卡点，多模态输入大小剧变会导致流水线并行出现严重负载不均衡；而在严格预算约束下的强化学习极易陷入长度过拟合，模型会生成大量无效思考 Token 却无法带来实质性能增益。</p>
+<p><strong>怎么做的</strong> Kimi K2.5 在架构上引入原生分辨率视觉编码器 MoonViT-3D，将连续帧视为时空体并进行 4 倍时间压缩。在多模态对齐上，放弃晚期融合，采用固定预算下低视觉比例的早期融合策略，让模型自然发展出平衡表征。针对视觉工具调用数据匮乏，提出零视觉监督微调，仅用纯文本微调数据，通过 IPython 编程代理图像操作来激活视觉智能体能力。强化学习阶段打破按模态划分专家的传统，按知识、推理等能力组织领域专家进行联合多模态强化学习，通过基于结果的视觉强化学习反向增强纯文本能力。为解决强化学习的长度过拟合，引入 Toggle 启发式算法，在预算限制阶段和标准扩展阶段间交替优化：$$ \tilde{r}(x, y)= \begin{cases}r(x, y) \cdot \mathbb{I}\left\{\frac{1}{K} \sum_{i=1}^K r\left(x, y_i\right)&lt;\lambda \text{ or }\left|y_i\right| \leq \text{budget}(x)\right\} &amp; \text{if } \lfloor t / m\rfloor \pmod 2=0 \\ r(x, y) &amp; \text{if } \lfloor t / m\rfloor \pmod 2=1 \end{cases} $$ 针对长视界任务，提出 Agent Swarm 并行智能体编排框架。该框架采用解耦架构，包含一个可训练的编排器和多个冻结的子智能体。编排器将复杂任务动态分解为可并行的子任务，其并行智能体强化学习奖励函数为：$$ r_{\mathrm{PARL}}(x, y)=\lambda_{1} \cdot r_{\text{parallel}}+\lambda_{2} \cdot r_{\text{finish}}+r_{\text{perf}}(x, y) $$ 实例化奖励和完成率奖励用于防止编排器退化为串行执行或生成虚假并行。为约束计算时间成本，框架以关键步骤而非总步数作为资源约束，即主智能体步数加上并行子智能体中的最大步数：$$ \text{CriticalSteps} = \sum_{t=1}^{T} \left( S_{\text{main}}^{(t)} + \max_{i} S_{\text{sub},i}^{(t)} \right) $$ 此外，设计了解耦编码器进程，将视觉编码器的前向与重计算后向从主干网络的流水线并行中剥离并均匀分布，彻底解决多模态训练的负载不均衡。</p>
+<p><strong>效果如何</strong> 实验在 NVIDIA H800 集群上完成，模型总参数量 1.04T，激活参数量 32B，预训练使用 15T 个混合 Token。对比基线涵盖代表闭源最强路线的 Claude Opus 4.5、GPT-5.2 (xhigh)、Gemini 3 Pro，以及代表开源前沿的 DeepSeek-V3.2 和 Qwen3-VL。量化结果显示，Kimi K2.5 在 AIME 2025 数学竞赛取得 96.1% 准确率，在 Humanity's Last Exam 启用工具后得分 50.2%，均优于 Claude Opus 4.5 和 GPT-5.2；在 SWE-Bench Verified 得分 76.8%，超越 Gemini 3 Pro。在 WideSearch 智能体搜索基准上，Agent Swarm 相比单智能体顺序执行基线，将目标 F1 分数提升至 79.0%，并在任务复杂度增加时将执行时间缩减 3 到 4.5 倍。工程效率上，解耦编码器进程使多模态训练效率达到纯文本的 90%，Toggle 算法在不损耗性能前提下减少了 25% 到 30% 的输出 Token。局限性在于，并行化并非总是最优，系统需依赖强化学习探索来决定何时并行；且为规避信用分配模糊和训练不稳定，多智能体架构妥协采用了冻结子智能体的非端到端联合优化设计。</p>
+</div>
+</details>
 <h1>A1 主要贡献</h1>
 <p>本文介绍了 Kimi K2.5，这是一个旨在推进通用智能体能力（General Agentic Intelligence）的开源多模态模型。K2.5 的核心贡献在于强调文本与视觉的联合优化（Joint Optimization），使两种模态相互增强，以及引入了并行智能体编排框架 Agent Swarm。</p>
 <p>主要贡献点如下：<br/>

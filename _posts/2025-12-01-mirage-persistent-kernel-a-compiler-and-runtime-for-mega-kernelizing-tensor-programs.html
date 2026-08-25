@@ -21,6 +21,15 @@ title: 'Mirage Persistent Kernel: A Compiler and Runtime for Mega-Kernelizing Te
 <p><strong>文章标题</strong>: Mirage Persistent Kernel: 一个用于对张量程序进行超级内核化(Mega-Kernelizing)的编译器和运行时<br/>
 <strong>作者/机构</strong>: Xinhao Cheng, Zhihao Zhang, Yu Zhou, Jianan Ji, Jinchen Jiang, Zepeng Zhao, Ziruo Xiao, Zihao Ye, Yingyi Huang, Ruihang Lai, Hongyi Jin, Bohan Hou, Mengdi Wu, Yixin Dong, Anthony Yip, Zihao Ye, Songting Wang, Wenqin Yang, Xupeng Miao, Tianqi Chen, Zhihao Jia<br/>
 <strong>机构</strong>: 卡内基梅隆大学, 清华大学, 英伟达, 密歇根大学, 独立研究员, 普渡大学</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了首个能将多GPU模型推理自动编译为单个高性能超级内核（mega-kernel）的系统MPK，通过消除算子间的内核屏障，在主流大语言模型推理任务上实现了高达1.7倍的端到端延迟降低。</p>
+<p><strong>要解决什么问题</strong> 现有的机器学习系统普遍采用“每个算子一个内核”的执行模型，这种机制会在同一流上连续启动的内核之间隐式插入内核屏障，导致三个致命的效率卡点。首先，内核屏障强制依赖的算子必须严格串行，阻碍了跨算子的软件流水线优化，使得张量内存加速器和张量核心等专用硬件在任务交接时出现流水线气泡。其次，它排除了细粒度的计算与通信重叠，例如矩阵乘法后的集合通信必须等待整个矩阵算完才能开始，而实际上通信操作的每个线程块只依赖矩阵乘法输出的一个子集。最后，每次推理迭代需要启动成百上千个内核，带来极大的启动开销，且现有的CUDA Graphs等静态缓解方案无法适应大语言模型推理中常见的动态序列长度和控制流变化。</p>
+<p><strong>怎么做的</strong> 核心思路是打破算子边界，将所有计算和GPU间通信融合成一个单一的持久化超级内核，并在单个流式多处理器（SM）的粒度上进行调度。这使得系统能绕开全局内核屏障，实现亚内核级别的同步。该方法由三个关键部件构成。首先是SM级图表示tGraph，其节点代表在单个SM上运行的任务，边代表任务间的细粒度依赖（事件）。其次是MPK编译器，它将输入计算图切分为tGraph，为了减少同步开销，编译器会执行事件融合，例如后继集融合会将触发相同下游任务的事件合并，定义为当 $OutTasks(e_1)=OutTasks(e_2)$ 时，生成新事件 $e'$ 满足 $InTasks(e') = InTasks(e_1) \cup InTasks(e_2)$；前驱集融合则合并依赖相同上游任务的事件，定义为当 $InTasks(e_1)=InTasks(e_2)$ 时，生成新事件 $e'$ 满足 $OutTasks(e')=OutTasks(e_1) \cup OutTasks(e_2)$。随后，编译器通过插入虚拟任务对tGraph进行归一化，确保每个任务最多只有一个依赖事件和触发事件，并使用广度优先搜索对图进行线性化，保证同一事件触发的所有任务在内存中索引连续，从而消除动态分配开销。最后是完全嵌入在超级内核内部的并行运行时，它将GPU的物理SM划分为负责分派任务的调度器和负责执行的工作者。运行时引入了分页式共享内存抽象，允许当前任务的计算与下一个任务的数据预取重叠。在任务下发上，运行时采用混合启动策略：对于执行时间随数据变化的算子（如注意力机制）采用即时（JIT）启动以维持SM间的动态负载均衡，而对于静态算子则采用提前（AOT）入队策略以最小化分派延迟。</p>
+<p><strong>效果如何</strong> 实验在A100、H100和B200三代GPU上进行，测试了包含密集模型和混合专家模型在内的五种主流大语言模型（如Qwen3-8B、Qwen3-30B-A3B），采用离线批处理推理设置（64个输入token，1024个输出token，bfloat16精度）。对比基线是代表“每个算子一个内核”路线的先进服务系统SGLang和vLLM，以及结合了手动优化内核与CUDA Graphs的PyTorch。量化结果显示，在单GPU单批次推理中，MPK相比SGLang和vLLM实现了1.0倍至1.7倍的端到端吞吐量提升；在A100上运行Qwen3-8B时，每token解码延迟从14.5毫秒降至12.5毫秒。在多GPU（8张H100）张量并行环境下，MPK实现了1.1倍至1.4倍的加速，相比原生PyTorch吞吐量提升高达10倍。消融实验证明，跨任务流水线能将任务运行时间减少1.2至1.3倍，计算与通信重叠能降低1.1倍延迟。针对混合专家模型，MPK的混合负载均衡策略相比SGLang取得了1.07倍到1.18倍的加速。该方法的代价是需要固定保留4个SM专门用于调度器，且图归一化会引入少量虚拟任务开销（实际测试中低于1%），同时即时（JIT）任务启动机制本身会带来额外的工作者与调度器间的同步延迟。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文介绍了一种名为 Mirage Persistent Kernel (MPK) 的系统，它是首个能将多GPU模型推理自动转换为单个高性能超级内核（mega-kernel）的编译器和运行时系统。</p>
 <p><strong>核心问题</strong>: 现有机器学习系统普遍采用“每个算子一个内核”（kernel-per-operator）的执行模型，这种模型存在以下几个关键限制：<br/>

@@ -18,6 +18,17 @@ title: HunyuanOCR Technical Report
 <div class="container">
 <h1>HunyuanOCR Technical Report</h1>
 <p><strong>作者/机构</strong>: Tencent Hunyuan Vision Team</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一款名为 HunyuanOCR 的 1B 参数轻量级视觉语言模型，通过纯端到端架构和强化学习优化，在文本定位、文档解析、信息抽取等任务上超越了传统流水线方法和更大参数量的通用模型。</p>
+<p><strong>要解决什么问题</strong> 传统的 OCR 系统（如 PaddleOCR、EasyOCR）通常采用高度模块化的流水线架构，将文本检测、多语种文本识别、细粒度布局分析、表格识别等多个独立模块级联在一起。这种多阶段处理机制存在一个致命卡点，即严重的“流水线效应”：早期模块（例如布局分析或文本检测）的微小错误会逐级向下游放大，导致在处理文本重叠或非标准复杂布局时，最终输出的准确率大幅受损，且系统部署和协同调优的维护成本极高。另一方面，近年来兴起的通用视觉语言模型（如 Gemini、Qwen-VL）虽然具备强大的端到端 OCR 能力，但其庞大的参数规模导致推理时显存占用大、计算资源消耗高、延迟极高，完全无法满足实际业务场景中对低延迟和边缘部署的严格要求。即使是近期涌现的专门为 OCR 设计的视觉语言模型（如 MinerU2.5、Dots.OCR），也往往依赖外部的布局检测模块进行预处理，未能真正摆脱错误传播的桎梏。</p>
+<p><strong>怎么做的</strong> HunyuanOCR 的核心思路是摒弃所有预处理和后处理模块，利用一个轻量级的统一视觉语言模型实现纯粹的端到端 OCR 推理，从而彻底消除级联架构带来的错误累积。该模型由三个关键部件构成：首先是基于 SigLIP-v2-400M 预训练模型构建的原生分辨率视觉编码器，它通过自适应切片机制原生支持任意输入分辨率并保持原始宽高比，避免了图像强制缩放带来的失真，专门负责在长文本或极端宽高比场景下提取高质量的视觉特征；其次是自适应 MLP 连接器，它在空间维度上对高分辨率视觉特征图进行可学习的池化压缩，在保留文本密集区等关键语义的同时，大幅缩减输入给语言模型的令牌序列长度，从而降低计算冗余；最后是基于 Hunyuan-0.5B 的轻量级语言模型，它引入了 XD-RoPE 技术，将传统的旋转位置编码分解为文本、高度、宽度和时间四个独立子空间，从而建立原生对齐机制，桥接一维文本序列、二维页面布局和三维时空信息。为了在仅 1B 的小参数下激发强大的端到端推理和格式化能力，训练过程在业界首次为 OCR 任务引入了组相对策略优化（GRPO）强化学习算法。对于文本定位和文档解析等具有明确对错的封闭任务，采用带可验证奖励的强化学习；对于翻译等开放任务，则使用大语言模型作为评判者给出软奖励。在每次迭代中，模型通过最大化以下目标函数来更新策略：
+$$ \mathcal{L}_{\mathrm{GRPO}}(\theta) = \mathbb{E}_{\left[q \sim \mathcal{D},\left\{o_{i}\right\}_{i=1}^{G} \sim \pi_{\theta_{\text {old }}}(\cdot \mid q)\right]}\left[\frac{1}{G} \sum_{i=1}^{G}\left[\min \left(\frac{\pi_{\theta}\left(o_{i} \mid q\right)}{\pi_{\theta_{\text {old }}}\left(o_{i} \mid q\right)} A_{i}, \operatorname{clip}\left(\frac{\pi_{\theta}\left(o_{i} \mid q\right)}{\pi_{\theta_{\text {old }}}\left(o_{i} \mid q\right)}, 1-\epsilon, 1+\epsilon\right) A_{i}\right)-\beta \mathbb{D}_{\mathrm{KL}}\left(\pi_{\theta} \| \pi_{\text {ref}}\right)\right]\right] $$
+其中 $A_i$ 是根据组奖励计算的优势函数，$\epsilon$ 和 $\beta$ 分别控制裁剪和 KL 散度惩罚的强度。通过在奖励计算中强制执行严格的格式和长度约束，模型学会了在单次前向传播中直接输出结构化的解析结果。</p>
+<p><strong>效果如何</strong> 实验基于 1B 参数的 HunyuanOCR（0.4B 视觉编码器加 0.5B 语言模型）进行，训练数据包含通过真实爬取和合成工具构建的超过 2 亿个图像-文本对。对比基线涵盖了三条路线：传统流水线系统（如 PaddleOCR、BaiduOCR）、专用 OCR 视觉语言模型（如 MinerU2.5、PaddleOCR-VL、MonkeyOCR-pro）以及通用大参数视觉语言模型（如 Gemini-2.5-Pro、Qwen3-VL 的 2B 到 235B 版本）。在自建的 900 张图像文本定位基准上，HunyuanOCR 取得 70.92 的最高综合得分，超越了 PaddleOCR 3.0 和部分商业云 API。在文档解析基准 OmniDocBench 上，它以 94.10 的得分击败了 MinerU2.5 和 PaddleOCR-VL。在信息抽取任务中，它在 30 种卡证和票据上分别达到 92.29 和 92.53 的准确率，优于参数量更大的 Qwen3-VL-4B。在英译中复杂文档翻译数据集 DoTA 上，其 83.48 的得分也超过了 8B 规模的通用模型。不过作者也承认，由于语言模型参数仅为 0.5B，其纯文本翻译能力相较于其强大的感知和解析能力仍有差距，对于极高精度的翻译任务，仍建议将其解析结果级联给更强的专用翻译模型。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文介绍了一款名为 HunyuanOCR 的商用级、开源、轻量级（1B参数）的视觉语言模型（VLM），专用于光学字符识别（OCR）任务。该模型旨在解决传统 OCR 系统和通用 VLM 在实际应用中遇到的问题。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

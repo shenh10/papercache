@@ -21,6 +21,23 @@ title: 'Distributed Speculative Inference (DSI): Speculation Parallelism for Pro
 <div class="container">
 <h1>Distributed Speculative Inference (DSI): Speculation Parallelism for Provably Faster Lossless Language Model Inference</h1>
 <p><strong>作者/机构</strong>: Nadav Timor∗ (Weizmann Institute of Science), Jonathan Mamou (Intel Labs), Daniel Korat (Intel Labs), Moshe Berchansky (Intel Labs), Oren Pereg (Intel Labs), Moshe Wasserblat (Intel Labs), Tomer Galanti (Weizmann Institute of Science), Michal Gordon (Texas A&amp;M University), David Harel (Weizmann Institute of Science)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一种名为分布式推测式推理（DSI）的非阻塞算法，通过引入推测并行机制重叠起草与验证过程，在多 GPU 环境下实现了比传统推测式推理快 1.29 至 1.92 倍的无损文本生成加速。</p>
+<p><strong>要解决什么问题</strong>
+传统的推测式推理（SI）方法受限于严格的顺序性“起草-验证”机制。具体而言，SI 依赖较快的起草模型先生成若干候选词元，再交由目标模型进行批量验证。在这个过程中，目标模型的前向传播验证是阻塞操作，必须等待当前批次的验证彻底完成，起草模型才能开始下一轮的起草。这种机制的致命卡点在于：当起草模型的生成速度不够快，或者其预测准确率较低导致大量词元被拒绝时，频繁且耗时的验证操作会抵消掉批量计算带来的时间收益。这导致当起草模型不够理想时，SI 的整体推理延迟甚至会高于完全不使用推测的传统自回归推理。如何打破验证过程对后续起草的阻塞，使得推测式推理在任何起草模型下都能稳定获得正向加速，是本文要解决的核心问题。</p>
+<p><strong>怎么做的</strong>
+为绕开顺序验证的阻塞卡点，本文提出推测并行（Speculation Parallelism, SP）这一新型任务并行机制，将推测式推理改造为非阻塞的分布式推测式推理（DSI）算法。其核心思路是利用多个目标模型和起草模型的实例，让验证过程与后续词元的起草过程在时间上并发重叠，从而有效隐藏目标模型前向传播的验证延迟。在关键设计上，DSI 维护一棵动态构建的词元树，由多个独立线程并发处理。起草模型不断在不同分支上生成候选词元，而目标模型实例则在后台异步执行验证任务。只有当目标模型发现某个候选词元预测错误（即触发拒绝）时，系统才会产生实质性的延迟代价：此时 DSI 会触发同步机制，终止所有基于该错误词元派生的子线程，并保留正确路径继续推进。为了在固定数量的硬件上高效调度这些并发任务，DSI 引入了前瞻（lookahead）超参数，即每次发送给目标服务器进行验证的草稿词元数量。通过调整该参数，算法可以控制推测并行度（SP，即同时使用的目标服务器最大数量），确保验证任务永远不需要排队等待目标服务器。其关键约束公式为：
+$$ \left \lceil \frac{(\text{target latency})}{(\text{lookahead}) \cdot (\text{drafter latency})} \right \rceil \leq \text{SP} $$
+在这一机制下，只要起草模型单次耗时 $t_1$ 小于目标模型耗时 $t_2$，且接受率为 $p$，生成 $N$ 个词元的期望时间复杂度可大幅降低：
+$$ t_1 p(N-1) + t_2((1-p)(N-1)+1) $$
+通过这种设计，DSI 将原本串行的验证开销转化为可被并行的后台任务，从理论上保证了其生成速度在最差情况下也与标准自回归推理持平，而在期望上则严格快于传统推测式推理。</p>
+<p><strong>效果如何</strong>
+实验通过单块 NVIDIA A100 80GB GPU 测量真实的生成延迟，并以此构建了一个模拟最多 8 个 GPU 的单节点多线程并发环境。测试涵盖了多种规模的模型对，包括 StarCoder-15B/168M、Phi3-14B/4B 以及 Vicuna-13B/68M 等，并在 CNN Daily Mail（文本摘要）、Alpaca（指令遵循）、MBPP 和 HumanEval（代码生成）等任务上进行了评估。对比的基线方法有两个：一是标准的自回归推理（non-SI），代表完全不使用推测的传统逐词生成路线；二是传统的推测式推理（SI），代表依赖顺序“起草-验证”的加速路线。量化结果表明，在生成 50 个词元的设置下，DSI 在所有测试组合中均持续优于 SI，端到端延迟加速比达 1.29 倍至 1.92 倍。例如，在 HumanEval 任务上使用 StarCoder-15B/168M 模型对时，DSI 比 SI 快 1.92 倍；在 CNN-DM 任务上使用 Vicuna-13B/68M 时快 1.47 倍。离线模拟进一步证明，即使在起草模型极慢或准确率极低的极端配置下，DSI 也从未慢于任何基线，且比两者中较快者最高提速 1.6 倍。在代价与局限性方面，DSI 必须依赖至少两个以上的处理单元才能发挥并行优势。此外作者承认，受限于预算，实验仅在模拟的多 GPU 环境中运行，未在物理多节点集群中测试真实的通信开销；且当多个线程竞争 CPU 核心或内存带宽等底层硬件资源时，若前瞻参数设置不当，仍可能引发资源竞争从而影响实际效率。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文介绍了一种名为分布式推测式推理（Distributed Speculative Inference, DSI）的新型推理算法。该算法通过并行化推测式推理（Speculative Inference, SI），克服了现有SI方法的根本局限性。传统的SI方法依赖于一个顺序的“起草-验证”过程，其中每次验证必须完成后才能起草新的令牌。这导致当起草模型（drafter）速度过慢或准确率不足时，SI的性能甚至可能劣于标准的自回归推理。DSI通过引入一种名为“推测并行（Speculation Parallelism, SP）”的新型任务并行机制，将SI转变为一个非阻塞算法，通过重叠验证和起草过程来有效隐藏验证延迟。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

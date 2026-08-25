@@ -20,6 +20,15 @@ title: Efficiently Modeling Long Sequences with Structured State Spaces
 <div class="container">
 <h1>Efficiently Modeling Long Sequences with Structured State Spaces</h1>
 <p><strong>作者/机构</strong>: Albert Gu, Karan Goel, and Christopher Ré, Department of Computer Science, Stanford University</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了结构化状态空间序列模型（S4），通过对状态空间模型进行正规加低秩的参数化分解，在保持理论上捕捉长距离依赖优势的同时，将计算和空间复杂度降至近乎最优，并在长距离竞技场（LRA）等基准测试中大幅刷新了现有序列模型的性能上限。</p>
+<p><strong>要解决什么问题</strong> 主流序列模型（如 RNN、CNN 和 Transformer）在处理长度超一万步的长距离依赖数据时普遍面临瓶颈。近期引入的状态空间模型（SSM）结合特殊的 HiPPO 矩阵（一种让隐藏状态最优记忆历史输入的数学结构），在理论上解决了长距离依赖问题，但其前置方法线性状态空间层（LSSL）存在严重的计算和显存卡点。具体而言，在状态维度为 $N$、序列长度为 $L$ 的设置下，LSSL 需要重复进行矩阵乘法来计算离散化后的状态转移，导致计算复杂度高达 $O(N^2L)$，空间复杂度达到 $O(NL)$。虽然理论上可以通过对角化状态矩阵来加速，但由于 HiPPO 矩阵的特征向量元素会随状态大小呈指数级增长，导致朴素的对角化方法以及现有的快速算法在数值计算上极不稳定，根本无法在现代硬件上落地，这直接阻碍了 SSM 成为通用的基础序列模型。</p>
+<p><strong>怎么做的</strong> 核心思路是通过全新的正规加低秩（NPLR）参数化方法，绕开状态矩阵直接连乘带来的计算灾难与数值不稳定，将核心计算转化到频域并归约为稳定的柯西核（Cauchy Kernel）计算。状态空间模型的基础连续时间表达为 $x'(t) = Ax(t) + Bu(t)$ 与 $y(t) = Cx(t)$，为具备长程记忆，状态矩阵 $A$ 必须使用特定的 HiPPO 矩阵。S4 的关键设计由三个部件构成。首先是 NPLR 分解，虽然 HiPPO 矩阵不能直接被稳定对角化，但它可被精确分解为条件完美的正规矩阵（Normal Matrix）与低秩矩阵（Low-Rank Matrix）之和，定义式为：$$A = V(\Lambda - PQ^*)V^*$$其中 $V$ 是酉矩阵，$\Lambda$ 是对角矩阵，$P$ 和 $Q$ 是低秩分解矩阵。其次是生成函数与 Woodbury 恒等式修正，S4 放弃了在时域直接计算离散化后的卷积核，转而在频域计算其截断生成函数，这一步将原本棘手的矩阵求幂运算巧妙地转换成了矩阵求逆运算；面对低秩项带来的求逆困难，S4 利用 Woodbury 恒等式将包含低秩项的求逆剥离，直接归约到对角矩阵的求逆上。最后是柯西核计算，经过上述变换，核心计算被完全等价为一个经典的柯西核问题，即计算形如 $\frac{1}{\omega - \zeta}$ 的式子，这在数值分析中存在极其稳定且极速的算法。通过这套组合拳，S4 既保留了 HiPPO 矩阵捕捉长距离依赖的理论优势，又成功将计算复杂度从平方级骤降至 $O((N+L)\log(N+L))$，空间复杂度降至 $O(N+L)$，并且由于其连续时间模型的本质，S4 还能在训练时使用高效的卷积表示，在推理时无缝切换为极速的循环表示。</p>
+<p><strong>效果如何</strong> 实验主要在单张 A100 GPU 上进行，对比基线涵盖前置方法 LSSL、代表注意力优化路线的高效 Transformer 变体（如 Linear Transformer）、代表循环路线的 RNN（如 ExpRNN）、代表局部感受野路线的 CNN（如 WaveGAN-D），以及专为时间序列设计的 Informer 模型。在效率验证上，S4 比 LSSL 速度快 30 倍，显存效率高 400 倍，且与最高效的 Transformer 变体开销相当。在长距离竞技场（LRA）基准测试中，S4 在全部 6 个任务上碾压基线，平均准确率达 80.48%（基线均低于 60%），更是首个成功解决序列长度达 16384 的 Path-X 任务的模型（准确率 88%，其他模型仅为 50% 的随机猜测）。在长度为 16000 的原始语音分类任务上，S4 取得 98.3% 的准确率，相比参数量是其 90 倍的专用 CNN 模型 WaveGAN-D 错误率减半，而同期的 Transformer 和 RNN 在此任务上完全失效。作为通用模型，S4 在自回归生成时利用循环状态，推理速度比标准 Transformer 快 60 倍，且能适应采样率减半的音频数据。作者也坦诚了该方法的局限性：在 WikiText-103 语言建模任务上，S4 虽缩小了差距但仍未完全追平标准 Transformer；此外，受限于底层算子库的支持，官方代码目前仅使用了 $O(NL)$ 的朴素实现，理论上更优的近线性时间柯西核算法仍有待未来的工程化落地。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决序列建模中的一个核心问题：<strong>高效处理包含长距离依赖（LRDs）的数据</strong>。现有的主流模型，如循环神经网络（RNNs）、卷积神经网络（CNNs）和Transformers，尽管有专门为长序列设计的变体，但在处理长度超过10000的时间步时仍然面临困难。</p>
 <p>最近，一种基于<strong>状态空间模型（State Space Model, SSM）</strong>的方法展现了潜力。SSM是一种基础科学模型，通过方程 $x'(t) = Ax(t) + Bu(t), y(t) = Cx(t) + Du(t)$ 描述系统。研究【18，Combining recurrent, convolutional, and continuous-time models with the structured learnable linear state space layer，NeurIPS 2021】发现，通过为状态矩阵A选择特殊的<strong>HiPPO矩阵</strong>【16，Hippo: Recurrent memory with optimal polynomial projections，NeurIPS 2020】，SSM在理论和实践上都能很好地捕捉长距离依赖。</p>
