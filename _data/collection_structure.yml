@@ -134,6 +134,13 @@ llm:
         - llm
         - algorithm
         - agent
+      - title: The Bitter Lesson of Tool Calling
+        date: '2026-08-01'
+        url: /papers/llm/algorithm/agent/2026/08/01/the-bitter-lesson-of-tool-calling.html
+        categories:
+        - llm
+        - algorithm
+        - agent
       - title: 'Large Language Model Agent: A Survey on Methodology, Applications
           and Challenges'
         date: '2025-03-01'
@@ -157,6 +164,14 @@ llm:
         - llm
         - algorithm
         - agent
+      - title: Speculative Programmatic Tool Calling
+        date: '2026-08-01'
+        url: /papers/llm/algorithm/agent/2026/08/01/speculative-programmatic-tool-calling.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: blog
       - title: 'The Landscape of Agentic Reinforcement Learning for LLMs: A Survey'
         date: '2025-09-01'
         url: /papers/llm/algorithm/agent/2025/09/01/the-landscape-of-agentic-reinforcement-learning-for-llms-a-survey.html
