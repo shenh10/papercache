@@ -21,6 +21,15 @@ title: 'GATED DELTA NETWORKS: IMPROVING MAMBA2 WITH DELTA RULE'
 <div class="container">
 <h1>GATED DELTA NETWORKS: IMPROVING MAMBA2 WITH DELTA RULE</h1>
 <p><strong>作者/机构</strong>: Songlin Yang (MIT CSAIL), Jan Kautz (NVIDIA), Ali Hatamizadeh (NVIDIA)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文将门控机制的快速内存擦除能力与Delta规则的选择性精确更新能力相结合，提出了门控Delta规则及Gated DeltaNet架构，在长上下文检索、语言建模和长度外推任务上全面超越了现有的Mamba2和DeltaNet。</p>
+<p><strong>要解决什么问题</strong> 标准Transformer的自注意力机制存在与序列长度呈二次方的计算复杂度瓶颈。作为高效替代方案的线性Transformer虽然解决了效率问题，但在处理长序列信息时，一旦序列长度超过模型维度，就会发生信息被叠加且无法区分的“记忆碰撞”，导致上下文检索能力大幅衰减。现有的改进路线各执一端且均有局限：以Mamba2为代表的门控更新规则通过一个动态比率统一衰减所有键值关联，这种机制虽然能快速擦除历史记忆，但无法针对不同重要性的信息进行选择性保留，内存利用效率低下；以DeltaNet为代表的Delta更新规则能够选择性地用新信息替换旧的键值对，在合成检索任务中表现优异，但它缺乏快速清除过时信息的机制，在面临真实世界的上下文切换时会因为无法有效清理内存而导致性能大幅下降。</p>
+<p><strong>怎么做的</strong> 核心思路是将门控机制与Delta规则统一在一个内存控制框架内，既利用门控项实现自适应的内存擦除，又保留Delta更新结构以促进有效的键值关联学习。传统的Delta规则通过动态擦除旧值并写入新值来进行更新，其本质是优化在线回归目标 $L(S_t) = \frac{1}{2} \|S_t k_t - v_t\|^2$，并实现了一个带广义Householder转移矩阵 $(I - \beta_t k_t k_t^\top)$ 的一阶线性循环。本文在此基础上引入了数据依赖的门控项 $\alpha_t \in (0, 1)$，其核心状态更新机制可以理解为在测试时随机梯度下降优化中加入自适应权重衰减。当 $\alpha_t$ 接近0时，模型能够迅速清除饱和或不相关的内存，避免记忆碰撞；当 $\alpha_t$ 接近1时，模型切换回纯Delta规则，对特定内容进行精确的选择性更新而不干扰其他信息。为了解决这种复杂循环带来的训练效率问题，作者在分块并行计算的基础上，利用经典的WY表示（用于优化广义Householder矩阵的累积乘积）并结合UT变换，推导出了支持门控项的硬件高效分块训练算法。该算法将序列分割成固定大小的块，利用张量核心进行密集的矩阵乘法运算。在具体架构设计上，Gated DeltaNet沿用了Llama的宏观结构，但将其中的自注意力层替换为基于门控Delta规则的混合器。在该混合器中，查询、键和值通过线性投影、短卷积和SiLU激活函数生成，并对查询和键应用L2归一化以保证训练稳定性。</p>
+<p><strong>效果如何</strong> 实验在1.3B参数规模下进行，模型使用FineWeb-Edu数据集的100B tokens进行训练，训练序列长度为4K，并在单张H100 GPU上测试吞吐量。对比基线包含代表衰减路线的纯线性循环模型（RetNet、HGRN2、Mamba、Mamba2）、代表纯Delta规则路线的DeltaNet，以及代表标准注意力的Transformer++。在常识推理和语言建模任务中，Gated DeltaNet的零样本准确率和困惑度持续优于Mamba2和DeltaNet。在外推至20K tokens的长序列测试中，该方法在所有RNN基线中取得了最低的综合困惑度，展现了更稳健的内存管理能力。在长上下文理解中，其在单文档问答、少样本上下文学习和代码任务上优势显著。然而，作者也坦承了局限性：在真实世界检索密集型任务中，纯线性循环模型与Transformer仍存在显著差距；虽然Gated DeltaNet优于Mamba2和DeltaNet，但提升幅度不如合成任务明显，原因在于未经指令微调的小模型容易产生重复错误。在代价方面，门控Delta规则相比纯Delta规则仅引入了微不足道的计算开销，但由于其转移矩阵更具表达力，吞吐量略慢于Mamba2，且在2K短上下文内不及高度优化的Transformer++。为此，作者引入了将Gated DeltaNet与滑动窗口注意力（SWA）或Mamba2层交错结合的混合架构，不仅在真实世界检索中超越了纯注意力模型，还保持了极具竞争力的训练吞吐量。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决线性Transformer在检索和长上下文任务中性能受限的问题。尽管线性Transformer作为标准Transformer的高效替代品备受关注，但其在特定任务上的表现仍有不足。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

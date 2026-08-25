@@ -21,6 +21,15 @@ title: 'CAGE: Curvature-Aware Gradient Estimation for Accurate Quantization-Awar
 <div class="container">
 <h1>CAGE: Curvature-Aware Gradient Estimation for Accurate Quantization-Aware Training</h1>
 <p><strong>作者</strong>: Soroush Tabesh, Mher Safaryan, Andrei Panferov, Alexandra Volkova, Dan Alistarh</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出名为 CAGE（曲率感知梯度估计）的新型量化感知训练方法，通过将量化误差作为曲率感知校正项直接整合到训练动态中，解决了低比特量化与全精度模型间的准确性差距，使 3 比特权重和激活的预训练准确性达到了先前最佳方法 4 比特的水平。</p>
+<p><strong>要解决什么问题</strong> 原有量化感知训练（QAT）卡在量化函数不可微、梯度几乎处处为零的问题上。标准做法直通估计器（STE）在反向传播时跳过量化算子，本质是用单位矩阵替换量化操作的雅可比矩阵，仅提供一阶近似。这种机制妥协导致梯度估计不准确，引发训练不稳定、次优收敛，以及权重在相邻量化网格点决策边界附近剧烈振荡。从理论机制看，现有方法试图寻找一个既是量化点又是损失函数驻点（梯度为零）的状态。但量化并非可逆变换，该目标通常无法实现，导致现有收敛保证中始终存在一个与量化误差成比例的非消失项。只要该误差存在，模型就无法真正收敛到最优，这是低比特量化模型精度掉点的核心瓶颈。</p>
+<p><strong>怎么做的</strong> 核心思路是将量化感知训练重构为多目标优化问题：同时最小化任务损失和量化误差（参数与量化后参数的距离）。为平衡两者，作者定义了帕累托最优点，即任何单目标的局部改进必以牺牲另一目标为代价，定义式为：$$\nabla_{\lambda \mathrm{P}} f\left(Q\left(x^{*}\right)\right):=\nabla f\left(x^{*}\right)+\lambda\left(x^{*}-Q\left(x^{*}\right)\right)=0$$其中 $\lambda$ 是平衡参数，$Q$ 是量化算子。基于此条件，CAGE 不去精炼一阶近似，而是直接将量化误差 $e_t = x_t - Q(x_t)$ 作为曲率感知校正项引入梯度更新。关键设计包含误差耦合机制与优化器集成。在 AdamW 优化器下，作者采用解耦更新规则：基础优化器先处理直通估计器传来的微批次梯度，计算出常规模型更新步 $\tilde{x}_{t+1}$；随后 CAGE 将量化误差作为轻量级逐元素后处理施加于参数，更新式为：$$x_{t+1} = \tilde{x}_{t+1} - \alpha \lambda_t e_t$$该解耦设计的职责在于保留 AdamW 的动量和方差统计行为，同时防止帕累托平稳方向被优化器预处理矩阵扭曲，从而稳定低比特训练并避免数值错误。为防初期校正项过度约束动态，设计了预热调度部件，在设定的静默期比例内跳过或线性提升校正系数。理论上，在损失平滑且随机梯度无偏等假设下，CAGE 能以 $O(\frac{1}{\sqrt{T}})$ 速率强遍历性收敛到帕累托最优解，且上界彻底消除了量化误差产生的非消失项。相比同期需要全精度前向传播的 LOTION 方法，CAGE 绕过了对损失正则化项求导的难题，直接在动态层面实现曲率感知。</p>
+<p><strong>效果如何</strong> 实验在 8 张 H100 GPU 上开展，涵盖 30M 到 800M 参数 Llama 风格模型预训练（C4 数据集）及 Llama-3.2-3B 模型的量化感知微调（Tulu-SFT 数据集）。对比的最强基线是 QuEST 方法，代表结合异常值缓解与信任掩码直通估计器的先进路线；另一基线是同期 LOTION 方法，代表通过无偏随机舍入平滑量化损失的正则化路线；同时以 BF16 全精度为参考。微调任务中，量化到 MXFP4 格式时，CAGE 在 GSM8K 等基准上持续优于 QuEST，将量化精度损失减半。预训练任务中，W4A4 设置下所有尺寸模型的最终验证困惑度均大幅低于 QuEST；在帕累托前沿对比中，CAGE 的 W3A3 训练准确性成功匹配了 QuEST 的 W4A4 结果。缩放定律分析显示，CAGE 在 4 比特时将模型有效参数容量提升超 10%，2 比特时提升 20%。此外，CAGE 在 AdamW、Muon、Shampoo 和 SOAP 等优化器上均带来一致的验证损失下降。在与 LOTION 的 W4A16 严格对齐测试中，LOTION 训练后期趋于平稳，而 CAGE 持续改进取得更低最终损失。该方法的代价是引入了静默比率和正则化系数两个需调节的超参数，且作者承认未来需进一步探索其在极低比特领域及与稀疏化结合的表现。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决低比特量化感知训练（QAT）与全精度训练之间的准确性差距问题。现有的QAT方法，尤其是直通估计器（STE），存在收敛缓慢和不稳定的问题，且缺乏形式化的收敛保证。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

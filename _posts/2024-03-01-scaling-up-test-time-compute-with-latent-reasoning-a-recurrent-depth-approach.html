@@ -19,6 +19,15 @@ title: 'Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Ap
 <div class="container">
 <h1>Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach</h1>
 <p>Jonas Geiping 1, Sean McLeish 2, Neel Jain 2, John Kirchenbauer 2, Siddharth Singh 2, Brian R. Bartoldson 3, Bhavya Kailkhura 3, Abhinav Bhatele 2, Tom Goldstein 2</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种潜在深度循环 Transformer 架构，通过在连续的高维潜在空间中进行隐式推理来扩展测试时计算量，成功训练了一个 3.5B 参数的模型，证明了无需专门思维链数据，仅靠增加测试时迭代次数即可显著提升复杂任务性能。</p>
+<p><strong>要解决什么问题</strong> 当前大语言模型主要通过思维链生成更多文本词元来扩展测试时计算量，这面临三个核心卡点。首先是极度依赖专门构建的长篇推理演示数据，无法直接利用标准预训练语料。其次是显存和计算效率瓶颈，长思维链要求极长的上下文窗口，导致推理和训练内存需求激增，并大幅增加分布式训练的通信成本。最后是表征局限性，现有方法强制将复杂的内部思考投射到单一的、语言化的词元上，难以捕捉空间思维或物理直觉等非语言化推理过程。作者希望建立一种鼓励模型通过学习逻辑和抽象来“思考”的先验，而非死记硬背，从而开辟出独立于参数扩展和语言化推理之外的第三条性能扩展路径。</p>
+<p><strong>怎么做的</strong> 核心思路是放弃在离散文本空间生成长思维链，转而让模型在连续潜在空间中进行隐式的循环计算。为绕开长上下文显存瓶颈和定制数据依赖，该方法设计了潜在深度循环 Transformer 架构。关键设计由三个功能组构成：前奏块（Prelude）将输入的离散词元嵌入潜在空间；核心循环块（Core recurrent block）是计算中心，在潜在空间中对状态反复迭代更新；尾声块（Coda）将最终状态反嵌入并输出下个词元的概率。其定义性公式为：$$ \mathbf{e} = P(\mathbf{x}), \mathbf{s}_{0} \sim \mathcal{N}(\mathbf{0}, \sigma^{2} I_{n \cdot h}), \mathbf{s}_{i} = R(\mathbf{e}, \mathbf{s}_{i-1}) \text{ for } i \in \{1, \ldots, r\}, \mathbf{p} = C(\mathbf{s}_{r}) $$ 其中 $r$ 是迭代次数。每步循环都会重新拼接注入输入特征 $\mathbf{e}$ 以保证迭代算子稳定，并在核心块中使用适配器矩阵将当前状态与输入特征拼接映射，而非简单加法融合。同时，用随机噪声初始化 $\mathbf{s}_{0}$ 以促使模型收敛到与初始化无关的稳态。微观设计上，所有层排列成特殊的“三明治”归一化格式，以稳定大规模训练。为使模型在测试时能自适应扩展计算量，训练阶段采用对数正态泊松分布为每个序列随机采样迭代次数 $r$，优化期望损失：$$ \mathcal{L}(\theta) = \mathbb{E}_{\mathbf{x} \in X} \mathbb{E}_{r \sim \Lambda} L(m_\theta(\mathbf{x}, r), \mathbf{x}^{\prime}) $$ 为控制显存开销，模型采用截断反向传播，仅对最后 8 次迭代计算梯度。该架构天然支持高级特性：通过评估连续步骤间的 KL 散度实现零样本每词元自适应计算；通过层间共享固定预算的 KV 缓存降低内存占用；且无需外部草稿模型即可实现零样本自推测解码。</p>
+<p><strong>效果如何</strong> 实验在 4096 张 AMD MI250X GPU 上训练了一个 3.5B 参数的模型，使用了 800B tokens 的混合数据。对比基线选择了规模相近的通用开源模型路线（Amber、Pythia、OLMo）以及专门的代码模型路线（StarCoder2）。量化结果显示，随测试时循环次数增加，模型性能显著提升。在 32 次循环下，该模型在标准基准上超越了 Pythia，与第一代 OLMo-7B 相当；在数学推理（GSM8k 和 MATH）上超越了除最新 OLMo-2 外的所有同级模型；在代码基准上击败了通用开源模型，但不及 StarCoder2 等专用模型。实验证明模型能自适应分配计算量：HellaSwag 等简单任务在 8 次循环后达峰值，而 GSM8k 等复杂任务能从 64 次循环中持续受益。通过可视化潜在空间，发现模型独立学会了利用高维空间的几何模式（如轨道、收敛路径和“滑块”机制）组织计算。该方法的局限在于，模型将容量用于推理而非记忆，导致封闭式问答表现一般，但在提供事实的开放式问答中性能大幅回升。此外，架构对初始化和归一化极度敏感，早期常规设置曾导致隐藏状态表示崩溃或陷入忽略输入状态的局部最优，最终依靠“三明治”层归一化格式和降低峰值学习率才成功扩展。</p>
+</div>
+</details>
 <h3>A1 主要贡献</h3>
 <p>本文研究了一种新颖的语言模型架构，该架构能够通过在潜在空间中进行隐式推理来扩展测试时的计算量。其核心思想是，当前主流的推理模型通过生成更多的词元（tokens）来扩展计算，例如思维链（chain-of-thought）方法，但这需要专门的训练数据，且必须将复杂的内部推理过程投射到单一的、语言化的下一个词元上，这可能是低效的。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

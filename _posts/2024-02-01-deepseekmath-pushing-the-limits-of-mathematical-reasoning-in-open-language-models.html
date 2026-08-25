@@ -21,6 +21,15 @@ title: 'DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Langu
 <p><strong>文章标题</strong>：DeepSeekMath: 推动开放语言模型中数学推理的极限<br/>
 <strong>作者/机构</strong>：Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, Junxiao Song, Xiao Bi, Haowei Zhang, Mingchuan Zhang, Y.K. Li, Y. Wu, Daya Guo; 来自 DeepSeek-AI, 清华大学, 北京大学</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文通过构建1200亿 tokens 的高质量数学语料库并提出无需评论家模型的 GRPO 强化学习算法，训练出了 DeepSeekMath 7B 模型，在数学推理任务上以小模型尺寸达到了与 540B 闭源模型相媲美的顶尖性能。</p>
+<p><strong>要解决什么问题</strong> 原有的大语言模型在提升数学推理能力时主要面临两个层面的卡点。在预训练阶段，高质量数学数据的规模和来源严重受限，以往模型高度依赖 arXiv 论文，但这类数据规模容易见顶，且对基础数学解题能力的实际提升并不明显。在强化学习微调阶段，主流的近端策略优化算法 PPO 存在严重的显存和计算资源瓶颈。PPO 在训练策略模型时，必须同时训练一个与策略模型参数量相当的价值函数（评论家模型）来估计基线以减少方差，导致显存消耗翻倍。此外，在语言模型生成任务中，通常只有序列末尾的最后一个 token 会被赋予分数，这种极其稀疏的奖励信号使得训练一个能在每个 token 上都给出准确价值预测的评论家模型变得异常困难且低效，严重拖慢了强化学习的迭代效率。</p>
+<p><strong>怎么做的</strong> 为了绕开上述卡点，本文在数据构建和强化学习算法上进行了核心设计。在数据层面，核心思路是通过迭代式的分类器从海量网页中挖掘高质量数学文本。方法从高质量网页集合 OpenWebMath 作为种子语料库出发，训练 fastText 分类器去 Common Crawl 中召回相似网页。为解决正样本多样性不足，设计了基于域名的迭代扩充机制：将高比例召回的域名标记为数学相关域，人工标注未被召回的 URL 加入种子库重新训练。经过四轮迭代，构建了包含1200亿 tokens 的 DeepSeekMath 语料库。在强化学习层面，提出了组相对策略优化算法 GRPO，核心思路是摒弃 PPO 中极耗资源的价值模型，通过对同个问题采样多个输出，利用组内相对得分估计基线。关键设计包含两种优势计算方式。对于结果监督，GRPO 为每个问题采样 $K$ 个输出，通过奖励模型打分后减去均值并除以标准差进行归一化，将所有 token 的优势值设为该归一化奖励：$$ \hat{A}_{t,k} = \frac{r_k - \text{mean}(r)}{\text{std}(r)} $$对于过程监督，则在每个推理步骤结束时赋予奖励，将 token 的优势值计算为后续所有步骤归一化奖励之和：$$ \hat{A}_{t,k} = \sum_{T_{\text{step}}(j) \ge t} R'_{\text{step}(j)_k} $$这种组内相对比较机制完美契合了奖励模型基于比较数据训练的本质，彻底免去了额外训练价值模型的显存开销。此外，模型在预训练前先进行代码训练，显著提升了后续的数学推理能力。</p>
+<p><strong>效果如何</strong> 实验基于 7B 参数规模的模型展开，预训练使用5000亿 tokens 混合数据，并在77.6万条数据上进行指令微调，最后仅用约14.4万条思维链数据进行强化学习。对比基线涵盖代表通用大模型的 Mistral 7B、Qwen 72B，代表数学专项预训练的 Llemma 34B，代表数学指令微调与强化学习的 WizardMath、ToRA 34B，以及代表闭源最高水平的 GPT-4、Gemini Ultra 和 Minerva 540B。量化结果显示，预训练阶段的 DeepSeekMath-Base 7B 在 MATH 数据集上比现有开源基础模型高出超10个绝对百分点，并超越了参数量大77倍的 Minerva 540B。强化学习后的 DeepSeekMath-RL 7B 在无工具思维链推理下，在 GSM8K 和 MATH 上分别达到 88.2% 和 51.7% 的准确率，击败所有 7B 到 70B 开源模型。在允许使用 Python 工具辅助的设置下，MATH 准确率接近 60%。实验也揭示了局限：单纯增加 arXiv 论文数据并未带来显著性能提升；若在单阶段预训练中强行混合代码和数学数据，受限于小模型容量，反而会损害无工具的纯数学推理能力。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文介绍了 DeepSeekMath，一个在数学推理方面取得显著性能的领域特定语言模型。其核心贡献可分为可扩展的数学预训练和对强化学习的探索与分析两个方面。</p>
 <p><strong>在可扩展的数学预训练方面：</strong><br/>

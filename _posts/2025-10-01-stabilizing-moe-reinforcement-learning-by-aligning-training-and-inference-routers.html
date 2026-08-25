@@ -19,6 +19,23 @@ title: Stabilizing MoE Reinforcement Learning by Aligning Training and Inference
 <h1>Stabilizing MoE Reinforcement Learning by Aligning Training and Inference Routers</h1>
 <p><strong>作者/机构</strong>: Wenhan Ma†‡∗, Hailin Zhang‡, Liang Zhao‡, Yifan Song†‡, Yudong Wang†‡, Zhifang Sui†⋄, Fuli Luo⋄<br/>
 †State Key Laboratory of Multimedia Information Processing, School of Computer Science, Peking University ‡LLM-Core Xiaomi</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文针对混合专家（MoE）模型在强化学习中因训练与推理路由选择不一致导致的训练崩溃问题，提出了部署路由回放（R3）方法，通过在训练阶段严格复用推理阶段的路由掩码，成功消除了策略差异并大幅提升了训练稳定性与最终性能。</p>
+<p><strong>要解决什么问题</strong>
+在大型语言模型的强化学习（如 PPO）中，普遍采用独立引擎进行部署采样（推理引擎）和损失计算（训练引擎），这种分离架构天然会带来策略不匹配。在混合专家（MoE）模型中，这种不一致性被显著放大，成为导致训练崩溃的根本卡点。具体到机制层面，MoE 模型与密集模型的关键区别在于路由机制引入了函数的不连续性。路由器输入的微小扰动会导致模型选择完全不同的专家网络，引起层输出的巨大变化。数据表明，约 10% 的路由器在训练时选择了与推理时不同的专家，导致高达 94% 的 token 在前向传播中经历了不同的专家选择。更严重的是，即使在同一训练框架内对完全相同的输入序列进行两次前向传播，MoE 模型也可能产生不同的 token 概率分布。这种路由分布的随机性，为强化学习中旧策略概率的计算引入了巨大噪声，导致重要性采样比率极不可靠。极端情况下，训练与推理分布概率比值超过 2 倍的极端 token 比例比密集模型高出一个数量级。这种失真的重要性权重直接破坏了策略更新的稳定性，导致模型在训练中途崩溃。</p>
+<p><strong>怎么做的</strong>
+为解决路由不一致的卡点，本文提出了部署路由回放（R3）方法。核心思路是：在推理阶段记录下模型做出的硬性路由选择，并在训练阶段强制回放，从而在物理层面保证训练和推理过程的路由行为绝对对齐。在常规 MoE 前向传播中，训练阶段的路由器根据输入计算 logits，生成指示选中专家的二进制掩码，再通过 softmax 计算门控权重并加权专家输出。R3 的关键设计由推理掩码捕获与训练梯度保留两个部件构成。首先，在推理阶段正常计算并保存路由掩码 $I_{\text{infer}}$。进入训练阶段后，R3 放弃使用训练时计算的掩码，直接注入并重用 $I_{\text{infer}}$，确保训练期间激活的专家与推理期间完全一致。其次，为不破坏路由器的优化，R3 并不直接回放推理时的门控权重，而是将推理掩码 $I_{\text{infer}}$ 与训练时实时计算的 logits $s_{\text{train}}$ 结合。回放门控权重 $g_{\text{replay},i}$ 的计算公式为：
+$$ g_{\text{replay},i} = \frac{I_{\text{infer},i} \exp(s_{\text{train},i})}{\sum_{j=1}^M I_{\text{infer},j} \exp(s_{\text{train},j})} $$
+随后，模型使用这些回放权重组合训练专家的输出，产生最终的回放输出：
+$$ \mathbf{y}_{\text{replay}} = \sum_{i=1}^{M} g_{\text{replay},i} \mathcal{E}_i(\mathbf{x}_{\text{train}}) $$
+这种设计的精妙在于，通过仅回放离散掩码 $I_{\text{infer}}$，梯度依然能通过 $s_{\text{train}}$ 正常回传给路由器的线性权重矩阵，在对齐专家选择的同时保留了完整的梯度流。此外，为支持多轮对话，R3 将推理引擎的路由掩码与 KVCache 一起存储，命中缓存时直接重用，使该方法在复杂任务中保持极高效率。</p>
+<p><strong>效果如何</strong>
+实验在数学推理任务上展开，使用约 10 万个数学问题作为训练数据。模型选用 30B 参数的 Qwen3-30B-A3B-Base 及其 SFT 模型。硬件配置未明确指定，软件栈基于 VeRL 框架，结合 Megatron 训练和 SGLang 推理。对比基线包含三种路线：代表裁剪技术的 GRPO 结合 DAPO、代表上裁剪阈值路线的 TIS，以及代表序列级重要性采样的 GSPO。量化结果表明，R3 在不同设置下均取得最优表现。在多 mini-step 设置（8 个 mini step，学习率 $1 \times 10^{-6}$）下，GRPO+R3 平均分比 GSPO 基线高 1.29 分；将 R3 与 GSPO 结合可再提升 0.95 分。在单 mini-step 设置（一次性更新 2048 个样本，学习率 $3 \times 10^{-6}$）下，未使用 R3 的三种基线在训练中全部遭遇灾难性崩溃；而 R3 成功防止了崩溃，并在 SFT 模型上比 TIS 高 5.58 分，在 Base 模型上高 1.51 分。底层指标显示，未使用的基线中概率差异超过 2 倍的极端 token 比例在 60 步后飙升至 10% 以上导致中断；应用 R3 后该比例绝大部分时间被压制在 $10^{-4}$ 以下。此外，R3 的梯度范数始终保持较低水平，证明模型能更稳地探索策略。作者也指出了局限：将 R3 与 TIS 结合未带来收益甚至导致性能下降（如 SFT 模型单 mini-step 下降 1.69 分），因为 R3 已消除了策略差异，叠加 TIS 的额外校正反而多余。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文研究了在混合专家（MoE）模型中，强化学习（RL）训练的不稳定性问题。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

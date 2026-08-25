@@ -20,6 +20,21 @@ title: 'Quartet: Native FP4 Training Can Be Optimal for Large Language Models'
 <h1>Quartet: Native FP4 Training Can Be Optimal for Large Language Models</h1>
 <p><strong>标题</strong>：Quartet：原生FP4训练可成为大语言模型的最优选择<br/>
 <strong>作者/机构</strong>：Roberto L. Castro (ISTA), Andrei Panferov (ISTA), Soroush Tabesh (ISTA), Oliver Sieberling (ETH Zürich), Jiale Chen (ISTA), Mahdi Nikdan (ISTA), Saleh Ashkboos (ETH Zürich), Dan Alistarh (ISTA &amp; Red Hat AI)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文针对大语言模型在极低精度下的训练精度下降问题，提出了一种专为NVIDIA Blackwell架构设计的端到端原生FP4训练算法Quartet，在保持模型精度的同时实现了相比FP8最高1.6倍的训练加速。</p>
+<p><strong>要解决什么问题</strong>
+虽然FP4等极低精度计算能显著提升吞吐量和能效，但现有的FP4训练算法在应用于当前的大语言模型时，会面临严重的精度下降和稳定性问题。为了维持训练，现有方法往往需要回退到更高精度进行部分计算，无法实现真正的端到端全量化训练。这导致了新兴的低精度硬件能力（如NVIDIA Blackwell架构提供的原生4位浮点数执行能力）与实现精确量化模型训练所需的算法支持之间存在巨大差距。具体到机制层面，如果强行在所有线性层使用低精度，前向传播的量化误差会导致模型有效参数量缩水，而反向传播的梯度估计偏差则会破坏迭代优化算法的收敛性，导致模型在长时训练中发散或性能断崖式下跌。</p>
+<p><strong>怎么做的</strong>
+作者提出通过“诱导缩放定律”来拆解和评估量化训练方法。该定律引入了两个关键参数：前向传播的参数效率 $\text{eff}_N$（与量化误差相关）和反向传播的数据效率 $\text{eff}_D$（与梯度偏差相关）。其定义公式如下：
+$$L(N, D, P_{forward}, P_{backward}) = \left( \frac{A}{(N \cdot \text{eff}_N(P_{forward}))^\alpha} + \frac{B}{(D \cdot \text{eff}_D(P_{backward}))^\beta} \right)^\gamma + E$$
+基于这一框架，Quartet算法采取了“两全其美”的策略，分别针对前向和反向传播的卡点进行设计，确保在线性层的所有三个矩阵乘法中都使用低精度。关键设计由以下几个部件构成：第一，前向传播采用QuEST方法。它通过Hadamard归一化后接基于均方根误差的裁剪，将内部状态投影到低精度。这种确定性的舍入方式能最小化均方误差，从而最大化参数效率。第二，反向传播采用随机舍入。优化理论表明无偏的梯度估计对收敛至关重要，随机舍入虽然会引入较高的误差，但能保证完美的幅度对齐，消除梯度偏差，从而最大化数据效率，这对于数据饱和的长时训练尤为关键。第三，面向GPU的极速算子实现。为了抵消Hadamard变换带来的额外开销，Quartet利用MXFP4格式每32个元素共享一个尺度的特性，将Hadamard变换的组大小也设为32。在计算阶段，算法将Hadamard变换与量化操作融合，直接在GPU共享内存和寄存器中完成FP32到FP4的转换与尺度计算。随后，利用CUTLASS 3.9库和Blackwell架构专用的 `tcgen05.mma` 指令，执行带有原生缩放因子的矩阵乘法。这种设计避免了在CUDA层面进行低效的软件重缩放，使得理论上复杂的量化流程在实际硬件上跑出了极致的速度。</p>
+<p><strong>效果如何</strong>
+实验在C4数据集上预训练了Llama-2架构模型，非嵌入参数规模从30M覆盖到7B，训练数据量从25倍到800倍参数量。硬件使用NVIDIA H100进行预训练，在RTX 5090上测试加速比。对比基线包含了四种全量化训练路线：代表无偏量化与随机下溢结合的LUQ、代表Hadamard异常值缓解路线的HALO、代表分块量化路线的Jetfire，以及代表杠杆分数采样路线的LSS。在所有数据参数比下，Quartet的验证损失均显著低于基线。在100倍数据参数比下，Quartet相比最强的基线LUQ相对损失降低了10%。当硬移植到FP4时，Jetfire和HALO出现严重性能下降，LSS在超过50倍数据量后直接发散。Quartet展现出极高的效率，参数效率达到0.64，数据效率达到0.94，这意味着达到同等损失所需参数量减少了15%、数据量减少了5倍。在7B模型上，Quartet展现了极佳的训练稳定性，且下游任务表现与验证损失高度一致。在整体训练速度上，Quartet相比FP8最高加速1.6倍，相比BF16最高加速2.9倍；前向推理相比FP8最高加速2倍。作者也承认了该方法的局限性：它深度绑定特定的数据格式（MXFP4）和计算架构（NVIDIA Blackwell），其随机舍入等核心操作高度依赖硬件底层的原生支持，在其他不支持这些特性的硬件或格式上可能无法直接复用。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文研究了在NVIDIA Blackwell新架构支持下，使用FP4低精度格式直接训练大语言模型（LLM）的挑战和机遇。</p>
 <p><strong>核心问题</strong>：尽管FP4等极低精度计算能显著提升吞吐量和能效，但现有的FP4训练算法在应用于当前的大语言模型时，会面临严重的精度下降和稳定性问题，或者需要回退到更高精度进行部分计算。这导致了新兴的低精度硬件能力与实现精确、端到端量化模型训练所需的算法支持之间存在差距。</p>

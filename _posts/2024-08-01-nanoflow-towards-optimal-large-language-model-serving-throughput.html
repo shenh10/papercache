@@ -20,6 +20,21 @@ title: 'NanoFlow: Towards Optimal Large Language Model Serving Throughput'
 <h1 id="nanoflow-towards-optimal-large-language-model-serving-throughput">NanoFlow: Towards Optimal Large Language Model Serving Throughput</h1>
 <p><strong>文章标题</strong>: NanoFlow: 迈向最优的大型语言模型服务吞吐量<br/>
 <strong>作者/机构</strong>: Kan Zhu (University of Washington), Yufei Gao (University of Washington, Tsinghua University), Yilong Zhao (University of Washington, UC Berkeley), Gefei Zuo (University of Michigan), Liangyu Zhao (University of Washington), Dedong Xie (University of Washington), Yile Gu (University of Washington), Tian Tang (University of Washington, Tsinghua University), Qinyu Xu (University of Washington, Tsinghua University), Zihao Ye (University of Washington), Keisuke Kamahori (University of Washington), Chien-Yu Lin (University of Washington), Ziren Wang (University of Washington, Tsinghua University), Stephanie Wang (University of Washington), Arvind Krishnamurthy (University of Washington), Baris Kasikci (University of Washington)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一个利用设备内并行性重叠异构操作的大语言模型服务框架 NanoFlow，通过将输入批次拆分为纳米批次进行细粒度流水线调度，在主流模型上实现了比现有最先进系统高 1.91 倍的吞吐量，达到了理论最优吞吐量的 50% 至 72%。</p>
+<p><strong>要解决什么问题</strong>
+现有的大语言模型服务系统未能充分利用 GPU 计算资源，导致实际吞吐量远低于理论上限。传统观点常认为大模型推理受限于显存带宽，但本文通过成本模型推导指出，在现代模型广泛采用分组查询注意力（GQA）且服务系统维持大批处理大小的场景下，端到端的推理实际上是计算密集型（compute-bound）的。然而，现有的主流服务框架在单个 GPU 内是按顺序执行异构操作的：先执行计算密集型的矩阵乘法，再执行内存密集型的注意力机制，最后执行网络密集型的张量并行通信。这种顺序执行模式会在设备内部产生大量流水线气泡，导致最核心的瓶颈资源——计算单元——在内存读取或网络同步期间处于闲置状态，整体计算利用率仅约 40%。如果不能打破设备内的顺序执行壁垒，系统吞吐量将永远受制于流水线气泡。</p>
+<p><strong>怎么做的</strong>
+为了打破顺序执行壁垒，NanoFlow 的核心思路是引入设备内并行性（intra-device parallelism），将原本庞大的输入批次拆分为更细粒度的“纳米批次”（nano-batch），并复制相应的操作独立处理每个部分。这种设计使得计算密集型、内存密集型和网络密集型操作能够在单个 GPU 内并行执行，从而用内存和网络操作填补计算操作的流水线气泡。在计算密集型场景下，系统的最优吞吐量仅取决于 GPU 的总计算能力和模型参数量，定义如下：
+$$Throughput_{optimal} = \frac{N_{GPU}Compute}{2P_{Model}}$$
+NanoFlow 的关键设计由自动搜索引擎和端到端运行时系统构成。首先，自动搜索引擎负责寻找最优的流水线调度策略，分两阶段运行。第一阶段在不考虑内核间干扰的假设下，使用混合整数线性规划确定初始的流水线结构（纳米批次的数量、大小和顺序），目标是消除计算流水线气泡。第二阶段引入真实的内核干扰模型，因为多个内核并发时会竞争底层硬件导致降速。引擎使用矩阵乘法性能作为物理资源分配的代理指标，建立计算利用率到内存或网络利用率的映射表，据此重新规划资源分配。其次，NanoFlow 提供了端到端运行时系统。在请求调度上，它采用异步调度，将 CPU 上的批次形成与 GPU 执行并行以隐藏调度开销；在键值缓存（KV 缓存）管理上，它利用前馈神经网络计算期间的 GPU 闲置带宽，将 KV 缓存同步卸载到主机，并通过连续空间拷贝再分散的策略大幅提升传输带宽。</p>
+<p><strong>效果如何</strong>
+实验在 8 块 NVLink 互连的 NVIDIA A100 GPU 上进行，评估了 LLaMA-2-70B、QWen2-72B、Mixtral 8×7B 等模型，使用 Splitwise 等真实对话数据集。对比基线包括三个代表性系统：实现 PagedAttention 和分块预填充的高吞吐量系统 vLLM、动态组合预填充和解码请求的微软框架 DeepSpeed-FastGen，以及启用分页缓存和动态批处理优化的英伟达高性能引擎 TensorRT-LLM。在离线吞吐量测试中，NanoFlow 表现出压倒性优势，在真实数据集长度下，吞吐量平均比 vLLM 高 4.18 倍，比 DeepSpeed-FastGen 高 3.45 倍，比 TensorRT-LLM 高 1.91 倍。在在线服务场景下，NanoFlow 在 200 毫秒延迟服务水平目标内，能维持比 TensorRT-LLM 高 1.64 倍的请求率。代价方面，单纯引入纳米批处理而不重叠会导致批处理效应减弱，带来 13.2% 的性能下降；启用 KV 缓存卸载也会因内核干扰导致流水线性能下降 3.0%。但这些代价被操作重叠带来的巨大收益（如解码密集型任务中 1.17 倍加速）和减少重计算的收益完全覆盖。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文首先通过详细分析指出，尽管大型语言模型（LLM）服务包含内存密集型组件（如自注意力机制），但对于大多数常见工作负载和模型而言，端到端的LLM服务实际上是计算密集型（compute-bound）的。然而，现有服务引擎未能充分利用计算资源，因为计算、内存、网络等异构操作在单个设备内是顺序执行的，导致总计算利用率仅约40%。</p>
 <p>针对这一问题，本文的核心贡献是提出了NanoFlow，一个旨在通过利用设备内并行性（intra-device parallelism）来最大化工作负载资源瓶颈利用率的服务框架。</p>

@@ -20,6 +20,17 @@ title: 'rStar2-Agent: Agentic Reasoning Technical Report'
 <p><strong>作者/机构</strong>: Ning Shang∗, Yifei Liu∗, Yi Zhu∗, Li Lyna Zhang∗†, Weijiang Xu, Xinyu Guan, Buze Zhang, Bingcheng Dong, Xudong Zhou, Bowen Zhang, Ying Xin, Ziming Miao, Scarlett Li, Fan Yang, Mao Yang†<br/>
 Microsoft Research</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文通过在代码环境中引入智能体强化学习，训练了一个 14B 参数的数学推理模型 rStar2-Agent，在生成更短响应的情况下，实现了比肩甚至超越 671B 规模前沿模型的数学推理能力。</p>
+<p><strong>要解决什么问题</strong> 现有推理模型主要通过延长思维链来提升性能，但这种单纯“想得更久”的路线在面对需要纠正细微中间错误或转换思路的难题时，常因内部自我反思失效而卡壳。为了让模型学会使用外部 Python 工具进行验证和纠错，引入智能体强化学习是必然趋势，但这面临两个机制层面的致命卡点。首先是环境噪声导致的奖励误导：当模型生成错误代码时，环境返回的报错信息会分散模型注意力，使其耗费大量 token 去修补代码语法而非推进推理；而现有的仅关注最终结果的强化学习奖励机制，会给那些中间工具调用错误但最终答案碰巧蒙对的轨迹赋予正奖励，这反而鼓励了模型生成冗长且低质的推理过程。其次是基础设施的并行度与显存瓶颈：智能体多轮推演会触发海量并发工具调用，且每轮生成的 token 长度极不均衡，传统的静态同步调度会导致严重的计算负载不均、GPU 大量空闲，以及 KV 缓存溢出后被迫驱逐任务带来的严重重复计算浪费，使得大规模训练在工程上难以落地。</p>
+<p><strong>怎么做的</strong> 核心思路是构建一套支持动态负载均衡的执行环境，并提出一种非对称重采样算法，在仅依赖最终结果奖励的前提下，自动过滤掉由环境噪声引发的低质轨迹。关键设计由三个部件构成。第一是负载均衡的推演调度器与隔离代码环境。为了解决多轮推演的计算不均，调度器不再静态平均分配任务，而是根据每个 GPU 当前可用的 KV 缓存容量动态分配推演请求；同时将代码执行卸载到独立的 CPU 工作节点上异步处理，从而在有限资源下支撑起极高的并发调用并消除 GPU 等待时间。第二是核心算法 GRPO-RoC（带正确时重采样的组相对策略优化）。它旨在解决正确答案掩盖中间工具错误的问题。具体而言，算法首先对每个问题过采样 $2G$ 条推演轨迹，然后通过正确时重采样策略下采样到 $G$ 条用于策略更新。对于奖励为负的轨迹，均匀下采样以保留多样的失败模式；对于奖励为正的轨迹，则计算其工具调用错误率 $p_{\text{err}}$ 和格式违规惩罚 $p_{\text{format}}$，总惩罚分数为 $p_{\text{total}} = p_{\text{err}} + p_{\text{format}}$。算法以与 $p_{\text{total}}$ 成反比的概率进行采样，从而优先保留中间步骤最干净、最高效的成功轨迹。其最终的优化目标定义为：
+$$J_{GRPO-RoC}(\theta) = \mathbb{E}_{q \sim P(Q), \{\hat{o}_i\}_{i=1}^G \sim \text{RoC}(\{o_i\}_{i=1}^{2G})} \left[ \frac{1}{G} \sum_{i=1}^G \min \left( \frac{\pi_\theta(\hat{o}_i|q)}{\pi_{\theta_{\text{old}}}(\hat{o}_i|q)} \hat{A}_i, \text{clip}\left(\frac{\pi_\theta(\hat{o}_i|q)}{\pi_{\theta_{\text{old}}}(\hat{o}_i|q)}, 1-\epsilon_{\text{low}}, 1+\epsilon_{\text{high}}\right) \hat{A}_i \right) \right]$$
+第三是高效的智能体训练配方。训练摒弃了注入推理数据的常规做法，仅用非推理数据进行监督微调，专门灌输指令遵循和代码工具使用格式，防止模型过拟合且保持初始响应简短。随后的强化学习分为多阶段，逐步放宽最大生成长度（从 8K 扩展到 12K）并过滤掉简单问题，迫使模型在有限长度内学会最高效的工具调用策略，而不是单纯依赖拉长思维链。</p>
+<p><strong>效果如何</strong> 实验基于 14B 参数的 Qwen3-14B-Base 模型，在 64 块 AMD MI300X GPU 上，使用 4.2 万道仅限整数答案的高质量数学题进行训练。对比基线既包括代表长思维链路线的前沿大模型（如 671B 的 DeepSeek-R1、o3-mini、Claude Opus 4.0），也包括代表无工具纯思维链强化学习路线的 DAPO，以及代表带工具智能体强化学习路线的 ZTRL 和 ReTool。量化结果显示，rStar2-Agent-14B 仅需 510 个强化学习步骤，就在 AIME24 测试集上取得了 80.6% 的准确率，在 AIME25 上取得 69.8%，不仅超越了 671B 的 DeepSeek-R1，而且生成的响应 token 数量显著更少。此外，尽管仅在数学数据上训练，该模型在 GPQA-Diamond 科学推理基准上的准确率也提升至 60.9%，展现了极强的跨领域泛化能力。在代价与局限性方面，作者坦承强化学习提升推理能力存在硬性上限：当模型达到其预训练容量所决定的固有推理天花板后，继续强行训练会导致策略和奖励信号彻底崩溃，当前的强化学习机制无法无限制地突破基础模型本身的容量限制。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文介绍了 rStar2-Agent，一个通过智能体强化学习（agentic reinforcement learning）训练的 14B 数学推理模型，其性能达到了前沿水平。该模型超越了当前的长思维链（long CoT），展现了更高级的认知行为，例如在使用 Python 编码工具前进行深思熟虑，并反思代码执行反馈，从而在复杂问题解决中自主探索、验证和优化中间步骤。</p>
 <p><strong>核心问题与挑战</strong>:<br/>

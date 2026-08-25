@@ -20,6 +20,19 @@ title: 'Effective Interplay Between Sparsity and Quantization: From Theory to Pr
 <div class="container">
 <h1>Effective Interplay Between Sparsity and Quantization: From Theory to Practice</h1>
 <p><strong>作者/机构</strong>: Simla Burcu Harma (EcoCloud, EPFL), Ayan Chakraborty (EcoCloud, EPFL), Elizaveta Kostenok (EcoCloud, EPFL), Danila Mishin (EcoCloud, EPFL), Dongho Ha (MangoBoost Inc.), Babak Falsafi (EcoCloud, EPFL), Martin Jaggi (EcoCloud, EPFL), Ming Liu (Google), Yunho Oh (Korea University), Suvinay Subramanian (Google), Amir Yazdanbakhsh (Google DeepMind)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文从数学和实验上证明了模型压缩中稀疏性与量化操作是非正交的，指出“先稀疏后量化”是唯一不引入额外复合误差的最佳顺序，但即便如此，两者的结合仍可能导致模型困惑度出现超出各自独立误差总和的显著退化。</p>
+<p><strong>要解决什么问题</strong> 随着大模型规模的指数级增长，内存占用和带宽成为部署时的核心卡点。为了解决这一问题，工业界通常会同时使用稀疏性（剪枝）和量化（降低位宽）这两种压缩技术。然而，现有的工程实践普遍默认这两种操作是正交的，即认为把它们叠加使用时，总误差只是两者单独误差的简单相加。这种想当然的假设掩盖了一个严重的机制问题：如果在张量处理时顺序不当（例如先量化后稀疏），量化操作会改变张量内部元素的相对大小顺序，导致原本数值较大、本该保留的重要权重在后续的稀疏化步骤中被错误地当成小权重剪枝掉。这种复合误差不仅会破坏张量本身的精度，还会随着网络深度在点积运算中不断放大，最终导致模型效果出现意料之外的严重崩塌。</p>
+<p><strong>怎么做的</strong> 核心思路是通过严格的数学推导，在张量层面和点积层面分别界定稀疏与量化复合时的误差边界，从而找出最优的应用顺序。作者针对目前最常用的最大值缩放的分块量化（根据块内最大绝对值确定缩放因子）和基于幅值的稀疏性（按绝对值大小剪枝）进行了建模。在张量层面，如果采用先稀疏后量化的顺序，由于稀疏化只是把小权重置零，不会改变块内的最大元素，因此量化的缩放因子保持不变，非零元素的量化误差也与单独量化时完全一致，其复合误差严格满足：
+$$ \|\varepsilon_{q \circ s}(\mathbf{x})\| \leq\|\varepsilon_{q}(\mathbf{x})\|+\|\varepsilon_{s}(\mathbf{x})\| $$
+相反，如果采用先量化后稀疏的顺序，量化过程中的精度损失会使得原本不同的数值变成相同的量化值。此时再按幅值剪枝，就无法区分它们原本的大小，从而误删重要元素。作者推导出了这种错误顺序带来的额外误差上界，证明该上界与量化步长及剪枝数量呈线性相关。进一步地，在点积层面（即权重与激活的矩阵乘法），作者证明了只要同时应用这两种技术，无论顺序如何，都会产生不可避免的额外误差。这个额外误差由两部分构成：一是复合操作带来的校正误差向量，二是量化误差与稀疏误差之间的相互作用项。为了在工程上衡量这种非正交性，作者定义了正交性阈值：
+$$ \text{Orthogonality Threshold} = \text{EM}(M) + \text{Err}_{Q}(M) + \text{Err}_{S}(M) $$
+即密集模型的原始评估指标加上单独量化的指标误差和单独稀疏的指标误差。如果压缩后模型的实际指标劣于这个阈值，就说明产生了额外的复合误差。</p>
+<p><strong>效果如何</strong> 实验在四块 A100 或 V100 GPU 上进行，评估了参数量从 1.25 亿到 80 亿的语言模型（OPT、LLaMA-2、LLaMA-3）和视觉模型（ViT、ResNet）。基线为全精度的密集 FP32 模型，对比路线为先稀疏后量化与先量化后稀疏两种微调策略，并测试了 INT8、HBFP8/6、MXFP8/6 等多种量化格式与 50% 非结构化、2:4 结构化稀疏的组合。在 WikiText2 数据集上的结果压倒性地证明了先稀疏后量化是更优顺序：例如在 OPT-125M 结合 HBFP6 格式时，先稀疏后量化的困惑度为 32.51，而先量化后稀疏则劣化到了 40.86。逐层误差分析也表明，错误顺序引入的误差会随着 Transformer 层数加深而急剧累积。同时，量化结果证实了非正交性的存在：在绝大多数配置下，联合压缩后的困惑度或交叉熵损失都显著超过了正交性阈值。例如 OPT-125M 在 HBFP6 结合 50% 稀疏时，困惑度增量达 4.86，远超正交性阈值。作者也指出了该现象的局限与失效场景：模型规模越大，对这种复合误差的容忍度越高；视觉模型比语言模型更鲁棒，只有在极高压缩率（如 75% 稀疏加 4 位量化）下才会暴露出显著的非正交性效应。此外，对于 SparseGPT 和 Wanda 这类利用激活值辅助判断权重重要性的一次性训练后稀疏方法，由于其指标设计自带补偿机制，对操作顺序并不敏感。尽管存在精度折损，但在 50% 稀疏度下结合 8 位或 6 位量化，仍能使内存占用和带宽需求分别减少 8 倍和 10.7 倍，为边缘设备部署提供了硬件效益与模型性能的权衡参考。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文系统性地研究了深度神经网络（DNNs）中稀疏性（Sparsity）与量化（Quantization）这两种主流模型压缩方法之间的相互作用。</p>
 <ul>

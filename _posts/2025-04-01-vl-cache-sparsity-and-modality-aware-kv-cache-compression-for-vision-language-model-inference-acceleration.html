@@ -20,6 +20,15 @@ title: 'VL-Cache: Sparsity and Modality-Aware KV Cache Compression for Vision-La
 <div class="container">
 <h1>VL-Cache: Sparsity and Modality-Aware KV Cache Compression for Vision-Language Model Inference Acceleration</h1>
 <p><strong>作者/机构</strong>: Dezhan Tu (University of California, Los Angeles), Danylo Vashchilenko (AWS AI, Amazon), Yuzhe Lu (AWS AI, Amazon), Panpan Xu (AWS AI, Amazon)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种专为视觉语言模型定制的键值缓存压缩方法 VL-Cache，通过利用视觉和文本间的模态边界与注意力稀疏性动态分配缓存预算，在仅保留 10% 缓存的情况下实现了无损准确率，并将端到端推理速度最高提升 2.33 倍。</p>
+<p><strong>要解决什么问题</strong> 随着视觉语言模型处理高分辨率图像和视频等长上下文能力的提升，预填充阶段产生的视觉 token 数量急剧膨胀。在自回归解码阶段，这些海量 token 对应的键值（KV）缓存需完整存储在显存中并在每步被频繁读取，导致显存容量见底，且显存带宽成为推理延迟的核心瓶颈。为缓解此卡点，现有 KV 缓存压缩方法多直接沿用为大型语言模型设计的策略，如为所有层分配相等预算，或假设深层信息少而采用单调递减预算。然而，视觉语言模型的注意力存在独特的模态边界：解码阶段的语言 token 主要关注提示词中位于视觉 token 之后的语言指令（即后视觉注意力），而非均匀关注所有视觉 token。现有方法忽略了这种跨模态稀疏性差异，导致压缩时要么错误丢弃信息密集层的关键 token，要么在稀疏层保留大量冗余，最终表现出严重的精度掉点或缓存命中率低下。</p>
+<p><strong>怎么做的</strong> 核心思路是利用视觉语言模型特有的“后视觉注意力”作为统一指导，在预填充阶段动态评估各层稀疏度并为 token 评分，从而在有限预算下精准剔除冗余 token。该方法能绕开原有卡点，是因为它摒弃了计算完整注意力矩阵的高昂代价，转而仅利用提示词中位于视觉 token 之后的少量语言 token 的注意力，既大幅降低计算开销，又能精准捕捉对后续生成至关重要的上下文信号。关键设计由两个核心部件构成。首先是层级自适应的稀疏性感知缓存预算分配。在预填充阶段，模型通过相对阈值过滤器对后视觉注意力矩阵进行剪枝，过滤掉对输出影响极小的低分注意力：$$ \mathbf{ThresholdFilter}(A, p)_{ij} = \begin{cases} A_{ij} &amp; \text{if } A_{ij} \geq p \cdot \max_j(A_{ij}) \\ 0 &amp; \text{otherwise} \end{cases} $$随后计算每一层的稀疏度（被过滤为零的条目比例）。根据各层表现出的非单调稀疏性，算法将全局缓存预算按比例动态分配给每一层，避免了固定或单调递减分配带来的资源错配。其次是模态感知的 Token 评分策略。确定单层预算后，需决定具体保留哪些 token。现有方法通常对所有历史 token 的注意力求和或使用固定大小滑动窗口。本方法定义了一种动态的、与提示词相关的评分策略，其窗口大小严格对齐后视觉语言提示的长度 $\tau$：$$ \psi(S) := \sum_i \text{softmax}\left(\frac{Q_{m-\tau:m}K_{m-\tau:m}^T}{\sqrt{d}}\right)_i $$其中 $Q$ 和 $K$ 为查询和键矩阵，$m$ 为总提示词长度。通过该公式，模型能准确识别并保留被后视觉指令高度关注的视觉和语言 token，在驱逐冗余 token 的同时最大化缓存命中率。</p>
+<p><strong>效果如何</strong> 实验基于 LLaVA-Mistral-7B 和 LLaVA-1.6-34B 模型（采用 Mistral 和 Yi-34B 语言基座，共享 CLIP-ViT 视觉编码器），在 8 张 A100 40GB GPU 上进行。对比基线涵盖多种主流路线：代表等量预算和累积注意力路线的 StreamingLLM 与 H2O，代表归一化注意力路线的 ZipCache，代表单调递减预算路线的 PyramidKV，以及代表视觉 token 缩减路线的 FastV 和 HiRED。量化结果表明，在 Coco-Caption、DocVQA 和 MathVista 等任务中，VL-Cache 在仅保留 10% 缓存预算的极端设置下，依然达到接近 100% 的完整缓存准确率，显著优于所有基线。速度测试中（生成 100 个 token），得益于缓存体积缩减 90%，解码速度最高提升 7.08 倍，端到端延迟最高加速 2.33 倍。该方法的代价在于预填充阶段需计算注意力统计量，引入 1% 到 4% 的极小延迟开销。作者承认的局限性包括：端到端加速比受预填充耗时稀释（如 128K 提示词且批大小为 1 时，7.08 倍解码加速仅转化为 1.66 倍端到端加速），因此在长输出任务中才能实现最大速度收益；同时，当前设计仅针对预填充阶段进行了一次性压缩，尚未覆盖解码阶段生成 token 的周期性压缩，也未扩展到显存压力更大的视频模型场景。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文提出了一种名为 VL-Cache 的新型 KV 缓存压缩方法，专为加速视觉语言模型（VLM）推理而设计。</p>
 <ul>

@@ -21,6 +21,21 @@ title: Massively Parallel Methods for Deep Reinforcement Learning
 <strong>作者/机构</strong>：Arun Nair, Praveen Srinivasan, Sam Blackwell, Cagdas Alcicek, Rory Fearon, Alessandro De Maria, Vedavyas Panneershelvam, Mustafa Suleyman, Charles Beattie, Stig Petersen, Shane Legg, Volodymyr Mnih, Koray Kavukcuoglu, David Silver<br/>
 <strong>机构</strong>：Google DeepMind, London</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出首个专为深度强化学习设计的大规模分布式架构 Gorila，通过将经验收集、梯度计算与参数更新解耦，在 49 款 Atari 游戏中不仅将 DQN 的训练时间缩短了一个数量级，还在绝大多数游戏上大幅超越了单机版本的性能与泛化能力。</p>
+<p><strong>要解决什么问题</strong>
+深度强化学习（如 DQN）在单机架构下的训练耗时极长，例如在单个 Atari 游戏上完成训练需要 12 到 14 天。这种单机串行模式卡在无法有效利用大规模集群计算资源上。以往的分布式方法或聚焦多智能体协作，或仅适用线性函数逼近的批处理，无法直接用于结合非线性深度神经网络的在线学习。因此，核心卡点在于：如何设计一种既能支持深度神经网络，又能将智能体与环境的交互、经验的存储以及网络参数的梯度计算彻底解耦的分布式机制，从而打破单机算力瓶颈，通过横向扩展资源成倍缩短训练时间并提升模型见识到的状态多样性。</p>
+<p><strong>怎么做的</strong>
+本文提出通用强化学习架构 Gorila（General Reinforcement Learning Architecture）。核心思路是将训练拆解为四个可独立扩展的组件：并行执行器（Actors）、分布式经验回放存储、并行学习器（Learners）与中央参数服务器。这种解耦使得数据生成、学习和模型更新能完全异步并行。中央参数服务器维护全局 Q 网络的主副本参数 $\theta^+$，并分片存储在多台机器上。多个并行执行器各包含一个 Q 网络本地副本，独立与环境交互，使用 $\epsilon$-贪心策略选择动作，并将经验元组 $(s, a, r, s')$ 存入经验回放存储。独立的并行学习器从经验池采样小批量数据，维护当前参数 $\theta$ 和目标参数 $\theta^-$，并计算损失函数关于当前参数的梯度：
+$$ g_i = \nabla_\theta \mathbb{E} \left[ \left( r + \gamma \max_{a'} Q(s', a'; \theta^-) - Q(s, a; \theta) \right)^2 \right] $$
+学习器将梯度 $g_i$ 异步发送给参数服务器。参数服务器汇总梯度后，使用 AdaGrad 更新规则修改全局参数 $\theta^+$。执行器和学习器定期从参数服务器拉取最新的 $\theta^+$ 同步本地网络，学习器中的目标网络参数 $\theta^-$ 则在参数服务器每完成固定次数的全局更新后同步一次。为应对分布式集群的节点延迟导致的不稳定，Gorila 引入保障机制：参数服务器丢弃计算延迟过大（本地参数与全局参数时间差超阈值）的旧梯度；各组件动态追踪 DQN 损失的滑动平均值和标准差，丢弃损失异常偏高的梯度。在最基础的“捆绑模式”下，一个执行器、一个本地经验池和一个学习器组成一个节点，各节点间仅通过参数服务器通信，实现极高的横向扩展效率。</p>
+<p><strong>效果如何</strong>
+实验在 49 款 Atari 2600 游戏上展开，输入 84×84×4 预处理图像，网络含 3 个卷积层和 1 个全连接层。配置为 31 个参数服务器分片、100 个执行器和 100 个学习器，经验池容量 100 万帧。基线为单 GPU DQN，代表最先进的单机串行路线。Gorila DQN 仅用 6 小时就在 19 款游戏上超越单机 DQN 训练 12 到 14 天的得分，36 小时内超越 38 款，将达到同等性能的时间缩短约一个数量级。经过 6 天训练，在测试泛化能力的 human starts（从人类专家采样的 100 个随机状态开局）评估中，Gorila DQN 在 41 款游戏上击败单机 DQN，其中 22 款得分翻倍，11 款得分达 5 倍以上。此外，Gorila DQN 在 human starts 设置下的性能提升幅度普遍高于常规的 null op starts（开局执行随机次数空操作）设置。这证明分布式架构不仅赢在算力，更赢在机制——100 个并行执行器同时探索环境，使模型观测到远比单机版本更丰富的状态空间，从而获得更强的泛化能力，能更从容应对未见过的状态。</p>
+</div>
+</details>
 <h3 id="a1">A1 主要贡献</h3>
 <p>本文介绍了一种首次为深度强化学习设计的大规模分布式架构。由于先前最先进的深度强化学习算法，如深度Q网络（DQN），仅在单机架构上应用，导致训练时间过长（例如，在单个Atari游戏上训练需要12-14天），本文的研究目标是构建一个能够利用大规模计算资源来扩展深度强化学习算法的分布式架构。</p>
 <p><strong>核心问题</strong>：<br/>

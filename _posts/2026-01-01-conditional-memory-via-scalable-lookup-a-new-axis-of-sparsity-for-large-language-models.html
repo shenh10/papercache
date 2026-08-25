@@ -23,6 +23,15 @@ title: 'Conditional Memory via Scalable Lookup: A New Axis of Sparsity for Large
 <li><strong>作者</strong>: Xin Cheng, Wangding Zeng, Damai Dai, Qinyu Chen, Bingxuan Wang, Zhenda Xie, Kezhao Huang, Xingkai Yu, Zhewen Hao, Yukun Li, Han Zhang, Huishuai Zhang, Dongyan Zhao, Wenfeng Liang</li>
 <li><strong>机构</strong>: Peking University, DeepSeek-AI</li>
 </ul>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种与专家混合（MoE）互补的条件记忆模块 Engram，通过将静态知识检索与动态计算解耦，在严格相等的参数和计算预算下，显著提升了 27B 规模大语言模型在知识密集、通用推理及长上下文任务中的性能。</p>
+<p><strong>要解决什么问题</strong> 当前大型语言模型主要依赖专家混合（MoE）来实现条件计算的稀疏性，但缺乏原生的知识查找机制。语言建模包含组合推理和知识检索两类子任务，前者需要深度动态计算，后者涉及大量局部、静态且高度模式化的文本。由于标准 Transformer 缺乏低开销的查找操作，模型被迫在早期层消耗宝贵的计算深度和注意力容量，去低效地重建静态知识的内部表示。这种机制不仅占用了本可用于更高级复杂推理的计算资源，还因为局部依赖关系占据了注意力机制，严重限制了模型处理全局长上下文的能力。</p>
+<p><strong>怎么做的</strong> 核心思路是引入条件记忆作为新的稀疏性轴，通过构建名为 Engram 的模块，将局部静态模式的存储与主干网络的动态计算在结构上解耦。它允许模型通过 O(1) 的稀疏查找直接获取固定知识，将早期层的计算资源释放给复杂推理。Engram 模块由四个关键部件构成。首先是分词器压缩，将语义等价的原始 token 折叠为规范标识符，最大化语义密度并提取后缀 n-gram。其次是多头哈希检索，利用轻量级乘法异或哈希函数将压缩后的 n-gram 确定性地映射到静态嵌入表中，拼接得到记忆向量 $\mathbf{e}_t$：$$z_{t,n,k} \triangleq \varphi_{n,k}(g_{t,n}), \quad \mathbf{e}_{t,n,k} = \mathbf{E}_{n,k}[z_{t,n,k}]$$ 接着是上下文感知门控，为了解决静态记忆缺乏上下文适应性和哈希冲突带来的噪声，将聚合了全局上下文的当前隐藏状态 $\mathbf{h}_t$ 作为查询，检索到的记忆 $\mathbf{e}_t$ 投影为键 $\mathbf{k}_t$ 和值 $\mathbf{v}_t$，计算出门控值：$$\alpha_{t}=\sigma\left(\frac{\operatorname{RMSNorm}\left(\mathbf{h}_{t}\right)^{\top} \operatorname{RMSNorm}\left(\mathbf{k}_{t}\right)}{\sqrt{d}}\right)$$ 门控输出 $\alpha_t \cdot \mathbf{v}_t$ 强制实现了语义对齐，当检索记忆与当前上下文矛盾时门控值趋于零，随后再通过一个短的深度可分离因果卷积扩大感受野。最后是多分支架构集成，在一个共享的稀疏嵌入表和值投影矩阵下，为不同分支分配独立的键投影矩阵，以平衡效率与表达能力。研究发现，将约 20% 至 25% 的稀疏参数预算从 MoE 专家重新分配给 Engram 记忆槽，能形成最优的混合分配策略。此外，由于检索索引仅依赖输入序列，系统可以在运行时异步从主机内存预取数据，实现计算与通信的完美重叠。</p>
+<p><strong>效果如何</strong> 实验在 262B 个 token 上预训练，采用 128K 词汇表和 30 层 Transformer，硬件使用 NVIDIA H800。对比基线包含代表传统密集计算路线的 Dense-4B 模型，以及代表条件计算路线的 MoE-27B 模型（配置 72 个路由专家）。Engram-27B 在保持总参数量 26.7B 和激活参数量严格相等的前提下，将路由专家减至 55 个，释放参数分配给 5.7B 的 Engram 模块。量化结果显示，在等参数和等计算量设置下，Engram-27B 全面超越 MoE-27B：在知识密集型任务中 MMLU 提升 3.4 分、CMMLU 提升 4.0 分；在通用推理任务中 BBH 提升 5.0 分；在代码与数学领域 HumanEval 提升 3.0 分、MATH 提升 2.4 分。在长上下文扩展训练中，由于局部依赖被卸载，Engram-27B 在 Multi-Query NIAH 检索任务上从基线的 84.2 分大幅提升至 97.0 分。机制分析证实，Engram 的浅层在功能上等同于 MoE 的深层，有效增加了网络深度。系统效率方面，将高达 100B 参数的查找表卸载到主机内存中，推理吞吐量损失最高仅为 2.8%。不过该方法也存在局限与代价：消融实验表明模型的事实知识极度依赖该模块，若在推理时禁用稀疏嵌入，事实知识基准性能会发生灾难性崩溃，仅保留 29% 至 44% 的性能；此外，模块的插入位置存在权衡，必须放置在较浅层（如第 2 层）才能有效替代底层局部聚合，若放置过深则会导致门控精度下降和性能衰退。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文探讨了大型语言模型（LLMs）中一个结构性优化的机会。当前模型主要通过专家混合（MoE）实现稀疏性，但这迫使它们通过计算来低效地模拟知识检索。语言建模包含两种性质不同的子任务：组合推理和知识检索。前者需要深度动态计算，而后者涉及大量局部、静态和高度模式化的文本（如命名实体、固定短语），这些内容更适合通过计算开销低的查找操作来处理。由于标准Transformer缺乏原生的知识查找机制，当前LLMs被迫消耗宝贵的计算深度来重建静态查找表，而这些计算资源本可用于更高级的推理。</p>
 <p>为了解决这一问题，本文提出了一个与条件计算互补的稀疏性轴：<strong>条件记忆（conditional memory）</strong>。条件计算通过稀疏激活参数来处理动态逻辑，而条件记忆则依赖稀疏查找操作来检索固定知识的静态嵌入。本文通过<strong>Engram模块</strong>实例化了这一概念，这是一个基于经典n-gram嵌入结构并结合了现代技术（如分词器压缩、多头哈希、上下文感知门控和多分支集成）的模块。</p>

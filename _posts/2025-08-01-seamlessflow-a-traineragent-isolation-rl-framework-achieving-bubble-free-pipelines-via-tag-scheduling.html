@@ -20,6 +20,15 @@ title: 'SeamlessFlow: A Trainer–Agent Isolation RL Framework Achieving Bubble-
 <h1 id="seamlessflow-a-traineragent-isolation-rl-framework-achieving-bubble-free-pipelines-via-tag-scheduling">SeamlessFlow: A Trainer–Agent Isolation RL Framework Achieving Bubble-Free Pipelines via Tag Scheduling</h1>
 <p><strong>文章标题</strong>：SeamlessFlow：一种通过标签调度实现无气泡流水线的训练器-智能体隔离强化学习框架<br/>
 <strong>作者/机构</strong>：Jinghui Wang, Shaojie Wang, Yinghan Cui, Xuxing Chen, Chao Wang, Xiaojiang Zhang, Minglei Zhang, Jiarong Zhang, Wenhao Zhuang, Yuchen Cao, Wankang Bao, Haimo Li, Zheng Lin, Huiming Wang, Haoyang Huang, Zongxian Feng, Zizheng Zhan, Ken Deng, Wen Xiang, Huaixi Tang, Kun Wu, Mengtong Li, Mengfei Xie, Junyi Peng, Haotian Zhang, Bin Chen, Bing Yu</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个名为 SeamlessFlow 的工业级强化学习框架，通过引入专用的数据平面实现训练器与智能体的完全解耦，并利用标签驱动的时空复用调度消除了流水线气泡，在长周期多智能体任务中实现了吞吐量翻倍和显著的性能提升。</p>
+<p><strong>要解决什么问题</strong> 工业级大语言模型强化学习部署面临两个核心卡点。首先是训练器与复杂智能体执行流的耦合问题：智能体通常具有复杂的记忆机制或测试时扩展能力，算法工程师需要获取与推理时完全一致的 token 级会话历史来进行强化学习。如果要求每个智能体都去适配训练框架的日志和控制接口，不仅维护成本极高，且容易在模型权重更新时发生响应截断或数据不一致。其次是异构集群的资源利用率与稳定性难以兼顾：现有的同构架构（如 VERL）将 rollout 和训练放在同一 GPU 上分时复用，虽无空闲但极易因单进程崩溃导致全局中断，且无法利用异构硬件；而分离架构（如 OpenRLHF）虽将两者解耦到不同集群，但由于强化学习各阶段的顺序依赖性，当 rollout 耗时远大于训练耗时（如长思维链任务）时，训练节点会长时间处于数据匮乏的空闲等待状态，产生严重的流水线气泡，大幅拖慢整体吞吐量。</p>
+<p><strong>怎么做的</strong> 核心思路是通过数据平面隔离训练与推理，并用标签系统打破物理机器的角色绑定，实现资源的时空动态复用。关键设计由两个核心部件构成。第一个是用于训练器-智能体隔离的数据平面，它包含轨迹管理器、Rollout 管理器和流式数据加载器。轨迹管理器作为一个独立代理服务插在智能体与大语言模型推理引擎之间，拦截并记录所有输入输出，通过最长前缀匹配合并多轮对话的共享前缀，不仅消除了冗余存储，还保证了训练数据与推理生成的比特级一致性。当触发模型权重更新时，Rollout 管理器会执行部分 rollout 机制，透明地挂起当前的生成请求，等待新模型加载完成后再从断点恢复生成，使智能体对底层的抢占和更新完全无感知。流式数据加载器则持续分派任务，避免固定批次造成的空闲。第二个是统一的时空资源分配标签系统。系统不再将机器固定为专属节点，而是为底层硬件打上能力标签（如 `rollout`、`train`）和基于显存带宽与算力计算出的 `train_priority` 优先级标签。在调度时，系统采用时空复用流水线：在生成阶段，所有带有 `rollout` 标签的节点全量产出数据；当累积数据达到更新阈值时，调度器会抢占带有 `train` 标签的节点去执行训练任务，而仅有 `rollout` 标签的节点继续生成滞后一步的离线策略数据；一旦训练完成，训练节点立刻被重新分配回 rollout 任务。这种即时角色切换将本该闲置的计算能力转化为生产力，彻底消除了分离架构中的流水线气泡。</p>
+<p><strong>效果如何</strong> 实验在 32 卡和 64 卡 H800 GPU 集群上进行，基于 Qwen3-8B 和 Qwen3-32B 模型展开。对比的基线是代表同构路线的 VERL 框架，两者采用了完全相同的强化学习算法、训练数据和超参数设置。在单轮数学任务中，SeamlessFlow 的 token 吞吐量平均比 VERL 提高了 100%，总训练时间缩短了 62%。在最大生成长度达 64K token 的 SWE-agent 智能体编程任务中，SeamlessFlow 实现了平均 1.55 倍的吞吐量提升，且在 64 卡集群下扩展性优势更明显。在端到端智能体学习评估中，使用包含 10K 个真实 GitHub 问题的 SWE-Bench 数据集进行训练，模型的测试用例通过率获得了显著提升：Qwen3-8B 的通过率从 12.2% 提升至 27.4%，Qwen3-32B 则从 23% 大幅提升至 45.8%。在代价与局限性方面，该方法在训练阶段会产生滞后一步的离线策略数据，且在异构集群中需要依赖优先级标签进行仔细的标签放置，以避免计算密集型设备成为模型训练阶段的瓶颈。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决工业级强化学习（RL）部署中的两个核心挑战：(1) 将RL训练与复杂的智能体（agent）执行流解耦；(2) 在保持大规模部署所需的稳定性和可扩展性的同时，以最小的空闲时间最大化GPU利用率。</p>
 <ul>

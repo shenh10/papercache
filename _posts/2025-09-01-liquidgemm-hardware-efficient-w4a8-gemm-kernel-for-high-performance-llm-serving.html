@@ -19,6 +19,17 @@ title: 'LiquidGEMM: Hardware-Efficient W4A8 GEMM Kernel for High-Performance LLM
 <div class="container">
 <h1>LiquidGEMM: Hardware-Efficient W4A8 GEMM Kernel for High-Performance LLM Serving</h1>
 <p><strong>作者/机构</strong>: Huanqi Hu (Shanghai Jiao Tong University), Bowen Xiao (ByteDance Seed), Shixuan Sun (Shanghai Jiao Tong University), Jianian Yin (ByteDance Seed), Zhexi Zhang (ByteDance Seed), Xiang Luo (ByteDance Seed), Chengquan Jiang (ByteDance Seed), Weiqi Xu (ByteDance Seed), Xiaoying Jia (ByteDance Seed), Xin Liu (ByteDance Seed), Minyi Guo (Shanghai Jiao Tong University)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文针对大语言模型推理中 W4A8（4位权重8位激活）量化存在的反量化计算瓶颈，提出了一种硬件高效的通用矩阵乘法算子 LiquidGEMM，通过无溢出的反量化算法和隐式细粒度流水线设计，在端到端系统级服务中实现了最高 4.94 倍的加速。</p>
+<p><strong>要解决什么问题</strong> 现有的大语言模型 W4A8 量化方案在实际部署时，性能远低于理论上限，其核心卡点在于硬件未感知的反量化步骤。在非对称通用矩阵乘法（GEMM）中，低位宽的权重必须先在 CUDA 核心上反量化为 8 位，才能送入张量核心（Tensor Cores）与激活值进行矩阵乘加运算。由于反量化过程存在数值溢出风险，现有的主流做法（如 QServe）需要调用十多条底层指令来规避溢出。这种复杂的处理给算力有限的 CUDA 核心带来了巨大的计算压力，导致 CUDA 核心的处理速度远远跟不上张量核心的高吞吐量，形成了严重的串行化瓶颈。结果就是，在处理大批次请求（计算密集型场景）时，W4A8 的实际延迟甚至比 W8A8 慢了近两倍，完全无法发挥出低位宽量化在显存带宽上的理论优势。</p>
+<p><strong>怎么做的</strong> 核心思路是通过算法与硬件指令的协同设计，将反量化开销降到极致，并利用细粒度流水线将数据加载、反量化和矩阵乘加（MMA）完全重叠。该方法由三个关键部件构成。首先是硬件高效的量化算法 LiquidQuant（LQQ），负责解决反量化溢出导致的指令膨胀问题。LQQ 在离线阶段将 INT8 权重的对称范围平移到无符号的 UINT8 域，再量化为 UINT4。在线反量化时，LQQ 利用二进制补码的等价特性，将原本需要复杂防溢出处理的加法转换为异或操作。其核心反量化公式为：
+$$ \widehat{Q}_{i8} = (Q_{u4} \cdot s_{u8} + a) \oplus \text{0x80} $$
+其中 $Q_{u4}$ 是 4 位权重，$s_{u8}$ 是缩放因子，$a$ 是离线预计算的偏移量，$\oplus$ 表示异或操作。通过这种转换，所有中间计算结果都能严格保持在 UINT8 范围内，从而直接调用硬件原生的 IMAD（乘加）和 XOR（异或）指令。该设计仅需两条算术指令即可处理四个元素，大幅降低了 CUDA 核心的计算开销。其次是隐式细粒度流水线（ImFP），负责消除各计算阶段的等待气泡。传统的粗粒度流水线为加载、反量化和 MMA 分配独立的线程束组，导致数据在寄存器和共享内存间来回搬运，并产生软件同步开销。ImFP 采用单生产者-多消费者的执行模型：一个加载线程束组作为生产者，将权重从全局内存搬运到共享内存并切分为细粒度任务；多个计算线程束组作为消费者，各自独立获取任务并连续执行反量化和 MMA。不同计算组处理不同任务，使得反量化与 MMA 实现隐式重叠，彻底避免了显式同步和冗余访存。最后是双 MMA 打包内存布局，负责提升数据加载效率。为匹配张量核心对输入数据格式的严苛要求，作者在离线阶段对权重进行一维重排，使每个线程在连续两次 MMA 操作中所需的 32 个 UINT4 元素在内存中物理相邻。每个线程只需一条粗粒度的加载指令就能一次性取回所有数据，消除了共享内存的银行冲突，并大幅减少了加载指令数和地址计算开销。</p>
+<p><strong>效果如何</strong> 实验在配备 80GB 显存的 NVIDIA H800 GPU 上进行，测试了 LLaMA 系列（最高 70B 参数）、Mistral-7B 和 Mixtral-8×7B 模型。对比基线包括代表最先进 W4A8 路线的 QServe 系统，以及代表官方高度优化路线的 NVIDIA TensorRT-LLM（涵盖 W8A8、W4A16、FP8 等配置）。在算子级别测试中，随着批次大小增加到 256，QServe 性能显著衰退，而 LiquidGEMM 保持极低延迟，在 LLaMA2-70B 的前馈网络层实现了高达 2.90 倍的加速。在端到端服务系统测试中，搭载该算子的 LiquidServe 在 80GB 显存限制下展现出极强扩展性。在 LLaMA2-70B 上，它通过支持更大批次大小，比 TensorRT-LLM 的 W8A8 方案实现 3.16 倍吞吐量加速，比 W4A16 方案实现 1.63 倍加速；相比 QServe，端到端系统级加速最高达 4.94 倍。消融实验证明，在计算密集型大批次场景下，仅 LQQ 算法就能带来 1.29 倍加速，ImFP 流水线也稳定优于粗粒度流水线。该方法的代价在于离线准备阶段：为保证精度，权重离线转换需依赖平滑量化（SmoothQuant）策略，并使用网格搜索确定最佳平滑尺度。作者坦承，本文核心贡献聚焦于底层算子执行效率，未在量化精度层面提出突破，但该算子能与现有提升量化精度的技术无缝集成。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决大型语言模型（LLM）服务中4位权重和8位激活（W4A8）量化方案的性能瓶颈问题。尽管W4A8在理论上能在准确性和性能之间取得良好平衡，但现有的W4A8通用矩阵乘法（GEMM）内核因在CUDA核心上进行低效的反量化操作而表现不佳，其速度无法跟上张量核心（Tensor Cores）的高吞吐量。</p>
 <p><strong>核心问题</strong>: 现有W4A8 GEMM内核的反量化步骤在CUDA核心上执行，由于存在潜在的溢出问题，需要数十条指令来解决，这给计算能力有限的CUDA核心带来了巨大压力，使其成为性能瓶颈，导致无法充分发挥张量核心的性能优势。这造成了理论上的性能潜力（如屋顶线分析所示）与实际表现之间的巨大差距。</p>

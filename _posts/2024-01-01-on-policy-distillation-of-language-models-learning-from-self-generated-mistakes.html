@@ -21,6 +21,23 @@ title: 'On-Policy Distillation of Language Models: Learning from Self-Generated 
 <ul>
 <li><strong>作者/机构</strong>: Rishabh Agarwal (Google DeepMind, Mila), Nino Vieillard (Google DeepMind), Yongchao Zhou (Google DeepMind, University of Toronto), Piotr Stanczyk (Google DeepMind), Sabela Ramos (Google DeepMind), Matthieu Geist (Google DeepMind), Olivier Bachem (Google DeepMind)</li>
 </ul>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一种利用学生模型自生成序列进行在策略反馈的广义知识蒸馏（GKD）方法，解决了自回归模型蒸馏中训练与推理分布不匹配的问题，在摘要、翻译和推理任务上相比基线方法实现了1.7倍到2.1倍的显著性能提升。</p>
+<p><strong>要解决什么问题</strong>
+现有的自回归序列模型知识蒸馏通常依赖固定的输出序列数据集（无论是真实标签还是由教师模型生成的序列），这导致了一个严重的卡点：训练与推理阶段的分布不匹配。学生模型在训练时看到的序列分布，与它在推理时自回归生成的序列分布存在显著差异。由于自回归生成的每一步都依赖前一步，这种不匹配会引发级联效应，早期步骤的微小预测错误会不断累积，最终导致文本生成质量大幅下降。此外，传统蒸馏常使用前向KL散度作为优化目标，这是一种模式覆盖的度量，要求学生模型覆盖教师模型的整个概率分布。但当学生模型容量有限、表达能力远低于教师模型时，强行拟合会导致模型给教师分布中概率较低的词汇分配不合理的概率质量，进而在使用温度采样时产生幻觉和低质量的输出。</p>
+<p><strong>怎么做的</strong>
+核心思路是借鉴强化学习中的在策略模仿学习，让学生模型在自己生成的输出序列上接受教师模型的指导，从而打破固定数据集带来的分布壁垒。具体而言，在蒸馏过程中，先由学生模型根据输入提示自行生成输出序列（训练时使用温度1以鼓励生成序列的多样性），随后教师模型针对这些自生成的序列，提供逐词的概率分布作为反馈信号。这样一来，学生模型就能直接从自己容易犯错的真实轨迹中学习，有效闭环了反馈机制，消除了训练与推理时的分布差异。为了实现这一机制，广义知识蒸馏（GKD）构建了一个统一的优化目标，将固定数据集与学生自生成序列混合使用。其核心损失函数定义为：
+$$L_{\mathrm{GKD}}(\theta):=(1-\lambda) \mathbb{E}_{(x, y) \sim(X, Y)}\left[\mathcal{D}\left(p_{\mathrm{T}} \| p_{\mathrm{S}}^{\theta}\right)(y | x)\right]+\lambda \mathbb{E}_{x \sim X}\left[\mathbb{E}_{y \sim p_{\mathrm{S}}(\cdot | x)}\left[\mathcal{D}\left(p_{\mathrm{T}} \| p_{\mathrm{S}}^{\theta}\right)(y | x)\right]\right]$$
+其中，$\lambda$ 是控制学生自生成数据比例的超参数，$\mathcal{D}$ 是衡量教师分布与学生分布差异的散度度量。为了保证训练稳定并降低计算开销，该方法在优化时不通过学生模型的采样过程进行反向传播。在初始化阶段，GKD 假设学生模型已经经过了监督微调，具备生成足够质量序列的能力，这与强化学习微调的两阶段训练非常相似。此外，GKD 框架解耦了散度度量的选择。除了前向KL散度，它允许使用反向KL散度或广义JSD。反向KL散度具有模式寻求特性，能优先拟合教师模型的高概率词汇；而广义JSD则通过有界系数在两者之间插值。同时，由于该方法仅依赖学生的输出样本，它可以无缝嵌入到强化学习微调（如RLAIF）中。在最大化特定标量奖励 $r(y)$ 的同时，通过蒸馏损失正则化策略，其联合目标为：
+$$\mathbb{E}_{x \sim X}\Big[(1-\alpha) E_{y \sim p_{\mathrm{S}}^{\theta}(\cdot \mid x)}[r(y)]-\alpha \mathbb{E}_{y \sim p_{\mathrm{S}}(\cdot \mid x)}\left[\mathcal{D}\left(p_{\mathrm{T}} \| p_{\mathrm{S}}^{\theta}\right)(y \mid x)\right]\Big]$$
+这种结合可以在优化特定目标的同时，避免模型通用能力的退化。</p>
+<p><strong>效果如何</strong>
+实验在 TPUv3 硬件上进行，教师模型采用约30亿参数的 T5-XL 或 FLAN T5-XL，学生模型则选用参数量从7700万到8亿不等的 T5 系列模型。对比基线包括代表传统监督蒸馏的 Supervised KD、代表序列级蒸馏的 SeqKD，以及代表模仿学习和散度最小化路线的 ImitKD 与 f-distill。在摘要生成（XSum）、机器翻译（WMT14）和算术推理（GSM8K）任务中，GKD 均显著优于所有基线。量化结果显示，在不同规模的学生模型上，GKD 相比基线方法在摘要任务上提升了2.1倍，机器翻译提升了1.7倍，算术推理提升了1.9倍。该方法展现出极高的数据效率，在摘要任务中仅使用5%的无标签训练数据，其表现就超越了使用100%真实标签数据的 Supervised KD 和 ImitKD。在指令微调任务中，结合反向KL散度的 GKD 在未见过的 MMLU 和 BBH 基准测试上取得了最佳泛化性能。在师生模型同为 FLAN T5-large 的自蒸馏设置下，GKD 训练出的学生模型在算术推理测试集上的准确率甚至反超了教师模型。实验也揭示了该方法的一些特性与局限：最优的散度度量高度依赖于具体任务，例如摘要任务在高温采样时更适合模式寻求型散度，而指令微调则更契合反向KL散度。将 GKD 与 RLAIF 结合时，使用文本蕴含分数作为奖励，能在大幅提升摘要质量的同时显著提高事实一致性。代价方面，使用学生模型自生成数据会带来额外的计算开销，在算术推理任务中，采样成本比使用固定数据集高出1.8到2.2倍，但考虑到显著的性能收益以及实际部署时的推理成本，这一训练阶段的额外开销是值得的。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文针对自回归序列模型在知识蒸馏（Knowledge Distillation, KD）过程中存在的训练与推理阶段输出序列分布不匹配的问题，提出了一种名为广义知识蒸馏（Generalized Knowledge Distillation, GKD）的新方法。</p>
 <ul>

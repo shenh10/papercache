@@ -21,6 +21,15 @@ title: 'APRIL: Active Partial Rollouts in Reinforcement Learning to Tame Long-Ta
 <p><strong>发表时间</strong>: 2025-09 · arXiv:2509.18521 (AMD)</p>
 <p><strong>原文</strong>: <a href="https://arxiv.org/abs/2509.18521" rel="noopener" target="_blank">https://arxiv.org/abs/2509.18521</a></p>
 <p><strong>作者/机构</strong>: Yuzhen Zhou (AMD, CMU, LMSYS Org), Jiajun Li (CMU, LMSYS Org), Yusheng Su (AMD, LMSYS Org), Gowtham Ramesh (AMD), Zilin Zhu (LMSYS Org), Xiang Long (LMSYS Org), Chenyang Zhao (LMSYS Org, UCLA), Jin Pan (LMSYS Org), Xiaodong Yu (AMD), Ze Wang (AMD), Kangrui Du (LMSYS Org), Jialian Wu (AMD), Ximeng Sun (AMD), Jiang Liu (AMD), Qiaolin Yu (LMSYS Org), Hao Chen (AMD), Zicheng Liu (AMD), Emad Barsoum (AMD)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为 APRIL 的主动部分 rollout 机制，通过超额配置和提前终止策略解决了强化学习训练中长尾生成导致的计算资源闲置问题，在主流强化学习算法上将吞吐量平均提升了 22.5%，并将最终准确率平均提高了 2.1%。</p>
+<p><strong>要解决什么问题</strong> 现有的大规模语言模型强化学习训练严重受制于 rollout 生成阶段的效率瓶颈，该阶段通常占总运行时间的 90% 以上。在标准的同步强化学习范式（如 TRL、OpenRLHF 和 verl 等框架）中，推理引擎会为同一批次内的所有实例生成响应，只有当整个批次全部收集完毕后，才会将数据送入训练引擎更新策略模型。然而，模型生成的响应长度存在显著的“长尾”分布现象。超过一半的响应会在几千个 token 内结束，但极少数异常值会一直生成直到触发最大长度限制。这种机制导致批次处理的完成时间完全由生成最慢的那个实例主导，较早完成的实例必须等待，从而在推理过程中产生大量的 GPU 闲置时间（即训练气泡），严重拖慢了整体训练周期并降低了硬件利用率。虽然完全异步的强化学习框架（如 AReaL 和 AsyncFlow）通过解耦推理和训练缓解了闲置问题，但它们引入了较高比例的陈旧数据，破坏了严格的同策略假设，容易导致梯度估计方差过高、训练不稳定以及最终准确率下降。</p>
+<p><strong>怎么做的</strong> APRIL 的核心思路是通过在系统调度层面对 rollout 生命周期进行抢占式管理，直接截断长尾等待时间。在标准的强化学习中，策略参数的更新依赖于当前策略下的采样动作，其通用更新式可表示为 $$\theta_{k+1} \leftarrow \theta_k + \mu \nabla_\theta \log \pi(a, \theta_k)|_{\theta=\theta_k} R(a)$$ 其中动作 $a \sim \pi(\theta_k)$ 即代表推理引擎中的 rollout 过程。为了绕开长尾等待的卡点，APRIL 引入了四个关键部件。首先是超额配置，在每次迭代时向推理引擎提交大于默认批次大小的 rollout 请求数量。其次是提前终止，一旦生成了目标数量的完整响应，推理引擎就会主动终止仍在运行的其余长尾任务。第三是即时训练，已完成的数据被立即送入训练引擎计算损失并优化策略模型。第四是回收利用与优先恢复，那些被提前终止的“部分 rollout”结果不会被丢弃，而是存入一个续写缓冲区，在下一步迭代开始时，系统会优先恢复缓冲区中未完成的 rollout，然后再启动新的生成。这种设计确保了没有任何计算资源被浪费。需要注意的是，这一机制使得参与训练的数据集不再是单一来源，而是混合了当前策略完全生成的轨迹，以及由早期策略初始化、被中止并恢复后在当前策略下完成的轨迹。这种对严格同策略假设的温和放松，既保留了同步强化学习的核心稳定性，又获得了异步方法的效率优势。</p>
+<p><strong>效果如何</strong> 实验在 Qwen3-4B 和 Qwen3-8B 模型上展开，使用了 DAPO-Math-17k、DeepMath-103K 和 DeepScaleR 等数学推理数据集进行训练，并在 AIME2024 基准上评估最终性能。硬件主要采用单节点 8 张 AMD MI300 或 NVIDIA H100，并实现了显存优化器以支持推理和训练同驻。对比基线是采用标准同步架构（即非部分 rollout）的 GRPO 和 DAPO 算法，它们代表了当前主流的严格同策略路线。量化结果显示，APRIL 在各项任务上将 rollout 吞吐量平均提升了 22.5%，其中 Qwen3-8B 结合 GRPO 算法时吞吐量最高提升了 49.5%。在收敛速度和准确率方面，APRIL 不仅没有因为引入陈旧数据而掉点，反而将最终准确率平均提高了 2.1%（例如 Qwen3-4B 结合 DAPO 时最高提升了 12.8%）。作者分析承认，在典型步骤中约有 40% 的 token 来自被截断并续写的实例，这意味着训练数据混合了最多前 5 个版本的旧策略。但这种轻微的异策略数据反而增加了样本多样性，起到了正则化作用，彻底消除了基线方法在训练后期经常出现的响应长度突然爆炸的失控现象。此外，由于 APRIL 采用实例级别的完成标准，同一输入的不同采样长度高度同质，因此不会在组内重新引入长尾效应。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>强化学习（RL）已成为大规模预训练语言模型（LLM）发展的关键阶段，从GPT-o系列到DeepSeek-R1等模型都依赖大规模RL训练来增强推理和编码能力。然而，RL训练的计算成本高昂，其中rollout生成阶段占总运行时间的90%以上。这一阶段的效率受到rollout响应长度“长尾”分布的严重制约：少数冗长的响应会拖慢整个批次，导致GPU闲置和利用率不足。随着模型和rollout规模的持续增长，这一瓶颈日益限制了可扩展性。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

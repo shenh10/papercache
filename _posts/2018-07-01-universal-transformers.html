@@ -19,6 +19,18 @@ title: Universal Transformers
 <div class="container">
 <h1>Universal Transformers</h1>
 <p><strong>作者/机构</strong>: Mostafa Dehghani (University of Amsterdam), Stephan Gouws (DeepMind), Oriol Vinyals (DeepMind), Jakob Uszkoreit (Google Brain), Łukasz Kaiser (Google Brain)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种结合 Transformer 并行性与循环神经网络归纳偏置的通用 Transformer 模型，通过在深度上进行循环更新并引入动态暂停机制，在机器翻译、语言理解和算法推理等广泛任务上取得了优于标准 Transformer 和 LSTM 的最佳结果。</p>
+<p><strong>要解决什么问题</strong> 标准 Transformer 完全依赖自注意力机制和固定层堆叠，虽然解决了循环神经网络因顺序计算无法并行化的问题并实现了全局感受野，却放弃了学习迭代或递归变换的归纳偏置。这种归纳偏置的缺失导致了一个关键卡点：当模型遇到训练期间未见过的输入长度时，泛化能力极差。在处理算法和语言理解任务时，固定深度的 Transformer 无法像神经图灵机或神经 GPU 那样根据输入规模动态扩展计算深度。另一方面，神经图灵机等模型虽在算法任务上具备图灵完备的理论能力，但在机器翻译等大规模现实自然语言任务上的表现却缺乏竞争力。因此，领域亟需一种既能保持前馈序列模型的高效并行计算能力，又能具备处理变长序列的循环归纳偏置，同时在实际大规模任务中表现优异的通用架构。</p>
+<p><strong>怎么做的</strong> 通用 Transformer 的核心思路是将 Transformer 的并行性与循环神经网络的循环性结合，构建在深度上循环的并行自注意力序列模型。它能绕开固定深度的泛化卡点，是因为它不再像传统循环神经网络那样在序列的位置维度上循环，而是在每个位置的向量表示的连续修正上循环。关键设计由并行循环更新机制和动态逐位置暂停机制构成。在并行循环更新机制中，模型在每个时间步并行修正所有位置的表示。首先，将前一时间步的隐藏状态加上二维的固定位置与时间坐标嵌入，输入多头自注意力机制中交换全局信息。接着，对输出应用一个在所有位置和时间步上共享权重的转换函数（深度可分离卷积或逐位置全连接层）。核心状态更新公式为：
+$$A^{t} = \text{LAYERNORM}((H^{t-1} + P^{t}) + \text{MULTIHEADSELFATTENTION}(H^{t-1} + P^{t}))$$
+$$H^t = \text{LAYERNORM}(A^t + \text{TRANSITION}(A^t))$$
+由于转换函数在时间步上共享参数，模型可执行任意次循环，在内存充足假设下具备图灵完备性。为优化资源分配，模型引入自适应计算时间作为动态逐位置暂停机制。该机制允许模型为每个符号动态预测标量暂停概率，当累积概率超过阈值时，该位置计算暂停，状态直接复制到后续步骤。这使模型能为复杂符号分配更多处理步数，对简单符号提前终止计算。解码器同样采用此循环结构，在自回归生成时通过掩码确保只关注左侧位置，最终通过仿射变换输出目标分布。</p>
+<p><strong>效果如何</strong> 实验在 bAbI 问答、主谓一致性、LAMBADA 语言建模、算法任务、学习执行及 WMT 2014 英德机器翻译任务上展开。机器翻译在 8xP100 GPU 上训练。对比基线包括代表前馈注意力路线的标准 Transformer 和 Weighted Transformer，代表传统循环路线的 LSTM，以及代表计算通用路线的神经 GPU。在 bAbI 问答中，带动态暂停的通用 Transformer 在 1k 和 10k 训练样本下均取得当前最佳结果，显著优于标准 Transformer，注意力分布表明思考时间与任务难度正相关。在主谓一致性任务中，平均准确率达 99.2%，与最佳基于注意力的 LSTM 相当。在 LAMBADA 数据集上，带动态暂停的模型达到业界最佳，动态暂停表现出类似正则化作用，平均使用 8.2 步。在算法任务中（长度 40 训练，长度 400 评估），通用 Transformer 大幅优于 LSTM 和标准 Transformer；虽然神经 GPU 表现完美，但作者承认这是因其使用了特殊的课程学习，而通用 Transformer 未使用。在 WMT 2014 英德翻译中，参数量相近的通用 Transformer 基础模型比标准 Transformer 基础模型提升了 0.9 BLEU，证明其循环归纳偏置在大规模自然语言处理中同样具有显著优势。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>卷积和全注意力前馈架构，如 Transformer【31，Attention is all you need，2017，CoRR】，已成为循环神经网络 (RNN) 在一系列序列建模任务（特别是机器翻译）中的可行替代方案。这些“时间上并行”的架构解决了 RNN 的一个显著缺点，即其固有的顺序计算阻碍了输入序列元素间的并行化，同时仍能解决序列变长时的梯度消失问题。Transformer 模型完全依赖自注意力机制来计算其输入和输出中符号的一系列上下文感知向量空间表示。这种机制不仅易于并行化，而且由于每个符号的表示都直接受到所有其他符号表示的影响，从而在整个序列上实现了有效的全局感受野。</p>
 <p>然而，具有固定层堆叠的 Transformer 放弃了 RNN 对学习迭代或递归变换的归纳偏置。实验表明，这种归纳偏置对于几种不同复杂度的算法和语言理解任务可能至关重要。与神经图灵机（Neural Turing Machine）【13，Neural turing machines，2014，CoRR】、神经 GPU（Neural GPU）【18，Neural GPUs learn algorithms，2016，ICLR】或堆栈 RNN（Stack RNNs）【17，Inferring algorithmic patterns with stack-augmented recurrent nets，2015，NIPS】等模型相比，Transformer 在处理训练期间未见过的输入长度时泛化能力不佳。</p>

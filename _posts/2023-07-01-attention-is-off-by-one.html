@@ -20,6 +20,15 @@ title: Attention Is Off By One
 <h1>Attention Is Off By One</h1>
 <p><strong>发表时间</strong>: 2023-07 · Blog post by Evan Miller (evanmiller.org)</p>
 <p><strong>作者：</strong> Evan Miller</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文指出 Transformer 注意力机制中的 softmax 函数存在强制分配权重的 off-by-one 设计缺陷，并提出在分母加 1 的 Softmax1 函数（即 QuietAttention 机制），允许注意力头在无信息时保持沉默，从而从理论上解决大模型量化困难的异常激活值问题。</p>
+<p><strong>要解决什么问题</strong> 原有的大语言模型在进行整数量化时，性能会发生严重下降，且难以压缩部署。其核心卡点在于模型内部存在大量数量级远超同类的异常权重和极大的激活值。现有的量化方案（例如位压缩技术）在处理这些异常值时往往会导致模型效果大打折扣。这个卡点的机制根源在于标准 Attention 机制对 softmax 函数的误用。原始的 Attention 公式为 $ \textrm{Attention}(Q, K, V) = \textrm{softmax}\left(\frac{QK^T}{\sqrt{d}}\right)V $。其中的 softmax 函数源于统计力学和多项式逻辑回归，其核心特性是强制在竞争项之间进行选择，使得输出的概率求和必须严格为 1。在 Transformer 模型中，softmax 被用来将输入映射为概率分布以混合 Value 向量，这就强制每个注意力头必须对输出向量进行标注。即使某个注意力头在当前位置并没有任何相关的语义信息需要添加，它也被迫分配权重。现有研究指出，超过 97% 的大模型异常激活值正是出现在空格和标点符号等非语义位置。由于标准 softmax 不允许模型“不作选择”，它迫使模型在面对这些非语义标记时也必须产生权重，进而导致了大量不必要的噪声放大和异常激活值的产生，最终阻碍了模型的高效量化。</p>
+<p><strong>怎么做的</strong> 为了绕开标准 softmax 强制归一化带来的噪声放大卡点，作者的核心思路是为 Attention 机制引入一个“退出机制”，使得注意力头在没有有效信息时能够表达“不进行任何标注”的意图。关键设计由一个被称为 Softmax1 的改进函数构成。具体而言，Softmax1 通过在传统 softmax 的分母中引入常数 1 来重构概率分配，其定义式为 $$ (\textrm{softmax}_1(x))_i = \frac{\exp(x_i)}{1+\sum_j \exp(x_j)} $$ 这一设计的职责在于打破概率之和必须为 1 的硬性约束，允许输出向量整体趋向于零。在极限情况下，当所有输入趋向负无穷时，原版 softmax 的输出会趋向于 $1/k$（即 $ \lim_{x_1 \to -\infty} \ldots \lim_{x_k \to -\infty} (\textrm{softmax}(x))_i = \frac{1}{k} \gt 0 $），这意味着无论输入如何都会产生非零权重；而 Softmax1 的输出则会平滑地趋向于 0（即 $ \lim_{x_1 \to -\infty} \ldots \lim_{x_k \to -\infty} (\textrm{softmax}_1(x))_i = 0 $），从而赋予了模型“逃逸”或保持沉默的能力。基于该函数，作者进一步定义了 QuietAttention 机制，其公式为 $$ \textrm{QuietAttention}(Q, K, V) := \textrm{softmax}_1 \left(\frac{QK^T}{\sqrt{d}}\right)V $$ 这一机制具备几个优良的数学属性：首先，它保持了相对值的不变性，即任意两项的比值 $ \frac{(\textrm{softmax}_1(x))_i}{(\textrm{softmax}_1(x))_j} $ 与原版 softmax 完全相同，均为 $ \frac{\exp(x_i)}{\exp(x_j)} $；其次，其导数始终为正，确保了网络反向传播时梯度传播的有效性；最后，输出值的总和被严格控制在 0 到 1 之间，保证了激活值的可控性。为了在工程上快速验证该机制，作者还提供了一个无需修改现有梯度计算代码的实现建议：在输入上下文前缀中添加一个零向量，并确保神经网络不包含额外的偏置项（包括位置编码）。这种输入结构在计算时就能起到等效于在分母中增加常数 1 的作用。</p>
+<p><strong>效果如何</strong> 本文是一篇探讨底层机制的观点性文章，作者尚未搭建具体的实验环境，因此没有提供模型规模、训练数据量、硬件配置等信息，也没有设置对比基线或给出量化结果。该方法目前完全处于理论构想阶段，其核心贡献在于从数学定义的底层逻辑上指出了异常激活值的成因，并给出了一种优雅的数学修正方案。作者呼吁开源社区对这一机制进行大规模的实验验证，并建议未来的实验可以通过观察模型权重峰度以及激活值的无穷范数的变化，来评估 QuietAttention 是否真正消除了异常值并改善了模型的量化特性。由于缺乏实际的训练与推理测试，该方法在真实复杂任务中的实际代价、对模型收敛速度的影响，以及是否存在潜在的失效场景，均有待后续的工程实践来进一步揭示。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文针对现代人工智能（特别是Transformer模型）中普遍存在的量化困难问题，提出了一个核心观点：Attention机制中的softmax函数存在“off-by-one”错误。</p>
 <ul>

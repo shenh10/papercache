@@ -19,6 +19,17 @@ title: Training language models to follow instructions with human feedback
 <h1 id="training-language-models-to-follow-instructions-with-human-feedback">Training language models to follow instructions with human feedback</h1>
 <p><strong>作者/机构</strong>: Long Ouyang, Jeff Wu, Xu Jiang, Diogo Almeida, Carroll L. Wainwright, Pamela Mishkin, Chong Zhang, Sandhini Agarwal, Katarina Slama, Alex Ray, John Schulman, Jacob Hilton, Fraser Kelton, Luke Miller, Maddie Simens, Amanda Askell, Peter Welinder, Paul Christiano, Jan Leike, Ryan Lowe<br/>
 <strong>机构</strong>: OpenAI</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文通过引入基于人类反馈的强化学习技术对大型语言模型进行微调，成功使1.3B参数的InstructGPT模型在遵循用户指令上的表现超越了175B参数的基线模型，大幅提升了模型在真实场景中的有用性、真实性和无害性。</p>
+<p><strong>要解决什么问题</strong> 原有大型语言模型（如GPT-3）的底层训练目标是在海量互联网语料上预测下一个词元，这与“有用且安全地遵循用户指令”这一实际应用目标存在本质偏差。这种目标函数的不一致导致模型面临严重的对齐卡点：模型不仅常常无法准确理解并执行用户的显式或隐式意图，还会频繁产生捏造事实的幻觉，甚至输出带有毒性、偏见或对用户毫无帮助的内容。由于单纯扩大模型参数规模无法自然解决这种行为偏差，且在真实世界部署时极易引发安全风险并损害用户体验，因此亟需一种干预机制，将模型的生成分布从无意识的文本延续强行拉回人类期望的轨道上，使其输出真正做到有帮助、诚实且无害。</p>
+<p><strong>怎么做的</strong> 核心思路是引入基于人类反馈的强化学习（RLHF）机制，通过人类偏好数据直接塑造模型的生成行为，从而绕开单纯依赖无监督预测带来的对齐卡点。关键设计由三个递进的部件构成。第一步是有监督微调（SFT），研究人员收集由标注员编写及应用程序接口提交的真实提示，并由人类编写出期望的优质输出，使用这些演示数据对预训练语言模型进行有监督训练，使其初步具备遵循指令的能力。第二步是训练奖励模型（RM），针对同一个提示让模型生成多个不同输出，由标注员对输出质量进行排序。基于这些偏好数据，研究人员训练出一个6B参数的奖励模型来预测人类更偏好哪个输出，其核心职责是将离散的排序转化为连续的标量奖励信号。为避免模型在高度相关的比较数据上过拟合，该步骤将同提示下的所有比较对作为一个批次元素计算损失。第三步是强化学习微调，将奖励模型的输出作为环境奖励信号，使用近端策略优化（PPO）算法更新有监督微调模型的策略，以最大化人类偏好奖励。为防止模型过度优化奖励导致输出崩坏，并在公开自然语言处理数据集上出现性能衰退（即“对齐税”），作者在更新目标中引入了逐词元KL散度惩罚，并混合了原始预训练分布的梯度更新。最终优化的目标函数定义为：
+$$ \text{objective}(\phi) = E_{(x, y) \sim D_{\pi_{\phi}^{RL}}} \left[ r_\theta(x, y) - \beta \log \left( \frac{\pi_{\phi}^{RL}(y|x)}{\pi^{SFT}(y|x)} \right) \right] + \gamma E_{x \sim D_{pretrain}} [\log(\pi_{\phi}^{RL}(x))] $$
+其中 $\pi_{\phi}^{RL}$ 是正在学习的强化学习策略，$\pi^{SFT}$ 是初始的有监督训练模型，$r_\theta$ 是奖励模型，$\beta$ 和 $\gamma$ 分别控制KL惩罚和预训练梯度的强度。这套组合拳使得模型既能迎合人类偏好，又保住了原有的语言建模底子。</p>
+<p><strong>效果如何</strong> 实验基于GPT-3架构，训练了1.3B、6B和175B三种参数规模的模型。对比基线包括原始的GPT-3（代表无监督预训练路线）、精心设计提示词的GPT-3-prompted（代表少样本提示路线），以及在FLAN和T0数据集上微调的175B GPT-3（代表基于公开数据集的指令微调路线）。在真实应用程序接口提示分布的盲测中，仅1.3B参数的InstructGPT输出的受欢迎程度就显著超越了175B的GPT-3；在同等175B规模下，InstructGPT对阵GPT-3的胜率高达85%，对阵FLAN和T0模型的胜率也分别达到78%和79%，证明公开数据集的多样性不足以覆盖真实世界场景。在量化指标上，InstructGPT在TruthfulQA基准上的真实信息生成率大约是基线的两倍，在封闭领域任务中编造不存在信息的幻觉率从41%降至21%，且在被提示需要尊重时，有毒输出减少了约25%。模型还展现出强大的泛化能力，能遵循微调数据中极少出现的非英语指令和代码摘要任务，且未参与训练数据标注的独立标注员同样高度偏爱其输出。但该方法也存在代价与局限：标准的强化学习微调会导致模型在SQuAD和DROP等公开数据集上出现性能下降的“对齐税”，必须依赖混合预训练梯度的PPO-ptx变体才能有效缓解；同时模型在Winogender和CrowS-Pairs等偏见测试集上没有取得显著改善。作者也承认，模型依然会犯简单错误，例如会被带有错误前提的指令误导，或对简单问题给出冗长且模棱两可的回避性回答。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决大型语言模型（LMs）本质上并不擅长遵循用户意图的问题，即模型与用户不“对齐”（aligned）。大型语言模型可能会生成不真实、有毒或对用户无益的输出。这是因为它们的训练目标（在互联网上预测下一个词元）与“有用且安全地遵循用户指令”这一目标存在偏差。本文展示了一条通过人类反馈微调来使语言模型在广泛任务上与用户意图对齐的途径。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>

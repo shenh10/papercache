@@ -19,6 +19,15 @@ title: 'AsyncFlow: An Asynchronous Streaming RL Framework for Efficient LLM Post
 <h1 id="asyncflow-an-asynchronous-streaming-rl-framework-for-efficient-llm-post-training">AsyncFlow: An Asynchronous Streaming RL Framework for Efficient LLM Post-Training</h1>
 <p><strong>文章标题</strong>：AsyncFlow: An Asynchronous Streaming RL Framework for Efficient LLM Post-Training<br/>
 <strong>作者/机构</strong>：Zhenyu Han, Ansheng You, Haibo Wang, Kui Luo, Guang Yang, Wenqi Shi, Menglong Chen, Sicheng Zhang, Zeshun Lan, Chunshi Deng, Huazhong Ji, Wenjie Liu, Yu Huang, Yixiang Zhang, Chenyi Pan, Jing Wang, Xin Huang, Chunsheng Li, Jianping Wu (Huawei &amp; Individual Researcher)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文针对大规模语言模型后训练阶段的效率瓶颈，提出了一个名为 AsyncFlow 的异步流式强化学习框架，通过分布式流式数据加载和延迟参数更新机制解决了任务分离架构中的资源空闲问题，在大规模集群上实现了最高 2.03 倍的吞吐量提升。</p>
+<p><strong>要解决什么问题</strong> 大规模语言模型在强化学习后训练阶段的现有框架主要面临两类架构瓶颈。第一类是任务共置（Task-colocated）框架（如 DeepSpeed-Chat），将所有强化学习任务部署在同一组设备上交替执行，这不仅会导致严重的显存效率低下，还会因为模型在不同并行策略间切换产生巨大的重分片开销，且无法为不同大小的模型配置最优并行度。第二类是任务分离（Task-separated）框架（如 OpenRLHF），将不同任务分配到按需配置的独立资源池中，但受限于强化学习算法固有的数据依赖性，下游任务必须等待上游任务完成才能执行，导致大量的计算资源空闲；同时，语言模型复杂的嵌套并行策略使得跨任务的数据流调度异常复杂，进一步拉低了计算效率。此外，现有框架大多与特定的底层训练或推理引擎深度耦合，难以在工业界定制化的后端上灵活部署。</p>
+<p><strong>怎么做的</strong> 核心思路是通过细粒度的数据流调度和可控的异步执行，最大化任务分离架构中的流水线重叠。该框架由三个关键部件构成。首先是分布式数据管理模块 TransferQueue，它采用存控分离的架构，充当异步流式数据加载器。其数据平面使用二维列式结构存储样本，行代表完整样本，列代表特定任务所需的数据组件（如响应或对数概率），以支持按需拉取并减少冗余传输；控制平面则为每个任务维护一个集中式的元数据视图，一旦有新数据写入存储单元，就会向控制器广播更新状态。这种机制允许下游任务在获取到部分微批次数据后立即开始计算，无需等待整个全局批次生成完毕，从而实现了强化学习任务间的流式流水线重叠。其次是基于生产者-消费者的异步工作流优化，针对传统同步在策略（on-policy）算法带来的流水线气泡问题，设计了延迟参数更新机制。该机制将参数更新延迟一步，允许 rollout 节点在更新期间继续使用旧模型权重生成响应，同时在后台将新参数异步传输至主机内存，待当前生成结束后再加载到计算设备上。这种维持一步陈旧度的离策略（off-policy）设计，有效消除了迭代间的预热和冷却空闲时间。最后是服务化用户接口，通过分层抽象将算法调度逻辑与底层的具体执行引擎解耦，使得框架能够无缝接入各种异构的训练和推理后端。</p>
+<p><strong>效果如何</strong> 实验在大型 Ascend NPU 集群上进行（规模从 32 扩展至 1024 个 NPU），选用了 7B 到 32B 参数规模的 Qwen2.5 系列模型，基于包含 4 万个数学问答对的 DeepScaleR 数据集，采用 GRPO 算法（一种无需单独 critic 模型的强化学习算法）进行强化学习后训练。对比基线是 verl，这代表了当前先进的任务共置（task-collocated）路线。量化结果显示，在所有配置下 AsyncFlow 的端到端吞吐量均持续优于基线，平均提升 1.59 倍；在 256 个 NPU 上训练 7B 模型时，峰值吞吐量提升达到 2.03 倍。当集群规模扩大 16 倍时，系统仍保持 0.65 到 0.88 的高线性扩展效率。消融实验表明，仅引入 TransferQueue 实现流水线重叠就能带来 2.01 倍的吞吐量提升，而叠加异步工作流后可进一步提升 36.3%。在算法稳定性测试中，启用异步工作流后的模型平均奖励分数和响应长度方差与原生同步设置相比差异可以忽略不计，证明了该机制不会对模型性能产生负面影响。作者也指出了当前的局限：目前仍存在生成过程中的同步障碍，未来计划通过错开每个推理实例的参数更新时间来实现子步异步（sub-step asynchronization），以进一步将陈旧度阈值压缩到单个训练步之内。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文针对大规模语言模型（LLM）后训练（Post-Training）阶段中强化学习（RL）框架面临的挑战，提出了一个名为AsyncFlow的异步流式RL框架。</p>
 <p><strong>核心问题：</strong><br/>

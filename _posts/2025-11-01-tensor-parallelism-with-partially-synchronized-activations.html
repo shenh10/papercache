@@ -19,6 +19,22 @@ title: Tensor-Parallelism with Partially Synchronized Activations
 <div class="container">
 <h1>Tensor-Parallelism with Partially Synchronized Activations</h1>
 <p><strong>作者/机构</strong>: Itay Lamprecht†‡, Asaf Karnieli†, Yair Hanani†, Niv Giladi◦∗, Daniel Soudry‡ (†Intel, Israel ‡Department of Electrical and Computer Engineering - Technion, Haifa, Israel ◦AWS AI Labs)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一种名为 CAAT-Net 的通信感知架构，通过在张量并行中仅部分同步激活张量的通道，在保持模型参数量和总计算量不变的前提下，将大规模语言模型训练与推理的通信负载最高降低了 50%，且几乎不损失模型精度。</p>
+<p><strong>要解决什么问题</strong>
+大规模语言模型在分布式训练和推理时，通常依赖张量并行（Tensor-parallelism）技术来切分权重矩阵，从而显著降低单个设备的显存占用，使超大模型的训练成为可能。然而，原有的张量并行机制存在一个严重的效率瓶颈：它要求在每次多层感知器（MLP）和注意力层计算后，对设备间的激活张量或梯度张量执行完整的 `all-reduce` 同步操作。随着集群中张量并行维度的不断扩大，单个设备分担的矩阵乘法计算负载会成比例减少，但设备间需要传输的通信数据量却保持相对恒定。这种计算与通信的非对称缩放导致通信开销的相对占比急剧上升，甚至在集群规模扩大时反客为主，成为主导整个训练和推理耗时的核心卡点。如果不打破这种完全同步的机制，模型在内存受限的硬件上将永远受制于通信带宽的物理上限。</p>
+<p><strong>怎么做的</strong>
+本文的核心思路是将传统的完整 `all-reduce` 替换为“部分通道归约”（partial channel-reduce）操作，即允许模型在不完全同步激活张量的情况下进行训练。具体而言，在隐藏维度中，只有前一部分比例为 $p$ 的通道（称为共享通道）会在设备间进行同步，而剩余的通道（称为私有通道）则保留在各自的设备上不参与通信。这种机制从根本上改变了计算图，因为每个设备在通信后接收到的输入激活张量将不再相同。为了适配这一变化，作者提出了 CAAT-Net 架构，重新定义了 MLP 和注意力层。以多设备下的 MLP 为例，给定输入激活 $X_{ijm}$ 和切分后的权重 $\tilde{A}_{jkm}$ 与 $\tilde{B}_{klm}$，其部分通道归约的计算过程定义为：
+$$ \tilde{Z}_{i l m}=\sum_{k} \sigma\left(\sum_{j} X_{i j m} \tilde{A}_{j k m}\right) \tilde{B}_{k l m} $$
+$$ Z_{i l m}= \begin{cases}\sum_m \tilde{Z}_{i l m} &amp; \text { if } l&lt;\text { floor }(h p) \\ \tilde{Z}_{i l m} &amp; \text { if } l \geq \text { floor }(h p)\end{cases} $$
+其中 $m$ 代表张量并行设备等级，$h$ 为隐藏维度大小，$p$ 为同步因子。为了让这种部分同步机制在训练中真正收敛，关键设计包含三个部件。首先是修正前向与反向传播的不匹配：在标准框架（如 Megatron-LM）中，反向传播的 `all-reduce` 发生在通过归一化函数之前；但在 CAAT-Net 中，由于各设备输入不同，反向传播的 `all-reduce` 必须后置到计算归一化函数导数之后，以对齐前向传播中的求和位置。其次是数值稳定性保障：由于改变了反向传播中 `all-reduce` 的位置，必须将归约后的梯度以 32 位（fp32）精度进行累积（通信本身仍可用 16 位），否则会导致训练发散。最后是方差校正：部分同步会导致共享通道和私有通道的激活方差不一致，因此需要将私有通道的激活乘以一个校正因子（如张量并行度为 $r$ 时乘以 $\sqrt{r}$），以保证跨通道的信号传播均匀。</p>
+<p><strong>效果如何</strong>
+实验在 Intel Gaudi3 HPU 以及 NVIDIA H100 和 A100 硬件上进行，使用了 RedPajama 数据集，模型涵盖了 130M 自定义模型、1.1B 的 TinyLlama、7B 的 Llama2 以及 GPT3-XL。对比基线主要包括两类：一是代表标准路线的完全同步张量并行（即 Megatron-LM 原生实现），二是代表激活压缩路线的随机掩码（Random masking）和 Top-K 掩码方法。量化结果显示，在训练 7B 参数的 Llama2 模型时，设置同步因子 $p=0.5$ 和张量并行度为 8，CAAT-Net 成功减少了 50% 的通信负载，且在 HellaSwag、WikiText103 等零样本评测任务上与完全同步基线的准确率基本相当。在加速效果上，当张量并行度为 16 且 $p=0.25$ 时，Llama2-7B 的训练吞吐量提升了 14%，推理的首个令牌生成时间最高加速了 26%。相比之下，随机掩码和 Top-K 掩码基线即使在轻微压缩下也会导致验证损失严重恶化，且在减少通信量的实际效率上不如本方法。该方法的代价与局限在于：当同步因子 $p$ 过小（如低于 0.25）时，模型性能会出现明显下降；此外，如果推理时使用的张量并行维度与训练时不同，由于各设备的私有通道已被固化，必须通过模拟“逻辑设备”顺序计算，或者通过微调将 $p$ 值恢复到 1 才能正常服务。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>大规模语言模型（LLM）的训练和推理日益扩大，通常需要数百甚至数千台设备，因此对高效的分布式训练和推理技术的需求不断增长。张量并行（Tensor-parallelism）是许多著名LLM（如GPT-3、Llama和BLOOM）训练中的关键组成部分，它通过在多个设备上划分权重张量，显著减少了单个设备的内存占用，使得在内存有限的硬件上训练超大模型成为可能。然而，张量并行也带来了巨大的通信开销，主要源于同步激活或梯度张量的<code>all-reduce</code>操作。当张量并行的规模扩大时，每个设备的计算负载减少，而通信负载相对恒定，导致通信成本的相对增加，甚至可能主导整个训练过程。</p>
 <p>本文研究的核心问题是如何在保持模型性能的同时，减少张量并行中的通信开销。研究发现，通过对现有实践进行微小调整，LLM可以在不完全同步激活张量的情况下进行训练。基于此，本文提出了“部分通道归约”（partial channel–reduce）操作，即只同步激活张量隐藏维度中的一部分通道，允许不同设备上的激活在通信后存在差异。</p>

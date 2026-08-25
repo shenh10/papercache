@@ -20,6 +20,15 @@ title: 'Fiddler: CPU-GPU Orchestration for Fast Inference of Mixture-of-Experts 
 <h1>Fiddler: CPU-GPU Orchestration for Fast Inference of Mixture-of-Experts Models</h1>
 <p><strong>作者/机构</strong>: Keisuke Kamahori1∗, Tian Tang1,2∗, Yile Gu1, Kan Zhu1, Baris Kasikci1<br/>
 1University of Washington, 2Tsinghua University</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了 Fiddler，一个专为显存受限环境设计的混合专家模型（MoE）推理系统，它通过动态评估 CPU 和 GPU 的批处理效应来逐层调度计算，在多种场景下均实现了显著的推理加速。</p>
+<p><strong>要解决什么问题</strong> 在资源受限环境中本地运行大型语言模型面临严重的显存瓶颈。MoE 架构虽通过门控机制降低了计算需求，但总参数量庞大，无法完整装入单张消费级显卡，且推理时大量未激活的专家参数闲置，导致资源浪费。现有两类方案均卡在不同的机制瓶颈上：第一类是权重卸载（Offloading）方法，将权重存放在 CPU，推理时按需通过 PCIe 传输到 GPU。由于 PCIe 带宽远低于显存读取带宽，频繁搬运权重会产生极高的固定通信延迟。第二类是基于 CPU 的推理框架（如 llama.cpp），将部分层留在 GPU，其余在 CPU 计算，只需传输体积较小的激活值。然而，这种做法忽略了批处理效应差异：GPU 的执行延迟在不同输入规模下基本恒定，而 CPU 的计算延迟会随输入 token 数量呈线性暴涨。因此，在长序列预填充或束搜索等输入规模较大的关键场景中，CPU 计算会成为严重的性能拖累。</p>
+<p><strong>怎么做的</strong> Fiddler 的核心思路是放弃静态的层分配，在运行时根据每个专家层接收的输入 token 数量，动态决定在 CPU 还是 GPU 上执行。它巧妙利用了批处理效应差异：对于输入规模小的专家层，在 CPU 上计算可绕开高昂的 PCIe 权重传输开销；对于输入规模大的专家层，CPU 计算耗时急剧恶化，此时将权重传到 GPU 并由 GPU 计算反而整体耗时更短。系统由三个关键部件构成。首先是初始化阶段的专家放置。Fiddler 将所有 token 必经的非专家层固定在 GPU 显存中。对于剩余显存，系统通过离线分析校准数据统计专家流行度，优先将最常用的专家权重加载到 GPU，以此最大化显存命中率。其次是运行时的动态执行策略。在门控网络输出后，Fiddler 获取分配给各专家的输入 token 数量 $s$。若专家权重已在 GPU 中，则直接无开销执行。若在 CPU 中，系统调用延迟预测模型裁决。设 $cpu\_lat(s)$ 为 CPU 计算延迟（随 $s$ 线性增长），$gpu\_lat(s)$ 为 GPU 计算延迟（视为常数），$trans\_lat()$ 为固定的权重传输延迟。Fiddler 遵循以下更新式进行路由：$$ \text{Device} = \begin{cases} \text{GPU}, &amp; \text{if } cpu\_lat(s) &gt; gpu\_lat(s) + trans\_lat() \\ \text{CPU}, &amp; \text{otherwise} \end{cases} $$当判定为 CPU 执行时，系统仅需传输体积极小的激活值（耗时不足总延迟的 1%）。最后，Fiddler 为 CPU 专家处理设计了定制化计算核，调用原生 PyTorch 不支持的 AVX512_BF16 指令集，大幅提升了 CPU 端的矩阵运算效率。</p>
+<p><strong>效果如何</strong> 实验基于 16 位精度的 Mixtral-8x7B 模型和 ShareGPT 数据集搭建，硬件采用两套配置不同但显存均不足以装下完整模型参数的异构环境。对比基线明确指向了两条技术路线：代表权重卸载路线的 DeepSpeed-MII（开启 ZeRO-Infinity）和 Mixtral-Offloading，以及代表 CPU 计算路线的 llama.cpp。量化结果显示，Fiddler 成功整合了不同路线的优势。在常规的单批次端到端推理任务中，Fiddler 的生成吞吐量比表现最好的基线 llama.cpp 平均快 1.26 倍。在长上下文预填充场景下（输入高达 4096 tokens），基于卸载的方法原本占据优势，但 Fiddler 依然凭借动态调度超越了它们，首个 token 生成时间比 DeepSpeed-MII 快 1.07 倍，比 Mixtral-Offloading 快 1.65 倍。在产生大量并行计算的束搜索推理中（搜索宽度 4 到 16），Fiddler 更是比 llama.cpp 实现了 11.57 倍的性能提升。作者也指出了局限性：对于 Mixtral-8x7B 这类使用 SiLU 激活函数的模型，由于输出极少为绝对的零，难以直接套用传统的通道剪枝等稀疏化压缩技术，Fiddler 必须在不修改模型结构的前提下进行系统级调度。此外，其延迟模型将 GPU 执行时间视为常数，将 CPU 执行时间视为随输入线性增长，实际调度效果强依赖于该预设模型的准确性。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong><br/>
 在资源受限的环境（如个人电脑或边缘设备）中运行大型语言模型（LLM）变得日益重要，这有助于提升隐私、实现模型定制化，并普及先进的LLM技术。混合专家（Mixture-of-Experts, MoE）架构的LLM因其通过门控机制仅激活部分参数，计算需求相对较低，非常适合此类环境。然而，MoE模型的挑战在于其巨大的模型尺寸（如Mixtral-8x7B、Grok-1等），需要大量GPU内存来存储所有参数，导致在有限的GPU内存下进行本地推理十分困难。此外，由于推理时仅使用部分参数，大量GPU内存被闲置，造成资源浪费和成本效益低下。</p>

@@ -20,6 +20,23 @@ title: Scaling Latent Reasoning via Looped Language Models
 <h1>Scaling Latent Reasoning via Looped Language Models</h1>
 <p><strong>文章标题</strong>: 通过循环语言模型扩展潜在推理<br/>
 <strong>作者/机构</strong>: Rui-Jie Zhu, Zixuan Wang, Kai Hua, Tianyu Zhang, Ziniu Li, Haoran Que, Boyi Wei, Zixin Wen, Fan Yin, He Xing, Lu Li, Jiajun Shi, Kaijing Ma, Shanda Li, Taylor Kergan, Andrew Smith, Xingwei Qu, Mude Hui, Bohong Wu, Qiyang Min, Hongzhi Huang, Xun Zhou, Wei Ye, Jiaheng Liu, Jian Yang, Yunfeng Shi, Chenghua Lin, Enduo Zhao, Tianle Cai, Ge Zhang, Wenhao Huang, Yoshua Bengio, Jason Eshraghian; 隶属于 ByteDance Seed, UC Santa Cruz, Princeton University, Mila - Quebec AI Institute, University of Montreal, Peking University, Carnegie Mellon University, University of Pennsylvania, Conscium, University of Manchester, M-A-P 等多家机构。</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出并开源了预训练循环语言模型 Ouro 系列，通过在潜在空间中复用 Transformer 层进行迭代计算，使 1.4B 和 2.6B 参数的模型在多数基准测试上达到了 4B 和 8B 标准模型的性能，实现了 2 到 3 倍的参数效率提升。</p>
+<p><strong>要解决什么问题</strong>
+现有大型语言模型提升能力的常规路径面临着难以逾越的物理与机制卡点：单纯扩大模型参数规模会导致部署时的显存占用、延迟和推理成本急剧上升；而利用思维链等测试时计算技术来提升参数效率，又会不可避免地导致输出序列长度膨胀，不仅增加了解码开销，还容易出现事后合理化的问题。此外，标准非循环模型在处理复杂任务时，往往受限于知识操纵能力的不足，难以高效完成多跳推理。虽然让模型在潜在空间中进行多步迭代计算能增强推理能力，但如果对所有输入词元都施加相同的计算深度，会造成严重的算力浪费，因为简单词元并不需要深层计算。因此，如何在不增加显存占用、不拉长输出序列的前提下，让模型根据输入难度动态分配计算资源以实现高效推理，成为了当前亟待解决的关键卡点。</p>
+<p><strong>怎么做的</strong>
+核心思路是构建循环语言模型（LoopLM），通过在预训练阶段让一组权重绑定的 Transformer 层在潜在空间中被多次迭代重用，从而在不增加参数量的前提下加深计算深度。这种机制将推理过程内置于隐藏状态的演变中，绕开了思维链带来的序列膨胀问题。具体而言，模型将深度为 L 的层堆栈重复应用 $t$ 次：
+$$F^{(t)}(\cdot) = \text{lmhead} \circ \underbrace{\mathcal{M}^L \circ \dots \circ \mathcal{M}^L}_{t \text{ iterations}} \circ \text{ emb}(\cdot)$$
+为了解决计算浪费问题，模型引入了自适应计算门控机制。在每个循环步骤 $t$，模型都会并行运行一个退出门，根据当前隐藏状态预测一个瞬时的退出概率，进而推导出在第 $t$ 步终止计算的离散概率分布 $p_{\phi}(t \mid x)$。在推理时，当累积退出概率超过设定阈值，模型就会提前退出，从而为简单词元节省算力。在训练设计上，直接优化门控会导致概率坍缩到最大循环步数，因此作者设计了两阶段训练法。第一阶段在语言建模损失中引入了基于均匀先验的熵正则化项，鼓励模型在探索阶段无偏地探索计算深度，防止模型总是崩溃到使用最大步数：
+$$ \mathcal{L}=\sum_{t=1}^{T_{\max }} p_{\phi}(t \mid x) \mathcal{L}^{(t)} - \beta H\left(p_{\phi}(\cdot \mid x)\right) $$
+第二阶段则冻结语言模型参数，专门微调退出门。通过计算额外循环带来的边际性能改进来生成理想的继续或退出标签，构建自适应退出损失函数。该函数同时惩罚“思考不足”（在应该继续时退出）和“过度思考”（在应该退出时继续）两种失败模式，引导模型在性能增益停滞时果断退出，实现了计算成本与准确率的精准权衡。</p>
+<p><strong>效果如何</strong>
+实验在 7.7T 词元的预训练数据上训练了 1.4B 和 2.6B 参数的 Ouro 模型。对比基线主要选取了代表标准密集 Transformer 路线的强力开源模型，包括 Qwen3、Gemma 和 Llama3 系列。量化结果显示，在 4 个循环步的设置下，Ouro 1.4B 基础模型的性能与 4B 参数的 Qwen3-Base 相当，并在 BBH、GSM8K 和 MATH500 等挑战性推理任务上更优；Ouro 2.6B 则在 MMLU-Pro 等推理密集型基准上超越了 8B 参数的 Qwen3-Base。经过监督微调的 Ouro-Thinking 模型在 AIME 和 GPQA 等高级数学与科学基准上同样达到了 4B 和 8B 基线的水平。合成任务分析表明，这种优势并非源于知识存储容量的增加，而是模型学习组合和操纵知识的样本效率更高。在安全性与忠实性上，随着循环步数增加，模型在 HEx-PHI 基准上的有害性显著降低，且不同循环步骤间的答案存在系统性分歧，证明其在真实更新决策而非事后合理化。在推理效率方面，通过在解码阶段复用最后一步的 KV 缓存，模型在几乎不损失性能的情况下将内存开销降低了 4 倍。不过，该方法也存在局限与代价：当在推理时将循环步数外推至超过训练时的最大深度时，模型在标准基准上的性能会出现中度下降；此外，由于动态提前退出机制导致执行路径长度可变，现有的 vLLM 等推理框架无法提供高效的离策略采样，导致作者在强化学习对齐阶段的尝试未能取得超越监督微调的性能提升。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题与研究目标</strong>:<br/>
 大型语言模型（LLMs）的发展历史上主要依赖于模型规模的扩大，但这导致了部署基础设施要求高、延迟和成本增加等问题。因此，参数效率（在固定的参数预算内实现更好的模型能力）变得至关重要。传统的提升参数效率的途径（扩大训练语料库、利用思维链等推理时计算）面临数据稀缺和输出序列膨胀等限制。本文探索了第三种途径：通过架构创新在固定参数预算内实现动态计算。</p>

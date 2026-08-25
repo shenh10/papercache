@@ -18,6 +18,15 @@ title: 'Preble: Efficient Distributed Prompt Scheduling for LLM Serving'
 <div class="container">
 <h1 id="preble-efficient-distributed-prompt-scheduling-for-llm-serving">Preble: Efficient Distributed Prompt Scheduling for LLM Serving</h1>
 <p><strong>作者/机构</strong>: Vikranth Srivatsa, Zijian He, Reyna Abhyankar, Dongming Li, Yiying Zhang (University of California, San Diego)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了首个针对长且共享提示（prompt）优化的分布式大语言模型（LLM）服务系统 Preble，通过动态调度算法在利用现有缓存和探索新节点之间取得平衡，大幅降低了真实工作负载下的平均和尾部延迟。</p>
+<p><strong>要解决什么问题</strong> 现有的 LLM 服务系统（如 vLLM）通常将每个请求视为独立的计算单元，在面对包含长篇上下文、工具说明或系统指令等大量重复前缀的请求时，会完全重新计算注意力机制的键值（KV）缓存，导致严重的算力浪费。在分布式集群中利用前缀共享面临三个底层卡点：首先是计算与状态的强耦合，LLM 推理要求注意力计算必须直接访问同一 GPU 上的 KV 缓存，无法像传统分布式文件系统那样将计算和存储分离；其次是严格的前缀约束，只有完全匹配的前缀才能被共享，且整个前缀必须完整存放在同一 GPU 上，不能跨卡切分；最后是动态负载均衡难题，由于 LLM 的前缀树结构和各节点的请求负载随时间动态变化，静态划分请求本质上是一个 NP 难的图分区问题，极易导致部分 GPU 显存溢出或算力闲置，而其他 GPU 却无法分担。</p>
+<p><strong>怎么做的</strong> 核心思路是构建一个双层调度架构，通过全局调度器处理跨 GPU 的请求分发，再由单卡上的本地调度器执行迭代级批处理，以此绕开静态分区的死结。全局调度器维护一棵全局前缀树，并采用 E2（利用与探索）动态调度算法。当请求可节省的重计算量（匹配的前缀 token 数）大于新计算量（未匹配的剩余 token 数）时，算法采取“利用”策略，贪心地将请求发往缓存了其“关键部分”（即匹配 token 最长的树节点）且负载最轻的 GPU。当共享前缀较短时，算法转入“探索”策略，为请求寻找总负载成本最低的新 GPU。分配到 GPU $i$ 的总成本定义为 $$Cost_i = L_i + M_i + R_i$$ 其中 $L_i = \sum_{r \in W} (P T_r + D T_r)$ 代表基于历史窗口内预填充和解码时间估算的 GPU 预期负载，$M_i = \sum P T_j \times N_j$ 代表为新请求腾出显存而驱逐旧缓存所带来的重计算成本，$R_i$ 则是运行当前请求未命中部分的实际预填充成本。此外，系统创新地引入了预填充与解码平衡机制，将缓存全命中的请求视为纯解码计算，未命中的长提示请求视为预填充计算，优先将后者调度到前者扎堆的 GPU 上，以填补算力空窗。在单卡本地调度层面，系统摒弃了传统的先到先服务或最大共享优先策略，改用基于前缀缓存命中率的优先级分组调度，按比例从各优先级组抽取请求，在最大化共享效率的同时避免了低命中率请求被饿死。如果遇到局部热点，全局调度器还会触发负载转移或自动扩缩，将过载的前缀子树复制并拆分到多个 GPU 上。</p>
+<p><strong>效果如何</strong> 实验在 4 张 A6000 和 8 张 H100 GPU 集群上展开，分别运行 Mistral 7B 和 Llama-3 70B 模型，测试了工具调用、具身智能体、代码生成、视频问答、长文档问答五个真实工作负载以及 Azure 真实生产追踪数据。对比基线主要有两个：一是代表单机前缀共享路线的 SGLang 数据并行版本（使用轮询分发），二是代表理想化静态划分路线的 Oracle 分区基线（利用离线全局信息手动切分前缀树）。量化结果显示，在所有配置下，Preble 相比 SGLang 基线将平均延迟降低了 1.5 倍至 14.5 倍，p99 尾部延迟降低了 2 倍至 10 倍，且性能全面持平或超越了具备全局先验知识的 Oracle 理想基线。在混合工作负载下，Preble 的首 token 时间和每输出 token 时间也均优于基线。不过作者也承认了部分局限性：在代码生成这类解码时间占比极高且所有请求共享同一个固定长系统提示的任务中，简单的轮询分发也能获益，此时 Preble 的平均延迟优势会收窄至 1.56 倍至 1.8 倍；此外，当把底层后端从 SGLang 换成 vLLM 时，由于 vLLM 的前缀缓存功能尚不完善且不支持与分块预填充同开，Preble 带来的相对性能提升幅度会有所减弱，但依然优于原生 vLLM。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决大型语言模型（LLM）服务中，由长且部分共享的提示（prompt）带来的新挑战。</p>
 <p><strong>核心问题</strong>:<br/>

@@ -22,6 +22,19 @@ title: 'Hierarchical Balance Packing: Towards Efficient Supervised Fine-tuning f
 <ul>
 <li><strong>作者/机构</strong>: Yongqiang Yao (Shanghai Jiao Tong University), Jinru Tan (Central South University), Kaihuan Liang (SenseTime Research), Feizhao Zhang (SenseTime Research), Jiahao Hu (SenseTime Research), Shuo Wu (SenseTime Research), Yazhe Niu (The Chinese University of Hong Kong), Ruihao Gong (Beihang University, SenseTime Research), Dahua Lin (SenseTime Research), Ningyi Xu (Shanghai Jiao Tong University)</li>
 </ul>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种用于长上下文大语言模型微调的分层平衡打包（HBP）方法，通过多级数据分组和动态训练策略解决了长短文混合训练时的工作负载不平衡问题，在保持模型性能的同时，将236B参数模型的训练速度最高提升了2.4倍。</p>
+<p><strong>要解决什么问题</strong> 现有的大语言模型长上下文微调通常采用数据打包技术处理长短文混合数据，但这会引发三个严重的底层效率卡点。首先是注意力计算复杂度极度不平衡：即使两个设备被分配了总长度相同的打包数据（例如同为4K，一个是四个1K拼接，另一个是两个2K拼接），由于注意力计算复杂度随序列长度呈平方级增长，两者的实际计算量差异巨大，导致算力闲置与设备等待。其次是序列并行通信开销的浪费：长上下文数据必须依赖序列并行和跨设备通信来完成注意力计算，而短数据本不需要跨设备通信；当长短数据被强行打包混合时，短数据也会被强制拉入序列并行通信环中，造成大量无意义的网络传输时间浪费。最后是训练策略的冲突：在给定的显存限制下，序列并行度与梯度检查点层数之间存在严格的权衡。序列并行度小会导致显存吃紧，被迫增加梯度检查点层数从而引入大量重计算；序列并行度大则会引入过多通信开销。不同长度的序列对应的最优策略完全不同，传统的一刀切打包方法无法兼顾这一点。</p>
+<p><strong>怎么做的</strong> 核心思路是放弃将所有长度数据混在一起打包的传统做法，改为构建多级数据打包组，让不同长度的数据在各自最优的硬件配置下训练，从而绕开计算不平衡和通信浪费的卡点。该方法由三个关键部件构成。第一是分层组自动选择，算法会预先对不同序列长度进行性能剖析，寻找序列并行度与梯度检查点层数之间的最优权衡，并推导出能让通信开销最小化的多级打包长度组。第二是平衡打包机制，它先将训练样本按长度分配到对应的打包组中，接着使用贪婪填充策略，因为较大的打包组仅用自身的长样本很难填满，所以需要从较短的打包组中抽取少量序列来填补空隙，以此降低填充率；随后根据注意力复杂度对打包数据进行排序，构建出计算量均衡的批次。为了衡量并优化这种注意力计算的不平衡性，作者定义了注意力平衡比（ABR），其计算方式为：
+$$ \mathrm{ABR}=\frac{\sum_{i}^{N}\left(A_{\max }-A_{i}\right)}{A_{\max } \times N} $$
+其中 $A_i$ 是各个设备的注意力计算复杂度。第三是专为多级输入设计的动态训练流程，包含零开销切换的自适应序列并行、从纯短文逐渐过渡到长短文混合的课程学习策略，以及一个稳定的损失归一化器。由于数据打包会打乱全局的 token 分布，传统的按样本或按本地 token 数求平均的损失函数会引入偏差，因此作者提出使用全局批次的平均 token 数 $T_{\text{ave}}$ 作为分母来进行归一化：
+$$ \mathcal{L}_{\text{stable}} = \frac{\sum_{i}^{B_{l}} \text{loss}_{i}}{B_{l} * T_{\text{ave}}} $$
+这种设计确保了每个 token 对总损失的贡献绝对相等，消除了异构序列长度带来的梯度偏差。</p>
+<p><strong>效果如何</strong> 实验在32块至256块 H100 80GB GPU 上进行，使用了 Tulu3 和 LongCite 等数据集，覆盖了从 LLaMA 3.1、Qwen-2.5 到最大 236B 参数的 DeepSeek-V2 模型。对比基线包括代表损失重加权路线的 LongAlign、代表传统朴素打包路线的 ISF，以及代表动态序列并行路线的 FlexSP。量化结果显示，该方法在通用任务和长上下文任务（如 Ruler-128K）上均保持了与强基线持平甚至更好的性能，同时大幅提升了训练效率。在 DeepSeek-V2 模型上，该方法将训练时间从57.1个 GPU 天缩短至23.8个 GPU 天，实现了2.4倍的加速。消融实验表明，分层打包将通信开销比例从1.0降至0.173，而平衡批处理将注意力平衡比从0.506极大地压缩至0.002。相比于 FlexSP，本方法不仅实现了更低的注意力不平衡和填充率，还避免了 FlexSP 每批次5到15秒的动态分组开销，因为本方法的全局数据级操作是提前完成的，自动选择与打包的总耗时不到整体训练时间的2%。在 OpenHermes 和 LongWriter 等数据集上的测试也证实了该方法具有良好的泛化性。局限性在于，受限于算力，该方法尚未在 256K 或 512K 的超长上下文设置中测试，也未在强化学习微调等其他后训练阶段进行验证。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>: 训练长上下文大语言模型（Long-Context LLMs）具有挑战性，因为使用长短文混合数据进行训练常会导致工作负载不平衡。现有工作主要通过数据打包（data packing）来缓解此问题，但未能考虑注意力计算不平衡和通信开销浪费的问题。</p>
 <p><strong>研究目标与创新点</strong>: 本文提出了一种名为<strong>分层平衡打包（Hierarchical Balance Packing, HBP）</strong>的方法，旨在通过新颖的批次构建方法和训练策略来解决这些低效问题。HBP的核心贡献如下：<br/>
