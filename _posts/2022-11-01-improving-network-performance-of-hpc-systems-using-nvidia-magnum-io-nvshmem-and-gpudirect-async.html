@@ -17,6 +17,15 @@ title: Improving Network Performance of HPC Systems Using NVIDIA Magnum IO NVSHM
 
 <div class="container">
 <h1 id="improving-network-performance-of-hpc-systems-using-nvidia-magnum-io-nvshmem-and-gpudirect-async">Improving Network Performance of HPC Systems Using NVIDIA Magnum IO NVSHMEM and GPUDirect Async</h1>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文在 NVSHMEM 通信库中引入了 InfiniBand GPUDirect Async (IBGDA) 技术，通过让 GPU 直接向网卡提交通信请求并完全绕过 CPU 代理，彻底解除了细粒度小消息的节点间通信吞吐量瓶颈。</p>
+<p><strong>要解决什么问题</strong> 在包含数万个 GPU 的大规模高性能计算系统中，强缩放工作负载极度依赖 GPU 间高效的细粒度通信。NVIDIA Magnum IO NVSHMEM 是一个提供分区全局地址空间数据访问模型的通信库，它在节点内利用 NVLink 能实现极高的细粒度数据访问效率。然而，当跨节点进行横向扩展时，传统的 NVSHMEM InfiniBand 可靠连接（IBRC）传输机制存在严重的架构卡点：它必须依赖主机 CPU 上的代理线程来管理网络操作。当 GPU 上的 CUDA 内核发起通信时，只能将工作描述符写入主机内存的代理缓冲区，随后由 CPU 代理线程检测描述符、构建网络请求、更新主机内存中的门铃记录（DBR）缓冲区，并最终敲击网卡（NIC）的硬件门铃寄存器。现代网卡每秒能处理数亿个通信请求，GPU 也能以同等速率生成请求，但 CPU 代理线程处理这些请求的速率却要低几个数量级。这种严重的速率不匹配导致 CPU 周期被大量消耗，且 CPU 代理成为了通信控制路径上的绝对瓶颈。在小消息和高并发场景下，这种机制根本无法打满网络硬件的峰值吞吐量，导致节点间网络通信与节点内 NVLink 通信在小消息性能上存在巨大鸿沟。</p>
+<p><strong>怎么做的</strong> 核心思路是利用 GPUDirect Async 技术建立一条从 GPU 流式多处理器（SM）到网卡的直接控制路径，将 CPU 完全从通信关键路径中剔除。为了实现这一目标，IBGDA 对底层通信部件的物理位置和交互逻辑进行了重构。首先，传统机制中位于主机内存的工作队列（WQ）缓冲区和门铃记录（DBR）缓冲区被全部下放到了 GPU 内存中，这使得 GPU SM 能够以极低的延迟直接访问它们，同时保留了网卡通过 GPUDirect RDMA 技术对其进行访问的能力。当应用程序在 GPU 上调用 NVSHMEM 通信操作时，GPU 的 SM 会直接创建一个网卡工作描述符，并将其写入 GPU 内存中的 WQ 缓冲区，同时更新 DBR 缓冲区。随后，SM 直接向网卡硬件中的门铃寄存器写入数据来通知网卡。网卡收到通知后，利用 GPUDirect RDMA 技术直接从 GPU 内存读取工作描述符和待传输数据，并发送到远程节点。传输完成后，网卡同样使用 GPUDirect RDMA 将完成事件直接写入完成队列（CQ）缓冲区，从而通知 GPU 操作已结束。我们可以用通信延迟的构成来表达这一机制的转变，传统 IBRC 机制的单次通信延迟为：$$T_{IBRC} = T_{SM \to Proxy} + T_{CPU\_Process} + T_{CPU \to NIC} + T_{Transfer}$$ 而 IBGDA 机制彻底消除了 CPU 处理开销，将其简化为：$$T_{IBGDA} = T_{SM \to NIC} + T_{Transfer}$$ 此外，IBGDA 还设计了自动数据合并功能，当同一个线程束内的目标地址连续时，硬件能自动将 32 个小消息合并成一个大消息发送。</p>
+<p><strong>效果如何</strong> 实验在 4 台 DGX-A100 服务器上搭建，节点间通过 NVIDIA Quantum HDR 交换机连接 NVIDIA ConnectX-6 200 Gb/s InfiniBand 网卡。为凸显网络性能，所有实验均强制禁用了节点内的 NVLink 通信。对比基线为 NVSHMEM 标准发行版中的两种传输方式：代表传统 CPU 代理路线的 IBRC 传输，以及代表本文新路线的 IBGDA 传输。在单边写带宽测试中，当使用 64 个合作线程阵列（CTA）发起通信时，IBGDA 仅需 2 KiB 的小消息就能打满网络峰值带宽，而 IBRC 受限于 CPU 瓶颈，无论怎么增加 CTA 数量都无法降低达到峰值带宽所需的最小消息尺寸；对于小于 1 KiB 的消息，IBGDA 提供的吞吐量比 IBRC 高出多达 9.5 倍。在 8 字节标量小消息吞吐量测试中，IBRC 的发送速率死锁在约 1.7 MOPS（百万操作/秒），而 IBGDA 仅用 8 个 CTA 就逼近了网卡 215 MOPS 的硬件极限；当触发自动数据合并特性时，IBGDA 的发送速率甚至突破了网卡峰值，接近 2000 MOPS。在 Jacobi 求解器强缩放案例中，使用 IBRC 时细粒度标量发送版本的延迟是数据聚合发送版本的 8 倍以上，而换用 IBGDA 后，细粒度发送版本的延迟大幅降低至与聚合发送版本持平。在 32 个处理元件参与的 All-to-All 集体操作测试中，IBGDA 彻底消除了 IBRC 中 CPU 代理造成的序列化瓶颈，在小于 16 KiB 的消息场景下展现出更低且更稳定的总延迟。作者也指出，发送大量小消息的绝对网络开销依然略高于发送单个大消息，但 IBGDA 凭借并行提交海量请求的能力，让应用程序得以隐藏这些网络开销。</p>
+</div>
+</details>
 <h3 id="_1"><strong>文章标题与作者</strong></h3>
 <ul>
 <li><strong>标题</strong>：使用 NVIDIA Magnum IO NVSHMEM 和 GPUDirect Async 提升 HPC 系统的网络性能</li>

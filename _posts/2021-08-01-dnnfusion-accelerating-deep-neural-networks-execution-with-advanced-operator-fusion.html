@@ -19,6 +19,19 @@ title: 'DNNFusion: Accelerating Deep Neural Networks Execution with Advanced Ope
 
 <div class="container">
 <h1>DNNFusion: Accelerating Deep Neural Networks Execution with Advanced Operator Fusion</h1>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 提出了一种基于算子映射类型分类和数学属性图重写的深度神经网络算子融合框架 DNNFusion，在移动设备上挖掘出高达 8.8 倍的融合机会，实现了最高 9.3 倍的推理加速。</p>
+<p><strong>要解决什么问题</strong> 深度神经网络在移动设备上推理时，模型深度的增加成为了制约执行效率的核心卡点。随着网络变深，层数增多会导致两个直接的物理瓶颈：一是产生海量的中间结果，极大地增加了内存占用和缓存压力；二是单层的计算量往往不足，导致处理器（尤其是 GPU）的利用率低下。算子融合是减少内存需求和提高效率的关键手段，但现有主流路线均存在局限。以 TensorFlow 和 TVM 为代表的框架通常采用基于特定固定模式的融合方法，这种规则匹配限制性太强，无法覆盖极深模型中极其多样的算子种类和层连接方式；而基于多面体（Polyhedral）的循环融合技术则直接在底层的计算视图上操作，完全丢失了高层的算子语义信息，从而错失了大量潜在的融合机会。</p>
+<p><strong>怎么做的</strong> 核心思路是保留高层算子视图的语义优势，通过对算子及其组合的输入输出映射关系进行严格的数学分类，从而系统性地扩大融合搜索空间。整个机制由四个关键部件构成。首先是算子映射类型分类，方法根据输入与输出元素的对应关系，将 ONNX 生态中的所有算子抽象为五种类型：一对一（One-to-One）、一对多（One-to-Many）、多对多（Many-to-Many）、重组（Reorganize）和洗牌（Shuffle）。例如，一对一映射被严格定义为存在函数使得：
+$$y[d_1,...,d_n] = F(x[f_1(d_1),...,f_n(d_n)])$$
+且索引间存在一一映射；而一对多则定义为：
+$$y[e_1,...,e_m] = F(x[f_1(d_1),...,f_n(d_n)])$$
+且 $m &gt; n$。基于此分类，方法引入了转换阻抗（Transformation Impedance）概念来衡量融合难度，一对一阻抗最低，多对多阻抗最高。当两个算子尝试融合时，系统通过查表即可推断融合后算子的映射类型，并直接判定该融合是绝对盈利（直接融合）、绝对亏损（中止融合），还是需要性能剖析。其次是扩展计算图（ECG），它在传统计算图基础上注入了算子的映射类型、中间结果可移除性以及结合律、交换律、分配律等数学属性。第三步是基于数学属性的图重写，系统以减少浮点运算次数为目标，利用算子的数学属性在 ECG 的子图内进行贪心模式匹配。例如，利用结合律将两个倒数和两个乘法算子替换为一个倒数、一个平方和一个乘法，从而消除冗余计算和中间数据拷贝。第四步是轻量级融合计划探索与代码生成，算法优先选择中间结果最小的“一对一”算子作为融合种子，因为它们阻抗低、能引发更多融合；随后沿着种子的前驱和后继进行贪心传播，结合映射类型分析和性能剖析数据库生成候选融合块。最后，系统将 ECG 转换为数据流树（DFT），逆向遍历依赖关系，利用预定义的代码生成规则为移动端 CPU 和 GPU 生成 C++ 和 OpenCL 代码，并辅以块内优化（直接消除仅被使用一次的洗牌或重组类数据移动算子）和块间优化（由卷积等主导算子决定整个融合块的全局数据排布格式）。</p>
+<p><strong>效果如何</strong> 实验在三星 Galaxy S20（骁龙 865 的 CPU 与 GPU）以及两款旧设备上进行，测试了包含 EfficientNet-B0、YOLO-V4、Mask R-CNN、BERT-BASE、GPT-2 等 15 个涵盖视觉与自然语言处理的主流模型。对比基线包括代表主流执行框架的 MNN 和 TFLite、代表端到端编译优化的 TVM、代表动态图框架的 Pytorch-Mobile，以及代表通用图替换路线的 TASO；同时设置了无融合和固定模式融合作为内部消融基线。量化结果显示，DNNFusion 是唯一能成功运行所有 15 个测试模型的框架。在移动 CPU 上，其推理延迟相比 MNN、TVM、TFLite 和 Pytorch-Mobile 分别实现了 1.4-2.6 倍、1.5-3.5 倍、1.4-3.3 倍和 1.6-9.3 倍的加速；在移动 GPU 上相比 MNN、TVM 和 TFLite 也实现了最高 4.0 倍的加速。与 TASO 相比，其专为融合设计的图重写在 CPU 上带来了 1.4-2.6 倍的额外加速。在 YOLO-V4 的微观测试中，该方法显著降低了总内存访问量和各级缓存未命中率，并实现了最高的处理器利用率。该方法的代价在于编译阶段依赖预先计算的性能剖析数据库来处理映射类型分析中无法直接判定盈利性的情况；如果缺失该离线数据库，模型的编译时间将从约 1 小时暴增至 3 小时。作者也坦承，当前方法尚未结合最新的模型剪枝技术，这也是未来的优化方向。</p>
+</div>
+</details>
 <h3>DNNFusion：通过先进的算子融合加速深度神经网络的执行</h3>
 <p><strong>作者/机构</strong>: Wei Niu (William &amp; Mary, USA), Jiexiong Guan (William &amp; Mary, USA), Yanzhi Wang (Northeastern University, USA), Gagan Agrawal (Augusta University, USA), Bin Ren (William &amp; Mary, USA)</p>
 <h2>A1 主要贡献</h2>

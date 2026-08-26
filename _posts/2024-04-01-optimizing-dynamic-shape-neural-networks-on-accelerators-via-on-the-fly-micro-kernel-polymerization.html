@@ -20,6 +20,15 @@ title: Optimizing Dynamic-Shape Neural Networks on Accelerators via On-the-Fly M
 <div class="container">
 <h1>Optimizing Dynamic-Shape Neural Networks on Accelerators via On-the-Fly Micro-Kernel Polymerization</h1>
 <p><strong>作者/机构</strong>: Feng Yu, Guangli Li, Jiacheng Zhao, Huimin Cui, Xiaobing Feng, Jingling Xue (SKLP, ICT, CAS, UCAS, UNSW)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个名为 MikPoly 的动态形状张量编译器，通过离线生成固定大小微内核并在运行时进行在线聚合的两阶段优化方法，在 GPU 和 NPU 上为任意动态形状的张量算子生成高性能程序，相比顶尖厂商库实现了平均 1.49 倍的性能提升。</p>
+<p><strong>要解决什么问题</strong> 现有张量编译器在处理动态形状神经网络（如动态批量大小、可变图像分辨率或动态序列长度）时存在严重的机制卡点。传统的静态形状编译器（如 TVM）依赖耗时的搜索过程，只能离线为固定形状生成代码，无法应对运行时才确定形状的动态场景。现有的动态形状编译器（如 DietCode 和 Nimble）虽然加快了编译，但强制要求开发者预先定义形状的变化范围，一旦实际形状超出预设范围就会导致运行时错误或性能大幅下降。此外，厂商提供的手工优化库（如 cuBLAS）在面对任意变化的张量形状时，由于计算任务无法完美均匀地映射到硬件执行单元上（例如 GPU 的线程块总数略大于一个执行波次能容纳的数量时，最后一个波次的利用率极低），会产生严重的负载不均衡，导致性能出现巨大波动，难以维持持续的最优算力输出。</p>
+<p><strong>怎么做的</strong> 为了绕开预定义形状范围的限制和厂商库的负载不均衡问题，MikPoly 提出了一种基于微内核聚合（micro-kernel polymerization）的两阶段解耦优化机制。核心思路是将底层优化问题拆分为离线生成和在线聚合两步。首先，在离线阶段，MikPoly 将张量程序的循环模板分为针对本地内存优化的最内层循环和针对全局内存优化的外层循环。利用现有的自动调度器，它基于内层循环模板为特定硬件生成一组高度优化的、固定大小的微内核（micro-kernels），并为每个微内核训练一个分段线性性能模型，用于预测其在单个处理引擎上的执行代价。其次，在在线阶段，当算子的具体形状在运行时确定后，MikPoly 会使用预定义的聚合模式（即将算子的输出划分为不同的计算区域）来重组外层循环，并尝试用离线生成的不同微内核去填充这些区域。为了在微秒级时间内从众多组合中选出最优解，MikPoly 引入了一个精确且轻量级的代价模型。对于在多级加速器 $H$ 上的张量程序 $S$，其总执行代价由各个区域 $R_i$ 和对应的微内核 $\tilde{K}_i$ 的代价总和决定，定义为：$$ \text{Cost}(S,H) = \sum_{(R_i, \tilde{K}_i) \in S} f_{\text{wave}}(R_i, \tilde{K}_i, H) \times f_{\text{pipe}}(R_i, \tilde{K}_i, H) $$ 其中，$f_{\text{pipe}}$ 是通过离线性能模型预测的单个流水线任务的执行代价，而 $f_{\text{wave}}$ 表示并行执行所有任务所需的波次（waves）数量，计算方式为：$$f_{\text{wave}}(R_i, \tilde{K}_i, H) = \left\lceil \frac{f_{\text{parallel}}(R_i, \tilde{K}_i)}{|P_{\text{multi}}|} \right\rceil$$ 这里 $f_{\text{parallel}}$ 是流水线任务总数，$|P_{\text{multi}}|$ 是硬件处理引擎的数量。通过这种将大任务拆分并由多个不同大小微内核共同处理的聚合策略，MikPoly 能够完美填充硬件的执行波次，彻底消除负载不均衡，且无需预设形状范围即可适应任意动态输入。</p>
+<p><strong>效果如何</strong> 实验在 Nvidia A100 GPU 和昇腾 910 NPU 上进行，涵盖了通用矩阵乘法（GEMM）、卷积算子以及语言模型（如 BERT、Llama2-13b）和视觉模型（如 ResNet）的端到端推理。对比基线包括代表顶尖厂商手工优化路线的 cuBLAS、cuDNN 和 CANN，代表模板库路线的 CUTLASS，代表现有动态形状编译器路线的 DietCode 和 Nimble，以及代表大语言模型推理系统的 FasterTransformer。在算子层面，MikPoly 在 GPU 上相比 cuBLAS/cuDNN 在 GEMM 和卷积上分别取得平均 1.47 倍和 1.98 倍的加速；在 NPU 上相比 CANN 分别取得 1.10 倍和 1.41 倍的加速。在与同类编译器的公平对比中，MikPoly 在 GPU 上运行 GEMM 的速度平均比 DietCode 快 2.94 倍，比 Nimble 快 7.54 倍；更重要的是，在 8192 个动态形状测试中，当输入形状超出预定义范围时 DietCode 出现大量失效，而 MikPoly 实现了 100% 的有效运行。在 Llama2-13b 的端到端测试中，集成 MikPoly 后相比 FasterTransformer 基线取得了最高 1.05 倍的加速。作者也承认了当前方法的局限性：目前尚未结合算子融合等图级优化技术，且卷积操作仅采用了基于 GEMM 的转换实现，未来若引入 Winograd 等原生卷积算法可能会带来更大的性能收益。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决动态形状神经网络中张量程序优化的挑战。现有方法存在编译成本高、无法适应任意形状变化等问题。为实现对动态形状神经网络的高效优化，本文提出了MikPoly，一个基于微内核聚合（micro-kernel polymerization）的新型动态形状张量编译器。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

@@ -22,6 +22,15 @@ title: 'Ansor: Generating High-Performance Tensor Programs for Deep Learning'
 <li><strong>文章标题</strong>: Ansor：为深度学习生成高性能张量程序</li>
 <li><strong>作者/机构</strong>: Lianmin Zheng (UC Berkeley), Chengfan Jia (Alibaba Group), Minmin Sun (Alibaba Group), Zhao Wu (Alibaba Group), Cody Hao Yu (Amazon Web Services, Inc), Ameer Haj-Ali (UC Berkeley), Yida Wang (Amazon Web Services), Jun Yang (Alibaba Group), Danyang Zhuo (UC Berkeley and Duke University), Koushik Sen (UC Berkeley), Joseph E. Gonzalez (UC Berkeley), Ion Stoica (UC Berkeley)</li>
 </ul>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了 Ansor 自动化张量程序生成框架，通过构建分层搜索空间并结合基于梯度的任务调度算法，自动为深度神经网络生成超越现有手动库和搜索框架的高性能张量程序。</p>
+<p><strong>要解决什么问题</strong> 深度神经网络在不同硬件上的高效执行依赖高性能张量程序，但现有生成方式卡在搜索空间受限和评估不准确两个机制瓶颈上。传统供应商内核库（如 cuDNN）需耗费巨大工程量为每个算子手动调优，难以跟上新算子迭代。现有基于搜索的编译方法分两条路线，但均有缺陷：第一条是基于模板的方法（如 TVM、FlexTensor），依赖人工预定义模板限定搜索空间，不仅需要极高专家经验，且模板通常只针对单一算子，无法覆盖算子融合等跨节点优化，导致搜索空间狭窄；第二条是基于顺序构建的方法（如 Halide），通过逐个节点展开构建程序，并在每次决策后用成本模型对不完整程序进行激进剪枝。由于成本模型只能在完整程序上训练，用它预测不完整程序的最终性能极不准确，导致许多最终性能优异的程序在早期被错误丢弃，同时固定顺序决策也限制了添加缓存等灵活的图结构优化。</p>
+<p><strong>怎么做的</strong> 为绕开手动模板限制和不完整程序评估误差，Ansor 提出将高级结构与低级细节解耦的分层搜索空间生成机制，配合进化搜索与动态调度寻找最优程序。首先，Ansor 自动为计算图生成大型分层搜索空间，顶层是定义程序高级结构的草图（sketch），底层是包含数十亿低级选择的注解（annotation）。在草图生成阶段，系统按拓扑顺序遍历计算图节点，递归应用一组派生规则（如跳过、内联、多级分块、带融合的多级分块、添加缓存、归约因子分解）枚举所有可能的高级结构。在注解阶段，Ansor 对草图随机采样，随机填充分块大小、并行化外层循环、向量化和展开内层循环，直接生成完整张量程序，彻底避免对不完整程序的评估。因随机采样程序性能参差不齐，Ansor 引入带学习成本模型的进化策略进行微调。系统以采样程序为初始种群，通过分块大小、并行、计算位置变异及基于节点的交叉等操作生成新程序。为快速评估适应度，Ansor 训练梯度提升决策树作为成本模型，预测程序最内层非循环语句得分，损失函数为 $loss(f, P, y) = y(\sum_{s \in S(P)} f(s) - y)^2$，其中 $y$ 是真实吞吐量，$S(P)$ 是最内层语句集合，以此赋予高吞吐量程序更大权重。最后，面对包含多个子图的完整神经网络，Ansor 引入基于梯度下降的任务调度算法。系统将每个子图优化视为一个任务，通过近似计算目标函数对分配时间的梯度 $\frac{\partial f}{\partial t_i}$，将有限搜索时间优先分配给能显著降低端到端延迟的性能瓶颈子图。</p>
+<p><strong>效果如何</strong> 实验在 Intel CPU、NVIDIA GPU 和 ARM CPU 上进行，测试了单算子、子图到端到端网络（如 ResNet-50、DCGAN、BERT 等）的性能。对比基线涵盖主流框架（PyTorch、TensorFlow、TensorRT、TensorFlow Lite）及代表不同路线的先进方法：代表激进剪枝路线的 Halide auto-scheduler，以及代表基于模板路线的 FlexTensor 和 AutoTVM。量化结果显示，单算子测试中 Ansor 探索到了现有框架搜索空间外的优化组合，实现 1.1 倍至 22.5 倍性能提升；端到端网络推理测试中，Ansor 在 Intel CPU、ARM CPU 和 NVIDIA GPU 上将执行性能分别最高提升 3.8 倍、2.6 倍和 1.7 倍。在包含大量转置卷积的 DCGAN 上加速极显著，因其能用正确分块和展开策略简化乘零操作。此外，得益于任务调度器，Ansor 在 Intel CPU 上仅需 AutoTVM 约 1/10 的搜索时间即可达到同等性能。作者坦诚了几个局限性：无法优化动态形状计算图，要求形状必须静态已知；目前仅支持稠密算子，无法处理稀疏算子；主要在较高层次优化，底层依赖 LLVM 或 NVCC，未能充分利用 Intel VNNI 或 NVIDIA Tensor Core 等特殊硬件指令。</p>
+</div>
+</details>
 <h2>主要贡献</h2>
 <p><strong>核心问题</strong>: 深度神经网络（DNN）的高效执行离不开高性能的张量程序。然而，为不同硬件平台上的各种算子获得高性能的张量程序极具挑战性。</p>
 <p><strong>现有方法及其局限</strong>:<br/>

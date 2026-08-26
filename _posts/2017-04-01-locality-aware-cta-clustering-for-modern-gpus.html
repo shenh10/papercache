@@ -25,6 +25,15 @@ title: Locality-Aware CTA Clustering for Modern GPUs
 - Xu Liu, College of William and Mary<br/>
 - Akash Kumar, Technische Universität Dresden<br/>
 - Henk Corporaal, Eindhoven University of Technology</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种纯软件的 CTA 聚类（CTA-Clustering）技术，通过绕开不可控的硬件调度器将具有数据重用的线程块绑定到同一个流式多处理器上，在多代 GPU 上显著减少了 L2 缓存事务并实现了平均 1.4 倍以上的性能加速。</p>
+<p><strong>要解决什么问题</strong> 现代 GPU 程序的全局数据重用中有 45% 发生在不同的协作线程阵列（CTA，即线程块）之间，但这种 CTA 间局部性长期被浪费。原有做法卡在 GPU 底层的 CTA 调度器（GigaThread 引擎）完全由硬件控制，对软件既不可见也无法修改。硬件通常采用轮询或随机策略将 CTA 分发给各个流式多处理器（SM），导致原本访问同一块数据的 CTA 被打散到不同的 SM 上，或者在时间上错开执行。由于 GPU 核心内的 L1 缓存容量极小，且采用写驱逐策略，这种无序调度会引发严重的缓存颠簸，导致 L1 命中率极低，迫使 SM 频繁向延迟极高且带宽有限的 L2 缓存和全局内存发起请求。如果不能在机制上接管调度权，把具有潜在重用关系的 CTA 强行聚集到同一个 SM 上并发或连续执行，就无法利用这部分巨大的局部性收益。</p>
+<p><strong>怎么做的</strong> 作者提出了 CTA 聚类技术，核心思路是废弃默认的内核启动方式，通过纯软件的代码转换构建一个映射机制，欺骗或完全规避硬件调度器，强制有局部性的 CTA 在同一个 SM 上执行。关键设计由分区、反转和绑定三个步骤构成。首先是分区（Partitioning），负责将原始内核中的所有 CTA 划分为 $M$ 个平衡的簇，使得簇内保留最多的 CTA 间局部性。作者通过分析数组引用对网格维度的依赖性来决定是按 X 还是 Y 维度划分，其启发式分区函数定义为：$$f(v) = \left( \lfloor v/M \rfloor - \left( \lfloor (v\%M)/M \rfloor * (\lfloor |V|/M \rfloor + 1) + \lfloor v/M \rfloor * \lfloor |V|/M \rfloor \right), v\%M \right)$$ 其中 $v$ 是原始 CTA ID，$|V|$ 是总 CTA 数，$M$ 是簇的数量，输出结果为簇 ID $i$ 和该 CTA 在簇内的位置 $w$。其次是反转（Inverting），负责在已知簇 ID 和簇内位置时，反向推导出原始的 CTA ID，其反转函数定义为：$$v = f^{-1}((w, i)) = i * (\lfloor |V|/M \rfloor + 1) + w + \min(i - (|V|\%M), 0)$$ 最后是绑定（Binding），负责将实际执行的计算资源与划分好的簇对应起来。为了彻底绕开黑盒的硬件调度器，作者设计了基于代理的聚类（Agent-based Clustering）。该机制在每个 SM 上只启动少量在内核执行期间持久驻留的 CTA（称为代理），代理通过读取特殊寄存器 `%smid` 获取当前物理 SM 的 ID，从而知道自己该负责哪个簇。代理内部运行一个任务循环，不断获取簇内位置 $w$，结合所在簇 $i$，利用反转函数计算出原始 CTA ID $v$，进而执行原始内核的计算逻辑。作为补充，该方法还引入了 CTA 节流机制，通过限制每个 SM 上活跃的代理数量来缓解缓存争用，并配合缓存旁路和重塑顺序后的 CTA 预取来进一步掩盖内存延迟。</p>
+<p><strong>效果如何</strong> 实验在 Fermi、Kepler、Maxwell 和 Pascal 四代 NVIDIA GPU 上搭建，测试了来自 Rodinia、Parboil 等基准测试集的 23 个应用。对比基线包括默认硬件调度的基线（BSL）、基于轮询假设的重定向聚类（RD）、基于代理的聚类（CLU）、结合 CTA 节流的代理聚类（CLU+TOT）、缓存旁路（BPS）以及 CTA 预取（PFH）。量化结果显示，对于具有算法相关局部性的应用，结合节流的代理聚类在四代架构上分别实现了平均 1.46 倍、1.48 倍、1.45 倍和 1.42 倍的性能加速，最高加速达 3.83 倍，L2 缓存事务数分别锐减了 55%、65%、29% 和 28%。该方法存在明确的适用边界：它对算法相关和缓存行相关的应用极为有效，但对数据相关、写相关或纯流式应用几乎没有收益。此外，架构差异会带来显著的代价波动，在较新的 Maxwell 和 Pascal 架构上，由于 L1 缓存行较小（32B）且被划分为多个扇区，阻碍了跨扇区的数据重用，加上动态 warp 绑定机制引入了额外的原子操作和同步开销，其聚类效果略逊于拥有 128B 大缓存行的老架构。作者也承认，对于像矩阵乘法这种数据重用距离远超 L1 缓存容量、且每个 CTA 包含大量 warp 导致并发代理数受限的应用，时间与空间局部性均难以被有效捕获，性能提升十分有限。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文探讨了现代GPU中一种长期被忽视但具有性能提升潜力的数据局部性——CTA间局部性（inter-CTA locality）。利用这种局部性面临三大挑战：硬件可行性不明确、底层的CTA调度器未知且无法访问、以及核心内缓存容量小。</p>
 <p>为解决这些问题，本文做出了以下主要贡献：<br/>

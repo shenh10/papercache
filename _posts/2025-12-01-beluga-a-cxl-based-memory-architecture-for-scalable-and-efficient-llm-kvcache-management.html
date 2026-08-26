@@ -18,6 +18,15 @@ title: 'Beluga: A CXL-Based Memory Architecture for Scalable and Efficient LLM K
 <div class="container">
 <h1>Beluga: A CXL-Based Memory Architecture for Scalable and Efficient LLM KVCache Management</h1>
 <p><strong>作者/机构</strong>: Xinjun Yang, Qingda Hu, Junru Li, Feifei Li, Yicong Zhu, Yuqi Zhou, Qiuru Lin, Jian Dai, Yang Kong, Jiayu Zhang, Guoqiang Xu, Qiang Liu (Alibaba Cloud Computing)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了Beluga，首个利用CXL 2.0交换机为GPU集群提供解耦共享内存池的架构，通过原生加载和存储语义替代RDMA网络协议，在大型语言模型推理中实现了高效的KVCache读写，将系统吞吐量最高提升了4.79倍。</p>
+<p><strong>要解决什么问题</strong> 在大型语言模型（LLM）的长上下文推理中，KVCache（键值缓存，用于保存历史token激活值以避免重复计算）的内存占用随上下文长度线性增长，远超单机GPU高带宽内存和CPU物理内存的容量上限。现有系统通常采用基于RDMA（远程直接内存访问）的解耦内存池来跨节点扩展容量，但RDMA本质上是网络协议而非内存总线，带来了三个致命卡点。首先是数据路径冗长，在CPU驱动模式下，数据必须经过主机内存的“反弹缓冲区”中转，形成“GPU到主机内存再到远程内存”的低效路径。其次是控制路径同步开销极高，微基准测试表明，在16KB的数据传输中，实际数据移动仅占2.68µs，而内核启动和跨组件轮询等同步开销高达约8µs。最后是面对KVCache高度碎片化的内存布局时效率暴跌，例如32B参数模型中一个KVCache块可能需要128次非连续传输，而RDMA网卡的散点和聚集列表存在硬件限制（单次最多30个条目），导致必须将操作拆分为大量独立请求，极易触发IOPS（每秒输入输出操作次数）瓶颈。这些高昂的延迟甚至会抵消KVCache重用带来的计算节省，迫使系统不得不采用极其复杂的缓存感知调度策略。</p>
+<p><strong>怎么做的</strong> 核心思路是将内存访问范式从网络协议转变为内存语义接口。Beluga利用CXL（Compute Express Link，一种新兴的设备间高效内存共享互连协议）2.0交换机，将多个GPU服务器连接到一个大规模共享内存池。GPU和CPU可以通过简单的加载和存储指令直接访问这个全局内存池，就像访问本地内存一样。该方法之所以能绕开原有卡点，是因为它在物理层面上消除了主机内存中转，在控制层面上将数据传输无缝集成到GPU原生的CUDA流中，彻底去除了RDMA繁琐的请求准备和跨组件同步开销。关键设计由三个部件构成。首先是统一地址空间映射，系统通过直接访问模式将CXL内存暴露为块设备，允许用户空间进程直接将其映射到虚拟地址空间。其次是软件驱动的缓存一致性管理，由于当前CXL 2.0硬件不支持跨主机的缓存一致性，Beluga针对不同操作设计了绕过缓存的策略：CPU写操作强制使用非临时存储指令直接落盘，GPU写操作禁用数据直接I/O以绕过末级缓存，而读操作前则显式调用指令使本地陈旧缓存行失效。最后是针对KVCache特性的传输引擎，Beluga摒弃了RDMA复杂的请求拆分，直接使用自定义的细粒度CUDA复制内核来处理非连续读写。对于碎片化的KVCache传输，RDMA的请求拆分复杂度为 $$N_{RDMA\_req} = \lceil \frac{N_{fragments}}{30} \rceil$$ 而Beluga通过单个内核即可完成无限的离散读写，即 $$N_{CXL\_req} = 1$$ 此外，Beluga还在CXL内存池中预留了专用空间，通过生产者和消费者模式的自旋等待标志位，实现了完全在用户空间运行的远程过程调用（RPC），用于高效同步KVCache的元数据。由于CXL提供了极低的访问延迟，Beluga彻底抛弃了复杂的缓存感知调度，转而采用简单的缓存无关调度，直接使用标准负载均衡分发推理请求。</p>
+<p><strong>效果如何</strong> 实验在一个由两台服务器组成的集群上进行，每台服务器配备双路Intel CPU和8张96GB显存的H20 GPU。Beluga系统通过PCIe 5.0适配器连接到一个8TB的CXL内存池。对比基线是高度优化的RDMA方案MoonCake（基于vLLM和LMCache库）以及Nvidia官方的Dynamo方案，它们代表了当前最先进的网络内存池路线。在LV-Eval长上下文问答数据集（输入超过15K tokens）和未量化的Qwen-32B模型设置下，当KVCache完全命中时，Beluga-KVCache相比MoonCake将首token生成时间降低了89.6%，系统吞吐量提升了7.35倍。在微观操作上，面对高度稀疏的KVCache读取（16个非连续token），Beluga的延迟大幅降低了95.9%；其基于共享内存的RPC往返延迟仅为2.11µs，比RDMA快4倍。该架构当前也存在局限和代价：由于数据路径必须穿过CPU的根复合体，GPU访问CXL内存的写带宽被限制在26 GB/s，未能跑满物理链路上限；同时，单内存设备在倾斜访问下会产生排队延迟，必须依赖软件层面2MB粒度的内存交错技术来强行分散负载。作者承认，彻底解决带宽瓶颈需要等待未来支持GPU直连交换机的硬件架构。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>随着大型语言模型（LLM）尺寸的急剧增大和对长上下文推理需求的增长，内存已成为GPU加速的LLM服务中的关键瓶颈。GPU上的高带宽内存（HBM）虽然访问速度快，但容量有限，必须依赖主机内存（CPU DRAM）来支持大规模的键值缓存（KVCache）。然而，DRAM的最大容量受到每个CPU插槽内存通道数量的限制。为了克服这一限制，现有系统通常采用基于RDMA的解耦内存池，但这引入了高访问延迟、复杂的通信协议和同步开销等重大挑战。新兴的CXL技术为KVCache设计带来了新机遇。</p>
 <p>本文提出了Beluga，一个新颖的内存架构，它使GPU和CPU能够通过CXL交换机访问一个共享的大规模内存池。该设计支持通过CXL fabric进行原生的加载/存储（load/store）访问语义，从而提供接近本地内存的延迟，同时降低了编程复杂性并最小化了同步开-销。</p>

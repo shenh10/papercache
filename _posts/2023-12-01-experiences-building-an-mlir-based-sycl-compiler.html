@@ -19,6 +19,15 @@ title: Experiences Building an MLIR-based SYCL Compiler
 <div class="container">
 <h1>Experiences Building an MLIR-based SYCL Compiler</h1>
 <p>Ettore Tiotto (Intel Corporation), Vı́ctor Perez (Codeplay Software), Whitney Tsang (Intel Corporation), Lukas Sommer (Codeplay Software), Julian Oppermann (Codeplay Software), Victor Lomuller (Codeplay Software), Mehdi Goli (Codeplay Software), James Brodman (Intel Corporation)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文构建了一个基于 MLIR 编译器框架的 SYCL 编译器 SYCL-MLIR，通过自定义方言保留高级语义并实现主机与设备代码的联合分析，在多面体基准测试中相比主流的基于 LLVM 的编译器实现了最高 4.32 倍的性能加速。</p>
+<p><strong>要解决什么问题</strong> 现有的 SYCL 编译器（如基于 LLVM 的 DPC++）在编译机制上存在两个严重的卡点。首先是高级语义的过早丢失。SYCL 编程模型包含丰富的高级抽象，例如工作项（work-item）的并行执行层次以及用于管理设备内存的缓冲区-访问器（buffer and accessor）模型。现有编译器在早期阶段就把这些结构降级成了低级的 LLVM IR，导致编译器无法识别内存访问模式等高级信息，从而错失了针对 GPU 内存层次结构的优化机会。其次是主机与设备代码的隔离编译。标准流程采用单源多编译器遍机制，主机代码和设备代码被分开独立编译。这种物理隔离导致主机端的调用上下文（例如传递给内核的常量参数、访问器的具体范围和偏移量）无法传递给设备编译器，彻底阻断了跨主机-设备边界的联合分析与优化。</p>
+<p><strong>怎么做的</strong> 核心思路是利用 MLIR 框架的多层中间表示能力，自定义专门的 SYCL 方言（dialect，即特定领域的类型和操作集合），并在同一个模块中并排表示主机和设备代码，从而绕开语义丢失和隔离编译的卡点。关键设计由三个部件构成。第一是构建 SYCL 方言，将设备端的工作项位置和内存访问器，以及主机端的内核调度和缓冲区构造，全部建模为 MLIR 的原生类型和操作，直接在中间表示中固化高级语义。第二是主机代码提升（Host Raising）机制。由于直接将复杂的 C++ 主机代码转换为 MLIR 存在工程困难，编译器先获取主机代码的 LLVM IR，然后通过模式匹配，将底层的运行时调用重新提升为高级的 SYCL 方言操作，借此实现了主机与设备代码在同一个 MLIR 模块中的联合表示。第三是基于联合表示的定制化分析与设备优化。编译器实现了一致性分析来追踪变量在工作组内是否分化，并实现了内存访问分析，将仿射循环中的内存访问精确建模为访问矩阵与偏移向量的组合：$$ \text{Access} = M \times \begin{pmatrix} \text{gid} \\ \text{iter} \end{pmatrix} + \vec{b} $$ 基于这些分析，编译器执行了循环内化（Loop Internalization）优化。它通过分析访问矩阵识别出具有时间局部性的全局内存访问，将其分块并预取到延迟更低的局部内存（local memory）中，同时利用一致性分析确保安全地注入同步屏障。此外，得益于主机-设备的联合表示，编译器还能执行跨边界的常量传播，将主机端定义的常量执行范围或访问器属性直接折叠进设备内核，从而简化设备端控制流并消除无用参数。</p>
+<p><strong>效果如何</strong> 实验在配备 Intel Xeon Platinum 8480+ CPU 和 Intel Data Center GPU Max 1100 的硬件上进行，评估了 SYCL-Bench 测试集和 oneAPI 示例。对比基线有两个：Intel DPC++ 编译器（代表传统的基于 LLVM 的静态隔离编译路线）和 AdaptiveCpp（代表在运行时利用 JIT 编译来捕获主机上下文的路线）。在计算密集型的 polybench 基准测试中，SYCL-MLIR 相比 DPC++ 实现了 1.45 倍的几何平均加速比，最高加速达到 4.32 倍，显著优于 AdaptiveCpp 的 1.22 倍，这主要归功于循环内化将数据成功预取到局部内存以及数组归约优化。在 single-kernel 测试集中，SYCL-MLIR 取得了 1.02 倍的微弱平均加速。在整个 SYCL-Bench 测试集上，其几何平均加速比为 1.18 倍。该方法也存在明显的局限性：由于当前的设备优化强依赖于仿射循环分析，SYCL-MLIR 在基于模板（stencil）的工作负载（如一维热传递模拟）上未能触发优化，反而出现了最高 14% 的性能下降。此外，在工程代价上，主机代码提升机制严重依赖于对底层运行时代码的模式匹配，这意味着一旦 SYCL 运行时的内部实现发生变化，编译器的提升逻辑就必须同步修改，带来了较高的维护成本。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决当前SYCL编译器面临的两大挑战：一是由于过早地将高级语言结构和语义降低到低级中间表示（如LLVM IR），导致高级信息丢失，影响了优化效果；二是主机代码和设备代码的编译过程相互隔离，无法进行联合分析和优化。为了应对这些挑战，本文介绍了基于MLIR编译器框架设计和实现一个SYCL编译器的实践经验。</p>
 <p><strong>核心问题与研究目标</strong><br/>

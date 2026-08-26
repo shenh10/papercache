@@ -18,6 +18,15 @@ title: GPU-Initiated Networking for NCCL
 <h1>GPU-Initiated Networking for NCCL</h1>
 <p><strong>作者/机构</strong>: Khaled Hamidouche, John Bachan, Pak Markthub, Peter-Jan Gootzen, Elena Agostini, Sylvain Jeaugey, Aamir Shafi, Georgios Theodorakis, Manjunath Gorentla Venkata {khamidouche, jbachan, pmarkthub, pgootzen, eagostini, sjeaugey, ashafi, gtheodorakis, manjunath}@nvidia.com NVIDIA Corporation</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文在NCCL 2.28中设计并实现了GPU启动网络（GIN）功能，允许GPU线程直接从CUDA核函数中发起单向RDMA网络通信，在消除CPU协调开销的同时，将设备端通信能力无缝集成到NCCL的生产级生态中，并在专家混合（MoE）工作负载中达到了与专用通信库相当的性能。</p>
+<p><strong>要解决什么问题</strong> 传统的GPU集群网络通信长期依赖主机启动模式，即由CPU负责协调所有的通信操作。这种以CPU为中心的机制在处理现代AI工作负载（特别是专家混合MoE架构）时暴露出了严重的机制卡点：MoE模型需要动态、负载均衡的all-to-all token路由，其消息大小不可预测且通信模式极其不规则。如果依赖CPU调度，细粒度的GPU间通信会产生高昂的CUDA核函数启动开销、数据经由主机内存暂存带来的PCIe传输延迟，以及CPU与GPU之间的同步等待开销。虽然业界出现了NVSHMEM或DeepEP等支持设备端发起的专用通信库，但它们脱离了广泛使用的NCCL生态系统，导致应用程序无法在同一个运行时内同时享受主机优化的标准集合通信和设备驱动的低延迟点对点通信，增加了多通信库并存的部署与运维复杂度。</p>
+<p><strong>怎么做的</strong> GIN的核心思路是将单向通信语义引入设备端，让GPU线程无需接收方协调即可直接读写远程内存，从而彻底绕开CPU调度和双向握手延迟，实现计算与通信的深度重叠。整个系统由三层架构组成：负责资源管理和内存窗口注册的主机端NCCL核心层、供CUDA核函数直接调用的设备端API层，以及提供具体网络执行逻辑的插件层。在机制设计上，GIN要求所有参与的GPU预先注册对称的内存窗口以实现零拷贝访问，并通过GIN上下文封装网络队列对来提供并发通信流。GPU通过调用put发起异步的远程写入，并通过两种机制追踪完成状态：本地的Counters用于确认发送缓冲区可安全重用，远程的Signals用于确认数据已到达目标端并对远程GPU可见。为了在无序传输中保证正确性，GIN定义了一个关键的轻量级排序不变量：在同一个上下文中发往同一个对等方的操作，当远程信号更新完成时，保证此前发出的所有数据写入均已对远程可见，即满足 $Signal_{complete} \implies \forall Put_{prior} \text{ are visible}$。为了兼顾极致性能与硬件兼容性，插件层设计了双后端架构：GDAKI后端利用DOCA GPUNetIO技术，让GPU直接向网卡门铃寄存器写入描述符，实现纯粹的GPU到网卡直通；而Proxy后端则作为后备方案，让GPU将操作写入无锁队列，由绑核的CPU代理线程轮询并代为发起标准RDMA网络请求，从而在缺乏直通硬件的系统上保持功能等效。</p>
+<p><strong>效果如何</strong> 实验在配备H100 GPU的EOS集群上进行，主要对比基线是代表独立设备启动PGAS路线的专用通信库NVSHMEM（包含IBGDA和IBRC两种传输后端）。在点对点微基准测试中，对于4到128字节的小消息，GIN的GDAKI后端实现了16.7 µs的往返延迟，与NVSHMEM IBRC的16.0 µs相当，且显著优于NVSHMEM IBGDA的24.3 µs；即使是走CPU代理的Proxy后端也达到了18.0 µs。在应用级评估中，作者将GIN集成到专门的MoE通信库DeepEP中。在处理4096个token的高吞吐量核函数测试中（2个节点16张GPU，BF16精度），GIN的RDMA分发带宽达到84.36 GB/s，与NVSHMEM的84.97 GB/s几乎一致；扩展到8个节点64张GPU时，两者均维持在53到54 GB/s。在处理1到128个token的低延迟核函数纯RDMA测试中，8节点规模下GIN与NVSHMEM均保持了约34到35 GB/s的带宽和219到225 µs的延迟，各项指标差异均在1%到2%以内，证明GIN在不损失性能的前提下成功统一了生态。该方法的局限性在于，要发挥GDAKI后端的极致性能，必须依赖特定的现代网卡硬件（ConnectX-6 Dx及以上）和严格的GPU-网卡同PCIe节点拓扑，否则只能回退到有额外延迟的Proxy后端；此外，当前版本的内存窗口强制要求各节点分配相同大小的容量，对非对称显存分配场景存在一定限制。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>现代AI工作负载，尤其是专家混合（Mixture-of-Experts, MoE）架构，对低延迟、细粒度的GPU间通信以及设备端控制提出了越来越高的要求。传统的GPU通信遵循主机启动模式，即由CPU协调所有通信操作，这带来了同步开销。为了解决这一问题，NCCL 2.28引入了Device API，旨在通过设备启动的通信来消除CPU的协调开销，从而实现计算与通信的紧密集成。</p>
 <p>本文重点介绍了NCCL Device API中的GPU启动网络（GPU-Initiated Networking, GIN）功能。GIN是Device API的三种操作模式之一，专为通过InfiniBand和RoCE网络进行的节点间通信而设计。另外两种模式是用于节点内NVLink/PCIe通信的Load/Store Accessible（LSA）和用于NVLink SHARP硬件多播的Multimem。</p>

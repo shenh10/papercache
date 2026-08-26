@@ -20,6 +20,26 @@ title: 'GPUDirect Async: Exploring GPU synchronous communication techniques for 
 <h1 id="gpudirect-async-exploring-gpu-synchronous-communication-techniques-for-infiniband-clusters">GPUDirect Async: Exploring GPU synchronous communication techniques for InfiniBand clusters</h1>
 <p>E. Agostini *, D. Rossetti, S. Potluri</p>
 <p>NVIDIA, Santa Clara, CA, United States</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文基于 CUDA 8.0 引入的 GPUDirect Async 技术，开发了允许 GPU 直接控制 InfiniBand 网卡进行异步通信的执行模型与消息传递库，在多 GPU 科学计算应用中成功将通信开销降低了最高 26%。</p>
+<p><strong>要解决什么问题</strong>
+在传统的多 GPU 加速 MPI 并行应用中，CPU 始终充当着 GPU 计算任务和网卡网络通信任务的协调者。这种机制要求 CPU 不断在计算和通信阶段之间交替，并频繁执行同步操作（例如调用 cudaStreamSynchronize 和 MPI_Wait）。当应用进行强缩放时，分配给每个节点的计算量和通信时长会大幅缩短。一旦缩放超过某个临界点，CPU 启动 GPU 计算任务和网卡通信任务所产生的调度与同步开销，就会变得与实际执行计算或通过网络交换几千字节数据的时间相当。这种由 CPU 频繁介入关键路径所带来的同步开销，导致通信过程无法有效地隐藏在计算过程背后，最终使得整个应用程序在扩展到更多 GPU 时遭遇性能瓶颈，无法继续提升并行效率。</p>
+<p><strong>怎么做的</strong>
+核心思路是将通信的控制路径从 CPU 卸载到 GPU，让 GPU 直接触发和轮询排队到 InfiniBand 网卡的通信操作，从而把 CPU 从通信的关键路径中彻底移除。为了实现这一点，方法利用了 GPUDirect Async 技术，将网卡的硬件门铃寄存器和完成队列通过页锁定主机内存映射到 GPU 的地址空间中。CPU 的职责被简化为仅负责预先分配缓冲区、准备通信描述符并将其排队；而 GPU 则负责通过写入门铃寄存器来真正触发通信，并直接轮询完成队列以等待通信结束。</p>
+<p>为了让开发者易于使用，作者在底层驱动之上构建了 LibGDSync 库以桥接 CUDA 和 InfiniBand Verbs API，并进一步封装出轻量级消息传递库 LibMP 来替换标准 MPI 原语。基于此，本文设计了两种异步通信模型：</p>
+<p>第一种是流异步（SA）模型。通信操作与计算任务被混合排队到同一个 CUDA 流中。对于主机 CPU 而言，这些操作是完全异步的，CPU 可以一次性排队大量任务后去执行其他工作或休眠。该模型要取得比传统 CPU 同步模型更快的收益，必须满足通信时间（发送 $S$ 与等待 $W$）小于传统模型中 GPU 等待 CPU 调度的空闲时间（$T_{idle}$）：
+$$ \sum (S + W)_{SA} &lt; T_{idle} $$</p>
+<p>第二种是内核发起（KI）模型。它采用内核融合技术，直接由 CUDA 内核中的线程触发通信。为了避免死锁，该模型使用动态调度器和块间屏障，强制分配至少一个线程块专门负责轮询接收队列，其他线程块负责计算或发送。KI 模型相比 SA 模型的性能增益取决于计算任务与通信任务在 GPU 流式多处理器上的时间重叠度：
+$$ Gain = \sum Overlap $$
+当所有任务能适配 GPU 可用的逻辑块数量且高度重叠时，KI 模型达到最佳效果；若任务需要大量线程块导致只能顺序执行，则重叠度趋近于零，退化为最坏场景。</p>
+<p><strong>效果如何</strong>
+微基准测试在搭载 Tesla K40m GPU 和 Mellanox Connect-IB 网卡的服务器上进行，应用基准测试在 Wilkes 集群（使用 256 张 Tesla K20c GPU）上搭建。对比基线为代表传统 CPU 驱动通信路线的标准 OpenMPI 实现。在几何多网格求解器代理应用 HPGMG-FV CUDA（弱缩放设置，2 个进程）中，SA 模型获得了 24% 的最大通信时间增益，而 KI 模型由于成功将任务融合到一个内核中，获得了 26% 的最大增益，表现优于 SA 模型。在经典分子动力学代理应用 CoMD-CUDA 中，SA 模型获得了 25% 到 35% 的通信增益（占总运行时间约 5% 的提升）；但 KI 模型由于该应用需要高达 1700 个线程块，导致任务无法重叠，陷入了最坏场景。</p>
+<p>该方法也存在明确的代价和失效场景。微基准测试表明，GPU 控制路径每次操作有约 2.5 微秒的恒定开销，因此对于极小消息，传统的 CPU 驱动通信反而更快。此外，在图广度优先搜索（BFS）应用的测试中，该方法未能提供任何优势。这是因为 GPUDirect Async 要求通信参数（如目标秩、消息大小）必须在 CPU 将任务排队到 GPU 流之前就完全确定。而 BFS 的迭代次数未知且通信大小是动态计算的，强制使用异步模型会导致必须引入额外的同步操作和计算开销，彻底抵消了卸载通信带来的收益。</p>
+</div>
+</details>
 <h2 id="_1">主要贡献</h2>
 <p>本文探讨了GPUDirect Async技术的动机和构建块，该技术是CUDA 8.0引入的新功能，允许GPU直接与第三方设备同步，例如直接触发和轮询排队到InfiniBand Connect-IB网络适配器的通信操作，而无需CPU参与GPU应用的通信关键路径。核心问题是传统GPU加速并行应用中，CPU作为GPU计算和网络通信任务的协调者，导致同步开销（如cudaStreamSynchronize和MPI_Wait），从而限制性能，尤其在强缩放时计算和通信时长缩短时。研究目标是通过微基准测试和性能模型展示GPUDirect Async在多GPU MPI应用中的潜在益处，包括HPGMG-FV（几何多网格应用的代理）和CoMD-CUDA（经典分子动力学代码的代理），并报告一个不提供优势的测试案例，即大规模图的广度优先搜索算法实现。创新点包括引入两种异步通信模型：Stream Asynchronous（SA）模型，通过CUDA流混合通信和计算；Kernel-Initiated（KI）模型，由CUDA内核触发通信；开发LibMP作为简单消息传递库来演示GPUDirect Async的使用；提出性能模型来解释领域分解数值应用的结果；使用代表不同科学领域的基准测试展示益处。</p>
 <h2 id="observation">背景知识/关键Observation/设计原则</h2>

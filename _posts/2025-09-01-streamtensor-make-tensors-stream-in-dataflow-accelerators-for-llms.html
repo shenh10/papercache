@@ -1,10 +1,9 @@
 ---
-added_date: '2026-03-11'
+added_date: '2026-04-01'
 author: shenh10
 categories:
 - mlsys
-- compiler
-- tensor
+- gpu
 comments: true
 date: '2025-09-01'
 layout: post
@@ -20,6 +19,21 @@ title: 'StreamTensor: Make Tensors Stream in Dataflow Accelerators for LLMs'
 <div class="container">
 <h1>StreamTensor: Make Tensors Stream in Dataflow Accelerators for LLMs</h1>
 <p><strong>作者/机构</strong>: Hanchen Ye (University of Illinois Urbana-Champaign), Deming Chen (Inspirit IoT, Inc., University of Illinois Urbana-Champaign)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了首个端到端的数据流编译器框架 StreamTensor，通过引入专门编码流信息的类型系统，实现了大语言模型在数据流加速器上的全自动内核融合与 FIFO 深度推导，在 FPGA 上大幅降低了推理延迟并提升了能效。</p>
+<p><strong>要解决什么问题</strong> 现有数据流架构在应对大语言模型自回归解码的显存墙瓶颈时，面临极高的编程与优化门槛。数据流加速器的核心在于通过片上先进先出队列（FIFO）在计算内核间直接流式传输中间结果，从而绕开外部存储。然而，现有的手动或半自动设计范式卡在四个具体机制上：首先，FIFO 严格的顺序访问特性使得相邻内核在切分、置换和向量化策略上极难协同，容易导致流水线停顿或内存浪费；其次，现有编译器往往假设数据能完全放入片上，无法自动处理直接内存访问（DMA）与内核执行的重叠及流布局匹配；再次，当生产者和消费者内核计算模式不同、流布局不兼容时，手动检查兼容性并生成满足片上内存限制的流布局转换器几乎是不现实的；最后，FIFO 深度的确定极具挑战，尺寸不合理会直接导致溢出、下溢甚至全局死锁，而依赖仿真或手动调优的方法在面对复杂网络时完全失去了可扩展性。</p>
+<p><strong>怎么做的</strong> 核心思路是将数据流加速器的设计从手动搭建转变为基于编译器的自动生成，其内核在于引入了一种全新的迭代张量（itensor）类型系统来系统性地编码流信息。传统的张量类型只记录形状和数据类型，默认内存映射访问，而 itensor 明确编码了元素的形状、迭代空间（循环行程计数和步长）以及迭代映射（从迭代空间到数据空间的仿射映射）。通过比对生产者和消费者的 itensor 类型，编译器能自动判断流布局是否兼容：若匹配则直接通过 FIFO 连接；若不匹配，则自动推断并生成一个占用内存最小的流布局转换器（包含本地乒乓缓冲）。在编译流程上，StreamTensor 构建了三个层次的设计空间。第一层是张量切分空间，利用黑盒优化器探索切分大小和展开因子；第二层是内核融合空间，通过算法在片上内存上限的约束下，寻找能将中间结果全部留在片上流转的全局融合计划，并自动生成 DMA 逻辑以处理边界的片外数据；第三层是资源分配空间，专门解决 FIFO 深度确定的死锁难题。作者提出了一种基于分段线性函数的令牌行为模型，将内核间令牌的生产和消耗速率进行数学建模。对于单次执行中传递的精确令牌数 $T$、源内核初始延迟 $D$ 以及目标内核启动的相对延迟 $delay$，当源内核吞吐量低于目标内核时，FIFO 所需的最大令牌数定义为：
+$$max\_tokens = T - \lfloor \frac{delay - D}{II_{target}} \rfloor$$
+当源内核吞吐量高于目标内核时，最大令牌数定义为：
+$$max\_tokens = \lceil \frac{delay - D}{II_{source}} \rceil$$
+这两个公式揭示了最大令牌数与延迟之间的正相关关系。基于此，StreamTensor 将 FIFO 深度确定转化为一个求解内核间延迟的线性规划（LP）问题。其目标函数为最小化所有边上的延迟总和：
+$$\min \sum_{e_{i,j} \in E} delay(i, j)$$
+约束条件为任意两节点间的延迟必须大于等于连接它们的所有路径上初始延迟的最大累积值。这一机制在数学上保证了既不会发生反压导致的死锁，又能将 FIFO 的资源占用降到最低。</p>
+<p><strong>效果如何</strong> 实验在 AMD U55C FPGA 平台上进行实测，前端接入 Torch-MLIR 处理 PyTorch 模型，测试了 GPT-2 以及新兴的 Qwen、Llama 和 Gemma 模型。对比基线包括代表领域特定语言自动调优路线的 Allo、代表手动设计多 FPGA 加速器路线的 DFX，以及代表冯·诺依曼架构的 NVIDIA A100 和 2080Ti GPU。在 GPT-2 任务中，StreamTensor 成功将整个 Transformer 块融合到单块 FPGA 上，相比 Allo 将总延迟降低了 0.76 倍，首个令牌生成时间（TTFT）缩短了 0.40 倍；相比 DFX，TTFT 降低了 0.19 倍。与 GPU 对比，尽管 GPU 算力庞大使得 TTFT 占优，但在内存密集型的解码阶段，StreamTensor 的总延迟分别比 A100 和 2080Ti 降低了 0.64 倍和 0.25 倍。在能效方面，StreamTensor 在 Qwen 和 Gemma 模型上分别比 A100 高出 1.99 倍和 1.59 倍。消融实验证明，内核融合将片上内存使用量压缩到了原始设计的 14.8% 至 16.8%，没有该机制模型根本无法以纯数据流方式部署。不过该方法也存在局限场景：在运行 Llama 模型时，由于其产生更多的中间结果，迫使编译器采用保守的 FIFO 均衡策略（将所有内核吞吐量对齐到最慢节点），导致内核间执行重叠减少，最终性能表现不及 Qwen 和 Gemma。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文针对数据流架构在深度学习工作负载（特别是大型语言模型LLM）中面临的内存瓶颈和性能优化挑战，提出了一个名为StreamTensor的编译器框架。现有方法在处理内核间相关性、外部存储器访问管理和缓冲区优化方面存在困难。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

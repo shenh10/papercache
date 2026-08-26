@@ -19,6 +19,21 @@ title: 'Radial Attention: O(n log n) Sparse Attention with Energy Decay for Long
 <div class="container">
 <h1>Radial Attention: O(n log n) Sparse Attention with Energy Decay for Long Video Generation</h1>
 <p><strong>作者/机构</strong>: Xingyang Li, Muyang Li, Tianle Cai, Haocheng Xi, Shuo Yang, Yujun Lin, Lvmin Zhang, Songlin Yang, Jinbo Hu, Kelly Peng, Maneesh Agrawala, Ion Stoica, Kurt Keutzer, Song Han (MIT, NVIDIA, Princeton, UC Berkeley, Stanford, First Intelligence)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一种计算复杂度为 $O(n \log n)$ 的稀疏注意力机制 Radial Attention，通过静态掩码模拟视频数据中的时空能量衰减，在保持生成质量的前提下，将长视频扩散模型的推理速度提升了数倍并大幅降低了微调成本。</p>
+<p><strong>要解决什么问题</strong>
+视频扩散模型在生成长视频时，面临着严重的计算复杂度卡点。由于视频引入了额外的时间维度，潜变量 Token 数量急剧膨胀（例如生成 5 秒 720p 视频需要约 11 万个 Token），而模型普遍采用的 3D 稠密自注意力机制，其计算量和显存消耗会随着 Token 数量的增加呈二次方 $O(n^2)$ 暴涨。现有的缓解方案各有缺陷：直接使用线性注意力会导致生成质量严重下降；滑动窗口等静态稀疏方法（如 STA）感受野固定，限制了长距离依赖的建模；而动态稀疏方法（如 SVG）虽然表达能力强，但引入了在线决策开销，且无法用于模型训练，难以将预训练模型高效扩展到未见过的长视频分布上。</p>
+<p><strong>怎么做的</strong>
+核心思路是利用视频数据中固有的“时空能量衰减”现象来分配计算资源。作者观察到，经过 softmax 后的注意力分数会随着 Token 之间空间和时间距离的增加而呈指数级减弱。基于此，Radial Attention 设计了一个静态的稀疏注意力掩码，将这种能量衰减转化为计算密度的衰减，从而绕开了 $O(n^2)$ 的计算卡点。该机制由两个关键部件构成：首先是时间密度衰减，注意力图按帧与帧之间的时间距离被划分为多个对角带，主对角线（中心带）保留完整的计算密度，向外移动时，每个连续带的计算密度减半，但覆盖的时间跨度（带的宽度）翻倍；其次是空间密度衰减，在每个帧到帧的注意力块内，保留空间位置相近的高能量交互，形成对角线结构，且该对角线的宽度会随着帧间时间距离的增加而呈指数级缩小。当宽度缩小到小于 1 时，不再继续变窄，而是降低对角线出现的频率。其掩码 $\tilde{M}$ 的定义性规则如下（其中 $i,j$ 为帧索引，$k,l$ 为空间索引，$s$ 为每帧 Token 数）：
+$$ \tilde{M}_{i,j,k,l} = \begin{cases} 0, &amp; \text{if } 2^{\lfloor \log_2 \max(|i-j|, 1) \rfloor} \leq s \text{ and } |k-l|+1 \leq \frac{s}{2^{\lfloor \log_2 \max(|i-j|, 1) \rfloor}} \\ 0, &amp; \text{if } |i-j| \bmod \lceil \frac{2^{\lfloor \log_2 \max(|i-j|, 1) \rfloor}}{s} \rceil = 0 \text{ and } k=l \\ -\infty, &amp; \text{otherwise} \end{cases} $$
+值为 $-\infty$ 的位置在 softmax 中被忽略。此外，为了保证生成质量，第一帧被设置为注意力池（Attention Sink），允许所有 Token 对其进行全局关注。通过这种静态掩码设计，Radial Attention 将注意力矩阵中非零元素的数量上界控制在 $4sn(\log_2 n - \log_2 s)$，成功将计算复杂度从 $O(n^2)$ 降至 $O(n \log n)$。由于它保留了最关键的 Token 关系且无需动态路由，因此可以直接结合低秩适配器（LoRA）对预训练模型的注意力层进行高效微调，以极低的代价扩展到长视频生成。</p>
+<p><strong>效果如何</strong>
+实验在 100 亿参数的 Mochi 1、130 亿参数的 HunyuanVideo 和 140 亿参数的 Wan2.1-14B 等主流视频扩散模型上进行，使用 OpenVid-1M 数据集进行微调，硬件采用 NVIDIA H100 GPU。对比基线包括代表动态稀疏路线的 SVG、代表静态滑动窗口路线的 STA、代表大语言模型稀疏路线的 PA、代表位置编码外推路线的 RIFLEx、代表线性注意力路线的 SANA，以及全参数或 LoRA 微调的原始稠密注意力。在默认视频长度下（无需训练直接替换），Radial Attention 的生成质量与 SVG 相当，全面超越 STA 和 PA，并在单张 H100 上为 HunyuanVideo 和 Wan2.1 分别实现了 1.9 倍和 1.8 倍的端到端推理加速。在生成 4 倍长度的扩展视频时（如 HunyuanVideo 生成 509 帧），无微调基线和 RIFLEx 质量严重崩溃，SANA 等方法效果不佳；而 Radial Attention 仅需少量 LoRA 微调，其视觉奖励和多维度指标就达到了与稠密注意力 LoRA 微调相当甚至略高的水平，同时将训练成本大幅降低了 4.4 倍，推理速度提升了 3.7 倍。该方法的局限在于，其掩码设计基于注意力分数呈指数衰减的简化假设，可能无法完美拟合真实视频中极其复杂的时空依赖；此外，虽然在时间维度上实现了对数级压缩，但面对单帧分辨率极高的情况，其空间维度的计算复杂度依然是二次方。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>近期，扩散模型在高质量视频生成方面取得了显著进展，但额外的时间维度极大地增加了计算成本，使得在长视频上进行训练和推理变得异常昂贵。</p>
 <p><strong>核心问题</strong>: 视频合成中的时间维度导致Token数量远超图像，而自注意力机制的计算量随上下文长度呈二次方增长，这使得在长视频上进行训练和推理的计算成本过高，限制了模型的可扩展性。</p>

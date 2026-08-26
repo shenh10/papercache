@@ -21,6 +21,23 @@ title: Optimizing Dynamic Neural Networks with Brainstorm
 <p><strong>文章标题</strong>: 使用 Brainstorm 优化动态神经网络<br/>
 <strong>作者/机构</strong>: Weihao Cui (上海交通大学), Zhenhua Han (微软亚洲研究院), Lingji Ouyang (中国科学技术大学), Yichuan Wang (上海交通大学), Ningxin Zheng (微软亚洲研究院), Lingxiao Ma (微软亚洲研究院), Yuqing Yang (微软亚洲研究院), Fan Yang (微软亚洲研究院), Jilong Xue (微软亚洲研究院), Lili Qiu (微软亚洲研究院), Lidong Zhou (微软亚洲研究院), Quan Chen (上海交通大学), Haisheng Tan (中国科学技术大学), Minyi Guo (上海交通大学)</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了首个专门优化动态神经网络执行的深度学习框架 Brainstorm，通过统一动态性的表达粒度并收集运行时统计信息来进行模型执行的专门化优化，最终在主流动态模型上实现了最高 11.7 倍的加速或 42% 的显存节省。</p>
+<p><strong>要解决什么问题</strong>
+现有深度学习框架主要为静态神经网络设计，其核心卡点在于表达粒度的错位。现有框架只能在张量（tensor）级别追踪数据流，而动态神经网络（如 Mixture-of-Experts 模型）的动态分发通常发生在子张量（sub-tensor）级别，例如语言模型中的单个令牌（token）或视觉模型中的图像块（patch）。由于编译器无法理解和追踪这种细粒度的数据流，也就无法收集模型在运行时的动态统计分布（例如哪些分支负载极高、哪些层之间存在强相关性）。这种机制上的盲区导致现有框架只能应用静态的算子融合，完全错失了利用运行时非均匀激活分布来专门化调度 GPU 算力、优化跨卡通信或隐藏路由开销的巨大优化空间。</p>
+<p><strong>怎么做的</strong>
+核心思路是通过引入新的数据与控制流抽象，将动态性的表达与底层执行解耦，从而在正确的粒度上捕获细粒度数据流并实施动态优化。该方法主要由两个核心部件构成。首先是定义动态性粒度的数据抽象 Cell，它允许开发者明确指定张量内部参与路由的基本单元（如某个维度上的特定形状）。其定义机制可表示为：
+$$ \text{Cell} = \text{brt.annotate\_cell}(\text{Tensor}, \text{dims}, \text{shape}) $$
+其次是统一的动态分派接口 Router，它将决定 Cell 去向的控制流逻辑封装起来，生成与源张量布局相同的路由决策：
+$$ \text{Routes} = \text{router\_fn}(\text{Cell}, \text{kwargs}) $$
+通过这种解耦，Brainstorm 在预编译阶段使用符号执行推导静态算子中的 Cell 级数据流，在运行时通过 JIT 分析器收集 Router 的统计配置文件（如分支负载、层间相关性）。基于这些可追踪的细粒度数据流，Brainstorm 实施了四种动态优化策略：第一是动态水平融合，分析路由到各分支的 Cell 数量，将多个并发分支融合成一个针对高频负载形状调优的 GPU 核函数，按需填充执行；第二是配置文件引导的模型放置，通过跨层 Cell 级分析，将高概率同时激活的相关子网络部署在同一 GPU 上以消除冗余通信；第三是推测式路由，利用分支激活的偏态分布，提前启动高概率分支以隐藏 CPU-GPU 同步的路由开销，预测错误时回滚；第四是推测式权重预加载，针对显存受限场景，推测性地将高概率分支的权重提前从内存载入 GPU。</p>
+<p><strong>效果如何</strong>
+实验在单张 A100（80GB）和 8 张 V100（32GB）GPU 平台上进行，评估了涵盖自然语言处理和计算机视觉领域的 6 个主流动态神经网络（如 SwitchTransformer、SwinV2-MoE、MSDNet 等）。对比基线包括代表通用原生优化路线的 PyTorch 官方实现，以及代表特定模型定制优化路线的 Tutel（专为 MoE 模型设计的优化库）和 DeepSpeed-MoE。在端到端测试中，Brainstorm 在 MSDNet 上通过推测式路由和动态水平融合实现了最高 11.7 倍的加速；在 DynamicRouting 模型上将推理延迟降低 1.97 倍的同时减少了 43.5% 的显存消耗。相比于强基线，Brainstorm 在 SwitchTransformer 上比 PyTorch 和 Tutel 分别快 3.63 倍和 3.33 倍，并避免了 Tutel 在 256 个专家时的显存溢出问题；在 TaskMoE 上通过优化模型放置减少了 42% 到 87% 的跨卡通信，带来 1.34 倍的吞吐量提升。该方法的代价是极低的追踪开销（低于 1.0%），但其局限性在于对数据分布漂移敏感：当实际运行的负载分布与收集的统计配置文件发生严重偏离时（例如未见过的负载形状增多），由于核函数填充造成的计算浪费，动态水平融合的加速比会从 4.65 倍骤降至 2.11 倍。此外，应对分布漂移触发的重新优化需要数分钟时间，期间模型只能回退到无动态优化的默认执行状态。</p>
+</div>
+</details>
 <h3>A1 主要贡献</h3>
 <p>本文针对动态神经网络（Dynamic Neural Networks, DNNs）的优化问题，提出了一个名为 Brainstorm 的深度学习框架。</p>
 <p><strong>核心问题</strong>：现有的深度学习框架主要为静态神经网络设计，其算子执行顺序对所有输入都是确定的。然而，动态神经网络在推理时会根据输入稀疏地激活不同的子网络，这种动态性带来了新的优化机会。现有框架无法抓住这些机会，关键在于<strong>表达粒度的错位（misaligned expression granularity）</strong>：框架只能在张量（tensor）级别追踪数据流，而动态性（如 Mixture-of-Experts (MoE) 模型中的“令牌”分发）通常发生在子张量（sub-tensor）级别。因此，现有编译器无法理解和追踪这种细粒度的数据流，也就无法收集用于动态优化的运行时配置文件。</p>

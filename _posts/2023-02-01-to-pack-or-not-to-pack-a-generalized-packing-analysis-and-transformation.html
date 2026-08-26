@@ -20,6 +20,15 @@ title: 'To Pack or Not to Pack: A Generalized Packing Analysis and Transformatio
 <p><strong>标题</strong>：打包还是不打包：一种通用的打包分析与变换<br/>
 <strong>作者/机构</strong>：Caio Salvador Rohwedder, Nathan Henderson, João P. L. De Carvalho, Yufei Chen, and José Nelson Amaral<br/>
 <strong>单位</strong>：University of Alberta, Edmonton, Canada</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为 GPAT 的通用打包分析与变换编译器框架，通过编译时的成本效益分析模型自动决策并应用数据布局变换，打破了 Packing 优化仅限于矩阵乘法的局限，在通用循环嵌套上显著超越了现有循环优化器的性能。</p>
+<p><strong>要解决什么问题</strong> 现有的循环优化器（如 Polly、Pluto 等多面体框架）在应用 Packing（打包，即将非连续内存访问的子张量复制到连续内存中）时，要么只能通过模式匹配局限于通用矩阵乘法（GEMM），要么需要手动添加 pragma 指令，完全不支持通用的循环嵌套。这个卡点非常致命，因为许多计算任务会访问非连续的内存数据，导致空间局部性极差。这不仅会引起缓存未命中，更严重的是会给虚拟内存系统带来巨大压力，因为单次循环嵌套内需要翻译大量不同虚拟页的地址，导致 TLB（地址翻译缓存）条目耗尽而产生 TLB 容量未命中。此外，非连续访问也阻碍了编译器生成高效的向量化指令。然而，如果无脑对所有张量做 Packing，数据复制和解包写回的开销又会轻易吞噬掉性能收益。因此，急需一个能基于成本效益分析、自动推广到通用计算且能精准权衡开销与收益的 Packing 决策机制。</p>
+<p><strong>怎么做的</strong> GPAT 放弃了试错调优和模式匹配，采用一个四阶段的编译时分析模型，静态评估循环嵌套中所有可能的“循环-张量”候选对，找出能通过数据布局变换减少 TLB 未命中并促进向量化的最优 Packing 方案。第一步是数据重用过滤器，它会淘汰在目标循环迭代中没有被重用的子张量，只有当张量访问对循环的归纳变量保持不变时，才值得承受 Packing 的复制开销。第二步是缓存驻留过滤器，用于确保打包后的张量在使用期间不会被驱逐出目标缓存，其判定条件是目标缓存必须能容纳打包张量的 footprint（占用字节数）加上目标循环一次迭代中所有其他张量工作集 footprint 的两倍。第三步是目标实现评估，对剩下的候选者，GPAT 会尝试寻找一个置换向量来改变数据布局，使最内层循环的连续访问步长最小化。候选者必须满足两个目标之一：一是最内层访问步长缩减，即步长减小且访问量大于两个缓存行，以促进向量化；二是 TLB 未命中缩减。判断 TLB 收益的核心逻辑是比较打包前后的 TLB 条目需求，只有当不打包的条目数超出容量且打包后的条目数小于等于容量时才成立，即满足 $$ \text{NoPacking} &gt; \text{TLBEntries} \quad \text{and} \quad \text{Packing} \le \text{TLBEntries} $$ 其中打包后的条目数是通过置换后的工作集形状重新估计的。第四步是贪婪选择，GPAT 定义了一个成本效益函数，收益为减少的 TLB 条目数与循环执行次数的线性组合，成本为打包张量的 footprint（若有写操作则成本翻倍）。系统按效益成本比对候选者排序，贪婪地选择非冗余且能持续满足目标的候选者组合，最终在 MLIR 的 Affine 方言中将选定的方案转化为实际的内存分配、数据重排复制和解包循环代码。</p>
+<p><strong>效果如何</strong> 实验在 Intel i5 8500 CPU 和 32 GiB 内存的硬件上单线程运行，使用 PolyBench/C 的 large 数据集进行评估。对比基线包括代表多面体优化路线的 Polly 和 Pluto（通过 Polymer 工具调用），以及 MLIR Affine 方言自身的自动分块传递，还有作为底层基准的 Clang -O3。在 2mm 和 3mm 基准测试中，GPAT 结合 Polymer 分块引擎的性能始终优于 Polly，因为它成功应用了 Polly 不支持的数据布局变换，其中在 3mm 上取得了最高的整体加速。在非 GEMM 类的 gramschmidt 和 contract3D 任务上，GPAT 同样成功识别出 Packing 机会并超越了 Polly，证明了其在通用计算上的有效性。硬件计数器数据证实，GPAT 显著减少了 L1 数据 TLB 的加载未命中，并通过数据布局变换促进了 CPU 向量指令的使用。此外，GPAT 与分块变换完全正交，无论输入代码是否经过分块，甚至在 Affine 分块失败的场景下都能独立带来性能提升。但该方法也有局限，在极小分块尺寸下，GPAT 可能会因为 LLVM 的循环展开导致寄存器压力增大而出现性能下降；在 trmm 任务上，虽然 GPAT 提升了 Affine 的性能，但未能超越 Polly 更全面的综合优化策略。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文针对目前编译器中 Packing 优化的局限性——即主要局限于手工优化的通用矩阵乘法（GEMM）实现或自动调优技术，而通用循环优化器（如 Polly、Pluto）要么仅通过模式匹配将其应用于 GEMM，要么完全不支持——提出了一个通用的解决方案。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

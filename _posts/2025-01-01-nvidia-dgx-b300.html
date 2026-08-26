@@ -17,6 +17,15 @@ title: NVIDIA DGX B300
 <div class="container">
 <h1>NVIDIA DGX B300</h1>
 <p><strong>作者/机构</strong>: NVIDIA Corporation</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文推出了专为 AI 推理时代设计的 NVIDIA DGX B300 系统，通过集成八颗 NVIDIA Blackwell Ultra GPU 与 NVIDIA Mission Control 软件，在提供 144 PFLOPS 稀疏推理算力的同时实现自动化运维，相比上一代将密集 FP4 性能提升了 1.5 倍。</p>
+<p><strong>要解决什么问题</strong> 随着大模型技术演进，行业进入需要模型执行复杂多步思考的 AI 推理时代，数据中心也必须向大规模制造智能的 AI 工厂转型，这在硬件和运营层面暴露出严重卡点。硬件上，复杂推理对计算密度、显存容量及带宽提出极高要求，传统集群易遭遇显存墙和通信瓶颈。运营上，构建和管理新型 AI 工厂的复杂性急剧上升，多数企业缺乏高效调度复杂 AI 生态的专业团队与工具。这种系统集成、专业知识和能源成本控制上的差距，直接导致昂贵的集群停机时间和低下的硬件利用率。当基础设施无法保持高正常运行时间时，开发人员的等待时间被迫拉长，严重拖累了生成式 AI 的投资回报率。因此，如何将超大规模计算性能封装进标准企业级尺寸，并用软件抹平运维门槛，是当前的核心阻碍。</p>
+<p><strong>怎么做的</strong> 为绕开算力密度与运维复杂度的卡点，NVIDIA DGX B300 采用全栈集成设计，将硬件计算引擎与自动化运营平台深度绑定。核心计算部件由八颗 NVIDIA Blackwell Ultra SXM GPU 构成，配合 Intel Xeon 6776P 处理器，提供 2.1 TB 总 GPU 内存及 64 TB/s 的 HBM3e 带宽，保障了复杂推理的数据吞吐量。节点内互联配备两个 NVIDIA NVLink 交换系统，提供 14.4 TB/s 聚合带宽打破通信瓶颈。跨节点网络集成了八个 OSFP 端口服务八张 NVIDIA ConnectX-8 VPI 网卡，最高支持 800 Gb/s 传输，辅以两张双端口 QSFP112 NVIDIA BlueField-3 DPU 提供最高 400 Gb/s 网络卸载。物理部署上，系统采用兼容 NVIDIA MGX 架构的风冷机箱，尺寸控制在 10U。该设计符合开放计算项目标准，首次实现兼容机箱与传统交流电源部署的灵活性，功耗控制在 14.5 kW 到 15.1 kW 之间。在运营层面，系统引入基于 NVIDIA Run:ai 技术的 NVIDIA Mission Control 软件作为核心调度部件。它充当虚拟运营团队，自动化执行从集群裸机启动到日常工作负载调度的全部任务，通过软件定义提供基础设施弹性，最大化正常运行时间，使 2 TB 至 4 TB 系统内存及 NVMe 内部存储阵列得到高效利用。系统还预装 NVIDIA AI Enterprise 和 NVIDIA DGX OS，构成开箱即用的 AI 工厂蓝图。</p>
+<p><strong>效果如何</strong> 系统性能验证基于完整的 10U 物理整机配置进行。对比基线明确选择了上一代系统 DGX B200，代表前一代数据中心算力架构的性能基准。量化测试表明，DGX B300 相比 DGX B200 实现了显著跨越：密集 FP4 性能提升了 1.5 倍，Attention 算子性能提升了 2 倍。绝对算力规格上，系统在 FP4 Tensor Core 精度下能输出 144 PFLOPS 稀疏推理性能与 108 PFLOPS 稠密推理性能；在 FP8 或 FP6 Tensor Core 精度下，带稀疏性的训练性能达 72 PFLOPS，对应稠密性能为 36 PFLOPS。在代价与局限性方面，系统运行环境受严格物理条件制约，官方指出其 10°C 至 35°C 的运行温度范围带有条件限制，企业实际部署时需对数据中心散热设施进行严格评估。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文档介绍了 NVIDIA DGX B300 系统，旨在为企业应对 AI 推理时代和数据中心向 AI 工厂演进的双重变革。</p>
 <ul>

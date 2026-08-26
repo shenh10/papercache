@@ -19,6 +19,21 @@ title: 'PipeThreader: Software-Defined Pipelining for Efficient DNN Execution'
 <div class="container">
 <h1 id="pipethreader-software-defined-pipelining-for-efficient-dnn-execution">PipeThreader: Software-Defined Pipelining for Efficient DNN Execution</h1>
 <p>Yu Cheng†∗ Lei Wang† Yining Shi† Yuqing Xia⋄ Lingxiao Ma⋄ Jilong Xue⋄ Yang Wang⋄ Zhiwen Mo‡⋄ Feiyang Chen¶⋄ Fan Yang⋄ Mao Yang⋄ Zhi Yang† †School of Computer Science, Peking University ⋄Microsoft Research ‡Imperial College London ¶Shanghai Jiao Tong University</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一个名为 PipeThreader 的深度神经网络编译器，通过将底层硬件的调度权从硬件转移到软件层，实现了现代 GPU 内部异构计算单元的高效流水线并行，在 FlashAttention 和 Mamba2 等模型上均达到了匹配甚至超越专家手工优化内核的性能。</p>
+<p><strong>要解决什么问题</strong>
+现有的深度学习编译器和传统 GPU 编程模型（如 CUDA）通常将流式多处理器（SM）视为同构的执行单元，忽略了现代 GPU 内部高度异构的硬件组件（如专门负责矩阵运算的 TensorCores、负责通用计算的 CUDA cores 以及负责内存搬运的 TMA）。随着算子融合技术的发展，计算流水线变得越来越深，而这些专用硬件单元通常以大尺寸的张量切片为粒度进行处理，导致并发线程数显著减少，原有的硬件调度器难以维持高效的流水线运转。这使得开发者只能依赖极度耗时的手工调优（例如从 FlashAttention-2 到 FlashAttention-3 耗费了近一年时间），且这种手工内核极难泛化到新硬件或 Mamba2 这种新兴模型上（其手工优化版本的 TensorCore 利用率仅为 15%）。现有的 Triton 或 TVM 等编译器由于缺乏显式表达切片级流水线执行的机制，无法在软件层面控制不同专用单元之间的计算与通信重叠，导致严重的资源闲置。</p>
+<p><strong>怎么做的</strong>
+核心思路是将流水线调度从隐式的硬件行为转变为显式的软件控制，让编译器能够直接编排切片级别的操作在不同专用硬件单元上的执行顺序。为此，PipeThreader 引入了两个关键抽象：专用任务（sTask）和专用执行单元（sEU）。首先，编译器将输入的数据流图切分为细粒度的 sTask，每个 sTask 绑定到特定类型的 sEU 上（例如将矩阵乘法拆分为在 TMA 上执行的加载任务和在 TensorCores 上执行的计算任务），这些任务构成了保留数据依赖关系的 sTask-graph。在切分时，除了传统的空间维度切分，PipeThreader 将归约维度的切分提升为核心优化策略，以此暴露出更多的流水线并行机会。其次，硬件被抽象为分层结构，一个执行单元（EU，对应 GPU 的 SM）包含多个异构的 sEU，并暴露了 sEU 的同步或异步特性。为了在巨大的搜索空间中找到最优解，PipeThreader 定义了结构化的调度表示 sProgram，其本质是一个二维数组：
+$$ sProg[sEU][order] $$
+它精确记录了每个 sTask 被分配到的 sEU 及其执行顺序。调度过程依赖三个核心原语：Append 用于将任务分配给特定 sEU，Wait 用于插入同步屏障以保证数据依赖，Propagate 用于在图中反向推导各个任务的切片形状。在具体的调度策略上，PipeThreader 采用两级算法：在 EU 之间均匀分配子图以实现数据并行；在 EU 内部采用贪心策略，优先调度异步任务以及能解锁更多下游任务的节点，同时通过内置的分析器实时校验当前调度方案的片上内存（如共享内存和寄存器）占用情况，从而在切片大小与流水线深度之间找到最佳平衡点。</p>
+<p><strong>效果如何</strong>
+实验在 NVIDIA H100 和 AMD MI300X 两款 GPU 上进行，评估了 LLAMA3-8B/70B、Mamba2-1.3B、RetNet-65B 以及 ResNet50 等模型，覆盖了从批处理大小为 1 到 128、序列长度从 512 到 16K 的多种推理场景。对比基线涵盖了代表深度学习框架的 PyTorch-Inductor（基于 Triton）和 ONNXRuntime、代表专用推理引擎的 TensorRT 和 vLLM、代表底层计算库的 cuBLAS/rocBLAS，以及代表极致手工优化的 FlashAttention-3 和代表算子融合编译器的 Ladder。在 H100 上的算子级测试中，PipeThreader 生成的 FlashAttention 内核最高达到了 FlashAttention-3 的 2.18 倍速度；在 Mamba2 的线性注意力算子上，最高达到 Triton 的 2.59 倍，并且在 8K 和 16K 长序列下 Triton 出现失效，而本方法依然稳定运行。在端到端延迟方面，对于量化版的 LLAMA3-8B，本方法最高比 vLLM 快 5.16 倍，比 PyTorch-Inductor 快 11.98 倍；在 Mamba2 模型上最高比 vLLM 快 2.41 倍。在 AMD 硬件上，尽管其异步能力较弱，本方法依然在 LLAMA3 上取得了比 ONNXRuntime 最高快 15.51 倍的加速，证明了其跨架构的泛化能力。不过，该方法也存在一定代价和局限：由于搜索空间庞大，复杂算子（如 FlashAttention）的编译时间长达 5.26 分钟；此外，对于注意力头维度极大的模型（如 RetNet-65B），受限于硬件资源，流水线优化的空间被压缩，相比 Ladder 编译器的性能提升仅有 1.04 倍。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文提出PipeThreader，一个新的DNN编译器，旨在有效利用现代GPU中的异构专用硬件单元，如TensorCores和Tensor Memory Accelerators。通过将调度功能从硬件转移到软件，实现更高效和复杂的计算流水线，而无需大量手动努力。主要创新点包括：引入sTask-graph作为DNN计算抽象，用于表示细粒度任务和依赖；提出分层硬件抽象，捕捉专用单元的能力；以及新的调度原语（append、wait和propagate），支持软件定义的流水线。PipeThreader能为FlashAttention等已知DNN架构发现高效流水线调度，实现相当或更好的性能；同时为新兴模型如Mamba2揭示新型流水线方案，提供显著优于最先进手工优化的性能。代码开源于<a href="https://github.com/tile-ai/tilelang" rel="noopener noreferrer" target="_blank">https://github.com/tile-ai/tilelang</a>。</p>
 <p>研究目标是解决现代GPU中异构硬件和操作融合带来的调度挑战：专用单元需要大张量粒度，导致并发线程减少，硬件调度器难以处理深计算流水线；操作融合加深流水线，手工优化难以泛化到新GPU类型、新模型或新张量形状。PipeThreader通过软件定义流水线，支持现代GPU架构上的高效DNN执行。</p>

@@ -17,6 +17,15 @@ title: Single-pass Parallel Prefix Scan with Decoupled Look-back
 <div class="container">
 <h1>Single-pass Parallel Prefix Scan with Decoupled Look-back</h1>
 <p>Duane Merrill, Michael Garland (NVIDIA Corporation)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文针对 GPU 并行计算中的前缀扫描（Prefix Scan）原语提出了一种名为 Decoupled Look-back 的单遍算法，通过允许常数界的冗余计算解除了全局前缀传播延迟，在现代 GPU 上实现了接近内存拷贝理论上限的吞吐量。</p>
+<p><strong>要解决什么问题</strong> 现代计算机系统中，前缀扫描的性能瓶颈在于内存带宽（数据移动成本），而非计算能力。理想的顺序扫描算法仅需 $2n$ 的数据移动（即 $n$ 次读与 $n$ 次写），但现有的 GPU 并行扫描策略均存在机制上的显著缺陷。第一类是如 Reduce-then-scan 的多遍算法，这类方法通常需要进行两次完整的内存遍历，产生约 $3n$ 的全局数据移动，且无法在处理器过载的情况下支持原位（in-situ）全局分配。第二类是单遍的 Chained-scan（链式扫描）方法，虽然它成功将数据移动量降到了约 $2n$，但相邻处理器之间存在严格的串行前缀依赖。后一个分区必须等待前一个分区的包含前缀（inclusive prefix）可用才能推进。这种串行依赖带来了严重的信号传播延迟，阻止了内存 I/O 被完全饱和，导致实际吞吐量远低于硬件带宽的理论上限。</p>
+<p><strong>怎么做的</strong> 核心思路是通过引入有界冗余计算，解耦本地计算与全局前缀传播延迟的强绑定。该方法是对 Chained-scan 的推广，不再让处理器死等直接前驱的最终结果，而是允许其主动向前“回溯”检查更远前驱的状态并自行累加，从而重叠前缀依赖的传播时间。关键设计围绕一个包含三个字段的分区状态描述符展开：`aggregate`（当前分区内部元素的归约值）、`inclusive_prefix`（当前分区的包含前缀）以及 `status_flag`（状态标志）。状态标志分为三种：`X`（无效，尚无可用信息）、`A`（聚合值可用）和 `P`（前缀可用）。算法执行时，每个并行处理器独立完成以下核心步骤：首先，处理器计算当前分区的聚合值并写入 `aggregate`，将状态更新为 `A`。接着进入解耦回溯阶段，处理器维护一个局部的 `exclusive_prefix`（独占前缀），从直接前驱开始向更早的分区逆向检查。如果前驱状态为 `X`，则轮询等待；如果状态为 `A`，则将该前驱的 `aggregate` 累加到局部的 `exclusive_prefix` 中，并继续向更早的前驱回溯；如果状态为 `P`，则将该前驱的 `inclusive_prefix` 累加，并直接终止回溯阶段。回溯结束后，处理器将 `exclusive_prefix` 与自身的 `aggregate` 相加得到 `inclusive_prefix`，写入描述符并将状态更新为 `P`。最后，以 `exclusive_prefix` 为初始种子完成本分区的内部扫描。这种设计的精妙之处在于其常数界回溯属性，保证了总体工作复杂度依然是最优的 $O(n)$。同时，一旦某个分区记录了状态 `P`，就能通过短路机制瞬间解除后续所有处理器的阻塞。在工程实现上，作者引入了多项关键优化：为了解决虚拟处理器任意调度可能导致的死锁，为每个处理器分配了保证活跃调度的标识符；为消除内存栅栏的性能惩罚，利用 64 位操作将状态标志和数值合并为单次原子写入；此外，还利用 SIMD 线程组实现了并行化回溯，一组 $t$ 个线程可同时检查 $t$ 个前驱窗口，进一步掩盖延迟。该单遍策略还天然支持原位（in-place）压缩行为，处理器能保证前驱已读取输入，从而安全地将结果写回原位置。</p>
+<p><strong>效果如何</strong> 实验在 NVIDIA Tesla M40、K40 和 C2050 三款 GPU 硬件上进行（均关闭 ECC），测试数据集为 32 位整数及键值对，输入规模从 $2^{10}$ 跨度到 $2^{30}$。对比基线涵盖三条路线：基于 OpenCL 的单遍链式扫描实现 StreamScan、采用三内核 reduce-then-scan 的 MGPU 库，以及采用递归 scan-then-propagate 的 Thrust 库。量化结果显示，本文在 CUB 库中实现的 Decoupled Look-back 方法在所有架构和问题规模上均达到或超越了基线。在饱和处理器的大规模问题下，该方法相较于 StreamScan、MGPU 和 Thrust 的调和平均加速比分别达到了 1.11 倍、1.43 倍和 2.27 倍。在 M40 和 K40 架构的大规模数据下，该方法的设备级吞吐量成功匹配了全局 `memcpy` 的性能上限，证明其已榨干 DRAM 带宽极限，而 StreamScan 即使经自动调优也因串行延迟无法触及该上限。在 32M 输入规模的压缩类算法（如 `select-if`、`reduce-by-key` 等）测试中，该方法利用单遍扫描策略将项选择与前缀扫描融合，无需额外 I/O，其性能比 Thrust 快了 3.5 倍到 7.1 倍不等。作者也坦诚了该方法的一个局限性：由于采用了动态调度机制，与基于静态数据流网络的传统并行化不同，对于浮点数加法这类伪结合算子，扫描结果可能会因为每次运行时扫描算子数量和顺序的差异，而呈现出非确定性的执行结果。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文针对并行计算中的基础原语——前缀扫描（Prefix Scan），提出了一种高效、避免通信的单遍（single-pass）并行算法，名为"解耦回溯"（Decoupled Look-back）。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

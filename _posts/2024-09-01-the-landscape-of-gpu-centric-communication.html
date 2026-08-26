@@ -18,6 +18,15 @@ title: The Landscape of GPU-Centric Communication
 <h1>The Landscape of GPU-Centric Communication</h1>
 <p><strong>发表时间</strong>: 2024-09 · arXiv:2409.09874 (Survey)</p>
 <p><strong>作者/机构</strong>: DIDEM UNAT, Koç University, Turkey; ILYAS TURIMBETOV, Koç University, Turkey; MOHAMMED KEFAH TAHA ISSA, Koç University, Turkey; DOĞAN SAĞBILI, Koç University, Turkey; FLAVIO VELLA, University of Trento, Italy; DANIELE DE SENSI, Sapienza University of Rome, Italy; ISMAYIL ISMAYILOV, Koç University, Turkey</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文对“以GPU为中心的通信”进行了系统性综述，梳理了从底层硬件互连、内存与网络机制到上层通信库的演进路线，为解决多GPU扩展时的通信瓶颈提供了完整技术图谱。</p>
+<p><strong>要解决什么问题</strong> 在高性能计算和机器学习中，多GPU集群是算力底座，但GPU间通信迅速成为可扩展性瓶颈。传统通信采用“以CPU为中心”的模型，将GPU仅视为算力协处理器，数据移动与同步高度依赖CPU。这带来三大卡点：一是数据路径冗余，GPU间传输需先拷贝到主机内存，再由CPU路由到目标GPU或网卡（NIC），导致高延迟和带宽浪费；二是控制路径阻塞，通信发起和同步必须由CPU介入，迫使GPU频繁中断计算等待调度，破坏了计算与通信的重叠；三是语义不匹配，细粒度通信模式极难扩展，因CPU无法高效处理GPU海量并发线程的微小数据交换。因此，将通信的数据与控制路径从CPU卸载到GPU，赋予其自主管理通信的能力，是突破扩展墙的关键。</p>
+<p><strong>怎么做的</strong> 本文通过建立统一的分类学，将以GPU为中心的通信机制按API调用位置和数据路径参与者进行解构。节点内通信被划分为主机原生、主机控制、设备原生及带回退的设备原生四类；节点间通信则按数据包构建和触发者的不同，划分为从完全依赖CPU到完全由GPU接管的五个阶段。核心思路是通过内存管理和直接访问技术逐步剥离CPU。内存管理方面：页锁定内存（Pinned Memory）跳过可分页内存的暂存拷贝；统一虚拟寻址（UVA）将CPU和所有GPU内存映射到同一地址空间；进程间通信（IPC）打破跨进程缓冲区访问限制；统一虚拟内存（UVM）实现按需隐式分页与显存超订。数据与控制路径直通化主要由GPUDirect系列实现：GPUDirect 1.0让GPU和NIC共享主机固定内存；GPUDirect P2P结合UVA，允许同节点GPU通过PCIe直接读写对方显存，引入直接加载与存储机制，使通信能内联到计算内核中；GPUDirect RDMA将GPU显存暴露给NIC的基地址寄存器，实现跨节点直接内存访问；GPUDirect Async允许GPU触发CPU预注册的网络消息。为实现完全自主，GPUNetIO允许GPU在内核执行期动态构建数据包并与NIC同步，彻底摆脱CPU。硬件互连上，NVLink和Infinity Fabric等提供极高物理带宽，并支持交换机层面的集合通信卸载。基于此，上层通信库完成范式转换：GPU-Aware MPI自动利用IPC和RDMA消除冗余拷贝；而以GPU为中心的集合通信库（如NCCL）摒弃了多次内核启动，将集合通信与局部归约计算融合在单一GPU内核中，大幅降低同步开销。</p>
+<p><strong>效果如何</strong> 本文作为系统性综述，未搭建传统对比实验，而是横向对比了各技术路线的硬件规格与固有代价。量化规格上，现代互连技术吞吐量惊人：NVIDIA Blackwell架构的第五代NVLink实现单GPU 1.8 TB/s双向带宽，可通过NVSwitch扩展至576卡全连接；AMD的xGMI在8卡系统提供896 GB/s总带宽。然而，这些方法在工程中面临明确的代价与失效场景。首先，固定内存过度分配会挤占物理内存拖垮系统。其次，GPUDirect P2P的直接读写虽能隐式重叠计算与通信，但通信线程会与计算争夺GPU资源；且该机制对内存访问模式极度敏感，非合并的随机读写会暴露远程内存延迟，导致执行停滞。在节点间通信中，GPUDirect RDMA在内核运行期无法保证GPU与NIC的内存一致性，必须依赖CPU拆除内核或调用特定API强制同步，导致持久化内核跨节点通信易出正确性问题。此外，GPUDirect Async受限于只能触发CPU预注册的消息，未彻底解耦控制路径。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>近年来，GPU因其大规模并行性和高内存带宽，已成为高性能计算（HPC）和机器学习（ML）应用的首选加速器。截至2025年11月，Top500超级计算机排名前10的系统中，有9个依赖GPU集群进行加速【79, TOP500 Supercomputer Sites, 2023, <a href="https://www.top500.org/" rel="noopener noreferrer" target="_blank">https://www.top500.org/</a>】 。</p>
 <p><strong>核心问题</strong>: 尽管大量使用GPU能显著加速计算，但GPU之间的通信很快成为可扩展性的瓶颈【136, Peta-Scale Phase-Field Simulation for Dendritic Solidification on the TSUBAME 2.0 Supercomputer, 2011, SC ’11】【149, The Persistent Challenge of Data locality in Post-Exascale Era, 2025, Computing in Science and Engineering】。传统上，多GPU通信（无论是节点内还是节点间）一直由CPU负责，这种以CPU为中心的执行模型将GPU视为仅提供大量计算的设备，而在通信等辅助任务上依赖CPU。</p>

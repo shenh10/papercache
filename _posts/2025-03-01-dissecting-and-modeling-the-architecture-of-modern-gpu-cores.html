@@ -18,6 +18,15 @@ title: Dissecting and Modeling the Architecture of Modern GPU Cores
 <div class="container">
 <h1>Dissecting and Modeling the Architecture of Modern GPU Cores</h1>
 <p><strong>作者/机构</strong>: RODRIGO HUERTA, Polytechnic University of Catalonia, Barcelona, Barcelona, Spain; MOJTABA ABAIE SHOUSHTARY, Polytechnic University of Catalonia, Barcelona, Barcelona, Spain; JOSÉ LORENZO CRUZ, Polytechnic University of Catalonia, Barcelona, Barcelona, Spain; ANTONIO GONZÁLEZ, Polytechnic University of Catalonia, Barcelona, Barcelona, Spain</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文通过逆向工程揭示了现代 NVIDIA GPU 核心的微架构细节，并将其集成到 Accel-sim 模拟器中，将模拟真实硬件的平均绝对百分比误差从 34.03% 降低至 13.45%。</p>
+<p><strong>要解决什么问题</strong> 学术界广泛使用的 GPU 模拟器（如 Accel-sim）底层仍基于超过 15 年前的过时架构（如 Tesla 微架构），导致评估新思想时与现代硬件表现严重脱节。这个卡点具体体现在流水线机制的根本错位上：旧模型假设 GPU 依赖庞大的硬件记分板来跟踪指令依赖，并使用操作数收集器来解决寄存器读取冲突；但现代商业 GPU 实际上早已摒弃了这些高成本硬件，转而采用编译器辅助的控制位机制和寄存器文件缓存。这种底层机制的差异使得旧模拟器在指令分发时序、寄存器端口争用和内存延迟的模拟上产生巨大偏差，导致研究人员在过时基线上得出的性能瓶颈和优化结论，往往在真实的现代硬件上完全失效。</p>
+<p><strong>怎么做的</strong> 核心思路是通过编写微基准测试（手写 SASS 汇编指令并插入 CLOCK 计数器）在真实硬件上运行，逆向推导现代 GPU 的流水线机制，并从零重写模拟器的核心模型。该方法主要由四个关键部件构成以绕开旧模型的机制错位。首先是软硬协同的数据依赖管理，现代 GPU 摒弃了硬件记分板，对于固定延迟指令，编译器会在指令中设置 Stall 计数器，硬件每周期将其减一，非零时该 warp 停顿；对于可变延迟指令（如内存访问），每个 warp 分配 6 个依赖计数器，产生者指令在分发后增加计数器，在写回或读取后减少，消费者指令则通过依赖掩码或专用的等待指令阻塞执行，直到指定的计数器归零：$$ \text{Wait Condition: } \text{SB}_x \le \text{Threshold} $$ 其次是分发调度策略，揭示了调度器采用编译器指导的贪婪后最年轻（CGGTY）策略，即优先连续分发同一 warp 的就绪指令，若因依赖或资源受限不满足条件，则切换到最年轻的就绪 warp。第三是寄存器与流水线重构，证实了现代 GPU 彻底移除了操作数收集器，固定延迟指令在分发和读取操作数之间增加了 Control 阶段（用于更新依赖计数器）和 Allocate 阶段（用于检查寄存器端口冲突），并引入了由编译器复用位控制的寄存器文件缓存（RFC）来缓解单端口存储体的读取争用。最后是内存与前端建模，为每个子核心引入了带大小为 8 的流缓冲区预取器的私有 L0 指令缓存，并精确区分了全局内存与共享内存在 RAW/WAW 和 WAR 依赖下的真实延迟差异。</p>
+<p><strong>效果如何</strong> 实验在 Turing、Ampere 以及最新的 Blackwell 架构（如 RTX 2080 Ti、RTX A6000、RTX 5070 Ti）上搭建，测试了包含 Cutlass、Deepbench 等 13 个套件的 128 个基准测试。对比基线是原版 Accel-sim 模拟器，它代表了依赖硬件记分板和操作数收集器的传统架构路线。量化结果显示，新模型在所有测试 GPU 上的平均绝对百分比误差仅为 13.45%，而原版 Accel-sim 高达 34.03%；从第 90 百分位的尾部准确性来看，原版误差高达 89.31%，而新模型降至 29.78%。在最新的 Blackwell 架构上，新模型依然保持了 17.41% 的高精度。此外，消融实验证明现代 GPU 的控制位依赖管理机制在性能上匹敌传统记分板，但面积开销仅占常规寄存器文件的 0.09%，远低于传统记分板的 5.32%。作者承认的局限在于，该方法强依赖于提取 SASS 汇编代码中的控制位，对于少数闭源且无法获取 SASS 的内核（如 Deepbench 中的部分内核），模拟器只能退化使用传统的记分板机制进行混合模拟。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在弥合学术界GPU模拟器与现代商业GPU架构之间的差距。当前大多数学术研究依赖的模拟器所模拟的GPU核心架构基于超过15年前的设计（如Tesla微架构），与现代核心架构存在显著差异。本文通过逆向工程揭示了现代NVIDIA GPU核心架构的关键特性，并将其集成到一个先进的GPU模拟器中，从而显著提高了模拟的准确性。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>
