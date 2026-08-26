@@ -7,9 +7,9 @@ layout: default
   <header class="post-header">
     <h1 class="post-title p-name" itemprop="name headline">{{ page.title | escape }}</h1>
     <p class="post-meta">
-      <time class="dt-published" datetime="{{ page.date | date_to_xmlschema }}" itemprop="datePublished">
-        {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
-        {{ page.date | date: date_format }}
+      {%- comment -%} 论文只精确到发表月份，front matter 里的日永远是占位的 01，不显示 {%- endcomment -%}
+      <time class="dt-published" datetime="{{ page.date | date: '%Y-%m' }}" itemprop="datePublished">
+        {{ page.date | date: "%Y-%m" }}
       </time>
       {%- if page.author -%}
         • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span class="p-author h-card" itemprop="name">{{ page.author }}</span></span>

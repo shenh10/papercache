@@ -769,7 +769,7 @@ class SearchWidget {
       <div class="paper-card-widget" data-url="${paper.url}">
         <div class="paper-title-widget">${paper.title}</div>
         <div class="paper-meta-widget">
-          <span class="paper-date-widget">${new Date(paper.date).toLocaleDateString()}</span>
+          <span class="paper-date-widget">${String(paper.date || '').substring(0, 7)}</span>
           <span class="paper-categories-widget">${paper.categories.join(' / ')}</span>
           ${paper.tag ? `<span class="paper-tag-widget">${paper.tag}</span>` : ''}
         </div>

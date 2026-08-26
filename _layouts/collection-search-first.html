@@ -1141,7 +1141,8 @@ window.RSS_SUBSCRIBE_URL = {{ '/feeds/index.html' | relative_url | jsonify }};
         excerpt: {{ final_excerpt | jsonify }},
         tags: {{ post.tags | jsonify }},
         categories: {{ post.categories | jsonify }},
-        date: {%- if post.date -%}{{ post.date | date: "%Y-%m-%d" | jsonify }}{%- else -%}{{ "" | jsonify }}{%- endif -%}
+        {%- comment -%} 只到月：日是占位的 01，发出去下游一定会当真日期显示 {%- endcomment -%}
+        date: {%- if post.date -%}{{ post.date | date: "%Y-%m" | jsonify }}{%- else -%}{{ "" | jsonify }}{%- endif -%}
       }{%- if forloop.last == false -%},{%- endif -%}
     {%- endfor -%}
     ];
@@ -3270,27 +3271,21 @@ if (typeof window.SearchFirstMode === 'undefined') {
     const isArxiv = tag && tag.toLowerCase() === 'arxiv';
     const tagClass = isArxiv ? ' tag-arxiv' : '';
     
-    // 格式化日期
+    // 格式化日期。论文只精确到发表月份，一律输出 YYYY-MM
     const formatDate = (dateStr) => {
       if (!dateStr) return '';
-      // 如果是字符串格式 YYYY-MM-DD，直接返回
-      if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
-        return dateStr.substring(0, 10);
+      if (typeof dateStr === 'string' && /^\d{4}-\d{2}/.test(dateStr)) {
+        return dateStr.substring(0, 7);
       }
       try {
         const date = new Date(dateStr);
         if (isNaN(date.getTime())) {
-          // 如果解析失败，尝试直接返回原始值的前10个字符
-          return typeof dateStr === 'string' ? dateStr.substring(0, 10) : '';
+          return typeof dateStr === 'string' ? dateStr.substring(0, 7) : '';
         }
-        // 格式化为 YYYY-MM-DD
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        // 用 UTC 取值：日期串是 UTC 零点，本地取值会在西半球退回上个月
+        return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
       } catch(e) {
-        // 如果解析失败，尝试返回原始字符串的前10个字符
-        return typeof dateStr === 'string' ? dateStr.substring(0, 10) : '';
+        return typeof dateStr === 'string' ? dateStr.substring(0, 7) : '';
       }
     };
     

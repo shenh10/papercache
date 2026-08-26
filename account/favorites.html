@@ -503,7 +503,8 @@ permalink: /account/favorites.html
     const escapedOriginalUrl = fav.post_url.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     const escapedTitle = (fav.title || fav.post_url).replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const createdDate = fav.created_at ? new Date(fav.created_at).toLocaleDateString('zh-CN') : '未知日期';
-    const publishedDate = fav.published_date ? new Date(fav.published_date).toLocaleDateString('zh-CN') : null;
+    // 发表时间只精确到月（收藏/已读时间是真实时间戳，照常显示到日）
+    const publishedDate = fav.published_date ? String(fav.published_date).substring(0, 7) : null;
     const readDate = fav.read_at ? new Date(fav.read_at).toLocaleDateString('zh-CN') : null;
 
     // 获取论文的类别和tag
@@ -981,13 +982,14 @@ permalink: /account/favorites.html
           }
         }
 
-        // 3. 尝试从URL中提取日期（格式：/papers/.../2025/06/01/...）
+        // 3. 尝试从URL中提取日期（格式：/papers/.../2025/06/01/...）。
+        //    permalink 里的日恒为占位的 01，只取年月。
         let extractedDate = null;
-        const datePattern = /\/(\d{4})\/(\d{2})\/(\d{2})\//;
+        const datePattern = /\/(\d{4})\/(\d{2})\/\d{2}\//;
         const dateMatch = postUrl.match(datePattern);
         if (dateMatch) {
-          const [, year, month, day] = dateMatch;
-          extractedDate = `${year}-${month}-${day}`;
+          const [, year, month] = dateMatch;
+          extractedDate = `${year}-${month}`;
         }
 
         metadataMap[postUrl] = {

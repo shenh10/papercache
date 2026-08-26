@@ -116,7 +116,7 @@
     sec.classList.add('show');
     sec.style.display='block';
     if(!items||!items.length){box.innerHTML='<div style="text-align:center;padding:40px;color:#6b7280"><h3>未找到相关论文</h3><p>尝试使用不同的关键词或浏览分类</p></div>';log('rendered empty');return;}
-    items.forEach(function(p){var d=document.createElement('div');var tag=chooseTag(p);var escapedUrl=(p.url||'#').replace(/'/g,"\\'");var displayDate=p.date?new Date(p.date).toLocaleDateString('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit'}):new Date().toLocaleDateString();
+    items.forEach(function(p){var d=document.createElement('div');var tag=chooseTag(p);var escapedUrl=(p.url||'#').replace(/'/g,"\\'");/* 论文只精确到发表月份，直接截 YYYY-MM：走 Date 解析会按 UTC 零点再转本地，反而多造一个假日 */var displayDate=p.date?String(p.date).substring(0,7):'';
       if(isMobile){
         // 移动端：列表样式
         d.className='post-list-item-mobile';

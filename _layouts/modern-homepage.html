@@ -683,8 +683,13 @@ layout: default
             </div>
             {% for post in latest_added limit: 10 %}
             <div class="post-item">
-              {%- assign display_date = post.added_date | default: post.date -%}
-              <span class="post-date post-date-added">{{ display_date | date: "%Y-%m-%d" }}</span>
+              {%- comment -%} added_date 是真实的收录日期，精确到日；退到 date 时只能给到月 {%- endcomment -%}
+              {%- if post.added_date -%}
+                {%- assign display_date = post.added_date -%}{%- assign display_fmt = "%Y-%m-%d" -%}
+              {%- else -%}
+                {%- assign display_date = post.date -%}{%- assign display_fmt = "%Y-%m" -%}
+              {%- endif -%}
+              <span class="post-date post-date-added">{{ display_date | date: display_fmt }}</span>
               {%- if post.categories.size > 0 -%}
                 {%- assign subcategory = post.categories | last -%}
                 <span class="post-subcategory post-subcategory-added">{{ subcategory }}</span>

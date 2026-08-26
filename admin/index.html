@@ -697,7 +697,8 @@ permalink: /admin/index.html
             excerpt: {{ final_excerpt | jsonify }},
             tags: {{ post.tags | jsonify }},
             categories: {{ post.categories | jsonify }},
-            date: {%- if post.date -%}{{ post.date | date: "%Y-%m-%d" | jsonify }}{%- else -%}{{ "" | jsonify }}{%- endif -%}
+            {%- comment -%} 只到月：日是占位的 01 {%- endcomment -%}
+            date: {%- if post.date -%}{{ post.date | date: "%Y-%m" | jsonify }}{%- else -%}{{ "" | jsonify }}{%- endif -%}
           }{%- if forloop.last == false -%},{%- endif -%}
         {%- endfor -%}
         ];
