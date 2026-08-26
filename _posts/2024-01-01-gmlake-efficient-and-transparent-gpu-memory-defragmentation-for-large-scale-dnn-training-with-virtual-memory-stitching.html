@@ -18,6 +18,15 @@ title: 'GMLake: Efficient and Transparent GPU Memory Defragmentation for Large-s
 <div class="container">
 <h1>GMLake: Efficient and Transparent GPU Memory Defragmentation for Large-scale DNN Training with Virtual Memory Stitching</h1>
 <p><strong>作者/机构</strong>: Cong Guo∗ (Shanghai Jiao Tong University, Shanghai Qi Zhi Institute), Rui Zhang∗ (Ant Group), Jiale Xu (Shanghai Jiao Tong University, Shanghai Qi Zhi Institute), Jingwen Leng† (Shanghai Jiao Tong University, Shanghai Qi Zhi Institute), Zihan Liu (Shanghai Jiao Tong University, Shanghai Qi Zhi Institute), Ziyu Huang (Shanghai Jiao Tong University, Shanghai Qi Zhi Institute), Minyi Guo† (Shanghai Jiao Tong University, Shanghai Qi Zhi Institute), Hao Wu (Ant Group), Shouren Zhao (Ant Group), Junping Zhao† (Ant Group), Ke Zhang (Ant Group)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种基于底层 GPU 虚拟内存管理的内存分配框架 GMLake，通过虚拟内存拼接技术消除了大规模深度学习模型训练中的内存碎片，在不修改用户代码的前提下最高减少了 33% 的 GPU 显存占用（节省 25GB）。</p>
+<p><strong>要解决什么问题</strong> 现有深度学习框架（如 PyTorch 和 TensorFlow）普遍采用带有“分裂”机制的缓存分配器。在大语言模型训练中，为了缓解显存压力，工程师通常会引入重计算、卸载、分布式训练和低秩自适应（LoRA）等优化技术。这些复杂策略打破了张量分配的规则性，引入大量频繁、不规则且大小悬殊的显存请求。缓存分配器为满足小请求会不断分裂大块显存，导致显存池布满零碎空闲块。当需要为新张量分配显存时，即使所有空闲块总容量绰绰有余，也会因找不到单一足够大的物理连续显存块而触发内存不足（OOM）错误。这导致高达 30% 的显存被碎片化浪费，严重限制了训练的批处理大小与扩展性。</p>
+<p><strong>怎么做的</strong> 核心思路是利用 CUDA 底层虚拟内存管理接口引入虚拟内存拼接机制，将物理上不连续的空闲显存块在虚拟地址空间中映射为逻辑上连续的显存块，从而绕开物理连续性带来的分配失败卡点。该方法由虚拟内存 API、虚拟内存池和分配器三个关键部件构成。首先，虚拟内存 API 构建了基础数据结构 pBlock，通过保留虚拟地址、创建物理块和映射地址三个底层操作，将物理显存统一划分为 2MB 的基础块。为规避底层 API 极高的调用延迟，方法仅对大于 2MB 的请求使用此机制，小请求仍交由原有分裂机制处理。其次，虚拟内存池用于缓存分配结果以减少 API 调用，它采用双层结构：原始内存池（pPool）存储与物理显存严格一一对应的 pBlock；拼接内存池（sPool）存储由多个 pBlock 拼接而成的 sBlock，sBlock 不占用新物理显存，仅作为指向多个 pBlock 的软链接。最后，分配器接管了框架的内存调度逻辑，核心是 Stitch 函数。当单一空闲块不足以满足大显存请求时，分配器会在 pPool 中贪婪寻找多个总容量达标的 pBlock，调用底层接口为它们保留统一的虚拟地址，并直接映射到这些 pBlock 的物理地址上，生成新 sBlock 返回给上层。整个过程无需真实的数据移动。由于深度学习训练具有高度规律性，分配器在最初几次迭代记录下拼接模式后，后续训练只需在池中进行精确匹配。当显存触及容量上限时，系统会触发基于最近最少使用原则的释放机制，清理非活动的 sBlock 以保证鲁棒性。</p>
+<p><strong>效果如何</strong> 实验在配备 80GB 显存的 A100 GPU 服务器上搭建，涵盖单机与多机 RDMA 分布式环境，测试了 OPT-13B、Vicuna-13B、GPT-NeoX-20B 等百亿参数规模的开源大模型。对比基线为 PyTorch 原生缓存分配器，代表传统的基于最佳适配与分裂算法的显存管理路线。在结合重计算、卸载和低秩自适应等复杂策略的 76 个工作负载中，基线方法的显存碎片率常超过 20%，而该方法稳定将其控制在 5% 到 10% 之间，最高降低了 33% 的显存占用（节省 25GB）。在将 GPU 从 1 张扩展到 16 张的分布式测试中，基线显存利用率跌至 76%，该方法则维持在 90% 左右，并在 DeepSpeed、FSDP 等主流平台上表现出一致的扩展性。端到端吞吐量上，该方法与基线持平，且能支撑起基线会直接触发 OOM 的大批处理大小。该方法的主要代价是底层虚拟内存接口调用延迟极高，分配 2MB 小块比原生接口慢 115 倍，高度依赖内存池的缓存命中率。此外作者承认，若模型训练呈现极端不规则的分配模式，系统会产生大量微小碎块并频繁触发拼接。为此方法设置了 128MB 的最小碎片限制，低于此限制的块不再参与拼接与分裂，以此作为牺牲部分空间换取性能鲁棒性的妥协。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文研究的核心问题是，在训练大规模深度神经网络（DNN），特别是大语言模型（LLM）时，现有的内存缩减技术（如重计算、卸载、分布式训练和低秩自适应）会引入频繁且不规则的内存分配/释放请求，这导致深度学习框架（如PyTorch和TensorFlow）中基于“分裂”机制的缓存分配器产生严重的内存碎片问题，碎片率高达30%。这种碎片化降低了GPU内存的利用率，并可能导致过早的内存不足（OOM）错误。</p>
 <p>为了解决这一问题，本文的研究目标是设计并实现一种新颖的内存分配框架，以有效减少GPU内存碎片，提高内存利用率，同时对现有的DNN模型和内存优化技术保持完全透明。</p>

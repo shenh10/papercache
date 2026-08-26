@@ -19,6 +19,15 @@ title: 'SIRIUS: HARVESTING WHOLE-PROGRAM OPTIMIZATION OPPORTUNITIESFOR DNNS'
 <div class="container">
 <h1>SIRIUS: HARVESTING WHOLE-PROGRAM OPTIMIZATION OPPORTUNITIESFOR DNNS</h1>
 <p><strong>作者/机构</strong>: Yijin Li, Jiacheng Zhao, Qianqi Sun, Haohui Mai, Lei Chen, Wanlu Cao, Yanfan Chen, Zhicheng Li, Ying Liu, Xinyuan Zhang, Xiyu Shi, Jie Zhao, Jingling Xue, Huimin Cui, Xiaobing Feng</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个名为 SIRIUS 的全程序分析与优化编译器框架，通过统一建模主机端和设备端代码来发掘全局内核融合机会，在 NVIDIA A100 上相比 TensorRT 实现了平均 5.15 倍的推理加速。</p>
+<p><strong>要解决什么问题</strong> 现有 AI 编译系统（如 TensorFlow、PyTorch、TVM 等）的优化通常局限于计算图和算子表示层面，这种做法的卡点在于割裂了主机端（host）和设备端（kernel）的完整执行逻辑。由于缺乏对全部源代码的全局视角，编译器无法跨越算子边界去发掘最大化的内核融合机会。这种局限性直接导致了执行过程中的指令冗余，例如在未充分融合的子图中，不同算子会反复从全局内存中加载相同的数据，且无法执行跨算子的死代码消除。以 BERT 的一个子图为例，TensorFlow 完全不融合，而 Apollo 和 TensorRT 只能做到部分融合，当模型包含大量细粒度算子时，这种由于视野受限导致的冗余内存访问和高昂的内核启动开销，会严重拖慢整体硬件的执行效率。</p>
+<p><strong>怎么做的</strong> SIRIUS 的核心思路是将主机端驱动和设备端内核代码统一编译为 LLVM IR，并在多面体域中构建统一抽象表示（UAR），从而利用经典的全程序分析技术进行全局内核融合与指令级优化。该方法主要由三个关键部件构成。首先是构建 UAR，它通过局部分析和自底向上的调用图遍历，捕捉整个程序的数据与控制依赖，并将同步屏障带来的隐式控制依赖转换为虚拟数据依赖。为了精确表示跨内核的数据依赖，UAR 将依赖宽度标注为线程级、块级和全局级。例如，块级依赖要求源节点 $s$ 的各个块访问区域线性不相交 $\forall(i, j) A_{s}^{\text {block}(i)} \cap A_{s}^{\text {block}(j)}=\emptyset$，且目标节点 $t$ 的每个块仅依赖 $s$ 的一个块 $\forall j, \exists ! i, A_s^{block(i)} \cap A_t^{block(j)} \neq \emptyset$。其次是两阶段贪心融合调度，局部融合阶段通过广度优先搜索遍历 UAR，将仅存在线程级或块级依赖的内核按顺序合并；全局融合阶段则利用 ISL 求解器，严格禁止融合存在全局依赖的内核（因 GPU 全局同步支持差），并仅在无依赖且代码相同时融合独立内核。最后是内核片段编排与融合后优化，SIRIUS 会生成从完全水平（不同块并行执行）到完全垂直（同一线程顺序执行）的多种代码版本供自动调优器选择。垂直融合虽然减少了并行度，但为单线程顺序优化创造了条件，SIRIUS 会在融合后的 UAR 中移除冗余的虚拟同步节点，进而执行跨算子的代码移动、常量传播（将主机端常量直接传播到内核指令中）以及迭代域重塑，从而彻底消除冗余的内存加载和地址计算指令。</p>
+<p><strong>效果如何</strong> 实验在配备 NVIDIA A100 和 V100 GPU 的服务器上进行，评估了 BERT（序列长度 384，float16 精度）、LSTM、ResNeXt 等 6 个代表性 DNN 模型。对比基线包括代表传统图优化与算子库路线的 TensorFlow、TF-XLA、TensorRT，代表自动调优编译路线的 TVM，以及代表其他融合策略的 Rammer 和 AStitch。在 A100 上批处理大小为 1 时，SIRIUS 相比 TensorRT 平均取得 5.15 倍加速（最高 11.98 倍），相比 Rammer 平均取得 1.62 倍加速。在 BERT 模型上相比 TensorRT 实现了 1.46 倍加速，能将 9 个算子全部融合成 1 个内核，指令数从 470 万锐减至 77 万。在 LSTM 案例中，SIRIUS 通过全程序分析发现矩阵在主机端连续分配，从而在融合内核中将基地址重写为公共偏移量，消除了运行时的 MAD 地址计算指令。该方法的代价是引入了额外的编译与调优开销，全程序分析与求解调度耗时约十几分钟，自动调优耗时因模型而异（BERT 约 2 分钟，LSTM 需 54 分钟），但总开销控制在 1 小时内。作者承认的局限性在于，SIRIUS 目前必须依赖算子的 CUDA 源代码（实验中由 TVM 生成）作为输入，且作为代码生成后的优化编译器，它无法在全局层面改变线程组织结构。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文提出了一种名为SIRIUS的全程序分析与优化编译器框架，旨在解决现有AI生态系统中（如TensorFlow、PyTorch、TVM等）从计算图和算子表示出发进行优化的局限性，即未能充分利用经典的编译器优化技术。</p>
 <p><strong>核心问题</strong>: 现有AI系统的优化方法（如新编程语言、新内核融合启发式、自动调优等）虽然取得了成果，但忽视了从DNN模型的全部源代码（包括主机端和设备端）出发，利用经典的全程序分析来发掘最大化性能潜力的机会。以BERT的一个子图为例（图1），TensorFlow不进行融合，执行时间为54.00µs；Apollo和TensorRT进行部分融合，执行时间分别为46.20µs和29.91µs。而SIRIUS通过全程序分析，能够将9个算子全部融合成一个内核，指令数从470万减少到77万，执行时间降至15.82µs，这得益于更广阔的优化视野带来的冗余加载消除和死代码消除等经典优化。</p>

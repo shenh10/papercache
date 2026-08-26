@@ -18,6 +18,15 @@ title: 'CUDA Agent: Large-Scale Agentic RL for High-Performance CUDA Kernel Gene
 <h1>CUDA Agent: Large-Scale Agentic RL for High-Performance CUDA Kernel Generation</h1>
 <p>Weinan Dai1,2,3∗, Hanlin Wu1,2,3∗, Qiying Yu1,2,3, Huan-ang Gao1,2,3, Jiahao Li1, Chengquan Jiang1, Weiqiang Lou1, Yufan Song1, Hongli Yu1,2,3, Jiaze Chen1,3, Wei-Ying Ma2,3, Ya-Qin Zhang2,3, Jingjing Liu2,3, Mingxuan Wang1,3, Xin Liu1, Hao Zhou2,3†</p>
 <p>1ByteDance Seed 2Institute for AI Industry Research (AIR), Tsinghua University 3SIA-Lab of Tsinghua AIR and ByteDance Seed</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个名为 CUDA Agent 的大规模代理强化学习系统，通过构建可扩展的数据合成管道和技能增强的开发环境，使大语言模型能够自主生成并优化高性能 CUDA 内核，在 KernelBench 评测中实现了超越静态编译器和最强专有模型的更优率。</p>
+<p><strong>要解决什么问题</strong> 现有的语言模型在生成高性能 CUDA 内核时，优化能力往往落后于 `torch.compile` 等静态编译器，且传统的微调方法无法从根本上提升其内在的优化逻辑。如果直接引入强化学习来提升能力，会遇到严重的训练崩溃卡点：由于 CUDA 代码在预训练数据中占比极低（不足 0.01%），模型在探索时会采样出大量低概率的 token。当训练和推理引擎使用不同的数值精度（例如 BF16 和 FP16）时，这些低概率 token 的概率计算会出现微小误差，导致强化学习中的重要性采样比率产生极大方差，甚至发生剧烈波动或数值爆炸，使得模型在短短十几步后就会彻底崩溃。</p>
+<p><strong>怎么做的</strong> 核心思路是将大语言模型从被动的代码生成器转变为主动的系统优化器，通过构建包含真实执行反馈的代理循环，并配合多阶段预热策略来绕开强化学习的数值崩溃卡点。整个系统由三个关键部件构成。首先是可扩展的数据合成管道，系统从 `torch` 和 `transformers` 库中抓取种子算子，利用大语言模型将最多 5 个算子组合成融合计算层，再通过执行反馈过滤掉不可执行、有随机性或耗时不合理的样本，最终构建出包含 6000 个样本的训练集。其次是技能集成的代理循环，系统为模型配备了代码编辑、性能分析等工具，并注入了规范化的 CUDA 开发工作流指令。为了避免模型通过调用原生函数等方式作弊，环境实施了严格的权限隔离和多输入验证，并设计了联合优化正确性与延迟的鲁棒奖励机制：$$r = \begin{cases} -1 &amp; \text{如果正确性检查失败} \\ 3 &amp; \text{如果 } b(t, t_{\text{eager}}) \wedge b(t, t_{\text{compile}}) \\ 2 &amp; \text{如果 } b(t, t_{\text{eager}}) \\ 1 &amp; \text{其他情况} \end{cases}$$ 其中 $b(t, t_0)$ 表示生成内核相对于基线有超过 5% 的显著加速。最后是支持稳定训练的强化学习算法。为了解决低概率 token 导致的数值爆炸，系统在正式强化学习前引入了多阶段预热：先在基础模型上执行单轮强化学习，收集高质量的代理轨迹；接着对 Actor 模型进行拒绝微调，仅保留获得正奖励且行为模式正常的轨迹进行监督训练；同时利用广义优势估计对 Critic 模型进行价值预训练，使其能准确评估多轮交互状态的价值。完成预热后，再使用近端策略优化算法更新策略：$$\mathcal{L}^{\text{CLIP}}(\theta) = \mathbb{E}_{\tau \sim \mathcal{D}} \bigg[ \frac{1}{T} \sum_{t=0}^{T-1} \min \big( \rho_t(\theta) \hat{A}_t, \text{clip}(\rho_t(\theta), 1 - \epsilon_{\text{lower}}, 1 + \epsilon_{\text{higher}}) \hat{A}_t \big) \bigg]$$ 这种设计为模型提供了关键的行为先验，有效抑制了策略分布的发散。</p>
+<p><strong>效果如何</strong> 实验基于拥有 230B 总参数（23B 激活参数）的 Seed1.6 混合专家模型展开，训练数据为合成的 6000 个算子任务。评估在包含 250 个不同算子任务的 KernelBench 数据集上进行，硬件环境为 128 张 NVIDIA H20 GPU 构成的隔离沙盒。对比基线包括代表静态编译器路线的 `torch.compile`，以及代表强专有大模型路线的 Claude Opus 4.5、Gemini 3 Pro、GLM 4.6 和 Kimi K2。量化结果显示，CUDA Agent 在 KernelBench 的 Level-1、Level-2 和 Level-3 任务中，相较于 `torch.compile` 分别实现了 100%、100% 和 92% 的更优率；在算子序列组成的 Level-2 任务中，实现了 2.80 倍的平均加速。在难度最高的 Level-3 任务中，其性能超越了 Claude Opus 4.5 和 Gemini 3 Pro 约 40%。消融实验暴露出该方法的代价与局限：系统高度依赖多阶段预热和代理循环，如果移除拒绝微调环节，训练奖励会迅速崩溃且策略熵急剧增加；如果移除 Critic 的价值预训练，模型会因为无法惩罚无效搜索路径而导致交互轨迹长度爆炸；若剥离代理循环退化为单轮生成，模型将失去编译错误和分析器反馈，生成的内核性能甚至不如静态编译器基线。</p>
+</div>
+</details>
 <h1>1. 主要贡献</h1>
 <p>本文提出了 <strong>CUDA Agent</strong>，这是一个大规模的代理强化学习系统，旨在解决现有大型语言模型（LLM）在生成高性能 CUDA 内核代码方面竞争力不足的问题。尽管 LLM 在通用编程中表现出色，但在 CUDA 内核生成方面仍落后于 <code>torch.compile</code> 等基于编译器的系统。现有的方法要么依赖无训练的微调，要么在固定的多轮执行反馈循环中微调模型，都未能从根本上提升模型内在的 CUDA 优化能力。</p>
 <p>为了克服这些限制，本文的主要贡献集中在以下三个方面：</p>

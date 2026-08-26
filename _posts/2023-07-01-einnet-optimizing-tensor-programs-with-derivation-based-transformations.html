@@ -22,6 +22,21 @@ title: 'EinNet: Optimizing Tensor Programs with Derivation-Based Transformations
 <li><strong>文章标题</strong>：EINNET：使用基于派生的变换优化张量程序</li>
 <li><strong>作者/机构</strong>：Liyan Zheng, Haojie Wang, Jidong Zhai, Muyan Hu, Zixuan Ma, Tuowei Wang, and Shuhong Huang, Tsinghua University; Xupeng Miao, Carnegie Mellon University; Shizhi Tang and Kezhao Huang, Tsinghua University; Zhihao Jia, Carnegie Mellon University</li>
 </ul>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+EinNet 提出了一个基于派生的张量程序优化器，通过将计算图转化为通用张量代数表达式并自动生成定制算子，突破了预定义算子的优化限制，在真实模型推理中比现有最优框架实现了最高 2.72 倍的加速。</p>
+<p><strong>要解决什么问题</strong>
+现有的深度神经网络张量计算优化方法，无论是算子级的 TVM、Ansor，还是图级的 TASO、PET，都局限于“预定义算子可表示（POR）”的变换空间。这意味着优化器只能在现成算子库（如 cuDNN、cuBLAS）已有的算子组合里打转。如果一种更高效的计算重组方式需要用到库里没有定义的定制化算子（例如在归约时加上特定的内存偏移，或者对张量进行非标准的布局重排），现有框架就完全无法发现这种变换。这种机制上的限制导致大量潜在的高效计算图结构被埋没，使得模型在执行卷积、矩阵乘法等核心计算时，无法进一步压榨显存带宽和计算单元的极限性能。</p>
+<p><strong>怎么做的</strong>
+核心思路是跳出预定义算子的限制，将张量程序转化为通用的张量代数表达式，通过数学等价的派生规则探索更广阔的变换空间，并按需自动生成新算子。首先，方法将输入程序表示为包含遍历符号 $\mathbf{L}$ 和求和符号 $\sum$ 的代数表达式：
+$$ \mathbf{L} \sum_{\vec{x}}^{\mathbb{X}} \sum_{\vec{y}}^{\mathbb{Y}} f(\mathbf{T}[\tau(\vec{x}, \vec{y})]) $$
+其中 $\tau$ 是利用迭代器计算张量元素索引的函数。接着，系统应用两类派生规则对表达式进行等价变换：表达式内派生（如求和分裂、变量替换、边界放宽与收紧）用于重组单个计算；表达式间派生（如分裂、合并、融合）用于在多个计算间共享输入或合并算子。为了将派生出的数学表达式落地为可执行程序，系统引入了 eOperator（表达式即算子）机制。系统通过算术强度分析，将计算密集型的表达式通过迭代器映射表强行对齐并降级给底层高性能库，而将无法匹配的、内存密集型的非标准计算定义为 eOperator，直接交由代码生成器编译为定制 Kernel。面对派生带来的爆炸级搜索空间，方法设计了距离引导的两阶段搜索：第一阶段进行有深度限制的探索性派生；第二阶段选定一个目标高性能算子，计算当前表达式与目标算子在不匹配迭代器数量上的表达式距离，只保留能缩小该距离的派生方向，并自动生成 eOperator 来弥合两者差异。同时，利用基于迭代空间和顺序的指纹哈希技术，实时修剪求和重排等造成的等价冗余状态。</p>
+<p><strong>效果如何</strong>
+实验在 NVIDIA A100 和 V100 GPU 上进行，测试了包含 ResNet-18、GCN、LongFormer 等 7 个真实模型。对比基线涵盖了主流路线：基于专家规则的 TensorFlow XLA 和 TensorRT、基于调度的 TVM 结合 Ansor、基于超优化的 PET，以及 TensorFlow 和 Nimble。在端到端推理性能上，该方法在 A100 和 V100 上相比最佳基线分别取得了最高 2.72 倍和 2.68 倍的加速。对于图卷积网络 GCN 和长文本模型 LongFormer，性能提升均超过 2 倍；即便是被高度优化的 ResNet-18，也获得了 1.2 倍的加速。量化分析表明，性能增益主要来自将低效卷积转换为矩阵乘法加定制 eOperator，从而大幅削减了显存和 L2 缓存的访存量（例如某卷积优化的显存访问量从 56.7MB 降至 10.5MB）。代价方面，由于搜索空间庞大，单个模型的离线搜索时间最长需 2 小时。此外作者承认，在 A100 上开启 TF32 和 Tensor Cores 时，TensorRT 在部分模型（如 ResNet-18）上表现更好，因为 TensorRT 底层调用了许多闭源的高效私有 GPU Kernel，这超出了本方法当前的搜索空间。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>：现有的深度神经网络（DNN）张量计算优化方法仅考虑由一组固定的预定义张量算子所能表示的变换，这导致了高度受限的优化空间。无论是算子级别的优化器（如TVM、Ansor）还是图级别的优化器（如TASO、PET），它们都局限于所谓的“预定义算子可表示（Predefined Operator Representable, POR）”变换。这种限制使得许多潜在的、更高效的计算重组方式无法被发现，因为它们可能需要现有库中未定义的定制化算子。</p>
 <p><strong>研究目标</strong>：本文旨在突破POR变换的限制，探索一个更广阔的通用张量代数变换空间。目标是开发一种能够自动发现和利用这些通用变换的优化器，通过揭示算子的计算语义，将计算重组为任意的张量表达式，并自动生成变换所需的新算子，从而发现现有框架无法找到的新型程序变换。</p>

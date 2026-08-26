@@ -19,6 +19,15 @@ title: Hardware Compute Partitioning on NVIDIA GPUs\*
 <h1 id="hardware-compute-partitioning-on-nvidia-gpus">Hardware Compute Partitioning on NVIDIA GPUs*</h1>
 <p><strong>文章标题</strong>：NVIDIA GPU 上的硬件计算分区<br/>
 <strong>作者/机构</strong>：Joshua Bakita and James H. Anderson, Department of Computer Science, University of North Carolina at Chapel Hill</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文揭示了 NVIDIA GPU 硬件中隐藏的计算单元空间分区机制，并开发了用户态 API `libsmctrl`，在单一 CUDA 上下文中实现了对流式多处理器的高粒度空间隔离，显著提升了多任务并发的资源利用率和延迟稳定性。</p>
+<p><strong>要解决什么问题</strong> 现有的 GPU 管理机制通常将 GPU 视为单一的、不可分割的设备，默认采用时间分割复用来仲裁多个任务。这种机制的卡点在于，当单个任务（例如小模型推理或零星的实时任务）的并行度不足以占满 GPU 内部所有的流式多处理器（SM）时，强制的互斥访问会导致严重的计算容量闲置。虽然开发者可以通过在单一 CUDA 上下文中创建多个 CUDA 流（streams）来实现工作负载的并发，但这种软件层面的并发缺乏硬件级别的空间隔离。一旦共享环境中的某个任务发生异常或变得计算密集，它会无差别地抢占全局计算资源，导致同一上下文中其他关键任务的执行延迟大幅飙升。这种缺乏物理边界的资源争用，使得工程师无法在保证严格延迟要求的前提下，安全地回收和利用 GPU 的闲置算力。</p>
+<p><strong>怎么做的</strong> 核心思路是利用 NVIDIA 硬件调度流水线中原生存在但未被公开使用的掩码字段，在任务分发阶段硬性限制 CUDA 核函数（kernel）只能在指定的计算硬件上运行，从而绕开全局分发带来的资源争用卡点。该方法主要由三个关键部件构成。首先是任务元数据（TMD）的拦截与掩码注入。TMD 是 GPU 内部用于描述核函数启动的数据结构，作者发现其中包含名为 `SM_DISABLE_MASK` 的字段（实际上作用于包含多个 SM 的线程处理集群 TPC）。通过利用一个未文档化的 CUDA 调试回调 API，系统可以在 TMD 由 CPU 构建完成但尚未上传至 GPU 的间隙对其进行拦截，并注入自定义的位掩码。设注入的掩码为 $M$，GPU 的 TPC 总数为 $N_{TPC}$，则核函数 $k$ 实际可用的 TPC 集合 $S_k$ 由下式严格限定：$$S_k = \{ i \mid (M \text{ AND } (1 \ll i)) = 0, 0 \le i &lt; N_{TPC} \}$$ 其次是物理拓扑的提取。GPU 的内存管理单元和 L1 缓存是按通用处理集群（GPC）划分的，为了避免跨 GPC 的总线争用，分区边界应与 GPC 对齐。然而，由于芯片制造过程中的晶圆清扫机制（禁用缺陷核心），同型号 GPU 的 TPC 到 GPC 的物理映射是随机的。为此，作者开发了 `nvdebug` 内核模块，直接读取 GPU 寄存器以提取真实的硬件拓扑映射。最后是用户态控制库 `libsmctrl`。它将上述底层机制封装为简单的 C 语言 API，允许工程师在全局、CUDA 流以及单个核函数级别设置 TPC 掩码。高粒度的核函数掩码会覆盖低粒度的流掩码，使得不同流中的任务可以被安全地隔离在互不重叠的 TPC 集合上并发执行，且每次核函数调用的开销仅为几条指令。</p>
+<p><strong>效果如何</strong> 实验在从 Kepler 到 Ampere 架构（如 GTX 970、Titan V、A100 及 Jetson AGX Xavier 等）的多款 NVIDIA GPU 上进行。案例研究在 Titan V GPU 上运行 YOLOv2 目标检测模型（基于 PASCAL VOC 2012 数据集），对比基线是无分区的时间共享模式（即依赖 CUDA 流并发的常规路线）。量化结果显示，当主 YOLOv2 实例与一个发生故障（产生大量异常核函数）的竞争实例共享 GPU 时，在无分区基线下，主实例的平均延迟从 24ms 飙升至 82ms；而启用 TPC 分区（为两个实例各分配 4 个 TPC）后，主实例的延迟稳定在 44ms，几乎完全屏蔽了故障任务的干扰。此外，实验证明通过调整分配给任务的 TPC 数量，可以平滑控制任务的执行时间（例如将 TPC 从 1 个增至 2 个，耗时减半）。该方法的局限性在于，由于依赖 CPU 端拦截 TMD，它不支持完全在 GPU 端构建任务的机制（如 CUDA 动态并行或 CUDA Graphs）；同时受限于 TMD 字段的 64 位宽，目前无法对超过 64 个 TPC 的 GPU 进行分区。此外，作者发现当并发的 CUDA 流数量超过 GPU 工作分发单元（WDU）的任务槽数量（例如 GTX 1060 上为 32 个）时，硬件的贪婪调度和高优先级抢占机制会导致低优先级任务被跨分区阻塞，从而破坏隔离性，因此建议限制使用的 CUDA 流数量。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决当前 GPU 管理方法中存在的一个核心问题：GPU 通常被视为一个单一的、不可分割的设备，并强制执行互斥访问控制，这类似于在多核 CPU 上一次只调度一个任务，从而导致严重的计算容量损失，尤其是在单个任务无法饱和所有 GPU 计算核心时。研究目标是为 NVIDIA GPU 提供一种高粒度的计算单元空间分区机制，从而能够安全高效地共享 GPU，回收通常被闲置的计算容量。</p>
 <p>为了实现这一目标，本文做出了以下贡献：<br/>

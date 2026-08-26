@@ -21,6 +21,15 @@ title: Leveraging Chiplet-Locality for Efficient Memory Mapping in Multi-Chip Mo
 <ul>
 <li><strong>作者/机构</strong>: JUNHYEOK PARK, Electronics and Telecommunications Research Institute; SUNGBIN JANG, OSANG KWON, YONGHO LEE, SEOKIN HONG, Sungkyunkwan University</li>
 </ul>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为 CLAP 的内存映射机制，通过分析多芯片模块 GPU 中数据结构的局部性特征，为每个数据结构自适应选择合适的页大小，在保持内存局部性的同时降低了地址转换开销，相比静态分页方案性能提升高达 19.2%。</p>
+<p><strong>要解决什么问题</strong> 多芯片模块（MCM）GPU 提升了算力扩展性，但也引入了非均匀内存访问（NUMA）效应，访问远程 chiplet 上的数据会产生高延迟和能耗。在此架构下，内存映射的页大小是决定性能的关键卡点，它在地址转换效率和内存访问局部性之间存在权衡。使用 2MB 大页面时，单个 TLB（转换后备缓冲器）条目能覆盖更大内存，显著降低地址转换开销；但粗粒度的数据放置极易导致数据被错误分配到非本地 chiplet，激增远程访问。反之，64KB 小页面能实现细粒度放置以保持高局部性，但地址转换开销剧增。不同应用甚至同一应用内的不同数据结构，对页大小的敏感度各不相同。现有的 CPU NUMA 方案（如 C-NUMA）试图通过页面迁移动态调整页大小，但这依赖昂贵的 TLB 刷新，且缺乏对单个数据结构的个性化考量，无法适应 GPU 大规模并行且可预测的访问模式。即使引入先进的远程缓存，不当页大小引发的海量远程访问也会击穿缓存系统的处理能力。</p>
+<p><strong>怎么做的</strong> CLAP（Chiplet-Locality Aware Page Placement）的核心思路是为每个数据结构定制合适的页大小。它利用了 GPU 独有的 chiplet-locality 特性——即虚拟地址上连续的页面组，通常主要由同一个 chiplet 访问。通过识别这种局部性，CLAP 将连续的虚拟页面映射到连续的物理帧上，既获得大页面的低转换开销，又维持小页面的高局部性。该机制由四个关键部件构成：第一是部分内存映射（PMM）。应用启动时，内存管理器先用 64KB 小页面映射数据结构的前 20% 数据，允许页面精准放置在请求它的 chiplet 上，形成反映真实访问模式的样本映射。为弥补此阶段无法使用大页面的问题，PMM 引入机会性大页面，当连续 64KB 页面恰好映射到同一 chiplet 时，动态组合成 2MB 大页面。第二是远程跟踪器（RT）。这是嵌入在 GPU 内存管理单元中的轻量级硬件，在页表遍历时通过分配 ID 识别数据结构，实时统计每个数据结构的远程访问率。第三是内存映射分析（MMA）。PMM 达到 20% 阈值后，GPU 驱动程序在后台运行 MMA。它用树结构评估 chiplet-locality，叶节点代表 64KB 区域，内部节点计算局部性得分，量化后代叶节点映射到同一 chiplet 的比例。结合 RT 提供的远程访问率 $ratio_{rt}$，MMA 选择满足以下条件的最高树层级 $l$ 作为最佳页大小：$$score_{\text{avg}}(l) \geq thres - \frac{ratio_{\text{rt}} + ratio_{\text{target}}}{k}$$第四是支持中间页大小的 TLB 合并逻辑。MMA 选出的页大小可能是系统不支持的中间大小（如 256KB）。内存管理器会预留连续物理帧，按需映射 64KB 子页面构建类似大页面的区域。同时，硬件 TLB 控制器检测连续映射的页表项，将其合并为单一 TLB 条目，在不增加 TLB 存储开销的前提下加速地址转换。</p>
+<p><strong>效果如何</strong> 实验基于扩展的 GPGPU-Sim v4.2，模拟了拥有 256 个流式多处理器和 HBM2 内存的 4-chiplet MCM GPU。评估数据包含 15 个常规 GPU 基准测试，以及从 ResNet-50、ViT、GPT-3 等模型提取的矩阵运算。对比基线涵盖四条路线：代表固定页大小的静态分页（S-64KB、S-2MB）、代表 CPU 动态页面迁移的 Ideal_C-NUMA、代表多 GPU 细粒度页面放置的 GRIT，以及代表 MCM GPU 地址转换优化的 MGvm 和 F-Barre。量化结果显示，CLAP 相比 S-64KB 和 S-2MB 平均性能分别提升 17.5% 和 19.2%。在与各路线代表的较量中，CLAP 优势明显：比 Ideal_C-NUMA 提升 11.9%，比 GRIT 提升 17.1%，比 MGvm 提升 24.8%。在 8-chiplet 系统中，CLAP 相比 2MB 静态分页的性能优势扩大到 21.5%。该方法的硬件代价极小，新增组件仅占 GPU 芯片面积的 0.0018%，且分析过程在后台掩盖了延迟。作者承认的局限在于，对于极度偏好小页面以维持局部性的工作负载，CLAP 即使采用中间页大小，其地址转换效率依然无法完全等价于原生的 2MB 大页面，导致距离理想配置仍有 5.78% 的性能差距。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文研究了多芯片模块（MCM）GPU中内存映射的页大小对性能的影响，并提出了一种名为CLAP（Chiplet-Locality Aware Page Placement）的高效内存映射机制。</p>
 <p><strong>核心问题与研究目标</strong><br/>

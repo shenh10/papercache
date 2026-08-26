@@ -19,6 +19,19 @@ title: 'Campo: Cost-Aware Performance Optimization for Mixed-Precision Neural Ne
 <div class="container">
 <h1 id="campo-cost-aware-performance-optimization-for-mixed-precision-neural-network-training">Campo: Cost-Aware Performance Optimization for Mixed-Precision Neural Network Training</h1>
 <p><strong>作者/机构</strong>: Xin He (CSEE, Hunan University &amp; Xidian University); Jianhua Sun and Hao Chen (CSEE, Hunan University); Dong Li (University of California, Merced)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一个感知数据类型转换成本的混合精度训练优化工具 Campo，通过量化转换开销并动态决定每个操作的精度，在不损失模型精度的前提下显著提升了神经网络的训练吞吐量和能效。</p>
+<p><strong>要解决什么问题</strong>
+现有的主流机器学习框架（如 TensorFlow 和 PyTorch）在进行混合精度训练时，普遍采用一种贪婪的静态策略：将神经网络计算图中的操作按数值安全性划分为白名单（如矩阵乘法，强制使用 FP16）、黑名单（如指数运算，强制使用 FP32）等，并在不同精度的操作之间自动插入数据类型转换节点。这种做法的卡点在于，它完全忽略了数据类型转换本身的开销。转换操作不仅需要在计算图中初始化节点，还需要对张量中的每个标量元素进行位转换和数值截断。性能分析表明，这种转换成本可能占到操作执行时间的 3% 到 29%。此外，使用 FP16 带来的性能增益极度依赖于输入张量的大小以及是否能激活张量核心（Tensor Core，简称 TC）。当输入张量较小或形状不满足 TC 的硬件要求时，FP16 的计算加速非常有限，此时如果盲目将其转换为 FP16，高昂的转换成本会直接反噬低精度带来的收益，导致混合精度训练的整体执行时间甚至比纯 FP32 还要长。</p>
+<p><strong>怎么做的</strong>
+Campo 的核心思路是摒弃盲目的精度分配，改为基于特定操作的性能预测模型，在运行时进行感知成本的计算图重写。该方法由离线的性能建模和在线的图重写两部分构成。首先，由于不同操作的内存访问和计算强度差异巨大，Campo 离线为每个独立的操作（如 Conv2D、MatMul）分别构建线性回归性能模型。模型包含两部分，第一部分预测转换成本，定义为：$$C_I + r \times \text{tensor\_size}$$ 其中 $C_I$ 是节点初始化常数时间，$r$ 是单个元素的转换耗时，$\text{tensor\_size}$ 是输入张量的元素总数。第二部分预测操作在 FP16 下的执行时间，定义为：$$OP_{LP} = \sum_{i=1}^{N} w_i \times PC_i + \sigma \times OP_{FP32}$$ 其中 $OP_{FP32}$ 是该操作在 FP32 下的执行时间，$PC_i$ 是通过斯皮尔曼相关系数筛选出的与 FP16 性能强相关的硬件性能事件（如全局内存吞吐量、每周期指令数、GPU 占用率等），$w_i$ 和 $\sigma$ 为回归系数。在线上训练时，Campo 会先用 FP32 运行一个预热迭代以收集上述硬件事件，随后对计算图进行四次遍历：第一次遍历针对白名单操作，利用模型计算“FP16 执行时间 + 转换成本”是否小于“FP32 执行时间”，只有算账划算才分配 FP16；第二次遍历针对黑名单及其下游操作，强制锁定为 FP32 以守住模型精度底线；第三次遍历针对处于中间地带的推断名单和清除名单操作，如果其上下游已经是 FP16，则顺水推舟将其设为 FP16 以消除边界的转换节点；第四次遍历再次利用模型，评估剩余安全操作的转换成本与收益。此外，为了最大化硬件利用率，Campo 会在底层对输入张量进行透明的零填充，强行将其维度补齐为 8 的倍数，从而满足 TC 的激活条件，因为 TC 带来的约 2 倍加速足以覆盖不到 20% 的填充计算开销。</p>
+<p><strong>效果如何</strong>
+实验在配备 Nvidia GeForce RTX 2080 Ti 和 V100 GPU 的服务器上进行，测试了 AlexNet、Inception3、Vgg16、ResNet50、DCGAN 和 BERT-large 六个不同规模的模型。对比的基线方法是 TensorFlow v1.15 及其内置的 TF_AMP（代表 Nvidia 官方最先进的贪婪式混合精度优化路线）以及纯 FP32 训练。量化结果显示，在 RTX 2080 Ti 和 V100 上，Campo 的训练吞吐量比强基线 TF_AMP 分别平均提升了 20.8% 和 20.9%（最高达 24.5%）。消融实验证明，这主要归功于 Campo 平均减少了 27.7% 的无用转换节点，并将 TC 利用率提升了 29.4%，其中图重写策略对总体性能提升的贡献高达 84.5%。在能效方面，Campo 比 TF_AMP 平均提高了 21.4%。在所有测试任务中，Campo 训练出的模型精度与纯 FP32 和 TF_AMP 完全一致，没有任何精度损失。作者也坦承了方法的局限性：性能模型存在平均 5.8% 的预测误差，在极少数情况（少于 1.5%）下会发生误判，但由于黑名单机制的严格保护，这种误判只会导致微小的性能折损，绝不会引发外推失效或精度掉点。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文的核心研究问题是，现有的混合精度训练策略（如TensorFlow和PyTorch中的策略）贪婪地对性能关键型操作应用FP16精度，但没有量化和考虑数据类型转换（casting）带来的成本。作者通过性能分析揭示，转换成本可能占操作执行时间的21%以上，在某些情况下甚至超过使用低精度带来的性能增益，从而导致整体性能下降。</p>
 <p>为解决此问题，本文的研究目标是设计一个能够感知转换成本的性能优化工具Campo，旨在最大化混合精度训练的性能，同时不损失模型精度。</p>

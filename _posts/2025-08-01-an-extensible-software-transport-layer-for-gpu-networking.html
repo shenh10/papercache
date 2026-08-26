@@ -17,6 +17,15 @@ title: An Extensible Software Transport Layer for GPU Networking
 <div class="container">
 <h1>An Extensible Software Transport Layer for GPU Networking</h1>
 <p><strong>作者/机构</strong>: Yang Zhou (UC Berkeley, UC Davis), Zhongjie Chen (Tsinghua University), Ziming Mao (UC Berkeley), ChonLam Lao (Harvard University), Shuo Yang (UC Berkeley), Pravein Govindan Kannan (IBM Research), Jiaqi Gao (Unaffiliated), Yilong Zhao (UC Berkeley), Yongji Wu (UC Berkeley), Kaichao You (UC Berkeley, Tsinghua University), Fengyuan Ren (Tsinghua University), Zhiying Xu (Amazon Web Services), Costin Raiciu (University Politehnica of Bucharest &amp; Broadcom), Ion Stoica (UC Berkeley)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一个纯软件、可扩展的GPU网络传输层UCCL，通过将控制路径剥离到主机CPU执行而保留数据路径的硬件直通，在不修改现有网卡的前提下实现了灵活的拥塞控制和多路径传输，使机器学习集体通信性能最高提升了4.5倍。</p>
+<p><strong>要解决什么问题</strong> 现有RDMA网卡（NIC）的传输层功能（如拥塞控制、丢包恢复）被固化在硬件ASIC中，其演进速度远落后于机器学习工作负载的需求。这种硬件固化导致了几个具体的机制卡点：首先，面对大模型训练中的流冲突，单路径RDMA极易引发拥塞，而硬件缺乏维护海量路径状态的片上SRAM，难以实现高效的多路径传输；其次，在MoE（混合专家）模型推理时，突发流量会造成严重的网络incast（多打一）拥塞，但商用网卡不支持能从接收端主动限流的接收端驱动拥塞控制；最后，老一代网卡因片上缓存限制，在发生丢包时只能采用低效的Go-Back-N（退回N步）重传，迫使集群严重依赖PFC（优先级流量控制）来维持无损网络，这不仅容易引发死锁，在异构网卡混部时还会导致可用带宽断崖式下跌。</p>
+<p><strong>怎么做的</strong> 核心思路是解耦数据路径与控制路径，在保持数据负载通过GPUDirect直接读写GPU显存的高性能同时，将拥塞控制、负载均衡和可靠性等控制逻辑上移至主机CPU执行。为了绕开硬件固化的传输逻辑，UCCL优先选用网卡的RDMA不可靠连接（UC），利用其不包含硬件拥塞控制的特性，并通过双边操作附加立即数（immediate data）在CPU间传递控制状态。其控制头的32位空间被严格定义为：$$Header_{32bit} = ID_{conn}^{8bit} \oplus ID_{msg}^{7bit} \oplus CSN^{8bit} \oplus Flag_{last}^{1bit} \oplus CC_{state}^{8bit}$$ 对于不支持UC的网卡（如AWS EFA），则采用不可靠数据报（UD），利用网卡的散播/汇聚（scatter-gather）特性，在发送端将CPU上的控制头与GPU上的数据合并打包，满足物理约束 $L_{header} + L_{payload} \le MTU$，并在接收端由网卡自动拆分到CPU和GPU，乱序数据包则通过修改集体通信库的归约内核（reduction kernel）在GPU显存中完成重组。为了让软件传输跟上单网卡400G的极高带宽，UCCL设计了三个关键部件：一是控制合并，将传输控制的决策粒度从单数据包放大到32KB的数据块，大幅降低CPU开销；二是多路径支持，为每对网卡分配多达256个队列对（QP），由于机器学习通信多为大消息，QP上下文切换的开销被有效分摊；三是连接分裂，允许多个CPU核心通过共享队列协同处理单一连接，解决单核处理瓶颈并实现动态负载均衡。</p>
+<p><strong>效果如何</strong> 实验在四种硬件平台上展开，包括配备NVIDIA H100与ConnectX-7网卡的InfiniBand/以太网集群、配备AMD MI300X与Broadcom Thor-2网卡的集群，以及AWS上配备A100与EFA网卡的云实例。对比基线点名了代表纯硬件路线的NCCL over ConnectX-7（依赖硬件RC队列）、代表AMD生态的RCCL over Thor-2，以及代表SmartNIC卸载路线的AWS官方SRD协议（运行在网卡ARM核上）。在存在流冲突的以太网胖树拓扑中，UCCL的all-to-all总线带宽比ConnectX-7硬件基线最高提升4.54倍；在AWS EFA实例上，由于主机CPU算力碾压网卡功耗受限的ARM核，UCCL的all-to-all性能比官方SRD协议最高提升3.27倍。在模拟MoE模型的15对1网络incast场景下，UCCL实现的接收端驱动协议EQDS将受害背景流量的P99.9延迟比InfiniBand内置传输降低了4.88倍。在1/256的高丢包率下，UCCL的软件选择性重传仅掉速6%至30%，而硬件Go-Back-N机制掉速高达59%至76%。该方法的代价是需要消耗额外的计算与总线资源：每个网卡需额外占用2个CPU核心运行引擎（若开启接收端限流还需1个核心），且多队列切换会产生额外的PCIe流量（约占PCIe 5.0带宽的2.5%）。此外，作者承认将控制粒度放大到32KB数据块的控制合并设计会带来一定精度损失，在纯发送端驱动的拥塞控制下可能导致约17.9%的性能折损。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文针对快速发展的机器学习（ML）工作负载对网络提出的日益增长的需求，而现有RDMA NIC上的主机网络传输层难以演进的问题，提出了UCCL（Ultra-CCL），一个可扩展的软件传输层，以促进GPU网络的发展。</p>
 <p><strong>核心问题</strong>:<br/>

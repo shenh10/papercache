@@ -19,6 +19,15 @@ title: 'Welder: Scheduling Deep Learning Memory Access via Tile-graph'
 <div class="container">
 <h1>Welder: Scheduling Deep Learning Memory Access via Tile-graph</h1>
 <p><strong>作者/机构</strong>: Yining Shi, Peking University &amp; Microsoft Research; Zhi Yang, Peking University; Jilong Xue, Lingxiao Ma, Yuqing Xia, Ziming Miao, Yuxiao Guo, Fan Yang, and Lidong Zhou, Microsoft Research</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为WELDER的深度学习编译器，通过引入`tile-graph`抽象将算子内与算子间的内存访问优化统一到一个框架中，在多种硬件上实现了显著的端到端推理加速。</p>
+<p><strong>要解决什么问题</strong> 现代深度学习模型正面临严重的内存瓶颈，处理高保真数据时产生的大量中间激活值导致频繁的全局内存交换。性能分析显示，GPU显存带宽利用率高达96.7%，而计算核心利用率仅为51.6%。造成该卡点的核心机制在于，算子内与算子间的数据复用模式存在根本冲突。传统系统在优化单算子时，会利用循环分块技术寻找最优的内部数据分块（tile）形状以最大化计算效率。例如，连续的Matmul和Softmax单独优化时，在共享内存中的最优分块分别是[32×64]和[4×128]。由于相邻算子最优分块形状不一致，Softmax无法直接在高速缓存中复用Matmul的中间数据，只能写回全局内存再读取。若强制对齐分块形状进行融合，又会破坏算子自身的计算效率。现有基于规则的融合方法无法在全局视角下权衡这两种收益，也无法覆盖复杂的算子组合。</p>
+<p><strong>怎么做的</strong> WELDER的核心思路是将深度学习计算建模为基于数据块的细粒度数据流图（`tile-graph`）。它通过统一的输出块形状对齐相邻算子，根据内存流量决定最佳分块，并为每个内存层级独立优化，从而绕开算子内外复用冲突的卡点。关键设计由以下部件构成：首先是`tile-graph`抽象，将算子拆分为多个算子块。相邻算子块通过共同的中间复用块连接，使后置算子直接在高速缓存中消费前置输出，无需物化完整中间张量。其次是块传播机制，只要确定输出块形状，即可根据张量表达式反向推断出所有依赖的输入块和中间块形状。在此基础上，WELDER引入了基于流量的成本模型。给定对齐的块配置，总全局内存流量可通过单次计算的输入输出块体积乘以计算完整张量所需的块数来精确推导：$Q_{total} = (\sum Size(Tile_{in}) + \sum Size(Tile_{out})) \times \frac{Size(Tensor_{out})}{Size(Tile_{out})}$，由此可见，中间复用块的流量被完全节省。第三是解耦的调度空间。基于“跨层独立性”观察，针对某一内存层级的流量优化仅取决于该层级的块配置，使WELDER能将复杂的组合优化空间分解为多个独立子空间。最后是两阶段调度器，包含两个核心接口：`SetConnect`用于探索算子在不同内存层级的连接方案；`Propagate`用于在给定连接下为子图搜索最优块配置。调度器枚举连接方案，利用成本模型评估流量和占用，生成分层的`tile-graph`执行计划。该计划通过统一设备接口映射为硬件代码，甚至能将主机内存纳入分层模型以支持超大输入。</p>
+<p><strong>效果如何</strong> 实验在NVIDIA V100、RTX 3090、AMD MI50及Graphcore IPU上进行，评估了涵盖图像分类、NLP等任务的10个代表性模型。对比基线包括代表框架的PyTorch和ONNXRuntime，代表专家级手工优化库的TensorRT和FasterTransformer，以及代表先进编译器的Ansor、Rammer、BladeDISC和Nimble。在V100启用TensorCore且批大小为1的FP16设置下，WELDER相比PyTorch、ONNXRuntime和TensorRT分别取得7.18倍、3.08倍和1.53倍的平均加速比。WELDER自动发现了89种现有方法未探索过的算子融合模式，最大一次将48个算子合并为一个内核。消融实验证明，共享内存层的数据复用是性能提升的关键来源。此外，通过将主机内存纳入层次结构，WELDER能处理8K分辨率的超大图像，在UNet上实现2.63倍加速。作者承认的局限性在于：对于纯计算密集且缺乏融合空间的模型（如VGG16），WELDER性能不如TensorRT，因为TensorRT使用了WELDER尚未支持的特定数值算法（如Winograd）。此外，当前设计主要针对静态模型，动态模型需依赖即时编译转换为静态子图后优化。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>: <br/>
 传统的深度神经网络（DNNs）被视为计算密集型工作负载，但随着现代DNN模型处理更高保真度的数据（如大图像、长句子）以及硬件加速器中计算核心（如TensorCore）速度的提升，DNNs正变得越来越受内存限制。对一系列顶尖DNN模型的性能分析显示，GPU内存带宽利用率高达96.7%，而计算核心的平均利用率仅为51.6%。这种效率低下的原因是，现有DNN系统缺乏对模型内存访问的整体优化，尤其是在处理算子间（inter-operator）数据复用方面存在挑战，因为不同算子最优的内部数据分块（tile）形状常常不一致，导致难以在高速缓存（如共享内存）中直接复用数据。</p>

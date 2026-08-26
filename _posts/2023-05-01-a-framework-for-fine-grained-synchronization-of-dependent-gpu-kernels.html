@@ -18,6 +18,19 @@ title: A Framework for Fine-Grained Synchronization of Dependent GPU Kernels
 <div class="container">
 <h1>A Framework for Fine-Grained Synchronization of Dependent GPU Kernels</h1>
 <p><strong>作者/机构</strong>: Abhinav Jangda (Microsoft Research), Saeed Maleki (Microsoft Research), Maryam Mehri Dehnavi (University of Toronto), Madan Musuvathi (Microsoft Research), Olli Saarikivi (Microsoft Research)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一个名为 cuSync 的 GPU 核心细粒度同步框架，通过在计算块级别而非整个核心级别进行同步，打破了传统流同步导致的最后一波流式多处理器闲置问题，显著提升了 GPU 资源利用率并降低了主流机器学习模型的推理时间。</p>
+<p><strong>要解决什么问题</strong>
+现有 GPU 在执行具有依赖关系的机器学习算子（如 GeMM 和 Conv2D）时，存在严重的资源利用率不足问题。在 CUDA 的执行机制中，计算任务被划分为多个独立的计算块（tile），由线程块在流式多处理器（SM）上分多波次执行。总波次由公式 $\lceil \frac{\text{网格中的线程块总数}}{\text{占用率} \times \text{SM数量}} \rceil$ 决定。当线程块总数不是 SM 数量的整数倍时，最后一波执行必然会导致部分 SM 处于闲置状态。更严重的是，传统的流同步机制要求生产者核心的所有线程块必须全部执行完毕，依赖它的消费者核心才能开始启动。这种粗粒度的同步机制使得生产者和消费者核心在各自的最后一波执行中都会产生资源浪费，无法让独立的计算块跨核心并发执行，导致像 MegatronLM GPT-3 这样的模型在推理时，相关 GeMM 操作的 GPU 利用率仅有 60% 到 80%。</p>
+<p><strong>怎么做的</strong>
+为了绕开流同步带来的资源闲置卡点，cuSync 框架的核心思路是将同步粒度从“整个核心”细化到“计算块”。通过让消费者核心提前启动，并仅在需要特定输入数据时才等待对应的生产者计算块，从而填补最后一波的空闲 SM 资源。该方法由四个关键机制构成。首先，将有依赖关系的生产者和消费者核心分配到不同的 CUDA 流上调用，从根本上解除系统级的流同步限制。其次，为了防止消费者核心过早调度导致死锁或无效占用，设计了等待核心机制。消费者流在启动真正的消费者核心前，会先启动一个单线程的等待核心，它在全局内存信号量上忙等待；直到生产者核心的第一个线程块开始执行并修改该信号量，等待核心才会退出，从而严格保证了生产者先于消费者被调度。第三，为了最小化消费者的同步等待时间，框架接管了计算块的调度顺序。通过维护一个将一维线性索引映射到三维网格索引的数组，并配合原子计数器，强制生产者和消费者按照相同的自定义顺序（如行主序）处理计算块，避免了 CUDA 运行时随机调度带来的不可控延迟。最后，在具体的计算块同步上，框架提供了 wait 和 post 函数以及灵活的同步策略。生产者计算完一个块后调用 post 增加信号量，消费者在加载依赖数据前调用 wait 阻塞等待。框架支持多种策略：例如最细粒度的 TileSync 策略为每个计算块分配独立信号量；而 RowSync 策略则让同一行的所有计算块共享一个信号量，以减少全局内存访问开销。此外，作者还开发了 cuSyncGen 编译器，用户只需通过领域特定语言定义核心间的依赖关系，编译器就能自动生成上述同步策略和调度顺序的 CUDA 代码，并自动执行诸如“将等待输入块与加载另一输入块的操作重排序”等指令级优化，以进一步掩盖同步延迟。</p>
+<p><strong>效果如何</strong>
+实验在配备 8 块 NVIDIA Tesla V100 32GB GPU 的硬件环境下进行，评估了 MegatronLM GPT-3 145B、LLaMA 65.2B、ResNet-38 和 VGG-19 四个模型的推理任务。对比基线有两个：一是代表传统路线的标准 CUDA 流同步 StreamSync；二是代表算力切分路线的 Stream-K，该方法通过在所有 SM 中均匀划分最后一个波次的工作量来提升利用率。量化结果显示，cuSync 在端到端推理时间上实现了显著缩减：GPT-3 降低了 6% 到 15%，LLaMA 降低了 9% 到 13%，ResNet-38 降低了 5% 到 22%，VGG-19 降低了 6% 到 16%。在具体的 GeMM 核心对比中，cuSync 的最佳策略比 Stream-K 的性能高出 15%，因为 Stream-K 需要调用两次核心并产生额外的全局内存访问，且目前仅支持 GeMM，而 cuSync 能够泛化到 Conv2D 等任何基于计算块的算子。在不同负载下最优策略有所不同：小批量处理时细粒度的 TileSync 表现最好，而大批量时由于重叠机会多且需减少内存访问，RowSync 表现更佳。该方法也存在代价和局限性：同步机制本身会引入全局内存访问和线程同步开销，在极端少计算量的场景下比标准流同步高出 2% 到 3% 的开销；此外，性能提升幅度会随着批处理大小的增加呈现振荡现象，因为批处理变大导致总波次增加，cuSync 节省下来的波次占比会随之波动；最后，该框架目前仍需要用户手动修改少量算子代码（约 0.5% 到 1% 的代码行）来接入生成的同步策略。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决在GPU上执行机器学习（ML）模型时，由于依赖性计算（如GeMM、Conv2D）导致的GPU资源利用率不足的问题。</p>
 <p><strong>核心问题</strong>: 传统的GPU计算将任务分解为多个独立的块（tiles），由线程块（thread blocks）在流式多处理器（SMs）上分多波（waves）执行。当线程块数量不是SM数量的整数倍时，最后一波执行将导致部分SM闲置，造成GPU资源浪费。传统的流同步（stream synchronization）机制要求一个核心（kernel）的所有线程块执行完毕后，依赖于它的下一个核心才能开始执行，这加剧了最后一波的资源浪费问题。如图1(b)所示，两个依赖的GeMM操作，每一波的第二个部分都只有一半的SM在工作。Table I的数据也显示，在MegatronLM GPT-3的推理中，两个依赖的GeMM在不同批量大小下的GPU利用率仅为60-80%。</p>

@@ -18,6 +18,17 @@ title: Efficiently Emulating High-Bitwidth Computation with Low-Bitwidth Hardwar
 <div class="container">
 <h1>Efficiently Emulating High-Bitwidth Computation with Low-Bitwidth Hardware</h1>
 <p><strong>作者/机构</strong>: ZIXUAN MA, Tsinghua University, Beijing, China; HAOJIE WANG, Tsinghua University, Beijing, China; GUANYU FENG, Tsinghua University, Beijing, China; CHEN ZHANG, Tsinghua University, Beijing, China; LEI XIE, Tsinghua University, Beijing, China; JIAAO HE, Tsinghua University, Beijing, China; Shengqi Chen, Tsinghua University, Beijing, China; Jidong Zhai, Tsinghua University, Beijing, China</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了Ape系统，通过在底层硬件上用低位宽数据类型高效模拟高位宽计算，并结合细粒度的动态数据类型自适应算法，在保证精度的前提下，将通用矩阵乘法和端到端应用的性能分别最高提升了3.12倍和1.78倍。</p>
+<p><strong>要解决什么问题</strong> 领域特定加速器（如NVIDIA Tensor Core和华为昇腾）虽然具备极高的计算吞吐量，但原生主要支持FP16、INT8等低位宽数据类型。为了利用这些硬件加速高精度计算，以往的做法是通过软件指令组合来模拟高位宽数据类型。然而，原有的模拟方案卡在两个瓶颈上：一是缺乏对误差和表示范围的深入优化，例如此前用FP16模拟FP32的方案，其数据表示范围极其受限，下界过大容易导致下溢出；二是缺乏高效的自适应机制，不同模拟策略在性能和精度上存在巨大差异，而真实业务数据的分布在运行时才会确定，如果对整个矩阵采用单一的保守高精度模拟策略，会白白浪费算力，但现有的严格浮点误差分析方法耗时极长（如分析小矩阵需十分钟），根本无法用于运行时动态决策。</p>
+<p><strong>怎么做的</strong> 核心思路是构建一个包含多种模拟策略的模拟器和一个细粒度动态分块的适配器。在模拟器层面，作者设计了多种用低位宽拼凑高位宽的算法。以用两个FP16模拟一个FP32（即FP32-F）为例，FP32被拆分为高位域 $Hi$ 和低位域 $Lo$。由于FP16只有5个指数位，直接拆分会导致低位域的指数极易超出表示范围。为此，作者引入了缩放机制，将 $Lo$ 的指数移动12位（放大4096倍），使其能与 $Hi$ 保持等效索引，从而将表示范围大幅扩展至 $[6.10 \times 10^{-5}, 6.55 \times 10^{4}]$。在执行乘加运算时，原本需要四次乘法，但由于 $Lo_A \times Lo_B$ 的结果已被移位24位，对最终FP32的23位尾数精度毫无影响，因此可以直接省略。其核心更新式精简为：
+$$C += Hi_A \times Hi_B + Hi_A \times Lo_B + Lo_A \times Hi_B$$
+这一省略不仅保证了 $2^{-22}$ 的精度，还带来了理论上1.33倍的加速。此外，作者还首次提出了用两个TF32模拟FP32（FP32-T）和用三个BF16模拟FP32（FP32-B，可无损保持FP32全精度）的方案。在适配器层面，为了平衡性能与精度，系统会将输入矩阵切分为小数据块，并在运行时扫描每个块的最大指数位长度，生成掩码矩阵。随后，通过一个轻量级的性能模型（对掩码矩阵执行一次小型矩阵乘法），系统能以极低的开销预测不同策略的耗时，从而在同一次大矩阵计算中，让数值范围小的块走极速的FP32-F，数值范围大的块走安全的FP32-B，实现细粒度的混合计算。</p>
+<p><strong>效果如何</strong> 实验在NVIDIA GPU（V100、T4、A100）和华为Ascend 910A上进行，涵盖量子电路模拟、主成分分析、K最近邻、BERT等多种应用。对比基线主要包括：代表原生单精度路线的cuBLAS FP32（运行在CUDA Core上），以及代表以往模拟路线的FP32-M和EGEMM-TC。在A100上测试不同尺寸的方阵通用矩阵乘法时，FP32-F和FP32-B相比cuBLAS FP32分别实现了3.12倍和1.85倍的加速；与同类模拟方法相比，FP32-F不仅数据范围更大，性能也比FP32-M高出1.22倍。在端到端应用测试中，只需将底层库替换为Ape，各项应用即可获得平均1.61倍、最高1.78倍的加速。在ResNet-18的卷积层测试中，FP32-F相比原生FP32也取得了最高1.86倍的加速，证明该方法同样适用于卷积算子。在精度方面，量子电路模拟的端到端误差与原生FP64相比，Ape的模拟方法与原生FP32处于同一水平（约9%），而直接使用FP16会导致高达172%的严重错误。分解分析表明，适配器在运行时进行细粒度决策引入的开销微乎其微，完全被混合计算节省的时间所抵消。作者也坦承了该方法的一个局限：由于Tensor Core硬件底层的截断机制是向零舍入而非四舍五入，在进行大矩阵乘法时，截断误差会在归约累加过程中不断累积，导致所有模拟方法的计算误差都会随着矩阵尺寸的增加而增大。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决领域特定加速器（DSAs）虽然计算能力强大但原生支持的数据类型有限的问题。以往工作虽然探索了软件模拟某些数据类型，但未能对模拟数据类型的误差进行深入分析，从而错失了在表示能力（范围和精度）和性能方面的潜在优化机会。同时，如何为给定应用高效地设计更多模拟数据类型并选择一个高性能的方案，同时保证正确性和精度，仍然是一个开放问题。</p>
 <p>为应对这些挑战，本文提出了Ape系统，其核心目标是：<br/>

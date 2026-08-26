@@ -23,6 +23,22 @@ title: 'Unity: Accelerating DNN Training Through Joint Optimization of Algebraic
 <strong>作者/机构</strong>: Colin Unger†♠, Zhihao Jia‡♭♠, Wei Wu∗⋄, Sina Lin§, Mandeep Baines♭, Carlos Efrain Quintero Narvaez♭, Vinay Ramakrishnaiah∗, Nirmal Prajapatii∗, Pat McCormick∗, Jamaludin Mohd-Yusof∗, Xi Luo♯, Dheevatsa Mudigere♭, Jongsoo Park♭, Misha Smelyanskiy♭, Alex Aiken†<br/>
 <strong>所属机构</strong>: Stanford University†, Carnegie Mellon University‡, Los Alamos National Lab∗, NVIDIA⋄, Microsoft§, Meta♭, SLAC National Accelerator Laboratory♯</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+Unity 是首个在分布式 DNN 训练中将代数变换与并行化策略进行联合优化的系统，它通过统一的图替换机制，在高达 192 个 GPU 的集群上实现了最高 3.6 倍的训练吞吐量提升。</p>
+<p><strong>要解决什么问题</strong>
+现有的 DNN 训练框架通常将代数变换（如算子融合）和并行化（如数据并行、模型并行）作为两个独立的步骤顺序执行，这种割裂会导致次优的性能。具体卡点在于，前置的代数优化器可能会为了局部计算效率融合两个算子，但这会改变计算图的结构，直接阻碍后续并行优化器应用更高效的策略（例如减少通信量的缩减并行）。过去无法联合优化的根本原因在于中间表示的不匹配：传统的计算图用节点表示数学运算，用节点上的静态注释来表示并行化策略。当代数变换引入或替换新节点时，这些新节点缺乏并行化注释，也无法明确表达通信成本，导致并行策略失效，联合搜索算法根本无法交错运行。</p>
+<p><strong>怎么做的</strong>
+Unity 的核心思路是引入一种名为并行计算图（PCG）的统一表示，将代数变换和并行化策略全部抽象为对 PCG 的图替换操作，从而在一个统一的搜索空间内完成联合优化。为了让计算图能感知并行和通信，PCG 扩展了传统的张量维度，引入了六个专门的并行化算子（如改变并行度的 Partition/Combine、控制副本和同步的 Replicate/Reduce、处理时间维度的 Pipeline/Batch），并将每个算子绑定到一个机器映射（Machine Map）上，精确指定并行任务在物理 GPU 拓扑中的分配。</p>
+<p>通过这种设计，任何复杂的并行策略（如混合并行）或代数变换，都可以被拆解为一系列基础的图替换。为了保证替换的正确性，Unity 利用 Z3 定理证明器对算子属性进行形式化验证，例如验证 Reduce 算子与矩阵乘法的可交换性：</p>
+<p>$$ \forall d, x, y. \mathrm{Matmul}(\mathrm{Reduce}(d,x),y) = \mathrm{Reduce}(d,\mathrm{Matmul}(x,\mathrm{Replicate}(d,y))) $$</p>
+<p>面对联合优化带来的指数级搜索空间，Unity 设计了三层分层搜索算法。顶层使用基于成本的回溯搜索来寻找最优的图替换序列；中层针对每个候选图，利用 DNN 常见的线性链结构，通过顺序和并行图分割技术结合动态规划，快速找到最优的机器映射；底层为了扩展到超大模型，在干扰最少替换的节点处对大图进行切分，并强制在切分点搜索匹配的并行化状态。这种分治策略将搜索复杂度从节点数的指数级降至线性级，确保在 20 分钟内完成超大空间的探索。</p>
+<p><strong>效果如何</strong>
+实验在 Summit 超级计算机上搭建，使用了最多 192 个 NVIDIA V100 GPU，涵盖了图像分类、语言模型、推荐系统等 7 个真实模型（如 BERT-Large、DLRM、Inception-v3）。对比基线包括代表专家手动极致优化的 Megatron 和 DeepSpeed，以及代表传统顺序优化路线的 TASO 结合 FlexFlow。量化结果显示，在 BERT-Large 上，Unity 全自动搜索出的策略性能与专家手工调整的 Megatron 持平；在单卡显存装不下的 DLRM 和 CANDLE-Uno 模型上，Unity 相比专家设计的混合并行策略和顺序优化基线，分别实现了 3.6 倍和 1.6 倍的吞吐量加速。消融实验证明，单纯由联合优化这一机制本身（对比同等搜索空间下的顺序优化）就能带来高达 1.4 倍的加速。该方法的局限性在于，其搜索算法强依赖现代 DNN 的顺序和并行线性链结构，面对结构极度不规则的网络（如 NASNet）时扩展性会受限；此外，成本模型目前未将张量卸载和重计算等显存优化技术纳入联合搜索，可能会生成理论吞吐量高但实际触发显存溢出的策略，且对流水线并行的支持仅限于基础的顺序 1F1B 调度。</p>
+</div>
+</details>
 <h3>A1 主要贡献</h3>
 <p>本文介绍了Unity，这是第一个在分布式DNN训练中联合优化代数变换和并行化的系统。现有的DNN训练优化方法主要分为两类：代数变换和并行化，但它们通常是独立应用的，这会错失重要的性能提升机会。</p>
 <p><strong>核心问题</strong>：独立地、顺序地应用代数变换和并行化优化是次优的。例如，一个代数优化器可能会融合两个算子以提高计算效率，但这可能会阻止后续并行化优化器应用更高效的并行策略（如减少通信量的缩减并行）。这种相互依赖性表明，为了达到最佳性能，必须对这两种优化进行联合考虑。然而，联合优化面临两大挑战：<br/>

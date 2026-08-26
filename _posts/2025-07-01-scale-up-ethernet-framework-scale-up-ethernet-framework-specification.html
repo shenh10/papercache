@@ -17,6 +17,15 @@ title: Scale-Up Ethernet Framework Scale-Up Ethernet Framework Specification
 <div class="container">
 <h1 id="scale-up-ethernet-framework-scale-up-ethernet-framework-specification">Scale-Up Ethernet Framework Scale-Up Ethernet Framework Specification</h1>
 <p><strong>文章作者/机构</strong>: Broadcom</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> Broadcom提出了一种名为SUE（Scale-Up Ethernet）的以太网扩展框架规范，通过精简传输层状态、引入机会性打包和定制化AI转发报头，为XPU集群提供了一个专为单跳网络优化的低延迟、高带宽横向扩展互联方案。</p>
+<p><strong>要解决什么问题</strong> 随着AI工作负载对并行处理能力需求的增长，XPU集群需要在机架或多机架级别进行横向扩展（Scale-Up）。原有的Scale-Out（向外扩展）网络传输协议（如RoCEv2）在应对这种场景时面临严重的面积和功耗卡点。具体而言，Scale-Up网络的带宽需求比Scale-Out高出一个数量级，例如需要大量800Gbps接口，如果直接照搬Scale-Out方案中为了处理复杂网络拓扑而设计的报文喷洒（packet spraying）、乱序重排、报文跟踪位图以及选择性重传机制，会在发送端和接收端产生庞大的状态维护开销。这种复杂性在Scale-Up通常采用的单交换机跳（single switch hop）受限拓扑中是完全多余的，因为单层拓扑内同一平面根本不会发生冲突。因此，如何剥离不必要的复杂性，在不引起线头阻塞的前提下，设计一个能以线速启动且极具面积效率的XPU间内存事务传输层，成为了核心挑战。</p>
+<p><strong>怎么做的</strong> 核心思路是摒弃Scale-Out协议的复杂多路径和选择性重传，转而利用以太网生态构建一个极简的、基于单边共享内存语义的单路径传输协议。为了绕开状态维护带来的面积卡点，SUE依赖无损网络操作，采用简单的退回N步（Go-Back-N）机制来从极少发生的丢包中恢复，从而大幅缩减了传输状态。该框架的关键设计由四个部件构成。首先是接口与信用机制，XPU与SUE之间通过带有信用流控的FIFO或AXI4接口连接，请求和响应被映射到不同的虚拟通道（VC）以避免死锁，SUE内部在将事务移入发送数据路径前会进行头部对齐。其次是机会性打包（Opportunistic Packing）引擎，由于XPU接口速度高于以太网接口，事务会在SUE的目的地队列中累积，调度器在轮询队列时，会将发往同一目的地和VC的多个命令直接打包成最大4096字节的协议数据单元，且不会为了凑满体积而刻意引入延迟。第三是多层可靠性与无损链路保障，底层采用优先级流控（PFC）或支持更多无损类且所需缓冲更少的基于信用的流控（CBFC）来避免拥塞丢包，同时引入链路层重传（LLR），当交换机间发生前向纠错（FEC）无法纠正的错误时，直接在链路层重传，无需等待端点超时。第四是定制的网络封装，SUE定义了AI转发报头（AFH），其中AFH Gen 2将传统以太网报头压缩至6字节或12字节，极大降低了线路开销。此外，针对面积和功耗极度敏感的场景，作者设计了SUE Lite简化版，直接移除可靠传输层和拥塞控制，仅依赖LLR保证节点间可靠性，并将打包限制在1K字节。</p>
+<p><strong>效果如何</strong> 由于本文档为一份技术规范，作者并未搭建传统的对比实验环境，也没有提供与现有专有协议的端到端基线对比测试，而是从架构设计和理论预算的角度给出了量化预期。在硬件开销方面，通过移除可靠传输层等精简设计，SUE Lite版本能够将IP的物理尺寸减小高达50%，显著提升了面积效率。在端到端单向延迟预算方面，作者针对不同的物理介质给出了理论计算结果：在包含XPU、SUE处理和交换机延迟的完整链路中，使用3米Twinax铜缆的单向延迟预算可低至477.6ns，而使用10米单模光纤的延迟预算为549.2ns。该方案的局限性在于，其极简的Go-Back-N重传和单路径设计高度依赖于底层网络通过PFC或CBFC提供的无损特性以及LLR的链路级保障，一旦在极端情况下发生频繁的不可恢复丢包，其性能回退代价将高于采用选择性重传的复杂协议。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文档介绍了<strong>可扩展以太网框架（Scale-Up Ethernet, SUE）</strong>，旨在为基于以太网的XPU（如图形处理器GPU或各种定制机器学习加速器）横向扩展（Scale-Up）网络提供一个低延迟、高带宽的连接框架。随着机器学习和AI推理等工作负载的复杂性不断增加，对并行处理能力的需求也显著增长，将XPU集群扩展到机架或多机架级别成为必要。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>

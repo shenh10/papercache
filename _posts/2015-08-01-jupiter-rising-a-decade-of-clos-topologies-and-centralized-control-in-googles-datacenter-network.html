@@ -19,6 +19,15 @@ title: 'Jupiter Rising: A Decade of Clos Topologies and Centralized Control in G
 <div class="container">
 <h1 id="jupiter-rising-a-decade-of-clos-topologies-and-centralized-control-in-googles-datacenter-network">Jupiter Rising: A Decade of Clos Topologies and Centralized Control in Google’s Datacenter Network</h1>
 <p>Arjun Singh, Joon Ong, Amit Agarwal, Glen Anderson, Ashby Armistead, Roy Bannon, Seb Boving, Gaurav Desai, Bob Felderman, Paulie Germano, Anand Kanagala, Jeff Provost, Jason Simmons, Eiichi Tanda, Jim Wanderer, Urs Hölzle, Stephen Stuart, and Amin Vahdat Google, Inc. jupiter-sigcomm@google.com</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> Google通过采用商用交换芯片构建多级Clos拓扑并结合中心化控制机制，成功打造出容量扩展100倍、双向带宽超过1.3Pbps的定制化数据中心网络，彻底打破了传统商业网络架构在规模和成本上的限制。</p>
+<p><strong>要解决什么问题</strong> 原有做法是采用当时密度最高的512端口1GE交换机构建传统的四柱式集群网络。这种架构卡在高端交换机的成本和容量限制上，导致每台主机的带宽被严重限制在平均100Mbps，极易引发严重的丢包问题。这个卡点非常重要，因为大规模数据处理、远程存储访问和交互式Web服务推动了数据中心的带宽需求大约每年翻一番。为了保证系统的高可用性，集群调度必须将作业和存储数据分散到楼宇、兆瓦级发电机和物理机架行等多个电力故障域中，这种分布自然消除了流量的局部性，导致一个典型集群中92%的流量需要跨越服务器块进行通信。如果继续沿用传统架构，高带宽应用只能局限在单一的机架顶部交换机下以避免上行链路严重超载，这不仅阻碍了集群规模的扩大，还会导致计算资源分散在多个小集群中无法有效调度，严重降低了作业调度的打包效率。此外，传统网络依赖去中心化的路由协议，在成百上千个交换元件中运行基于广播的协议会产生巨大的开销，且极其难以管理。</p>
+<p><strong>怎么做的</strong> 核心思路是利用商用交换芯片构建多级Clos拓扑，并用一个全局中心化的软件机制来统一控制整个网络。它能绕开原有卡点，是因为Clos拓扑可以通过增加网络层级扩展到几乎任意大小，且内置了大量冗余路径，而中心化控制将整个数据中心视为单一网络结构，避免了传统路由协议动态发现信息的冗杂过程。关键设计由四个部件构成。首先是模块化的硬件拓扑，网络分为边缘交换机、汇聚块和骨干块，历经五代演进，最新一代Jupiter采用包含四个交换芯片的独立机箱Centauri作为构建块，支持异构硬件就地引入，并将端口速率提升至40G。其次是定制的内部网关协议Firepath，负责中心化状态分发与分布式计算。网络中选举出的Firepath主节点收集所有接口状态，构建带有单调递增版本号的链路状态数据库，并通过多播分发给所有交换机；客户端收到更新后，在本地独立计算带有多路径等价路由的最短路径并更新硬件转发表。第三是邻居发现协议，它利用预先配置的静态拓扑视图，定期交换本地端口和预期对端端口的信息，在线验证物理布线的正确性，防止错误连接导致转发环路。最后是集群边界路由器CBR，它在网络边缘将标准的外部BGP与Firepath集成，通过设立独立的汇聚块连接外部网络，淘汰了传统的集群路由器，并在集群间构建了基于BGP的Freedome网络以实现海量带宽。</p>
+<p><strong>效果如何</strong> 实验是在Google全球数十个数据中心站点中进行的，连接了数万台商用服务器，网络设备经历了五代自研架构的演进。对比基线是2004年部署的传统四柱式集群网络，它代表了依赖昂贵供应商设备和去中心化路由协议的传统路线。量化结果显示，最新一代Jupiter网络在最大配置下支持了服务器之间1.3Pbps的双向带宽，十年内容量扩展了100倍，服务器接入带宽提升至10Gbps并支持40G突发。在部署成本上，引入光纤捆绑技术将光纤资本和运营支出降低了近40%。在故障恢复方面，得益于高路径多样性，大多数局部链路故障能在500毫秒内完成路由收敛。在拥塞控制上，通过配置QoS丢弃、调整主机TCP窗口和启用ECN，在25%平均利用率下的丢包率从1%降至低于0.01%。作者也承认了该架构的局限和代价：中心化控制在极端电力故障导致全网重启时，活跃度协议和路由计算会争夺有限的CPU资源，引发路由雪球效应；此外，硬件老化会导致背板链路单向故障引发流量黑洞，且中心化配置缺乏并发读写锁，曾因监控系统与配置系统冲突导致部分网络行为异常。</p>
+</div>
+</details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文回顾了过去十年间，Google为克服数据中心网络在成本、运营复杂性和规模限制方面的问题而采取的策略。论文详细介绍了五代数据中心网络的发展历程，这些网络的设计统一遵循了三个核心主题：</p>
 <ol>
