@@ -2019,14 +2019,6 @@ llm:
         - llm
         - engineering
         - rl
-      - title: 'RLAX: Large-Scale, Distributed Reinforcement Learning for Large Language
-          Models on TPUs'
-        date: '2026-03-12'
-        url: /papers/llm/engineering/rl/2026/03/12/rlax-large-scale-distributed-reinforcement-learning-for-large-language-models-on-tpus.html
-        categories:
-        - llm
-        - engineering
-        - rl
       - title: 'Seer: Online Context Learning for Fast Synchronous LLM Reinforcement
           Learning'
         date: '2025-11-01'
@@ -3001,14 +2993,6 @@ llm:
           - inference
           - speculative_decoding
           tag: iclr25
-        - title: 'DFlash: Block Diffusion for Flash Speculative Decoding'
-          date: '2026-01-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2026/01/01/dflash-block-diffusion-for-flash-speculative-decoding.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
         - title: 'DSpark: Confidence-Scheduled Speculative Decoding with Semi-Autoregressive
             Generation'
           date: '2026-07-01'
@@ -5704,12 +5688,6 @@ mlsys:
       - mlsys
       - gpu
       tag: jpdc18
-    - title: Dissecting and Modeling the Architecture of Modern GPU Cores
-      date: '2025-01-01'
-      url: /papers/mlsys/gpu/2025/01/01/dissecting-and-modeling-the-architecture-of-modern-gpu-cores.html
-      categories:
-      - mlsys
-      - gpu
     - title: 'Roofline: An Insightful Visual Performance Model for Multicore Architectures'
       date: '2009-04-01'
       url: /papers/mlsys/gpu/2009/04/01/roofline-an-insightful-visual-performance-model-for-multicore-architectures.html
