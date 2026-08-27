@@ -1,5 +1,5 @@
 ---
-added_date: '2026-03-16'
+added_date: '2026-08-27'
 author: shenh10
 categories:
 - llm
@@ -22,6 +22,15 @@ title: 'MInference 1.0: Accelerating Pre-filling for Long-Context LLMs via Dynam
 <div class="container">
 <h1>MInference 1.0: Accelerating Pre-filling for Long-Context LLMs via Dynamic Sparse Attention</h1>
 <p><strong>作者/机构</strong>: Huiqiang Jiang†, Yucheng Li♢†, Chengruidong Zhang†, Qianhui Wu, Xufang Luo, Surin Ahn, Zhenhua Han, Amir H. Abdi, Dongsheng Li, Chin-Yew Lin, Yuqing Yang, Lili Qiu. Microsoft Corporation, ♢University of Surrey</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为 MInference 的动态稀疏注意力计算方法，在无需重新训练的前提下，将长上下文大语言模型推理的预填充阶段延迟在单张 A100 显卡上最多降低 10 倍，并成功保持了模型在各项下游任务中的高准确率。</p>
+<p><strong>要解决什么问题</strong> 随着大型语言模型处理的上下文长度不断增加，推理过程中的预填充阶段面临着严峻的计算挑战。由于注意力机制的计算复杂度随序列长度呈二次方增长，自注意力计算的开销会占据总预填充延迟的 90% 以上。具体而言，当一个 8B 参数的模型在单张 A100 GPU 上处理 1M token 的提示时，仅预填充阶段就需要耗费高达 30 分钟，这种极高的延迟使得长上下文模型难以在实际生产中被广泛部署。现有的预填充加速方法在应用于长上下文场景时，往往面临两难境地：要么无法有效降低计算延迟，要么在强行加速后无法保持可接受的准确率，导致模型在长文本理解和检索任务上失效。因此，如何打破注意力机制的二次方复杂度计算瓶颈，在不损失模型精度的前提下大幅提升长序列的预填充效率，成为了当前大语言模型推理亟待解决的核心卡点。</p>
+<p><strong>怎么做的</strong> 核心思路是利用注意力矩阵在长上下文中的动态稀疏性来跳过冗余计算。研究发现，在极长上下文中，每个 token 实际上只关注极少数的其他 token，注意力矩阵展现出高达 96.8% 的稀疏性。然而，这种稀疏分布是高度动态且依赖具体输入的，固定的稀疏掩码无法准确捕获关键信息。为此，作者将注意力矩阵的宏观稀疏模式归纳为三种：关注初始和局部 token 的 A-shape 模式、关注特定垂直线和固定间隔斜线的 Vertical-Slash 模式，以及呈现空间聚类特征的 Block-Sparse 模式。基于这三种模式，MInference 的关键设计由离线模式分配、在线动态索引构建和优化的 GPU 核函数三个部件构成。首先，离线核函数感知搜索部件会为每个注意力头分配最优的稀疏模式及其参数，其目标是在严格的 GPU 实际计算量预算下，最小化稀疏近似带来的误差，即 $\min |\boldsymbol{A}(\boldsymbol{M})-\boldsymbol{A}_{\text{dense}}|$。其次，在线动态稀疏索引构建部件会在推理时根据具体输入实时生成稀疏掩码。对于 Vertical-Slash 头，系统会将最后的少量查询向量与键向量相乘，以此低成本地估计出全局重要的垂直线和斜线位置；对于 Block-Sparse 头，系统则对查询和键向量进行均值池化后再相乘，从而快速锁定最重要的注意力块。最后，优化的 GPU 核函数部件基于 Triton 和 FlashAttention 等技术，将上述动态生成的稀疏索引转化为真正的硬件加速。整个稀疏注意力计算的定义性公式为 $$A(M)=\text{Softmax}(\frac{1}{\sqrt{d}}QK^{\top}-c(1-M))$$ 其中 $M$ 是动态生成的二值稀疏掩码，$c$ 是一个极大的常数，用于确保被掩码遮蔽的不重要权重在 Softmax 操作后趋近于零，从而在极小化额外估计开销的同时，让模型精准且高效地只计算那些真正重要的注意力分数。</p>
+<p><strong>效果如何</strong> 实验在单张 A100 GPU 上进行，测试了包括 LLaMA-3-8B（支持 262K 和 1M 上下文）、GLM-4-9B-1M、Yi-9B-200K 等多种先进的长上下文大语言模型。对比基线包括五种免训练稀疏方法：代表局部与全局窗口路线的 StreamingLLM、代表扩张与步幅注意力路线的 StreamingLLM 变体、代表外部记忆单元路线的 InfLLM，以及使用静态索引的 MInference 退化版。量化结果显示，在处理 1M token 的提示时，MInference 将预填充延迟从 30 分钟大幅缩短至 3 分钟，实现了 10 倍的加速。在 Needle In A Haystack 长上下文检索任务中，MInference 在高达 1M token 的范围内完美保持了信息提取能力，而 StreamingLLM 和 InfLLM 一旦关键信息超出其固定的全局或局部窗口范围，准确率便会急剧下降至零。在 InfiniteBench 和 RULER 复杂长文本基准测试中，MInference 取得了所有稀疏方法中的最佳整体表现，在问答和代码等任务上甚至略微超越了全注意力基线模型。此外，消融实验证明，如果将动态索引退化为静态索引，模型在高度动态的键值检索任务中会完全失效。该方法也存在一定的局限性和代价：在线构建动态稀疏索引会带来 5% 到 20% 的时间开销，当处理 10K token 这种相对较短的上下文时，索引构建的开销占比会飙升至 30%，导致端到端延迟与标准的 FlashAttention 几乎没有差异；同时，如果强行设置过高的稀疏率，模型的准确性仍然会出现明显的下降。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>: 随着大型语言模型（LLM）的提示长度不断增加，其推理的计算挑战成为广泛部署的重大障碍。由于注意力计算的二次方复杂度，一个8B参数的LLM在单张A100 GPU上处理1M token的提示（即预填充阶段）需要30分钟，其中自注意力计算的开销超过总预填充延迟的90%。现有的预填充加速方法在应用于长上下文LLM时，往往无法保持可接受的准确性或效率。</p>
 <p><strong>研究目标</strong>: 本文旨在通过一种动态稀疏注意力计算方法，显著加速长上下文LLM推理的预填充阶段，同时保持模型的高准确率，且无需重新训练或微调。</p>

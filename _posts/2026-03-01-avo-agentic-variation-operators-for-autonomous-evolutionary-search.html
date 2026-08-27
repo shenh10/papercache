@@ -19,6 +19,19 @@ title: 'AVO: Agentic Variation Operators for Autonomous Evolutionary Search'
 <h1>AVO: Agentic Variation Operators for Autonomous Evolutionary Search</h1>
 <p><strong>文章标题</strong>: AVO：用于自主进化搜索的智能体变异算子<br/>
 <strong>作者/机构</strong>: Terry Chen∗, Zhifan Ye∗, Bing Xu∗, Zihao Ye, Timmy Liu, Ali Hassani, Tianqi Chen, Andrew Kerr, Haicheng Wu, Yang Xu, Yu-Jung Chen, Hanfeng Chen, Aditya Kane Ronny Krashinsky, Ming-Yu Liu, Vinod Grover, Luis Ceze, Roger Bringmann, John Tran, Wei Liu, Fung Xie, Michael Lightstone, Humphrey Shi (NVIDIA)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一种名为智能体变异算子（AVO）的新型进化变异机制，将大型语言模型具象化为可自主查阅文档、测试并修正代码的智能体循环，在NVIDIA B200 GPU上自动搜索出的多头注意力核函数吞吐量达到了1668 TFLOPS，全面超越了高度手工优化的cuDNN和FlashAttention-4基线。</p>
+<p><strong>要解决什么问题</strong> 现有的基于大型语言模型（LLM）的进化搜索方法，通常将大模型的能力严格限制在预设算法流程中的候选解生成环节。在这种固定流水线中，大模型每次被调用时只能单向输出一段代码，既无法主动查阅特定领域的参考文档，也不能在提交前自行编译测试、解读性能分析反馈并修正错误。这种缺乏自主迭代能力的机制，在面对GPU核函数这类已经被极度优化的底层领域时会遭遇严重的卡点。以现代GPU上的注意力计算为例，为了突破显存带宽瓶颈，最先进的核函数必须采用分块计算，并在复杂的硬件架构（如NVIDIA Blackwell）上进行精细的warp专业化分工。这要求开发者精准协调负责矩阵乘法、在线softmax状态维护、输出重缩放以及异步数据搬运的不同warp组。要在这种高度复杂的微架构层面上榨取极限性能，单纯依赖单次生成的表面代码转换是无效的，必须像人类性能工程师一样，进行深度的硬件级推理以及反复的“测试-调试”循环。因此，如何打破固定流水线的束缚，让大模型在进化搜索中承担具备完整闭环能力的自主优化角色，是进一步挖掘底层硬件算力潜能必须解决的核心问题。</p>
+<p><strong>怎么做的</strong> 核心思路是彻底摒弃传统进化搜索中将采样、生成和评估割裂的僵化流水线，用一个具备自主闭环能力的智能体（Agent）来替代整个变异算子。在传统的进化搜索中，种群的变异过程通常被分解为固定的采样和生成两个阶段：
+$$\text{Vary}(\mathcal{P}_t) = \text{Generate}(\text{Sample}(\mathcal{P}_t))$$
+这种模式下，大模型仅负责执行生成步骤。而本文提出的智能体变异算子（AVO）将整个变异过程重构为一个由大模型驱动的自导向循环：
+$$\text{Vary}(\mathcal{P}_t) = \text{Agent}(\mathcal{P}_t, \mathcal{K}, \mathbf{f})$$
+在这个定义式中，$\mathcal{P}_t$代表包含历史解决方案及其得分的完整谱系，$\mathcal{K}$是包含CUDA编程指南、硬件规范以及现有开源核函数源码的领域知识库，$\mathbf{f}$是负责验证数值正确性并测量目标硬件吞吐量的多维评分函数。AVO的关键设计由三个核心机制构成。首先是自主智能体循环，智能体主动查阅$\mathcal{P}_t$中的历史实现，对比性能分析特征以寻找瓶颈，并在修改代码前检索$\mathcal{K}$中的硬件约束。其次是内部的“编辑-评估-诊断”迭代，智能体会自行调用$\mathbf{f}$测试其编写的核函数，如果未能通过正确性检查或吞吐量没有提升，它会自主诊断问题并修正代码。例如，它能通过查阅文档发现条件分支带来的同步开销，进而自主实现无分支累加器重缩放。智能体直到打磨出满意的版本才会向外提交，这有效绕开了单次生成极易产生无效代码的卡点。最后是自我监督机制，由于长期自主优化容易陷入探索停滞，该机制会在后台持续监控，一旦检测到智能体卡壳，就会强制审查整个进化轨迹，并为智能体提供新的候选优化方向，保证持续进化的动力。</p>
+<p><strong>效果如何</strong> 实验在NVIDIA B200 GPU上进行，核心评估任务是多头注意力（MHA）和分组查询注意力（GQA）的前向预填充吞吐量。测试配置为头维度128、BF16精度，序列长度从4096到32768不等。对比基线选择了两个极具代表性的极致优化路线：cuDNN代表NVIDIA官方闭源且针对特定硬件深度定制的商业级核函数；FlashAttention-4（FA4）代表当前开源社区针对Blackwell架构优化的最先进算法。量化结果显示，经过7天、跨越40个提交版本的自主进化，AVO在因果MHA任务上全面超越基线，吞吐量比cuDNN高出0.4%至3.5%，比FA4高出5.0%至10.5%，峰值性能达到1668 TFLOPS。将搜索到的MHA核函数迁移到GQA任务时，智能体仅需30分钟自主适配，便在因果GQA配置下取得了比cuDNN高出最高7.0%、比FA4高出最高9.3%的性能。从代价和局限性来看，这种极致性能依赖于极大的算力开销，智能体在7天内内部试错了超过500个候选方向才沉淀出40个有效版本。同时优化的边际收益递减明显，早期版本能带来巨大增益，后期只能通过跨warp组寄存器重新平衡等微操作挤出微小提升。此外，在非因果MHA的较短序列测试中，AVO的性能与两个基线在测量误差范围内持平，未能取得实质性突破。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题与研究目标</strong>: 传统的进化搜索方法已开始使用大型语言模型（LLM）来替代手工制作的变异算子，但这些系统通常将LLM限制在预设流程中的候选解生成环节。在这种模式下，LLM每次调用只产生一个输出，无法主动查阅参考资料、测试其更改、解释反馈或在提交候选解之前修正其方法。这种限制对于那些已经被高度优化的领域（如GPU核函数）尤其明显，因为在这些领域中，进一步的改进需要深入且迭代的工程实践。本文的目标是研究如何突破这一限制，让LLM在进化搜索中扮演更核心、更自主的角色。</p>
 <p><strong>创新点 (Agentic Variation Operators - AVO)</strong>:<br/>

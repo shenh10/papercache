@@ -19,6 +19,19 @@ title: Technical Report of Attention Residuals
 <div class="container">
 <h1>Technical Report of Attention Residuals</h1>
 <p><strong>作者/机构</strong>: Kimi Team <a href="https://github.com/MoonshotAI/Attention-Residuals" rel="noopener noreferrer" target="_blank">https://github.com/MoonshotAI/Attention-Residuals</a></p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了注意力残差（AttnRes）及其分块变体（Block AttnRes），通过将固定的残差累加替换为跨网络深度的 softmax 注意力机制，解决了深层模型中隐藏状态不受控增长和早期特征被稀释的问题，在极低开销下提升了模型的扩展定律表现和下游任务性能。</p>
+<p><strong>要解决什么问题</strong> 现有 Transformer 普遍采用标准残差连接配合 PreNorm，每一层以固定的单位权重将输出累加到残差流中。这种机制存在两个致命卡点。首先是特征稀释与幅度失控问题：由于残差流的幅度随网络深度单调递增，深层网络为了在固定尺度的归一化输入中保持影响力，被迫学习越来越大的输出，这不仅导致早期层的贡献被逐渐稀释，还会使得最早几层的梯度异常偏大，破坏训练稳定性。其次是信息访问的不可逆压缩：无论是标准残差还是引入门控的 Highway 网络，每一层都只能接收前一层的直接输出，这是一个混合了所有早期层信息的单一压缩状态。不同类型的层（如注意力和 MLP）无法根据自身需求选择性地读取特定的早期特征，一旦某些早期信息在聚合中丢失，深层网络就无法再将其精准找回。</p>
+<p><strong>怎么做的</strong> 核心思路是借鉴序列建模中的注意力机制，将深度方向上固定的残差累加替换为依赖输入内容的深度 softmax 注意力。具体而言，完全注意力残差（Full AttnRes）为每一层引入一个独立的可学习伪查询向量 $w_l$，将其与所有先前层的输出（作为键和值）进行注意力计算，从而实现对历史层特征的选择性检索。第 $l$ 层的输入定义为：
+$$ \boldsymbol{h}_{l}=\sum_{i=0}^{l-1} \alpha_{i \rightarrow l} \cdot \boldsymbol{v}_{i} $$
+其中注意力权重 $\alpha_{i \to l}$ 的计算方式为：
+$$\alpha_{i \to l}=\frac{\exp(\boldsymbol{w}_{l}^\top \text{RMSNorm}(\boldsymbol{v}_{i}))}{\sum_{j=0}^{l-1} \exp(\boldsymbol{w}_{l}^\top \text{RMSNorm}(\boldsymbol{v}_{j}))}$$
+公式中的 RMSNorm 能够防止输出范数过大的层主导注意力权重。然而，在流水线并行训练中，保留并传输所有层输出会带来 $O(Ld)$ 的显存和通信开销。为此，作者设计了块注意力残差（Block AttnRes），将总层数划分为 $N$ 个块。在块内部，层输出通过标准残差求和压缩为单一的块级表征；在块之间，当前层仅对这 $N$ 个块级表征和初始词元嵌入进行完全注意力计算。这一设计将通信和显存开销大幅降至 $O(Nd)$。为了让该机制在大规模工程中真正落地，作者还配套了系统级优化：在训练端，引入基于缓存的跨阶段通信机制，流水线相邻阶段只传输增量块，消除了冗余通信；在推理端，利用伪查询向量与前向计算解耦的特性，采用两阶段计算策略，先将块间查询批处理为单次矩阵乘法，再通过在线 softmax 与块内顺序计算合并，将显存访问成本分摊。</p>
+<p><strong>效果如何</strong> 实验基于 Kimi Linear 架构（混合专家模型，交错使用 KDA 和 MLA 注意力层）搭建，最大规模模型达到 48B 参数，并在 1.4T tokens 上使用 Muon 优化器完成了预训练。对比基线包括标准的 PreNorm 残差连接，以及代表静态跨层权重的 DenseFormer 和代表多状态循环路线的 mHC 方法。扩展定律实验表明，在 5.6 PFLOP/s-days 的计算量下，Block AttnRes 的验证损失降至 1.692，而 PreNorm 基线为 1.714，相当于节省了 1.25 倍的计算量。在 16 层模型的消融中，Block AttnRes 取得 1.746 的损失，优于 mHC 的 1.747 和 DenseFormer 的 1.767，且 Block AttnRes 仅用每层 5.5d 的显存 I/O 就持平了 mHC 高达 34d 的开销。在 48B 规模的下游任务评估中，Block AttnRes 全面优于基线，尤其在依赖深度信息流的组合性任务上提升显著，例如 GPQA-Diamond 提升 7.5 个百分点，Minerva Math 提升 3.6 个百分点，HumanEval 提升 3.1 个百分点。架构扫描进一步发现，该方法比基线更偏好深而窄的网络结构。在代价与局限性方面，该方法在流水线并行下的端到端训练耗时增加不到 4%，推理延迟开销低于 2%；但长上下文预填充会增加 KV 缓存压力，需要配合序列分片技术缓解。此外，工程实现上有一个硬性要求：所有伪查询向量必须初始化为零，以确保训练初期退化为等权重平均，否则会引发训练波动。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决现代大型语言模型（LLM）中普遍存在的残差连接问题。标准的残差连接与 PreNorm 结合使用时，会以固定的单位权重累积所有层的输出，导致隐藏状态随网络深度不受控制地增长，并逐渐稀释每一层的贡献。为解决此问题，本文提出了<strong>注意力残差（Attention Residuals, AttnRes）</strong>。</p>
 <p><strong>核心思想</strong>：AttnRes 提议用对先前所有层输出的 softmax 注意力机制来取代固定的累加操作。这使得每一层能够通过学习到的、依赖于输入的权重，选择性地聚合更早期的表征。AttnRes 的核心机制是为每一层学习一个伪查询向量（pseudo-query），通过这个向量与先前所有层的输出（作为键和值）计算注意力权重，从而实现对信息的动态、内容感知的深度检索。</p>

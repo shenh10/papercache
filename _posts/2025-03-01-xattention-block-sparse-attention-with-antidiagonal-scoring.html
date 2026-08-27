@@ -23,6 +23,23 @@ title: 'XAttention: Block Sparse Attention with Antidiagonal Scoring'
 <p><strong>作者/机构</strong>: Ruyi Xu * 1, Guangxuan Xiao * 2, Haofeng Huang 1, Junxian Guo 3, Song Han 2 4<br/>
 <strong>GitHub</strong>: <a href="https://github.com/mit-han-lab/x-attention" rel="noopener noreferrer" target="_blank">https://github.com/mit-han-lab/x-attention</a></p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong>
+本文提出了一种名为 XAttention 的即插即用块稀疏注意力框架，通过计算注意力块的反向对角线元素之和来高效评估块的重要性，在不牺牲模型准确性的前提下，将长上下文 Transformer 模型预填充阶段的注意力计算加速了最高 13.5 倍。</p>
+<p><strong>要解决什么问题</strong>
+长上下文 Transformer 模型在处理超长序列时，注意力机制的二次方计算复杂度会在预填充（pre-filling）阶段造成严重的性能瓶颈。为了降低算力开销，现有的块稀疏注意力机制试图只在关键的注意力块上进行计算，但卡在了“如何高效且准确地找出这些关键块”这一步。如果使用简单的池化（如平均或求和池化）来预测块的重要性，当块内只有少数显著的垂直或斜线注意力模式时，池化方法会因为平均效应而丢失这些关键的稀疏信号导致预测失效；如果使用基于搜索的方法（例如 MInference 和 FlexPrefill 试图通过分析输入查询的最后一部分来搜索垂直和斜线索引），不仅重要的注意力模式未必会一直保留在最后的查询段中，而且搜索算法本身在预填充阶段会引入巨大的额外计算开销，这种开销甚至会抵消掉稀疏化带来的速度收益，导致实际推理效率大打折扣。</p>
+<p><strong>怎么做的</strong>
+核心思路是利用注意力矩阵中反向对角线（从左下到右上）元素值的总和，作为评估该注意力块整体重要性的高效代理指标。这种设计之所以能绕开上述卡点，是因为反向对角线在矩阵几何上必然会与块内所有潜在的垂直和斜线注意力模式相交，既保证了不会漏掉关键的注意力模式，又确保了每个 token 的信息都被纳入考量，同时计算量极小，彻底避免了复杂的索引搜索开销。该方法由三个关键部件构成。首先是带步长的反向对角线评分，对于大小为 $B$ 的注意力块，算法以步长 $S$ 沿着反向对角线提取元素并求和，以此作为该块的得分。其次是阈值块选择，将所有反向对角线的得分进行 Softmax 归一化得到概率分布后，挑选出一个最小的块集合，使得这些块的累积概率超过预设的阈值 $\tau$。其核心逻辑可以表示为：
+$$ \text{find\_blocks}(A, \tau) = \arg \min_{\mathcal{B}} \left\{ |\mathcal{B}| \mid \sum_{b \in \mathcal{B}} \sum_{(i, j) \in b} A_{i, j} \geq \tau \right\} $$
+其中 $A$ 是注意力图，$\mathcal{B}$ 是选中的块集合。最后，为了进一步压榨计算效率，作者还设计了一个可选的最小阈值预测部件。因为不同的注意力头表现出的稀疏度不同，该部件使用动态规划为每个头寻找最优的独立阈值。定义动态规划表 $D[h][m]$ 表示在前 $h$ 个头上进行 $m$ 次阈值调整时的最佳性能，其状态转移为：
+$$ D[h][m] = \max(D[h - 1][m], P (h, m)) $$
+在每一步调整中，将当前头的阈值降低百分之十，即 $t_{h}(m)=t_{h}(m-1) \times 0.9$，从而在维持模型准确性的同时，将稀疏度推向极致。最终，模型只在被选中的高分块上执行标准的注意力计算，直接剪枝掉非必要计算。</p>
+<p><strong>效果如何</strong>
+实验在自然语言、视频理解和视频生成三大场景下展开，使用的模型包括 Llama-3.1-8B-Instruct、Qwen2-VL-7B-Instruct 和 HunyuanVideo，硬件依托于 NVIDIA DGX 服务器。对比基线涵盖了密集注意力路线的 FlashAttention（基于 FlashInfer 实现），以及三种代表性的稀疏注意力路线：依赖动态模式搜索的 MInference、基于上下文感知搜索的 FlexPrefill，以及需要预训练门控权重的 SeerAttention。量化结果显示，在 256K 上下文长度下，XAttention 实现了高达 13.5 倍的预填充注意力加速。在耗时拆解中，其模式选择阶段的速度比 MInference 快 24.9 倍，比 FlexPrefill 快 5.9 倍。在长文本基准 RULER 和真实任务 LongBench 中，XAttention 取得了所有稀疏方法中的最高平均分，在部分超长序列上的准确性甚至超越了全注意力基线。在 Video-MME 视频理解任务中，它同样在长视频表现上超越了全注意力。不过该方法也存在局限和使用代价：在用于非因果注意力的视频生成模型（如 HunyuanVideo 在 VBench 上的测试）时，直接应用会导致生成视频的布局发生轻微偏移，必须引入一个预热代价，即前 5 个去噪步骤必须使用全注意力，之后才能切换到 XAttention 以保证视觉保真度（此时 PSNR 达 23.5，SSIM 达 0.822）。此外，消融实验表明步长超参不能设置过大（如设为 64），否则会因为无法准确区分不同长度的斜线模式而导致精度下降。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>: 长上下文Transformer模型（LCTMs）在处理视频理解、视频生成等需要长序列信息的任务中至关重要，但其注意力机制的二次方复杂度导致计算成本高昂，特别是在预填充（pre-filling）阶段形成了性能瓶颈，阻碍了其在现实世界中的应用。</p>
 <p><strong>研究目标</strong>: 旨在设计一种能够显著加速长上下文Transformer模型推理，同时不牺牲模型准确性的块稀疏注意力机制，从而真正释放其在实际应用中的潜力。</p>

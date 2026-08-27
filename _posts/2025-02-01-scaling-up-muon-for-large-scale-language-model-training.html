@@ -19,6 +19,15 @@ title: Scaling up Muon for Large-Scale Language Model Training
 <h1>Scaling up Muon for Large-Scale Language Model Training</h1>
 <p><strong>文章作者/机构</strong>: Jingyuan Liu1, Jianlin Su1, Xingcheng Yao2, Zhejun Jiang1, Guokun Lai1, Yulun Du1, Yidao Qin1, Weixin Xu1, Enzhe Lu1, Junjie Yan1, Yanru Chen1, Huabin Zheng1, Yibo Liu1, Shaowei Liu1, Bohong Yin1, Weiran He1, Han Zhu1, Yuzhi Wang1, Jianzhou Wang1, Mengnan Dong1, Zheng Zhang1, Yongsheng Kang1, Hao Zhang1, Xinran Xu1, Yutao Zhang1, Yuxin Wu1, Xinyu Zhou1 ∗, Zhilin Yang1<br/>
 1 Moonshot AI, 2 UCLA</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本研究通过引入权重衰减、统一更新步长并设计适配 ZeRO-1 的分布式架构，成功将基于矩阵正交化的 Muon 优化器扩展至百亿参数规模的大语言模型训练，仅需约 52% 的训练算力即可达到与主流优化器同等的性能。</p>
+<p><strong>要解决什么问题</strong> 近期提出的 Muon 优化器在小规模模型中潜力极大，但扩展到数十亿参数、数万亿 tokens 的大规模训练时面临三大机制卡点。首先是精度溢出。长程训练下，模型权重和层输出的均方根会持续增长，突破 bf16 的高精度范围导致性能受损。其次是更新步长失控。Muon 的理论更新均方根随参数矩阵形状变化，遇到维度极大的稠密矩阵时更新过小限制表达能力，遇到维度较小的注意力键值头时更新过大引发训练崩溃。最后是分布式扩展瓶颈。主流大模型训练依赖 ZeRO-1 技术将优化器状态切分到各设备，这对逐元素计算的优化器很高效；但 Muon 计算近似正交化必须依赖完整的梯度矩阵，原生切分方案无法直接应用，导致在分布式集群中难以兼顾显存与通信开销。此外，该方法在预训练与监督微调阶段的泛化性也亟待验证。</p>
+<p><strong>怎么做的</strong> Muon 的核心思路是将优化过程视为谱范数约束下的最速下降，通过牛顿-舒尔茨迭代对梯度动量进行近似正交化，其核心迭代式为：$$\mathbf{X}_{k}=a \mathbf{X}_{k-1}+b\left(\mathbf{X}_{k-1} \mathbf{X}_{k-1}^{\mathrm{T}}\right) \mathbf{X}_{k-1}+c\left(\mathbf{X}_{k-1} \mathbf{X}_{k-1}^{\mathrm{T}}\right)^{2} \mathbf{X}_{k-1}$$ 这种正交化能防止权重仅沿少数主导方向更新。为绕开上述卡点，本方法包含三个关键设计。第一，引入解耦权重衰减。在更新规则中加入衰减项，有效抑制了权重均方根的无限增长，确保参数处于 bf16 安全范围内，在过训练时实现更低损失。第二，设计一致的更新均方根缩放。理论推导表明，形状为 $[A, B]$ 的矩阵其 Muon 更新均方根为 $1/\sqrt{\max(A, B)}$。为消除形状依赖，方法将更新乘以 $\sqrt{\max(A, B)}$，并进一步乘以 0.2，强制将更新均方根对齐到 AdamW 典型的 0.2 范围内。这不仅解决了极端维度下的更新失控，还使 Muon 能直接复用 AdamW 调优好的学习率等超参。最终的参数更新公式为：$$\mathbf{W}_t = \mathbf{W}_{t-1} - \eta_t (0.2 \cdot \mathbf{O}_t \cdot \sqrt{\max(A, B)} + \lambda \mathbf{W}_{t-1})$$ 其中 $\mathbf{O}_t$ 是正交化后的梯度动量。第三，开发分布式 Muon 架构。为兼容 ZeRO-1 切分，该架构在计算更新前引入跨数据并行组的收集操作，将切分梯度拼接成完整矩阵，执行牛顿-舒尔茨迭代后，仅保留本地切分对应的更新量应用到参数上。此设计使 Muon 仅需一个动量缓冲区，显存占用降至分布式 AdamW 的一半，且在 bf16 下迭代将通信开销控制在合理范围。</p>
+<p><strong>效果如何</strong> 实验在分布式集群上展开，涵盖 399M 到 1.5B 参数 Llama 稠密模型的缩放定律研究，以及基于 deepseek-v3-small 架构的 16B 参数混合专家模型 Moonlight 在 5.7T tokens 上的预训练，并在 Qwen2.5-7B 基础模型上进行微调测试。对比基线是代表逐元素自适应学习率路线的 AdamW。量化结果显示，在计算最优设置下，Muon 仅需约 52% 的训练 FLOPs 即可达到与 AdamW 相当的性能。在 1.2T tokens 检查点上，Moonlight 在数学和代码任务上显著优于 AdamW 训练的同架构基线；完成 5.7T tokens 训练后，Moonlight 推进了性能与算力的帕累托前沿。奇异值分解熵分析证明，Muon 优化出的权重矩阵具有更平坦的奇异值分布，为模型提供了更多样的优化方向。但该方法也有明确代价与局限：全梯度矩阵收集引入了额外通信开销，实际通信量约为基线的 1.5 倍；存在严重的预训练与微调不匹配失效场景，在 AdamW 预训练的模型上用 Muon 微调毫无优势，必须在预训练阶段就引入 Muon 才能最大化收益；且当前非矩阵参数仍需依赖 AdamW 进行混合优化。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>近期，基于矩阵正交化的Muon优化器【16, Muon: An optimizer for hidden layers in neural networks. 2024. URL: <a href="https://kellerjordan.github.io/posts/muon/" rel="noopener noreferrer" target="_blank">https://kellerjordan.github.io/posts/muon/</a>】在小规模语言模型训练中展现了强大的性能，但其在大模型上的可扩展性尚未得到验证。本报告旨在解决将Muon优化器扩展应用于大规模语言模型训练（数十亿参数，数万亿tokens）所面临的挑战 。</p>
 <p><strong>核心问题与挑战：</strong><br/>

@@ -22,6 +22,15 @@ title: Speculative Speculative Decoding
 <li><strong>文章标题</strong>：推测性推测解码</li>
 <li><strong>作者/机构</strong>：Tanishq Kumar (斯坦福大学), Tri Dao (普林斯顿大学, Together AI), Avner May (Together AI)</li>
 </ul>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了推测性推测解码（Speculative Speculative Decoding, SSD）框架，通过在独立设备上让草稿模型预测多种验证结果并提前生成后续 tokens，消除了草稿与验证的顺序依赖，相较于优化的推测解码基线实现最高 2 倍加速，比自回归生成快最高 5 倍。</p>
+<p><strong>要解决什么问题</strong> 现有的推测解码（Speculative Decoding, SD）方法卡在草稿生成与目标模型验证之间的严格顺序依赖上。在标准机制下，草稿模型用小算力快速生成一段候选 tokens 后，必须完全停下来，等待庞大的目标模型完成前向传播来验证这些 tokens。只有当验证结束、确定了最终接受的序列并可能采样出奖励令牌（bonus token）后，草稿模型才能启动下一轮推测。这种“推测-等待验证-再推测”的同步阻塞机制，导致草稿模型在验证期间处于空闲状态，白白浪费了计算时间，从根本上锁死了推测解码的加速上限。</p>
+<p><strong>怎么做的</strong> 核心思路是让草稿模型和目标模型在不同硬件上完全异步并行。当目标模型验证当前草稿时，草稿模型不再原地等待，而是提前预测目标模型可能输出的多种验证结果，并顺着这些结果继续生成后续 tokens，存入推测缓存（speculation cache）。一旦目标模型验证完毕，若实际结果命中缓存，草稿模型便以零延迟直接返回准备好的序列，从而彻底隐藏草稿生成的耗时。为使该机制高效运转，作者设计了 Saguaro 算法，由三个关键部件构成。第一是验证结果预测器，负责决定把有限算力押注在哪些可能结果上。由于潜在验证结果多达 $O(KV)$ 种，算法将其转化为约束优化问题，并发现缓存命中率随缓存大小呈幂律分布。据此，Saguaro 采用几何扇出（geometric fan-out）策略，对接受概率越高的位置分配越多的预测分支，最优扇出值 $F_k$ 遵循有上限的几何级数：$$F_{k} = F_{0} \cdot a_{p}^{k /(1+r)}$$ 第二是 Saguaro 采样器，负责平衡缓存命中率与草稿接受率。被拒绝的 token 会触发从残差分布中采样奖励令牌，而残差分布极难预测。Saguaro 采样器通过降权常数 $C \in [0, 1]$，刻意压低草稿模型对最可能 tokens 的预测概率：$$\sigma_{F, C}(z) \propto \begin{cases}C \cdot \exp \left(z_t\right) &amp; \text { if } t \in \operatorname{top}_F(z) \\ \exp \left(z_t\right) &amp; \text { otherwise }\end{cases}$$ 这迫使残差概率质量集中在这些被压低的 tokens 上，人为提高了奖励令牌落入缓存的概率，代价是草稿分布偏离目标分布导致接受率略降。第三是自适应回退策略，处理缓存未命中情况。当批量大小（batch size）较小时，未命中后回退给高精度但较慢的神经推测器；当批量大小超过临界值时，未命中概率大增，为防止整个批次被慢速推测器拖垮，系统自适应切换到极低延迟的快速推测器。</p>
+<p><strong>效果如何</strong> 实验在单节点搭建，目标模型使用 Llama-3.1-70B-Instruct 和 Qwen3-32B，部署在 4 张 H100 GPU 上；草稿模型使用 Llama-3.2-1B-Instruct 和 Qwen3-0.6B，部署在 1 张独立 H100 GPU 上。测试数据集涵盖数学（GSM8k）、代码（HumanEval）、聊天（UltraFeedback）和指令遵循（Alpaca）。对比基线包括：标准自回归解码（AR）、普通推测解码（SD，代表草稿与验证同步的传统路线），以及 EAGLE-3（代表改进草稿模型架构的强基线）。在批量大小为 1 且贪婪解码设置下，该方法相较于标准自回归解码平均实现近 5 倍端到端提速，相较于高度优化的普通推测解码基线实现最高 2 倍加速。在不同批量大小下，该方法均全面拓宽了吞吐量-延迟的帕累托前沿，证明其不仅降低延迟，还提高了单设备计算效率。该方法也存在明确代价与局限。首先，它强制要求草稿模型部署在独立硬件上，增加物理资源开销。其次，对于大规模强化学习或离线数据生成等受限于吞吐量的工作负载，该方法表现不佳，因为额外增加了验证计算量。最后，在批量大小较大时，缓存未命中极易发生，此时系统受限于草稿生成算力，必须为草稿模型分配更多 GPU 才能维持加速效果。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决<strong>推测解码（Speculative Decoding, SD）</strong>中存在的<strong>草稿（drafting）与验证（verification）之间的顺序依赖</strong>问题。在标准的推测解码中，草稿模型必须等待验证过程完成后才能开始下一轮的推测，这限制了其加速效果。</p>
 <p><strong>核心问题</strong>：我们能否消除草稿和验证之间的顺序依赖？</p>

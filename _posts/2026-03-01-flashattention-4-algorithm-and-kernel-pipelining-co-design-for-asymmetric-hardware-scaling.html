@@ -19,6 +19,15 @@ title: 'FlashAttention-4: Algorithm and Kernel Pipelining Co-Design for Asymmetr
 <div class="container">
 <h1>FlashAttention-4: Algorithm and Kernel Pipelining Co-Design for Asymmetric Hardware Scaling</h1>
 <p><strong>作者/机构</strong>: Ted Zadouri<em>1,6, Markus Hoehnerbach</em>2, Jay Shah*3, Timmy Liu4, Vijay Thakkar2,5, Tri Dao1,6 (1普林斯顿大学 2Meta 3Colfax Research 4NVIDIA 5佐治亚理工学院 6Together AI)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文针对 Blackwell 架构 GPU 提出了 FlashAttention-4，通过算法与核函数流水线的协同设计，在 B200 GPU 上相比 cuDNN 实现了最高 1.3 倍的加速，达到了 1613 TFLOPs/s 的性能。</p>
+<p><strong>要解决什么问题</strong> 原有的注意力机制在向新一代 Blackwell 架构（如 B200、GB200）迁移时，遭遇了严重的硬件非对称扩展卡点。在新架构中，张量核心的矩阵乘法吞吐量相比上一代 Hopper 架构翻倍，达到了每周期 8192 次操作；然而，共享内存的读取带宽和用于计算 softmax 的指数运算单元吞吐量却保持不变或扩展极慢。这种算力与访存、标量计算之间的极度不平衡，导致性能瓶颈发生了转移。在前向传播中，指数运算单元的低吞吐量和共享内存流量成为了与矩阵乘法并列的卡点；而在反向传播中，共享内存带宽更是成为了绝对的性能瓶颈，其消耗的时钟周期甚至比张量核心计算多出约 30%。如果继续沿用旧的执行逻辑，张量核心将大量处于闲置等待状态，无法发挥新硬件的算力优势。</p>
+<p><strong>怎么做的</strong> 核心思路是最大化矩阵乘法与其他非矩阵乘法操作的重叠，并从算法层面削减对瓶颈资源的依赖。关键设计由四个部件构成。第一是重新设计的异步流水线。利用 Blackwell 完全异步的矩阵乘法指令和新增的张量内存，将 softmax 计算与更大瓦片（128×128）的张量核心操作在不同的线程束组中完全重叠，反向传播时更是将当前元素的梯度计算与前一次迭代的矩阵乘法并行。第二是缓解指数运算瓶颈。在硬件指数单元之外，利用浮点乘加单元通过多项式逼近来实现软件模拟的指数函数，分担了 10% 到 25% 的计算压力；同时引入条件性 softmax 重缩放，当局部最大值 $m_j$ 与前值 $m_{j-1}$ 的变化小于设定阈值 $\tau$ 时直接跳过重缩放步骤，其更新式修改为：$$O_j = \begin{cases} e^{m_{j-1}-m_j} O_{j-1} + e^{S_j-m_j} V_j &amp; \text{if } m_j - m_{j-1} &gt; \tau \\ O_{j-1} + e^{S_j-m_{j-1}} V_j &amp; \text{otherwise} \end{cases}$$ 第三是削减共享内存流量。在反向传播中，利用 Blackwell 特有的 2-CTA 矩阵乘法模式，让两个线程块（CTA）协同执行一次大瓦片的矩阵乘法。每个线程块只需在自己的共享内存中加载一半的操作数，直接将共享内存流量减半。同时，这种切分方式使得计算梯度 dQ 时的全局原子归约数量也减少了一半。第四是基于最长处理时间优先的调度策略。针对因果掩码或可变序列长度带来的负载不均衡，通过重排批次和注意力头的计算顺序，优先处理耗时最长的任务块。此外，整个方法完全使用嵌入 Python 的 CuTe-DSL 实现，摒弃了 C++ 模板，使编译时间缩短了 20 到 30 倍。</p>
+<p><strong>效果如何</strong> 实验在单张 B100 180GB SXM6 硬件（基准测试在 B200 GPU 上进行）上搭建，输入数据类型为 BF16，隐藏层维度设为 2048，序列长度从 1K 到 32K 不等，并专门测试了 DeepSeek V3 架构中使用的 (192, 128) 非对称头维度配置。对比基线包括代表闭源路线的 cuDNN 9.13，以及代表开源路线的 Triton 3.6、PyTorch、FlashAttention-2 和 Gluon。量化结果显示，在中长序列（4K 及以上）和因果掩码设置下，FlashAttention-4 的前向传播速度比 cuDNN 快 1.1 到 1.3 倍，比 Triton 快 2.1 到 2.7 倍，最高达到了 1613 TFLOPs/s，占到了理论算力上限的 71%。反向传播同样在长序列下取得了稳定的加速。该方法也存在一定代价：软件模拟指数函数会带来极微小的精度损失，但被证明完全淹没在 BF16 的量化误差中；此外，为了支持强化学习等场景的可复现训练，作者提供了一个基于信号量锁的确定性反向传播模式，但这种强制同步机制会带来性能损耗，其运行速度仅为非确定性版本的 75%。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决大型语言模型和长上下文应用中，作为Transformer架构核心层的Attention机制的性能瓶颈问题。随着硬件从Hopper架构（如H100）向Blackwell架构（如B200, GB200）演进，硬件性能呈现出<strong>非对称扩展</strong>的特点：张量核心（Tensor Core）的吞吐量翻倍，而其他功能单元（如共享内存带宽、指数运算单元）的扩展速度较慢或保持不变。这种不平衡的硬件扩展使得非矩阵乘法（non-MMA）资源成为新的性能瓶颈。</p>
 <p>为了应对Blackwell GPU上这些变化的瓶颈，本文提出了FlashAttention-4，通过算法与核函数（kernel）实现的协同设计来解决问题。本文的核心贡献如下：</p>

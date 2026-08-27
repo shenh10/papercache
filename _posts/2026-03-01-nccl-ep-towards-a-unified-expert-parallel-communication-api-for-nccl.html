@@ -19,6 +19,15 @@ title: 'NCCL EP: Towards a Unified Expert Parallel Communication API for NCCL'
 <h1>NCCL EP: Towards a Unified Expert Parallel Communication API for NCCL</h1>
 <p><strong>作者/机构</strong>: Amos Goldman, Nimrod Boker, Maayan Sheraizin, Nimrod Admoni, Artem Polyakov, Subhadeep Bhattacharya, Fan Yu, Kai Sun, Georgios Theodorakis, Hsin-Chun Yin, Peter-Jan Gootzen, Aamir Shafi, Assaf Ravid, Salvatore Di Girolamo, Manjunath Gorentla Venkata, Gil Bloch, NVIDIA Corporation</p>
 <hr/>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> NVIDIA 提出了 NCCL EP，一个完全基于 NCCL Device API 构建的统一 MoE（混合专家）通信库，在解决接口碎片化问题的同时，实现了与专用库相当的内核吞吐量，并将低延迟模式的显存占用降低了一个数量级。</p>
+<p><strong>要解决什么问题</strong> MoE 架构依赖专家并行，引入了细粒度、动态的 all-to-all 通信：前向分发（Dispatch）需将 token 按动态索引路由到专家 GPU，后向合并（Combine）需将专家输出聚合回原位置。标准的 NCCL 集合通信无法高效处理这种动态路由、不规则消息大小和负载不均衡，因此业界催生了 DeepEP、Hybrid-EP 等专用通信库。然而，这些专用做法卡在严重的生态碎片化和 API 复杂性上：它们独立于事实标准 NCCL 运行，需要开发者手动管理独立的初始化和内存池；深度耦合特定硬件（如特定网卡配置）；并且为低延迟（推理）和高吞吐（训练）模式提供完全割裂的 API。这不仅让上层框架的集成极其痛苦，而且现有低延迟库的通信缓冲区大小会随着专家数、批次大小和节点数的乘积暴增，在专家数量较多时会导致严重的显存浪费。</p>
+<p><strong>怎么做的</strong> NCCL EP 的核心思路是将 MoE 通信原语原生集成到 NCCL 基础设施中，利用允许 GPU 内核直接发起通信而无需 CPU 介入的 NCCL Device API，实现统一的软硬件抽象。为了绕开 API 割裂的卡点，它设计了统一的 `ncclEpDispatch` 和 `ncclEpCombine` 接口，并采用两级资源管理架构：组（Group）负责管理长生命周期的通信缓冲区和网络连接，句柄（Handle）则捕获单次前向传播的动态路由决策，从而分摊了高昂的设置成本。在底层传输上，它构建了设备端发起的混合通信路径，节点内通过 LSA（Load/Store Accessible）机制使用 NVLink 直接读写，节点间通过 GIN（GPU-Initiated Networking）发起 RDMA，彻底将 CPU 移出数据路径。它还引入了张量描述符编码布局角色，并提供 Python 绑定以无缝对接框架。针对不同任务，NCCL EP 在创建组时可指定两种算法模式：高吞吐模式改编自 Hybrid-EP，输出二维拼接张量以适配分组矩阵乘法；低延迟模式改编自 DeepEP，输出三维专家主序张量。针对原有低延迟模式显存浪费的痛点，NCCL EP 重新设计了通信缓冲区布局。原有 DeepEP 的缓冲区大小随 $O(E \cdot B \cdot P)$ 缩放（$E$ 为专家数，$B$ 为批次大小，$P$ 为并行度），NCCL EP 通过在分发消息头中扩展路由信息，让一个 token 每个目标 rank 只发送一次，而不是每个专家发送一次，并在合并阶段缓存路由信息实现高效的子区域索引。优化后的缓冲区大小缩减为：$$O(N \cdot B \cdot P + B \cdot K \cdot P)$$其中 $N$ 为 rank 数，$K$ 为 top-k 路由数。对于 64 个 rank、512 个专家、top-k 为 8 的配置，内存占用减少比例为：$$\frac{2 \cdot E}{(N + K)}$$这使得低延迟模式的显存占用大幅减少了约 14 倍。</p>
+<p><strong>效果如何</strong> 实验在 576 个节点的 EOS 集群（每节点 8 张 H100 80GB GPU，配备 NVLink 和 InfiniBand）上进行，测试了 30B 参数的 Qwen3-30B-A3B MoE 模型，设置 128 token 和 top-k 为 8。对比基线是代表专用设备端发起通信路线的强基线 DeepEP。在 8 到 64 张 GPU 的低延迟内核吞吐量测试中（DeepEP 也配置为使用 NCCL 后端以保证公平），NCCL EP 的分发吞吐量在多节点下与 DeepEP 相当甚至更高（64 张 GPU 时优势显著），合并吞吐量在 64 张 GPU 时与 DeepEP 趋于一致（1 到 4 节点落后 5% 到 12%）。在 vLLM 框架的端到端推理服务测试（1000 个请求，最大并发 32）中，NCCL EP 的吞吐量和 token 间延迟比使用原生 NVSHMEM 后端的 DeepEP 落后 7% 到 10%。作者承认 NCCL EP 目前仍是实验性 API，端到端性能的落后部分源于合并操作的开销，且多节点高吞吐量内核的优化仍在进行中，这暂时限制了其在训练场景下的极致性能。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文介绍了 NCCL EP (Expert Parallelism)，一个完全基于 NCCL Device API 构建的全新 MoE（Mixture-of-Experts）通信库。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>
