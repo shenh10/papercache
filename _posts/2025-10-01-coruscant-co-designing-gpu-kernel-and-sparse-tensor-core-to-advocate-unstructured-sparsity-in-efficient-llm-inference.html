@@ -20,6 +20,16 @@ title: 'Coruscant: Co-Designing GPU Kernel and Sparse Tensor Core to Advocate Un
 <h1>Coruscant: Co-Designing GPU Kernel and Sparse Tensor Core to Advocate Unstructured Sparsity in Efficient LLM Inference</h1>
 <p><strong>文章标题</strong>: Coruscant: Co-Designing GPU Kernel and Sparse Tensor Core to Advocate Unstructured Sparsity in Efficient LLM Inference<br/>
 <strong>作者/机构</strong>: Donghyeon Joo (University of Maryland, College Park), Helya Hosseini (University of Maryland, College Park), Ramyad Hadidi (d-Matrix), Bahar Asgari (University of Maryland, College Park)</p>
+
+                <details class="tldr-block" open>
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了软硬协同方案 Coruscant，通过首创的位图稀疏格式、定制 GPU 算子及微架构扩展，在 30% 到 70% 的非结构化稀疏度下，大幅降低了访存开销并显著提升了大语言模型推理的吞吐量。</p>
+<p><strong>要解决什么问题</strong> 大语言模型推理的解码阶段主要由权重投影操作主导，这是一个极度依赖显存带宽的内存密集型任务。为了加速推理，非结构化剪枝被广泛使用，它能在 30% 到 70% 的稀疏度下很好地保持模型精度。然而，原有的做法卡在了稀疏格式的压缩效率上。现有的稀疏格式（如压缩稀疏行 CSR 或坐标列表 COO）需要为每个非零元素存储位置索引，在中等稀疏度下，存储这些索引的额外开销极大，甚至会导致压缩后的稀疏矩阵比原始密集矩阵还要大，完全无法减少数据移动。因为缺乏高效的格式和算子支持，工程界被迫妥协，转而使用 NVIDIA 硬件原生支持的 2:4 半结构化稀疏模式。但这种妥协代价高昂：它不仅将稀疏度死板地固定在 50%，还会对模型的困惑度和生成质量造成严重的、不可逆的破坏。因此，如何在中等稀疏度下实现真正高效的非结构化压缩与计算，成了释放剪枝潜力的核心卡点。</p>
+<p><strong>怎么做的</strong> 核心思路是通过软硬协同设计，用极致的压缩率降低全局内存到流式多处理器的数据传输，并在计算端消除解压开销。该方案由三个关键部件构成。第一是 Coruscant 稀疏格式。它摒弃了存储显式坐标索引的传统做法，将矩阵按列划分为大小为 64 的分块，每个分块仅用一个 64 位的位图来标记非零元素的位置。这种设计在 50% 稀疏度下能将内存占用压缩至 56.25%，彻底绕开了传统格式越压越大的卡点。第二是 Coruscant GPU 算子。它采用“加载为压缩，计算为密集”的流水线，将压缩数据加载到寄存器后，利用前导零计数指令快速解析位图，将非零元素解压到共享内存中供张量核计算。为了避免解压时的写入冲突，算子采用了严格的列式分块策略，确保每个线程负责两列，各自写入不同的共享内存存储体，从而实现了零写入冲突。第三是 Coruscant 稀疏张量核微架构。作者发现软件算子中解压到共享内存的步骤占用了高达 36% 的执行时间，于是对 GPU 张量核进行了极小面积的硬件改造。他们在乘加计算单元前插入了一个位图解码器，直接在寄存器层面读取压缩数据和位图。每个周期，解码器解析位图并提取对应的密集向量元素，直接送入计算单元：$$ \text{Output} = \text{Output} + (\text{Compressed\_A} \times \text{Selected\_Dense\_B}) $$ 这一设计彻底砍掉了显式的解压指令和共享内存传输，让张量核能直接在压缩格式上执行乘加运算。</p>
+<p><strong>效果如何</strong> 实验在配备 48GB 显存的 RTX 6000 Ada GPU 上搭建，测试了 Llama 2 7B 与 13B 模型以及 OPT 30B 与 66B 权重。对比基线包括代表密集计算路线的官方库 cuBLAS、代表硬件半结构化路线的 cuSPARSELt，以及代表软件非结构化稀疏路线的 Flash-LLM。在 30% 到 70% 的稀疏度下，Coruscant 算子相比 cuBLAS 实现了最高 2.02 倍的提速，相比 Flash-LLM 提速最高 1.48 倍。在 Llama 2 7B 的端到端生成任务中，纯软件算子使吞吐量增加了 26%（达到 135 tokens/s），而启用定制张量核后吞吐量增加了 40%（达到 206 tokens/s）。极致的压缩还带来了显著的显存红利，原本在批大小为 32 时会因显存溢出而崩溃的 13B 模型，在使用该方法后不仅成功跑通，还获得了可观的吞吐量。代价与局限在于，该方法在预填充阶段比密集基线慢，因此对短文本生成任务不友好，只有在长文本解码阶段才能摊销掉这部分开销；此外，当批大小急剧增加导致计算密集度上升时，其缓解访存瓶颈的加速优势也会随之减弱；最后，在低于 30% 或高于 70% 的极端稀疏度下，其性能分别不如 cuBLAS 和 Flash-LLM。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决在现代硬件上利用非结构化稀疏性进行高效大语言模型（LLM）推理的难题。尽管非结构化剪枝在较高稀疏度下能更好地保持模型精度，但由于硬件支持不足，LLM剪枝通常被限制在硬件友好的结构化模式上。这导致剪枝技术的潜力无法被完全发挥。</p>
 <p><strong>核心问题</strong>: LLM推理，尤其是解码（decode）阶段，主要由权重投影（GeMM）操作主导，这些操作是内存密集型的（如图1所示）。现有的稀疏格式在30%至70%的稀疏度范围内（这是LLM剪枝的典型范围）压缩效率低下，而现有的SpMM（稀疏矩阵-密集矩阵乘法）GPU核（Kernel）也无法在该稀疏度范围内提供有效的计算加速。这迫使研究人员采用NVIDIA支持的2:4半结构化稀疏格式，但这种格式将稀疏度固定在50%且会牺牲模型精度。</p>

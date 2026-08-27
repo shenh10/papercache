@@ -19,6 +19,16 @@ title: 'FAST-DLLM V2: Efficient Block-Diffusion LLM'
 <ul>
 <li><strong>作者/机构</strong>: Chengyue Wu (香港大学, NVIDIA), Hao Zhang (NVIDIA), Shuchen Xue (NVIDIA), Shizhe Diao (NVIDIA), Yonggan Fu (NVIDIA), Zhijian Liu (NVIDIA), Pavlo Molchanov (NVIDIA), Ping Luo (香港大学), Song Han (NVIDIA, MIT), Enze Xie (NVIDIA)</li>
 </ul>
+
+                <details class="tldr-block" open>
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出 Fast-dLLM v2，通过仅 1B tokens 的微调将预训练自回归模型高效适配为块扩散语言模型，在保持生成质量的同时实现了比标准自回归解码高达 2.5 倍的推理加速。</p>
+<p><strong>要解决什么问题</strong> 传统自回归大语言模型采用严格的从左到右逐个 token 生成的方式，这种顺序解码机制严重限制了推理过程中的并行性，导致生成长文本时延迟极高。为了打破这种串行瓶颈，研究者们提出了基于扩散的语言模型，允许多个 token 联合预测以提升并行度。然而，现有的扩散语言模型在实际落地时面临多重卡点：首先是无法有效利用键值缓存（KV 缓存），导致计算冗余、推理延迟依然居高不下；其次是序列长度往往固定，缺乏生成灵活性；最后是训练成本极其高昂，例如现有的 Dream 模型需要消耗约 500B tokens 的数据才能完成从自回归到扩散机制的适配，极大地限制了其普及与扩展。</p>
+<p><strong>怎么做的</strong> Fast-dLLM v2 的核心思路是结合自回归和扩散模型的优势，实现“块间自回归生成，块内扩散并行优化”。为了绕开高昂的训练成本，作者设计了一种对自回归极其友好的后训练适配策略。首先将长序列切分为固定大小的块，在每个块内引入部分 token 掩码。为了确保所有 token 都能得到充分训练，模型采用互补掩码策略：将每个样本复制为两个视图，一个使用随机掩码，另一个使用其补集，让模型同时观察跨视图的掩码和未掩码上下文。同时，为了维持预训练模型的时序表示质量，采用移位标签策略，即预测位置 $i$ 的 token 时使用位置 $i-1$ 的隐藏状态。其训练目标是最小化仅针对被掩码 token 的交叉熵损失：$$\mathcal{L}_{\text{block}}(\theta) = -\mathbb{E}_{x,m} \left[ \sum_{i=1}^{L} \mathbf{1}[x_t^i = [\text{MASK}]] \log p_\theta(x_0^i \mid x_{&lt;i}, x_{\text{block}(i)}) \right]$$ 配合精心设计的混合注意力掩码，模型允许块内双向关注和跨块因果关注，仅需约 1B tokens 即可完成无损适配。在推理阶段，模型按块逐个解码并引入分层缓存机制。第一层是块级缓存，将已解码块的未掩码 token 缓存为只读上下文供后续块重用，恢复了跨块的键值缓存能力。在当前块内，模型采用基于置信度的并行解码，迭代优化掩码 token，置信度超过阈值的位置被并行揭开。为了加速这一过程，引入了第二层子块缓存（DualCache），为部分解码的块维护前缀和后缀缓存，在揭示更多 token 时直接复用，彻底排除了昂贵的重新计算。</p>
+<p><strong>效果如何</strong> 实验基于 Qwen2.5-Instruct 的 1.5B 和 7B 模型，在 64 块 A100 GPU 上使用约 1B 到 3B tokens 的指令微调数据进行训练。对比基线包括代表标准自回归路线的 Qwen2.5-Instruct 和 Qwen2.5-7B-Nemo-FT，以及代表扩散路线的 Dream 和 Fast-dLLM-LLaDA。在 7B 规模上，Fast-dLLM v2 的综合平均分达到 60.3，超过了 Qwen2.5-7B-Nemo-FT（59.6）和 Dream（57.6）。在 GSM8K 数学推理任务中，当并行解码的置信度阈值设为 0.9 时，准确率仅有极小下降，但吞吐量从 39.1 tokens/s 飙升至 101.7 tokens/s，实现 2.6 倍加速。在 A100 和 H100 硬件上，批量大小为 64 时吞吐量分别最高提升 1.5 倍和 1.8 倍。该方法也有其局限性：推理时如果使用的块大小与训练时不匹配，会导致显著的性能下降；此外，子块缓存在极小批量（如批量大小为 1）时带来的吞吐量增益可忽略不计，其效率优势主要在计算密集型的大批量场景下才能充分释放。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p>本文针对自回归（AR）大语言模型（LLM）固有的顺序解码导致推理效率低下的问题，提出了 Fast-dLLM v2，一个精心设计的块扩散语言模型（dLLM）。该模型旨在将预训练的 AR 模型高效地适配为 dLLM，以实现并行文本生成。</p>
 <p><strong>核心问题与研究目标</strong><br/>

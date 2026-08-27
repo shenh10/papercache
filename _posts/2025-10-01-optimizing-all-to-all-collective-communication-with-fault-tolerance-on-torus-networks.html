@@ -20,6 +20,16 @@ title: Optimizing All-to-All Collective Communication with Fault Tolerance on To
 <div class="container">
 <h1>Optimizing All-to-All Collective Communication with Fault Tolerance on Torus Networks</h1>
 <p><strong>作者/机构</strong>: Le Qin, Junwei Cui, Weilin Cai (The Hong Kong University of Science and Technology (Guangzhou)), Meng Niu, Yan Yang (Huawei Technologies Co., Ltd.), Jiayi Huang (The Hong Kong University of Science and Technology (Guangzhou))</p>
+
+                <details class="tldr-block" open>
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文针对多维环面网络上的 All-to-All 集合通信，提出了一套包含单维传输算法与多维调度策略的软硬件协同优化方案，在无故障和单链路故障场景下，相比现有基线分别实现了最高 2.28 倍和 1.61 倍的性能加速。</p>
+<p><strong>要解决什么问题</strong> 深度学习推荐模型（DLRM）和专家混合（MoE）模型高度依赖 All-to-All 集合通信，但其复杂的点对点模式极易成为性能瓶颈。在多维环面网络中，现有实现面临两个核心卡点。首先是无故障场景下的带宽浪费与调度气泡：传统单维 Ring 算法未充分利用最短路径，非最短路径转发白白消耗了额外链路带宽；而跨维度的流水线调度在分块传输时不可避免会引入通信气泡，且难以确定最优分块大小，无法实现多维完全重叠。其次是链路故障下的通信中断与降速：大规模分布式处理常遇到光路交换机或端点导致的链路故障，传统 Ring 算法要求节点间有直接链路，单条故障就会导致算法失效；而现有通用容错路由并非为集合通信定制，改变路由会破坏原有链路分配，引发网络拥塞和效率骤降。</p>
+<p><strong>怎么做的</strong> 本文从单维算法和多维调度两个层面设计了无故障和容错机制。无故障场景下，核心思路是通过精准路径分配和多维正交调度榨干网络带宽。单维层面提出 HalfRing 算法，摒弃传统 Ring 算法盲目双向等距传输的做法，严格根据收发节点间的实际最短距离决定传输方向。由于所有节点仅通过最短路径通信，每个阶段只在一个方向消耗带宽，另一方向带宽可让给其他阶段使用。假设环内节点数为 $N$，单向带宽为 $B$，每个节点数据量为 $S$，传统 Ring 算法传输时间为 $$T_{Ring} = \frac{N(N-1) \cdot (S/N)}{2B}$$ 而 HalfRing 通过最短路径消除非必要绕路转发，大幅减少总单跳传输次数，实现带宽和延迟最优。多维层面提出 DimRotation 调度策略，对于 N 维环面网络，将数据均分为 N 个数据块，并为每块分配不同的维度通信顺序。该设计使不同数据块在各维度完美错开，实现无气泡且完全重叠的多维传输。链路故障场景下，核心思路是利用冗余链路进行逻辑重构与跨维加速。单维层面提出 FoldedRing 算法，当环内某链路故障时，利用所有反向链路构建逻辑补偿连接，将剩余链路折叠成新环维持通信。但 FoldedRing 传输时间是正常 Ring 算法两倍。为此，多维层面提出 MATE 调度策略，利用环面拓扑正交性，将故障环上的部分数据传输卸载到同维度的其他健康环上。具体而言，它通过其他维度的链路为故障环节点构建无冲突双向连接，在加速阶段利用 HalfRing 并行传输剩余数据。增强版 MATEe 则在正常阶段将部分数据预分配给故障环，减少加速阶段数据量，最大化带宽利用率。</p>
+<p><strong>效果如何</strong> 实验基于 ASTRA-SIM 和 GARNET 模拟器及 16 个 NPU 构成的物理集群进行，网络配置对齐 8×8 的 TPUv3 和 8×8×8 的 TPUv4 架构。评估负载涵盖 DLRM、MoE 及 Mixtral 7B×8 等模型。对比基线包含两类：一是代表细粒度算法路线的 Ring 算法加流水线调度；二是代表粗粒度硬件路由路线的谷歌 TPUv4 原生维度顺序路由（DOR）及其容错版本 WFR 路由。无故障合成实验中，HalfRing 结合 DimRotation 相比 Ring 加流水线基线实现 2.28 倍平均加速；模拟 TPUv4 集群时相比 DOR 路由提速 1.57 倍。端到端模型训练与推理中，该组合带来 1.64 倍总时间加速。单链路故障场景下，MATEe 调度相比谷歌 WFR 路由最高实现 1.61 倍加速，某些配置下绝对性能甚至超越无故障的 Ring 加流水线基线。此外，该方法在非均匀通信和多重链路故障下依然保持 1.14 倍至 1.55 倍加速优势。不过，作者通过真实硬件验证指出其局限性：在真实 NPU 机器上，容错设计 MATE 性能仅达到基线的 77%，这是因为多路径绕行在底层实现中引入了更多系统中断和额外通信开销，表明其在真实系统落地时仍面临工程损耗。</p>
+</div>
+</details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>: 大规模分布式处理被广泛用于大型模型的推理和训练，如深度学习推荐模型（DLRM）和专家混合（MoE）模型。然而，All-to-All集体通信因其复杂的点对点通信模式和阻塞性，已成为分布式DLRM和MoE加速的主要性能瓶颈。此外，长时间的分布式处理经常遇到链路故障，这严重影响了系统的效率、可靠性和成本。与支持任意连接（如Clos网络）的交换式拓扑不同，环面（torus）网络上的All-to-All通信会因共享路由路径而相互干扰，造成严重的性能限制。</p>
 <p><strong>研究目标</strong>: 本文旨在解决上述挑战，提出了用于环面网络上具有容错功能的All-to-All优化的单维算法和多维调度策略。</p>
