@@ -1933,15 +1933,6 @@ llm:
         - llm
         - engineering
         - rl
-      - title: 'Beat the Long Tail: Distribution-Aware Speculative Decoding for RL
-          Training'
-        date: '2025-11-01'
-        url: /papers/llm/engineering/rl/2025/11/01/beat-the-long-tail-distribution-aware-speculative-decoding-for-rl-training.html
-        categories:
-        - llm
-        - engineering
-        - rl
-        tag: mlsys26
       - title: 'LlamaRL: A Distributed Asynchronous Reinforcement Learning Framework
           for Efficient Large-scale LLM Training'
         date: '2025-05-01'
@@ -2890,6 +2881,16 @@ llm:
           - engineering
           - inference
           - speculative_decoding
+        - title: 'Beat the Long Tail: Distribution-Aware Speculative Decoding for
+            RL Training'
+          date: '2025-11-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/11/01/beat-the-long-tail-distribution-aware-speculative-decoding-for-rl-training.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: mlsys26
         - title: 'EasySpec: Layer-Parallel Speculative Decoding for Efficient Multi-GPU
             Utilization'
           date: '2025-02-01'
