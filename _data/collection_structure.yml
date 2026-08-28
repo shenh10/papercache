@@ -5717,6 +5717,14 @@ mlsys:
       categories:
       - mlsys
       - gpu
+    - title: GPU-Initiated On-Demand High-Throughput Storage Access in the BaM System
+        Architecture
+      date: '2022-03-01'
+      url: /papers/mlsys/gpu/2022/03/01/gpu-initiated-on-demand-high-throughput-storage-access-in-the-bam-system-architecture.html
+      categories:
+      - mlsys
+      - gpu
+      tag: asplos23
     - title: NVIDIA DGX B300
       date: '2025-01-01'
       url: /papers/mlsys/gpu/2025/01/01/nvidia-dgx-b300.html
