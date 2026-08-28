@@ -3173,6 +3173,15 @@ llm:
           - engineering
           - inference
           - kvcache
+        - title: 'TARDIS: A GPU-Centric KV Cache Service for Efficient LLM Inference'
+          date: '2025-10-01'
+          url: /papers/llm/engineering/inference/kvcache/2025/10/01/tardis-a-gpu-centric-kv-cache-service-for-efficient-llm-inference.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
+          tag: apsys25
         - title: 'SkipKV: Selective Skipping of KV Generation and Storage for Efficient
             Inference with Large Reasoning Models'
           date: '2025-12-01'
