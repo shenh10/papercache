@@ -1167,6 +1167,118 @@ llm:
           - transformer-variant
           tag: nips25
       attention:
+        sparsity:
+          posts:
+          - title: Efficient Streaming Language Models with Attention Sinks
+            date: '2023-09-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2023/09/01/efficient-streaming-language-models-with-attention-sinks.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            tag: iclr24
+          - title: 'IndexCache: Accelerating Sparse Attention via Cross-Layer Index
+              Reuse'
+            date: '2026-03-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2026/03/01/indexcache-accelerating-sparse-attention-via-cross-layer-index-reuse.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+          - title: 'MInference 1.0: Accelerating Pre-filling for Long-Context LLMs
+              via Dynamic Sparse Attention'
+            date: '2024-07-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2024/07/01/minference-10-accelerating-pre-filling-for-long-context-llms-via-dynamic-sparse-attention.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            tag: nips24
+          - title: 'Native Sparse Attention: Hardware-Aligned and Natively Trainable
+              Sparse Attention'
+            date: '2025-02-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/native-sparse-attention-hardware-aligned-and-natively-trainable-sparse-attention.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+          - title: 'Longformer: The Long-Document Transformer'
+            date: '2020-04-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2020/04/01/longformer-the-long-document-transformer.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+          - title: 'MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS'
+            date: '2025-02-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/moba-mixture-of-block-attention-for-long-context-llms.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            tag: nips25
+          - title: 'HySparse: A Hybrid Sparse Attention Architecture with Oracle Token
+              Selection and KV Cache Sharing'
+            date: '2026-02-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2026/02/01/hysparse-a-hybrid-sparse-attention-architecture-with-oracle-token-selection-and-kv-cache-sharing.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+          - title: 'FlexPrefill: A Context-Aware Sparse Attention Mechanism for Efficient
+              Long-Sequence Inference'
+            date: '2025-02-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/flexprefill-a-context-aware-sparse-attention-mechanism-for-efficient-long-sequence-inference.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            tag: iclr25
+          - title: Mixture-of-Depths Attention
+            date: '2026-03-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2026/03/01/mixture-of-depths-attention.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+          - title: 'XAttention: Block Sparse Attention with Antidiagonal Scoring'
+            date: '2025-03-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/03/01/xattention-block-sparse-attention-with-antidiagonal-scoring.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            tag: iclr25
+          - title: 'BLASST: Dynamic Blocked Attention Sparsity via Softmax Thresholding'
+            date: '2025-12-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/12/01/blasst-dynamic-blocked-attention-sparsity-via-softmax-thresholding.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
+            tag: mlsys26
         linear:
           posts:
           - title: Artificial Hippocampus Networks for Efficient Long-Context Modeling
@@ -1421,108 +1533,6 @@ llm:
             - architecture
             - attention
             - ssm
-        sparsity:
-          posts:
-          - title: 'IndexCache: Accelerating Sparse Attention via Cross-Layer Index
-              Reuse'
-            date: '2026-03-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2026/03/01/indexcache-accelerating-sparse-attention-via-cross-layer-index-reuse.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-          - title: 'MInference 1.0: Accelerating Pre-filling for Long-Context LLMs
-              via Dynamic Sparse Attention'
-            date: '2024-07-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2024/07/01/minference-10-accelerating-pre-filling-for-long-context-llms-via-dynamic-sparse-attention.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-            tag: nips24
-          - title: 'Native Sparse Attention: Hardware-Aligned and Natively Trainable
-              Sparse Attention'
-            date: '2025-02-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/native-sparse-attention-hardware-aligned-and-natively-trainable-sparse-attention.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-          - title: 'Longformer: The Long-Document Transformer'
-            date: '2020-04-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2020/04/01/longformer-the-long-document-transformer.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-          - title: 'MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS'
-            date: '2025-02-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/moba-mixture-of-block-attention-for-long-context-llms.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-            tag: nips25
-          - title: 'HySparse: A Hybrid Sparse Attention Architecture with Oracle Token
-              Selection and KV Cache Sharing'
-            date: '2026-02-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2026/02/01/hysparse-a-hybrid-sparse-attention-architecture-with-oracle-token-selection-and-kv-cache-sharing.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-          - title: 'FlexPrefill: A Context-Aware Sparse Attention Mechanism for Efficient
-              Long-Sequence Inference'
-            date: '2025-02-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/02/01/flexprefill-a-context-aware-sparse-attention-mechanism-for-efficient-long-sequence-inference.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-            tag: iclr25
-          - title: Mixture-of-Depths Attention
-            date: '2026-03-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2026/03/01/mixture-of-depths-attention.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-          - title: 'XAttention: Block Sparse Attention with Antidiagonal Scoring'
-            date: '2025-03-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/03/01/xattention-block-sparse-attention-with-antidiagonal-scoring.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-            tag: iclr25
-          - title: 'BLASST: Dynamic Blocked Attention Sparsity via Softmax Thresholding'
-            date: '2025-12-01'
-            url: /papers/llm/algorithm/architecture/attention/sparsity/2025/12/01/blasst-dynamic-blocked-attention-sparsity-via-softmax-thresholding.html
-            categories:
-            - llm
-            - algorithm
-            - architecture
-            - attention
-            - sparsity
-            tag: mlsys26
         posts:
         - title: 'A Little Goes a Long Way: Efficient Long Context Training and Inference
             with Partial Contexts'
@@ -2136,6 +2146,15 @@ llm:
           - engineering
           - inference
           - kvcache
+        - title: 'TraCT: Disaggregated LLM Serving with CXL Shared Memory KV Cache
+            at Rack-Scale'
+          date: '2025-12-01'
+          url: /papers/llm/engineering/inference/kvcache/2025/12/01/tract-disaggregated-llm-serving-with-cxl-shared-memory-kv-cache-at-rack-scale.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'PROMPT CACHE: MODULAR ATTENTION REUSE FOR LOW-LATENCY INFERENCE'
           date: '2024-04-01'
           url: /papers/llm/engineering/inference/kvcache/2024/04/01/prompt-cache-modular-attention-reuse-for-low-latency-inference.html
@@ -2257,6 +2276,15 @@ llm:
           - inference
           - kvcache
           tag: eurosys25
+        - title: 'Tutti: Making SSD-Backed KV Cache Practical for Long-Context LLM
+            Serving'
+          date: '2026-05-01'
+          url: /papers/llm/engineering/inference/kvcache/2026/05/01/tutti-making-ssd-backed-kv-cache-practical-for-long-context-llm-serving.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'vAttention: Dynamic Memory Management for Serving LLMs without PagedAttention'
           date: '2025-03-01'
           url: /papers/llm/engineering/inference/kvcache/2025/03/01/vattention-dynamic-memory-management-for-serving-llms-without-pagedattention.html
@@ -2543,6 +2571,15 @@ llm:
           - inference
           - kvcache
           tag: nips25
+        - title: 'MemServe: Flexible Mem Pool for Building Disaggregated LLM Serving
+            with Caching'
+          date: '2024-06-01'
+          url: /papers/llm/engineering/inference/kvcache/2024/06/01/memserve-flexible-mem-pool-for-building-disaggregated-llm-serving-with-caching.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'TriAttention: Efficient Long Reasoning with Trigonometric KV Compression'
           date: '2026-04-01'
           url: /papers/llm/engineering/inference/kvcache/2026/04/01/triattention-efficient-long-reasoning-with-trigonometric-kv-compression.html
@@ -2609,6 +2646,14 @@ llm:
           - engineering
           - inference
           - kvcache
+        - title: 'LMCache: An Efficient KV Cache Layer for Enterprise-Scale LLM Inference'
+          date: '2025-10-01'
+          url: /papers/llm/engineering/inference/kvcache/2025/10/01/lmcache-an-efficient-kv-cache-layer-for-enterprise-scale-llm-inference.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'ContrastKV: Robust KV Cache Eviction via Contrastive Signal Fusion
             for Multi-Query Generalization'
           date: '2026-07-01'
@@ -2656,6 +2701,16 @@ llm:
           - inference
           - kvcache
           tag: emnlp25
+        - title: 'DejaVu: KV-Cache Streaming for Fast, Fault-Tolerant Generative LLM
+            Serving'
+          date: '2024-03-01'
+          url: /papers/llm/engineering/inference/kvcache/2024/03/01/dejavu-kv-cache-streaming-for-fast-fault-tolerant-generative-llm-serving.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
+          tag: icml24
         - title: 'Kelle: Co-design KV Caching and eDRAM for Efficient LLM Serving
             in Edge Computing'
           date: '2025-10-01'
@@ -2675,6 +2730,16 @@ llm:
           - inference
           - kvcache
           tag: iclr26
+        - title: 'InfiniGen: Efficient Generative Inference of Large Language Models
+            with Dynamic KV Cache Management'
+          date: '2024-07-01'
+          url: /papers/llm/engineering/inference/kvcache/2024/07/01/infinigen-efficient-generative-inference-of-large-language-models-with-dynamic-kv-cache-management.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
+          tag: osdi24
         - title: 'SqueezeAttention: 2D Management of KVCache in LLM Inference via
             Layer-Wise Optimal Budget'
           date: '2025-04-01'
@@ -2685,6 +2750,15 @@ llm:
           - inference
           - kvcache
           tag: iclr25
+        - title: 'PRESERVE: Prefetching Model Weights and KV-Cache in Distributed
+            LLM Serving'
+          date: '2025-01-01'
+          url: /papers/llm/engineering/inference/kvcache/2025/01/01/preserve-prefetching-model-weights-and-kv-cache-in-distributed-llm-serving.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'DiffKV: Differentiated Memory Management for Large Language Models
             with Parallel KV Compaction'
           date: '2025-10-01'
@@ -2742,6 +2816,15 @@ llm:
           - engineering
           - inference
           - kvcache
+        - title: 'InstInfer: In-Storage Attention Offloading for Cost-Effective Long-Context
+            LLM Inference'
+          date: '2024-09-01'
+          url: /papers/llm/engineering/inference/kvcache/2024/09/01/instinfer-in-storage-attention-offloading-for-cost-effective-long-context-llm-inference.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'SCBENCH: A KV Cache-Centric Analysis of Long-Context Methods'
           date: '2025-04-01'
           url: /papers/llm/engineering/inference/kvcache/2025/04/01/scbench-a-kv-cache-centric-analysis-of-long-context-methods.html
@@ -2793,6 +2876,14 @@ llm:
             Ultra-Fast Long-Context Prefilling'
           date: '2026-03-01'
           url: /papers/llm/engineering/inference/kvcache/2026/03/01/flashprefill-instantaneous-pattern-discovery-and-thresholding-for-ultra-fast-long-context-prefilling.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
+        - title: 'vTensor: Flexible Virtual Tensor Management for Efficient LLM Serving'
+          date: '2024-07-01'
+          url: /papers/llm/engineering/inference/kvcache/2024/07/01/vtensor-flexible-virtual-tensor-management-for-efficient-llm-serving.html
           categories:
           - llm
           - engineering
@@ -3053,6 +3144,15 @@ llm:
           - inference
           - low_precision
           tag: nips25
+        - title: 'Atom: Low-Bit Quantization for Efficient and Accurate LLM Serving'
+          date: '2023-10-01'
+          url: /papers/llm/engineering/inference/low_precision/2023/10/01/atom-low-bit-quantization-for-efficient-and-accurate-llm-serving.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - low_precision
+          tag: mlsys24
         - title: Progressive Mixed-Precision Decoding for Efficient LLM Inference
           date: '2025-04-01'
           url: /papers/llm/engineering/inference/low_precision/2025/04/01/progressive-mixed-precision-decoding-for-efficient-llm-inference.html
@@ -3220,6 +3320,15 @@ llm:
           - engineering
           - inference
           - low_precision
+        - title: 'KIVI: A Tuning-Free Asymmetric 2bit Quantization for KV Cache'
+          date: '2024-02-01'
+          url: /papers/llm/engineering/inference/low_precision/2024/02/01/kivi-a-tuning-free-asymmetric-2bit-quantization-for-kv-cache.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - low_precision
+          tag: icml24
         - title: 'SmoothQuant: Accurate and Efficient Post-Training Quantization for
             Large Language Models'
           date: '2022-11-01'
@@ -3525,6 +3634,15 @@ llm:
         - llm
         - engineering
         - inference
+      - title: 'FlexGen: High-Throughput Generative Inference of Large Language Models
+          with a Single GPU'
+        date: '2023-07-01'
+        url: /papers/llm/engineering/inference/2023/07/01/flexgen-high-throughput-generative-inference-of-large-language-models-with-a-single-gpu.html
+        categories:
+        - llm
+        - engineering
+        - inference
+        tag: icml23
       - title: 'From Tokens to Layers: Redefining Stall-Free Scheduling for LLM Serving
           with Layered Prefill'
         date: '2025-10-01'
@@ -3641,13 +3759,6 @@ llm:
         - engineering
         - inference
         tag: mlsys26
-      - title: 'Mooncake: A KVCache-centric Disaggregated Architecture for LLM Serving'
-        date: '2024-07-01'
-        url: /papers/llm/engineering/inference/2024/07/01/mooncake-a-kvcache-centric-disaggregated-architecture-for-llm-serving.html
-        categories:
-        - llm
-        - engineering
-        - inference
       - title: 'SARATHI: Efficient LLM Inference by Piggybacking Decodes with Chunked
           Prefills'
         date: '2023-08-01'
@@ -3724,6 +3835,31 @@ llm:
         - engineering
         - inference
         tag: asplos25
+      - title: 'Infinite-LLM: Efficient LLM Service for Long Context with DistAttention
+          and Distributed KVCache'
+        date: '2024-01-01'
+        url: /papers/llm/engineering/inference/2024/01/01/infinite-llm-efficient-llm-service-for-long-context-with-distattention-and-distributed-kvcache.html
+        categories:
+        - llm
+        - engineering
+        - inference
+      - title: 'FASTDECODE: High-Throughput GPU-Efficient LLM Serving using Heterogeneous
+          Pipelines'
+        date: '2024-03-01'
+        url: /papers/llm/engineering/inference/2024/03/01/fastdecode-high-throughput-gpu-efficient-llm-serving-using-heterogeneous-pipelines.html
+        categories:
+        - llm
+        - engineering
+        - inference
+      - title: 'LoongServe: Efficiently Serving Long-Context Large Language Models
+          with Elastic Sequence Parallelism'
+        date: '2024-04-01'
+        url: /papers/llm/engineering/inference/2024/04/01/loongserve-efficiently-serving-long-context-large-language-models-with-elastic-sequence-parallelism.html
+        categories:
+        - llm
+        - engineering
+        - inference
+        tag: sosp24
       - title: 'MegaScale-Infer: Serving Mixture-of-Experts at Scale with Disaggregated
           Expert Parallelism'
         date: '2025-07-01'
