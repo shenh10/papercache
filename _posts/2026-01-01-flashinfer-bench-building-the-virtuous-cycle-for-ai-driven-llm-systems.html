@@ -1287,7 +1287,7 @@ void gqa_paged_decode_h32_kv8_d128_ps1_cuda(
 - 使用定义的张量形状、数据类型和轴信息来指导内存访问模式和优化策略<br/>
 - 针对{target_gpu} GPU特性（内存层次结构、计算单元等）进行优化</p>
 <p>包装函数必须处理完整的设备管理：<br/>
-- 如果需要，将CPU张量移动到GPU（当torch.cuda.is_available()<a href="http://时使用.to" rel="noopener noreferrer" target="_blank">时使用.to</a>('cuda')或.cuda()）<br/>
+- 如果需要，将CPU张量移动到GPU（当torch.cuda.is_available()时使用.to('cuda')或.cuda()）<br/>
 - 如果CUDA对GPU张量不可用，则引发明确的错误<br/>
 - 使用GPU张量调用triton内核<br/>
 - 将结果移回输入张量的原始设备<br/>
@@ -1330,7 +1330,7 @@ void gqa_paged_decode_h32_kv8_d128_ps1_cuda(
 <li>保留与规范中相同的函数签名和设备处理</li>
 </ul>
 <p>包装函数必须处理完整的设备管理：<br/>
-- 如果需要，将CPU张量移动到GPU（当torch.cuda.is_available()<a href="http://时使用.to" rel="noopener noreferrer" target="_blank">时使用.to</a>('cuda')或.cuda()）<br/>
+- 如果需要，将CPU张量移动到GPU（当torch.cuda.is_available()时使用.to('cuda')或.cuda()）<br/>
 - 如果CUDA对GPU张量不可用，则引发明确的错误<br/>
 - 使用GPU张量调用triton内核<br/>
 - 将结果移回输入张量的原始设备<br/>
