@@ -4234,6 +4234,14 @@ llm:
         - engineering
         - moe
         tag: icml25
+      - title: Training Communication-Efficient Mixture-of-Experts Language Models
+          With Layer Re-Configuration
+        date: '2026-08-01'
+        url: /papers/llm/engineering/moe/2026/08/01/training-communication-efficient-mixture-of-experts-language-models-with-layer-re-configuration.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: 'EPS-MoE: Expert Pipeline Scheduler for Cost-Efficient MoE Inference'
         date: '2024-10-01'
         url: /papers/llm/engineering/moe/2024/10/01/eps-moe-expert-pipeline-scheduler-for-cost-efficient-moe-inference.html
