@@ -1,0 +1,340 @@
+---
+added_date: '2026-08-31'
+author: shenh10
+categories:
+- llm
+- algorithm
+- models
+comments: true
+date: '2026-08-01'
+layout: post
+mathjax: true
+tag: blog
+title: 'GLM-5.3-Flash: Frontier Intelligence, Flash Cost'
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>GLM-5.3-Flash: Frontier Intelligence, Flash Cost</h1>
+<p><strong>发表时间</strong>: 2026-08 · Blog post by Z.ai (z.ai)</p>
+<p><strong>原文</strong>: <a href="https://z.ai/blog/glm-5.3-flash" rel="noopener" target="_blank">https://z.ai/blog/glm-5.3-flash</a></p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> GLM-5.3-Flash 是一个拥有 320B 总参数和 18B 激活参数的原生多模态模型，通过引入线性与稀疏混合注意力机制及底层推理栈优化，在成本降至 1/10 的情况下，其代码与智能体能力大幅超越 GLM-5.2，并逼近 Claude Opus 4.8。</p>
+<p><strong>要解决什么问题</strong> 大模型在处理长达 1M tokens 的超长上下文时，注意力机制的计算量和 KV 缓存带来的显存开销会急剧膨胀，导致推理成本居高不下。这一卡点在显存容量和内存带宽相对受限的国产 AI 芯片集群上尤为致命，严重制约了前沿模型的大规模经济部署。此外，在代码生成领域（如前端、游戏开发和 3D 模拟），传统的纯文本输出无法覆盖最终产品的交互与渲染效果，模型如果缺乏原生的视觉能力，就无法在测试阶段通过观察渲染界面来发现布局错误或交互失效，从而导致代码生成任务在实际应用中出现断层，无法形成从生成到视觉反馈再到自我修正的完整闭环。</p>
+<p><strong>怎么做的</strong> 核心思路是对模型架构、训练配方和底层推理栈进行全链路的极致效率重构，并原生融入视觉反馈机制。首先，为了绕开长上下文带来的显存与计算卡点，模型在 GLM 系列中首次采用了线性注意力与稀疏注意力相结合的混合架构。其机制是：线性注意力通过状态建模来捕获局部依赖关系，而稀疏注意力则通过一个轻量级的索引器（indexer）来检索相关的全局上下文。为了进一步降低 1M 上下文长度下索引器的延迟和显存开销，作者设计了 IndexPool 技术，其核心操作是通过加权池化将四个索引器键（Key）向量压缩为一个，其压缩过程可抽象表示为 $K_{pooled} = \sum_{i=1}^{4} w_i K_i$，从而大幅压缩缓存体积。此外，模型引入了流形约束超连接（mHC）以提升扩展效率，并将网络层数从 92 层缩减至 45 层。在多模态与训练数据层面，模型使用了 30T tokens 的多模态预训练语料。针对视觉代码任务，构建了专门的数据合成流水线，强调视觉自我评估和测试时改进。模型能够渲染其生成的代码，检查用户实际看到的界面，识别视觉问题并迭代修改底层代码。对于前端代码，还引入了带有环境反馈的强化学习，并通过基于真实用户流的智能体验证来增强 GUI 评估。在工程实现与部署层面，为了在内存和带宽受限的国产 AI 芯片上实现高效服务，团队基于 SGLang 构建了专用推理引擎，采用了以计算换带宽和以通信换带宽的激进显存优化策略。关键组件包括：针对线性注意力和 LM head 的节点内张量并行、ReplaySSM、W8A8 量化、INT8/FP8/BF16 混合缓存量化以及 Layer Split 技术。在集群规模上，采用了生产级的编码-预填充-解码（EPD）分离架构，将多模态编码、提示词预填充和逐词元解码拆分为独立调度、可扩展的工作池。</p>
+<p><strong>效果如何</strong> 实验基于 320B 总参数（18B 激活参数）的模型，在 1M 上下文设置下，于国产 AI 芯片集群上进行测试。对比的基线模型涵盖了多个路线：代表上一代内部基线的 GLM-5.2 和 GLM-5.3，代表内部基础模型路线的 GLM-4.5-Base 和 GLM-5-Base，代表近期开源模型的 DeepSeek-V4-Flash 和 Kimi-K3，以及代表前沿智能路线的 Claude Opus 4.8、GPT-5.6 Terra、Gemini 3.7 Flash 和 DeepSeek-V4-Vision-Exp。在量化结果上，GLM-5.3-Flash 的每任务成本仅为 0.045 美元，在 Artificial Analysis Intelligence Index v4.1.1 中得分为 57，以 1/10 的成本提供了极具竞争力的性能。在代码与智能体任务中，它全面超越 GLM-5.2，例如在 DeepSWE v1.1 上得分为 63.4（基线为 46.2），在 AutomationBench 上得分为 48.8（基线为 26.2）；在内部的 Z.ai Code Bench v1.0 最大努力级别下，以 29.0 的得分逼近 Claude Opus 4.8 的 29.5。在架构效率对比中，计算每层每个注意力头的开销时，GLM-5.3-Flash 的注意力计算量比 GLM-5.3 减少了 3.0 倍，是所有对比模型中最低的；其 KV 缓存比 GLM-5.3 缩小了 4.4 倍。在国产芯片的端到端服务性能上，相比初始基线实现了 3 倍提升，达到了与主流 NVIDIA GPU 相当的硬件效率。作者也坦诚了当前方法的局限性：尽管 KV 缓存大幅缩小，但其绝对尺寸仍然略大于 Kimi-K3 和 DeepSeek-V4-Flash，在此维度上仍有进一步优化的空间。</p>
+</div>
+</details>
+<h2>主要贡献</h2>
+<p>本文介绍了GLM-5系列中首个原生多模态模型GLM-5.3-Flash。该模型总参数量为320B，但激活参数仅为18B，以十分之一的成本在多项基准测试和实际工作负载中超越了GLM-5.2，同时在编码和Agentic基准测试中逼近了Claude Opus 4.8。</p>
+<p>GLM-5.3-Flash从一个全新训练的基础模型开始，其架构和训练方案围绕能力和效率进行了重新设计。在GLM系列中，本文首次引入了结合稀疏注意力和线性注意力的混合架构，大幅降低了长上下文服务成本，同时保留了精确的长上下文能力。该模型还采用了流形约束超连接（Manifold-Constrained Hyper-Connections, mHC）以进一步提高扩展效率。结合最新的30T-token多模态预训练语料库，这些改变使得GLM-5.3-Flash能够以更少的计算量提供更高的智能。在发布之前，GLM-5.3-Flash作为<code>ox-alpha</code>在OpenCode和OpenRouter上进行了匿名测试以收集用户反馈，并迅速成为当周最受欢迎的模型——且所有这些流量均由国产AI芯片提供服务。</p>
+<figure class="image-figure">
+<img alt="匿名测试反馈图1" class="figure-image" src="https://z-cdn-media.chatglm.cn/prompts-rich-media-resources/5.3-flash-blog/ryTOUL3vGe.png"/>
+<figcaption class="figure-caption">匿名测试反馈图1</figcaption>
+</figure>
+<figure class="image-figure">
+<img alt="匿名测试反馈图2" class="figure-image" src="https://z-cdn-media.chatglm.cn/prompts-rich-media-resources/5.3-flash-blog/S10CTLhwzg.png"/>
+<figcaption class="figure-caption">匿名测试反馈图2</figcaption>
+</figure>
+<h2>背景知识与设计原则</h2>
+<p><strong>视觉编码的边界扩展</strong>：视觉编码不仅是处理图像，它更扩展了编码所能触及的边界。对于前端开发、游戏开发和3D模拟等任务，最终输出不仅是代码本身，而是用户体验的界面、交互或世界。许多失败案例只能通过渲染、交互或游戏测试才能暴露出来。CUA进一步将编码从可编程系统扩展到可见和交互式环境中。因此，视觉能力需要原生集成到模型中，使其能够决定何时进行观察，并使用视觉反馈来指导后续的操作。</p>
+<p><strong>视觉编码的数据合成与闭环验证</strong>：我们针对视觉编码开发了数据合成管道，重点关注视觉自我评估和测试时的改进（test-time improvement）。由此产生的轨迹（trajectories）要求模型与环境进行交互，检查其自身的输出，并迭代地对其进行改进。对于前端编码，我们还探索了带有环境反馈的强化学习，并通过基于真实用户流（user flows）的代理验证进一步加强了GUI评估。这使得验证过程超越了单纯的功能正确性，延伸到了渲染和交互式产品层面。代码让模型构建和改变世界，视觉让它进入人们看到和使用的世界。这里的关键是闭合生成和视觉反馈之间的循环：模型可以渲染其输出，检查用户实际看到的内容，识别视觉问题，并相应地修改底层的工件。这不仅适用于界面和游戏，也适用于视觉结构化输出（如演示文稿）。在下面的例子中，GLM-5.3-Flash检测到生成幻灯片中的布局问题，并通过视觉自我验证完善了排版。</p>
+<figure class="image-figure">
+<img alt="存在布局问题的初始版本" class="figure-image" src="https://z-cdn-media.chatglm.cn/prompts-rich-media-resources/5.3-flash-blog/SyYfF83Pze.jpg"/>
+<figcaption class="figure-caption">存在布局问题的初始版本</figcaption>
+</figure>
+<figure class="image-figure">
+<img alt="视觉自我验证后的版本" class="figure-image" src="https://z-cdn-media.chatglm.cn/prompts-rich-media-resources/5.3-flash-blog/Hy1xDIhwzl.jpg"/>
+<figcaption class="figure-caption">视觉自我验证后的版本</figcaption>
+</figure>
+<p><strong>超越编码的专业工作伙伴</strong>：编码能力为智能知识工作提供了重要基础，而视觉智能将这些能力扩展到更广泛的专业任务中。专业活动中很大一部分涉及解释异构的视觉和结构化信息，包括文档、电子表格、演示文稿、仪表板、界面和会议工件。视觉智能通过使模型能够联合推理文本、视觉和结构上下文，将模型的能力扩展到以代码为中心的环境之外。模型可以直接解释与任务相关的工件并识别相关信息，而不需要用户将他们的工作环境明确翻译成文本指令。它还可以根据视觉上下文和预期结果评估自己的输出，从而实现更有效的自我验证和改进——包括对演示文稿质量和美学的更强判断能力。</p>
+<h2>方法细节</h2>
+<figure class="image-figure">
+<img alt="架构设计图" class="figure-image" src="https://z-cdn-media.chatglm.cn/prompts-rich-media-resources/5.3-flash-blog/HyqVZw2wze.png"/>
+<figcaption class="figure-caption">架构设计图</figcaption>
+</figure>
+<p><strong>超低成本推理架构设计</strong>：与GLM-4.5系列相比，GLM-5.3-Flash专门为超低成本推理而设计。尽管两者的总参数量相似（320B对比355B），但GLM-5.3-Flash将激活参数量（18B对比32B）和层数（45层对比92层）几乎减半。</p>
+<p><strong>混合注意力机制与IndexPool</strong>：为了最小化长上下文场景中的注意力计算成本，我们采用了一种结合线性注意力（linear attention）和稀疏注意力（sparse attention）的混合架构。线性注意力通过状态建模捕捉局部依赖关系，而稀疏注意力则通过轻量级索引器（indexer）检索相关的全局上下文。为了进一步降低在1M-token上下文长度下索引器的延迟和内存开销，我们引入了IndexPool技术，该技术通过加权池化（weighted pooling）将四个索引器键向量（key vectors）压缩为一个。</p>
+<p><strong>计算与KV Cache效率对比</strong>：为了说明我们架构的效率，我们将GLM-5.3-Flash的每个token计算量和KV缓存大小与GLM-5.3以及最近的两个开源模型（DeepSeek-V4-Flash和Kimi-K3）进行了比较。为了在不同规模的模型之间进行公平比较，我们计算了每层每个头（per head per layer）的注意力计算量和每层平均KV缓存大小（BF16格式）。与GLM-5.3相比，GLM-5.3-Flash使用的注意力计算量减少了3.0倍，KV缓存缩小了4.4倍。在所有比较的模型中，GLM-5.3-Flash的注意力计算量最低。其KV缓存大小仍略大于Kimi-K3和DeepSeek-V4-Flash，这留下了进一步改进的空间。整体架构的改进，结合优化的预训练语料库，使得GLM-5.3-Flash能够以更少的计算量产生更多的智能。</p>
+<p><strong>国产AI芯片集群上的大规模服务</strong>：在过去的一周里，我们在一个大规模的国产AI芯片集群上提供了GLM-5.3-Flash服务，该集群由高带宽互连和针对底层硬件优化的服务栈提供支持。</p>
+<p><strong>基于SGLang的专用推理引擎开发</strong>：为了克服单个芯片相对有限的计算和内存容量，我们在SGLang之上为这种架构构建了一个专用的推理引擎。值得注意的是，这项工作得到了由GLM-5.3驱动的基础设施代理（infrastructure agent）的加速，该代理协助工程师开发和优化内核（kernels），诊断性能瓶颈，并改进服务栈——从而创造了一个反馈循环，在这个循环中，模型帮助优化了服务于模型本身的系统。</p>
+<p><strong>针对内存和带宽受限的优化技术</strong>：这些芯片主要受限于内存容量和带宽，特别是在支持高达一百万token的上下文长度时。这要求进行积极的内存优化，包括针对底层架构量身定制的以计算换带宽（compute-for-bandwidth）和以通信换带宽（communication-for-bandwidth）技术。我们的技术栈结合了用于线性注意力和LM head的节点内张量并行（intra-node tensor parallelism）、ReplaySSM、W8A8量化、混合INT8/FP8/BF16缓存量化以及层拆分（Layer Split）技术。</p>
+<p><strong>集群规模的EPD解耦架构与端到端性能提升</strong>：在集群规模上，我们生产级的编码-预填充-解码（Encode–Prefill–Decode, EPD）解耦架构将多模态编码、提示预填充（prompt prefill）和逐token解码分离到独立调度和可扩展的工作池（worker pools）中，从而实现高效可靠的服务。与我们在相同硬件上的初始基线相比，我们在端到端服务性能上实现了3倍的提升，达到了与主流NVIDIA GPU相当的硬件效率和单token成本。这证明了国产芯片可以大规模、高效且经济地支持前沿模型推理。</p>
+<h2>实验环境</h2>
+<ul>
+<li><strong>模型架构关键参数</strong>：GLM-5.3-Flash总参数量320B，激活参数量18B，网络层数为45层。采用线性注意力与稀疏注意力的混合架构，引入IndexPool池化压缩技术，支持最大上下文长度达1M tokens。</li>
+<li><strong>硬件配置</strong>：部署于具备高带宽互连的大规模国产AI芯片集群，受限于单卡内存容量和带宽。</li>
+<li><strong>软件配置</strong>：基于SGLang构建专用推理引擎。采用节点内张量并行、ReplaySSM、W8A8量化、混合INT8/FP8/BF16缓存量化和Layer Split技术；集群服务采用EPD解耦架构。开源模型权重支持SGLang、vLLM和TokenSpeed等推理框架进行本地部署。</li>
+<li><strong>数据集与语料库</strong>：采用30T-token的多模态预训练语料库。</li>
+</ul>
+<h2>实验结果</h2>
+<p><strong>性价比与综合智能评估</strong>：<br/>
+GLM-5.3-Flash推动了Artificial Analysis Intelligence Index v4.1.1的帕累托前沿（Pareto frontier），其得分为57，而每个任务的成本仅为0.045美元（折扣后）——这种智能水平以前通常需要大约10倍的成本才能获得。这使其成为广泛工作负载中极具竞争力的默认选择。<br/>
+<img alt="性价比散点图" class="figure-image" src="https://z-cdn-media.chatglm.cn/prompts-rich-media-resources/5.3-flash-blog/Sy_ehD3wzx.png"/></p>
+<p><strong>编码与Agentic基准测试对比</strong>：<br/>
+在六个编码和Agentic基准测试中，GLM-5.3-Flash持续超越GLM-5.2，且通常优势显著。例如在DeepSWE v1.1上得分为63.4（GLM-5.2为46.2），在AutomationBench上得分为48.8（GLM-5.2为26.2），总体表现逼近Claude Opus 4.8。<br/>
+<img alt="雷达图性能对比" class="figure-image" src="https://z-cdn-media.chatglm.cn/prompts-rich-media-resources/5.3-flash-blog/rJG_RLhPzl.png"/></p>
+<p><strong>内部编码评估</strong>：<br/>
+在Z.ai Code Bench v1.0内部编码评估中，GLM-5.3-Flash在每一个努力水平（effort level）上都明显优于GLM-5.2，并且在最大努力（max effort）下几乎追平了Claude Opus 4.8（29.0对比29.5）。<br/>
+<img alt="内部编码评估条形图" class="figure-image" src="https://z-cdn-media.chatglm.cn/prompts-rich-media-resources/5.3-flash-blog/H1hAKXnDMx.png"/></p>
+<p><strong>基础模型能力对比测试</strong>：<br/>
+下表比较了GLM-5.3-Flash-Base与之前的Base模型以及DeepSeek-V4-Flash-Base。GLM-5.3-Flash-Base总体上优于GLM-4.5-Base，并在大多数基准测试中与参数量大得多的GLM-5-Base（744B）保持竞争力。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>GLM-4.5-Base</th>
+<th>GLM-5-Base</th>
+<th>DeepSeek-V4-Flash-Base</th>
+<th>GLM-5.3-Flash-Base</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Activated Params</td>
+<td>32B</td>
+<td>40B</td>
+<td>13B</td>
+<td>18B</td>
+</tr>
+<tr>
+<td>Total Params</td>
+<td>355B</td>
+<td>744B</td>
+<td>284B</td>
+<td>320B</td>
+</tr>
+<tr>
+<td>MMLU</td>
+<td>86.1</td>
+<td>88.3</td>
+<td>88.5</td>
+<td>88.1</td>
+</tr>
+<tr>
+<td>BBH</td>
+<td>86.2</td>
+<td>87.4</td>
+<td>84.9</td>
+<td>86.6</td>
+</tr>
+<tr>
+<td>HellaSwag</td>
+<td>87.1</td>
+<td>88.1</td>
+<td>85.3</td>
+<td>87.1</td>
+</tr>
+<tr>
+<td>LiveCodeBench-Base</td>
+<td>28.1</td>
+<td>34.4</td>
+<td>29.9</td>
+<td>37.6</td>
+</tr>
+<tr>
+<td>SimpleQA</td>
+<td>30</td>
+<td>36</td>
+<td>31.2</td>
+<td>33.5</td>
+</tr>
+</tbody>
+</table>
+<p><em>(DeepSeek-V4-Flash-Base的结果使用内部评估框架进行评估，以控制实现差异)</em></p>
+<p><strong>多模型综合能力全面对比</strong>：<br/>
+在涵盖Coding、Agentic和Vision三大类的综合测试中，GLM-5.3-Flash展现出强大的原生多模态与推理能力。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>GLM-5.3-Flash</th>
+<th>GLM-5.2</th>
+<th>DeepSeek-V4-Vision-Exp</th>
+<th>Opus 4.8</th>
+<th>GPT-5.6 Terra</th>
+<th>Gemini 3.7 Flash</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Coding</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Terminal Bench 2.1</td>
+<td>84.3</td>
+<td>81</td>
+<td>83.9</td>
+<td>85</td>
+<td>87.4</td>
+<td>85.8</td>
+</tr>
+<tr>
+<td>DeepSWE (v1.1)</td>
+<td>63.4</td>
+<td>46.2</td>
+<td>59.3</td>
+<td>58</td>
+<td>69.6</td>
+<td>65.3</td>
+</tr>
+<tr>
+<td>NL2Repo</td>
+<td>56.3</td>
+<td>48.9</td>
+<td>57.7</td>
+<td>69.7</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td><strong>Agentic</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>Toolathlon Verified</td>
+<td>78.4</td>
+<td>59.9</td>
+<td>75.9</td>
+<td>76.2</td>
+<td>74.9</td>
+<td></td>
+</tr>
+<tr>
+<td>AutomationBench (v1.0.6)</td>
+<td>48.8</td>
+<td>26.2</td>
+<td>38.8</td>
+<td>41</td>
+<td>37.2</td>
+<td>52.3</td>
+</tr>
+<tr>
+<td>Agents' Last Exam</td>
+<td>26.3</td>
+<td>20.4</td>
+<td>27.3</td>
+<td>27</td>
+<td>28</td>
+<td></td>
+</tr>
+<tr>
+<td>HLE w/ Tools</td>
+<td>55.3</td>
+<td>54.7</td>
+<td>55.1</td>
+<td>57.9</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>GDPval-AA v2</td>
+<td>1773</td>
+<td>1504</td>
+<td>1675</td>
+<td>1582</td>
+<td>1571</td>
+<td>1527</td>
+</tr>
+<tr>
+<td><strong>Vision</strong></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>OfficeQA Pro</td>
+<td>62.4</td>
+<td></td>
+<td>57.9</td>
+<td>48.9</td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>CharXiv Reasoning (w/ Tools)</td>
+<td>89.4</td>
+<td></td>
+<td>80.4</td>
+<td>89.9</td>
+<td>88</td>
+<td>88.7</td>
+</tr>
+<tr>
+<td>Chartography (w/ Tools)</td>
+<td>78</td>
+<td></td>
+<td>64.3</td>
+<td>75</td>
+<td>68</td>
+<td>65</td>
+</tr>
+<tr>
+<td>BabyVision</td>
+<td>53.4</td>
+<td></td>
+<td>35.1</td>
+<td>46.8</td>
+<td>61.6</td>
+<td>70.9</td>
+</tr>
+<tr>
+<td>MVbench</td>
+<td>77.8</td>
+<td></td>
+<td>69.4</td>
+<td>67.1</td>
+<td>75</td>
+<td>82.2</td>
+</tr>
+<tr>
+<td>MMVU</td>
+<td>80.5</td>
+<td></td>
+<td>72.7</td>
+<td>67.4</td>
+<td>75.8</td>
+<td>82.3</td>
+</tr>
+</tbody>
+</table>
+<h2>结论</h2>
+<p>GLM-5.3-Flash表明，前沿智能不一定需要付出前沿的成本。这并非任何单一技巧的结果，而是三个层面共同作用的产物：一个用更少计算量提供更强能力的架构、一个更丰富的多模态预训练语料库，以及与推理硬件协同设计的基础设施。目前，该方案正在向更大的模型扩展——GLM-5.3-Flash推动了性价比的前沿，而从构建它中汲取的经验已经开始塑造下一个前沿模型。</p>
+<h2>补充细节</h2>
+<p><strong>模型发布与应用集成</strong>：<br/>
+GLM-5.3-Flash已向所有GLM Coding Plan用户推出，提供3倍于GLM-5.3的可用配额。用户可以在ZCode中通过Browser Use和Computer Use解锁其多模态能力：代理可以通过点击和视觉验证网页，并操作桌面应用程序。GLM-5.3-Flash的模型权重已在Hugging Face上公开。对于本地部署，GLM-5.3-Flash目前支持SGLang、vLLM和TokenSpeed等推理框架，对更多框架的支持正在开发中。</p>
+<p><strong>详细评估参数与策略配置</strong>：<br/>
+* <strong>HLE w/ tools (full set)</strong>：使用采样参数<code>temperature=1.0</code>和<code>top_p=0.95</code>进行评估，最大生成长度为<code>163,840</code> tokens。评估在最大上下文长度<code>300,000</code> tokens下进行，使用上下文管理策略。使用GPT-5.6-luna (medium)作为裁判模型。<br/>
+* <strong>NL2Repo</strong>：在1M上下文中，使用<code>temperature=1.0</code>、<code>top_p=1.0</code>和<code>max_new_tokens=64k</code>评估NL2Repo。为了防止黑客攻击，使用了基于规则和基于LLM的判断来防止恶意行为（例如未经授权的pip或curl操作）。<br/>
+* <strong>DeepSWE</strong>：使用mini-swe-agent测试工具运行DeepSWE，参数为<code>temperature=0.95</code>、<code>top_p=1.0</code>、<code>timeout=6h</code>，上下文长度为400K。<br/>
+* <strong>Terminal-Bench 2.1</strong>：在Claude Code 2.1.207中评估，参数为<code>temperature=1.0</code>、<code>top_p=1</code>、<code>max_new_tokens=65536</code>，6小时超时。<br/>
+* <strong>Agent’s Last Exam (ALE)</strong>：使用官方评估协议和Claude Code测试工具评估ALE（推理努力=max，1M上下文，64K最大输出）。工具搜索被禁用，结果由官方ALE评估器评分。<br/>
+* <strong>Toolathlon Verified</strong>：通过官方评估服务获取所有结果，并报告3次独立运行的平均pass@1。<br/>
+* <strong>AutomationBench</strong>：在AutomationBench <strong>v1.0.6</strong>上进行评估，包含了修复PR #13中引入的<code>null</code>类型处理问题的补丁。<br/>
+* <strong>GDPval-AA v2</strong>：模型由Artificial Analysis进行独立评估。<br/>
+* <strong>BabyVision</strong>：使用<code>temperature=1.0</code>、<code>top_p=0.95</code>，最大上下文长度为164K tokens。将输入图像调整大小，使其较短边至少为1.5K像素，这与其他基线的设置保持一致。<br/>
+* <strong>OfficeQA Pro</strong>：在不提供嵌入文本访问权限的情况下，在Treasury Bulletin PDF语料库上评估代理。使用<code>temperature=1.0</code>、<code>top_p=0.95</code>，最大上下文长度为512K tokens。<br/>
+* <strong>CharXiv Reasoning与Chartography</strong>：使用<code>temperature=1.0</code>、<code>top_p=0.95</code>，最大上下文长度为256K tokens。<br/>
+* <strong>MVBench和MMVU</strong>：使用<code>temperature=1.0</code>、<code>top_p=0.95</code>，最大上下文长度为256K tokens。对于原生接受视频输入的模型（如Gemini 3.7 Flash），直接输入原始视频进行评估。对于不支持视频输入的模型，采用默认的1 fps帧提取策略。如果提取的总帧数超过API的最大限制，则在视频中执行均匀帧采样，直到达到此最大帧数限制。</p>
+</div>
+
+
+</div>

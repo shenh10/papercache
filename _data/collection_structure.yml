@@ -342,6 +342,14 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'GLM-5.3-Flash: Frontier Intelligence, Flash Cost'
+        date: '2026-08-01'
+        url: /papers/llm/algorithm/models/2026/08/01/glm-53-flash-frontier-intelligence-flash-cost.html
+        categories:
+        - llm
+        - algorithm
+        - models
+        tag: blog
       - title: 'NVIDIA Nemotron Nano 2: An Accurate and Efficient Hybrid Mamba-Transformer
           Reasoning Model'
         date: '2025-08-01'
