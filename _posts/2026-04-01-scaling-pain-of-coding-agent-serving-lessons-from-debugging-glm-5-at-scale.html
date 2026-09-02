@@ -1,0 +1,124 @@
+---
+added_date: '2026-09-02'
+author: shenh10
+categories:
+- llm
+- engineering
+- inference
+- kvcache
+comments: true
+date: '2026-04-01'
+layout: post
+mathjax: true
+tag: blog
+title: 'Scaling Pain of Coding Agent Serving: Lessons from Debugging GLM-5 at Scale'
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>Scaling Pain of Coding Agent Serving: Lessons from Debugging GLM-5 at Scale</h1>
+<p><strong>发表时间</strong>: 2026-04 · Blog post by Z.ai (z.ai)</p>
+<p><strong>原文</strong>: <a href="https://z.ai/blog/scaling-pain" rel="noopener" target="_blank">https://z.ai/blog/scaling-pain</a></p>
+<p>作者/机构：中科加禾（北京）科技有限公司，中国科学院计算技术研究所处理器芯片全国重点实验室，及 GLM 团队</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文针对 GLM-5 在高并发长上下文 Coding Agent 场景下的乱码与复读问题，定位并修复了推理引擎中的两个底层显存竞态 Bug，并提出 LayerSplit 分层存储方案，大幅提升了长文本推理的稳定性与吞吐量。</p>
+<p><strong>要解决什么问题</strong> 大模型转向长上下文（平均超过 70K tokens）和高并发的 Coding Agent 任务时，推理基础设施面临极端的显存与调度压力，导致线上服务偶发乱码、复读和生僻字。这些异常并非模型精度衰减，而是由高负载下的状态管理与底层显存机制缺陷引发。具体卡点包括：首先，异常触发极度依赖并发压力与请求时序，线下低负载无法复现，常规检测方法难以满足排查需求；其次，在 Prefill（预填充）与 Decode（解码）分离架构中，为控制首字延迟引入的超时中止机制在跨节点通信时存在状态不一致，极易引发 KV Cache 的错误复用与显存覆写；再次，为缓解长文本显存压力引入的多级缓存（HiCache）机制，在异步换入显存与计算重叠执行时缺乏严格的流水线同步，导致算子读取到未就绪的显存垃圾数据；最后，现有的 Context Parallel（上下文并行）策略在各 GPU 间存在 KV Cache 冗余存储，有限的显存容量直接锁死了预填充阶段的计算资源利用率上限。</p>
+<p><strong>怎么做的</strong> 针对上述卡点，团队从异常监控、状态同步到显存架构进行了三层重构。第一步是建立基于投机采样（利用小模型起草、大模型验证以加速推理的技术）的实时监控信号。团队发现异常输出与投机采样的接受率高度相关：当目标模型连续接受的草稿 token 长度 $spec\_accept\_length &lt; 1.4$ 且生成长度超过 128 时，意味着目标模型的 KV Cache 状态已损坏，对应乱码或生僻字；当草稿 token 接受率 $spec\_accept\_rate &gt; 0.96$ 时，意味着注意力模式退化陷入高置信度循环，对应复读。基于此，系统可实时阻断异常并重试。第二步是修复 PD 分离架构下的 KV Cache 竞态。原有机制下，Decode 侧因超时单方面中止请求并将显存分配给新请求，而 Prefill 侧仍在执行旧请求的 RDMA 写入，导致新请求的显存被覆盖。修复方案是引入严格的时序约束：Decode 触发中止后，必须等待 Prefill 侧确认相关 RDMA 写入尚未开始或已全部完成，才能回收并复用该槽位，彻底阻断跨请求的显存覆写。第三步是修复 HiCache 的读取流水线原子性。原有实现中，负责从 CPU 异步加载缓存的 Load Stream 与负责计算的 Forward Stream 缺乏依赖，导致索引算子在缓存未加载完时就开始计算。修复方案是在索引算子启动前强制插入显式同步点，确保对应层级缓存完全就绪后再启动前向计算。第四步是设计 LayerSplit 分层存储方案以突破显存瓶颈。LayerSplit 打破了原有设计中每张卡保存全部层 KV Cache 的冗余，改为每张 GPU 仅持有部分层的 KV Cache。在计算某一层注意力时，持有该层缓存的 GPU 将其广播给其他相关 GPU。为掩盖通信开销，该机制将缓存广播与索引计算在时间上重叠，最终只需承担极小的索引缓存（仅为 KV Cache 体积的 1/8）广播开销，大幅降低了单卡显存占用。</p>
+<p><strong>效果如何</strong> 实验基于 GLM-5 系列模型，在模拟线上真实并发分布、平均上下文长度超过 70K tokens 且前缀缓存命中率极高的 Coding Agent 负载下进行测试，对比基线为修复前的系统以及代表常规上下文并行路线的 SGLang 开源实现。在稳定性方面，引入投机采样监控和修复 PD 分离时序一致性后，线上乱码和复读等异常发生率从约万分之十几断崖式下降至万分之三以下；在修复 HiCache 流水线同步缺失后，由执行时序不一致引发的异常完全消失。性能吞吐方面，LayerSplit 优化在 GLM-5.1 模型上进行了量化测试。在缓存命中率达到 90%、请求长度从 40K 逐步拉升至 120K 的区间内，相比于存在显存冗余存储的原有 SGLang 基线，LayerSplit 方案带来了 10% 到 132% 的吞吐量提升。量化结果表明，随着上下文长度增加，该分层存储方案节省显存并转化为计算吞吐的收益越发显著，且通信开销对整体性能影响微乎其微。优化的代价是需要更复杂的系统工程与严格的状态一致性维护来支撑模型扩展。</p>
+</div>
+</details>
+<h2>主要贡献</h2>
+<p>在大模型应用从简单对话全面转向更复杂、长程的 Coding Agent 任务背景下，推理基础设施每天承受数亿次调用，面临前所未有的压力。GLM-5 系列模型在执行高并发、长上下文的 Coding Agent 任务时，遭遇了难以稳定复现的乱码、复读及偶现生僻字等异常。本文的核心目标是定位并解决这些因极高系统负载引发的底层状态管理与并发竞态问题，以克服推理系统在规模化服务中的“Scaling Pain”。</p>
+<p>核心创新点与贡献包括：<br/>
+1. 创新性地将投机采样（Speculative Decoding）的性能指标转化为在线异常监控的实时信号，解决了长文本生成中乱码和复读难以高效检测的瓶颈。<br/>
+2. 准确定位并修复了 PD（Prefill-Decode）分离架构下异步 Abort 引发的 KV Cache 复用竞态问题，建立显式的跨节点时序一致性保证。<br/>
+3. 发现并修复了 DSA HiCache 加载流水线中的同步约束缺失（Read-before-Ready）问题，重构了算子流水线的原子性。<br/>
+4. 设计并实现了 KV Cache 分层存储方案（LayerSplit），通过消除 Context Parallel 并行策略下的显存冗余，大幅降低了 Prefill 侧的显存压力，显著提升了系统的整体吞吐量。</p>
+<h2>背景知识与关键观察</h2>
+<p><strong>异常现象的观察与初步推断</strong>。自三月起，在 GLM-5 的线上监控和用户反馈中观察到三类异常现象：乱码（garbled output）、复读（repetition），以及生僻字（rare character）。这些现象在表面上与长上下文场景下常见的“降智”相似，但由于并没有上线任何降低模型精度的优化，一个更关键的问题是：异常究竟源于模型本身，还是源于推理链路？如果源于模型，异常会表现为针对特定输入的稳定、可重复行为；反之，若异常与系统压力或运行时状态相关，则更可能指向推理基础设施中的链路或状态管理问题。</p>
+<p><strong>线下复现过程与异常特征定位</strong>。排查初期，先对用户反馈的 bad cases 做本地回放，并将同一批请求重复推理数百次，但始终未能复现异常，说明大概率不是模型本身的问题。为进一步模拟线上环境的压力，对线上日志做脱敏处理，并尽可能保留原始并发分布与请求时序，在本地进行全量回放。起初仍未复现异常，直到进一步调整 PD 分离比例并持续提高系统负载，模拟高峰期的 Prefill 堆积和 Decode 侧 KV Cache 压力后，才在约每万次请求中稳定复现 3-5 次异常。这种“与请求内容无关、与系统压力相关”的特征，说明问题可能来自高负载下的推理状态管理。与此同时，线下复现的异常频率仍低于线上反馈的频率，说明现有检测方法可能存在漏检，或仍有部分触发场景尚未覆盖。</p>
+<p><strong>异常检测方法的局限性</strong>。如何可靠识别异常输出成为了新的挑战。三类异常中，复读相对容易检测，而乱码与生僻字比较棘手。尝试过正则表达式、字符集匹配等启发式方法，也尝试过基于模型判别的方式，但前者存在明显的漏判与误伤，后者则难以满足大规模消融实验的效率要求。上述限制使异常检测本身成为定位流程中的一个瓶颈。</p>
+<p><strong>投机采样指标作为异常检测信号的发现</strong>。在反复分析推理日志后，发现了一个意想不到的切入点：投机采样（Speculative Decoding）指标可以作为异常检测的重要参考。投机采样原本是一个性能优化技术，先由草稿模型生成候选 token，再由目标模型校验并决定是否接受，从而在不改变最终输出分布的前提下提升 decode 效率。观察到两个指标（<code>spec_accept_length</code>：目标模型连续接受的 draft token 前缀长度；<code>spec_accept_rate</code>：draft token 被接受的比例）在异常发生时呈现出稳定模式：<br/>
+- 乱码和生僻字：通常伴随极低的 <code>spec_accept_length</code>，即草稿模型生成的候选 token 几乎全部被目标模型拒绝；表明目标模型所看到的 KV Cache 状态与草稿模型预期之间存在显著偏差。<br/>
+- 复读：通常伴随偏高的 <code>spec_accept_rate</code>，表明损坏的 KV Cache 可能使注意力模式退化，并将生成过程推向高置信度的重复循环。<br/>
+<img alt="图1: 投机采样指标可以作为异常检测的重要参考" class="figure-image" src="https://z-cdn-media.chatglm.cn/prompts-rich-media-resources/scaling-pain-blog/HyN3gRk0Zg.png"/></p>
+<p><strong>在线异常监控策略的实现</strong>。基于上述观察，进一步实现了一套在线异常监控策略：当 <code>spec_accept_length</code> 持续低于 1.4 且生成长度已超过 128 token，或 <code>spec_accept_rate</code> 超过 0.96 时，系统主动中止当前生成，并将请求交由负载均衡器重试。该策略使投机采样从单纯的性能优化技术，拓展为输出质量的实时监控信号，成为后续消融实验中的关键工具。</p>
+<h2>方法细节</h2>
+<p><strong>KV Cache 复用冲突的定位</strong>。在观察到异常输出与并发压力具有明显相关性后，进一步分析其原因。通过对请求生命周期以及推理引擎中 PD 分离执行时序的分析，发现该问题源于请求生命周期与 KV Cache 回收与复用时序之间的不一致，从而引发的 KV Cache 复用冲突。</p>
+<p><strong>异步 Abort 引发的 KV Cache 复用竞态原因分析</strong>。为限制尾延迟，在推理引擎中引入了基于超时的请求终止机制：当 Prefill 阶段未在规定时间内完成时，Decode 侧会对请求执行 Abort，并回收其占用的 KV Cache 资源。然而，该 Abort 信号未被正确传播至 Prefill 侧，同时 Decode 侧也缺乏判断 KV Cache 是否可安全回收与复用的充分信息。因此，在 Decode Abort 并将对应 KV Cache 空间分配给新请求之后，先前已发起的 RDMA 写入以及正在执行的 Prefill 计算仍持续执行，未被同步取消。</p>
+<p><strong>PD分离场景下的时序关系展示</strong>。图2中展示了在 PD 分离架构下，两个请求在 Prefill 与 Decode 之间交互的时序关系，以及由此引发的 KV Cache 竞态。<br/>
+<img alt="图2: PD分离场景下 KV Cache 竞态示意图" class="figure-image" src="https://z-cdn-media.chatglm.cn/prompts-rich-media-resources/scaling-pain-blog/BkevbCk0Wx.png"/></p>
+<p><strong>初始阶段的请求调度与超时触发</strong>。在初始阶段，Req1 被发送至 Prefill-1（P1）和 Decode（D）。由于调度或排队等原因，Req1 在 P1 侧经历了一段等待后才开始执行 Prefill Forward。与此同时，Decode 侧在一段时间内未收到对应的 KV Cache 数据，触发超时机制，并对 Req1 执行 Abort。</p>
+<p><strong>KV Cache 回收与新请求分配</strong>。随后，Decode 侧回收 Req1 占用的 KV Cache 槽位，但没有正确通知P1。紧接着，新请求 Req2 到达，并被分配至 Prefill-2（P2）和 Decode。由于内存复用策略，Req2 被分配到与 Req1 相同的 KV Cache 地址。P2 开始执行 Prefill Forward 并进行 KV Transfer，并在较短时间内完成，使 Decode 侧进入生成阶段。</p>
+<p><strong>数据覆盖导致生成结果异常</strong>。与此同时，P1 侧针对 Req1 发起的 KV Cache 写入仍在继续，其数据会写入已被 Req2 复用的显存区域，从而覆盖 Req2 的部分 KV Cache。最终，Req2 在 Decode 阶段读取到被覆盖的数据，导致生成结果异常。</p>
+<p><strong>引入时序一致性保证</strong>。为消除上述竞态，在推理引擎中引入了更严格的时序约束，在请求终止与 KV Cache 写入完成之间建立显式同步关系。</p>
+<p><strong>显式同步机制的具体实现</strong>。具体而言，Decode 在触发 Abort 后，会向 Prefill 侧发送通知。Prefill 仅在以下条件满足时返回“可释放”信号：相关 RDMA 写入尚未开始，或所有已提交写入均已完成。Decode 仅在收到该确认后，才允许回收并复用对应的 KV Cache 槽位。该机制确保 KV 写入不会跨越显存复用边界，从而避免跨请求的 KV Cache 覆盖。</p>
+<p><strong>BugFix#1修复效果总结</strong>。该修复上线后，异常输出的发生率由约万分之十几下降至万分之三以下。结果表明，在 PD 分离架构中，需要对跨节点的数据传输与显存复用建立明确的一致性约束，以避免类似问题。</p>
+<p><strong>HiCache 加载时序缺失背景</strong>。Coding Agent 场景显著提高了输入长度（平均超过 70K tokens），同时伴随较高的前缀复用率。这类负载使 HiCache（多级 KV Cache）成为线上服务中的关键优化手段。然而，在 KV Cache 换入与计算重叠执行的情况下，当前实现未能保证数据在使用前已完成加载，导致可能出现未就绪 KV Cache 被访问的情况。</p>
+<p><strong>流水线同步缺失导致的 read-before-ready 分析</strong>。通过对 HiCache 执行时序的分析，将问题定位在 DSA HiCache 的缓存读取路径上。系统会从 CPU 内存异步换入（swap-in）历史前缀缓存，并通过 Load Stream 与 Forward Stream 的重叠执行来提高吞吐。</p>
+<p><strong>Load Stream 与 Forward Stream 的理论执行逻辑</strong>。如图 3(a) 所示，Load Stream 负责加载 KV Cache 与 Indexer Cache，而 Forward Stream 依次执行 Index 计算与后续的 Sparse Attention。理论上，Forward Stream 中的 Indexer 计算应在对应的 Indexer Cache 完成加载后才能启动。然而，在原始实现中，该依赖并未被保证。</p>
+<p><strong>无同步约束引发的数据竞争</strong>。具体而言，Indexer 算子在启动时未对 Load Indexer Cache 的完成建立同步约束（图3中红色虚线区域）。因此，Forward Stream 可能先于 Load Stream 完成数据加载而开始执行，从而出现 Read-before-Ready 的访问模式，即在数据尚未完成加载时即被读取。</p>
+<p><strong>计算结果受损链条</strong>。该问题会导致 Index 计算基于不完整或未初始化的数据执行，进而影响后续 Sparse Attention 的计算结果，并最终反映为输出异常。<br/>
+<img alt="图3: HiCache读取流水线时序异常与修复示意图" class="figure-image" src="https://z-cdn-media.chatglm.cn/prompts-rich-media-resources/scaling-pain-blog/HyaPZ0yAWe.png"/></p>
+<p><strong>重构算子流水线的原子性</strong>。为解决上述问题，对 HiCache 的读取流水线进行了修改（如图3(b)所示），在数据加载与计算之间引入显式的同步约束。</p>
+<p><strong>显式同步约束的具体设计</strong>。在 Indexer 算子启动前引入与 Load Stream 的同步点，确保对应层级的 Indexer Cache 已完成加载。Forward Stream 仅在数据就绪后才启动计算，从而避免 Read-before-Ready 的访问。</p>
+<p><strong>BugFix#2修复效果及社区贡献</strong>。该修复上线后，在相同负载条件下，由执行时序不一致引起的异常完全消失，系统行为趋于稳定。该修复已通过 Pull Request #22811 提交至 SGLang 社区。</p>
+<p><strong>KV Cache分层存储 LayerSplit 的引入动机</strong>。上述两个竞态问题揭示了一个共同的系统瓶颈：在长上下文的 Coding Agent Serving 场景中，Prefill 阶段主导了系统性能。为了控制 Prefill 排队带来的 TTFT，引入了超时 Abort；为了缓解 Prefill 侧 KV Cache 容量压力，引入了 HiCache。在修复这些状态一致性问题后，进一步回到瓶颈本身：如何提升 Prefill 吞吐、降低 Prefill 侧 KV Cache 显存压力。为此，设计并实现了 KV Cache 分层存储方案 LayerSplit。</p>
+<p><strong>现有并行策略的显存冗余问题</strong>。Coding Agent 负载通常呈现出上下文长度较长、Prefix Cache 命中率较高的特征。在这一场景下，Prefill 阶段往往成为系统的主要性能瓶颈，因此 Context Parallel（CP）成为线上 Prefill 节点的主要并行策略。然而，现有的 SGLang 开源实现存在 KV Cache 冗余存储的问题，导致有限的 KV Cache 容量成为 GPU 计算资源利用率的限制因素。<br/>
+<img alt="图4: LayerSplit, KV Cache 分层存储方案" class="figure-image" src="https://z-cdn-media.chatglm.cn/prompts-rich-media-resources/scaling-pain-blog/S1dOZAJC-x.png"/></p>
+<p><strong>LayerSplit 分层存储方案设计</strong>。针对这一问题，设计并实现了一种 KV Cache 分层存储方案（LayerSplit）。在该方案中，每张 GPU 不再保存全部层的 KV Cache，而是仅持有部分层的 KV Cache（如图 4(a) 所示），从而显著降低单卡的显存占用。</p>
+<p><strong>跨 Rank 的协同与通信掩盖机制</strong>。在计算过程中，不同 CP rank 按照图 4(b) 所示的方式协同完成 Prefill：具体而言，持有某一层 KV Cache 的 rank 会在执行 Attention 计算前，将该层 Cache 广播给其他相关 rank。为降低通信开销，进一步设计了 KV Cache 广播与 indexer 计算的重叠机制，使二者在时间上相互掩盖。最终，整个流程中仅引入了 Indexer Cache 广播的额外开销，其规模约为 KV Cache 的 1/8，因此整体通信成本较低，对性能影响可以忽略。<br/>
+<img alt="图5: GLM-5.1 + LayerSplit 在不同长度下的吞吐提升" class="figure-image" src="https://z-cdn-media.chatglm.cn/prompts-rich-media-resources/scaling-pain-blog/Bk1tZCJ0-e.png"/></p>
+<p><strong>LayerSplit 的性能提升表现</strong>。图5 展示了在 Cache 命中率达到 90% 的条件下，该优化在请求长度从 40k 到 120k 区间内带来的性能提升。实验结果表明，系统吞吐量提升幅度在 10% 至 132% 之间，且随着上下文长度的增加，收益更加显著。整体来看，该优化显著提升了系统在 Coding Agent 场景下的处理能力。</p>
+<h2>实验环境</h2>
+<ul>
+<li><strong>数据集与场景特征</strong>：应用于线上 Coding Agent 任务，特点为高并发、长上下文（平均超过 70K tokens，性能测试覆盖 40k 到 120k 区间），且具有极高的前缀复用率（测试设定 Cache 命中率为 90%）。</li>
+<li><strong>模型架构</strong>：GLM-5 系列模型（包括 GLM-5.1），架构上结合了投机采样（Speculative Decoding）机制，包含草稿模型与目标模型。</li>
+<li><strong>硬件配置</strong>：采用多卡 GPU 显存集群，涉及跨节点的 RDMA 数据写入，以及 CPU 内存至 GPU 显存的异步数据换入（swap-in）机制。</li>
+<li><strong>软件配置</strong>：推理底层采用 PD（Prefill-Decode）分离架构。基于 SGLang 开源框架实现，采用了 Context Parallel (CP) 节点并行策略以及多级 KV Cache（DSA HiCache）优化。</li>
+</ul>
+<h2>实验结果</h2>
+<ul>
+<li>
+<p><strong>实验一：PD 分离架构下 KV Cache 竞态修复测试</strong></p>
+<ul>
+<li><strong>实验内容</strong>：在推理引擎中引入显式同步约束，确保 Prefill 侧的 RDMA 写入完成并返回确认后，Decode 侧才允许回收并复用 KV Cache。</li>
+<li><strong>实验结果</strong>：乱码、复读和生僻字等异常输出的发生率由约万分之十几大幅下降至万分之三以下。</li>
+<li><strong>分析结论</strong>：在 PD 分离架构中，跨节点的数据传输与显存复用必须建立明确的一致性约束，以避免跨请求的 KV Cache 覆盖问题。</li>
+</ul>
+</li>
+<li>
+<p><strong>实验二：HiCache 加载时序缺失修复测试</strong></p>
+<ul>
+<li><strong>实验内容</strong>：在 Indexer 算子启动前引入与 Load Stream 的同步点，确保对应的 Indexer Cache 已完成加载后再启动 Forward Stream 计算。</li>
+<li><strong>实验结果</strong>：在相同的高负载条件下，由执行时序不一致引起的 Read-before-Ready 异常完全消失，系统行为恢复稳定。</li>
+<li><strong>分析结论</strong>：重构算子流水线的原子性，确保数据完全就绪后再启动计算，是多级 KV Cache 机制正确运作的必要条件。</li>
+</ul>
+</li>
+<li>
+<p><strong>实验三：LayerSplit 分层存储方案吞吐量测试</strong></p>
+<ul>
+<li><strong>实验内容</strong>：在 Cache 命中率达到 90% 的条件下，对比原生 SGLang 实现与引入 LayerSplit 方案后，系统在 40k 到 120k 请求长度区间的吞吐量表现（见图5）。</li>
+<li><strong>实验结果</strong>：系统吞吐量提升幅度在 10% 至 132% 之间，且上下文越长，提升幅度越大。</li>
+<li><strong>分析结论</strong>：LayerSplit 通过消除 Context Parallel 策略下的 KV Cache 冗余存储，配合通信掩盖机制，显著降低了单卡显存占用，大幅提升了系统在长上下文场景下的处理能力。</li>
+</ul>
+</li>
+</ul>
+<h2>结论</h2>
+<p>当智能模型应用步入高并发、长上下文的 Coding Agent 时代，推理基础设施面临的挑战已超越了单纯的吞吐、延迟和可用性，保障输出质量的稳定性变得至关重要。每一次追求 Scaling Law 的突破，都必须有同等强度的底层系统工程作为坚实支撑。团队通过定位系统瓶颈和修复深层竞态 Bug，有效克服了规模化服务中的痛点，并期望以此经验帮助社区少走弯路，共同打磨出能够承载 AGI 未来的推理基础设施。</p>
+<h2>参考文献与引用</h2>
+<p>本篇文献无传统的参考文献列表，但包含对开源社区的贡献引用：</p>
+<ul>
+<li><strong>[1] 修复 HiCache 加载时序代码贡献</strong>：<a href="https://github.com/sgl-project/sglang/pull/22811">https://github.com/sgl-project/sglang/pull/22811</a>。<ul>
+<li><strong>引用段落及描述</strong>：在修复 HiCache 加载时序缺失（BugFix#2）的段落中，作者提到“该修复已通过 Pull Request #22811 提交至 SGLang 社区”，表明针对 Read-before-Ready 问题的流水线同步修复方案已被上游开源框架采纳。</li>
+</ul>
+</li>
+</ul>
+</div>
+
+
+</div>

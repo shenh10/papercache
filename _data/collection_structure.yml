@@ -2369,6 +2369,16 @@ llm:
           - inference
           - kvcache
           tag: icml25
+        - title: 'Scaling Pain of Coding Agent Serving: Lessons from Debugging GLM-5
+            at Scale'
+          date: '2026-04-01'
+          url: /papers/llm/engineering/inference/kvcache/2026/04/01/scaling-pain-of-coding-agent-serving-lessons-from-debugging-glm-5-at-scale.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
+          tag: blog
         - title: 'ShadowKV: KV Cache in Shadows for High-Throughput Long-Context LLM
             Inference'
           date: '2025-07-01'
