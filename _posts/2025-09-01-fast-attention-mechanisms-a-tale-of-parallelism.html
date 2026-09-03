@@ -71,7 +71,7 @@ $$\operatorname{Attn}_{Q, K, V}(X):=\operatorname{softmax}\left(Q(X) K(X)^{\top}
 <p></p>
 $$\operatorname{Attn}_{Q, K, V}(X)_i = \sum_{j=1}^N w_{i, j} v_j, \quad where \quad w_{i, j} = \frac{\exp(\langle q_i, k_j \rangle)}{\sum_{j'=1}^N \exp(\langle q_i, k_{j'} \rangle)}.$$
 
-<p><strong>多头注意力层的定义</strong>。一个H头的注意力层 f : R^(N×d) → R^(N×d) 由H个注意力头 $(Attn_{Q_h,K_h,V_h})<em>{h=1}^H$ 和H个 m × d 的矩阵 $(W_h)</em>(X)W_h$。}^H$ 组成；它的计算方式为 $f(X) := \sum_{h=1}^H Attn_{Q_h,K_h,V_h</p>
+<p><strong>多头注意力层的定义</strong>。一个H头的注意力层 f : R^(N×d) → R^(N×d) 由H个注意力头 $(Attn_{Q_h,K_h,V_h})_{h=1}^H$ 和H个 m × d 的矩阵 $(W_h)_{h=1}^H$ 组成；它的计算方式为 $f(X) := \sum_{h=1}^H Attn_{Q_h,K_h,V_h}(X)W_h$。</p>
 <p><strong>Transformer的定义</strong>。一个L层的Transformer T由L个注意力层 $f_1, ..., f_L : R^{N×d} → R^{N×d}$ 和一个输出函数 $ψ : R^d → R^d$ 指定。给定输入 X ∈ R^(N×d)，定义如下计算过程：</p>
 <p></p>
 $$X^{(0)}:=X \text { and } X^{(\ell)}:=f_{\ell}(X^{(\ell-1)}) \text { for } \ell=1, \ldots, L.$$
@@ -169,13 +169,13 @@ $$\sigma(w, i)=\max \{\{0\} \cup\{j \in \mathbb{N}: j \leq i, w_{j-1}=w_{i}\}\}.
 
 <p>归纳头任务是为每个 1 ≤ i ≤ N，计算 $w_{σ(w,i)}$ 的值。</p>
 <p><strong>归纳头任务示例</strong>。例如，设 Σ = {a, b, c} 且 w = aabcbabca。那么 $w_{σ(w,9)} = b$，因为第9个token是a，在位置9之前a的最后一次出现（在位置6）之后是b。</p>
-<p><strong>ANNA解决归纳头任务的定理</strong>。以下定理表明，我们的ANNA-transformer可以使用常数数量的层以及亚线性的嵌入维度和头数来解决归纳头问题。<strong>定理5.4</strong>：固定常数 $0 &lt; ε &lt; ε' &lt; 1$。存在一个ANNA-transformer T，其层数 L = O(1)，每层头数 H = O(N^((ε'-ε)/4))，嵌入维度 m = O(N^ε')，使得对于所有 w ∈ Σ^N 和所有 i ∈ [N]， $T(w)<em>i = w</em>$。</p>
+<p><strong>ANNA解决归纳头任务的定理</strong>。以下定理表明，我们的ANNA-transformer可以使用常数数量的层以及亚线性的嵌入维度和头数来解决归纳头问题。<strong>定理5.4</strong>：固定常数 $0 &lt; ε &lt; ε' &lt; 1$。存在一个ANNA-transformer T，其层数 L = O(1)，每层头数 H = O(N^((ε'-ε)/4))，嵌入维度 m = O(N^ε')，使得对于所有 w ∈ Σ^N 和所有 i ∈ [N]， $T(w)_i = w_{\sigma(w,i)}$。</p>
 <p><strong>证明思路</strong>。我们通过为归纳头构建一个常数轮的MPC算法来证明定理5.4（在附录F.2中），然后应用定理4.1将其转换为一个ANNA-transformer。</p>
 <p><strong>k-hop任务介绍</strong>。归纳头任务被（Sanford et al., 2024c【Sanford, Clayton, Daniel Hsu, and Matus Telgarsky. "Transformers, parallel computation, and logarithmic depth." In Forty-First International Conference on Machine Learning, 2024c.】）推广为一个k步的变体，称为“k-hop”。</p>
 <p><strong>k-hop任务定义</strong>。设Σ为一个有限字母表，w ∈ Σ^N。设 $σ^k(w, i)$ 表示前述定义中 $σ(w, \cdot)$ 的k次复合。k-hop归纳头任务是为每个 1 ≤ i ≤ N 计算 $w_{σ^k(w,i)}$。</p>
 <p><strong>k-hop任务示例</strong>。使用相同的例子，其中 Σ = {a, b, c}，w = aabcbabca 且 k = 2，我们有 $w_{σ(σ(w,9))} = a$，因为在位置7之前b的最后一次出现之后是a。</p>
 <p><strong>ANNA解决k-hop任务的扩展</strong>。正如在（Sanford et al., 2024c【Sanford, Clayton, Daniel Hsu, and Matus Telgarsky. "Transformers, parallel computation, and logarithmic depth." In Forty-First International Conference on Machine Learning, 2024c.】）中所做的，我们使用函数复合为k-hop构建了一个O(log k)轮的MPC算法，从而为此任务上的ANNA-transformer产生了对数深度的扩展。</p>
-<p><strong>ANNA解决k-hop任务的定理</strong>。<strong>定理5.6</strong>：固定常数 $0 &lt; ε &lt; ε' &lt; 1$，任何 k ∈ N 和字母表 Σ 且 |Σ| = O(N)。存在一个ANNA-transformer T，其层数 L = O(log k)，每层头数 H = O(N^((ε'-ε)/4))，嵌入维度 m = O(N^ε')，使得对于所有 w ∈ Σ^N 和所有 i ∈ [N]， $T(w)<em>i = w</em>$。</p>
+<p><strong>ANNA解决k-hop任务的定理</strong>。<strong>定理5.6</strong>：固定常数 $0 &lt; ε &lt; ε' &lt; 1$，任何 k ∈ N 和字母表 Σ 且 |Σ| = O(N)。存在一个ANNA-transformer T，其层数 L = O(log k)，每层头数 H = O(N^((ε'-ε)/4))，嵌入维度 m = O(N^ε')，使得对于所有 w ∈ Σ^N 和所有 i ∈ [N]， $T(w)_i = w_{\sigma^k(w,i)}$。</p>
 <p><strong>与先前工作的关系</strong>。完整的构造在附录F.2中给出。我们注意到，尽管先前的工作已经给出了k-hop（Bietti et al., 2023【Bietti, Alberto, et al. "Birth of a transformer: A memory viewpoint." Advances in Neural Information Processing Systems 36 (2023): 1560-1588.】; Sanford et al., 2024c【Sanford, Clayton, Daniel Hsu, and Matus Telgarsky. "Transformers, parallel computation, and logarithmic depth." In Forty-First International Conference on Machine Learning, 2024c.】）和Match2（Sanford et al., 2023【Sanford, Clayton, Daniel Hsu, and Matus Telgarsky. "Representational strengths and limitations of transformers." In Thirty-seventh Conference on Neural Information Processing Systems, 2023.】）的transformer构造，但鉴于架构的差异，这些结果并不直接意味着ANNA-transformer的构造。</p>
 <p><strong>ANNA在k-hop任务上的优势</strong>。先前的工作（Sanford et al., 2024c【Sanford, Clayton, Daniel Hsu, and Matus Telgarsky. "Transformers, parallel computation, and logarithmic depth." In Forty-First International Conference on Machine Learning, 2024c.】）表明，多层循环网络和低秩亚二次方注意力（Choromanski et al., 2021【Choromanski, Krzysztof Marcin, et al. "Rethinking attention with performers." In International Conference on Learning Representations, 2021.】; Kacham et al., 2024【Kacham, Praneeth, Vahab Mirrokni, and Peilin Zhong. "PolySketchFormer: Fast transformers via sketching polynomial kernels." In Proceedings of the 41st International Conference on Machine Learning, 2024.】）除非深度为Ω(k)或其内存大小/嵌入维度为Ω(N/k^6)，否则无法解决k-hop问题。相比之下，ANNA-transformer同时实现了O(log k)的深度和亚线性（相对于N）的宽度。在这个意义上，k-hop任务将ANNA-transformer与其他这些高效的神经架构区分开来。</p>
 <h2>A4 实验环境与结果</h2>

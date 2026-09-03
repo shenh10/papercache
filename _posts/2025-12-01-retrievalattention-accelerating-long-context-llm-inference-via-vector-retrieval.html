@@ -184,7 +184,7 @@ $$
 <p><strong>A100上的解码延迟测试</strong><br/>
 附录A.4测试了方法在高端设备（A100 80GB）上的通用性。表7显示了128K上下文下的单token生成延迟，<code>RetrievalAttention</code>在保持精度的同时，延迟远低于IVF和Flat。表8展示了上下文从100K变化到1M时的延迟变化。当KV缓存启用时，vLLM在上下文超过200K时触发OOM。与Flat和IVF对上下文大小极其敏感不同，<code>RetrievalAttention</code>在上下文从100K增加10倍至1M时，延迟仅有微小的增加（8%）。</p>
 <p><strong>结合CPU和GPU侧注意力结果的公式</strong><br/>
-附录B.1详细推导了合并部分注意力的数学公式。<code>RetrievalAttention</code>将注意力KV向量划分为GPU上的可预测集（$\mathcal{W}$）和CPU上动态检索集（$\Omega$），即 $\mathcal{T}_{t, \epsilon} = \mathcal{W} \cup \Omega$。为了保证近似输出等于在 $\mathcal{T}_{t, \epsilon}$ 上的计算结果，系统计算两个局部的注意力输出 $\mathbf{o}<em>{\mathcal{W}}$ 和 $\mathbf{o}</em>$：<br/>
+附录B.1详细推导了合并部分注意力的数学公式。<code>RetrievalAttention</code>将注意力KV向量划分为GPU上的可预测集（$\mathcal{W}$）和CPU上动态检索集（$\Omega$），即 $\mathcal{T}_{t, \epsilon} = \mathcal{W} \cup \Omega$。为了保证近似输出等于在 $\mathcal{T}_{t, \epsilon}$ 上的计算结果，系统计算两个局部的注意力输出 $\mathbf{o}_{\mathcal{W}}$ 和 $\mathbf{o}_{\Omega}$：<br/>
 </p>
 $$\begin{aligned}
 
@@ -197,7 +197,7 @@ $$\begin{aligned}
 
 \end{aligned}$$
 <p><br/>
-最终输出通过重缩放因子进行合并：$\mathbf{o}_t = \gamma_1 \cdot \mathbf{o}_{\mathcal{W}} + \gamma_2 \cdot \mathbf{o}_{\Omega}$。其中 $\tilde{z}_1 = \max_{i \in \mathcal{W}} z_i$ 和 $\tilde{z}<em>2 = \max</em>$，重缩放因子定义为：} z_i$ 是局部最大点积。设全局最大值为 $\tilde{z</p><div>$$\begin{aligned}
+最终输出通过重缩放因子进行合并：$\mathbf{o}_t = \gamma_1 \cdot \mathbf{o}_{\mathcal{W}} + \gamma_2 \cdot \mathbf{o}_{\Omega}$。其中 $\tilde{z}_1 = \max_{i \in \mathcal{W}} z_i$ 和 $\tilde{z}_2 = \max_{i \in \Omega} z_i$ 是局部最大点积。设全局最大值为 $\tilde{z}$，重缩放因子定义为：</p><div>$$\begin{aligned}
 
 \begin{array}{c}
 \gamma_1 = \frac{e^{\tilde{z}_1 - \tilde{z}} \cdot \sum_{i \in \mathcal{W}} e^{z_i - \tilde{z}_1}}{\sum_{i \in \mathcal{T}_{t,\epsilon}} e^{z_i - \tilde{z}}} \\

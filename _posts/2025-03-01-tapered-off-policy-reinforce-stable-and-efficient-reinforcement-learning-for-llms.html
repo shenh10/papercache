@@ -185,7 +185,7 @@ $$J_{\text{TOPR}}(\pi) = \sum_{\tau \in T^+} \mu(\tau)\rho\left(\frac{\pi(\tau)}
 <p>其中 $ρ(·, a, b) : [0, \infty) \rightarrow R$ 是锥度函数（taper function）：</p>
 <p></p>
 $$\begin{aligned}
-\rho(x, a, b)=\left\{\begin{array}{ll}a\left(1+\log \frac{x}{a}\right) &amp; \text { if } x<a>b \\ x &amp; \text { otherwise. }\end{array}\right.
+\rho(x, a, b)=\left\{\begin{array}{ll}a\left(1+\log \frac{x}{a}\right) &amp; \text { if } x&lt;a \\ b\left(1+\log \frac{x}{b}\right) &amp; \text { if } x&gt;b \\ x &amp; \text { otherwise. }\end{array}\right.
 \end{aligned}$$
 
 <p><strong>锥度函数ρ的作用</strong>。锥度函数ρ描述了截断对TOPR优化的目标函数的影响。它定义了重要性比率的下界，即对于任何a ≤ b，</p>
@@ -406,7 +406,7 @@ $$\begin{aligned}
 <figcaption class="figure-caption">图9：对于各种有效正样本比例，数据集中每种难度问题的有效比例。有效正样本较少的数据集给予难题更多权重。</figcaption>
 </figure>
 <p><strong>基线对问题难度的加权</strong>。图9显示了在改变基线（即有效正样本比例）时，给予简单和困难问题的重要性。对于训练集中的每个问题，我们生成了128个解决方案，然后根据基础模型对这些问题的预期准确率创建了10个等间距的桶。然后，我们平均计算了特定桶中每个问题有多少个解决方案。为了考虑基线参数，我们给每个正确解决方案一个(1 − c)的权重，给每个不正确解决方案一个(1 + c)的权重。</p>
-<p><strong>观察结论</strong>。我们看到，随着c的增加（即有效正样本比例的减少），更多的（相对权重）被给予了困难的问题。TOPR的性能与图9中曲线的形状之间似乎存在相关性。</p></a>
+<p><strong>观察结论</strong>。我们看到，随着c的增加（即有效正样本比例的减少），更多的（相对权重）被给予了困难的问题。TOPR的性能与图9中曲线的形状之间似乎存在相关性。</p>
 </div>
 
 

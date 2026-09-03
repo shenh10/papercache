@@ -152,7 +152,7 @@ $$\frac{2 T_e \cdot 2 n \cdot d+2 T_e n d}{4 T_e n+6 n d+4 T_e d}=\frac{3}{\frac
     // 确保非top-K条目更小<br/>
     $S'_e \leftarrow S_e - 1$<br/>
     并行处理 $t \in [T]$ 和 $k \in [K]$:<br/>
-      $S'$}(t, k)} \leftarrow S_{topK, t, k</li>
+      $S'_{t, I_{topK}(t, k)} \leftarrow S_{topK, t, k}$</li>
 <li>// (4) 对每个专家进行令牌舍入<br/>
     并行处理 $e \in [E]$:<br/>
       // 令牌排序和排序后的分数<br/>

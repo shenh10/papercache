@@ -183,7 +183,7 @@ $$\arg \min_{\boldsymbol{z}} -H^G(\boldsymbol{z}) - \langle \boldsymbol{z}, \bol
 <p><strong>模型架构</strong>：本文实验基于 Gemma-2 2B 模型，这是一个拥有 20 亿参数的 decoder-only Transformer。实验中，将标准的 FFN 和 Attention 替换为 Spark FFN 和 Spark Attention。</p>
 <ul>
 <li><strong>模型维度</strong>：$d_{\text{model}} = 2304$。</li>
-<li><strong>FFN 配置</strong>：原始 Gemma-2 使用门控 FFN（公式 (5)），$d'_{\text{ff}} = 9216$。Spark FFN（公式 (2)）使用 $d/2$。}} = 13824$ 以保持参数数量不变。稀疏度超参数 $k=1106$（约 8% 稀疏度），低秩预测器维度 $r=1024 \approx d_{\text{model}</li>
+<li><strong>FFN 配置</strong>：原始 Gemma-2 使用门控 FFN（公式 (5)），$d'_{\text{ff}} = 9216$。Spark FFN（公式 (2)）使用 $d_{\text{ff}} = 13824$ 以保持参数数量不变。稀疏度超参数 $k=1106$（约 8% 稀疏度），低秩预测器维度 $r=1024 \approx d_{\text{model}}/2$。</li>
 <li><strong>Attention 配置</strong>：原始 Gemma-2 交替使用 8192 token 的全局注意力和 4096 token 窗口的局部注意力，头维度 $d_{\text{attn}}=256$。Spark Attention（公式 (7)）替换了这两种注意力，局部注意力窗口保持 4096。稀疏度超参数 $k=256$（每个 token 最多关注 256 个 token），低秩预测器维度 $r=128 = d_{\text{attn}}/2$。</li>
 <li><strong>位置编码</strong>：与 Gemma-2 一样使用 Rotary Position Embedding (RoPE)【索引96，Roformer: Enhanced transformer with rotary position embedding+2024+Neurocomputing】，并将其应用于 Spark Attention 中的 $q[:r]$, $q[r:]$, $K_1$ 列向量和 $K_2$ 列向量。</li>
 </ul>

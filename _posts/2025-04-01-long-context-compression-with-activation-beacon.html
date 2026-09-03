@@ -66,7 +66,7 @@ $$[x_{1}, \ldots, x_{n}] \xrightarrow{\text { Partition }}\left[X_{1}, \ldots X_
 <p></p>
 $$X_{i} \xrightarrow{\text { Interleave } B_{i}} X_{i}^{\prime}=\left[x_{1}^{i}, \ldots, x_{\alpha_{i}}^{i},\langle\mathrm{b}\rangle_{1}^{i}, \ldots, x_{w-\alpha_{i}+1}^{i}, \ldots, x_{w}^{i},\langle\mathrm{b}\rangle_{k_{i}}^{i}\right].$$
 
-<p>LLM逐一编码这些块，在自注意力过程中将每个块的上下文信息压缩到相应的信标词元的激活值中。在编码完$X'<em>i$后，我们丢弃所有原始词元$X_i$的激活值，同时累积信标词元$B_i$的激活值。在编码下一个块$X'</em>$的代理。}$时，LLM直接以累积的信标激活值为条件，作为原始上下文$X_{\le i</p>
+<p>LLM逐一编码这些块，在自注意力过程中将每个块的上下文信息压缩到相应的信标词元的激活值中。在编码完$X'_i$后，我们丢弃所有原始词元$X_i$的激活值，同时累积信标词元$B_i$的激活值。在编码下一个块$X'_{i+1}$时，LLM直接以累积的信标激活值为条件，作为原始上下文$X_{\le i}$的代理。</p>
 <p><strong>渐进式工作流的优势</strong>。这种渐进式工作流对压缩质量和运行效率都有益。一方面，它能够彻底地提炼长上下文中的复杂信息，并允许压缩超过LLM上下文窗口的输入。另一方面，通过缓存和重用信标词元的激活值，它避免了冗余计算，并允许在多轮交互中增量更新压缩结果。</p>
 <p><strong>编码与压缩的具体实现</strong>。如图2所示，Activation Beacon复用了LLM的所有模块，仅对自注意力机制进行了轻微修改。不失一般性，对于第$i$个块$X'$，编码过程可以写为：</p>
 <p></p>
@@ -91,7 +91,7 @@ Q^b = W_Q^b H^b, \quad &amp;&amp; K^b = W_K^b H^b, \quad &amp;&amp; V^b = W_V^b 
 
 \end{aligned}$$
 
-<p>其中，$W^r_<em>$是LLM原始的投影矩阵，$W^b_</em>$是新引入的仅用于处理信标词元的矩阵。之后，原始词元和信标词元的查询/键/值状态被散布回去，以获得$Q, K, V \in R^{(w+k_i) \times D}$：</p>
+<p>其中，$W^r_*$是LLM原始的投影矩阵，$W^b_*$是新引入的仅用于处理信标词元的矩阵。之后，原始词元和信标词元的查询/键/值状态被散布回去，以获得$Q, K, V \in R^{(w+k_i) \times D}$：</p>
 <p></p>
 $$ \boldsymbol{Q}[\mathbb{I}^{r}] = \boldsymbol{Q}^{r}, \boldsymbol{Q}[\mathbb{I}^{b}] = \boldsymbol{Q}^{b}; \quad \boldsymbol{K}[\mathbb{I}^{r}] = \boldsymbol{K}^{r}, \boldsymbol{K}[\mathbb{I}^{b}] = \boldsymbol{K}^{b}; \quad \boldsymbol{V}[\mathbb{I}^{r}] = \boldsymbol{V}^{r}, \boldsymbol{V}[\mathbb{I}^{b}] = \boldsymbol{V}^{b}. $$
 
@@ -124,7 +124,7 @@ $$\mathrm{FLOPs}^{bcn} = \sum_{i=1}^{\lceil \frac{n}{w} \rceil} F^{Att} \left( \
 $$\min_{\boldsymbol{\Theta}^b}. \sum_{i=2}^{\lceil N/w \rceil} \sum_{j=1}^{w} \operatorname{Pr}(x_j^i \mid \langle \mathrm{b} \rangle_1^1, \dots, \langle \mathrm{b} \rangle_{k_{i-1}}^{i-1}, x_1^i, \dots x_{j-1}^i; \boldsymbol{\Theta}, \boldsymbol{\Theta}^b).$$
 
 <p>$\Theta$表示LLM自身的参数，在整个训练过程中保持固定。$\Theta^b$包括每层信标词元的投影矩阵$W_Q^b, W_K^b, W_V^b$，以及信标词元的词元嵌入$e_{\langle b \rangle}$（我们为所有信标词元使用一个共享嵌入）。训练损失可以从除第一个块中的词元外的所有词元中获得。这种特性带来了高样本效率，最大限度地利用了训练数据。请注意，我们从上述损失中排除了信标词元（将其标签设置为-100），因为它们仅用于压缩。</p>
-<p><strong>无梯度截断的端到端优化</strong>。循环记忆方法（Chevalier et al., 2023; Bulatov et al., 2023）在给定的块数处停止梯度反向传播以提高训练效率。这是因为这些方法依赖于先前块的最后一层输出来编码当前块，这导致计算图随着更多块的参与而加深。相比之下，Activation Beacon仅依赖于先前块的前一层输出（在层$l$对$X'<em>i$的编码仅以在层$l-1$对$X'</em>$的结果为条件），这与任何自回归LLM相同。因此，梯度可以自然地流经所有块，以优化长上下文的压缩效果。</p>
+<p><strong>无梯度截断的端到端优化</strong>。循环记忆方法（Chevalier et al., 2023; Bulatov et al., 2023）在给定的块数处停止梯度反向传播以提高训练效率。这是因为这些方法依赖于先前块的最后一层输出来编码当前块，这导致计算图随着更多块的参与而加深。相比之下，Activation Beacon仅依赖于先前块的前一层输出（在层$l$对$X'_i$的编码仅以在层$l-1$对$X'_{i-1}$的结果为条件），这与任何自回归LLM相同。因此，梯度可以自然地流经所有块，以优化长上下文的压缩效果。</p>
 <p><strong>逐块随机压缩率以增强灵活性</strong>。为了让模型能够灵活支持不同的压缩粒度，在训练期间，第$i$个块的压缩率$\alpha_i$从{2, 4, 8, 16, 32}中随机采样。在推理时，可以根据下游任务的具体效率要求选择一个压缩率，并对所有块保持不变。</p>
 <h2>A4 实验环境与结果</h2>
 <h3>实验环境</h3>

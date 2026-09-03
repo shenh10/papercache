@@ -104,7 +104,7 @@ $\mathcal{A}_{cur}$ 表示当前生成 token 对上下文前缀的注意力分�
 </p>
 $$ \underset{num\_block}{\arg\max} \left( \mathrm{avg} \left[ \sum_{\mathrm{sample}} \sum_{\mathrm{head}} \sum_{i=1}^D \mathrm{cossim}(\mathcal{A}_{full}^i, \mathcal{A}_{\mathcal{T}_F}^i) \right] \right) $$
 <p><br/>
-这里，$\mathcal{A}<em>{full}^i$ 和 $\mathcal{A}</em>^i$ 表示在生成第 $i$ 个 token 时压缩前后对应位置的注意力分布。$D$ 表示生成的 token 总数。对于每个数据集，选择 20% 的样本并分析最佳的 }_F<code>num_block</code>。选择导致最高平均相似度的 <code>num_block</code> 作为最佳聚类拟合。通过为每个数据集应用相应的 <code>num_block</code>，ClusterAttn 能够在细粒度下进行定制的聚类选择，从而实现上下文感知的 KV 缓存压缩。</p>
+这里，$\mathcal{A}_{full}^i$ 和 $\mathcal{A}_{\mathcal{T}_F}^i$ 表示在生成第 $i$ 个 token 时压缩前后对应位置的注意力分布。$D$ 表示生成的 token 总数。对于每个数据集，选择 20% 的样本并分析最佳的 <code>num_block</code>。选择导致最高平均相似度的 <code>num_block</code> 作为最佳聚类拟合。通过为每个数据集应用相应的 <code>num_block</code>，ClusterAttn 能够在细粒度下进行定制的聚类选择，从而实现上下文感知的 KV 缓存压缩。</p>
 <p><strong>将聚类与观察窗口拼接作为压缩后的提示词缓存</strong>。在使用聚类模式压缩上下文前缀之后，最后一步是将聚类与观察窗口结合起来，获得提示词最终的压缩 KV 缓存。这是因为聚类代表了上下文前缀的压缩，并不包含观察窗口内用户的查询，而这对于模型的响应至关重要。此外，先前的研究【Efficient streaming language models with attention sinks + 2024 + ICLR】、【H2O: heavy-hitter oracle for efficient generative inference of large language models + 2023 + NeurIPS】表明，最近的 tokens 对于后续生成的质量至关重要，因为它们确保了模型的稳定性和流畅性。</p>
 <hr/>
 <h3>实验环境</h3>

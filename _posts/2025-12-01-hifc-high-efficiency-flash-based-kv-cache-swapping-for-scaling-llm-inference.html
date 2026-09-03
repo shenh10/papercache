@@ -67,87 +67,121 @@ $$
 { \mathrm { M e m E x p C o s t } } = { \mathrm { C a p E x } } + \left( { \mathrm { P o w e r } } \times 2 4 \times 3 6 5 \times { \mathrm { Y e a r s } } \times { \mathrm { P U E } } \times { \frac { { \mathrm { E n e r g y C o s t } } } { 1 0 0 0 } } \right)
 $$
 
-<p><strong>三年期成本对比分析</strong>：评估了三种KV缓存存储配置的3年内存扩展成本：DRAM（DDR4）、企业级TLC SSD和HiFC（pSLC SSD）。HiFC配置的资本支出比DRAM减少了$3.6 \times$，功耗降低了$12.8 \times$。这导致总内存扩展成本仅为$136，比基于DRAM的方法低$4.5 \times$。因为直接使用商用SSD的TLC区域会引入性能下降和耐用性降低，从而导致成本效率低下。HiFC通过选择支持pSLC区域的商用SSD并专门在该区域内运行（占选定SSD总容量的$20\%$）来解决此问题。这种方法将驱动器的使用寿命延长了高达$8 \times$并确保了稳定的性能。
-
-## 实验环境
-
-* **模型架构与参数**：主要采用DeepSeek-R1-Distill-Qwen-32B（固定配置基准测试），同时扩展评估了DeepSeek-Llama-8B、DeepSeek-Qwen-14B和Mistral-7B。
-* **数据集名称、规模及用途**：使用LongBench中的多样化数据集，包括Qasper（平均长度3.6k）、GovReport（平均长度8.7k）和NarrativeQA（平均长度18.4k），用于验证在不同上下文长度下的鲁棒性。
-* **硬件配置**：
-    * 服务器/CPU：Dell PowerEdge R750xa, 2 $\times$ Intel Xeon Silver 4310。
-    * GPU：2 $\times$ NVIDIA A100 (80 GiB)。
-    * 内存：256 GiB DDR4。
-    * 系统存储：Samsung PM893, 7.68 TB SATA eSSD。
-    * 闪存缓存（用于HiFC）：1 TB NVMe Gen4 SSD (配置为pSLC缓存: 200 GiB)。
-
-* **软件配置**：操作系统为Ubuntu 22.04.5 LTS。基于vLLM v0.6.6框架实现，依赖CUDA Toolkit 12.3, PyTorch 2.5.1, GDS Release 1.8.1.2。
-
-## 实验结果
-
-1. **性能与KV缓存交换对比实验**：
-    * *实验内容*：在批处理大小为10的情况下，通过逐步增加输入和输出序列长度，比较HiFC和DRAM交换对系统性能的影响。
-    * *实验结果与分析*：图3(a)显示，随着输入长度增加，预填充阶段产生更多KV缓存，但解码阶段保持活跃的序列减少，导致并发度下降，吞吐量随之下降，交换次数在3k token左右达到峰值。图3(b)表明，增加输出长度会在解码阶段扩展KV缓存，初期允许更高的并发度，但在5k token后，由于交换活动激增，吞吐量逐渐下降。在此高I/O负载条件下，HiFC实现了与DRAM几乎相同的吞吐量，验证了其在维持高吞吐量的同时保持相当延迟的能力（引自Fig 3）。
-
-2. **硬件拓扑的可扩展性实验**：
-    * *实验内容*：在不同GPU与SSD比例（1:1, 2:1, 2:2）下测试HiFC的硬件可扩展性。使用DeepSeek-R1-Distill-Llama-8B，批处理大小200，输入8k，输出1k。
-    * *实验结果与分析*：表2显示，1:1配置下HiFC性能与GPU+DRAM基线相当。在数据并行（DP）的2:1配置下，性能相较基线提升$2 \times$，未观察到I/O瓶颈。在2:2配置下，不仅保持了$2 \times$的性能增益，同时将缓存请求总容量翻倍。这证实了HiFC能够高效扩展。
-
-3. **跨多样化模型和数据集的鲁棒性实验**：
-    * *实验内容*：在Qasper、GovReport、NarrativeQA数据集上，使用DS-Llama-8B、DS-Qwen-14B、Mistral-7B评估吞吐量。
-    * *实验结果与分析*：表3显示，HiFC在所有测试模型和数据集上保持了与基于DRAM交换相似的性能。吞吐量差异在$1 - 2\%$以内，证明了HiFC在实际多样化推理环境中的可靠性和效率。
-
-4. **KV交换对吞吐量的影响实验**：
-    * *实验内容*：固定批处理大小为20，上下文长度5k，逐渐增加并发流水线序列数量，观察交换行为。分配给KV缓存的内存为9.1 GiB。
-    * *实验结果与分析*：图4显示，当并发序列超过8个时，KV缓存占用超过9.1 GiB，触发交换操作。尽管交换次数增加，HiFC和DRAM系统的吞吐量在达到12个序列前持续上升并最终饱和。这表明交换开销被有效吸收，系统变为计算受限而非I/O受限，HiFC并未产生负面性能影响（引自Fig 4）。
-
-5. **KV块管理验证实验**：
-    * *实验内容*：对比不同空闲块分配策略（追加策略与左追加策略）对换出操作期间FC KV块索引分布的影响。
-    * *实验结果与分析*：图5显示，HiFC提出的追加策略使块呈顺序分配（类似LRU模式），而左追加策略在500次换出后变为高度非顺序的随机I/O模式。表4通过SMART日志验证，HiFC的换出操作实现了1.02的写入放大因子（WAF），比SSD规格（1.40）低$27\%$。这强调了顺序块分配对提高吞吐量和减少闪存磨损的重要性。
-
-6. **块大小对交换延迟隐藏的影响实验**：
-    * *实验内容*：在长上下文工作负载（上下文10k，批处理10）下，比较不同块大小（16到256 tokens）对HiFC和DRAM交换性能的影响。
-    * *实验结果与分析*：图6(a)显示DRAM的原始交换吞吐量始终是HiFC的两倍以上。图6(b)显示两者产生的交换事件数量完全一致。图6(c)证实，尽管存在原始带宽差距，HiFC的端到端吞吐量与DRAM几乎相同，因为延迟被并发序列执行有效摊销。64个token的块大小是平衡交换效率和碎片的最佳选择（引自Fig 6）。
-
-7. **I/O吞吐量对比实验**：
-    * *实验内容*：使用gdsio工具评估不同I/O类型和LBA范围对SSD性能的影响。
-    * *实验结果与分析*：表5显示，pSLC区域内的顺序读写提供一致的高吞吐量（约4.7-4.9 GiB/s），而随机写入因垃圾回收等内部机制显著变慢（1.617 GiB/s）。当写入超出pSLC容量时，性能也会大幅下降。这证明将KV缓存访问结构化为顺序I/O是实现高性能闪存交换的关键。
-
-8. **KV缓存初始化的可扩展性实验**：
-    * *实验内容*：对比HiFC和DRAM在不同KV缓存大小（10 GiB至100 GiB）下的LLM会话初始化时间。
-    * *实验结果与分析*：表6显示，无论缓存大小如何，HiFC的初始化延迟始终保持在32-34秒左右。相反，DRAM的初始化时间随缓存大小显著增加，在100 GiB时达到90秒（HiFC实现了$2.81 \times$的加速）。这是因为HiFC直接使用预生成的闪存缓存文件，而DRAM每次初始化都必须为每个KV块分配张量。</p>
+<p><strong>三年期成本对比分析</strong>：评估了三种KV缓存存储配置的3年内存扩展成本：DRAM（DDR4）、企业级TLC SSD和HiFC（pSLC SSD）。HiFC配置的资本支出比DRAM减少了$3.6 \times$，功耗降低了$12.8 \times$。这导致总内存扩展成本仅为$136，比基于DRAM的方法低$4.5 \times$。因为直接使用商用SSD的TLC区域会引入性能下降和耐用性降低，从而导致成本效率低下。HiFC通过选择支持pSLC区域的商用SSD并专门在该区域内运行（占选定SSD总容量的$20\%$）来解决此问题。这种方法将驱动器的使用寿命延长了高达$8 \times$并确保了稳定的性能。</p>
+<h2>实验环境</h2>
+<ul>
+<li><strong>模型架构与参数</strong>：主要采用DeepSeek-R1-Distill-Qwen-32B（固定配置基准测试），同时扩展评估了DeepSeek-Llama-8B、DeepSeek-Qwen-14B和Mistral-7B。</li>
+<li><strong>数据集名称、规模及用途</strong>：使用LongBench中的多样化数据集，包括Qasper（平均长度3.6k）、GovReport（平均长度8.7k）和NarrativeQA（平均长度18.4k），用于验证在不同上下文长度下的鲁棒性。</li>
+<li>
+<p><strong>硬件配置</strong>：</p>
+<ul>
+<li>服务器/CPU：Dell PowerEdge R750xa, 2 $\times$ Intel Xeon Silver 4310。</li>
+<li>GPU：2 $\times$ NVIDIA A100 (80 GiB)。</li>
+<li>内存：256 GiB DDR4。</li>
+<li>系统存储：Samsung PM893, 7.68 TB SATA eSSD。</li>
+<li>闪存缓存（用于HiFC）：1 TB NVMe Gen4 SSD (配置为pSLC缓存: 200 GiB)。</li>
+</ul>
+</li>
+<li>
+<p><strong>软件配置</strong>：操作系统为Ubuntu 22.04.5 LTS。基于vLLM v0.6.6框架实现，依赖CUDA Toolkit 12.3, PyTorch 2.5.1, GDS Release 1.8.1.2。</p>
+</li>
+</ul>
+<h2>实验结果</h2>
+<ol>
+<li>
+<p><strong>性能与KV缓存交换对比实验</strong>：</p>
+<ul>
+<li><em>实验内容</em>：在批处理大小为10的情况下，通过逐步增加输入和输出序列长度，比较HiFC和DRAM交换对系统性能的影响。</li>
+<li><em>实验结果与分析</em>：图3(a)显示，随着输入长度增加，预填充阶段产生更多KV缓存，但解码阶段保持活跃的序列减少，导致并发度下降，吞吐量随之下降，交换次数在3k token左右达到峰值。图3(b)表明，增加输出长度会在解码阶段扩展KV缓存，初期允许更高的并发度，但在5k token后，由于交换活动激增，吞吐量逐渐下降。在此高I/O负载条件下，HiFC实现了与DRAM几乎相同的吞吐量，验证了其在维持高吞吐量的同时保持相当延迟的能力（引自Fig 3）。</li>
+</ul>
+</li>
+<li>
+<p><strong>硬件拓扑的可扩展性实验</strong>：</p>
+<ul>
+<li><em>实验内容</em>：在不同GPU与SSD比例（1:1, 2:1, 2:2）下测试HiFC的硬件可扩展性。使用DeepSeek-R1-Distill-Llama-8B，批处理大小200，输入8k，输出1k。</li>
+<li><em>实验结果与分析</em>：表2显示，1:1配置下HiFC性能与GPU+DRAM基线相当。在数据并行（DP）的2:1配置下，性能相较基线提升$2 \times$，未观察到I/O瓶颈。在2:2配置下，不仅保持了$2 \times$的性能增益，同时将缓存请求总容量翻倍。这证实了HiFC能够高效扩展。</li>
+</ul>
+</li>
+<li>
+<p><strong>跨多样化模型和数据集的鲁棒性实验</strong>：</p>
+<ul>
+<li><em>实验内容</em>：在Qasper、GovReport、NarrativeQA数据集上，使用DS-Llama-8B、DS-Qwen-14B、Mistral-7B评估吞吐量。</li>
+<li><em>实验结果与分析</em>：表3显示，HiFC在所有测试模型和数据集上保持了与基于DRAM交换相似的性能。吞吐量差异在$1 - 2\%$以内，证明了HiFC在实际多样化推理环境中的可靠性和效率。</li>
+</ul>
+</li>
+<li>
+<p><strong>KV交换对吞吐量的影响实验</strong>：</p>
+<ul>
+<li><em>实验内容</em>：固定批处理大小为20，上下文长度5k，逐渐增加并发流水线序列数量，观察交换行为。分配给KV缓存的内存为9.1 GiB。</li>
+<li><em>实验结果与分析</em>：图4显示，当并发序列超过8个时，KV缓存占用超过9.1 GiB，触发交换操作。尽管交换次数增加，HiFC和DRAM系统的吞吐量在达到12个序列前持续上升并最终饱和。这表明交换开销被有效吸收，系统变为计算受限而非I/O受限，HiFC并未产生负面性能影响（引自Fig 4）。</li>
+</ul>
+</li>
+<li>
+<p><strong>KV块管理验证实验</strong>：</p>
+<ul>
+<li><em>实验内容</em>：对比不同空闲块分配策略（追加策略与左追加策略）对换出操作期间FC KV块索引分布的影响。</li>
+<li><em>实验结果与分析</em>：图5显示，HiFC提出的追加策略使块呈顺序分配（类似LRU模式），而左追加策略在500次换出后变为高度非顺序的随机I/O模式。表4通过SMART日志验证，HiFC的换出操作实现了1.02的写入放大因子（WAF），比SSD规格（1.40）低$27\%$。这强调了顺序块分配对提高吞吐量和减少闪存磨损的重要性。</li>
+</ul>
+</li>
+<li>
+<p><strong>块大小对交换延迟隐藏的影响实验</strong>：</p>
+<ul>
+<li><em>实验内容</em>：在长上下文工作负载（上下文10k，批处理10）下，比较不同块大小（16到256 tokens）对HiFC和DRAM交换性能的影响。</li>
+<li><em>实验结果与分析</em>：图6(a)显示DRAM的原始交换吞吐量始终是HiFC的两倍以上。图6(b)显示两者产生的交换事件数量完全一致。图6(c)证实，尽管存在原始带宽差距，HiFC的端到端吞吐量与DRAM几乎相同，因为延迟被并发序列执行有效摊销。64个token的块大小是平衡交换效率和碎片的最佳选择（引自Fig 6）。</li>
+</ul>
+</li>
+<li>
+<p><strong>I/O吞吐量对比实验</strong>：</p>
+<ul>
+<li><em>实验内容</em>：使用gdsio工具评估不同I/O类型和LBA范围对SSD性能的影响。</li>
+<li><em>实验结果与分析</em>：表5显示，pSLC区域内的顺序读写提供一致的高吞吐量（约4.7-4.9 GiB/s），而随机写入因垃圾回收等内部机制显著变慢（1.617 GiB/s）。当写入超出pSLC容量时，性能也会大幅下降。这证明将KV缓存访问结构化为顺序I/O是实现高性能闪存交换的关键。</li>
+</ul>
+</li>
+<li>
+<p><strong>KV缓存初始化的可扩展性实验</strong>：</p>
+<ul>
+<li><em>实验内容</em>：对比HiFC和DRAM在不同KV缓存大小（10 GiB至100 GiB）下的LLM会话初始化时间。</li>
+<li><em>实验结果与分析</em>：表6显示，无论缓存大小如何，HiFC的初始化延迟始终保持在32-34秒左右。相反，DRAM的初始化时间随缓存大小显著增加，在100 GiB时达到90秒（HiFC实现了$2.81 \times$的加速）。这是因为HiFC直接使用预生成的闪存缓存文件，而DRAM每次初始化都必须为每个KV块分配张量。</li>
+</ul>
+</li>
+</ol>
 <h2>结论</h2>
-<p>本文介绍了HiFC，这是一种新颖的无DRAM架构，旨在为大上下文LLM推理高效地提供KV缓存内存扩展。HiFC将传统的基于DRAM的交换替换为支持GDS的SSD（利用其伪SLC区域），从而创建了直接的GPU到SSD数据传输路径，消除了中间主机内存瓶颈。实验证明，HiFC保持了与传统DRAM交换方法相媲美的推理吞吐量。此外，广泛的验证确认这一优势在多样化的模型、数据集乃至多GPU扩展场景中均成立，突显了HiFC的鲁棒性和普遍适用性。对于长上下文和多批处理场景，vLLM的序列流水线调度器与HiFC优化的闪存缓存协同工作，有效管理KV缓存交换并最小化开销。同时，用1 TiB pSLC配置的SSD替代$128 \mathrm { G i B }$的DRAM，使三年期内存扩展成本降低了约五倍。总而言之，HiFC为可扩展的LLM推理提供了一条经济可行且高效的途径，尤其在大上下文和大批量推理场景中大有裨益。未来的工作计划探索混合闪存-DRAM缓存方案，以在各种工作负载下保持稳定的性能。
-
-## 附录
-
-**与InstInfer的比较**：虽然HiFC和InstInfer【13】都致力于超越DRAM扩展KV缓存，但它们基于根本不同的设计原则。InstInfer是一种硬件专用解决方案，依赖计算存储驱动器（CSD）执行存储内注意力处理以缓解PCIe瓶颈。相反，HiFC是专为广泛采用而设计的通用软件解决方案，在vLLM框架内利用商用NVMe SSD和GPU。
-
-* **成本与可访问性**：HiFC使用现成的NVMe SSD（例如Gen4 1TB约$136），而InstInfer需要专用的CSD（如二手SmartSSD 4TB约$2,526）。这使得HiFC成为大规模部署更经济的选择（表7）。
-* **延迟与吞吐量优化**：HiFC侧重于通过vLLM的流水线感知调度隐藏I/O延迟，并使用GDS最大化带宽。InstInfer则利用CSD的计算能力直接在存储设备上处理注意力机制。操作上的关键区别在于，HiFC仅在HBM耗尽时交换KV块，而InstInfer将整个KV缓存驻留在CSD中（表8）。
-* **系统兼容性与通用性**：HiFC作为软件级解决方案，无缝集成到vLLM中，兼容任何支持GDS的GPU和NVMe SSD。InstInfer依赖硬件，需要修改版的FlexGen框架和特定驱动程序（表9）。
-
-**与其他卸载系统的比较（AttentionStore和Mooncake）**：AttentionStore【36】提出了针对多轮对话工作负载优化的DRAM/SSD缓存层级，使用DRAM作为主缓存以最小化SSD访问延迟。Mooncake【27】引入了解耦架构，用于跨集群共享KV缓存，主要针对大批量离线推理。相反，HiFC设计为无DRAM的在线推理解决方案，利用GDS最大化I/O带宽，并通过vLLM调度器隐藏I/O延迟（表10）。
-
-**确定闪存缓存字节偏移量**：为了支持追加分配策略并实现顺序I/O，FC块必须与SSD物理4KB LBA格式对齐。HiFC预计算并存储针对每一层的KV类型特定偏移量查找表，将其直接传递给GDS API。
-* **计算公式**：单块大小（字节）为 ${ \mathsf { b l o c k _ s i z e _ b y t e s } } = H \times S \times D \times T$。层偏移量为 $l \times ( 2 \times B \times \mathrm { b l o c k _ s i z e _ b y t e s } )$。层内Key区域偏移量为 $k \times ( B \times { \mathrm { b l o c k } } _ { - } { \mathrm { s i z e } _ { - } { \mathrm { b y t e s } } } )$（其中k=0），Value区域偏移量为 $v \times ( B \times { \mathrm { b l o c k } } _ { - } { \mathrm { s i z e } _ { - } { \mathrm { b y t e s } } } )$（其中v=1）。某层的总字节绝对偏移量为层偏移量加上对应的Key/Value类型偏移量。表11展示了DeepSeek-Qwen-32B模型的具体字节偏移计算示例。
-
-**内存扩展成本分析与未来预测**：
-* **更新的3年内存扩展成本分析（2025年下半年）**：使用最新市场数据重新评估，DRAM（128 GiB，单价$5.06/GiB）的3年总成本为$729，而HiFC（Gen4 pSLC 1024 GiB，单价$0.10/GiB）为$120。成本差距扩大，DRAM方案目前比HiFC昂贵$6.1 \times$（表12）。
-* **内存类型及价格趋势预测（2025-2027）**：预测显示，尽管下一代GPU需要昂贵的DDR5内存，但其降价速度将慢于数据中心SSD。由于HiFC避免了高成本内存，其成本优势将在未来几年变得更加显著（表13）。
-
-**通过pSLC SSD提升总写入字节数（TBW）**：
-* **理论耐用性提升**：官方TLC模式下，SSD保证750 TBW（假设约3,000 P/E周期）。在pSLC模式下，每个单元仅编程1位，耐用性提升至约30,000 P/E周期。如果仅固定使用200 GiB的逻辑块区域，理论最大TBW为 $30,000 \times 200 \mathrm { G i B } = 6,000 \mathrm { T i B }$。这表明在SLC专属模式下，SSD可承受的写入量是官方保证的$8 \times$（表14）。
-* **实证耐用性分析与寿命验证**：在A100 GPU和GovReport数据集的持续负载测试中，每天总KV写入量为1.98 TiB。根据公式 ${ \mathrm { L i f e t i m e } } = \frac { \mathrm { p S L C ~ T B W } } { \mathrm { T o t a l ~ K V ~ W r i t t e n ~ p e r ~ D a y } \times 3 6 5 }$，预测SSD的寿命约为8.3年（表15）。这远超GPU典型的3年服务寿命，确保存储组件不会成为生产环境中的频繁故障点。
-
-**HiFC交换的延迟影响分析**：
-* **实验设置与结果**：在极高请求负载的延迟敏感场景下（HBM限制为4 GiB），仅使用GPU会导致OOM。与基于DRAM的交换系统相比，HiFC实现了高$5\%$的吞吐量（182 vs. 172 tokens/s）和低$7\%$的平均延迟（5.4s vs. 5.8s）（表19）。这证明HiFC通过GDS路径避免了DRAM争用瓶颈，并通过流水线重叠成功隐藏了交换延迟。
-
-**基于流水线的交换开销感知模型**：
-* **理论模型**：在深度流水线中，实际吞吐量常低于理想吞吐量，产生吞吐量缺口 $\Delta _ { \mathrm { T P S } } = \mathrm { T P S } _ { \mathrm { i d e a l } } - \mathrm { T P S } _ { \mathrm { t e s t } }$。这转化为流水线可容忍的停顿预算 $T _ { \mathrm { g a p } } = \Delta _ { \mathrm { T P S } } T _ { \mathrm { l a t } }$。闪存交换延迟为 $T _ { \mathrm { s w a p } } = T _ { \mathrm { f i x } } + \frac { N _ { \mathrm { s w a p } } B _ { \mathrm { s i z e } } s _ { \mathrm { t o k } } } { { \mathrm { B W } _ { \mathrm { F l a s h } } } }$。仅当 $T _ { \mathrm { s w a p } } &gt; T _ { \mathrm { g a p } }$ 时，交换开销才会导致性能下降。
-* **实证验证**：表20显示，即使一次交换引入了$266 \mathrm { m s }$的闪存延迟，但由于流水线已经存在$2.07 \mathrm { s }$的停顿预算（$T _ { \mathrm { g a p } }$），该交换延迟被完全吸收，未观察到额外的性能下降。
-
-**写入放大因子（WAF）分析**：
-* **WAF计算**：根据SMART日志，HiFC换出请求的主机写入量为232.5 GiB，而实际写入NAND的数据量通过公式 $\mathrm { W A F } = \frac { \mathrm { N A N D ~ W r i t e s } } { \mathrm { H o s t ~ W r i t e s } }$ 计算得出。结果WAF约为1.02（表21）。这比SSD规格中典型的随机读写WAF（1.4）低了$27\%$，表明HiFC生成的大规模顺序写入模式极大地提高了I/O效率并有利于闪存寿命。</p>
+<p>本文介绍了HiFC，这是一种新颖的无DRAM架构，旨在为大上下文LLM推理高效地提供KV缓存内存扩展。HiFC将传统的基于DRAM的交换替换为支持GDS的SSD（利用其伪SLC区域），从而创建了直接的GPU到SSD数据传输路径，消除了中间主机内存瓶颈。实验证明，HiFC保持了与传统DRAM交换方法相媲美的推理吞吐量。此外，广泛的验证确认这一优势在多样化的模型、数据集乃至多GPU扩展场景中均成立，突显了HiFC的鲁棒性和普遍适用性。对于长上下文和多批处理场景，vLLM的序列流水线调度器与HiFC优化的闪存缓存协同工作，有效管理KV缓存交换并最小化开销。同时，用1 TiB pSLC配置的SSD替代$128 \mathrm { G i B }$的DRAM，使三年期内存扩展成本降低了约五倍。总而言之，HiFC为可扩展的LLM推理提供了一条经济可行且高效的途径，尤其在大上下文和大批量推理场景中大有裨益。未来的工作计划探索混合闪存-DRAM缓存方案，以在各种工作负载下保持稳定的性能。</p>
+<h2>附录</h2>
+<p><strong>与InstInfer的比较</strong>：虽然HiFC和InstInfer【13】都致力于超越DRAM扩展KV缓存，但它们基于根本不同的设计原则。InstInfer是一种硬件专用解决方案，依赖计算存储驱动器（CSD）执行存储内注意力处理以缓解PCIe瓶颈。相反，HiFC是专为广泛采用而设计的通用软件解决方案，在vLLM框架内利用商用NVMe SSD和GPU。</p>
+<ul>
+<li><strong>成本与可访问性</strong>：HiFC使用现成的NVMe SSD（例如Gen4 1TB约$136），而InstInfer需要专用的CSD（如二手SmartSSD 4TB约$2,526）。这使得HiFC成为大规模部署更经济的选择（表7）。</li>
+<li><strong>延迟与吞吐量优化</strong>：HiFC侧重于通过vLLM的流水线感知调度隐藏I/O延迟，并使用GDS最大化带宽。InstInfer则利用CSD的计算能力直接在存储设备上处理注意力机制。操作上的关键区别在于，HiFC仅在HBM耗尽时交换KV块，而InstInfer将整个KV缓存驻留在CSD中（表8）。</li>
+<li><strong>系统兼容性与通用性</strong>：HiFC作为软件级解决方案，无缝集成到vLLM中，兼容任何支持GDS的GPU和NVMe SSD。InstInfer依赖硬件，需要修改版的FlexGen框架和特定驱动程序（表9）。</li>
+</ul>
+<p><strong>与其他卸载系统的比较（AttentionStore和Mooncake）</strong>：AttentionStore【36】提出了针对多轮对话工作负载优化的DRAM/SSD缓存层级，使用DRAM作为主缓存以最小化SSD访问延迟。Mooncake【27】引入了解耦架构，用于跨集群共享KV缓存，主要针对大批量离线推理。相反，HiFC设计为无DRAM的在线推理解决方案，利用GDS最大化I/O带宽，并通过vLLM调度器隐藏I/O延迟（表10）。</p>
+<p><strong>确定闪存缓存字节偏移量</strong>：为了支持追加分配策略并实现顺序I/O，FC块必须与SSD物理4KB LBA格式对齐。HiFC预计算并存储针对每一层的KV类型特定偏移量查找表，将其直接传递给GDS API。</p>
+<ul>
+<li><strong>计算公式</strong>：单块大小（字节）为 ${ \mathsf { b l o c k _ s i z e _ b y t e s } } = H \times S \times D \times T$。层偏移量为 $l \times ( 2 \times B \times \mathrm { b l o c k _ s i z e _ b y t e s } )$。层内Key区域偏移量为 $k \times ( B \times { \mathrm { b l o c k } } _ { - } { \mathrm { s i z e } _ { - } { \mathrm { b y t e s } } } )$（其中k=0），Value区域偏移量为 $v \times ( B \times { \mathrm { b l o c k } } _ { - } { \mathrm { s i z e } _ { - } { \mathrm { b y t e s } } } )$（其中v=1）。某层的总字节绝对偏移量为层偏移量加上对应的Key/Value类型偏移量。表11展示了DeepSeek-Qwen-32B模型的具体字节偏移计算示例。</li>
+</ul>
+<p><strong>内存扩展成本分析与未来预测</strong>：</p>
+<ul>
+<li><strong>更新的3年内存扩展成本分析（2025年下半年）</strong>：使用最新市场数据重新评估，DRAM（128 GiB，单价$5.06/GiB）的3年总成本为$729，而HiFC（Gen4 pSLC 1024 GiB，单价$0.10/GiB）为$120。成本差距扩大，DRAM方案目前比HiFC昂贵$6.1 \times$（表12）。</li>
+<li><strong>内存类型及价格趋势预测（2025-2027）</strong>：预测显示，尽管下一代GPU需要昂贵的DDR5内存，但其降价速度将慢于数据中心SSD。由于HiFC避免了高成本内存，其成本优势将在未来几年变得更加显著（表13）。</li>
+</ul>
+<p><strong>通过pSLC SSD提升总写入字节数（TBW）</strong>：</p>
+<ul>
+<li><strong>理论耐用性提升</strong>：官方TLC模式下，SSD保证750 TBW（假设约3,000 P/E周期）。在pSLC模式下，每个单元仅编程1位，耐用性提升至约30,000 P/E周期。如果仅固定使用200 GiB的逻辑块区域，理论最大TBW为 $30,000 \times 200 \mathrm { G i B } = 6,000 \mathrm { T i B }$。这表明在SLC专属模式下，SSD可承受的写入量是官方保证的$8 \times$（表14）。</li>
+<li><strong>实证耐用性分析与寿命验证</strong>：在A100 GPU和GovReport数据集的持续负载测试中，每天总KV写入量为1.98 TiB。根据公式 ${ \mathrm { L i f e t i m e } } = \frac { \mathrm { p S L C ~ T B W } } { \mathrm { T o t a l ~ K V ~ W r i t t e n ~ p e r ~ D a y } \times 3 6 5 }$，预测SSD的寿命约为8.3年（表15）。这远超GPU典型的3年服务寿命，确保存储组件不会成为生产环境中的频繁故障点。</li>
+</ul>
+<p><strong>HiFC交换的延迟影响分析</strong>：</p>
+<ul>
+<li><strong>实验设置与结果</strong>：在极高请求负载的延迟敏感场景下（HBM限制为4 GiB），仅使用GPU会导致OOM。与基于DRAM的交换系统相比，HiFC实现了高$5\%$的吞吐量（182 vs. 172 tokens/s）和低$7\%$的平均延迟（5.4s vs. 5.8s）（表19）。这证明HiFC通过GDS路径避免了DRAM争用瓶颈，并通过流水线重叠成功隐藏了交换延迟。</li>
+</ul>
+<p><strong>基于流水线的交换开销感知模型</strong>：</p>
+<ul>
+<li><strong>理论模型</strong>：在深度流水线中，实际吞吐量常低于理想吞吐量，产生吞吐量缺口 $\Delta _ { \mathrm { T P S } } = \mathrm { T P S } _ { \mathrm { i d e a l } } - \mathrm { T P S } _ { \mathrm { t e s t } }$。这转化为流水线可容忍的停顿预算 $T _ { \mathrm { g a p } } = \Delta _ { \mathrm { T P S } } T _ { \mathrm { l a t } }$。闪存交换延迟为 $T _ { \mathrm { s w a p } } = T _ { \mathrm { f i x } } + \frac { N _ { \mathrm { s w a p } } B _ { \mathrm { s i z e } } s _ { \mathrm { t o k } } } { { \mathrm { B W } _ { \mathrm { F l a s h } } } }$。仅当 $T _ { \mathrm { s w a p } } &gt; T _ { \mathrm { g a p } }$ 时，交换开销才会导致性能下降。</li>
+<li><strong>实证验证</strong>：表20显示，即使一次交换引入了$266 \mathrm { m s }$的闪存延迟，但由于流水线已经存在$2.07 \mathrm { s }$的停顿预算（$T _ { \mathrm { g a p } }$），该交换延迟被完全吸收，未观察到额外的性能下降。</li>
+</ul>
+<p><strong>写入放大因子（WAF）分析</strong>：</p>
+<ul>
+<li><strong>WAF计算</strong>：根据SMART日志，HiFC换出请求的主机写入量为232.5 GiB，而实际写入NAND的数据量通过公式 $\mathrm { W A F } = \frac { \mathrm { N A N D ~ W r i t e s } } { \mathrm { H o s t ~ W r i t e s } }$ 计算得出。结果WAF约为1.02（表21）。这比SSD规格中典型的随机读写WAF（1.4）低了$27\%$，表明HiFC生成的大规模顺序写入模式极大地提高了I/O效率并有利于闪存寿命。</li>
+</ul>
 <hr/>
 <p><strong>参考文献引用汇总</strong>：</p>
 <ul><li>【6, Efficient memory management for large language model serving with pagedattention 2023 SOSP】：背景部分引用，说明vLLM中的PagedAttention如何将KV缓存分割为16-128 token的统一块；方法细节及附录中引用，说明将KV缓存卸载到主机DRAM的常规方法。</li><li>【7, FlexGen: High-throughput generative inference of large language models with limited gpu memory 2023 ICML】：背景部分及方法细节引用，说明FlexGen如何将GPU、CPU和NVMe存储视为统一层级进行KV缓存卸载。</li><li>【13, Instinfer: In-storage attention offloading for cost-effective long-context llm inference 2024】：方法细节及附录引用，指出通过主机DRAM和PCIe间接访问SSD会导致带宽受限，并在附录中作为主要对比的硬件专用计算存储驱动器（CSD）方案。</li><li>【15, Nvidia gpudirect storage 2021】：方法细节引用，说明HiFC利用GDS技术将驻留在GPU的KV张量直接传输到SSD以消除中间缓冲。</li><li>【27, Mooncake: Trading more storage for less computation — a KVCache-centric architecture for serving LLM chatbot 2025 FAST】：附录引用，作为一种用于跨集群共享KV缓存的解耦架构对比系统。</li><li>【36, Cost-efficient large language model serving for multi-turn conversations ith cachedattention 2024 USENIX ATC】：附录引用，作为针对多轮对话优化的DRAM/SSD缓存层级对比系统。</li></ul>

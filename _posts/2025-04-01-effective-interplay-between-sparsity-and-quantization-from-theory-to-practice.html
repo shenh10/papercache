@@ -642,7 +642,7 @@ $$\begin{aligned}
 \tilde{\varepsilon}_{q \circ s}(\mathbf{w})_{i}=\begin{cases}-\varepsilon_{q}(\mathbf{w})_{i}, &amp; s(\mathbf{w})_{i}=0 \\ 0, &amp; \text { otherwise }\end{cases}
 \end{aligned}$$
 
-<p>然而，如果先应用量化，块中的某些元素可能会变得相等，导致稀疏操作移除了一个不同的元素集。形式上，如果 $w_i$ 被 s 剪枝但未被 $s \circ q$ 剪枝，则存在一个 $w_j$，$j \neq i$，使得 $q(w)<em>i = q(w)_j$。在这种情况下，$\tilde{\epsilon}_(w)_i = -\epsilon_s(w)_i$ 且 $\tilde{\epsilon}_(w)_j = \epsilon_s(w)_j - \epsilon_q(w)_j$。否则，它只包含被剪枝元素的量化误差。因此，$s \circ q$ 复合的校正向量的幅值通常大于相反顺序的。除了量化误差，校正向量还包含被剪枝的元素，这些元素在数量级上通常更大，除非在一些不太可能的边缘情况下。这导致 $\epsilon_t$ 的总值更大，意味着先应用稀疏性再量化的顺序对于点积是最优的。</em></p>
+<p>然而，如果先应用量化，块中的某些元素可能会变得相等，导致稀疏操作移除了一个不同的元素集。形式上，如果 $w_i$ 被 s 剪枝但未被 $s \circ q$ 剪枝，则存在一个 $w_j$，$j \neq i$，使得 $q(w)_i = q(w)_j$。在这种情况下，$\tilde{\epsilon}_(w)_i = -\epsilon_s(w)_i$ 且 $\tilde{\epsilon}_(w)_j = \epsilon_s(w)_j - \epsilon_q(w)_j$。否则，它只包含被剪枝元素的量化误差。因此，$s \circ q$ 复合的校正向量的幅值通常大于相反顺序的。除了量化误差，校正向量还包含被剪枝的元素，这些元素在数量级上通常更大，除非在一些不太可能的边缘情况下。这导致 $\epsilon_t$ 的总值更大，意味着先应用稀疏性再量化的顺序对于点积是最优的。</p>
 <p><strong>误差项 $\epsilon_i$ 的分析</strong>。项 $\epsilon_i$ 也对额外误差有贡献，它编码了误差向量 $\epsilon_q(x)$ 和 $\epsilon_s(w)$ 之间的相互作用。然而，$\epsilon_i$ 不如 $\epsilon_t$ 重要，因为它包含量化误差，其范数通常比原始块的范数低几个数量级。此外，$\epsilon_i$ 包含稀疏误差，这涉及最小的权重，从而削弱了这一额外误差的重要性。</p>
 <h3>N 结合GPTQ与稀疏性</h3>
 <p><strong>基于幅值的稀疏性与GPTQ</strong>。尽管我们的数学分析没有具体涵盖GPTQ，我们进行了受控实验来评估其在本文背景下的性能。我们将50%的非结构化稀疏性与GPTQ结合应用于OPT-125M模型。</p>

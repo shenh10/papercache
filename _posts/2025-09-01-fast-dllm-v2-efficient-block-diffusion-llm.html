@@ -219,7 +219,7 @@ $$\begin{aligned}
 <ul><li>$\mathcal{M}_{OBC}$ (偏移块因果掩码): 允许 $x_t$ 中的每个加噪 token 关注干净序列 $x_0$ 中先前块的 tokens，从而保持块间的因果条件：</li></ul><div>$$\begin{aligned}
 [M_{OBC}]_{ij} = \begin{cases} 1 &amp; \text{if } j \text{ is in a block before } i \\ 0 &amp; \text{otherwise} \end{cases}
 \end{aligned}$$</div>
-- $\mathcal{M}_{BC}$ (块因果掩码): 允许干净序列 $x_0$ 中的每个 token 关注所有先前和当前块的位置，以促进类似自回归的进程：<div>$$\begin{aligned}
+<ul><li>$\mathcal{M}_{BC}$ (块因果掩码): 允许干净序列 $x_0$ 中的每个 token 关注所有先前和当前块的位置，以促进类似自回归的进程：</li></ul><div>$$\begin{aligned}
 [M_{BC}]_{ij} = \begin{cases} 1 &amp; \text{if } j \text{ is in the same or an earlier block as } i \\ 0 &amp; \text{otherwise} \end{cases}
 \end{aligned}$$</div>
 这个组合掩码允许统一处理掩码 token 预测、同时以先前的已知上下文为条件，并通过块并行性实现结构化的训练效率。<p></p>
