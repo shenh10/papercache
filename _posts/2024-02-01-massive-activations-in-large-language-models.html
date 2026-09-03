@@ -102,12 +102,11 @@ title: Massive Activations in Large Language Models
 <p><strong>Mixtral-8x7B的位置</strong>。对于这个模型，巨量激活位于两个特征维度，即2070和3398。在序列维度上，我们发现它们与起始词元、分隔符词元以及某些词语词元相关联，例如词元“and”和“of”。这些词语词元往往是连词和介词，表示相对较少的语义。图3展示了Mixtral-8x7B中的这些模式。通常，对于长度为4096个词元的输入，这些词元主要位于序列的早期部分。</p>
 </li>
 </ul>
-<p><strong>位置总结</strong>。我们将对上述三个模型之外的LLMs的发现进行总结，并根据经验观察将其他模型进行分类。<br/>
-- <strong>特征维度</strong>：巨量激活始终存在于极少数固定的维度中。<br/>
-- <strong>序列维度</strong>：我们根据巨量激活的位置将LLMs分为三类：<br/>
-    a) <strong>仅起始词元</strong>：包括LLaMA2-13B, MPT和GPT-2。<br/>
-    b) <strong>起始词元和第一个“强”分隔符词元</strong>（即“.”或“\n”）：包括LLaMA2-7B和LLaMA2-7B-Chat。<br/>
-    c) <strong>起始词元、分隔符词元</strong>（如“.”、“\n”、“’”或“,”）<strong>以及某些弱语义词元</strong>（如“and”、“from”、“of”或“2”）：包括LLaMA2-70B, Mistral-7B, Mixtral-8x7B, Falcon-40B和Phi-2。</p>
+<p><strong>位置总结</strong>。我们将对上述三个模型之外的LLMs的发现进行总结，并根据经验观察将其他模型进行分类。</p>
+<ul><li><strong>特征维度</strong>：巨量激活始终存在于极少数固定的维度中。</li><li><strong>序列维度</strong>：我们根据巨量激活的位置将LLMs分为三类：<br/>
+a) <strong>仅起始词元</strong>：包括LLaMA2-13B, MPT和GPT-2。<br/>
+b) <strong>起始词元和第一个“强”分隔符词元</strong>（即“.”或“\n”）：包括LLaMA2-7B和LLaMA2-7B-Chat。<br/>
+c) <strong>起始词元、分隔符词元</strong>（如“.”、“\n”、“’”或“,”）<strong>以及某些弱语义词元</strong>（如“and”、“from”、“of”或“2”）：包括LLaMA2-70B, Mistral-7B, Mixtral-8x7B, Falcon-40B和Phi-2。</li></ul>
 <h3 id="23">2.3 与离群特征的区别</h3>
 <p><strong>区分巨量激活与离群特征</strong>。在了解了巨量激活的性质和位置之后，我们现在讨论它们与离群特征（outlier features）之间的区别，后者是LLMs中一个看似相似的现象。Dettmers等人【索引14，LLM.int8(): 8-bit matrix multiplication for transformers at scale+2022+NeurIPS】已经确定了LLMs中存在以大幅值为特征的离群特征。</p>
 <p><strong>概念上的差异</strong>。从概念上讲，一个巨量激活是一个标量值，由序列和特征维度共同决定；相比之下，一个离群特征是一个向量，对应于所有词元的激活值。此外，巨量激活仅出现在极少数的词元上，而离群特征则期望其维度内的大部分激活值都很大。</p>
@@ -129,10 +128,8 @@ title: Massive Activations in Large Language Models
 <p><strong>置零实验：验证其关键性</strong>。我们评估没有巨量激活的LLMs的性能。我们在它们首次出现时，将隐藏状态中的值设为零，即从干预后的LLMs中移除巨量激活。结果（表示为“Set to zero”）显示在表3中。有趣的是，模型性能出现了显著下降，例如困惑度爆炸。作为对比分析，我们将相同数量的激活值——那些平均幅度接近中位数幅度的激活值——同样设为零。我们发现这没有导致性能下降。这些结果凸显了巨量激活在LLMs内部计算中扮演的关键角色。</p>
 <p><strong>置为均值实验：验证其偏置作用</strong>。我们移除了巨量激活值中的微小方差。具体来说，我们将巨量激活的值调整为其经验均值。该均值是在RedPajama的100个序列上计算的。这项干预的结果（表示为“Set to mean”）显示在表3中。我们发现困惑度和零样本准确率几乎没有变化。这表明它们的值是恒定的且与输入无关，即功能上类似于偏置项。</p>
 <p><strong>核心发现总结</strong>。我们的发现可以总结为：巨量激活在LLMs中充当固定但重要的偏置项。</p>
-<p><strong>对巨量激活位置的解释</strong>。这些激活值作为偏置的特性，或许可以解释为什么LLMs将它们存储在特定的层和词元上：<br/>
-- <strong>起始词元</strong>：这些激活值倾向于出现在起始词元，可能是因为每个自回归训练实例都包含一个初始词元。由于LLMs基于下一个词的预测，起始词元是序列中所有前向传播过程都会使用的唯一词元。<br/>
-- <strong>分隔符词元</strong>：这些激活值存在于分隔符词元中，可能是由于这些词元的语义价值相对较低，使得它们成为存储此类偏置的低成本选择。相反，如果将具有丰富语义的词元重新用于存储偏置，则可能会导致输入信息的重大损失。<br/>
-- <strong>出现于初始几层之后</strong>：巨量激活仅在最初几层之后出现，可能是因为LLMs需要一些初始层来处理与巨量激活相关的词元的含义。在这些层中，它们的语义可能通过自注意力机制转移到其他词元位置，并在此后的计算中得以保留。</p>
+<p><strong>对巨量激活位置的解释</strong>。这些激活值作为偏置的特性，或许可以解释为什么LLMs将它们存储在特定的层和词元上：</p>
+<ul><li><strong>起始词元</strong>：这些激活值倾向于出现在起始词元，可能是因为每个自回归训练实例都包含一个初始词元。由于LLMs基于下一个词的预测，起始词元是序列中所有前向传播过程都会使用的唯一词元。</li><li><strong>分隔符词元</strong>：这些激活值存在于分隔符词元中，可能是由于这些词元的语义价值相对较低，使得它们成为存储此类偏置的低成本选择。相反，如果将具有丰富语义的词元重新用于存储偏置，则可能会导致输入信息的重大损失。</li><li><strong>出现于初始几层之后</strong>：巨量激活仅在最初几层之后出现，可能是因为LLMs需要一些初始层来处理与巨量激活相关的词元的含义。在这些层中，它们的语义可能通过自注意力机制转移到其他词元位置，并在此后的计算中得以保留。</li></ul>
 <h2 id="a2">A2 方法细节</h2>
 <p>本节中，我们将探索并研究LLMs中巨量激活的内部机制，特别是其与自注意力的关系。</p>
 <h3 id="41">4.1 注意力集中于巨量激活</h3>
@@ -301,10 +298,8 @@ title: Massive Activations in Large Language Models
 </ul>
 <h2 id="a5">A5 结论</h2>
 <p><strong>研究总结</strong>。对大型Transformer进行自回归训练在自然语言处理领域取得了重大进展。本研究揭示了这些大型语言模型（LLMs）中广泛存在巨量激活的现象。尽管数量极其稀少，但这些激活值对模型性能至关重要，且其值与输入无关。我们建立了巨量激活与自注意力机制之间的紧密联系，并表明LLMs利用它们来实现一种隐式的注意力计算偏置。我们的发现同样很好地推广到了视觉Transformer（ViTs）。我们希望本研究中提出的新结果有助于更深入地理解当今的大规模基础模型。</p>
-<p><strong>实践意义与未来方向</strong>。我们讨论了这项工作的一些实际意义和未来方向。<br/>
-1.  <strong>LLM量化</strong>：具有大幅值的激活值的存在已被广泛认为是有效量化LLMs的主要挑战【索引14，LLM.int8(): 8-bit matrix multiplication for transformers at scale+2022+NeurIPS】、【索引58，Smoothquant: Accurate and efficient post-training quantization for large language models+2023a+ICML】。本文识别了LLMs中一种新型的离群激活值，我们希望我们的发现能对LLM压缩的研究有所裨益。<br/>
-2.  <strong>模型可解释性</strong>：将过多注意力概率分配给少数固定词元的注意力图可能不利于机理可解释性【索引37，In-context learning and induction heads+2022+Transformer Circuits Thread】。我们提出的注意力公式可以使LLMs中产生的注意力图更具可解释性，并可能有利于下游应用【索引12，Vision transformers need registers+2023+arXiv】。<br/>
-3.  <strong>大规模训练</strong>：我们对新注意力公式的研究主要集中在其对巨量激活的影响上，并且由于计算资源限制，我们的实验仅限于一个小型的GPT-2模型。观察我们的结果如何推广到更大规模的模型，以及我们的注意力公式如何影响现代LLMs的训练稳定性【索引56，Small-scale proxies for large-scale transformer training instabilities+2023+arXiv】，将是很有趣的。</p>
+<p><strong>实践意义与未来方向</strong>。我们讨论了这项工作的一些实际意义和未来方向。</p>
+<ol><li><strong>LLM量化</strong>：具有大幅值的激活值的存在已被广泛认为是有效量化LLMs的主要挑战【索引14，LLM.int8(): 8-bit matrix multiplication for transformers at scale+2022+NeurIPS】、【索引58，Smoothquant: Accurate and efficient post-training quantization for large language models+2023a+ICML】。本文识别了LLMs中一种新型的离群激活值，我们希望我们的发现能对LLM压缩的研究有所裨益。</li><li><strong>模型可解释性</strong>：将过多注意力概率分配给少数固定词元的注意力图可能不利于机理可解释性【索引37，In-context learning and induction heads+2022+Transformer Circuits Thread】。我们提出的注意力公式可以使LLMs中产生的注意力图更具可解释性，并可能有利于下游应用【索引12，Vision transformers need registers+2023+arXiv】。</li><li><strong>大规模训练</strong>：我们对新注意力公式的研究主要集中在其对巨量激活的影响上，并且由于计算资源限制，我们的实验仅限于一个小型的GPT-2模型。观察我们的结果如何推广到更大规模的模型，以及我们的注意力公式如何影响现代LLMs的训练稳定性【索引56，Small-scale proxies for large-scale transformer training instabilities+2023+arXiv】，将是很有趣的。</li></ol>
 <h2 id="a6">A6 附录</h2>
 <h3 id="a-llms">A 更多关于LLMs中巨量激活的结果</h3>
 <p><strong>A.1 预训练LLMs</strong>。我们在LLaMA2-70B, LLaMA3, Phi-2, Mistral-7B, MPT-7B和Falcon-7B等更多预训练模型中展示了巨量激活的存在。结果（图17-23）表明，巨量激活在这些模型中普遍存在且特性与正文描述一致。有趣的是，在LLaMA2-70B中，巨量激活出现在代表数值的词元上（如“0”和“2”）。此外，Mistral-7B和Mixtral-8x7B中巨量激活的特征维度相同（2070），暗示后者可能是基于前者微调而来。<br/>

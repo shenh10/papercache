@@ -120,25 +120,10 @@ $$A \otimes B = (A, \text{comp}(A, \text{size}(A) \cdot \text{cosize}(B))) \circ
 </ul>
 <h2 id="_3">实现与环境</h2>
 <p>本文提供了一个范畴论框架的 Python 实现，形式为一个名为 <code>tract</code> 的模块，并展示了其与 NVIDIA 的 CuTe DSL（本文中称为 <code>cute</code>）的兼容性。该实现可在 <code><a href="https://github.com/ColfaxResearch/layout-categories" rel="noopener noreferrer" target="_blank">https://github.com/ColfaxResearch/layout-categories</a></code> 找到。</p>
-<p><strong>软件配置</strong>：<br/>
-*   <strong>核心库</strong>：NVIDIA 的 CuTe DSL (<code>cute</code>)。<br/>
-*   <strong>本文实现</strong>：一个名为 <code>tract</code> 的 Python 模块，实现了本文提出的范畴论框架。<br/>
-*   <strong>功能</strong>：<code>tract</code> 模块提供了与 <code>cute</code> 中布局操作相对应的范畴论操作，并能在两者之间进行转换。</p>
-<p><strong>功能对齐展示</strong>：<br/>
-*   <strong>元组构造</strong>：展示了如何在 Python 中构造简单元组和嵌套元组。<br/>
-*   <strong>Layout 与态射构造</strong>：<br/>
-    *   在 <code>cute</code> 中使用 <code>cute.make_layout(shape=S, stride=D)</code> 构造布局。<br/>
-    *   在 <code>tract</code> 中使用 <code>tract.make_morphism(domain=S, codomain=T, map_=alpha)</code> 构造嵌套元组态射。<br/>
-*   <strong>布局与态射之间的翻译</strong>：<br/>
-    *   <code>tract.is_tractable(L)</code>：检查 <code>cute</code> 布局 <code>L</code> 是否是易处理的。<br/>
-    *   <code>tract.compute_morphism(L)</code>：将一个易处理的 <code>cute</code> 布局 <code>L</code> 转换为其标准表示的 <code>tract</code> 态射 <code>fL</code>。<br/>
-    *   <code>tract.compute_layout(f)</code>：将一个 <code>tract</code> 态射 <code>f</code> 转换为其编码的 <code>cute</code> 布局 <code>Lf</code>。<br/>
-*   <strong>核心操作的兼容性</strong>：通过并列代码示例，展示了 <code>cute</code> 和 <code>tract</code> 在以下核心操作上行为的一致性：<br/>
-    1.  <strong>组合 (Composition)</strong>：<code>cute.composition(B, A)</code> 对应 <code>tract.compose(f, g)</code>。<br/>
-    2.  <strong>合并 (Coalesce)</strong>：<code>cute.coalesce(A)</code> 对应 <code>tract.coalesce(f)</code>，包括相对合并。<br/>
-    3.  <strong>补集 (Complement)</strong>：<code>cute.complement(A, N)</code> 对应 <code>tract.complement(f)</code>。<br/>
-    4.  <strong>逻辑除法 (Logical Division)</strong>：<code>cute.logical_divide(A, B)</code> 对应 <code>tract.logical_divide(f, g)</code>。<br/>
-    5.  <strong>逻辑乘积 (Logical Product)</strong>：<code>cute.logical_product(A, B)</code> 对应 <code>tract.logical_product(f, g)</code>。</p>
+<p><strong>软件配置</strong>：</p>
+<ul><li><strong>核心库</strong>：NVIDIA 的 CuTe DSL (<code>cute</code>)。</li><li><strong>本文实现</strong>：一个名为 <code>tract</code> 的 Python 模块，实现了本文提出的范畴论框架。</li><li><strong>功能</strong>：<code>tract</code> 模块提供了与 <code>cute</code> 中布局操作相对应的范畴论操作，并能在两者之间进行转换。</li></ul>
+<p><strong>功能对齐展示</strong>：</p>
+<ul><li><strong>元组构造</strong>：展示了如何在 Python 中构造简单元组和嵌套元组。</li><li><strong>Layout 与态射构造</strong>：<ul><li>在 <code>cute</code> 中使用 <code>cute.make_layout(shape=S, stride=D)</code> 构造布局。</li><li>在 <code>tract</code> 中使用 <code>tract.make_morphism(domain=S, codomain=T, map_=alpha)</code> 构造嵌套元组态射。</li></ul></li><li><strong>布局与态射之间的翻译</strong>：<ul><li><code>tract.is_tractable(L)</code>：检查 <code>cute</code> 布局 <code>L</code> 是否是易处理的。</li><li><code>tract.compute_morphism(L)</code>：将一个易处理的 <code>cute</code> 布局 <code>L</code> 转换为其标准表示的 <code>tract</code> 态射 <code>fL</code>。</li><li><code>tract.compute_layout(f)</code>：将一个 <code>tract</code> 态射 <code>f</code> 转换为其编码的 <code>cute</code> 布局 <code>Lf</code>。</li></ul></li><li><strong>核心操作的兼容性</strong>：通过并列代码示例，展示了 <code>cute</code> 和 <code>tract</code> 在以下核心操作上行为的一致性：<ol><li><strong>组合 (Composition)</strong>：<code>cute.composition(B, A)</code> 对应 <code>tract.compose(f, g)</code>。</li><li><strong>合并 (Coalesce)</strong>：<code>cute.coalesce(A)</code> 对应 <code>tract.coalesce(f)</code>，包括相对合并。</li><li><strong>补集 (Complement)</strong>：<code>cute.complement(A, N)</code> 对应 <code>tract.complement(f)</code>。</li><li><strong>逻辑除法 (Logical Division)</strong>：<code>cute.logical_divide(A, B)</code> 对应 <code>tract.logical_divide(f, g)</code>。</li><li><strong>逻辑乘积 (Logical Product)</strong>：<code>cute.logical_product(A, B)</code> 对应 <code>tract.logical_product(f, g)</code>。</li></ol></li></ul>
 <p>本文没有传统的数值实验，其“实验结果”体现在通过代码示例，系统地验证了其提出的范畴论框架（<code>tract</code> 模块）与现有高性能库（<code>cute</code>）在所有核心布局代数操作上的行为是一致的，从而证明了该框架的正确性和实用性。</p>
 <h2 id="a3">A3 背景知识：布局及其代数</h2>
 <h3 id="flat-layouts">扁平布局 (Flat Layouts)</h3>

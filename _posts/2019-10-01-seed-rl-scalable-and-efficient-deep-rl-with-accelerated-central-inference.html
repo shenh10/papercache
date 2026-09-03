@@ -56,11 +56,9 @@ title: 'SEED RL: SCALABLE AND EFFICIENT DEEP-RL WITH ACCELERATED CENTRAL INFEREN
 <figcaption class="figure-caption"></figcaption>
 </figure><br/>
 图1: 架构概览</p>
-<p><strong>传统架构的四个主要缺点</strong>。该架构存在以下几个方面的不足：<br/>
-1.  <strong>使用CPU进行神经网络推理</strong>：Actor通常部署在基于CPU的机器上。众所周知，CPU在执行神经网络计算时效率低下【34, Large-scale deep unsupervised learning using graphics processors, 2009, ACM】。当模型计算需求增加时，推理时间会超过环境步进的计算时间。此时的解决方案是增加Actor数量，但这会提高成本并影响收敛性【9, IMPALA: scalable distributed deep-rl with importance weighted actor-learner architectures, 2018, ICML】。<br/>
-2.  <strong>资源利用效率低下</strong>：Actor在环境步进和模型推理这两个任务之间交替进行。这两项任务的计算需求通常不匹配，导致资源利用率低或Actor运行缓慢。例如，某些环境是单线程的，而神经网络则易于并行化。<br/>
-3.  <strong>带宽需求高</strong>：模型参数、循环状态和观测数据需要在Actor和Learner之间传输。与模型参数相比，观测轨迹的大小通常只占几个百分点。此外，基于记忆的模型会发送大量状态，进一步增加了带宽需求。<br/>
-尽管像GA3C【25, Incremental Off-policy Reinforcement Learning Algorithms, 2017, University of Alberta】和单机版IMPALA这样的单机方法避免了问题1（使用CPU进行推理）和问题3（网络带宽需求），但它们受限于问题2（资源使用）和无法满足多种环境所需的大规模扩展。</p>
+<p><strong>传统架构的四个主要缺点</strong>。该架构存在以下几个方面的不足：</p>
+<ol><li><strong>使用CPU进行神经网络推理</strong>：Actor通常部署在基于CPU的机器上。众所周知，CPU在执行神经网络计算时效率低下【34, Large-scale deep unsupervised learning using graphics processors, 2009, ACM】。当模型计算需求增加时，推理时间会超过环境步进的计算时间。此时的解决方案是增加Actor数量，但这会提高成本并影响收敛性【9, IMPALA: scalable distributed deep-rl with importance weighted actor-learner architectures, 2018, ICML】。</li><li><strong>资源利用效率低下</strong>：Actor在环境步进和模型推理这两个任务之间交替进行。这两项任务的计算需求通常不匹配，导致资源利用率低或Actor运行缓慢。例如，某些环境是单线程的，而神经网络则易于并行化。</li><li><strong>带宽需求高</strong>：模型参数、循环状态和观测数据需要在Actor和Learner之间传输。与模型参数相比，观测轨迹的大小通常只占几个百分点。此外，基于记忆的模型会发送大量状态，进一步增加了带宽需求。</li></ol>
+<p>尽管像GA3C【25, Incremental Off-policy Reinforcement Learning Algorithms, 2017, University of Alberta】和单机版IMPALA这样的单机方法避免了问题1（使用CPU进行推理）和问题3（网络带宽需求），但它们受限于问题2（资源使用）和无法满足多种环境所需的大规模扩展。</p>
 <h2 id="a2">A2 方法细节</h2>
 <p><strong>SEED架构设计</strong>。SEED中使用的架构（如图1b所示）解决了上述问题。我们将推理和轨迹累积都转移到了Learner上，这使得它在概念上变成了一个带有远程环境的单机设置（除了处理故障）。这种逻辑上的转移有效地使Actor变成了一个围绕环境的小循环。在每个环境步骤中，观测数据被发送到Learner，Learner运行推理并将动作发送回Actor。这引入了一个新问题：4. <strong>延迟</strong>。</p>
 <p><strong>延迟解决方案：gRPC与批处理</strong>。为了最小化延迟，我们创建了一个使用gRPC（grpc.io）的简单框架，这是一个高性能的RPC库。具体来说，我们采用了流式RPC（streaming RPCs），其中从Actor到Learner的连接保持开放，元数据只发送一次。此外，该框架还包含一个批处理模块，可以有效地将多个Actor的推理调用批处理在一起。在Actor可以与Learner部署在同一台机器上的情况下，gRPC使用unix domain sockets，从而减少了延迟、CPU和系统调用开销。总体而言，对于我们考虑的多种模型，包括网络和推理在内的端到端延迟更快（见附录A.7）。</p>
@@ -81,17 +79,12 @@ title: 'SEED RL: SCALABLE AND EFFICIENT DEEP-RL WITH ACCELERATED CENTRAL INFEREN
 <figcaption class="figure-caption"></figcaption>
 </figure><br/>
 <p>图3: SEED中Learner的详细架构（带有一个可选的经验回放缓冲区）。</p>
-<p><strong>Learner的详细架构</strong>。SEED架构中Learner的详细视图如图3所示。其中运行着三种类型的线程：1. 推理（Inference） 2. 数据预取（Data prefetching） 3. 训练（Training）。<br/>
-*   <strong>推理线程</strong>接收一批观测、奖励和回合终止标志。它们加载循环状态，并将数据发送到推理TPU核心。接收到采样动作和新的循环状态后，动作被发送回Actor，同时最新的循环状态被存储起来。<br/>
-*   当一个轨迹完全展开后，它被添加到一个FIFO队列或经验回放缓冲区，稍后由<strong>数据预取线程</strong>进行采样。<br/>
-*   最后，这些轨迹被推送到参与训练的每个TPU核心的设备缓冲区中。<strong>训练线程</strong>（主Python线程）获取预取的数据，使用训练TPU核心计算梯度，并同步地将梯度应用于所有TPU核心（包括推理和训练核心）上的模型。<br/>
-推理和训练核心的比例可以进行调整，以实现最大的吞吐量和利用率。该架构可通过轮询方式将Actor分配给TPU主机，并为每个TPU主机设置独立的推理线程，从而扩展到TPU pod（2048个核心）。当Actor等待Learner响应时，它们处于空闲状态，因此为了充分利用机器，我们在单个Actor上运行多个环境。</p>
-<p><strong>对传统架构问题的解决方案总结</strong>。我们通过以下方式解决了之前列出的问题：<br/>
-1.  将推理移至Learner，从而消除了Actor上的任何神经网络相关计算。在这种架构中，增加模型大小不会增加对更多Actor的需求（实际上恰恰相反）。<br/>
-2.  在Learner上对推理进行批处理，并在Actor上运行多个环境。这充分利用了Learner上的加速器和Actor上的CPU。TPU核心用于推理和训练的数量可以精细调整，以匹配推理和训练的工作负载。所有这些因素都有助于降低实验成本。<br/>
-3.  所有与模型相关的东西都保留在Learner上，只有观测和动作在Actor和Learner之间发送。这将带宽需求降低了多达99%。<br/>
-4.  使用具有最小延迟和开销的流式gRPC，并将批处理集成到服务器模块中。<br/>
-我们在SEED框架中提供了以下两种算法的实现：V-trace和Q-learning。</p>
+<p><strong>Learner的详细架构</strong>。SEED架构中Learner的详细视图如图3所示。其中运行着三种类型的线程：1. 推理（Inference） 2. 数据预取（Data prefetching） 3. 训练（Training）。</p>
+<ul><li><strong>推理线程</strong>接收一批观测、奖励和回合终止标志。它们加载循环状态，并将数据发送到推理TPU核心。接收到采样动作和新的循环状态后，动作被发送回Actor，同时最新的循环状态被存储起来。</li><li>当一个轨迹完全展开后，它被添加到一个FIFO队列或经验回放缓冲区，稍后由<strong>数据预取线程</strong>进行采样。</li><li>最后，这些轨迹被推送到参与训练的每个TPU核心的设备缓冲区中。<strong>训练线程</strong>（主Python线程）获取预取的数据，使用训练TPU核心计算梯度，并同步地将梯度应用于所有TPU核心（包括推理和训练核心）上的模型。</li></ul>
+<p>推理和训练核心的比例可以进行调整，以实现最大的吞吐量和利用率。该架构可通过轮询方式将Actor分配给TPU主机，并为每个TPU主机设置独立的推理线程，从而扩展到TPU pod（2048个核心）。当Actor等待Learner响应时，它们处于空闲状态，因此为了充分利用机器，我们在单个Actor上运行多个环境。</p>
+<p><strong>对传统架构问题的解决方案总结</strong>。我们通过以下方式解决了之前列出的问题：</p>
+<ol><li>将推理移至Learner，从而消除了Actor上的任何神经网络相关计算。在这种架构中，增加模型大小不会增加对更多Actor的需求（实际上恰恰相反）。</li><li>在Learner上对推理进行批处理，并在Actor上运行多个环境。这充分利用了Learner上的加速器和Actor上的CPU。TPU核心用于推理和训练的数量可以精细调整，以匹配推理和训练的工作负载。所有这些因素都有助于降低实验成本。</li><li>所有与模型相关的东西都保留在Learner上，只有观测和动作在Actor和Learner之间发送。这将带宽需求降低了多达99%。</li><li>使用具有最小延迟和开销的流式gRPC，并将批处理集成到服务器模块中。</li></ol>
+<p>我们在SEED框架中提供了以下两种算法的实现：V-trace和Q-learning。</p>
 <h3 id="31-v-trace">3.1 V-TRACE</h3>
 <p><strong>V-trace算法的适配</strong>。我们适配到该框架的算法之一是V-trace【9, IMPALA: scalable distributed deep-rl with importance weighted actor-learner architectures, 2018, ICML】。我们没有包含任何在IMPALA基础上提出的新增功能，例如【48, Representation learning with contrastive predictive coding, 2018, CoRR】或【12, Shaping belief states with generative environment models for RL, 2019, CoRR】中提出的。这些新增功能也可以应用于SEED，并且由于它们的计算成本更高，它们将从SEED架构中受益。</p>
 <h3 id="32-q-learning">3.2 Q-LEARNING</h3>

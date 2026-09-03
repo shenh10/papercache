@@ -63,10 +63,8 @@ title: 'Gemma 4 12B: The Developer Guide'
 抱歉，您的浏览器不支持播放此视频</p>
 <h3>示例2：处理5分钟（1 FPS）的带音频视频</h3>
 <p>研究人员使用Gemma 4 12B分析了<a href="https://www.youtube.com/watch?v=wYSncx9zLIU&amp;start=932&amp;end=1245">https://www.youtube.com/watch?v=wYSncx9zLIU&amp;start=932&amp;end=1245</a>https://www.youtube.com/watch?v=wYSncx9zLIU&amp;amp;start=932&amp;amp;end=1245中从00:15:32到00:20:45的5分钟片段。为此，他们提取了该片段的所有帧（以1 FPS的速率），并结合了视频的音频和以下提示词作为输入。</p>
-<p><strong>输入内容</strong>：<br/>
-1. 313帧图像（1 FPS，图像尺寸调整以适应<a href="https://ai.google.dev/gemma/docs/capabilities/vision/image?_gl=1*jm0coc*_up*MQ..*_ga*MTI2MzkwODM0NS4xNzgwNDI5Mzg5*_ga_P1DBVKWT6V*czE3ODA0MjkzODkkbzEkZzAkdDE3ODA0MjkzODkkajYwJGwwJGgxOTEyOTEwNzc5#variable_resolution_token_budget">https://ai.google.dev/gemma/docs/capabilities/vision/image?_gl=1*jm0coc*_up*MQ..*_ga*MTI2MzkwODM0NS4xNzgwNDI5Mzg5*_ga_P1DBVKWT6V*czE3ODA0MjkzODkkbzEkZzAkdDE3ODA0MjkzODkkajYwJGwwJGgxOTEyOTEwNzc5#variable_resolution_token_budget</a>为70）。<br/>
-2. 提示词：<code>"what happens when the man takes a selfie?"</code>（“当那个男人自拍时发生了什么？”）<br/>
-3. 视频的原始音频以及上述提示词。</p>
+<p><strong>输入内容</strong>：</p>
+<ol><li>313帧图像（1 FPS，图像尺寸调整以适应<a href="https://ai.google.dev/gemma/docs/capabilities/vision/image?_gl=1*jm0coc*_up*MQ..*_ga*MTI2MzkwODM0NS4xNzgwNDI5Mzg5*_ga_P1DBVKWT6V*czE3ODA0MjkzODkkbzEkZzAkdDE3ODA0MjkzODkkajYwJGwwJGgxOTEyOTEwNzc5#variable_resolution_token_budget">https://ai.google.dev/gemma/docs/capabilities/vision/image?_gl=1*jm0coc*_up*MQ..*_ga*MTI2MzkwODM0NS4xNzgwNDI5Mzg5*_ga_P1DBVKWT6V*czE3ODA0MjkzODkkbzEkZzAkdDE3ODA0MjkzODkkajYwJGwwJGgxOTEyOTEwNzc5#variable_resolution_token_budget</a>为70）。</li><li>提示词：<code>"what happens when the man takes a selfie?"</code>（“当那个男人自拍时发生了什么？”）</li><li>视频的原始音频以及上述提示词。</li></ol>
 <p><strong>模型输出分析</strong>：</p>
 &lt;blockquote&gt;
 <p>当那个男人在这些演示视频中“自拍”或被展示手持智能手机放在脸前时，这是一种巧妙的视觉表现方式，用以说明AI模型如何获取现有的媒体——比如一张个人照片或一个视频片段——并对其进行“重构”。在这些特定的片段中，模型获取一张自拍照，并以此为基础生成各种场景（比如一个人在空间站，或在森林中行走）。</p>

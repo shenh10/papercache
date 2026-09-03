@@ -108,12 +108,9 @@ $$J_{GRPO-RoC}(\theta) = \mathbb{E}_{q \sim P(Q), \{\hat{o}_i\}_{i=1}^G \sim \te
 </ul>
 <div class="codehilite"><pre><span></span><code>&lt;tool call&gt;{"name": "execute python code with standard io", "arguments": {"code": "import sympy\n\n def verify divisibility (m,p):\n\n for p in sympy.primerange(2, 100000) ··· ", "input": ""}}&lt;/tool call&gt;
 </code></pre></div>
-<p>在每一轮结束时，系统会检查是否存在 <code>&lt;tool call&gt;</code> 块。如果存在，会解析 JSON 以提取 <code>code</code> 字段中的代码块和 <code>arguments</code> 中的 <code>input</code> 字段（如果可用）。如果因格式无效而解析失败，错误信息将被包装在 <code>&lt;tool response&gt;</code> 标签中返回给模型。否则，提取的代码和参数将被转发到环境服务，该服务会产生四种可能的响应之一：<br/>
-1.  <strong>成功执行并有标准输出</strong>：返回程序输出。<br/>
-2.  <strong>成功执行但无标准输出</strong>：返回 IPython 显示的输出。<br/>
-3.  <strong>执行错误</strong>：返回错误信息和追溯日志。<br/>
-4.  <strong>超时</strong>：代码语法有效，但因复杂度高或逻辑错误（如无限循环）未在时限内完成。<br/>
-在所有情况下，环境反馈都会被包装在 <code>&lt;tool response&gt;</code> 标签中并返回给模型。这种结构化方法提供了一个标准化的、类似 API 的接口，消除了解析的模糊性，并清晰地分离了推理与执行。</p>
+<p>在每一轮结束时，系统会检查是否存在 <code>&lt;tool call&gt;</code> 块。如果存在，会解析 JSON 以提取 <code>code</code> 字段中的代码块和 <code>arguments</code> 中的 <code>input</code> 字段（如果可用）。如果因格式无效而解析失败，错误信息将被包装在 <code>&lt;tool response&gt;</code> 标签中返回给模型。否则，提取的代码和参数将被转发到环境服务，该服务会产生四种可能的响应之一：</p>
+<ol><li><strong>成功执行并有标准输出</strong>：返回程序输出。</li><li><strong>成功执行但无标准输出</strong>：返回 IPython 显示的输出。</li><li><strong>执行错误</strong>：返回错误信息和追溯日志。</li><li><strong>超时</strong>：代码语法有效，但因复杂度高或逻辑错误（如无限循环）未在时限内完成。</li></ol>
+<p>在所有情况下，环境反馈都会被包装在 <code>&lt;tool response&gt;</code> 标签中并返回给模型。这种结构化方法提供了一个标准化的、类似 API 的接口，消除了解析的模糊性，并清晰地分离了推理与执行。</p>
 <ul>
 <li><strong>提示模板（Prompt Template）</strong>。图 3 展示了在智能体强化学习期间使用的提示。该提示指示模型首先在 <code>&lt;reason&gt; ... &lt;/reason&gt;</code> 中生成推理过程，然后在 <code>&lt;answer&gt; ... &lt;/answer&gt;</code> 中提供最终答案。为了引导正确的编码工具使用，提示明确详细说明了可用的工具（即编码工具），包括其描述和结构化的函数调用格式。值得注意的是，多轮推演设置可能会产生多个 <code>&lt;reason&gt;</code> 块，但只允许一个 <code>&lt;answer&gt;</code> 块，如图 2 所示。最终的数值结果必须用 <code>\boxed{}</code> 包装以便提取。</li>
 </ul>

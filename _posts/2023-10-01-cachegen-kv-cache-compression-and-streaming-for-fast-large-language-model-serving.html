@@ -22,9 +22,8 @@ title: 'CacheGen: KV Cache Compression and Streaming for Fast Large Language Mod
 <h1 id="cachegen-kv-cache-compression-and-streaming-for-fast-large-language-model-serving">CacheGen: KV Cache Compression and Streaming for Fast Large Language Model Serving</h1>
 <p><strong>发表时间</strong>: 2023-10 · arXiv:2310.07240</p>
 <p><strong>原文</strong>: <a href="https://arxiv.org/abs/2310.07240" rel="noopener" target="_blank">https://arxiv.org/abs/2310.07240</a></p>
-<p><strong>文章标题与作者/机构</strong><br/>
-- <strong>标题</strong>: CacheGen: KV Cache Compression and Streaming for Fast Large Language Model Serving<br/>
-- <strong>作者/机构</strong>: Yuhan Liu, Hanchen Li, Yihua Cheng, Siddhant Ray, Yuyang Huang, Qizheng Zhang*, Kuntai Du, Jiayi Yao, Shan Lu†, Ganesh Ananthanarayanan†, Michael Maire, Henry Hoffmann, Ari Holtzman, Junchen Jiang University of Chicago †Microsoft *Stanford University</p>
+<p><strong>文章标题与作者/机构</strong></p>
+<ul><li><strong>标题</strong>: CacheGen: KV Cache Compression and Streaming for Fast Large Language Model Serving</li><li><strong>作者/机构</strong>: Yuhan Liu, Hanchen Li, Yihua Cheng, Siddhant Ray, Yuyang Huang, Qizheng Zhang*, Kuntai Du, Jiayi Yao, Shan Lu†, Ganesh Ananthanarayanan†, Michael Maire, Henry Hoffmann, Ari Holtzman, Junchen Jiang University of Chicago †Microsoft *Stanford University</li></ul>
 <hr/>
 <details class="tldr-block" open="">
 <summary class="tldr-summary">速读</summary>
@@ -251,13 +250,8 @@ title: 'CacheGen: KV Cache Compression and Streaming for Fast Large Language Mod
 <hr/>
 <h3 id="a5"><strong>A5 结论</strong></h3>
 <p>本文提出了CacheGen，一个用于最小化LLM获取和处理上下文总延迟的上下文加载模块。CacheGen通过一个专为将KV缓存压缩成紧凑比特流而设计的编码器，减少了传输长上下文KV缓存所需的带宽。跨三种不同容量模型和四个不同上下文长度数据集的实验表明，CacheGen在保持高任务性能的同时，有效降低了总体延迟。</p>
-<p><strong>局限性与未来工作</strong>：<br/>
-- <strong>与其他压缩工作兼容</strong>：CacheGen与智能量化【索引62, 78, 97】等新兴技术是互补的，未来可以结合使用。<br/>
-- <strong>增量式KV缓存流式传输</strong>：未来工作包括将CacheGen扩展为增量式流传输，类似于可伸缩视频编码（SVC）。<br/>
-- <strong>真实世界应用中的上下文重用</strong>：需要更多业界数据集来验证上下文重用的普遍性。<br/>
-- <strong>硬件与模型扩展</strong>：未来将在更高端的GPU和更大规模的模型（如OPT-175B）上评估CacheGen。<br/>
-- <strong>其他系统设计</strong>：未来可将CacheGen与并发工作中关于KV缓存存储、缓存策略等方面的研究相结合。<br/>
-- <strong>其他限制</strong>：未在自由文本生成任务上进行广泛评估；网络模型未包含极高带宽情况；并非所有LLM应用（如实时搜索）都能缓存KV特征。</p>
+<p><strong>局限性与未来工作</strong>：</p>
+<ul><li><strong>与其他压缩工作兼容</strong>：CacheGen与智能量化【索引62, 78, 97】等新兴技术是互补的，未来可以结合使用。</li><li><strong>增量式KV缓存流式传输</strong>：未来工作包括将CacheGen扩展为增量式流传输，类似于可伸缩视频编码（SVC）。</li><li><strong>真实世界应用中的上下文重用</strong>：需要更多业界数据集来验证上下文重用的普遍性。</li><li><strong>硬件与模型扩展</strong>：未来将在更高端的GPU和更大规模的模型（如OPT-175B）上评估CacheGen。</li><li><strong>其他系统设计</strong>：未来可将CacheGen与并发工作中关于KV缓存存储、缓存策略等方面的研究相结合。</li><li><strong>其他限制</strong>：未在自由文本生成任务上进行广泛评估；网络模型未包含极高带宽情况；并非所有LLM应用（如实时搜索）都能缓存KV特征。</li></ul>
 <hr/>
 <h3 id="a6"><strong>A6 附录</strong></h3>
 <h4 id="a-cachegen"><strong>A CacheGen的文本输出示例</strong></h4>

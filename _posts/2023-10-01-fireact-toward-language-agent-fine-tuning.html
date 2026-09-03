@@ -67,25 +67,18 @@ title: 'FIREACT: TOWARD LANGUAGE AGENT FINE-TUNING'
 </figure></p>
 <h2 id="a2">A2 方法细节</h2>
 <h3 id="_1">任务</h3>
-<p><strong>本文在成熟的问答（QA）任务上进行训练和测试。</strong> 这些任务遵循了先前工作（Wei等人，2022b【索引84，Chain of thought prompting elicits reasoning in large language models. 2022. arXiv】；Yao等人，2022b【索引87，React: Synergizing reasoning and acting in language models. 2022. arXiv】；Shinn等人，2023【索引60，Reflexion: Language agents with verbal reinforcement learning. 2023. arXiv】）的选择，因为它们拥有丰富且高质量的训练数据，并且评估方法（答案精确匹配）简单可靠。我们使用了四个数据集：<br/>
-- <strong>HotpotQA</strong> (Yang等人，2018)【索引85，HotpotQA: A dataset for diverse, explainable multi-hop question answering. 2018. EMNLP】是一个具有挑战性的问答数据集，需要多步推理和知识检索。答案通常是一个简短的实体或是/否。我们使用2000个随机训练问题来策划微调数据，并使用500个随机开发集问题进行评估。<br/>
-- <strong>Bamboogle</strong> (Press等人，2022)【索引48，Measuring and narrowing the compositionality gap in language models. 2022. arXiv】是一个包含125个多跳问题的测试集，其格式与HotpotQA相似，但经过精心设计，以避免通过谷歌搜索直接解决问题。<br/>
-- <strong>StrategyQA</strong> (Geva等人，2021)【索引13，Did aristotle use a laptop? A question answering benchmark with implicit reasoning strategies. 2021. TACL】是一个是/否问答数据集，需要隐式推理步骤。<br/>
-- <strong>MMLU</strong> (Hendrycks等人，2021)【索引18，Measuring massive multitask language understanding. 2021. ICLR】涵盖了57个多项选择问答任务，涉及初等数学、历史和计算机科学等多个领域。</p>
+<p><strong>本文在成熟的问答（QA）任务上进行训练和测试。</strong> 这些任务遵循了先前工作（Wei等人，2022b【索引84，Chain of thought prompting elicits reasoning in large language models. 2022. arXiv】；Yao等人，2022b【索引87，React: Synergizing reasoning and acting in language models. 2022. arXiv】；Shinn等人，2023【索引60，Reflexion: Language agents with verbal reinforcement learning. 2023. arXiv】）的选择，因为它们拥有丰富且高质量的训练数据，并且评估方法（答案精确匹配）简单可靠。我们使用了四个数据集：</p>
+<ul><li><strong>HotpotQA</strong> (Yang等人，2018)【索引85，HotpotQA: A dataset for diverse, explainable multi-hop question answering. 2018. EMNLP】是一个具有挑战性的问答数据集，需要多步推理和知识检索。答案通常是一个简短的实体或是/否。我们使用2000个随机训练问题来策划微调数据，并使用500个随机开发集问题进行评估。</li><li><strong>Bamboogle</strong> (Press等人，2022)【索引48，Measuring and narrowing the compositionality gap in language models. 2022. arXiv】是一个包含125个多跳问题的测试集，其格式与HotpotQA相似，但经过精心设计，以避免通过谷歌搜索直接解决问题。</li><li><strong>StrategyQA</strong> (Geva等人，2021)【索引13，Did aristotle use a laptop? A question answering benchmark with implicit reasoning strategies. 2021. TACL】是一个是/否问答数据集，需要隐式推理步骤。</li><li><strong>MMLU</strong> (Hendrycks等人，2021)【索引18，Measuring massive multitask language understanding. 2021. ICLR】涵盖了57个多项选择问答任务，涉及初等数学、历史和计算机科学等多个领域。</li></ul>
 <h3 id="_2">工具</h3>
 <p><strong>我们使用SerpAPI构建了一个谷歌搜索工具。</strong> 遵循Press等人（2022）【索引48，Measuring and narrowing the compositionality gap in language models. 2022. arXiv】的做法，我们使用SerpAPI构建了一个谷歌搜索工具，该工具会返回“答案框”、“答案摘要”、“高亮词”或“首个结果摘要”中第一个存在的内容。这确保了响应简短且相关。我们发现，这样一个简单的工具足以满足跨任务的基本问答需求，并增加了我们微调模型的易用性和通用性。</p>
 <h3 id="_3">语言模型</h3>
-<p><strong>我们研究了三类语言模型。</strong><br/>
-- <strong>OpenAI GPT</strong>。我们使用GPT-4（OpenAI，2023b）【索引43，Gpt-4 technical report. 2023】提示生成所有微调数据，并使用GPT-3.5（OpenAI，2023a）【索引42，Gpt-3.5 turbo fine-tuning and api updates. 2023】进行微调和提示。我们在2023年7月至9月期间以ChatCompletion模式使用了这两个模型。<br/>
-- <strong>Llama-2</strong> (Touvron等人，2023b)【索引78，Llama 2: Open foundation and finetuned chat models. 2023. arXiv】模型，参数量为7B和13B，使用“chat”模式。<br/>
-- <strong>CodeLlama</strong> (Roziere等人，2023)【索引55，Code llama: Open foundation models for code. 2023. arXiv】模型，参数量为7B、13B和34B，使用“instruct”模式，这有助于进一步理解模型规模扩展效应以及代码微调对代理任务的重要性。</p>
+<p><strong>我们研究了三类语言模型。</strong></p>
+<ul><li><strong>OpenAI GPT</strong>。我们使用GPT-4（OpenAI，2023b）【索引43，Gpt-4 technical report. 2023】提示生成所有微调数据，并使用GPT-3.5（OpenAI，2023a）【索引42，Gpt-3.5 turbo fine-tuning and api updates. 2023】进行微调和提示。我们在2023年7月至9月期间以ChatCompletion模式使用了这两个模型。</li><li><strong>Llama-2</strong> (Touvron等人，2023b)【索引78，Llama 2: Open foundation and finetuned chat models. 2023. arXiv】模型，参数量为7B和13B，使用“chat”模式。</li><li><strong>CodeLlama</strong> (Roziere等人，2023)【索引55，Code llama: Open foundation models for code. 2023. arXiv】模型，参数量为7B、13B和34B，使用“instruct”模式，这有助于进一步理解模型规模扩展效应以及代码微调对代理任务的重要性。</li></ul>
 <h3 id="_4">微调方法</h3>
 <p><strong>我们主要使用低秩自适应（LoRA）进行微调实验。</strong> 我们使用LoRA（Hu等人，2022）【索引21，Lora: Low-rank adaptation of large language models. 2022. ICLR】进行大多数微调实验，但为了进行某些比较，也使用了全模型微调。</p>
 <h3 id="_5">实验结构</h3>
-<p><strong>我们将实验分为三个复杂性递增的部分。</strong> 考虑到语言代理微调涉及的多种因素，我们将实验分为三个部分：<br/>
-- 使用单一提示方法在单一任务上进行微调（第5节）；<br/>
-- 使用多种方法在单一任务上进行微调（第6节）；<br/>
-- 使用多种方法在多任务上进行微调（第7节）。</p>
+<p><strong>我们将实验分为三个复杂性递增的部分。</strong> 考虑到语言代理微调涉及的多种因素，我们将实验分为三个部分：</p>
+<ul><li>使用单一提示方法在单一任务上进行微调（第5节）；</li><li>使用多种方法在单一任务上进行微调（第6节）；</li><li>使用多种方法在多任务上进行微调（第7节）。</li></ul>
 <h2 id="a4">A4 实验环境</h2>
 <ul>
 <li>

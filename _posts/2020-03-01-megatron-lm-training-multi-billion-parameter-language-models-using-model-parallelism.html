@@ -33,13 +33,8 @@ title: 'Megatron-LM: Training Multi-Billion Parameter Language Models Using Mode
 </details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文提出了一种简单高效的层内模型并行方法，以解决因内存限制而难以训练超大规模Transformer模型的核心问题。研究目标是实现能够训练数十亿参数Transformer模型的可扩展方案，且该方案无需新的编译器或库更改，易于在现有的PyTorch框架中实现。</p>
-<p><strong>核心创新点如下：</strong><br/>
-*   <strong>简单高效的模型并行方法</strong>：本文实现了一种层内模型并行方法，仅通过对现有PyTorch Transformer实现进行少量针对性修改即可完成。该方法与流水线模型并行正交且互补。<br/>
-*   <strong>卓越的可扩展性</strong>：通过对模型和数据并行技术进行深入的实证分析，本文展示了在使用512个GPU时高达76%的扩展效率，在整个应用中实现了15.1 PetaFLOPs的持续计算性能。<br/>
-*   <strong>BERT模型扩展的关键发现</strong>：本文发现，对于BERT这类模型，仔细调整层归一化（Layer Normalization）的位置对于模型规模增大时性能的提升至关重要。<br/>
-*   <strong>模型规模与性能的关系</strong>：本文证明了扩大模型规模可以显著提升GPT-2（研究至83亿参数）和BERT（研究至39亿参数）模型的准确率。<br/>
-*   <strong>刷新SOTA记录</strong>：本文训练的模型在多个基准测试中取得了SOTA（state-of-the-art）成果，包括WikiText103数据集的困惑度（10.8 ppl）、LAMBADA数据集的完形填空准确率（66.5%）以及RACE数据集的阅读理解准确率（90.9%）。<br/>
-*   <strong>代码开源</strong>：本文开源了其代码、训练和评估流程，以促进社区的进一步研究。</p>
+<p><strong>核心创新点如下：</strong></p>
+<ul><li><strong>简单高效的模型并行方法</strong>：本文实现了一种层内模型并行方法，仅通过对现有PyTorch Transformer实现进行少量针对性修改即可完成。该方法与流水线模型并行正交且互补。</li><li><strong>卓越的可扩展性</strong>：通过对模型和数据并行技术进行深入的实证分析，本文展示了在使用512个GPU时高达76%的扩展效率，在整个应用中实现了15.1 PetaFLOPs的持续计算性能。</li><li><strong>BERT模型扩展的关键发现</strong>：本文发现，对于BERT这类模型，仔细调整层归一化（Layer Normalization）的位置对于模型规模增大时性能的提升至关重要。</li><li><strong>模型规模与性能的关系</strong>：本文证明了扩大模型规模可以显著提升GPT-2（研究至83亿参数）和BERT（研究至39亿参数）模型的准确率。</li><li><strong>刷新SOTA记录</strong>：本文训练的模型在多个基准测试中取得了SOTA（state-of-the-art）成果，包括WikiText103数据集的困惑度（10.8 ppl）、LAMBADA数据集的完形填空准确率（66.5%）以及RACE数据集的阅读理解准确率（90.9%）。</li><li><strong>代码开源</strong>：本文开源了其代码、训练和评估流程，以促进社区的进一步研究。</li></ul>
 <h2 id="a3">A3 背景知识与挑战</h2>
 <h3 id="_1">神经语言模型预训练</h3>
 <p><strong>预训练语言模型的演进</strong>。预训练语言模型已成为自然语言处理（NLP）研究人员不可或缺的工具。利用大规模语料库进行预训练以学习语言的鲁棒神经表示，是过去十年中一个活跃的研究领域。早期的工作，如预训练词嵌入表【29, Distributed representations of words and phrases and their compositionality, 2013】【33, Glove: Global vectors for word representation, 2014】【45, Word representations: A simple and general method for semi-supervised learning, 2010】，证明了这能改善下游任务的效果。后续工作通过学习和迁移能够捕捉词语上下文表示的神经模型，进一步推动了该领域的发展【24, context2vec: Learning generic context embedding with bidirectional lstm, 2016】【23, Learned in translation: Contextualized word vectors, 2017】【34, Deep contextualized word representations, 2018】【35, Learning to generate reviews and discovering sentiment, 2017】【37, Better language models and their implications, 2019】。近期的并行工作【41, Unsupervised pretraining for sequence to sequence learning, 2016】【10, Fine-tuned language models for text classification, 2018】【36, Improving language understanding by generative pre-training, 2018】【6, Bert: Pre-training of deep bidirectional transformers for language understanding, 2018】【21, Roberta: A robustly optimized BERT pretraining approach, 2019b】【5, Transformer-xl: Attentive language models beyond a fixed-length context, 2019】【48, Xlnet: Generalized autoregressive pretraining for language understanding, 2019】【20, Multi-task deep neural networks for natural language understanding, 2019a】【18, Albert: A lite bert for self-supervised learning of language representations, 2019】不仅迁移语言模型以提取上下文词表示，还在下游任务上对语言模型进行端到端微调。这一系列方法的发展，从迁移词嵌入表演进到迁移数十亿参数的整个语言模型，对硬件、系统技术和框架的规模化高效运行能力提出了越来越高的计算需求。本研究旨在提供必要的工具，以推动这一趋势继续向前发展。</p>
@@ -180,13 +175,8 @@ title: 'Megatron-LM: Training Multi-Billion Parameter Language Models Using Mode
 </ul>
 <h2 id="a5">A5 结论</h2>
 <p>本文成功地通过实现一种仅需对现有PyTorch Transformer实现进行少量修改的模型并行方法，克服了传统单模型单GPU训练的局限性。研究团队在512个NVIDIA V100 GPU上，使用8路模型并行高效地训练了高达83亿参数的Transformer模型，并在整个应用中实现了15.1 PetaFLOPs的持续计算性能。研究还发现，对于BERT模型，仔细调整层归一化的位置对于随着模型规模增大而提升准确率至关重要。通过研究模型规模对下游任务准确率的影响，本文在WikiText103、LAMBADA和RACE数据集上取得了远超以往的成果，并建立了新的SOTA记录。最后，本文开源了代码以支持未来的研究工作。</p>
-<p><strong>未来工作方向包括：</strong><br/>
-1.  <strong>继续扩大预训练规模</strong>：这将进一步考验现有的深度学习软硬件。<br/>
-2.  <strong>优化器改进</strong>：需要提高优化器的效率和减小其内存占用。<br/>
-3.  <strong>混合并行策略</strong>：对于超过160亿参数的模型，需要结合层内、层间模型并行以及跨节点模型并行。<br/>
-4.  <strong>探索其他模型</strong>：将该方法应用于不同的模型家族（如XLNet, T5）。<br/>
-5.  <strong>评估更复杂的任务</strong>：在更困难和多样化的下游任务（如生成式问答、摘要、对话）上评估大模型的性能。<br/>
-6.  <strong>知识蒸馏</strong>：使用这些大型预训练教师模型来训练小型的学生模型。</p>
+<p><strong>未来工作方向包括：</strong></p>
+<ol><li><strong>继续扩大预训练规模</strong>：这将进一步考验现有的深度学习软硬件。</li><li><strong>优化器改进</strong>：需要提高优化器的效率和减小其内存占用。</li><li><strong>混合并行策略</strong>：对于超过160亿参数的模型，需要结合层内、层间模型并行以及跨节点模型并行。</li><li><strong>探索其他模型</strong>：将该方法应用于不同的模型家族（如XLNet, T5）。</li><li><strong>评估更复杂的任务</strong>：在更困难和多样化的下游任务（如生成式问答、摘要、对话）上评估大模型的性能。</li><li><strong>知识蒸馏</strong>：使用这些大型预训练教师模型来训练小型的学生模型。</li></ol>
 <h2 id="a6">A6 附录</h2>
 <h3 id="a-bert">A. BERT微调超参数</h3>
 <p><strong>微调超参数设置</strong>。表6展示了在微调期间为每个模型和任务使用的超参数。<br/>

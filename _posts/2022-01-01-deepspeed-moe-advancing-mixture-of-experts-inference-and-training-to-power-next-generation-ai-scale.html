@@ -35,19 +35,11 @@ $$L = \alpha L_{CE} + (1-\alpha) L_{KD}$$
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决混合专家（Mixture-of-Experts, MoE）模型在实际应用中面临的挑战，使其成为训练和部署下一代大规模AI模型的可行且高效的方案。</p>
 <p><strong>核心问题</strong>:<br/>
-随着密集模型（dense model）的训练逐渐达到硬件资源的极限，MoE模型因其相较于同等质量密集模型显著降低的训练成本而备受关注。然而，MoE模型也面临着自身的挑战，限制了其广泛应用：<br/>
-1.  <strong>应用范围有限</strong>: MoE在自然语言处理领域的应用主要局限于编码器-解码器模型，在自回归自然语言生成（NLG）等计算成本更高的领域探索不足。<br/>
-2.  <strong>巨大的内存需求</strong>: MoE模型虽然计算成本较低，但参数量远超同等质量的密集模型，导致“参数效率”低下。这不仅给训练带来了巨大的设备内存压力，也使模型难以在数千个GPU上有效扩展。<br/>
-3.  <strong>推理性能受限</strong>: 巨大的模型尺寸和低参数效率使得MoE模型的快速推理极具挑战性。大参数量需要更多GPU来装载模型，而推理性能往往受限于内存带宽，MoE模型可能需要比密集模型高出数倍的内存带宽才能达到相似的延迟。</p>
+随着密集模型（dense model）的训练逐渐达到硬件资源的极限，MoE模型因其相较于同等质量密集模型显著降低的训练成本而备受关注。然而，MoE模型也面临着自身的挑战，限制了其广泛应用：</p>
+<ol><li><strong>应用范围有限</strong>: MoE在自然语言处理领域的应用主要局限于编码器-解码器模型，在自回归自然语言生成（NLG）等计算成本更高的领域探索不足。</li><li><strong>巨大的内存需求</strong>: MoE模型虽然计算成本较低，但参数量远超同等质量的密集模型，导致“参数效率”低下。这不仅给训练带来了巨大的设备内存压力，也使模型难以在数千个GPU上有效扩展。</li><li><strong>推理性能受限</strong>: 巨大的模型尺寸和低参数效率使得MoE模型的快速推理极具挑战性。大参数量需要更多GPU来装载模型，而推理性能往往受限于内存带宽，MoE模型可能需要比密集模型高出数倍的内存带宽才能达到相似的延迟。</li></ol>
 <p><strong>研究目标与主要贡献</strong>:<br/>
-为了克服上述挑战，使MoE模型变得实用、易于获取和应用，本文提出了DeepSpeed-MoE，一个端到端的MoE训练和推理解决方案，其核心贡献包括：<br/>
-1.  <strong>将MoE扩展至自回归NLG任务</strong>: 本文将MoE模型应用于类GPT-3和MT-NLG的自回归语言生成任务，并证明在达到相同模型质量的情况下，可将训练成本降低5倍。这为在现有硬件资源下训练更大规模、更高质量的模型开辟了道路。<br/>
-2.  <strong>通过模型创新提高参数效率</strong>:<br/>
-    *   <strong>Pyramid-Residual MoE (PR-MoE)</strong>: 提出了一种新颖的MoE架构，通过残差连接将密集层和MoE层混合，并仅在最有效的网络层应用专家网络。PR-MoE能够在不影响模型质量和计算量的情况下，将MoE模型的参数量减少最多3倍。<br/>
-    *   <strong>Mixture-of-Students (MoS)</strong>: 基于PR-MoE，通过分阶段知识蒸馏技术创建了一个蒸馏版本MoS，可在保持相近模型质量的同时，将MoE模型尺寸进一步压缩，最多减少3.7倍。<br/>
-3.  <strong>开发高性能MoE推理系统</strong>:<br/>
-    *   <strong>DeepSpeed-MoE推理系统</strong>: 这是一个高度优化的MoE推理系统，支持在数百个GPU上高效扩展推理工作负载。与现有MoE推理解决方案相比，它能将推理延迟和成本降低多达7.3倍。<br/>
-    *   <strong>系统与模型协同优化</strong>: 结合系统和模型层面的优化，DeepSpeed-MoE为MoE模型提供了比同等质量密集模型快4.5倍、便宜9倍的推理性能，并能为万亿参数级别的MoE模型提供25毫秒以下的超快推理延迟。</p>
+为了克服上述挑战，使MoE模型变得实用、易于获取和应用，本文提出了DeepSpeed-MoE，一个端到端的MoE训练和推理解决方案，其核心贡献包括：</p>
+<ol><li><strong>将MoE扩展至自回归NLG任务</strong>: 本文将MoE模型应用于类GPT-3和MT-NLG的自回归语言生成任务，并证明在达到相同模型质量的情况下，可将训练成本降低5倍。这为在现有硬件资源下训练更大规模、更高质量的模型开辟了道路。</li><li><strong>通过模型创新提高参数效率</strong>:<ul><li><strong>Pyramid-Residual MoE (PR-MoE)</strong>: 提出了一种新颖的MoE架构，通过残差连接将密集层和MoE层混合，并仅在最有效的网络层应用专家网络。PR-MoE能够在不影响模型质量和计算量的情况下，将MoE模型的参数量减少最多3倍。</li><li><strong>Mixture-of-Students (MoS)</strong>: 基于PR-MoE，通过分阶段知识蒸馏技术创建了一个蒸馏版本MoS，可在保持相近模型质量的同时，将MoE模型尺寸进一步压缩，最多减少3.7倍。</li></ul></li><li><strong>开发高性能MoE推理系统</strong>:<ul><li><strong>DeepSpeed-MoE推理系统</strong>: 这是一个高度优化的MoE推理系统，支持在数百个GPU上高效扩展推理工作负载。与现有MoE推理解决方案相比，它能将推理延迟和成本降低多达7.3倍。</li><li><strong>系统与模型协同优化</strong>: 结合系统和模型层面的优化，DeepSpeed-MoE为MoE模型提供了比同等质量密集模型快4.5倍、便宜9倍的推理性能，并能为万亿参数级别的MoE模型提供25毫秒以下的超快推理延迟。</li></ul></li></ol>
 <p>总而言之，本文的创新和系统使MoE模型在训练和推理成本上都显著优于同等质量的密集模型，为AI领域从密集模型向稀疏MoE模型的转变提供了坚实的基础，使得用更少的资源训练和部署更高质量的模型成为可能。</p>
 <h2 id="a3">A3 背景知识与相关工作</h2>
 <h3 id="21-nlp">2.1 大规模密集NLP模型</h3>
@@ -99,13 +91,10 @@ $$L = \alpha L_{CE} + (1-\alpha) L_{KD}$$
 <h3 id="5-deepspeed-moemoe">5. DeepSpeed-MoE推理：以前所未有的规模和速度服务MoE模型</h3>
 <p><strong>MoE推理的挑战与目标</strong>。优化推理延迟和成本对于MoE模型的实际应用至关重要。在推理过程中，批次大小通常较小，因此MoE模型的推理延迟主要取决于从主内存加载模型参数所需的时间，这与传统观念中计算量越少推理越快的看法相反。因此，MoE推理性能取决于两个主要因素：整体模型大小和可实现的内存总带宽。在前一节中，我们提出了PR-MoE和MoS来减小MoE模型的大小，同时保持模型准确性。本节将介绍我们的系统优化解决方案，通过创建一个多GPU MoE推理系统，利用数十个分布式GPU的聚合内存带宽来加速推理。综合来看，DeepSpeed-MoE（简称DS-MoE）提供了前所未有的规模和效率来服务大规模MoE模型，与基线MoE系统相比，延迟降低了7.3倍，成本更低；与同等质量的密集模型相比，MoE推理速度提高了4.5倍，成本降低了9倍。DS-MoE是【索引51，Deepspeed inference: Enabling efficient inference of transformer models at unprecedented scale，2022，arXiv】中介绍的更广泛的DeepSpeed-inference工作的一部分。</p>
 <h4 id="51-deepspeed-moe">5.1 DeepSpeed-MoE推理系统设计</h4>
-<p><strong>MoE推理性能的悖论</strong>。MoE推理性能存在一个有趣的悖论：<br/>
--   <strong>从最佳情况看</strong>：MoE模型（采用top-1门控）的每个输入token在每个MoE层只激活一个专家，这导致其关键数据路径等同于基础密集模型的大小，比实际模型大小小数个数量级。例如，在对一个1.3B+MoE-128模型进行推理时，每个输入token只需要13亿参数，尽管总参数量是520亿。<br/>
--   <strong>从最坏情况看</strong>：处理一批token（例如一个句子或一段文本）所需的总参数量可能与完整模型大小相当（因为不同的token可能激活不同的专家），即前述例子中的全部520亿参数，这使得实现短延迟和高吞吐量变得极具挑战性。</p>
-<p><strong>DeepSpeed-MoE的设计目标与策略</strong>。DeepSpeed-MoE推理系统的设计目标是引导性能趋向于最佳情况。这是通过三组精心协调的优化实现的：<br/>
--   <strong>模型分区与并行</strong>：仔细划分模型，并采用不同类型的并行策略；将具有相同关键数据路径的所有token进行分组和路由，以减少每个设备的数据访问量，并实现最大的聚合带宽。<br/>
--   <strong>通信调度优化</strong>：通过并行协调优化通信调度，以有效地对token进行分组和路由。<br/>
--   <strong>核函数优化</strong>：优化Transformer和MoE相关的核函数，以提高单设备性能。</p>
+<p><strong>MoE推理性能的悖论</strong>。MoE推理性能存在一个有趣的悖论：</p>
+<ul><li><strong>从最佳情况看</strong>：MoE模型（采用top-1门控）的每个输入token在每个MoE层只激活一个专家，这导致其关键数据路径等同于基础密集模型的大小，比实际模型大小小数个数量级。例如，在对一个1.3B+MoE-128模型进行推理时，每个输入token只需要13亿参数，尽管总参数量是520亿。</li><li><strong>从最坏情况看</strong>：处理一批token（例如一个句子或一段文本）所需的总参数量可能与完整模型大小相当（因为不同的token可能激活不同的专家），即前述例子中的全部520亿参数，这使得实现短延迟和高吞吐量变得极具挑战性。</li></ul>
+<p><strong>DeepSpeed-MoE的设计目标与策略</strong>。DeepSpeed-MoE推理系统的设计目标是引导性能趋向于最佳情况。这是通过三组精心协调的优化实现的：</p>
+<ul><li><strong>模型分区与并行</strong>：仔细划分模型，并采用不同类型的并行策略；将具有相同关键数据路径的所有token进行分组和路由，以减少每个设备的数据访问量，并实现最大的聚合带宽。</li><li><strong>通信调度优化</strong>：通过并行协调优化通信调度，以有效地对token进行分组和路由。</li><li><strong>核函数优化</strong>：优化Transformer和MoE相关的核函数，以提高单设备性能。</li></ul>
 <p>我们将在接下来的三节中深入探讨这些优化。</p>
 <h4 id="52">5.2 张量切片、专家切片、数据并行和专家并行的灵活组合</h4>
 <p><strong>多维并行策略</strong>。为了在MoE模型上实现前所未有的低延迟和高吞吐量，我们的推理系统设计旨在最小化每个设备上的关键数据路径，最大化可实现的聚合内存带宽，并同时提供充足的聚合内存以支持海量模型。这是通过以下方式实现的：(1) 对专家参数使用专家并行【索引32，Scalable and efficient moe training for multitask multilingual models，2021，CoRR】和切片；(2) 对非专家参数使用数据并行和张量切片。图7展示了一个单一的MoE Transformer层，其中包含专家（如MLP）和非专家参数（如Attention），以及我们如何使用并行策略组合来处理每个组件。</p>
@@ -131,10 +120,8 @@ $$L = \alpha L_{CE} + (1-\alpha) L_{KD}$$
 </figure></p>
 <h4 id="54-transformermoe">5.4 高度优化的Transformer和MoE相关核函数</h4>
 <p><strong>核函数优化</strong>。DS-MoE推理系统包含高度优化的多GPU Transformer核函数以及高度优化的MoE相关核函数。我们使用DeepSpeed推理核函数来最大化非专家Transformer层的带宽利用率【索引53，DeepSpeed: Accelerating large-scale model inference and training via system optimizations and compression，2021，Microsoft Research Blog】。本文重点关注用于执行门控和不同数据布局转换的MoE相关算子，这些在文献中通常使用稀疏-密集einsum实现。在高层次上，我们通过将这些算子实现为显式的数据布局转换，而不是高度稀疏-密集的einsum，来优化它们，从而将计算复杂度从立方级降低到平方级。我们还将大部分这些算子融合成一个单一的核函数。</p>
-<p><strong>MoE计算的优化细节</strong>。具体来说，MoE相关的计算包括三个主要部分：<br/>
-1.  <strong>门控函数</strong>：确定token到专家的分配，结果表示为一个稀疏张量（一个one-hot向量）。<br/>
-2.  <strong>稀疏einsum算子</strong>：在one-hot张量和所有token之间进行，根据分配的专家ID对token进行排序。<br/>
-3.  <strong>最终einsum</strong>：在MoE计算结束时，对token进行缩放并重新排序回其原始顺序。</p>
+<p><strong>MoE计算的优化细节</strong>。具体来说，MoE相关的计算包括三个主要部分：</p>
+<ol><li><strong>门控函数</strong>：确定token到专家的分配，结果表示为一个稀疏张量（一个one-hot向量）。</li><li><strong>稀疏einsum算子</strong>：在one-hot张量和所有token之间进行，根据分配的专家ID对token进行排序。</li><li><strong>最终einsum</strong>：在MoE计算结束时，对token进行缩放并重新排序回其原始顺序。</li></ol>
 <p><strong>从稀疏到稠密的优化</strong>。门控函数中的稀疏张量表示和稀疏einsum算子引入了显著的延迟开销。首先，门控函数包含创建token掩码、选择top-k专家和执行累积和（cumsum）等众多操作，这些操作不仅因稀疏张量表示而浪费，而且由于多次核函数调用而非常缓慢。其次，稀疏einsum的复杂度为 $S \times E \times M \times c_e$，其中S是token总数，E是专家数，M是模型隐藏维度，$c_e$是专家容量。在这个方程中，每个token的E个操作中有 $(E-1)$ 个是与零的乘法和加法。这是因为门控操作的泛化导致了对多个掩码矩阵或one-hot向量的einsum，产生了大量不必要的零计算。我们使用密集表示和核函数融合来优化这些算子。</p>
 <p><strong>具体实现</strong>。首先，我们将门控函数融合成一个单一的核函数，并使用一个密集的token-专家映射表来表示从token到专家的分配，大大减少了核函数启动开销以及稀疏表示带来的内存和计算开销。具体来说，门控核函数包括top-k、cumsum和scatter操作。我们使用Blelloch扫描算法在GPU上并行化cumsum。最后，我们使用映射表和token ID来将正确的token路由到MoE专家。其次，为了优化剩下的两个稀疏einsum，我们使用上述映射表将它们实现为数据布局转换，首先根据专家ID排序，然后再恢复原始顺序，而无需任何稀疏einsum。这将这些操作的复杂度从 $S \times E \times M \times c_e$ 降低到 $S \times M \times c_e$。结合数据转换，我们使用相应的门控logits（在概率域）来更新专家输出。总的来说，这些优化使得MoE核函数相关的延迟减少了6倍以上。</p>
 <h2 id="a4">A4 实验</h2>

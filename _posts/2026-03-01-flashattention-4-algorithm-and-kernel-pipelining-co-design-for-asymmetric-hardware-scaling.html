@@ -77,10 +77,8 @@ $$\begin{aligned}
 <p><strong>张量核心与增强的异步性</strong>。Blackwell配备了第五代张量核心，其操作的瓦片尺寸远大于以往架构。每个MMA张量核心指令处理128 × N的瓦片（通常N=128或256），而Hopper上是64 × N。至关重要的是，Blackwell的MMA指令将其输出异步地直接写入TMEM，而Hoomer的MMA则写入寄存器。这种完全的异步性使得计算与其他操作之间能有更好的重叠，因为MMA单元不再因等待寄存器写回而阻塞。硬件对异步性的支持使得warp专业化核函数成为可能，即一个CTA的warps被划分为生产者或消费者角色，分别只负责发出数据移动或计算指令【索引1，CudaDMA: Optimizing GPU Memory Bandwidth via Warp Specialization+2011+SC '11+<a href="https://doi.org/10.1145/2063384.2063400" rel="noopener noreferrer" target="_blank">https://doi.org/10.1145/2063384.2063400</a>】 。</p>
 <p><strong>2-CTA张量核心</strong>。Blackwell支持一种2-CTA张量核心MMA模式，其中同一线程块集群内的两个CTA（CTA对）协同执行单个MMA操作，允许该操作从两个CTA读取和写入张量内存。由CTA对中的一个线程发起MMA，但其对等CTA必须已启动并在操作进行期间保持活动状态。与单CTA MMA将M维度限制为128相比，配对模式通过在M维度上将A瓦片和累加器划分到CTA对中，并在N维度上将B瓦片划分到两个CTA中，支持M=128或256。这样，每个CTA只需在自己的共享内存中暂存一半的B，而硬件在乘法过程中会使用合并后的B瓦片。这减少了冗余的共享内存容量和带宽需求，但由于这些操作会跨CTA对访问张量内存，核函数必须以固定的CTA对形式启动，并在整个核函数中对张量内存和张量核心操作使用一致的2-CTA模式。</p>
 <p><strong>变化的瓶颈</strong>。Blackwell体现的一个关键趋势是张量核心的吞吐量扩展速度快于其他功能单元。与Hopper相比，Blackwell的FP16/BF16张量核心吞吐量翻了一番（每个GPU从1 PFLOPS【索引17，Nvidia H100 tensor core GPU architecture+2022+】增加到2.25 PFLOPS【索引19，Nvidia Blackwell architecture technical brief+2024+<a href="https://nvdam.widen.net/s/" rel="noopener noreferrer" target="_blank">https://nvdam.widen.net/s/</a> xqt56dflgh/nvidia-blackwell-architecture-technical-brief】），但共享内存带宽和指数单元吞吐量保持不变或扩展得更慢。这种不平衡将性能瓶颈从矩阵乘法转移到了共享内存流量和像softmax这样的非矩阵乘法操作上。正如我们在3.1和3.2节的roofline分析所示，这要求精心的核函数设计，以最大化MMA操作与这些瓶颈资源之间的重叠。</p>
-<p><strong>B200（和GB200）上几个硬件组件的吞吐量如下</strong>。<br/>
-1. <strong>张量核心</strong>：BF16 MMA的吞吐量为8192 ops/clock/SM，是Hopper（4096 ops/clock/SM）的两倍。这可以从理论最大FLOPS推导出来：2.25 PFLOPS / 1850 Mhz时钟速度 / 148 SMs = 8192 ops/clock/SM。<br/>
-2. <strong>指数单元</strong>：B200和GB200上的多功能单元（MUFU）可以执行16 ops/clock/SM，与Hopper相同【索引18，CUDA Programming Guide Version 12.4+2024+<a href="https://docs.nvidia.com/" rel="noopener noreferrer" target="_blank">https://docs.nvidia.com/</a> cuda/cuda-c-programming-guide/index.html】。我们注意到，B300和GB300 GPU的指数吞吐量已翻倍至32 ops/clock/SM，但在撰写本文时这些GPU尚未广泛可用。<br/>
-3. <strong>SMEM</strong>：根据微基准测试【索引15，Dissecting the nvidia hopper architecture through microbenchmarking and multiple level analysis+2025+】，读取吞吐量为128 bytes/clock/SM，与Hopper相同。</p>
+<p><strong>B200（和GB200）上几个硬件组件的吞吐量如下</strong>。</p>
+<ol><li><strong>张量核心</strong>：BF16 MMA的吞吐量为8192 ops/clock/SM，是Hopper（4096 ops/clock/SM）的两倍。这可以从理论最大FLOPS推导出来：2.25 PFLOPS / 1850 Mhz时钟速度 / 148 SMs = 8192 ops/clock/SM。</li><li><strong>指数单元</strong>：B200和GB200上的多功能单元（MUFU）可以执行16 ops/clock/SM，与Hopper相同【索引18，CUDA Programming Guide Version 12.4+2024+<a href="https://docs.nvidia.com/" rel="noopener noreferrer" target="_blank">https://docs.nvidia.com/</a> cuda/cuda-c-programming-guide/index.html】。我们注意到，B300和GB300 GPU的指数吞吐量已翻倍至32 ops/clock/SM，但在撰写本文时这些GPU尚未广泛可用。</li><li><strong>SMEM</strong>：根据微基准测试【索引15，Dissecting the nvidia hopper architecture through microbenchmarking and multiple level analysis+2025+】，读取吞吐量为128 bytes/clock/SM，与Hopper相同。</li></ol>
 <p><strong>硬件趋势分析</strong>。我们可以看到，Blackwell上的MMA吞吐量相比Hopper翻了一番，但其他硬件单元的提速并非同步。这反映了加速器设计的一个更广泛趋势：在相似的功耗/硅片面积约束下，通过提高最重要组件（通常是矩阵乘法单元）的吞吐量来获得更高的性能。</p>
 <h2>A2 方法细节</h2>
 <h3>3.1 注意力前向传播</h3>
@@ -130,12 +128,8 @@ $$2^{x}=2^{\lfloor x\rfloor} 2^{x-\lfloor x\rfloor}$$
 $$2^{x_{\text{frac}}} \approx \sum_{i=0}^{n} p_i x_{\text{frac}}^i$$
 
 <p>其中$p_0 = 1.0$，其余系数通过Sollya软件包【索引4，Sollya: An environment for the development of numerical codes+2010+ICMS 2010】计算得出，以最小化在[0, 1)上的相对逼近误差。多项式求值使用霍纳（Horner）法则和FMA指令，以实现高吞吐量。</p>
-<p><strong>完整的算法流程如下</strong>：<br/>
-1. 将x裁剪至不小于-127，以避免下溢。<br/>
-2. 使用向下取整模式计算⌊x⌋：将$2^{23} + 2^{22}$加到x上（强制将小数位移入尾数），然后在使用向下取整模式减去它。<br/>
-3. 计算小数部分：$x_{frac} = x − ⌊x⌋$。<br/>
-4. 求值多项式得到$2^{x_{frac}}$。<br/>
-5. 合并整数和小数部分：将⌊x⌋移入指数域，并加上$2^{x_{frac}}$的尾数位。</p>
+<p><strong>完整的算法流程如下</strong>：</p>
+<ol><li>将x裁剪至不小于-127，以避免下溢。</li><li>使用向下取整模式计算⌊x⌋：将$2^{23} + 2^{22}$加到x上（强制将小数位移入尾数），然后在使用向下取整模式减去它。</li><li>计算小数部分：$x_{frac} = x − ⌊x⌋$。</li><li>求值多项式得到$2^{x_{frac}}$。</li><li>合并整数和小数部分：将⌊x⌋移入指数域，并加上$2^{x_{frac}}$的尾数位。</li></ol>
 <p>通过将指数计算分布到MUFU和FMA单元上，这种方法有效地提高了指数吞-吐量，缓解了注意力计算中的一个关键瓶颈。</p>
 <p><strong>部分模拟</strong>。尽管多项式模拟提高了指数吞吐量，但它也带来了成本：需要额外的寄存器（用于保存中间值和系数）、更高的寄存器带宽消耗以及比MUFU指令更长的延迟。对所有指数求值都使用模拟会增加寄存器压力，并可能导致寄存器溢出，从而抵消吞吐量优势。因此，我们只对每行softmax中的一部分元素（10-25%）应用模拟，其余元素通过硬件MUFU.EX2指令计算。具体比例根据给定瓦片配置的MMA和指数吞吐量比率进行经验性调整。</p>
 <p><strong>数值精度</strong>。表2比较了不同阶数多项式逼近与硬件MUFU.EX2指令的精度，测试基于400万个在[0, 1)范围内的随机输入。我们报告了两个指标：FP32级别的误差（任何量化之前）和BF16级别的误差（将FP32输出四舍五入到BF16后），两者都与FP64参考值进行比较。在FP32级别，3阶多项式的最大相对误差为8.8 × 10⁻⁵，比硬件高约600倍。然而，在四舍五入到BF16后，误差几乎无法区分：对于所有阶数≥3的多项式，BF16的量化误差（~3.9 × 10⁻³）主导了多项式逼近误差。在99%的输入上，3阶多项式与硬件的差异在1个BF16 ULP（Unit in the Last Place）之内，这对于softmax输出以BF16精度被消费的注意力计算来说是足够的。更高阶的多项式缩小了FP32的差距：5阶多项式在最大相对误差上与硬件的差距在2倍以内，但每次求值需要额外两条FMA指令。</p>
@@ -156,9 +150,8 @@ m_j &amp;= \max(m_{j-1}, \text{rowmax}(S_j)) \\
 \end{aligned}$$
 
 <p>其中$m_j$是运行最大值，ℓj是指数的运行和（归一化因子）。中间输出$O_j$的更新方式为：$O_j = e^{m_{j-1}−m_j} O_{j-1} + e^{S_j−m_j} V_j$。重缩放因子$e^{m_{j-1}−m_j}$通过在遇到更大值时对先前结果进行重新归一化来确保数值稳定性。</p>
-<p><strong>条件性重缩放</strong>。$e^{m_{j-1}−m_j} O_{j-1}$这一步需要进行一次向量乘法。我们提出了两个简单的观察：<br/>
-1. 只有当$m_j &gt; m_{j-1}$时，即当发现新的更大值时，重缩放才是必要的。<br/>
-2. 我们可以容忍重缩放中的一些“松弛”：仅当$m_j - m_{j-1} &gt; \tau$时才进行重缩放，其中$\tau$是一个阈值（通常设为$log_2(256) = 8.0$，对应于256.0的重缩放因子）。只要我们持续跟踪统计数据（我们已经完成的总缩放量），我们最终仍然可以得到真正的分母，从而得到正确的最终输出。</p>
+<p><strong>条件性重缩放</strong>。$e^{m_{j-1}−m_j} O_{j-1}$这一步需要进行一次向量乘法。我们提出了两个简单的观察：</p>
+<ol><li>只有当$m_j &gt; m_{j-1}$时，即当发现新的更大值时，重缩放才是必要的。</li><li>我们可以容忍重缩放中的一些“松弛”：仅当$m_j - m_{j-1} &gt; \tau$时才进行重缩放，其中$\tau$是一个阈值（通常设为$log_2(256) = 8.0$，对应于256.0的重缩放因子）。只要我们持续跟踪统计数据（我们已经完成的总缩放量），我们最终仍然可以得到真正的分母，从而得到正确的最终输出。</li></ol>
 <p><strong>在FlashAttention-4中，我们修改算法如下：</strong></p>
 <p></p>
 $$\begin{aligned}

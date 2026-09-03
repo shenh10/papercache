@@ -33,17 +33,8 @@ title: 'ZeRO: Memory Optimizations Toward Training Trillion Parameter Models'
 </details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决训练参数量从数十亿到万亿级别的大型深度学习模型所面临的内存限制和效率挑战。现有并行化方案（如数据并行、模型并行）在内存效率、计算/通信效率和易用性之间存在权衡，难以进一步扩展模型规模。</p>
-<p>为应对此挑战，本文提出了 <strong>ZeRO（Zero Redundancy Optimizer，零冗余优化器）</strong>，一个旨在优化内存使用、提升训练速度和模型规模的解决方案。ZeRO的核心创新点如下：<br/>
-1.  <strong>提出ZeRO-DP，一种增强的数据并行方案</strong>：ZeRO-DP通过划分模型状态（优化器状态、梯度和参数）而非复制，消除了数据并行训练中的内存冗余。它通过动态通信调度，在实现与模型并行相当的内存效率的同时，保持了数据并行的高计算粒度和低通信量。ZeRO-DP分为三个优化阶段：<br/>
-    *   <strong>$P_{os}$ (Optimizer State Partitioning)</strong>：优化器状态划分，可减少4倍内存占用。<br/>
-    *   <strong>$P_g$ (Gradient Partitioning)</strong>：增加梯度划分，可减少8倍内存占用。<br/>
-    *   <strong>$P_p$ (Parameter Partitioning)</strong>：再增加参数划分，内存减少量与数据并行度 $N_d$ 成线性关系，可达 $N_d$ 倍。<br/>
-2.  <strong>提出ZeRO-R，用于优化残差内存</strong>：在ZeRO-DP解决了模型状态内存瓶颈后，ZeRO-R进一步优化激活值、临时缓冲区和内存碎片这三类残差状态的内存占用。<br/>
-    *   通过<strong>划分激活值</strong>并按需重构，解决了模型并行中激活值复制导致的冗余。<br/>
-    *   通过管理<strong>临时缓冲区</strong>的大小，平衡内存与计算效率。<br/>
-    *   通过主动进行<strong>内存碎片整理</strong>，提高了内存利用率。<br/>
-3.  <strong>将ZeRO与模型并行（MP）结合</strong>：ZeRO可以与MP结合使用，进一步降低内存占用。理论上，数据并行度为 $N_d$、模型并行度为 $N_m$ 时，每台设备的内存占用可减少 $N_d \times N_m$ 倍，使得在有限的硬件上以合理的批量大小高效训练超大规模模型成为可能。<br/>
-4.  <strong>实现并验证了ZeRO-100B</strong>：本文实现了ZeRO的一个子集（$P_{os+g}$ + ZeRO-R），命名为ZeRO-100B。实验证明，该系统能在400个GPU上高效训练超过1000亿参数的模型，性能达到15 Petaflops，模型规模比现有技术（SOTA）提升8倍，性能提升10倍。同时，它支持在不使用模型并行的情况下训练高达130亿参数的模型，极大地降低了大规模模型训练的门槛。基于ZeRO，研究人员已成功训练出当时全球最大的语言模型Turing-NLG（170亿参数）。</p>
+<p>为应对此挑战，本文提出了 <strong>ZeRO（Zero Redundancy Optimizer，零冗余优化器）</strong>，一个旨在优化内存使用、提升训练速度和模型规模的解决方案。ZeRO的核心创新点如下：</p>
+<ol><li><strong>提出ZeRO-DP，一种增强的数据并行方案</strong>：ZeRO-DP通过划分模型状态（优化器状态、梯度和参数）而非复制，消除了数据并行训练中的内存冗余。它通过动态通信调度，在实现与模型并行相当的内存效率的同时，保持了数据并行的高计算粒度和低通信量。ZeRO-DP分为三个优化阶段：<ul><li><strong>$P_{os}$ (Optimizer State Partitioning)</strong>：优化器状态划分，可减少4倍内存占用。</li><li><strong>$P_g$ (Gradient Partitioning)</strong>：增加梯度划分，可减少8倍内存占用。</li><li><strong>$P_p$ (Parameter Partitioning)</strong>：再增加参数划分，内存减少量与数据并行度 $N_d$ 成线性关系，可达 $N_d$ 倍。</li></ul></li><li><strong>提出ZeRO-R，用于优化残差内存</strong>：在ZeRO-DP解决了模型状态内存瓶颈后，ZeRO-R进一步优化激活值、临时缓冲区和内存碎片这三类残差状态的内存占用。<ul><li>通过<strong>划分激活值</strong>并按需重构，解决了模型并行中激活值复制导致的冗余。</li><li>通过管理<strong>临时缓冲区</strong>的大小，平衡内存与计算效率。</li><li>通过主动进行<strong>内存碎片整理</strong>，提高了内存利用率。</li></ul></li><li><strong>将ZeRO与模型并行（MP）结合</strong>：ZeRO可以与MP结合使用，进一步降低内存占用。理论上，数据并行度为 $N_d$、模型并行度为 $N_m$ 时，每台设备的内存占用可减少 $N_d \times N_m$ 倍，使得在有限的硬件上以合理的批量大小高效训练超大规模模型成为可能。</li><li><strong>实现并验证了ZeRO-100B</strong>：本文实现了ZeRO的一个子集（$P_{os+g}$ + ZeRO-R），命名为ZeRO-100B。实验证明，该系统能在400个GPU上高效训练超过1000亿参数的模型，性能达到15 Petaflops，模型规模比现有技术（SOTA）提升8倍，性能提升10倍。同时，它支持在不使用模型并行的情况下训练高达130亿参数的模型，极大地降低了大规模模型训练的门槛。基于ZeRO，研究人员已成功训练出当时全球最大的语言模型Turing-NLG（170亿参数）。</li></ol>
 <h2 id="a3-observation">A3 背景知识/关键Observation/设计原则</h2>
 <h3 id="3">3. 内存都去哪儿了？</h3>
 <p><strong>引言</strong><br/>

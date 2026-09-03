@@ -131,11 +131,8 @@ MNM 学习一个由前馈神经网络（FFN）参数化的额外记忆状态 $\t
 其中 $W_O \in \mathbb{R}^{H \times d_{\text{value}} \times d_{\text{model}}}$ 是可训练的权重。</p>
 <h3 id="32">3.2 记忆与有效上下文窗口</h3>
 <p><strong>Infini-Transformer 的内存优势</strong>：Infini-Transformer 以有界的内存占用实现了无界的上下文窗口。表1列出了先前的段级记忆模型及其上下文内存占用和有效上下文长度。Infini-Transformer 在单层每头中存储压缩上下文（$M_s$ 和 $z_s$）的内存复杂度为常数 $d_{\text{key}} \times d_{\text{value}} + d_{\text{key}}$。相比之下，其他模型的内存复杂度随序列维度增长：Transformer-XL【【14】Dai et al., Transformer-xl: Attentive language models beyond a fixed-length context, arXiv 2019】、Compressive Transformer【【47】Rae et al., Compressive transformers for long-range sequence modelling, arXiv 2019】和 Memorizing Transformers【【63】Wu et al., Memorizing transformers, arXiv 2022】的内存复杂度依赖于缓存大小；而 RMT【【7】Bulatov et al., Recurrent memory transformer, NeurIPS 2022】和 AutoCompressors【【18】Ge et al., In-context autoencoder for context compression in a large language model, arXiv 2023】则依赖于软提示的大小。</p>
-<p><strong>与其他长上下文模型的比较</strong>：<br/>
--   <strong>Transformer-XL</strong>：通过缓存上一段的 KV 状态，将上下文窗口从 $N$ 扩展到 $N \times l$ 个词元，但带来了 $(d_{\text{key}} + d_{\text{value}}) \times H \times N \times l$ 的额外内存占用。<br/>
--   <strong>Compressive Transformer</strong>：在 Transformer-XL 的基础上增加第二个缓存，存储过去段激活的压缩表示，将上下文窗口扩展了 $c \times r \times l$，但上下文内存复杂度依然很高。<br/>
--   <strong>Memorizing Transformers</strong>：选择存储整个 KV 状态作为上下文，由于存储开销巨大，他们将上下文计算限制在单层内。通过使用快速 kNN 检索器，它构建了一个覆盖整个序列历史（长度 $N \times S$）的上下文窗口，但存储成本更高。实验表明，Infini-Transformer LM 在 Memorizing Transformers 的基础上实现了超过100倍的压缩率，同时进一步改善了困惑度分数。<br/>
--   <strong>RMT 和 AutoCompressors</strong>：理论上允许无限的上下文长度，因为它们将输入压缩成摘要向量，并作为额外的软提示输入到后续段。然而，在实践中，这些技术的成功高度依赖于软提示向量的大小。增加软提示向量数量以提升性能会迅速增加内存和计算复杂度，从而降低效率。AutoCompressors 的研究还发现，需要一个高效的压缩目标来训练这类提示压缩技术。</p>
+<p><strong>与其他长上下文模型的比较</strong>：</p>
+<ul><li><strong>Transformer-XL</strong>：通过缓存上一段的 KV 状态，将上下文窗口从 $N$ 扩展到 $N \times l$ 个词元，但带来了 $(d_{\text{key}} + d_{\text{value}}) \times H \times N \times l$ 的额外内存占用。</li><li><strong>Compressive Transformer</strong>：在 Transformer-XL 的基础上增加第二个缓存，存储过去段激活的压缩表示，将上下文窗口扩展了 $c \times r \times l$，但上下文内存复杂度依然很高。</li><li><strong>Memorizing Transformers</strong>：选择存储整个 KV 状态作为上下文，由于存储开销巨大，他们将上下文计算限制在单层内。通过使用快速 kNN 检索器，它构建了一个覆盖整个序列历史（长度 $N \times S$）的上下文窗口，但存储成本更高。实验表明，Infini-Transformer LM 在 Memorizing Transformers 的基础上实现了超过100倍的压缩率，同时进一步改善了困惑度分数。</li><li><strong>RMT 和 AutoCompressors</strong>：理论上允许无限的上下文长度，因为它们将输入压缩成摘要向量，并作为额外的软提示输入到后续段。然而，在实践中，这些技术的成功高度依赖于软提示向量的大小。增加软提示向量数量以提升性能会迅速增加内存和计算复杂度，从而降低效率。AutoCompressors 的研究还发现，需要一个高效的压缩目标来训练这类提示压缩技术。</li></ul>
 <h2 id="a4">A4 实验环境与结果</h2>
 <h3 id="a41">A4.1 实验环境</h3>
 <ul>
@@ -221,13 +218,10 @@ MNM 学习一个由前馈神经网络（FFN）参数化的额外记忆状态 $\t
 <p>本文引入了一种将压缩记忆模块与标准点积注意力层紧密集成的方案——Infini-attention。这一对注意力层的精妙而关键的修改，使得 LLMs 能够利用有界的内存和计算资源处理无限长的上下文。实验证明，该方法可以自然地扩展到百万词元级别的输入序列，在长上下文语言建模和书籍摘要任务上均优于基线模型。此外，该方法还展示了强大的长度泛化能力：一个在最多 5K 序列长度的 Passkey 实例上微调的 1B 模型，成功解决了 1M 长度的问题。一个有效的记忆系统不仅对于 LLMs 理解长上下文至关重要，也对推理、规划、持续学习新知识，甚至学会如何学习都至关重要。</p>
 <h2 id="a6">A6 附录</h2>
 <h3 id="a">A. 额外的训练细节</h3>
-<p><strong>长上下文语言建模任务</strong>:<br/>
-*   <strong>学习率</strong>: 通过在 {0.003, 0.005, 0.01, 0.03} 中搜索，最终设定为 0.01。<br/>
-*   <strong>优化器</strong>: 使用 Adafactor 优化器【【54】Shazeer &amp; Stern, Adafactor: Adaptive learning rates with sublinear memory cost, ICML 2018】，配合 1000 步的线性预热（warmup），之后进行余弦衰减（cosine decay）。<br/>
-*   <strong>内存优化</strong>: 在每个段之后应用梯度检查点技术以节省内存。<br/>
-*   <strong>批量大小</strong>: 设置为 64。</p>
-<p><strong>LLM 实验</strong>:<br/>
-*   在持续预训练和任务微调期间，学习率设定为 0.0001。</p>
+<p><strong>长上下文语言建模任务</strong>:</p>
+<ul><li><strong>学习率</strong>: 通过在 {0.003, 0.005, 0.01, 0.03} 中搜索，最终设定为 0.01。</li><li><strong>优化器</strong>: 使用 Adafactor 优化器【【54】Shazeer &amp; Stern, Adafactor: Adaptive learning rates with sublinear memory cost, ICML 2018】，配合 1000 步的线性预热（warmup），之后进行余弦衰减（cosine decay）。</li><li><strong>内存优化</strong>: 在每个段之后应用梯度检查点技术以节省内存。</li><li><strong>批量大小</strong>: 设置为 64。</li></ul>
+<p><strong>LLM 实验</strong>:</p>
+<ul><li>在持续预训练和任务微调期间，学习率设定为 0.0001。</li></ul>
 <h3 id="b-passkey">B. Passkey 检索任务</h3>
 <p><strong>输入格式示例</strong>:<br/>
 下面展示了 Passkey 任务的输入格式。</p>

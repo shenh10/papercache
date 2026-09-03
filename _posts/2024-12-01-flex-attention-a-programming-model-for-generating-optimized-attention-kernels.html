@@ -99,10 +99,9 @@ title: 'FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION K
 图3. 滑动窗口注意力的BlockMask。左图：分数矩阵被划分为完全可见块（绿色）、部分掩码块（黄色）和忽略块（白色）。右图：BlockMask被编码为一个索引矩阵加上每行的块计数。上图：<code>score_mod</code>应用于完整和部分块。下图：<code>mask_mod</code>应用于部分块。</p>
 <p><strong><code>BlockMask</code>数据结构</strong>。FlexAttention实现了一个<code>BlockMask</code>数据结构来利用稀疏性，同时只增加可忽略的内存开销。我们在编译时预先计算一个块掩码，以消除运行时开销。<code>BlockMask</code>首先将分数矩阵沿着Q_LEN和KV_LEN维度分割成块。然后，如果一个块中的所有分数标量都被掩码为-inf，<code>BlockMask</code>就将其指定为非计算块。通过在块级别记录稀疏性，我们无需实现一个大的稀疏矩阵，从而显著减少了内存开销。</p>
 <p><strong><code>BlockMask</code>的具体实现</strong>。具体来说，<code>BlockMask</code>包含两个张量，一个形状为B × H × Num_Row的<code>kv_num_block</code>和一个形状为B × H × Num_Row × Num_Col的<code>kv_indices</code>。这里，Num_Row和Num_Col分别是沿查询和键值维度的行和列的块数。<code>kv_num_block</code>存储每行的非零块数量，而<code>kv_indices</code>存储这些非零块的索引。通过访问<code>kv_num_block</code>，FlexAttention可以跳过被掩码的块，并实现成比例的性能加速。</p>
-<p><strong>全块优化</strong>。我们还将<code>BlockMask</code>分为完整块（full blocks）和部分块（partial blocks），以进一步提高性能。我们的关键思想是最小化因应用<code>mask_mod</code>而产生的运行时开销，并在可能的情况下跳过它。我们根据稀疏性识别出两种类型的块：<br/>
-1.  <strong>部分块</strong>：其中一些分数标量被掩码为-inf，需要在运行时逐元素应用<code>mask_mod</code>。<br/>
-2.  <strong>完整块</strong>：其中没有分数标量被掩码，这使我们能够跳过<code>mask_mod</code>，只应用<code>score_mod</code>。<br/>
-对于像因果掩码这样的常见模式，这种优化带来了大约15%的性能提升。图3展示了滑动窗口注意力的<code>BlockMask</code>。滑动窗口掩码仅应用于部分块，而相对位置分数修改则逐元素地应用于完整块和部分块。</p>
+<p><strong>全块优化</strong>。我们还将<code>BlockMask</code>分为完整块（full blocks）和部分块（partial blocks），以进一步提高性能。我们的关键思想是最小化因应用<code>mask_mod</code>而产生的运行时开销，并在可能的情况下跳过它。我们根据稀疏性识别出两种类型的块：</p>
+<ol><li><strong>部分块</strong>：其中一些分数标量被掩码为-inf，需要在运行时逐元素应用<code>mask_mod</code>。</li><li><strong>完整块</strong>：其中没有分数标量被掩码，这使我们能够跳过<code>mask_mod</code>，只应用<code>score_mod</code>。</li></ol>
+<p>对于像因果掩码这样的常见模式，这种优化带来了大约15%的性能提升。图3展示了滑动窗口注意力的<code>BlockMask</code>。滑动窗口掩码仅应用于部分块，而相对位置分数修改则逐元素地应用于完整块和部分块。</p>
 <p><strong><code>BlockMask</code>引导的间接内存访问</strong>。在注意力中利用稀疏性可以带来显著的性能加速。现有的解决方案，如FlashAttention，会遍历KV_LEN维度，并根据注意力变体手动指定迭代的开始和结束索引。这带来了巨大的编程负担。此外，如果查询词元索引小于键词元索引，还需要额外的努力来确保最后一个块中的注意力分数被正确掩码。</p>
 <p><strong>自动化稀疏性利用</strong>。FlexAttention利用<code>BlockMask</code>信息来自动利用注意力变体中的稀疏性。它首先根据<code>kv_num_block</code>（指定未被掩码的分数矩阵块的数量）来调整每个GPU块中的工作负载。然后，它使用<code>KV_Indices</code>来映射到下一个要处理的块。在这里，我们利用了一种间接内存访问策略，因为索引不必指向序列中的连续词元。这为编译各种注意力模式（如滑动窗口注意力、局部-全局注意力或自定义稀疏模式）提供了灵活性，而无需修改核函数。</p>
 <p><figure class="image-figure">
@@ -139,11 +138,8 @@ title: 'FLEX ATTENTION: A PROGRAMMING MODEL FOR GENERATING OPTIMIZED ATTENTION K
 <p><strong>自动化转换</strong>。为了解决这个问题，我们自动将<code>mask_mod</code>和<code>score_mod</code>转换为它们的推理对应版本，如图6(b)所示。具体来说，我们提供一个装饰器（decorator），它接收用户定义的<code>mask_mod</code>和一个<code>offset</code>，并生成一个转换后的<code>mask_mod</code>，该函数会消费偏移量信息。</p>
 <h2 id="a3">A3 实验环境</h2>
 <p>我们评估了FlexAttention在7种流行的注意力修改上的性能（见表1），包括经典的noop（无操作）和causal（因果），流行的位置嵌入alibi【Press et al., 2022, Train short, test long: Attention with linear biases enables input length extrapolation】，局部注意力sliding window（滑动窗口）【Beltagy et al., 2020a, Longformer: The long-document transformer】，完全可见前缀的prefixLM，添加tanh层的soft cap，以及用于批处理不同长度输入的document mask（文档掩码）。这些注意力变体在多头注意力（MHA）和分组查询注意力（GQA）下进行了评估。</p>
-<p>这些注意力变体在我们评估的五个基线中得到了不同程度的支持：<br/>
-*   <strong>FlashAttention-v2 (FAv2)</strong>【Dao, 2024, Flashattention-2: Faster attention with better parallelism and work partitioning】：一个最先进的高性能注意力核，通过核融合、分块和重计算来减少HBM读写。<br/>
-*   <strong>FlashAttention-v3 (FAv3)</strong>【Shah et al., 2024, Flashattention-3: Fast and accurate attention with asynchrony and low-precision】：一个实验性的核，利用Hopper GPU的新硬件特性进一步提升性能。<br/>
-*   <strong>FlashDecoding (FAKV)</strong>【Dao et al., 2023, Flashdecoding for long-context inference】：FlashAttention提供的一个为支持kv-cache的推理场景优化的核。<br/>
-*   <strong>Scale dot-product attention (SDPA)</strong>：PyTorch原生的函数式注意力API，支持数学实现、内存高效注意力（mem efficient）【Rabe &amp; Staats, 2022, Self-attention does not need o(n2) memory】、FAv2和cuDNN后端。SDPA能平滑地集成到PyTorch框架中，支持NestedTensor、<code>torch.compile</code>和CUDA图等优化。</p>
+<p>这些注意力变体在我们评估的五个基线中得到了不同程度的支持：</p>
+<ul><li><strong>FlashAttention-v2 (FAv2)</strong>【Dao, 2024, Flashattention-2: Faster attention with better parallelism and work partitioning】：一个最先进的高性能注意力核，通过核融合、分块和重计算来减少HBM读写。</li><li><strong>FlashAttention-v3 (FAv3)</strong>【Shah et al., 2024, Flashattention-3: Fast and accurate attention with asynchrony and low-precision】：一个实验性的核，利用Hopper GPU的新硬件特性进一步提升性能。</li><li><strong>FlashDecoding (FAKV)</strong>【Dao et al., 2023, Flashdecoding for long-context inference】：FlashAttention提供的一个为支持kv-cache的推理场景优化的核。</li><li><strong>Scale dot-product attention (SDPA)</strong>：PyTorch原生的函数式注意力API，支持数学实现、内存高效注意力（mem efficient）【Rabe &amp; Staats, 2022, Self-attention does not need o(n2) memory】、FAv2和cuDNN后端。SDPA能平滑地集成到PyTorch框架中，支持NestedTensor、<code>torch.compile</code>和CUDA图等优化。</li></ul>
 <p>我们使用<code>gpt-fast</code>【gpt-fast maintainers &amp; contributors, 2023, Accelerating generative ai with pytorch ii: Gpt, fast】和<code>torchtune</code>【torchtune maintainers &amp; contributors, 2024, torchtune: Pytorch’s finetuning library】在LLaMa3和LLaMa3.1模型【Dubey et al., 2024, The llama 3 herd of models】上评估了端到端的训练和推理性能。<code>gpt-fast</code>和<code>torchtune</code>是原生的PyTorch库，为流行模型提供了易于使用的微调和推理方案。它们默认依赖<code>torch.compile</code>来启用优化（包括CUDA图、核融合和内联、matmul模板、参数冻结等），并使用SDPA进行注意力计算。</p>
 <p>我们的实验在Nvidia H100 GPU（功率上限650W，内存带宽限制2.4TB/s）、Nvidia A100 GPU（功率上限330W）和Nvidia A6000 GPU上进行。</p>
 <h2 id="a4">A4 实验结果</h2>

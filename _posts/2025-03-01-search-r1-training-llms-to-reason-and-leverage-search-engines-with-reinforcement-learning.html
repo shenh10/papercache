@@ -37,13 +37,8 @@ $$ r_{\phi}(x, y) = \begin{cases} 1, &amp; \text{if } a_{\text{pred}} == a_{\tex
 </details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决大型语言模型（LLMs）在处理复杂推理和获取最新外部信息时面临的挑战。现有的方法，如检索增强生成（RAG）或将搜索引擎视为工具的提示方法，通常是次优的，因为模型并未经过优化以学习如何与搜索引擎有效交互。</p>
-<p>为应对这些挑战，本文提出了SEARCH-R1，一个新颖的强化学习（RL）框架，它通过以下创新使LLMs能够在其推理过程中自主地与搜索引擎进行交错式交互：<br/>
-1.  <strong>分析了在LLM推理中应用强化学习以改进搜索引擎使用的挑战和视角</strong>。本文指出了将搜索引擎集成到RL框架中存在的三个关键挑战：框架集成与稳定性、多轮交错推理与搜索、以及奖励函数设计。<br/>
-2.  <strong>提出了SEARCH-R1框架</strong>。这是一个支持LLM直接与搜索引擎进行rollout和优化的新颖RL框架。其核心特性包括：<br/>
-    *   <strong>检索Token屏蔽（Retrieved Token Masking）</strong>：在计算RL损失时，仅考虑LLM生成的Token，忽略从搜索引擎检索到的Token，从而稳定训练过程。<br/>
-    *   <strong>多轮交错推理与搜索</strong>：模型能够通过生成特殊的<code>&lt;search&gt;</code>和<code>&lt;/search&gt;</code> Token来多次调用搜索引擎，并将检索到的信息（包裹在<code>&lt;information&gt;</code>和<code>&lt;/information&gt;</code>中）用于后续的逐步推理（包裹在<code>&lt;think&gt;</code>和<code>&lt;/think&gt;</code>中），以解决复杂问题。<br/>
-    *   <strong>简单的结果导向奖励函数</strong>：采用简单的基于最终答案正确性的奖励函数，避免了设计复杂的过程奖励，并证明了其在搜索-推理场景中的有效性。<br/>
-3.  <strong>进行了系统的实验验证</strong>。在七个问答数据集上进行的实验表明，SEARCH-R1的性能显著优于多种基线方法。在相同实验设置下，Qwen2.5-7B和Qwen2.5-3B模型相较于RAG基线分别取得了41%和20%的平均相对性能提升。此外，本文还提供了关于RL方法选择（PPO vs. GRPO）、不同LLM选择（基础模型 vs. 指令微调模型）以及响应长度动态变化的经验性见解。</p>
+<p>为应对这些挑战，本文提出了SEARCH-R1，一个新颖的强化学习（RL）框架，它通过以下创新使LLMs能够在其推理过程中自主地与搜索引擎进行交错式交互：</p>
+<ol><li><strong>分析了在LLM推理中应用强化学习以改进搜索引擎使用的挑战和视角</strong>。本文指出了将搜索引擎集成到RL框架中存在的三个关键挑战：框架集成与稳定性、多轮交错推理与搜索、以及奖励函数设计。</li><li><strong>提出了SEARCH-R1框架</strong>。这是一个支持LLM直接与搜索引擎进行rollout和优化的新颖RL框架。其核心特性包括：<ul><li><strong>检索Token屏蔽（Retrieved Token Masking）</strong>：在计算RL损失时，仅考虑LLM生成的Token，忽略从搜索引擎检索到的Token，从而稳定训练过程。</li><li><strong>多轮交错推理与搜索</strong>：模型能够通过生成特殊的<code>&lt;search&gt;</code>和<code>&lt;/search&gt;</code> Token来多次调用搜索引擎，并将检索到的信息（包裹在<code>&lt;information&gt;</code>和<code>&lt;/information&gt;</code>中）用于后续的逐步推理（包裹在<code>&lt;think&gt;</code>和<code>&lt;/think&gt;</code>中），以解决复杂问题。</li><li><strong>简单的结果导向奖励函数</strong>：采用简单的基于最终答案正确性的奖励函数，避免了设计复杂的过程奖励，并证明了其在搜索-推理场景中的有效性。</li></ul></li><li><strong>进行了系统的实验验证</strong>。在七个问答数据集上进行的实验表明，SEARCH-R1的性能显著优于多种基线方法。在相同实验设置下，Qwen2.5-7B和Qwen2.5-3B模型相较于RAG基线分别取得了41%和20%的平均相对性能提升。此外，本文还提供了关于RL方法选择（PPO vs. GRPO）、不同LLM选择（基础模型 vs. 指令微调模型）以及响应长度动态变化的经验性见解。</li></ol>
 <h2 id="a3">A3 背景知识</h2>
 <h3 id="21"><strong>2.1 大型语言模型与检索</strong></h3>
 <p>尽管大型语言模型（LLMs）【60, A survey of large language models, 2023, arXiv】【45, Gemini 1.5: Unlocking multimodal understanding across millions of tokens of context, 2024, arXiv】【1, Gpt-4 technical report, 2023, arXiv】在推理【10, Deepseek-r1: Incentivizing reasoning capability in llms via reinforcement learning, 2025, arXiv】和编码【9, Deepseek-coder: When the large language model meets programming–the rise of code intelligence, 2024, arXiv】方面展现出卓越的能力，但它们通常缺乏特定领域的知识【35, A study of generative large language model for medical research and healthcare, 2023, NPJ digital medicine】【29, Large language models in finance: A survey, 2023, Proceedings of the fourth ACM international conference on AI in finance】，并且容易产生幻觉【59, Siren’s song in the ai ocean: a survey on hallucination in large language models, 2023, arXiv】。为缓解这些限制，搜索引擎【61, Dense text retrieval based on pretrained language models: A survey, 2024, ACM Transactions on Information Systems】被广泛集成以提供外部信息。主要有两种集成方式：（1）检索增强生成（RAG）【7, Retrieval-augmented generation for large language models: A survey, 2023, arXiv】和（2）将搜索引擎视为工具【39, Toolformer: Language models can teach themselves to use tools, 2023, Advances in Neural Information Processing Systems】。RAG【26, Retrieval-augmented generation for knowledge-intensive nlp tasks, 2020, Advances in neural information processing systems】【58, Inference scaling for long-context retrieval augmented generation, 2024, arXiv】【53, Rag-gym: Optimizing reasoning and search agents with process supervision, 2025, arXiv】通常遵循检索和序贯生成的流程，搜索引擎根据输入查询获取相关信息，然后与查询拼接后输入LLM。然而，这可能面临检索到不相关信息【18, Long-context llms meet rag: Overcoming challenges for long inputs in rag, 2024, The Thirteenth International Conference on Learning Representations】和无法提供足够有用上下文【17, Active retrieval augmented generation, 2023, Proceedings of the 2023 Conference on Empirical Methods in Natural Language Processing】的挑战。另一种方法是“搜索即工具”，通过提示或微调使LLM与搜索引擎交互。IRCoT【46, Interleaving retrieval with chain-of-thought reasoning for knowledge-intensive multi-step questions, 2022a, arXiv】和ReAct【56, React: Synergizing reasoning and acting in language models, 2023, International Conference on Learning Representations (ICLR)】使用提示引导迭代推理和搜索引擎调用，而Toolformer【39, Toolformer: Language models can teach themselves to use tools, 2023, Advances in Neural Information Processing Systems】则利用监督微调来增强搜索能力。然而，这些方法依赖于高质量的标注轨迹，难以大规模获取。最近的研究【10, Deepseek-r1: Incentivizing reasoning capability in llms via reinforcement learning, 2025, arXiv】表明，RL仅用结果奖励就能使LLM发展出高级推理技能，但其在搜索引擎调用场景中的潜力仍未被充分探索。</p>
@@ -111,11 +106,8 @@ $$ r_{\phi}(x, y) = \begin{cases} 1, &amp; \text{if } a_{\text{pred}} == a_{\tex
 </li>
 </ul>
 <h3 id="_2"><strong>实验结果</strong></h3>
-<p><strong>主要性能比较（表2）</strong><br/>
-*   <strong>SEARCH-R1的优越性</strong>: SEARCH-R1在所有七个数据集上始终优于强大的基线方法。使用Qwen2.5-7B和Qwen2.5-3B模型，相较于RAG基线分别实现了24%和20%的平均相对性能提升。这些提升在域内（NQ, HotpotQA）和域外（其他数据集）评估中都成立。<br/>
-*   <strong>与无检索RL的比较</strong>: SEARCH-R1的性能超过了不使用检索的RL推理训练方法（R1），这符合预期，因为将搜索整合到LLM推理中提供了相关的外部知识，从而提高了整体性能。<br/>
-*   <strong>模型适应性</strong>: SEARCH-R1对基础模型和指令微调模型均有效，表明基于结果奖励的RL方法可以成功应用于带搜索的推理场景。<br/>
-*   <strong>模型规模效应</strong>: 较大的模型（7B）在学习如何进行搜索方面表现更好，与次优模型（如RAG）相比，其性能差距更大。</p>
+<p><strong>主要性能比较（表2）</strong></p>
+<ul><li><strong>SEARCH-R1的优越性</strong>: SEARCH-R1在所有七个数据集上始终优于强大的基线方法。使用Qwen2.5-7B和Qwen2.5-3B模型，相较于RAG基线分别实现了24%和20%的平均相对性能提升。这些提升在域内（NQ, HotpotQA）和域外（其他数据集）评估中都成立。</li><li><strong>与无检索RL的比较</strong>: SEARCH-R1的性能超过了不使用检索的RL推理训练方法（R1），这符合预期，因为将搜索整合到LLM推理中提供了相关的外部知识，从而提高了整体性能。</li><li><strong>模型适应性</strong>: SEARCH-R1对基础模型和指令微调模型均有效，表明基于结果奖励的RL方法可以成功应用于带搜索的推理场景。</li><li><strong>模型规模效应</strong>: 较大的模型（7B）在学习如何进行搜索方面表现更好，与次优模型（如RAG）相比，其性能差距更大。</li></ul>
 <blockquote>
 <p>表2：主要结果。最佳性能以粗体显示。†/⋆分别代表域内/域外数据集。<br/>
 <figure class="image-figure">
@@ -123,10 +115,8 @@ $$ r_{\phi}(x, y) = \begin{cases} 1, &amp; \text{if } a_{\text{pred}} == a_{\tex
 <figcaption class="figure-caption"></figcaption>
 </figure></p>
 </blockquote>
-<p><strong>不同RL方法的比较：PPO vs. GRPO（表3，图2(a)）</strong><br/>
-*   <strong>收敛速度</strong>: GRPO比PPO收敛更快，因为PPO依赖的评论家模型需要预热。<br/>
-*   <strong>训练稳定性</strong>: PPO表现出更高的训练稳定性。GRPO在训练多步后可能导致奖励崩溃，而PPO保持稳定。<br/>
-*   <strong>最终性能</strong>: 尽管在收敛速度和稳定性上存在差异，两种方法最终达到的训练奖励和性能相当，表明两者都适用于优化SEARCH-R1。但PPO因其稳定性而成为更优选的选择。</p>
+<p><strong>不同RL方法的比较：PPO vs. GRPO（表3，图2(a)）</strong></p>
+<ul><li><strong>收敛速度</strong>: GRPO比PPO收敛更快，因为PPO依赖的评论家模型需要预热。</li><li><strong>训练稳定性</strong>: PPO表现出更高的训练稳定性。GRPO在训练多步后可能导致奖励崩溃，而PPO保持稳定。</li><li><strong>最终性能</strong>: 尽管在收敛速度和稳定性上存在差异，两种方法最终达到的训练奖励和性能相当，表明两者都适用于优化SEARCH-R1。但PPO因其稳定性而成为更优选的选择。</li></ul>
 <blockquote>
 <p>表3：SEARCH-R1使用PPO和GRPO在七个数据集上的性能结果。<br/>
 <figure class="image-figure">
@@ -134,14 +124,12 @@ $$ r_{\phi}(x, y) = \begin{cases} 1, &amp; \text{if } a_{\text{pred}} == a_{\tex
 <figcaption class="figure-caption"></figcaption>
 </figure></p>
 </blockquote>
-<p><strong>基础模型 vs. 指令微调LLM（图2(b)）</strong><br/>
-*   指令微调模型收敛更快，初始性能更高。<br/>
-*   然而，经过训练后，两种模型的最终训练奖励非常相似。这表明虽然指令微调加速了学习，但RL最终可以弥合性能差距，使基础模型达到相当的水平。</p>
-<p><strong>响应长度和有效搜索研究（图2(c)，图2(d)）</strong><br/>
-*   <strong>响应长度</strong>: 训练过程中，响应长度呈现出“减少-增加-稳定”的趋势。早期阶段（前100步）长度急剧下降，模型学习消除冗余词。后期阶段，随着模型学会频繁调用搜索引擎，响应长度和训练奖励都显著增加。<br/>
-*   <strong>有效搜索</strong>: 随着训练的进行，LLM学会了更频繁地调用搜索引擎。</p>
-<p><strong>检索Token损失屏蔽研究（表4）</strong><br/>
-*   实验证明，对检索到的token应用损失屏蔽可以带来更大的LLM性能提升，减轻了意外的优化效应，并确保了更稳定的训练。与不使用屏蔽的变体相比，使用屏蔽的SEARCH-R1性能始终更优。</p>
+<p><strong>基础模型 vs. 指令微调LLM（图2(b)）</strong></p>
+<ul><li>指令微调模型收敛更快，初始性能更高。</li><li>然而，经过训练后，两种模型的最终训练奖励非常相似。这表明虽然指令微调加速了学习，但RL最终可以弥合性能差距，使基础模型达到相当的水平。</li></ul>
+<p><strong>响应长度和有效搜索研究（图2(c)，图2(d)）</strong></p>
+<ul><li><strong>响应长度</strong>: 训练过程中，响应长度呈现出“减少-增加-稳定”的趋势。早期阶段（前100步）长度急剧下降，模型学习消除冗余词。后期阶段，随着模型学会频繁调用搜索引擎，响应长度和训练奖励都显著增加。</li><li><strong>有效搜索</strong>: 随着训练的进行，LLM学会了更频繁地调用搜索引擎。</li></ul>
+<p><strong>检索Token损失屏蔽研究（表4）</strong></p>
+<ul><li>实验证明，对检索到的token应用损失屏蔽可以带来更大的LLM性能提升，减轻了意外的优化效应，并确保了更稳定的训练。与不使用屏蔽的变体相比，使用屏蔽的SEARCH-R1性能始终更优。</li></ul>
 <blockquote>
 <p>表4：有无检索token损失屏蔽的SEARCH-R1性能。使用检索token损失屏蔽训练的LLM性能始终更优。（LLM: Qwen2.5-7b-base; RL: PPO）<br/>
 <figure class="image-figure">
@@ -253,9 +241,8 @@ $$ r_{\phi}(x, y) = \begin{cases} 1, &amp; \text{if } a_{\text{pred}} == a_{\tex
 </figure></p>
 </blockquote>
 <h3 id="i-r1search-r1"><strong>I R1与SEARCH-R1的比较：一个案例研究</strong></h3>
-<p><strong>案例分析</strong>: 为了深入了解SEARCH-R1，我们使用Qwen2.5-7B-Base进行案例研究，将其行为与不带搜索引擎的RL（R1）【10, Deepseek-r1: Incentivizing reasoning capability in llms via reinforcement learning, 2025, arXiv】进行比较。结果揭示了以下关键观察：<br/>
-*   <strong>交错推理与检索增强问题分析</strong>: SEARCH-R1通过多轮检索进行深度推理，而R1仅依赖模型内部知识。通过整合检索段落，SEARCH-R1使LLM能迭代地完善其推理，从而得出更明智、更准确的响应。<br/>
-*   <strong>通过迭代检索进行自我验证</strong>: 我们观察到，在第二轮检索后，LLM已收集到足够信息来回答问题。然而，SEARCH-R1执行了额外的检索步骤来自我验证其结论，进一步增强了对最终答案的信心。这一现象与无检索的LLM推理RL的发现【10】一致，突显了RL即使在搜索增强设置中也能鼓励验证驱动的推理。</p>
+<p><strong>案例分析</strong>: 为了深入了解SEARCH-R1，我们使用Qwen2.5-7B-Base进行案例研究，将其行为与不带搜索引擎的RL（R1）【10, Deepseek-r1: Incentivizing reasoning capability in llms via reinforcement learning, 2025, arXiv】进行比较。结果揭示了以下关键观察：</p>
+<ul><li><strong>交错推理与检索增强问题分析</strong>: SEARCH-R1通过多轮检索进行深度推理，而R1仅依赖模型内部知识。通过整合检索段落，SEARCH-R1使LLM能迭代地完善其推理，从而得出更明智、更准确的响应。</li><li><strong>通过迭代检索进行自我验证</strong>: 我们观察到，在第二轮检索后，LLM已收集到足够信息来回答问题。然而，SEARCH-R1执行了额外的检索步骤来自我验证其结论，进一步增强了对最终答案的信心。这一现象与无检索的LLM推理RL的发现【10】一致，突显了RL即使在搜索增强设置中也能鼓励验证驱动的推理。</li></ul>
 <p><strong>问题</strong>: Curious是一款女士香水，其代言歌手出生在哪个城市和州？<br/>
 <strong>基准答案</strong>: McComb, Mississippi</p>
 <p><strong>R1的回答</strong>:<br/>

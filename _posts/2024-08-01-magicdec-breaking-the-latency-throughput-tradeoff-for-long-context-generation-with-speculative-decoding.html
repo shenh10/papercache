@@ -35,10 +35,8 @@ title: 'MAGICDEC: BREAKING THE LATENCY-THROUGHPUT TRADEOFF FOR LONG CONTEXT GENE
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在解决在长上下文应用（如交互式聊天机器人、文档分析和智能体工作流）中，同时实现大型语言模型（LLM）服务的低延迟和高吞吐量这一挑战。</p>
 <p><strong>核心问题：</strong><br/>
-传统的推理优化技术面临一个固有的权衡：<br/>
-1.  <strong>投机解码（Speculative Decoding, SD）</strong>：通过使用一个较小的草稿模型预测多个 token，再由目标模型验证，可以无损地降低延迟。然而，现有观点认为，当批量大小（batch size）增加时，验证成本会急剧上升，导致 SD 效率低下，因此不适用于高吞吐量场景。<br/>
-2.  <strong>批处理（Batching）技术</strong>：如 vLLM 等通过增大批量大小来提高吞吐量，但这通常以牺牲每个 token 的延迟为代价。<br/>
-3.  <strong>模型压缩技术</strong>：如量化、剪枝等可以同时改善延迟和吞吐量，但通常会牺牲模型输出的质量。</p>
+传统的推理优化技术面临一个固有的权衡：</p>
+<ol><li><strong>投机解码（Speculative Decoding, SD）</strong>：通过使用一个较小的草稿模型预测多个 token，再由目标模型验证，可以无损地降低延迟。然而，现有观点认为，当批量大小（batch size）增加时，验证成本会急剧上升，导致 SD 效率低下，因此不适用于高吞吐量场景。</li><li><strong>批处理（Batching）技术</strong>：如 vLLM 等通过增大批量大小来提高吞吐量，但这通常以牺牲每个 token 的延迟为代价。</li><li><strong>模型压缩技术</strong>：如量化、剪枝等可以同时改善延迟和吞吐量，但通常会牺牲模型输出的质量。</li></ol>
 <p>基于这些挑战，本文提出了一个核心问题：<strong>我们能否在不牺牲准确性的前提下，同时提高长序列推理的吞吐量和延迟？</strong></p>
 <p><strong>研究目标与创新点：</strong><br/>
 本文对上述问题给出了肯定的回答，并指出对于中长序列的大批量推理场景，投机解码（SD）可以被有效地用来同时改善吞吐量和延迟。这一结论基于以下几个关键洞察：</p>
@@ -291,11 +289,8 @@ title: 'MAGICDEC: BREAKING THE LATENCY-THROUGHPUT TRADEOFF FOR LONG CONTEXT GENE
 <h2 id="a5">A5 结论</h2>
 <p><strong>结论总结</strong><br/>
 优化 LLM 推理的吞吐量和延迟极具挑战性，尤其是在长上下文、大批量场景下。本文的分析揭示，与现有误解相反，投机解码在这种场景下是有益的，并且其效用会随着批量大小的增加而增强。在寻找有效的草稿策略时，我们发现，在相同的内存预算下，KV 压缩比模型压缩更容易实现更高的接受率，这一优势在大批量和长上下文长度的场景下更为显著。基于这些洞见，我们探索了不同的 KV 压缩算法作为草稿策略，并提出了一个感知瓶颈的通用框架，以根据任务、批量大小和序列长度选择合适的草稿策略。</p>
-<p><strong>局限性与未来工作</strong><br/>
-*   <strong>局限性</strong>：MagicDec 仅关注长上下文 LLM 服务的解码性能，而预填充（prefill）阶段在这些场景中也同样充满挑战。此外，MagicDec 在高端 GPU 上往往能取得更好的加速效果，因为它们具有更高的 FLOPS 与内存带宽比和更大的 HBM 容量。<br/>
-*   <strong>未来工作</strong>：<br/>
-    *   可以将 MagicDec 与专注于提升预填充性能的工作（如【2, Mnemosyne: Parallelization strategies for efficiently serving multi-million context length llm inference requests without approximations, 2024, arXiv】、【48, DistServe: Disaggregating Prefill and Decoding for Goodput-Optimized Large Language Model Serving, 2024, arXiv】）相结合，以同时改善预填充和解码性能。<br/>
-    *   可以探索在卸载（offloading）和分布式设置中采用投机解码，以减少通信开销，从而更好地利用普通设备的资源。</p>
+<p><strong>局限性与未来工作</strong></p>
+<ul><li><strong>局限性</strong>：MagicDec 仅关注长上下文 LLM 服务的解码性能，而预填充（prefill）阶段在这些场景中也同样充满挑战。此外，MagicDec 在高端 GPU 上往往能取得更好的加速效果，因为它们具有更高的 FLOPS 与内存带宽比和更大的 HBM 容量。</li><li><strong>未来工作</strong>：<ul><li>可以将 MagicDec 与专注于提升预填充性能的工作（如【2, Mnemosyne: Parallelization strategies for efficiently serving multi-million context length llm inference requests without approximations, 2024, arXiv】、【48, DistServe: Disaggregating Prefill and Decoding for Goodput-Optimized Large Language Model Serving, 2024, arXiv】）相结合，以同时改善预填充和解码性能。</li><li>可以探索在卸载（offloading）和分布式设置中采用投机解码，以减少通信开销，从而更好地利用普通设备的资源。</li></ul></li></ul>
 <h2 id="a6">A6 附录</h2>
 <h3 id="a1_1">A.1 系统实现</h3>
 <ul>

@@ -40,10 +40,8 @@ $$ \text{Routing Score} = s_{i,j} + b_j $$
 <h3 id="a1">A1 主要贡献</h3>
 <p>DeepSeek-V3是一个拥有6710亿总参数的强混合专家（MoE）语言模型，每个token激活370亿参数。为了实现经济高效的训练和推理，该模型继承并验证了DeepSeek-V2中的多头潜在注意力（MLA）和DeepSeekMoE架构。本文的核心问题是如何在提升模型性能的同时，实现极致的训练和推理效率。</p>
 <p>研究目标是通过算法、框架和硬件的协同设计，在可控的成本内训练出性能顶尖的开源模型。</p>
-<p>主要创新点如下：<br/>
-1.  <strong>架构创新：新颖的负载均衡策略和训练目标</strong><br/>
-    *   在DeepSeek-V2高效架构的基础上，首创了一种<strong>无辅助损失（auxiliary-loss-free）的负载均衡策略</strong>，旨在最小化因强制负载均衡对模型性能造成的负面影响。<br/>
-    *   研究并采用了一种<strong>多Token预测（Multi-Token Prediction, MTP）</strong>的训练目标，实验证明该目标有助于提升模型在各类评测基准上的性能，并可用于推理加速的推测解码。</p>
+<p>主要创新点如下：</p>
+<ol><li><strong>架构创新：新颖的负载均衡策略和训练目标</strong><ul><li>在DeepSeek-V2高效架构的基础上，首创了一种<strong>无辅助损失（auxiliary-loss-free）的负载均衡策略</strong>，旨在最小化因强制负载均衡对模型性能造成的负面影响。</li><li>研究并采用了一种<strong>多Token预测（Multi-Token Prediction, MTP）</strong>的训练目标，实验证明该目标有助于提升模型在各类评测基准上的性能，并可用于推理加速的推测解码。</li></ul></li></ol>
 <ol>
 <li>
 <p><strong>预训练：追求极致的训练效率</strong></p>
@@ -196,10 +194,8 @@ $$ \text{Routing Score} = s_{i,j} + b_j $$
 <h4 id="3">3. 基础设施</h4>
 <h5 id="32">3.2 训练框架</h5>
 <p><strong>HAI-LLM训练框架</strong>。DeepSeek-V3的训练由HAI-LLM框架支持，该框架采用16路流水线并行（PP）【索引79，Zero bubble pipeline parallelism，2023a，arXiv】、跨8个节点的64路专家并行（EP）【索引57，Gshard: Scaling giant models with conditional computation and automatic sharding，2021，ICLR】和ZeRO-1数据并行（DP）【索引83，Zero: Memory optimizations toward training trillion parameter models，2020，SC20】。</p>
-<p><strong>工程优化</strong>。为了实现高效训练，实施了以下优化：<br/>
-1.  设计了<strong>DualPipe算法</strong>用于高效的流水线并行，该算法减少了流水线气泡，并通过计算-通信重叠解决了跨节点专家并行带来的重通信开销。<br/>
-2.  开发了高效的<strong>跨节点all-to-all通信核函数</strong>，以充分利用InfiniBand（IB）和NVLink带宽。<br/>
-3.  精心优化了<strong>内存占用</strong>，使得训练DeepSeek-V3无需使用昂贵的张量并行（TP）。</p>
+<p><strong>工程优化</strong>。为了实现高效训练，实施了以下优化：</p>
+<ol><li>设计了<strong>DualPipe算法</strong>用于高效的流水线并行，该算法减少了流水线气泡，并通过计算-通信重叠解决了跨节点专家并行带来的重通信开销。</li><li>开发了高效的<strong>跨节点all-to-all通信核函数</strong>，以充分利用InfiniBand（IB）和NVLink带宽。</li><li>精心优化了<strong>内存占用</strong>，使得训练DeepSeek-V3无需使用昂贵的张量并行（TP）。</li></ol>
 <h6 id="321-dualpipe-">3.2.1 DualPipe与计算-通信重叠</h6>
 <p><strong>DualPipe算法解决通信开销</strong>。由于跨节点专家并行，DeepSeek-V3的计算与通信比约为1:1，导致效率不高。为解决此问题，设计了名为DualPipe的创新流水线并行算法。DualPipe通过有效重叠前向和后向的计算-通信阶段来加速训练，并减少流水线气泡。</p>
 <p><strong>DualPipe的核心思想与实现</strong>。DualPipe的核心思想是在一对独立的前向和后向块（chunk）内重叠计算和通信。每个块被分为四个部分：attention、all-to-all分发、MLP和all-to-all合并。在后向块中，attention和MLP进一步分为“为输入反向传播”和“为权重反向传播”。如图4所示，通过重新排列这些组件并手动调整GPU SM（流多处理器）用于通信与计算的比例，可以确保all-to-all和PP通信在执行期间被完全隐藏。</p>
@@ -221,10 +217,8 @@ $$ \text{Routing Score} = s_{i,j} + b_j $$
 <p><strong>定制通信核函数以保证计算性能</strong>。为了保证DualPipe有足够的计算性能，我们定制了高效的跨节点all-to-all通信核函数（包括分发和合并），以节省专用于通信的SM数量。核函数的实现与MoE门控算法及集群网络拓扑协同设计。具体来说，通过将每个token的分发限制在最多4个节点来减少IB流量。token首先通过IB传输到目标节点上具有相同节点内索引的GPU，到达后立即通过NVLink转发到托管目标专家的特定GPU。这样，IB和NVLink的通信被完全重叠，每个token可以高效地选择平均每个节点3.2个专家而没有额外的NVLink开销。这意味着，尽管DeepSeek-V3实际上只选择8个路由专家，但它可以将这个数量扩展到最多13个（4节点 × 3.2专家/节点）而通信成本保持不变。总体而言，仅需20个SM就足以充分利用IB和NVLink的带宽。</p>
 <p><strong>通信核函数实现细节</strong>。我们采用warp specialization技术【索引7，Singe: leveraging warp specialization for high performance on GPUs，2014，PPoPP ’14】，将20个SM划分为10个通信通道。在分发过程中，(1) IB发送、(2) IB到NVLink转发、(3) NVLink接收由各自的warp处理，warp数量根据实际工作负载动态调整。合并过程也类似。此外，为减少对其他SM计算核函数的影响，我们使用定制的PTX指令并自动调整通信块大小，从而显著减少了L2缓存的使用和干扰。</p>
 <h6 id="323">3.2.3 极致的内存节省与最小开销</h6>
-<p><strong>采用多种技术减少训练内存占用</strong>。<br/>
-1.  <strong>重计算RMSNorm和MLA上投影</strong>：在反向传播期间重计算所有RMSNorm操作和MLA上投影，从而无需持久存储它们的输出激活值，以微小开销显著减少了激活内存需求。<br/>
-2.  <strong>CPU中的指数移动平均（EMA）</strong>：在训练期间，我们将模型参数的EMA保存在CPU内存中，并在每个训练步骤后异步更新。这使得我们能够维护EMA参数而无需额外的内存或时间开销。<br/>
-3.  <strong>多Token预测的共享嵌入和输出头</strong>：利用DualPipe策略，我们将模型的最浅层（包括嵌入层）和最深层（包括输出头）部署在同一个PP rank上。这使得MTP模块和主模型之间可以物理共享嵌入和输出头的参数及梯度，进一步提高了内存效率。</p>
+<p><strong>采用多种技术减少训练内存占用</strong>。</p>
+<ol><li><strong>重计算RMSNorm和MLA上投影</strong>：在反向传播期间重计算所有RMSNorm操作和MLA上投影，从而无需持久存储它们的输出激活值，以微小开销显著减少了激活内存需求。</li><li><strong>CPU中的指数移动平均（EMA）</strong>：在训练期间，我们将模型参数的EMA保存在CPU内存中，并在每个训练步骤后异步更新。这使得我们能够维护EMA参数而无需额外的内存或时间开销。</li><li><strong>多Token预测的共享嵌入和输出头</strong>：利用DualPipe策略，我们将模型的最浅层（包括嵌入层）和最深层（包括输出头）部署在同一个PP rank上。这使得MTP模块和主模型之间可以物理共享嵌入和输出头的参数及梯度，进一步提高了内存效率。</li></ol>
 <h5 id="33-fp8">3.3 FP8训练</h5>
 <p><strong>引入FP8混合精度框架</strong>。受低精度训练最新进展的启发，我们提出了一个利用FP8数据格式的细粒度混合精度框架来训练DeepSeek-V3。为了解决FP8格式动态范围有限的问题，我们引入了细粒度的量化策略：1x$d_{tile}$元素的tile-wise分组或$d_{block} \times d_{block}$元素的block-wise分组。相关的反量化开销在我们的高精度累加过程中被大部分缓解。此外，为了进一步减少MoE训练中的内存和通信开销，我们以FP8格式缓存和分发激活值，同时以BF16格式存储低精度优化器状态。与BF16基线相比，我们FP8训练模型的相对损失误差始终低于0.25%。</p>
 <p><figure class="image-figure">
@@ -412,15 +406,11 @@ $$ \text{Routing Score} = s_{i,j} + b_j $$
 <h3 id="a5">A5 结论</h3>
 <p><strong>论文总结</strong>：<br/>
 本文介绍了DeepSeek-V3，一个拥有6710亿总参数（370亿激活）的大型MoE语言模型，它在14.8T tokens上进行了训练。该模型在继承MLA和DeepSeekMoE架构的基础上，开创性地采用了无辅助损失的负载均衡策略和多token预测训练目标，以提升性能。得益于FP8训练支持和细致的工程优化，其训练成本效益极高。后训练阶段成功地从DeepSeek-R1系列模型中蒸馏了推理能力。全面评估表明，DeepSeek-V3是当前最强的开源模型，性能可与GPT-4o和Claude-3.5-Sonnet等顶尖闭源模型相媲美。尽管性能强大，其全部训练（包括预训练、上下文扩展和后训练）仅需278.8万H800 GPU小时，保持了极高的经济性。</p>
-<p><strong>局限性</strong>：<br/>
-1.  <strong>部署门槛</strong>：为保证高效推理，推荐的部署单元较大，可能对小型团队构成负担。<br/>
-2.  <strong>推理速度</strong>：尽管端到端生成速度已是DeepSeek-V2的两倍以上，但仍有进一步提升的空间。<br/>
-这些局限性有望随着更先进硬件的发展而自然得到解决。</p>
-<p><strong>未来方向</strong>：<br/>
-1.  <strong>模型架构</strong>：持续研究和改进模型架构，以进一步提高训练和推理效率，并探索突破Transformer架构限制的可能性。<br/>
-2.  <strong>训练数据</strong>：不断迭代训练数据的数量和质量，探索更多维度的训练信号来源。<br/>
-3.  <strong>深度思考能力</strong>：通过扩展模型的推理长度和深度，持续探索和迭代其深度思考能力。<br/>
-4.  <strong>模型评估</strong>：探索更全面、多维度的模型评估方法，以避免对固定基准的过度优化，从而更真实地评估模型能力。</p>
+<p><strong>局限性</strong>：</p>
+<ol><li><strong>部署门槛</strong>：为保证高效推理，推荐的部署单元较大，可能对小型团队构成负担。</li><li><strong>推理速度</strong>：尽管端到端生成速度已是DeepSeek-V2的两倍以上，但仍有进一步提升的空间。</li></ol>
+<p>这些局限性有望随着更先进硬件的发展而自然得到解决。</p>
+<p><strong>未来方向</strong>：</p>
+<ol><li><strong>模型架构</strong>：持续研究和改进模型架构，以进一步提高训练和推理效率，并探索突破Transformer架构限制的可能性。</li><li><strong>训练数据</strong>：不断迭代训练数据的数量和质量，探索更多维度的训练信号来源。</li><li><strong>深度思考能力</strong>：通过扩展模型的推理长度和深度，持续探索和迭代其深度思考能力。</li><li><strong>模型评估</strong>：探索更全面、多维度的模型评估方法，以避免对固定基准的过度优化，从而更真实地评估模型能力。</li></ol>
 <hr/>
 <h3 id="a6">A6 附录</h3>
 <h4 id="b">B. 低精度训练的消融研究</h4>

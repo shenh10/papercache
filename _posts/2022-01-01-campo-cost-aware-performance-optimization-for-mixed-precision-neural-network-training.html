@@ -36,11 +36,8 @@ Campo 的核心思路是摒弃盲目的精度分配，改为基于特定操作�
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文的核心研究问题是，现有的混合精度训练策略（如TensorFlow和PyTorch中的策略）贪婪地对性能关键型操作应用FP16精度，但没有量化和考虑数据类型转换（casting）带来的成本。作者通过性能分析揭示，转换成本可能占操作执行时间的21%以上，在某些情况下甚至超过使用低精度带来的性能增益，从而导致整体性能下降。</p>
 <p>为解决此问题，本文的研究目标是设计一个能够感知转换成本的性能优化工具Campo，旨在最大化混合精度训练的性能，同时不损失模型精度。</p>
-<p><strong>本文的主要贡献如下：</strong><br/>
-*   <strong>全面的性能特征分析和量化</strong>：本文对神经网络训练中的操作进行了全面的性能表征，并量化了类型转换的成本。与传统的不考虑转换成本而决定精度分配的方法相反，本文揭示了转换成本可能超过使用低精度带来的性能收益。这一发现是前所未有的。<br/>
-*   <strong>新颖实用的性能模型</strong>：开发了新颖且实用的性能模型，用于预测转换成本以及操作在低精度下的性能。<br/>
-*   <strong>提出Campo工具</strong>：提出了一个名为Campo的性能优化工具，它能实现高性能的混合精度训练，且不损失训练精度。Campo使用图遍历算法和性能模型为每个操作分配高精度或低精度。<br/>
-*   <strong>显著的性能提升</strong>：在Nvidia GeForce RTX 2080 Ti和V100 GPU上，与使用TF_AMP（Nvidia先进的混合精度训练性能优化器）的TensorFlow相比，Campo在六个神经网络模型上平均将训练吞吐量提高了20.8%（最高24.5%）和20.9%（最高23.4%），且不损失训练精度。同时，由于采用了成本感知的混合精度训练，Campo的能效平均提高了21.4%（最高24.2%）。</p>
+<p><strong>本文的主要贡献如下：</strong></p>
+<ul><li><strong>全面的性能特征分析和量化</strong>：本文对神经网络训练中的操作进行了全面的性能表征，并量化了类型转换的成本。与传统的不考虑转换成本而决定精度分配的方法相反，本文揭示了转换成本可能超过使用低精度带来的性能收益。这一发现是前所未有的。</li><li><strong>新颖实用的性能模型</strong>：开发了新颖且实用的性能模型，用于预测转换成本以及操作在低精度下的性能。</li><li><strong>提出Campo工具</strong>：提出了一个名为Campo的性能优化工具，它能实现高性能的混合精度训练，且不损失训练精度。Campo使用图遍历算法和性能模型为每个操作分配高精度或低精度。</li><li><strong>显著的性能提升</strong>：在Nvidia GeForce RTX 2080 Ti和V100 GPU上，与使用TF_AMP（Nvidia先进的混合精度训练性能优化器）的TensorFlow相比，Campo在六个神经网络模型上平均将训练吞吐量提高了20.8%（最高24.5%）和20.9%（最高23.4%），且不损失训练精度。同时，由于采用了成本感知的混合精度训练，Campo的能效平均提高了21.4%（最高24.2%）。</li></ul>
 <h2 id="a3">A3 背景知识与关键洞察</h2>
 <h3 id="21">2.1 混合精度训练</h3>
 <ul>
@@ -407,15 +404,8 @@ Campo 的核心思路是摒弃盲目的精度分配，改为基于特定操作�
 <p>本文介绍了Campo，一个用于混合精度神经网络训练的成本感知性能优化工具。该工具为训练操作分配最优精度（FP32或FP16），同时最小化不必要的类型转换，以最大化训练性能。Campo的设计基于一个独特的观察：在混合精度训练中，为实现混合精度而进行的类型转换成本可能会抵消使用低精度带来的性能益处。这一观察在现有方法中被忽略，导致性能提升较小甚至性能下降。</p>
 <p>我们构建了针对特定操作的性能模型，以预测和量化转换成本对使用低精度性能的影响。借助这些性能模型，Campo在运行时采用一种成本感知的图重写策略，为每个操作决定应使用的精度，且不损失神经网络的训练精度。我们在Nvidia Turing和Volta架构的GPU上评估了Campo与六个神经网络模型，结果表明Campo的性能显著优于TensorFlow。</p>
 <h2 id="_1">方法细节中的引用汇总</h2>
-<p>在方法细节章节中，主要引用了以下文献来支持其模型构建过程：<br/>
-*   <strong>引用[16]</strong>: Thomas W MacFarland and Jan M Yates. Spearman’s rank-difference coefficient of correlation. In Introduction to nonparametric statistics for the biological sciences using R, pages 249–297. Springer, 2016.<br/>
-    *   <strong>引用段落</strong>: 4.2.2 节 "Selection of model features"<br/>
-    *   <strong>原文描述</strong>: "We use the Spearman’s rank correlation coefficient [16] (or Spearman’s ρ) to select events. The Spearman’s ρ is a method to quantify how well the relationship between two variables can be described using a monotonic function [16]." (我们使用斯皮尔曼等级相关系数[16]（或斯皮尔曼的ρ）来选择事件。斯皮尔曼的ρ是一种量化两个变量之间关系能否用单调函数描述的方法[16]。)<br/>
-    *   <strong>引用目的</strong>: 说明选择性能模型特征（即性能事件）所使用的统计学方法。<br/>
-*   <strong>引用[17]</strong>: Peter Mattson, Christine Cheng, Cody Coleman, Greg Diamos, Paulius Micikevicius, David Patterson, Hanlin Tang, Gu-Yeon Wei, Peter Bailis, Victor Bittorf, et al. Mlperf training benchmark. arXiv preprint arXiv:1910.01500, 2019.<br/>
-    *   <strong>引用段落</strong>: 4.2.2 节 "Getting model coefficients wi and σ"<br/>
-    *   <strong>原文描述</strong>: "To generate 1000 inputs with different sizes, we profile the input data size of the operations from 11 NN models (including GoogLeNet, UNet-3D, DLRM, DCIGN, BiLSTM, SSDMobileNet-v1, ShuffleNet, SSD, DenseNet, Mask R-CNN, RNN-T) from the MLPerf benchmark suite [17] using 100 training steps with various batch sizes." (为了生成1000个不同大小的输入，我们从MLPerf基准测试套件[17]中的11个神经网络模型中，使用各种批量大小进行100个训练步骤来分析操作的输入数据大小。)<br/>
-    *   <strong>引用目的</strong>: 说明用于生成性能模型训练数据的神经网络模型和基准测试套件的来源。</p>
+<p>在方法细节章节中，主要引用了以下文献来支持其模型构建过程：</p>
+<ul><li><strong>引用[16]</strong>: Thomas W MacFarland and Jan M Yates. Spearman’s rank-difference coefficient of correlation. In Introduction to nonparametric statistics for the biological sciences using R, pages 249–297. Springer, 2016.<ul><li><strong>引用段落</strong>: 4.2.2 节 "Selection of model features"</li><li><strong>原文描述</strong>: "We use the Spearman’s rank correlation coefficient [16] (or Spearman’s ρ) to select events. The Spearman’s ρ is a method to quantify how well the relationship between two variables can be described using a monotonic function [16]." (我们使用斯皮尔曼等级相关系数[16]（或斯皮尔曼的ρ）来选择事件。斯皮尔曼的ρ是一种量化两个变量之间关系能否用单调函数描述的方法[16]。)</li><li><strong>引用目的</strong>: 说明选择性能模型特征（即性能事件）所使用的统计学方法。</li></ul></li><li><strong>引用[17]</strong>: Peter Mattson, Christine Cheng, Cody Coleman, Greg Diamos, Paulius Micikevicius, David Patterson, Hanlin Tang, Gu-Yeon Wei, Peter Bailis, Victor Bittorf, et al. Mlperf training benchmark. arXiv preprint arXiv:1910.01500, 2019.<ul><li><strong>引用段落</strong>: 4.2.2 节 "Getting model coefficients wi and σ"</li><li><strong>原文描述</strong>: "To generate 1000 inputs with different sizes, we profile the input data size of the operations from 11 NN models (including GoogLeNet, UNet-3D, DLRM, DCIGN, BiLSTM, SSDMobileNet-v1, ShuffleNet, SSD, DenseNet, Mask R-CNN, RNN-T) from the MLPerf benchmark suite [17] using 100 training steps with various batch sizes." (为了生成1000个不同大小的输入，我们从MLPerf基准测试套件[17]中的11个神经网络模型中，使用各种批量大小进行100个训练步骤来分析操作的输入数据大小。)</li><li><strong>引用目的</strong>: 说明用于生成性能模型训练数据的神经网络模型和基准测试套件的来源。</li></ul></li></ul>
 </div>
 
 

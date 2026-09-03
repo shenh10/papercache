@@ -21,9 +21,8 @@ title: 'LIA: A Single-GPU LLM Inference Acceleration with Cooperative AMX-Enable
 <h1 id="lia-a-single-gpu-llm-inference-acceleration-with-cooperative-amx-enabled-cpu-gpu-computation-and-cxl-offloading">LIA: A Single-GPU LLM Inference Acceleration with Cooperative AMX-Enabled CPU-GPU Computation and CXL Offloading</h1>
 <p><strong>发表时间</strong>: 2025-06</p>
 <p><strong>LIA: 结合协作式AMX CPU-GPU计算和CXL卸载的单GPU LLM推理加速</strong></p>
-<p><strong>作者/机构</strong>:<br/>
-- Hyungyo Kim, Nachuan Wang, Qirong Xia, Jinghan Huang, Nam Sung Kim (伊利诺伊大学厄巴纳-香槟分校)<br/>
-- Amir Yazdanbakhsh (Google DeepMind)</p>
+<p><strong>作者/机构</strong>:</p>
+<ul><li>Hyungyo Kim, Nachuan Wang, Qirong Xia, Jinghan Huang, Nam Sung Kim (伊利诺伊大学厄巴纳-香槟分校)</li><li>Amir Yazdanbakhsh (Google DeepMind)</li></ul>
 <hr/>
 <details class="tldr-block" open="">
 <summary class="tldr-summary">速读</summary>
@@ -43,8 +42,8 @@ $$ L_{i,compute}(\mathbf{p}) = p_i \frac{C_i}{T_{CPU}} + (1 - p_i) \frac{C_i}{T_
 大型语言模型（LLM）的参数规模持续增长，导致在单块GPU上进行推理变得不可行，因为模型参数和中间值（如KV缓存和激活值）的存储需求超过了高端GPU（如H100）的显存容量。现有解决方案，如多GPU部署，成本高昂；而将模型参数卸载到CPU内存并通过PCIe传输的系统级卸载方法，则受到PCIe带宽的限制，导致推理延迟显著增加。此外，以往的CPU-GPU协作框架因CPU计算吞吐量远低于GPU而效果有限，并且未能根据不同的批量大小（batch size）和序列长度动态调整计算卸载策略，导致资源利用不佳。</p>
 <p><strong>研究目标</strong>:<br/>
 本文旨在解决单GPU在LLM推理中的内存瓶颈和性能问题，提出一个名为LIA（LLM Inference Acceleration）的框架，该框架利用英特尔CPU的先进矩阵扩展（AMX）技术和CXL内存技术，在小批量和高吞吐量两种场景下加速单GPU LLM推理。</p>
-<p><strong>创新点</strong>:<br/>
-1.  <strong>对AMX矩阵乘法性能的全面分析</strong>：本文对集成了AMX（内置矩阵乘法加速器）的英特尔第四代（Sapphire Rapids, SPR）和第六代（Granite Rapids, GNR）至强可扩展处理器进行了微基准测试。测试结果显示，搭载AMX的SPR和GNR处理器分别能提供高达4.5倍和9倍于AVX512的GEMM（通用矩阵乘法）吞吐量，其性能分别达到A100 GPU的11%和22%，H100 GPU的5%和10%。在GEMV（通用矩阵向量乘法）方面，其吞吐量分别达到A100的38%和44%，H100的35%和41%。这些发现证明了配备AMX的CPU在计算卸载方面的巨大潜力，远超以往的CPU卸载框架。</p>
+<p><strong>创新点</strong>:</p>
+<ol><li><strong>对AMX矩阵乘法性能的全面分析</strong>：本文对集成了AMX（内置矩阵乘法加速器）的英特尔第四代（Sapphire Rapids, SPR）和第六代（Granite Rapids, GNR）至强可扩展处理器进行了微基准测试。测试结果显示，搭载AMX的SPR和GNR处理器分别能提供高达4.5倍和9倍于AVX512的GEMM（通用矩阵乘法）吞吐量，其性能分别达到A100 GPU的11%和22%，H100 GPU的5%和10%。在GEMV（通用矩阵向量乘法）方面，其吞吐量分别达到A100的38%和44%，H100的35%和41%。这些发现证明了配备AMX的CPU在计算卸载方面的巨大潜力，远超以往的CPU卸载框架。</li></ol>
 <ol>
 <li>
 <p><strong>基于AMX驱动的CPU-GPU协同LLM推理加速</strong>：基于上述分析，LIA框架被设计用于系统性地协调CPU和GPU的协同工作。LIA包含两个主要部分：</p>
@@ -352,10 +351,8 @@ $$ L_{i,compute}(\mathbf{p}) = p_i \frac{C_i}{T_{CPU}} + (1 - p_i) \frac{C_i}{T_
 <li><strong>存档地址</strong>：<a href="https://zenodo.org/records/15104666" rel="noopener noreferrer" target="_blank">https://zenodo.org/records/15104666</a></li>
 </ul>
 <h4 id="a3_1">A.3 描述</h4>
-<p><strong>A.3.1 如何访问</strong>。LIA的源代码、脚本和指南已在GitHub (<a href="https://github.com/Hyungyo1/LIA_AMXGPU)" rel="noopener noreferrer" target="_blank">https://github.com/Hyungyo1/LIA_AMXGPU)</a> 和Zenodo (<a href="https://zenodo.org/records/15104666)" rel="noopener noreferrer" target="_blank">https://zenodo.org/records/15104666)</a> 上公开。我们比较的其他框架可在以下地址找到：<br/>
--   Intel Extension for PyTorch: <a href="https://github.com/intel/intel-extension-for-pytorch.git" rel="noopener noreferrer" target="_blank">https://github.com/intel/intel-extension-for-pytorch.git</a><br/>
--   FlexGen: <a href="https://github.com/FMInference/FlexLLMGen" rel="noopener noreferrer" target="_blank">https://github.com/FMInference/FlexLLMGen</a><br/>
--   PowerInfer: <a href="https://github.com/SJTU-IPADS/PowerInfer" rel="noopener noreferrer" target="_blank">https://github.com/SJTU-IPADS/PowerInfer</a></p>
+<p><strong>A.3.1 如何访问</strong>。LIA的源代码、脚本和指南已在GitHub (<a href="https://github.com/Hyungyo1/LIA_AMXGPU)" rel="noopener noreferrer" target="_blank">https://github.com/Hyungyo1/LIA_AMXGPU)</a> 和Zenodo (<a href="https://zenodo.org/records/15104666)" rel="noopener noreferrer" target="_blank">https://zenodo.org/records/15104666)</a> 上公开。我们比较的其他框架可在以下地址找到：</p>
+<ul><li>Intel Extension for PyTorch: <a href="https://github.com/intel/intel-extension-for-pytorch.git" rel="noopener noreferrer" target="_blank">https://github.com/intel/intel-extension-for-pytorch.git</a></li><li>FlexGen: <a href="https://github.com/FMInference/FlexLLMGen" rel="noopener noreferrer" target="_blank">https://github.com/FMInference/FlexLLMGen</a></li><li>PowerInfer: <a href="https://github.com/SJTU-IPADS/PowerInfer" rel="noopener noreferrer" target="_blank">https://github.com/SJTU-IPADS/PowerInfer</a></li></ul>
 <p><strong>A.3.1 硬件依赖</strong>。运行LIA进行LLM推理需要一个支持AMX的CPU（第四代Xeon CPU或更新版本）系统，配备一个NVIDIA GPU和两个或更多CXL type-3内存扩展器。我们使用特定命令将CXL内存从设备DAX模式转换为系统RAM模式。</p>
 <h4 id="a4_2">A.4 安装</h4>
 <p><strong>代码获取与初始化</strong>。首先，下载GitHub仓库，初始化并更新子模块：</p>

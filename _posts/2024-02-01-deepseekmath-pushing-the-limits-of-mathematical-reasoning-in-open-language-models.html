@@ -34,15 +34,10 @@ title: 'DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Langu
 </details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文介绍了 DeepSeekMath，一个在数学推理方面取得显著性能的领域特定语言模型。其核心贡献可分为可扩展的数学预训练和对强化学习的探索与分析两个方面。</p>
-<p><strong>在可扩展的数学预训练方面：</strong><br/>
-1.  <strong>构建大规模高质量数学语料库</strong>：通过精心设计的数据筛选流程，从公开的 Common Crawl 数据中成功构建了包含1200亿词元（token）的高质量数学语料库——DeepSeekMath Corpus。该语料库的规模远超之前的研究，例如是 Minerva 使用的数学网页数据的近7倍，是 OpenWebMath 的9倍。<br/>
-2.  <strong>验证小模型+高质量数据的有效性</strong>：预训练的 DeepSeekMath-Base 7B 模型性能可与比其大77倍的 Minerva 540B 相媲美，证明了模型参数量并非数学推理能力的唯一关键因素，在高质量数据上训练的小模型同样能取得强大性能。<br/>
-3.  <strong>探索代码训练对数学推理的助益</strong>：研究发现，在进行数学训练之前先进行代码训练，能够提升模型在带工具和不带工具使用场景下的数学问题解决能力，为“代码训练能否提升推理能力”这一长期问题提供了肯定的部分答案。<br/>
-4.  <strong>对 arXiv 论文数据的反思</strong>：实验表明，尽管在许多数学相关论文中普遍使用 arXiv 论文进行训练，但在本文所采用的数学基准测试中，并未带来显著的性能提升。</p>
-<p><strong>在对强化学习的探索与分析方面：</strong><br/>
-1.  <strong>提出高效的强化学习算法 GRPO</strong>：引入了组相对策略优化（Group Relative Policy Optimization, GRPO），这是一种 PPO 的变体。GRPO 无需评论家（critic）模型，而是通过组内分数来估计基线，从而显著减少了与 PPO 相比的训练资源消耗。<br/>
-2.  <strong>验证 GRPO 的有效性</strong>：仅使用指令微调数据，GRPO 就显著提升了 DeepSeekMath-Instruct 模型的性能，并且在强化学习过程中观察到模型在领域外任务上的性能也有所提升。<br/>
-3.  <strong>提供统一的分析范式</strong>：提出了一个统一的范式来理解包括 RFT、DPO、PPO 和 GRPO 在内的不同训练方法。通过广泛实验深入研究了该范式的关键要素（如在线与离线训练、结果与过程监督、单轮与迭代强化学习等），并基于此探讨了强化学习有效的原因，为未来实现更有效的强化学习总结了潜在方向。</p>
+<p><strong>在可扩展的数学预训练方面：</strong></p>
+<ol><li><strong>构建大规模高质量数学语料库</strong>：通过精心设计的数据筛选流程，从公开的 Common Crawl 数据中成功构建了包含1200亿词元（token）的高质量数学语料库——DeepSeekMath Corpus。该语料库的规模远超之前的研究，例如是 Minerva 使用的数学网页数据的近7倍，是 OpenWebMath 的9倍。</li><li><strong>验证小模型+高质量数据的有效性</strong>：预训练的 DeepSeekMath-Base 7B 模型性能可与比其大77倍的 Minerva 540B 相媲美，证明了模型参数量并非数学推理能力的唯一关键因素，在高质量数据上训练的小模型同样能取得强大性能。</li><li><strong>探索代码训练对数学推理的助益</strong>：研究发现，在进行数学训练之前先进行代码训练，能够提升模型在带工具和不带工具使用场景下的数学问题解决能力，为“代码训练能否提升推理能力”这一长期问题提供了肯定的部分答案。</li><li><strong>对 arXiv 论文数据的反思</strong>：实验表明，尽管在许多数学相关论文中普遍使用 arXiv 论文进行训练，但在本文所采用的数学基准测试中，并未带来显著的性能提升。</li></ol>
+<p><strong>在对强化学习的探索与分析方面：</strong></p>
+<ol><li><strong>提出高效的强化学习算法 GRPO</strong>：引入了组相对策略优化（Group Relative Policy Optimization, GRPO），这是一种 PPO 的变体。GRPO 无需评论家（critic）模型，而是通过组内分数来估计基线，从而显著减少了与 PPO 相比的训练资源消耗。</li><li><strong>验证 GRPO 的有效性</strong>：仅使用指令微调数据，GRPO 就显著提升了 DeepSeekMath-Instruct 模型的性能，并且在强化学习过程中观察到模型在领域外任务上的性能也有所提升。</li><li><strong>提供统一的分析范式</strong>：提出了一个统一的范式来理解包括 RFT、DPO、PPO 和 GRPO 在内的不同训练方法。通过广泛实验深入研究了该范式的关键要素（如在线与离线训练、结果与过程监督、单轮与迭代强化学习等），并基于此探讨了强化学习有效的原因，为未来实现更有效的强化学习总结了潜在方向。</li></ol>
 <hr/>
 <h2 id="a2">A2 方法细节</h2>
 <h3 id="2">2. 数学预训练</h3>

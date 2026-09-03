@@ -26,9 +26,8 @@ title: "Demystifying NCCL: An In-depth Analysis of GPU Communication Protocols a
         Zhiyi Hu1∗, Siyuan Shen1∗, Tommaso Bonato1, Sylvain Jeaugey2, Cedell
         Alexander3, Eric Spada3, James Dinan2, Jeff Hammond2, Torsten
         Hoefler1<br/>
-        1ETH Zurich, Switzerland; 2NVIDIA Corporation; 3Broadcom Inc.<br/>
-        * These authors contributed equally to this work
-      </p>
+        1ETH Zurich, Switzerland; 2NVIDIA Corporation; 3Broadcom Inc.</p>
+<ul><li>These authors contributed equally to this work</li></ul>
 <details class="tldr-block" open="">
 <summary class="tldr-summary">速读</summary>
 <div class="tldr-body">
@@ -304,50 +303,35 @@ title: "Demystifying NCCL: An In-depth Analysis of GPU Communication Protocols a
         NCCL环Reduce算法执行跨多个GPU分布数据的元素级归约，将最终结果聚合到用户定义根GPU。像环Broadcast一样，操作利用从环拓扑派生的逻辑链，沿此数据流动并向根累积。如表X所示，链从第一GPU发送其本地数据块到环中下一GPU开始。中间GPU执行recvReduceSend原语：每个接收部分归约块、使用其自身对应数据应用元素级归约，并转发更新结果到下一GPU。此过程重复直到数据到达目的地根。根GPU以recvReduceCopy完成操作：接收最终部分结果、与其本地数据归约，并存储完全归约输出到其接收缓冲区。
       </p>
 <p>
-<strong>方法细节中的引用汇总。</strong> <br/>
-        - [7]：NCCL GitHub Issue #578: Ring AllReduce performance discrepancy,
+<strong>方法细节中的引用汇总。</strong> </p>
+<ul><li>[7]：NCCL GitHub Issue #578: Ring AllReduce performance discrepancy,
         未知年份, GitHub,
-        <a href="https://github.com/NVIDIA/nccl/issues/578" rel="noopener noreferrer" target="_blank">https://github.com/NVIDIA/nccl/issues/578</a>。在通信通道段落中，描述为大消息可能过载单一SM并无法饱和链路的问题。<br/>
-        - [8]：NCCL GitHub Issue #1302: Broadcast logic and topology insights,
+        <a href="https://github.com/NVIDIA/nccl/issues/578" rel="noopener noreferrer" target="_blank">https://github.com/NVIDIA/nccl/issues/578</a>。在通信通道段落中，描述为大消息可能过载单一SM并无法饱和链路的问题。</li><li>[8]：NCCL GitHub Issue #1302: Broadcast logic and topology insights,
         未知年份, GitHub,
-        <a href="https://github.com/NVIDIA/nccl/issues/1302" rel="noopener noreferrer" target="_blank">https://github.com/NVIDIA/nccl/issues/1302</a>。在通信通道段落中，描述为类似问题。<br/>
-        - [9]：Full bandwidth broadcast, reduction and scan with only two trees,
+        <a href="https://github.com/NVIDIA/nccl/issues/1302" rel="noopener noreferrer" target="_blank">https://github.com/NVIDIA/nccl/issues/1302</a>。在通信通道段落中，描述为类似问题。</li><li>[9]：Full bandwidth broadcast, reduction and scan with only two trees,
         2007, European Conference on Recent Advances in Parallel Virtual Machine
         and Message Passing Interface,
-        无URL。在通信通道段落中，描述为双二叉树结构。<br/>
-        - [10]：Energy, Memory, and Runtime Tradeoffs for Implementing
+        无URL。在通信通道段落中，描述为双二叉树结构。</li><li>[10]：Energy, Memory, and Runtime Tradeoffs for Implementing
         Collective Communication Operations, 2014, Journal of Supercomputing
         Frontiers and Innovations,
-        无URL。在通信通道段落中，描述为双二叉树结构。<br/>
-        - [12]：NCCL GitHub Issue # 609: why uses rdma write for default ib
+        无URL。在通信通道段落中，描述为双二叉树结构。</li><li>[12]：NCCL GitHub Issue # 609: why uses rdma write for default ib
         traffic, 2021, GitHub,
-        <a href="https://github.com/NVIDIA/nccl/issues/609" rel="noopener noreferrer" target="_blank">https://github.com/NVIDIA/nccl/issues/609</a>。在IB Verbs传输段落中，描述为使用RDMA write移动数据。<br/>
-        - [13]：Developing a Linux Kernel Module using GPUDirect RDMA, 2025,
-        无会议, 无URL。在GPUDirect RDMA优化段落中，描述为注册GPU内存机制。<br/>
-        - [14]：Buffer Sharing and Synchronization (dma-buf), 2025, 无会议,
-        kernel.org。在GPUDirect RDMA优化段落中，描述为Linux DMA-BUF子系统。<br/>
-        - [15]：Optimization of collective reduction operations, 2004, ICCS,
-        无URL。在NCCL集体算法概述段落中，描述为算法选择依赖。<br/>
-        - [16]：Bandwidth optimal all-reduce algorithms for clusters of
+        <a href="https://github.com/NVIDIA/nccl/issues/609" rel="noopener noreferrer" target="_blank">https://github.com/NVIDIA/nccl/issues/609</a>。在IB Verbs传输段落中，描述为使用RDMA write移动数据。</li><li>[13]：Developing a Linux Kernel Module using GPUDirect RDMA, 2025,
+        无会议, 无URL。在GPUDirect RDMA优化段落中，描述为注册GPU内存机制。</li><li>[14]：Buffer Sharing and Synchronization (dma-buf), 2025, 无会议,
+        kernel.org。在GPUDirect RDMA优化段落中，描述为Linux DMA-BUF子系统。</li><li>[15]：Optimization of collective reduction operations, 2004, ICCS,
+        无URL。在NCCL集体算法概述段落中，描述为算法选择依赖。</li><li>[16]：Bandwidth optimal all-reduce algorithms for clusters of
         workstations, 2009, Journal of Parallel and Distributed Computing,
-        无URL。在NCCL集体算法概述段落中，描述为类似。<br/>
-        - [17]：Optimization of collective communication operations in mpich,
+        无URL。在NCCL集体算法概述段落中，描述为类似。</li><li>[17]：Optimization of collective communication operations in mpich,
         2005, The International Journal of High Performance Computing
-        Applications, 无URL。在NCCL集体算法概述段落中，描述为类似。<br/>
-        - [18]：NCCL Issue #320: NVLS and CollNet Support, 2021, GitHub,
-        <a href="https://github.com/NVIDIA/nccl/issues/320" rel="noopener noreferrer" target="_blank">https://github.com/NVIDIA/nccl/issues/320</a>。在算法和协议支持概述段落中，描述为SHARP技术。<br/>
-        - [19]：Nccl github issue #919: Question: Nccl tree algorithm behaviour,
+        Applications, 无URL。在NCCL集体算法概述段落中，描述为类似。</li><li>[18]：NCCL Issue #320: NVLS and CollNet Support, 2021, GitHub,
+        <a href="https://github.com/NVIDIA/nccl/issues/320" rel="noopener noreferrer" target="_blank">https://github.com/NVIDIA/nccl/issues/320</a>。在算法和协议支持概述段落中，描述为SHARP技术。</li><li>[19]：Nccl github issue #919: Question: Nccl tree algorithm behaviour,
         2023, GitHub,
-        <a href="https://github.com/NVIDIA/nccl/issues/919" rel="noopener noreferrer" target="_blank">https://github.com/NVIDIA/nccl/issues/919</a>。在算法和协议支持概述段落中，描述为CollNet和NVLS细节。<br/>
-        - [2]：NVIDIA Collective Communications Library (NCCL) Documentation,
-        2025, 无会议, 无URL。在算法和协议支持概述段落中，描述为NVLS设计。<br/>
-        - [20]：New scaling algorithm and initialization with nvidia collective
+        <a href="https://github.com/NVIDIA/nccl/issues/919" rel="noopener noreferrer" target="_blank">https://github.com/NVIDIA/nccl/issues/919</a>。在算法和协议支持概述段落中，描述为CollNet和NVLS细节。</li><li>[2]：NVIDIA Collective Communications Library (NCCL) Documentation,
+        2025, 无会议, 无URL。在算法和协议支持概述段落中，描述为NVLS设计。</li><li>[20]：New scaling algorithm and initialization with nvidia collective
         communications library 2.23, 2025, 无会议,
-        无URL。在算法和协议支持概述段落中，描述为PAT算法。<br/>
-        - [21]：Pat: a new algorithm for all-gather and reduce-scatter
+        无URL。在算法和协议支持概述段落中，描述为PAT算法。</li><li>[21]：Pat: a new algorithm for all-gather and reduce-scatter
         operations at scale, 2025, 无会议,
-        无URL。在算法和协议支持概述段落中，描述为PAT算法。
-      </p>
+        无URL。在算法和协议支持概述段落中，描述为PAT算法。</li></ul>
 <h2 id="_4">实验环境</h2>
 <p>
         实验使用Alps超级计算系统，在瑞士国家超级计算中心（CSCS），配置16节点配备NVIDIA

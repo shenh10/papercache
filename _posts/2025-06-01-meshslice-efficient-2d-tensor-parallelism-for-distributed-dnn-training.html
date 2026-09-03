@@ -491,11 +491,8 @@ $$T_{comm} = T_{launch} + (P - 1) \times L_{sync} + \frac{size(shard)}{BW}$$
 <h2 id="a6">A6 结论</h2>
 <p>本文提出了MeshSlice算法，一种为分布式DNN训练设计的高效2D张量并行方法。MeshSlice通过将通信操作切分为多个部分，并利用软件流水线在行列两个维度上都实现了通信与计算的高效重叠，从而解决了现有2D GeMM算法（如Cannon、SUMMA、Collective GeMM）存在的流量大、同步开销高或无法重叠等问题。此外，本文还设计了MeshSlice LLM自动调优器，该工具能够通过选择高效的数据流，并利用精确的成本模型协同优化加速器网格形状和通信粒度，从而自动化了复杂的性能调优过程。</p>
 <p>在模拟的256个TPUv4集群上的评估表明，MeshSlice在训练GPT-3和Megatron-NLG模型时，端到端性能分别比当前最先进的算法快12.0%和23.4%。</p>
-<p>未来的工作方向包括：<br/>
-1.  <strong>扩展到GPU集群</strong>：通过在GPU集群的物理网络上构建逻辑网格，将MeshSlice应用于更广泛的硬件平台，并相应调整自动调优器以考虑网络竞争。<br/>
-2.  <strong>应用于推理场景</strong>：调整MeshSlice及其自动调优器以适应推理任务中更可能出现的内存瓶颈。<br/>
-3.  <strong>支持其他DNN层</strong>：将MeshSlice应用于可转换为GeMM操作的其他层，如卷积层，或用于优化GNN中的2D分布式稀疏GeMM。<br/>
-4.  <strong>结合专家混合（MoE）模型</strong>：将MeshSlice的2D TP与MoE的专家并行（EP）相结合，以支持更大规模模型的训练。</p>
+<p>未来的工作方向包括：</p>
+<ol><li><strong>扩展到GPU集群</strong>：通过在GPU集群的物理网络上构建逻辑网格，将MeshSlice应用于更广泛的硬件平台，并相应调整自动调优器以考虑网络竞争。</li><li><strong>应用于推理场景</strong>：调整MeshSlice及其自动调优器以适应推理任务中更可能出现的内存瓶颈。</li><li><strong>支持其他DNN层</strong>：将MeshSlice应用于可转换为GeMM操作的其他层，如卷积层，或用于优化GNN中的2D分布式稀疏GeMM。</li><li><strong>结合专家混合（MoE）模型</strong>：将MeshSlice的2D TP与MoE的专家并行（EP）相结合，以支持更大规模模型的训练。</li></ol>
 </div>
 
 

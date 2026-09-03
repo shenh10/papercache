@@ -39,14 +39,10 @@ $$LUT(\sim b_3b_2b_1b_0) = -LUT(b_3b_2b_1b_0)$$
 </details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文针对大规模语言模型（LLM）推理中资源密集的问题，提出了一种名为LUT Tensor Core的软硬件协同设计，旨在高效执行基于查找表（LUT）的混合精度矩阵乘法（mpGEMM），以加速低比特LLM的推理。</p>
-<p><strong>核心问题与研究目标</strong>：<br/>
-- <strong>问题</strong>：低比特量化（如INT4/2/1权重）是降低LLM推理成本的有效方法，但这引入了mpGEMM（低精度权重与高精度激活值相乘）计算。现有硬件（如GPU）不原生支持mpGEMM，通常采用基于反量化的间接方法，这会引入额外开销并成为性能瓶瓶颈。<br/>
-- <strong>目标</strong>：释放基于LUT的mpGEMM的全部潜力，解决现有软件和硬件LUT实现中的性能差距与挑战，包括高昂的表预计算和存储开销、对比特宽度组合支持有限、次优的分块形状以及缺乏专用指令集和编译支持。</p>
-<p><strong>核心创新点（LUT Tensor Core设计）</strong>：<br/>
-1.  <strong>软件优化</strong>：<br/>
-    *   <strong>最小化表预计算开销</strong>：将预计算过程拆分为一个独立的算子，避免了在多个计算单元中的冗余计算。通过算子融合技术，将其与前一个算子合并，进一步减少内存访问开销。<br/>
-    *   <strong>减少表存储开销</strong>：通过将权重的<code>{0, 1}</code>重新解释为<code>{−1, 1}</code>，利用了查找表的内在对称性，从而将表的大小减少了一半。<br/>
-    *   <strong>支持多样的激活精度</strong>：应用表量化技术，将预计算表中的元素量化为统一的低精度（如INT8），以支持不同的激活位宽（如FP16/8, INT8）并减小表宽度。</p>
+<p><strong>核心问题与研究目标</strong>：</p>
+<ul><li><strong>问题</strong>：低比特量化（如INT4/2/1权重）是降低LLM推理成本的有效方法，但这引入了mpGEMM（低精度权重与高精度激活值相乘）计算。现有硬件（如GPU）不原生支持mpGEMM，通常采用基于反量化的间接方法，这会引入额外开销并成为性能瓶瓶颈。</li><li><strong>目标</strong>：释放基于LUT的mpGEMM的全部潜力，解决现有软件和硬件LUT实现中的性能差距与挑战，包括高昂的表预计算和存储开销、对比特宽度组合支持有限、次优的分块形状以及缺乏专用指令集和编译支持。</li></ul>
+<p><strong>核心创新点（LUT Tensor Core设计）</strong>：</p>
+<ol><li><strong>软件优化</strong>：<ul><li><strong>最小化表预计算开销</strong>：将预计算过程拆分为一个独立的算子，避免了在多个计算单元中的冗余计算。通过算子融合技术，将其与前一个算子合并，进一步减少内存访问开销。</li><li><strong>减少表存储开销</strong>：通过将权重的<code>{0, 1}</code>重新解释为<code>{−1, 1}</code>，利用了查找表的内在对称性，从而将表的大小减少了一半。</li><li><strong>支持多样的激活精度</strong>：应用表量化技术，将预计算表中的元素量化为统一的低精度（如INT8），以支持不同的激活位宽（如FP16/8, INT8）并减小表宽度。</li></ul></li></ol>
 <ol>
 <li>
 <p><strong>硬件定制</strong>：</p>
@@ -64,12 +60,8 @@ $$LUT(\sim b_3b_2b_1b_0) = -LUT(b_3b_2b_1b_0)$$
 </ul>
 </li>
 </ol>
-<p><strong>主要成果</strong>：<br/>
--   与传统的Tensor Core相比，本文提出的LUT Tensor Core在功耗和面积上减少了4到6倍。<br/>
--   在mpGEMM性能上，LUT Tensor Core仅用16%的面积就实现了比传统Tensor Core更高的性能。<br/>
--   与最先进的纯软件LUT实现相比，LUT Tensor Core在通用矩阵向量乘（GEMV）中实现了高达1.42倍的加速，在GEMM中实现了72.2倍的加速。<br/>
--   与最先进的基于LUT的加速器相比，其计算密度和能效提高了1.44倍。<br/>
--   在端到端LLM推理（如BitNet和量化LLAMA模型）中，实现了2.06倍至5.51倍的推理加速，且面积和精度相当。</p>
+<p><strong>主要成果</strong>：</p>
+<ul><li>与传统的Tensor Core相比，本文提出的LUT Tensor Core在功耗和面积上减少了4到6倍。</li><li>在mpGEMM性能上，LUT Tensor Core仅用16%的面积就实现了比传统Tensor Core更高的性能。</li><li>与最先进的纯软件LUT实现相比，LUT Tensor Core在通用矩阵向量乘（GEMV）中实现了高达1.42倍的加速，在GEMM中实现了72.2倍的加速。</li><li>与最先进的基于LUT的加速器相比，其计算密度和能效提高了1.44倍。</li><li>在端到端LLM推理（如BitNet和量化LLAMA模型）中，实现了2.06倍至5.51倍的推理加速，且面积和精度相当。</li></ul>
 <h2 id="a3">A3 背景知识与动机</h2>
 <h3 id="21-llm">2.1 LLM推理与低比特量化</h3>
 <p><strong>LLM架构与计算核心</strong>。近年来，LLM主要依赖于仅解码器（decoder-only）的Transformer架构【66】，如图1所示。LLM由顺序的Transformer层构建，每层包含一个多头注意力块和一个前馈网络块。在这两个块中，主要的计算都是通用矩阵乘法（GEMM），或者在权重被量化的情况下是混合精度GEMM（mpGEMM）。LLM规模的扩大需要大量的硬件资源【21, 28】。例如，LLAMA-2-70B【65】仅模型权重（FP16格式）就需要140GB内存，远超现代GPU（如NVIDIA A100或H100）的容量，这对LLM的部署构成了巨大挑战。<br/>
@@ -320,15 +312,11 @@ $$LUT(\sim b_3b_2b_1b_0) = -LUT(b_3b_2b_1b_0)$$
 </ul>
 <h2 id="a6">A6 结论</h2>
 <p>本文提出了LUT Tensor Core，这是一种基于LUT计算范式的软硬件协同设计，旨在为低比特LLM加速实现高效的混合精度GEMM操作。LUT Tensor Core不仅提升了性能，还为各种精度组合提供了广泛的灵活性，并且能够无缝集成到现有的加速器架构和软件生态系统中。</p>
-<p><strong>未来工作展望</strong>：<br/>
--   <strong>低比特训练与微调</strong>：将LUT Tensor Core的应用从推理扩展到训练的整个流程，需要应对反向传播中更高精度的计算需求，并可能需要新的训练算法和硬件创新。<br/>
--   <strong>长上下文注意力与KV缓存量化</strong>：探索在长上下文场景中，将LUT Tensor Core应用于注意力计算和KV缓存量化，以解决注意力机制成为瓶颈的问题。<br/>
--   <strong>更灵活的数据格式支持</strong>：将LUT-based方法扩展到支持浮点（FP）权重和非整数权重（如三元权重），以进一步增强其通用性。</p>
+<p><strong>未来工作展望</strong>：</p>
+<ul><li><strong>低比特训练与微调</strong>：将LUT Tensor Core的应用从推理扩展到训练的整个流程，需要应对反向传播中更高精度的计算需求，并可能需要新的训练算法和硬件创新。</li><li><strong>长上下文注意力与KV缓存量化</strong>：探索在长上下文场景中，将LUT Tensor Core应用于注意力计算和KV缓存量化，以解决注意力机制成为瓶颈的问题。</li><li><strong>更灵活的数据格式支持</strong>：将LUT-based方法扩展到支持浮点（FP）权重和非整数权重（如三元权重），以进一步增强其通用性。</li></ul>
 <h2 id="_1">方法细节中的引用汇总</h2>
-<p>在论文的“方法细节”章节（第3节），作者引用了以下关键的编译器和框架来支持其编译栈的实现：<br/>
--   <strong>[5] TVM: end-to-end optimization stack for deep learning (Chen et al., 2018)</strong>: 被用作代码生成的基础。LMMA指令作为内联函数（intrinsics）在TVM中注册，以便生成最终的内核代码。<br/>
--   <strong>[62] Welder: Scheduling Deep Learning Memory Access via Tile-graph (Shi et al., OSDI 2023)</strong>: 被用于DFG转换和算子融合。作者将预计算操作实现为一个图优化过程，并利用Welder将该算子与前序算子融合，以减少内存开销。<br/>
--   <strong>[84] ROLLER: Fast and efficient tensor compilation for deep learning (Zhu et al., OSDI 2022)</strong>: 被用于LUT-mpGEMM的调度。作者在Roller的rTile接口中注册了LMMA指令的形状和分块计算逻辑，以生成最优的调度配置。</p>
+<p>在论文的“方法细节”章节（第3节），作者引用了以下关键的编译器和框架来支持其编译栈的实现：</p>
+<ul><li><strong>[5] TVM: end-to-end optimization stack for deep learning (Chen et al., 2018)</strong>: 被用作代码生成的基础。LMMA指令作为内联函数（intrinsics）在TVM中注册，以便生成最终的内核代码。</li><li><strong>[62] Welder: Scheduling Deep Learning Memory Access via Tile-graph (Shi et al., OSDI 2023)</strong>: 被用于DFG转换和算子融合。作者将预计算操作实现为一个图优化过程，并利用Welder将该算子与前序算子融合，以减少内存开销。</li><li><strong>[84] ROLLER: Fast and efficient tensor compilation for deep learning (Zhu et al., OSDI 2022)</strong>: 被用于LUT-mpGEMM的调度。作者在Roller的rTile接口中注册了LMMA指令的形状和分块计算逻辑，以生成最优的调度配置。</li></ul>
 </div>
 
 

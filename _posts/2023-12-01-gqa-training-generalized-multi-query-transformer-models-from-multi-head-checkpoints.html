@@ -34,9 +34,8 @@ $$W_{V, GQA}^{(g)} = \frac{1}{|S_g|} \sum_{h \in S_g} W_V^{(h)}$$
 </details>
 <h3 id="a1">A1 主要贡献</h3>
 <p>自回归解码器的推理过程是Transformer模型的一个严重瓶颈，主要因为在每个解码步骤都需要加载解码器权重以及所有的注意力键（keys）和值（values），这带来了巨大的内存带宽开销【Shazeer, 2019, Fast transformer decoding: One write-head is all you need, arXiv preprint】。多查询注意力（Multi-query attention, MQA）通过使用多个查询头（query heads）但共享单一的键和值头，可以显著减少加载键和值所带来的内存带宽。然而，MQA可能会导致模型质量下降和训练不稳定，并且为追求更快的推理速度而专门训练一个独立的模型在实践中可能并不可行。此外，尽管像PaLM【Chowdhery et al., 2022, Palm: Scaling language modeling with pathways】这样的一些语言模型已经采用了MQA，但许多公开可用的模型，如T5【Raffel et al., 2020, Exploring the limits of transfer learning with a unified text-to-text transformer, JMLR】和LLaMA【Touvron et al., 2023, Llama: Open and efficient foundation language models】，仍然使用多头注意力（Multi-head attention, MHA）。</p>
-<p>针对以上问题，本文提出了两大贡献以加速大型语言模型的推理速度：<br/>
-1.  <strong>提出了一种增量训练（uptraining）方法</strong>：该方法能够将已有的多头注意力（MHA）语言模型检查点，以原始预训练计算成本的一小部分（例如5%），转换为使用多查询注意力（MQA）的模型。这为同时获得高质量的MHA检查点和快速推理的MQA模型提供了一种经济高效的途径。<br/>
-2.  <strong>提出了分组查询注意力（Grouped-query attention, GQA）</strong>：GQA是MHA和MQA之间的一种插值方案。它将查询头分组，每组共享一个键和值头，从而使用的键值头数量介于MQA（1个）和MHA（与查询头数量相等）之间。实验证明，经过增量训练的GQA模型在质量上接近MHA，同时在推理速度上与MQA相当。</p>
+<p>针对以上问题，本文提出了两大贡献以加速大型语言模型的推理速度：</p>
+<ol><li><strong>提出了一种增量训练（uptraining）方法</strong>：该方法能够将已有的多头注意力（MHA）语言模型检查点，以原始预训练计算成本的一小部分（例如5%），转换为使用多查询注意力（MQA）的模型。这为同时获得高质量的MHA检查点和快速推理的MQA模型提供了一种经济高效的途径。</li><li><strong>提出了分组查询注意力（Grouped-query attention, GQA）</strong>：GQA是MHA和MQA之间的一种插值方案。它将查询头分组，每组共享一个键和值头，从而使用的键值头数量介于MQA（1个）和MHA（与查询头数量相等）之间。实验证明，经过增量训练的GQA模型在质量上接近MHA，同时在推理速度上与MQA相当。</li></ol>
 <h3 id="a2">A2 方法细节</h3>
 <h4 id="21-uptraining">2.1 增量训练（Uptraining）</h4>
 <p><strong>从多头模型生成多查询模型的两步法</strong>。这个过程分为两个步骤：首先，转换检查点；其次，进行额外的预训练，让模型适应其新结构。图1展示了将多头检查点转换为多查询检查点的过程。具体操作是将所有头的键（key）和值（value）的投影矩阵进行均值池化（mean pooled），融合成单一的投影矩阵。我们发现，这种方法比从多个头中选择单一的键和值头，或从头开始随机初始化新的键和值头效果更好。</p>

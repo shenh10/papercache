@@ -34,19 +34,8 @@ title: 'NeMo-Aligner: Scalable Toolkit for Efficient Model Alignment'
 <h3 id="a1">A1 主要贡献</h3>
 <p>本文介绍了NeMo-Aligner，一个旨在高效地将大型语言模型（LLMs）与人类价值观和偏好对齐的工具包。对齐是使LLMs变得有用和安全的关键步骤，但为拥有数百亿甚至数千亿参数的大模型构建高效的对齐工具充满挑战。</p>
 <p><strong>核心问题</strong>：现有的模型对齐开源工具（如HuggingFace TRL、trlX、DeepSpeedChat）虽然为社区提供了良好的起点，但在性能和可扩展性方面，尤其是在对齐如Nemotron 4 340B和Llama 3.1 405B等顶级大模型时，面临瓶颈。复杂的对齐算法（如RLHF中的PPO）引入了新的系统挑战，包括模型扩展性、模型间协调以及在训练循环中进行文本生成等。</p>
-<p><strong>研究目标与创新点</strong>：NeMo-Aligner旨在大幅提升模型对齐的性能和可扩展性，使其能够高效扩展至上千块GPU，从而支持对最大规模的开源LLMs进行对齐。其主要贡献和创新点如下：<br/>
-*   <strong>极致的可扩展性</strong>：通过以下三项关键技术应对扩展性挑战：<br/>
-    1.  基于<strong>Megatron-LM</strong>【33, Megatron-lm: Training multi-billion parameter language models using model parallelism, 2020, Arxiv】构建，支持3D（数据、张量、流水线）并行训练。<br/>
-    2.  为RLHF中的近端策略优化（PPO）训练实现了<strong>分布式方法</strong>。<br/>
-    3.  在PPO的rollout阶段集成了基于<strong>TensorRT-LLM</strong>【26, TensorRT-LLM, 2023, GitHub】的推理优化。<br/>
-*   <strong>全面的对齐算法支持</strong>：提供了对主流模型对齐范式的高度优化和可扩展实现，包括：<br/>
-    *   基于人类反馈的强化学习（RLHF），特别是PPO变体。<br/>
-    *   直接偏好优化（DPO）。<br/>
-    *   SteerLM。<br/>
-    *   自博弈微调（SPIN）。<br/>
-*   <strong>高效的微调支持</strong>：支持在参数高效微调（PEFT）设置下运行大多数对齐技术，如LoRA。<br/>
-*   <strong>框架的可扩展性</strong>：NeMo-Aligner被设计为可扩展的，用户能够以最小的努力支持其他对齐技术。<br/>
-*   <strong>开源贡献</strong>：该工具包以Apache 2.0许可证开源，鼓励社区参与贡献。</p>
+<p><strong>研究目标与创新点</strong>：NeMo-Aligner旨在大幅提升模型对齐的性能和可扩展性，使其能够高效扩展至上千块GPU，从而支持对最大规模的开源LLMs进行对齐。其主要贡献和创新点如下：</p>
+<ul><li><strong>极致的可扩展性</strong>：通过以下三项关键技术应对扩展性挑战：<ol><li>基于<strong>Megatron-LM</strong>【33, Megatron-lm: Training multi-billion parameter language models using model parallelism, 2020, Arxiv】构建，支持3D（数据、张量、流水线）并行训练。</li><li>为RLHF中的近端策略优化（PPO）训练实现了<strong>分布式方法</strong>。</li><li>在PPO的rollout阶段集成了基于<strong>TensorRT-LLM</strong>【26, TensorRT-LLM, 2023, GitHub】的推理优化。</li></ol></li><li><strong>全面的对齐算法支持</strong>：提供了对主流模型对齐范式的高度优化和可扩展实现，包括：<ul><li>基于人类反馈的强化学习（RLHF），特别是PPO变体。</li><li>直接偏好优化（DPO）。</li><li>SteerLM。</li><li>自博弈微调（SPIN）。</li></ul></li><li><strong>高效的微调支持</strong>：支持在参数高效微调（PEFT）设置下运行大多数对齐技术，如LoRA。</li><li><strong>框架的可扩展性</strong>：NeMo-Aligner被设计为可扩展的，用户能够以最小的努力支持其他对齐技术。</li><li><strong>开源贡献</strong>：该工具包以Apache 2.0许可证开源，鼓励社区参与贡献。</li></ul>
 <h3 id="a3">A3 背景知识</h3>
 <p>本节概述了NeMo-Aligner支持的几种关键模型对齐技术。</p>
 <p><figure class="image-figure">
@@ -56,17 +45,13 @@ title: 'NeMo-Aligner: Scalable Toolkit for Efficient Model Alignment'
 <h4 id="21-supervised-fine-tuning">2.1 监督微调（Supervised Fine Tuning）</h4>
 <p><strong>基本定义</strong>。给定一个预训练（或称“基础”）模型，监督微调（SFT）在包含提示和期望响应的数据集上更新模型参数。这些期望响应可能来自人类专家标注【18, Openassistant conversations – democratizing large language model alignment, 2023】或由其他语言模型生成【10, Enhancing chat language models by scaling high-quality instructional conversations, 2023】。模型通过词元级别的交叉熵损失函数进行训练，以模仿给定的期望响应。SFT是RLHF【30, Training language models to follow instructions with human feedback, 2022】和DPO【31, Direct preference optimization: Your language model is secretly a reward model, 2023】中一个重要的先决步骤，因为没有SFT，基础模型很难生成遵循用户指令的响应。这个步骤有时也被称为行为克隆，因为它期望模型模仿人类或其他模型的响应。</p>
 <h4 id="22-reinforcement-learning-from-human-feedback">2.2 基于人类反馈的强化学习（Reinforcement Learning from Human Feedback）</h4>
-<p><strong>RLHF概念与流程</strong>。RLHF由Christiano等人【7, Deep reinforcement learning from human preferences, 2017】提出，旨在避免在强化学习中手动定义奖励函数。它通过一个在人类偏好数据集（包含“选中”和“拒绝”轨迹对）上训练的奖励模型来实现。该奖励模型的损失函数源自Bradley-Terry模型【4, The rank analysis of incomplete block designs — I. The method of paired comparisons, 1952】，旨在最大化<code>r_chosen &gt; r_rejected</code>的概率。奖励模型训练好后，可用于为RL算法计算奖励。RLHF中最常用的两种方法是REINFORCE【44, Simple statistical gradient-following algorithms for connectionist reinforcement learning, 1992】和近端策略优化（PPO）【32, Proximal policy optimization algorithms, 2017】。NeMo-Aligner专注于Ouyang等人【30, Training language models to follow instructions with human feedback, 2022】描述的PPO方法。RLHF已被证明对模型对齐有显著益处【30, Training language models to follow instructions with human feedback, 2022; 2, Training a helpful and harmless assistant with reinforcement learning from human feedback, 2022a; 37, Llama 2: Open foundation and fine-tuned chat models, 2023】，其典型训练流程如Figure 1所示，包含三个步骤：<br/>
-1.  <strong>SFT模型训练</strong>：从一个预训练的基础模型开始，如2.1节所述训练一个初始的SFT模型。<br/>
-2.  <strong>奖励模型训练</strong>：基于SFT模型，使用一个包含“选中”和“拒绝”响应对的人类偏好数据集来训练一个奖励模型。通常，在训练前，我们在SFT模型之上初始化一个线性的奖励模型头。<br/>
-3.  <strong>PPO策略训练</strong>：从SFT模型出发，使用在线PPO算法训练一个策略模型，奖励由训练好的奖励模型提供。一个基于与SFT模型的KL散度的正则化项，用于防止策略偏离其起点太远并利用奖励模型的“盲点”【34, Learning to summarize from human feedback, 2020; 30, Training language models to follow instructions with human feedback, 2022】。PPO的critic（评论家）通常从奖励模型初始化。</p>
+<p><strong>RLHF概念与流程</strong>。RLHF由Christiano等人【7, Deep reinforcement learning from human preferences, 2017】提出，旨在避免在强化学习中手动定义奖励函数。它通过一个在人类偏好数据集（包含“选中”和“拒绝”轨迹对）上训练的奖励模型来实现。该奖励模型的损失函数源自Bradley-Terry模型【4, The rank analysis of incomplete block designs — I. The method of paired comparisons, 1952】，旨在最大化<code>r_chosen &gt; r_rejected</code>的概率。奖励模型训练好后，可用于为RL算法计算奖励。RLHF中最常用的两种方法是REINFORCE【44, Simple statistical gradient-following algorithms for connectionist reinforcement learning, 1992】和近端策略优化（PPO）【32, Proximal policy optimization algorithms, 2017】。NeMo-Aligner专注于Ouyang等人【30, Training language models to follow instructions with human feedback, 2022】描述的PPO方法。RLHF已被证明对模型对齐有显著益处【30, Training language models to follow instructions with human feedback, 2022; 2, Training a helpful and harmless assistant with reinforcement learning from human feedback, 2022a; 37, Llama 2: Open foundation and fine-tuned chat models, 2023】，其典型训练流程如Figure 1所示，包含三个步骤：</p>
+<ol><li><strong>SFT模型训练</strong>：从一个预训练的基础模型开始，如2.1节所述训练一个初始的SFT模型。</li><li><strong>奖励模型训练</strong>：基于SFT模型，使用一个包含“选中”和“拒绝”响应对的人类偏好数据集来训练一个奖励模型。通常，在训练前，我们在SFT模型之上初始化一个线性的奖励模型头。</li><li><strong>PPO策略训练</strong>：从SFT模型出发，使用在线PPO算法训练一个策略模型，奖励由训练好的奖励模型提供。一个基于与SFT模型的KL散度的正则化项，用于防止策略偏离其起点太远并利用奖励模型的“盲点”【34, Learning to summarize from human feedback, 2020; 30, Training language models to follow instructions with human feedback, 2022】。PPO的critic（评论家）通常从奖励模型初始化。</li></ol>
 <h4 id="23-direct-preference-optimization">2.3 直接偏好优化（Direct Preference Optimization）</h4>
 <p><strong>DPO核心思想</strong>。DPO【31, Direct preference optimization: Your language model is secretly a reward model, 2023】是一种离线、离策略的算法，它利用偏好数据直接训练一个最优策略，而无需显式的奖励模型。它使用一个参考策略，通过Bradley-Terry模型来隐式地推导出“选中”和“拒绝”响应对之间的奖励。这是通过计算最优策略和参考策略下，“选中”和“拒绝”响应的对数概率之差来实现的。这个差值经过缩放并通过sigmoid函数转换，最终得到损失函数。在训练过程中，参考策略是冻结的，它代表了生成这些偏好数据（“选中”/“拒绝”响应）的策略。如果生成偏好数据的原始参考策略不可用，可以通过在偏好数据的提示和“选中”响应上进行监督微调来近似得到。</p>
 <h4 id="24-steerlm">2.4 SteerLM</h4>
-<p><strong>SteerLM方法</strong>。SteerLM【11, SteerLM: Attribute conditioned SFT as an (user-steerable) alternative to RLHF, 2023】是一种基于监督微调的模型对齐算法，与DPO类似，它避免了使用复杂的RL方法。SteerLM包含三个步骤：<br/>
-1.  <strong>属性预测模型训练</strong>：首先，训练一个属性预测模型，该模型学习预测响应的各种语义属性的值（0到4之间，值越高越好），这些属性构成了有用和安全响应的要素，例如正确性和毒性【18, Openassistant conversations – democratizing large language model alignment, 2023; 41, Helpsteer: Multi-attribute helpfulness dataset for steerlm, 2023】。<br/>
-2.  <strong>数据集标注</strong>：接下来，使用属性预测模型在多样化的提示-响应数据集中标注各种有助于提升“有用性”和“安全性”的属性。<br/>
-3.  <strong>属性条件监督微调</strong>：最后，使用这些标注过的数据集进行属性条件监督微调。在这一步，模型学习在给定提示和格式化属性字符串（如<code>helpfulness:4,correctness:4,toxicity:0</code>）的条件下生成响应。这教会了模型以细粒度的方式区分哪些响应更有用/更安全。在推理时，可以将最优属性值附加到提示后，以生成最有帮助的响应。</p>
+<p><strong>SteerLM方法</strong>。SteerLM【11, SteerLM: Attribute conditioned SFT as an (user-steerable) alternative to RLHF, 2023】是一种基于监督微调的模型对齐算法，与DPO类似，它避免了使用复杂的RL方法。SteerLM包含三个步骤：</p>
+<ol><li><strong>属性预测模型训练</strong>：首先，训练一个属性预测模型，该模型学习预测响应的各种语义属性的值（0到4之间，值越高越好），这些属性构成了有用和安全响应的要素，例如正确性和毒性【18, Openassistant conversations – democratizing large language model alignment, 2023; 41, Helpsteer: Multi-attribute helpfulness dataset for steerlm, 2023】。</li><li><strong>数据集标注</strong>：接下来，使用属性预测模型在多样化的提示-响应数据集中标注各种有助于提升“有用性”和“安全性”的属性。</li><li><strong>属性条件监督微调</strong>：最后，使用这些标注过的数据集进行属性条件监督微调。在这一步，模型学习在给定提示和格式化属性字符串（如<code>helpfulness:4,correctness:4,toxicity:0</code>）的条件下生成响应。这教会了模型以细粒度的方式区分哪些响应更有用/更安全。在推理时，可以将最优属性值附加到提示后，以生成最有帮助的响应。</li></ol>
 <h4 id="25-self-play-fine-tuning">2.5 自博弈微调（Self-Play Fine-Tuning）</h4>
 <p><strong>SPIN机制</strong>。自博弈微调（SPIN）【6, Self-play finetuning converts weak language models to strong language models, 2024】是一种基于自博弈的算法，通过与自身先前版本的实例进行博弈，从一个较弱的模型发展出一个更强的模型。该过程从一个SFT数据集（提示/响应对）开始。首先，由模型的先前迭代版本生成新的响应。然后，通过区分这些自生成的响应和SFT数据中的真实人类响应来改进其策略。这是通过一个与DPO（2.3节）所用偏好损失函数相同的函数来实现的。当SPIN训练开始时，初始策略的一个副本被用作DPO损失中的参考策略。自博弈“游戏”会进行多轮迭代。在每轮迭代中，策略模型像DPO一样进行训练，而参考策略保持冻结；在每轮迭代结束时，用训练好的策略权重更新参考策略。在每次迭代中，算法遍历SFT训练数据集，并使用参考策略为每个提示生成响应，从而构建一个偏好元组，其中SFT中的真实人类响应为“选中”项，生成的响应为“拒绝”项。当整个epoch的偏好元组都构建好后，模型权重通过这些（“选中”，“拒绝”）对的DPO损失函数进行更新。通过这种自博弈机制，模型隐式地学会了偏好SFT的真实响应，而不是其先前迭代版本生成的响应。</p>
 <h3 id="a2">A2 方法细节</h3>
@@ -76,11 +61,8 @@ title: 'NeMo-Aligner: Scalable Toolkit for Efficient Model Alignment'
 <figcaption class="figure-caption">图2：RLHF训练的优化。PPO训练和推理的优化分别在3.1节和3.2节中详述。</figcaption>
 </figure></p>
 <h4 id="31-ppo">3.1 PPO训练的分布式方法</h4>
-<p><strong>PPO阶段的模型构成与分布式架构</strong>。PPO阶段需要在四个不同的模型上运行训练和/或推理，如图3所示：<br/>
-1.  <strong>PPO Actor (训练和推理，从SFT模型初始化)</strong>: 我们希望用PPO微调的模型。<br/>
-2.  <strong>Reference Policy (仅推理，设为SFT模型)</strong>: 用于计算KL散度惩罚的模型。<br/>
-3.  <strong>PPO Critic (训练和推理，从奖励模型初始化)</strong>: 在PPO中用于计算价值估计。<br/>
-4.  <strong>Reward Model (仅推理)</strong>: 为生成的rollout数据提供RL奖励。</p>
+<p><strong>PPO阶段的模型构成与分布式架构</strong>。PPO阶段需要在四个不同的模型上运行训练和/或推理，如图3所示：</p>
+<ol><li><strong>PPO Actor (训练和推理，从SFT模型初始化)</strong>: 我们希望用PPO微调的模型。</li><li><strong>Reference Policy (仅推理，设为SFT模型)</strong>: 用于计算KL散度惩罚的模型。</li><li><strong>PPO Critic (训练和推理，从奖励模型初始化)</strong>: 在PPO中用于计算价值估计。</li><li><strong>Reward Model (仅推理)</strong>: 为生成的rollout数据提供RL奖励。</li></ol>
 <p><strong>分布式实现与优化</strong>。所有这些模型都可能非常大（例如Llama 3.1 405B），因此NeMo-Aligner采用分布式方法进行PPO训练。我们允许用户设置PyTriton【22, PyTriton: Framework facilitating NVIDIA Triton inference server usage in Python environments, 2022】服务器和客户端，以便在PPO期间跨不同模型进行通信。这些PyTriton服务器使得模型可以运行在不同的计算集群上，消除了将critic和actor部署在同一计算资源分配上的要求。一种朴素的方法是为每个模型启动一个服务器（即四个服务器）。然而，我们注意到参考策略和PPO actor是相同的模型，只是权重不同。因此，我们将它们合并到一个作业中，并将参考策略的权重卸载到CPU，在进行参考策略推理步骤时与actor的权重进行交换。我们对奖励模型和critic也采用了相同的策略。所有通信都是异步完成的，允许critic的推理/训练与策略的推理/训练进行流水线操作。</p>
 <p><strong>计算资源平衡</strong>。我们调整计算资源的分配规模，使得 <code>[奖励模型推理 + critic推理] ≈ [actor采样 + 参考策略推理]</code> 并且 <code>[critic训练] ≤ [actor训练 + actor推理初始化]</code>。这确保了流水线能够最有效地利用可用的计算能力。</p>
 <p><figure class="image-figure">

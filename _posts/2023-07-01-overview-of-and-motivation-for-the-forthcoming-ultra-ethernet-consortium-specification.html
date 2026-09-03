@@ -31,20 +31,11 @@ title: Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium 
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文作为一份白皮书，阐述了为满足现代人工智能（AI）和高性能计算（HPC）工作负载需求而成立的 Ultra Ethernet 联盟（UEC）及其即将推出的技术规范的动机、核心问题和设计目标。</p>
 <p><strong>核心问题</strong>：<br/>
-现代大规模AI模型（如LLM和推荐系统）和HPC作业对网络性能提出了前所未有的要求。当前网络面临的关键挑战是“尾延迟”（tail latency），即通信阶段最后一条消息的到达时间，它直接决定了整个计算集群的效率。现有技术，特别是基于RoCE（RDMA over Converged Ethernet）的以太网方案，尽管在数据中心得到广泛应用，但其底层传输协议（源于InfiniBand）设计于上世纪末，已无法高效应对当前和未来的网络规模、带宽和通信模式。其主要缺陷包括：<br/>
-1.  <strong>低效的丢包恢复</strong>：“Go-Back-N”机制在发生丢包时效率低下，迫使运营商部署复杂的“无损”网络，但这又会引发大规模拥塞和队头阻塞问题。<br/>
-2.  <strong>次优的拥塞控制</strong>：DCQCN等算法需要针对特定网络和工作负载进行复杂的手动调优，缺乏TCP“开箱即用”的普适性。<br/>
-3.  <strong>有限的负载均衡</strong>：传统的ECMP基于流哈希，无法让单个大流量充分利用所有可用路径。<br/>
-4.  <strong>僵化的包序要求</strong>：严格的包序限制了乱序交付的效率，增加了不必要的延迟。<br/>
-5.  <strong>可扩展性瓶颈</strong>：原有的Verbs API和RC传输模式在面对海量节点和超高带宽时，状态管理开销巨大，存在扩展性问题。</p>
+现代大规模AI模型（如LLM和推荐系统）和HPC作业对网络性能提出了前所未有的要求。当前网络面临的关键挑战是“尾延迟”（tail latency），即通信阶段最后一条消息的到达时间，它直接决定了整个计算集群的效率。现有技术，特别是基于RoCE（RDMA over Converged Ethernet）的以太网方案，尽管在数据中心得到广泛应用，但其底层传输协议（源于InfiniBand）设计于上世纪末，已无法高效应对当前和未来的网络规模、带宽和通信模式。其主要缺陷包括：</p>
+<ol><li><strong>低效的丢包恢复</strong>：“Go-Back-N”机制在发生丢包时效率低下，迫使运营商部署复杂的“无损”网络，但这又会引发大规模拥塞和队头阻塞问题。</li><li><strong>次优的拥塞控制</strong>：DCQCN等算法需要针对特定网络和工作负载进行复杂的手动调优，缺乏TCP“开箱即用”的普适性。</li><li><strong>有限的负载均衡</strong>：传统的ECMP基于流哈希，无法让单个大流量充分利用所有可用路径。</li><li><strong>僵化的包序要求</strong>：严格的包序限制了乱序交付的效率，增加了不必要的延迟。</li><li><strong>可扩展性瓶颈</strong>：原有的Verbs API和RC传输模式在面对海量节点和超高带宽时，状态管理开销巨大，存在扩展性问题。</li></ol>
 <p><strong>研究目标与主要贡献</strong>：<br/>
-为解决上述问题，Ultra Ethernet 联盟（UEC）旨在从头开始设计一套全新的、开放的、基于以太网/IP生态系统的通信协议栈，即 <strong>Ultra Ethernet Transport (UET)</strong>。其核心目标是为下一代AI和HPC网络提供极致性能、可扩展性和易用性，并最小化尾延迟。UEC规范的主要贡献和创新点包括：<br/>
-1.  <strong>多路径与数据包喷洒（Packet Spraying）</strong>：设计一种能够让单个数据流同时利用所有可用网络路径的传输机制，以实现最优的负载均衡，避免网络热点。<br/>
-2.  <strong>灵活的交付顺序</strong>：支持乱序数据包直接递交至应用缓冲区，仅在应用需要时才强制执行顺序，从而最大化网络并发性和应用效率。<br/>
-3.  <strong>现代化的拥塞控制</strong>：开发专为AI和HPC优化的拥塞控制算法，能快速达到线速，有效管理入口拥塞（incast），且无需手动调优。<br/>
-4.  <strong>端到端遥测（Telemetry）</strong>：利用先进的遥测技术，使网络能够向端点提供精确、快速的拥塞信息，从而实现更灵敏、更准确的拥塞控制。<br/>
-5.  <strong>大规模可扩展性与原生安全性</strong>：协议设计支持百万级端点规模，并内置高效的加密和认证机制，以满足云环境下AI作业的隔离和安全需求。<br/>
-6.  <strong>统一AI与HPC需求</strong>：提供两种优化配置文件（一为AI优化，一为HPC优化），并引入链路层本地错误处理等机制，以同时满足AI对带宽和HPC对延迟的敏感需求。</p>
+为解决上述问题，Ultra Ethernet 联盟（UEC）旨在从头开始设计一套全新的、开放的、基于以太网/IP生态系统的通信协议栈，即 <strong>Ultra Ethernet Transport (UET)</strong>。其核心目标是为下一代AI和HPC网络提供极致性能、可扩展性和易用性，并最小化尾延迟。UEC规范的主要贡献和创新点包括：</p>
+<ol><li><strong>多路径与数据包喷洒（Packet Spraying）</strong>：设计一种能够让单个数据流同时利用所有可用网络路径的传输机制，以实现最优的负载均衡，避免网络热点。</li><li><strong>灵活的交付顺序</strong>：支持乱序数据包直接递交至应用缓冲区，仅在应用需要时才强制执行顺序，从而最大化网络并发性和应用效率。</li><li><strong>现代化的拥塞控制</strong>：开发专为AI和HPC优化的拥塞控制算法，能快速达到线速，有效管理入口拥塞（incast），且无需手动调优。</li><li><strong>端到端遥测（Telemetry）</strong>：利用先进的遥测技术，使网络能够向端点提供精确、快速的拥塞信息，从而实现更灵敏、更准确的拥塞控制。</li><li><strong>大规模可扩展性与原生安全性</strong>：协议设计支持百万级端点规模，并内置高效的加密和认证机制，以满足云环境下AI作业的隔离和安全需求。</li><li><strong>统一AI与HPC需求</strong>：提供两种优化配置文件（一为AI优化，一为HPC优化），并引入链路层本地错误处理等机制，以同时满足AI对带宽和HPC对延迟的敏感需求。</li></ol>
 <h2 id="a3-observation">A3 背景知识/关键Observation/设计原则</h2>
 <h3 id="aihpc">未来AI和HPC网络的核心需求</h3>
 <p><strong>未来网络的性能要求</strong>。即使考虑到使用以太网的优势，仍然可以也应该进行改进。网络必须不断发展，以便为未来更大规模、更高带宽的网络提供前所未有的性能。最重要的是，网络需要支持将消息尽快传递给所有参与的端点，即使是少数端点也不应有长时间的延迟。“尾延迟”应被最小化。</p>
@@ -69,26 +60,16 @@ title: Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium 
 <p><strong>网络拥塞的三个位置</strong>。网络拥塞可能发生在三个地方：从发送方到第一个交换机的出向链路、第一个交换机和最后一个交换机之间的链路、以及最后一个交换机和接收方之间的最终链路。</p>
 <p><strong>针对不同拥塞位置的控制策略</strong>。对于AI和HPC，发送方出向链路的拥塞主要通过发送主机上的调度算法来控制，该主机对所有出向流量都有可见性。上文描述的多路径数据包喷洒通过在所有路径上均匀分散负载，最大限度地减少了第一和最后一个交换机之间的热点和拥塞。最后一种拥塞形式——“入口拥塞（Incast）”——发生在到接收方的最后一条链路上，当多个发送方同时向同一目的地发送流量时会发生；它可能作为上述“All-to-All”通信的一部分出现。</p>
 <p><strong>现有拥塞控制算法的不足</strong>。近几十年来，已经提出了许多解决拥塞的方案（例如，DCQCN, DCTCP, SWIFT, Timely）。然而，目前没有一种算法能满足为AI优化的传输协议的所有需求。</p>
-<p><strong>AI优化拥塞控制的需求列表</strong>。这些需求包括：<br/>
-- 在高速、低往返时间的网络中，当存在无拥塞路径时，能够快速提升至线速，而不降低现有流量的性能。<br/>
-- 管理网络结构中以及到目的地的最后一跳路径上的拥塞。<br/>
-- 通过公平共享最终链路来控制入口拥塞，而不会导致昂贵的丢包、重传或增加尾延迟。<br/>
-- 无需随着流量组合变化、计算节点演进、链路速度增加和网络硬件发展而进行调优和配置。</p>
+<p><strong>AI优化拥塞控制的需求列表</strong>。这些需求包括：</p>
+<ul><li>在高速、低往返时间的网络中，当存在无拥塞路径时，能够快速提升至线速，而不降低现有流量的性能。</li><li>管理网络结构中以及到目的地的最后一跳路径上的拥塞。</li><li>通过公平共享最终链路来控制入口拥塞，而不会导致昂贵的丢包、重传或增加尾延迟。</li><li>无需随着流量组合变化、计算节点演进、链路速度增加和网络硬件发展而进行调优和配置。</li></ul>
 <p><strong>与多路径喷洒的协同设计</strong>。为未来AI工作负载设计的拥塞控制算法，必须既能支持这些需求，又能与多路径数据包喷洒协同工作。</p>
 <h3 id="end-to-end-telemetry">端到端遥测（End-to-End Telemetry）</h3>
 <p><strong>遥测对拥塞控制的赋能</strong>。这些优化的拥塞控制算法得益于新兴的端到端遥测方案。源自网络的拥塞信息可以告知参与者拥塞的位置和原因。缩短拥塞信令路径并向端点提供更多信息，可以实现更灵敏的拥塞控制。无论是由发送方还是接收方调度传输，现代交换机都可以通过快速将准确的拥塞信息传递给调度器或定速器（pacer），来促进响应迅速的拥塞控制——从而提高拥塞控制算法的响应速度和准确性。其结果是减少拥塞、更少的丢包和更小的队列——所有这些都是为了改善尾延迟。</p>
 <h3 id="ultra-ethernet-transport-uetaihpc">Ultra Ethernet Transport (UET)：为下一代AI和HPC网络设计的协议</h3>
 <p><strong>替代传统RoCE的必要性</strong>。Ultra Ethernet 联盟的成员认为，是时候重新开始，用Ultra Ethernet Transport（UET）取代传统的RoCE协议。UET是一种现代传输协议，旨在提供AI和HPC应用所需的性能，同时保留以太网/IP生态系统的优势。</p>
 <p><strong>UET的核心设计原则</strong>。从TCP/IP和以太网的成功中得到的两个基本教训是：传输协议应提供丢包恢复，以及无损网络在不触发队头阻塞和拥塞扩散的情况下非常难以操作。UET传输协议秉承这些原则，建立在经过验证的分布式路由算法和基于端点的可靠性与拥塞控制路径之上。</p>
-<p><strong>UET协议的先进特性</strong>。UET传输协议通过提供以下功能，超越了现状：<br/>
--   一个从一开始就设计为在IP和以太网上运行的开放协议规范。<br/>
--   多路径、数据包喷洒式交付，充分利用AI网络而不会引起拥塞或队头阻塞，从而消除了对集中式负载均衡算法和路由控制器的需求。<br/>
--   入口拥塞（Incast）管理机制，以最小的丢包率控制到目标主机的最后一跳链路上的扇入（fan-in）。<br/>
--   高效的速率控制算法，允许传输协议快速提升至线速，同时不给竞争流造成性能损失。<br/>
--   提供支持乱序数据包交付的API，并带有可选的消息有序完成功能，从而最大化网络和应用的并发性，并最小化消息延迟。<br/>
--   为未来的网络提供扩展性，支持1,000,000个端点。<br/>
--   无需针对特定网络和工作负载进行拥塞算法参数调优，即可实现高性能和最佳网络利用率。<br/>
--   设计用于在未来800G、1.6T及更快的以太网网络上，在商用硬件上实现线速性能。</p>
+<p><strong>UET协议的先进特性</strong>。UET传输协议通过提供以下功能，超越了现状：</p>
+<ul><li>一个从一开始就设计为在IP和以太网上运行的开放协议规范。</li><li>多路径、数据包喷洒式交付，充分利用AI网络而不会引起拥塞或队头阻塞，从而消除了对集中式负载均衡算法和路由控制器的需求。</li><li>入口拥塞（Incast）管理机制，以最小的丢包率控制到目标主机的最后一跳链路上的扇入（fan-in）。</li><li>高效的速率控制算法，允许传输协议快速提升至线速，同时不给竞争流造成性能损失。</li><li>提供支持乱序数据包交付的API，并带有可选的消息有序完成功能，从而最大化网络和应用的并发性，并最小化消息延迟。</li><li>为未来的网络提供扩展性，支持1,000,000个端点。</li><li>无需针对特定网络和工作负载进行拥塞算法参数调优，即可实现高性能和最佳网络利用率。</li><li>设计用于在未来800G、1.6T及更快的以太网网络上，在商用硬件上实现线速性能。</li></ul>
 <p><strong>超越传输层的规范定义</strong>。UEC规范将超越传输层，定义标准的语义层、改进的低延迟交付机制，以及标准的AI和HPC API，并为在UEC传输协议之上实现这些API提供标准的多厂商支持。</p>
 <h3 id="aihpc_2">AI与HPC的安全性</h3>
 <p><strong>AI网络的安全需求与UEC方案</strong>。AI训练和推理通常发生在需要作业隔离的托管网络中。此外，AI模型是日益敏感和有价值的商业资产。认识到这一点，UEC传输协议在设计上就融入了网络安全，可以对AI训练或推理作业中计算端点之间发送的所有网络流量进行加密和认证。UEC传输协议借鉴了现代加密方法（如IPSec和PSP）中用于高效会话管理、认证和保密性的成熟核心技术。</p>
@@ -111,11 +92,10 @@ title: Overview of and Motivation for the Forthcoming Ultra Ethernet Consortium 
 <h3 id="_1">免责声明</h3>
 <p>这些材料按“原样”提供。各方明确否认与材料相关的任何明示、暗示或其他形式的保证，包括适销性、非侵权性、特定用途适用性或所有权的默示保证。实施或以其他方式使用这些材料的全部风险由实施者和用户承担。在任何情况下，对于因本交付成果或其管辖协议引起的任何类型的任何诉讼原因，无论基于违约、侵权（包括过失）或其他原因，无论另一成员是否已被告知可能发生此类损害，各方均不对任何其他方承担利润损失或任何形式的间接、特殊、附带或后果性损害赔偿责任。</p>
 <h2 id="_2">参考文献引用说明</h2>
-<p><strong>引用文献</strong>：<br/>
-- 【1】 Hoefler, T., et al. "Data Center Ethernet and Remote Direct Memory Access: Issues at Hyperscale." <em>Computer</em>, vol. 56, no. 7, pp. 18-28, July 2023.</p>
-<p><strong>引用位置与描述</strong>：<br/>
--   <strong>所在章节</strong>：A3 背景知识/关键Observation/设计原则 - RDMA的成功及其局限性——重启的理由<br/>
--   <strong>引用原文描述</strong>：该文献被引用以支持“RoCE和InfiniBand共有的底层传输协议对于现代高要求的AI网络流量而言已经显示出其老化”这一论点。原文表述为：“It is now showing its age for modern, highly demanding AI network traffic see [Data Center Ethernet and Remote Direct Memory Access: Issues at Hyperscale, Hoefler et al., in Computer, July 2023]”。这表明，当前广泛使用的RDMA传输协议在面对现代AI网络的高要求时，其设计年代久远所带来的局限性已成为业界共识。</p>
+<p><strong>引用文献</strong>：</p>
+<ul><li>【1】 Hoefler, T., et al. "Data Center Ethernet and Remote Direct Memory Access: Issues at Hyperscale." <em>Computer</em>, vol. 56, no. 7, pp. 18-28, July 2023.</li></ul>
+<p><strong>引用位置与描述</strong>：</p>
+<ul><li><strong>所在章节</strong>：A3 背景知识/关键Observation/设计原则 - RDMA的成功及其局限性——重启的理由</li><li><strong>引用原文描述</strong>：该文献被引用以支持“RoCE和InfiniBand共有的底层传输协议对于现代高要求的AI网络流量而言已经显示出其老化”这一论点。原文表述为：“It is now showing its age for modern, highly demanding AI network traffic see [Data Center Ethernet and Remote Direct Memory Access: Issues at Hyperscale, Hoefler et al., in Computer, July 2023]”。这表明，当前广泛使用的RDMA传输协议在面对现代AI网络的高要求时，其设计年代久远所带来的局限性已成为业界共识。</li></ul>
 </div>
 
 

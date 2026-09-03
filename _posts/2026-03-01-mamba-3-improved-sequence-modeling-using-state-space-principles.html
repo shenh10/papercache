@@ -36,8 +36,8 @@ title: 'Mamba-3: Improved Sequence Modeling using State Space Principles'
 </details>
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题与研究目标</strong>: 尽管基于Transformer的模型在模型质量上表现出色，但其在推理过程中存在二次方计算复杂度和线性内存增长的问题，导致推理成本高昂。这催生了亚二次方模型（如状态空间模型SSMs）的发展，它们具有恒定的内存和线性计算需求。然而，许多现有的线性模型为了追求算法效率而牺牲了模型质量和能力，例如在状态追踪等任务上表现不佳。此外，这些模型理论上的线性推理在实践中硬件效率并不高，因为其解码阶段的算术强度低，导致硬件资源闲置。因此，本文的研究目标是从“推理优先”的视角出发，改进现有的线性模型（特别是Mamba-2），在提升模型质量和能力的同时，提高其硬件推理效率，从而推动性能-效率帕累托前沿。</p>
-<p><strong>创新点</strong>: 本文在Mamba-2的基础上，受状态空间模型（SSM）观点的启发，引入了三项核心方法论改进，共同构成了Mamba-3模型：<br/>
-1. <strong>指数-梯形离散化 (Exponential-Trapezoidal Discretization)</strong>: 提出了一种新的、更具表达能力的SSM离散化方法。该方法源于对时变、选择性SSM的离散化框架，该框架不仅为Mamba-1/2中缺乏理论依据的启发式离散化（本文称之为“指数-欧拉”方法）提供了形式化解释，还引入了“指数-梯形”这一更精确的实例化。这种新离散化方法在SSM的循环中隐含地应用了一个卷积操作，结合显式的B、C偏置项，使得Mamba-3能够替代语言模型架构中通常认为必不可少的短因果卷积。</p>
+<p><strong>创新点</strong>: 本文在Mamba-2的基础上，受状态空间模型（SSM）观点的启发，引入了三项核心方法论改进，共同构成了Mamba-3模型：</p>
+<ol><li><strong>指数-梯形离散化 (Exponential-Trapezoidal Discretization)</strong>: 提出了一种新的、更具表达能力的SSM离散化方法。该方法源于对时变、选择性SSM的离散化框架，该框架不仅为Mamba-1/2中缺乏理论依据的启发式离散化（本文称之为“指数-欧拉”方法）提供了形式化解释，还引入了“指数-梯形”这一更精确的实例化。这种新离散化方法在SSM的循环中隐含地应用了一个卷积操作，结合显式的B、C偏置项，使得Mamba-3能够替代语言模型架构中通常认为必不可少的短因果卷积。</li></ol>
 <ol>
 <li>
 <p><strong>复值状态空间模型 (Complex-valued State Space Model)</strong>: 将Mamba-3的底层SSM视为复值系统，从而实现比Mamba-2更具表达力的状态更新规则。这种轻量级的更新规则旨在克服当前许多线性模型在状态追踪能力上的缺陷。研究表明，这种复值更新等价于一种数据依赖的旋转位置嵌入（RoPE），并且可以高效计算，从而解决了先前线性模型无法完成的合成任务。</p>
@@ -46,10 +46,8 @@ title: 'Mamba-3: Improved Sequence Modeling using State Space Principles'
 <p><strong>多输入多输出SSM (Multi-Input, Multi-Output, MIMO)</strong>: 为了提高解码过程中的浮点运算（FLOP）效率，将状态更新从基于外积的方式转变为基于矩阵乘法的方式。从信号处理的角度看，这相当于将单输入单输出（SISO）的序列动态推广到多输入多输出（MIMO）。MIMO结构特别适用于推理，因为它在不增加状态大小（从而不影响解码速度）的情况下，通过增加内存密集型状态更新阶段的计算量来提升模型的表达能力。</p>
 </li>
 </ol>
-<p><strong>主要成果</strong>:<br/>
-- <strong>更优的质量</strong>: 在1.5B规模下，Mamba-3（MIMO）在下游语言建模任务上的平均准确率比Transformer高2.2个百分点，比Mamba-2高1.9个百分点，比当时最优模型GDN高1.8个百分点。Mamba-3（SISO）也比GDN高0.6个百分点。在状态大小实验中，状态大小为64的Mamba-3（MIMO）与状态大小为128的Mamba-2达到了相当的困惑度，即用一半的延迟实现了同等性能。<br/>
-- <strong>全新的能力</strong>: Mamba-3的复值状态使其能够解决Mamba-2无法解决的合成状态追踪任务，如算术任务。<br/>
-- <strong>更高的推理效率</strong>: 在固定状态大小下，Mamba-3（MIMO）将解码FLOPs提高了多达4倍，同时保持与Mamba-2相似的壁钟解码延迟，并提升了困惑度和下游任务性能。</p>
+<p><strong>主要成果</strong>:</p>
+<ul><li><strong>更优的质量</strong>: 在1.5B规模下，Mamba-3（MIMO）在下游语言建模任务上的平均准确率比Transformer高2.2个百分点，比Mamba-2高1.9个百分点，比当时最优模型GDN高1.8个百分点。Mamba-3（SISO）也比GDN高0.6个百分点。在状态大小实验中，状态大小为64的Mamba-3（MIMO）与状态大小为128的Mamba-2达到了相当的困惑度，即用一半的延迟实现了同等性能。</li><li><strong>全新的能力</strong>: Mamba-3的复值状态使其能够解决Mamba-2无法解决的合成状态追踪任务，如算术任务。</li><li><strong>更高的推理效率</strong>: 在固定状态大小下，Mamba-3（MIMO）将解码FLOPs提高了多达4倍，同时保持与Mamba-2相似的壁钟解码延迟，并提升了困惑度和下游任务性能。</li></ul>
 <h2>A3 背景知识</h2>
 <h3>2.1 符号表示</h3>
 <p><strong>基本定义</strong>。标量用普通字体字母（如 $a, b$）表示。张量，包括向量和矩阵，用粗体字母（如 $\mathbf{h}, \mathbf{C}$）表示。张量的形状可以从上下文中推断。输入序列长度表示为 $L$，模型维度为 $D$，SSM状态大小为 $N$。对于时间索引，我们使用下标（如 $x_t$ 表示时间 $t$ 的输入）。两个张量之间的Hadamard积（逐元素乘积）用 $\odot$ 表示。对于向量 $\mathbf{v} \in \mathbb{R}^N$，我们用 $\text{Diag}(\mathbf{v}) \in \mathbb{R}^{N \times N}$ 表示对角线为向量 $\mathbf{v}$ 的对角矩阵。对于跨时间步的标量乘积，我们使用符号 $\alpha_{t \cdots s} = \alpha_t \times \cdots \times \alpha_s = \prod_{i=s}^t \alpha_i$。</p>

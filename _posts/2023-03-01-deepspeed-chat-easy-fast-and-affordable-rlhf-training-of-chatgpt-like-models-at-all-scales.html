@@ -167,29 +167,21 @@ title: 'DeepSpeed-Chat: Easy, Fast and Affordable RLHF Training of ChatGPT-like 
                 GPU</figcaption>
 </figure>
 </p>
-<p><strong>方法细节中的引用汇总。</strong><br/>
-            - [6]：引用HuggingFace的Transformers，在描述易用体验和比较中，原文描述为“a pre-trained Huggingface [6] model”和“HuggingFace [6]
+<p><strong>方法细节中的引用汇总。</strong></p>
+<ul><li>[6]：引用HuggingFace的Transformers，在描述易用体验和比较中，原文描述为“a pre-trained Huggingface [6] model”和“HuggingFace [6]
             powered by native PyTorch [14]”。展开为【[6], Huggingface’s transformers: State-of-the-art natural language
-            processing+2019+arXiv preprint arXiv:1910.03771】。<br/>
-            - [7]：引用InstructGPT，在管道描述中，原文描述为“replicates the training pipeline from the InstructGPT [7] paper”和“highly
+            processing+2019+arXiv preprint arXiv:1910.03771】。</li><li>[7]：引用InstructGPT，在管道描述中，原文描述为“replicates the training pipeline from the InstructGPT [7] paper”和“highly
             consistent with InstructGPT paper [7]”。展开为【[7], Training language models to follow instructions with human
-            feedback+2022+Advances in Neural Information Processing Systems】。<br/>
-            - [8]：引用RLHF，在管道中，原文描述为“Reinforcement Learning with Human Feedback (RLHF) [8]”。展开为【[8], Learning to
-            summarize with human feedback+2020+Advances in Neural Information Processing Systems】。<br/>
-            - [9]：引用LoRA，在混合引擎中，原文描述为“LoRA [9]-based memory optimization strategies”和“Low Rank Adaptation
+            feedback+2022+Advances in Neural Information Processing Systems】。</li><li>[8]：引用RLHF，在管道中，原文描述为“Reinforcement Learning with Human Feedback (RLHF) [8]”。展开为【[8], Learning to
+            summarize with human feedback+2020+Advances in Neural Information Processing Systems】。</li><li>[9]：引用LoRA，在混合引擎中，原文描述为“LoRA [9]-based memory optimization strategies”和“Low Rank Adaptation
             (LoRA)”。展开为【[9], Lora: Low-rank adaptation of large language models+2021+arXiv preprint
-            arXiv:2106.09685】。<br/>
-            - [11]：引用PPO，在步骤3中，原文描述为“using the Proximal Policy Optimization (PPO) [11] algorithm”。展开为【[11], Proximal
-            policy optimization algorithms+2017+arXiv preprint arXiv:1707.06347】。<br/>
-            - [12]：引用SQuAD2.0，在混合训练中，原文描述为“prevent regression performance on public benchmarks like SQuAD2.0
+            arXiv:2106.09685】。</li><li>[11]：引用PPO，在步骤3中，原文描述为“using the Proximal Policy Optimization (PPO) [11] algorithm”。展开为【[11], Proximal
+            policy optimization algorithms+2017+arXiv preprint arXiv:1707.06347】。</li><li>[12]：引用SQuAD2.0，在混合训练中，原文描述为“prevent regression performance on public benchmarks like SQuAD2.0
             [12]”。展开为【[12], Know what you don’t know: Unanswerable questions for squad+2018+arXiv preprint
-            arXiv:1806.03822】。<br/>
-            - [13]：引用Colossal-AI，在比较中，原文描述为“Colossal-AI [13]”。展开为【[13], Colossal ai+2022+<a href="https://github.com/hpcaitech/ColossalAI" rel="noopener noreferrer" target="_blank">https://github.com/hpcaitech/ColossalAI</a>】。<br/>
-            - [14]：引用PyTorch，在比较中，原文描述为“native PyTorch [14]”。展开为【[14], Pytorch: An imperative style, high-performance
-            deep learning library+2019+Advances in neural information processing systems】。<br/>
-            - [15]：引用ZeRO，在可扩展性分析中，原文描述为“powered by ZeRO-based technology [15]”。展开为【[15], Zero: Memory optimizations
+            arXiv:1806.03822】。</li><li>[13]：引用Colossal-AI，在比较中，原文描述为“Colossal-AI [13]”。展开为【[13], Colossal ai+2022+<a href="https://github.com/hpcaitech/ColossalAI" rel="noopener noreferrer" target="_blank">https://github.com/hpcaitech/ColossalAI</a>】。</li><li>[14]：引用PyTorch，在比较中，原文描述为“native PyTorch [14]”。展开为【[14], Pytorch: An imperative style, high-performance
+            deep learning library+2019+Advances in neural information processing systems】。</li><li>[15]：引用ZeRO，在可扩展性分析中，原文描述为“powered by ZeRO-based technology [15]”。展开为【[15], Zero: Memory optimizations
             toward training trillion parameter models+2020+SC20: International Conference for High Performance
-            Computing, Networking, Storage and Analysis】。</p>
+            Computing, Networking, Storage and Analysis】。</li></ul>
 <h2 id="_4">实验环境</h2>
 <p><strong>数据集名称、规模及用途。</strong>
             使用多个数据集进行训练，支持数据抽象和混合，包括人类对查询的响应用于SFT、人类提供的排名数据集用于奖励模型微调，以及用于RLHF的反馈数据。支持如OPT系列模型的预训练数据，并提供数据分割/混合以在三个阶段中使用多个数据源。规模未指定精确数字，但支持从1.3B到175B参数模型的训练。

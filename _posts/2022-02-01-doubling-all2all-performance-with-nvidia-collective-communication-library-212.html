@@ -112,15 +112,8 @@ PXN解决的另一个问题是每个NIC附近只有一个GPU的拓扑情况。�
 <p><strong>PXN带来的模型并行灵活性</strong><br/>
 到目前为止，实现高效模型并行的唯一方法是将模型分割到GPU 0、2、4、6和1、3、5、7上，这样NCCL子通信器将包含[0,1]、[2,3]、[4,5]和[6,7]而不是[0,4]、[1,5]、[2,6]和[3,7]。新的PXN功能为您提供了更大的灵活性，并简化了模型并行的使用。</p>
 <h2 id="a4">A4 实验环境</h2>
-<p>本文未提供详细的实验环境配置，但根据文中的描述和图示，可以推断出以下信息：<br/>
-- <strong>硬件配置</strong>:<br/>
-    - <strong>平台</strong>: 提及了NVIDIA DGX系统，如图1中的DGX-A系统和图5中的DGX-1系统。这些系统内部GPU通过NVSwitch和NVLink高速互连。<br/>
-    - <strong>GPU</strong>: DGX系统中集成了多个NVIDIA GPU。<br/>
-    - <strong>网络</strong>: 节点间通过高速网络（如InfiniBand或Ethernet）连接，并采用了“rail-optimized”拓扑设计，即特定编号的NIC连接到相同的叶交换机。<br/>
-- <strong>软件配置</strong>:<br/>
-    - <strong>核心库</strong>: 对比了NCCL 2.12版本（启用PXN）与之前版本的性能。<br/>
-- <strong>模型与数据集</strong>:<br/>
-    - 未指定用于基准测试的具体AI模型或数据集。性能测试是直接针对<code>ncclAlltoall</code>集合操作的延迟进行的。</p>
+<p>本文未提供详细的实验环境配置，但根据文中的描述和图示，可以推断出以下信息：</p>
+<ul><li><strong>硬件配置</strong>:<ul><li><strong>平台</strong>: 提及了NVIDIA DGX系统，如图1中的DGX-A系统和图5中的DGX-1系统。这些系统内部GPU通过NVSwitch和NVLink高速互连。</li><li><strong>GPU</strong>: DGX系统中集成了多个NVIDIA GPU。</li><li><strong>网络</strong>: 节点间通过高速网络（如InfiniBand或Ethernet）连接，并采用了“rail-optimized”拓扑设计，即特定编号的NIC连接到相同的叶交换机。</li></ul></li><li><strong>软件配置</strong>:<ul><li><strong>核心库</strong>: 对比了NCCL 2.12版本（启用PXN）与之前版本的性能。</li></ul></li><li><strong>模型与数据集</strong>:<ul><li>未指定用于基准测试的具体AI模型或数据集。性能测试是直接针对<code>ncclAlltoall</code>集合操作的延迟进行的。</li></ul></li></ul>
 <h2 id="a5">A5 实验结果</h2>
 <ul>
 <li>

@@ -30,14 +30,10 @@ title: Demystifying GPU Microarchitecture through Microbenchmarking
 </details>
 <h2 id="a1">A1 主要贡献</h2>
 <p>本文旨在通过开发一套微基准测试程序，来测量和揭示Nvidia GT200 (GTX280) GPU中对CUDA可见的架构特性。由于制造商提供的文档信息有限且有时含糊不清，开发者、架构和编译器研究人员需要对现代GPU设计有更深入的理解。本文的研究重点是影响GPU性能的两个主要部分：算术处理核心和为这些核心提供指令与数据的内存层次结构。</p>
-<p><strong>核心问题与研究目标</strong>:<br/>
-- <strong>核心问题</strong>: 业界对GPU架构的了解主要依赖于制造商的文档（如NVIDIA的CUDA编程指南），但这些文档中的信息往往不够详尽或模糊，缺乏对底层硬件组织的深入解释。这给性能优化、死锁避免以及精确的性能建模带来了挑战。<br/>
-- <strong>研究目标</strong>: 通过微基准测试方法，精确测量Nvidia GT200 GPU的处理核心和内存层次结构的各种未公开特性，从而为性能优化、分析和建模提供详细、准确的硬件信息。</p>
-<p><strong>主要贡献</strong>:<br/>
-*   <strong>验证官方性能特性</strong>: 验证了CUDA编程指南中列出的部分性能特性。<br/>
-*   <strong>揭示控制流细节</strong>: 深入探究了分支分化（branch divergence）和屏障同步（barrier synchronization）的详细功能。发现了会导致死锁的非直观分支代码序列，并阐明了通过理解内部架构可以避免这些问题。<br/>
-*   <strong>测量内存与缓存层次结构</strong>: 测量了内存缓存层次结构的组织和性能，包括翻译后备缓冲区（TLB）层次结构、常量内存（constant memory）、纹理内存（texture memory）和指令内存（instruction memory）的缓存。<br/>
-*   <strong>分享测量技术</strong>: 详细介绍了所使用的测量技术，这些技术对于分析和建模其他GPU及类GPU系统，以及提高GPU性能建模与仿真的保真度具有参考价值【索引2, A. Bakhoda 等人, Analyzing CUDA Workloads Using a Detailed GPU Simulator, ISPASS 2009】。</p>
+<p><strong>核心问题与研究目标</strong>:</p>
+<ul><li><strong>核心问题</strong>: 业界对GPU架构的了解主要依赖于制造商的文档（如NVIDIA的CUDA编程指南），但这些文档中的信息往往不够详尽或模糊，缺乏对底层硬件组织的深入解释。这给性能优化、死锁避免以及精确的性能建模带来了挑战。</li><li><strong>研究目标</strong>: 通过微基准测试方法，精确测量Nvidia GT200 GPU的处理核心和内存层次结构的各种未公开特性，从而为性能优化、分析和建模提供详细、准确的硬件信息。</li></ul>
+<p><strong>主要贡献</strong>:</p>
+<ul><li><strong>验证官方性能特性</strong>: 验证了CUDA编程指南中列出的部分性能特性。</li><li><strong>揭示控制流细节</strong>: 深入探究了分支分化（branch divergence）和屏障同步（barrier synchronization）的详细功能。发现了会导致死锁的非直观分支代码序列，并阐明了通过理解内部架构可以避免这些问题。</li><li><strong>测量内存与缓存层次结构</strong>: 测量了内存缓存层次结构的组织和性能，包括翻译后备缓冲区（TLB）层次结构、常量内存（constant memory）、纹理内存（texture memory）和指令内存（instruction memory）的缓存。</li><li><strong>分享测量技术</strong>: 详细介绍了所使用的测量技术，这些技术对于分析和建模其他GPU及类GPU系统，以及提高GPU性能建模与仿真的保真度具有参考价值【索引2, A. Bakhoda 等人, Analyzing CUDA Workloads Using a Detailed GPU Simulator, ISPASS 2009】。</li></ul>
 <p><strong>GPU架构概览</strong>:<br/>
 论文中展示了GT200的层级化硬件资源结构，线程块（Blocks of threads）在流式多处理器（Streaming Multiprocessors, SM）中执行。多个SM组成一个线程处理集群（Thread Processing Clusters, TPC），整个GPU则由多个TPC和内存系统构成。</p>
 <p><figure class="image-figure">

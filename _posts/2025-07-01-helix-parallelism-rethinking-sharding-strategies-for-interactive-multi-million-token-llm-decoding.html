@@ -35,9 +35,8 @@ title: 'Helix Parallelism: Rethinking Sharding Strategies for Interactive Multi-
 </div>
 </details>
 <h2 id="a1">A1 主要贡献</h2>
-<p>本文旨在解决大型语言模型（LLM）在处理百万级Token上下文时，在严格的“词元到词元延迟”（Token-to-Token Latency, TTL）约束下进行实时自回归解码所面临的挑战。随着上下文历史变长，解码过程面临两大核心瓶颈：<br/>
-1.  <strong>前馈网络（FFN）权重读取</strong>：生成每个新词元都需要从DRAM中加载巨大的FFN权重，在小批量下此开销无法被摊销，成为延迟主导因素。<br/>
-2.  <strong>长KV缓存读取</strong>：在自注意力计算中，读取随上下文长度和批量大小线性增长的KV缓存，会迅速耗尽DRAM容量和带宽。</p>
+<p>本文旨在解决大型语言模型（LLM）在处理百万级Token上下文时，在严格的“词元到词元延迟”（Token-to-Token Latency, TTL）约束下进行实时自回归解码所面临的挑战。随着上下文历史变长，解码过程面临两大核心瓶颈：</p>
+<ol><li><strong>前馈网络（FFN）权重读取</strong>：生成每个新词元都需要从DRAM中加载巨大的FFN权重，在小批量下此开销无法被摊销，成为延迟主导因素。</li><li><strong>长KV缓存读取</strong>：在自注意力计算中，读取随上下文长度和批量大小线性增长的KV缓存，会迅速耗尽DRAM容量和带宽。</li></ol>
 <p>现有的张量并行（Tensor Parallelism, TP）策略虽然能缓解FFN权重读取的成本，但在注意力计算上扩展性不佳。一旦TP宽度超过KV头的数量（TP &gt; K），就会导致低效的KV缓存重复，限制了并行度和批量大小。为了解决KV缓存扩展问题，近期工作如Medha【7，Medha: Efficiently Serving Multi-Million Context Length LLM Inference Requests Without Approximations, 2025】采用KV并行（KV Parallelism, KVP）来分片KV缓存，但它们在后续的FFN计算中没有复用这些GPU，导致FFN权重加载仍然是瓶颈。</p>
 <p>为同时解决上述两个瓶颈，本文提出<strong>Helix Parallelism</strong>，一种混合执行策略，其核心创新点如下：</p>
 <ol>
@@ -83,9 +82,8 @@ title: 'Helix Parallelism: Rethinking Sharding Strategies for Interactive Multi-
 </figure><br/>
 图4: Helix在注意力和FFN阶段中每个GPU的工作流布局。Helix通过在每层基础上将N个GPU从N = KV P × T P A (T P A ≤ K)配置切换到N = T P F × EP来复用它们。（上）在注意力阶段，每个KV P GPU独立地将完整的批次[B, H]投影到QKV，在其KV分片上运行FlashAttention【9】以产生部分输出和log-sum-exp标量，然后参与一次沿查询头轴的All-to-All；每个GPU用接收到的片段重新缩放和求和，得到精确的softmax归一化张量，随后进行一次TP All-Reduce，形成最终的[B, H]注意力输出。（下）对于FFN，Helix根据模型类型采用两种模式：对于密集型FFN（EP = 1），它将所有N个GPU保留在张量并行模式T P F = N下，计算[B, H] → [B, F/N ] → [B, H]，然后进行TP All-Reduce；对于MoE FFN（EP &gt; 1），它将N个GPU重新划分为一个T P F × EP网格，将词元路由到相应的专家，在每个专家组内对全连接层应用TP，执行专家内All-Reduce，然后是专家间All-Gather，最后通过局部归约得到[B, H]。Helix在这些配置之间无缝切换，实现了零停机时间的流水线并提高了GPU利用率。</p>
 <p><strong>后注意力线性投影的数据流</strong>。在局部注意力计算结束时，每个KVP GPU已经计算出了其KV分片上、对应查询头以及整个批次B的部分注意力输出。这些输出通过一次沿查询头维度的All-to-All进行交换：每个GPU将其<code>B × H / (KVP × TPA)</code>的部分结果发送给KVP域中的其他所有GPU，并接收相应的数据切片。在与每个分片的log-sum-exp统计数据进行重新缩放和求和后，每个GPU持有其分配到的<code>H / (KVP × TPA)</code>隐藏维度切片的完全归一化注意力输出，但覆盖了整个批次。这实际上形成了一个大小为<code>TPA × KVP = N</code>的TP组。这些归一化的输出被送入后注意力线性投影层，该层以张量并行的方式在相同的N个GPU上运行。每个TP rank持有一份形状为<code>H/N × H</code>的投影权重矩阵分片，在其完整的批次输入（形状为<code>B × H/N</code>）上执行局部矩阵乘法，然后参与N个GPU间的All-Reduce操作。这个All-Reduce将<code>B × H</code>的部分投影聚合为完整的<code>B × H</code>输出，然后通过层归一化进入FFN块。</p>
-<p><strong>FFN的动态重配</strong>。后注意力阶段从KVP到TP的重配过程，在密集型和MoE模型中是相同的。在后注意力线性投影及其输出在N个GPU上的All-Reduce之后，整个N个GPU池会为FFN重新进行配置（见图4）：<br/>
-*   <strong>密集型FFN (EP = 1)</strong>：保持<code>TPF = N</code>，所有GPU协作以分摊权重读取成本，并在小批量上保持低延迟。<br/>
-*   <strong>MoE FFN (EP &gt; 1)</strong>：重新划分为一个最优的<code>TPF × EP</code>网格，通过选择合适的<code>TPF</code>与<code>EP</code>来最好地匹配专家的规模和数量。</p>
+<p><strong>FFN的动态重配</strong>。后注意力阶段从KVP到TP的重配过程，在密集型和MoE模型中是相同的。在后注意力线性投影及其输出在N个GPU上的All-Reduce之后，整个N个GPU池会为FFN重新进行配置（见图4）：</p>
+<ul><li><strong>密集型FFN (EP = 1)</strong>：保持<code>TPF = N</code>，所有GPU协作以分摊权重读取成本，并在小批量上保持低延迟。</li><li><strong>MoE FFN (EP &gt; 1)</strong>：重新划分为一个最优的<code>TPF × EP</code>网格，通过选择合适的<code>TPF</code>与<code>EP</code>来最好地匹配专家的规模和数量。</li></ul>
 <p><strong>无缝流水线</strong>。通过将注意力阶段的<code>KVP × TPA</code>、后注意力线性投影的<code>TP = N</code>、以及灵活的<code>TPF × EP</code> FFN布局串联起来，Helix确保所有N个GPU在一个零停机时间的流水线中保持完全利用，从而在注意力、投影和FFN阶段最大化了可扩展性和吞吐量。</p>
 <h3 id="23-kv">2.3 分布式KV拼接策略</h3>
 <p><strong>轮询式KV缓存更新</strong>。在解码过程中，每个新生成的词元都会广播到所有的KVP GPU，以便每个设备都能访问到当前的查询。然而，Helix在KVP rank之间错开KV缓存的更新，以保持内存的均衡增长，并确保每个GPU均匀地追加KV条目。具体来说，系统会将固定数量的解码步骤（例如16个词元）的KV对追加到KVP Rank 0上的分片，然后切换到KVP Rank 1处理接下来的16个词元，以此类推，以轮询（round-robin）的方式循环遍历所有N个KVP rank。这种分阶段的KV拼接策略保证了无论批量大小或序列长度如何，所有KVP GPU都能对KV存储做出贡献，避免了热点问题，并均匀地分散了KV缓存的增长。</p>

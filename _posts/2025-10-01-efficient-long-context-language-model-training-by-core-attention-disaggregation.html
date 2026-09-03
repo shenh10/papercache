@@ -44,13 +44,10 @@ title: EFFICIENT LONG-CONTEXT LANGUAGE MODEL TRAINING BY Core Attention Disaggre
 <figcaption class="figure-caption"></figcaption>
 </figure><br/>
 图 1. Transformer及其由核心注意力引起的工作负载不平衡。</p>
-<p>这一方法的可行性基于两个关键观察：<br/>
-1.  <strong>无状态性（Statelessness）</strong>: 核心注意力（CA）没有可训练的参数，且只存储极少的瞬时状态（如每行的softmax统计数据）。因此，对其进行负载均衡简化为了一个计算密集型任务的调度问题，而无需考虑内存状态的平衡。<br/>
-2.  <strong>可组合性（Composability）</strong>: 核心注意力的计算可以在token级别上进行任意粒度的切分。不同文档（来自不同DP副本或PP阶段）的token级计算任务可以被重新组合（re-batch）成一个大的、高设备利用率的融合内核调用，而不会损失现代注意力内核（如FlashAttention）的效率。</p>
-<p>基于CAD思想，本文实现了一个名为<strong>DistCA</strong>的系统，并包含三项关键优化：<br/>
-- <strong>原地注意力服务器（In-place attention server）</strong>: 通过让GPU在计算上下文无关层和作为注意力服务器之间分时复用，实现了高计算和高内存利用率。<br/>
-- <strong>乒乓执行机制（Ping-pong execution）</strong>: 将每个微批次（microbatch）分为两个更小的“Ping”和“Pong”纳米批次（nano-batches），通过交错执行来将数据通信与计算完全重叠，隐藏通信开销。<br/>
-- <strong>负载均衡调度器（Workload balanced scheduler）</strong>: 开发了一个感知通信的贪心调度算法，该算法动态地将文档切分为token级任务，并在注意力服务器之间进行调度，以在最小化通信开销的同时实现近乎完美的计算负载均衡。</p>
+<p>这一方法的可行性基于两个关键观察：</p>
+<ol><li><strong>无状态性（Statelessness）</strong>: 核心注意力（CA）没有可训练的参数，且只存储极少的瞬时状态（如每行的softmax统计数据）。因此，对其进行负载均衡简化为了一个计算密集型任务的调度问题，而无需考虑内存状态的平衡。</li><li><strong>可组合性（Composability）</strong>: 核心注意力的计算可以在token级别上进行任意粒度的切分。不同文档（来自不同DP副本或PP阶段）的token级计算任务可以被重新组合（re-batch）成一个大的、高设备利用率的融合内核调用，而不会损失现代注意力内核（如FlashAttention）的效率。</li></ol>
+<p>基于CAD思想，本文实现了一个名为<strong>DistCA</strong>的系统，并包含三项关键优化：</p>
+<ul><li><strong>原地注意力服务器（In-place attention server）</strong>: 通过让GPU在计算上下文无关层和作为注意力服务器之间分时复用，实现了高计算和高内存利用率。</li><li><strong>乒乓执行机制（Ping-pong execution）</strong>: 将每个微批次（microbatch）分为两个更小的“Ping”和“Pong”纳米批次（nano-batches），通过交错执行来将数据通信与计算完全重叠，隐藏通信开销。</li><li><strong>负载均衡调度器（Workload balanced scheduler）</strong>: 开发了一个感知通信的贪心调度算法，该算法动态地将文档切分为token级任务，并在注意力服务器之间进行调度，以在最小化通信开销的同时实现近乎完美的计算负载均衡。</li></ul>
 <p>通过在多达512个H200 GPU上对高达512K上下文长度的负载进行评估，DistCA相比现有系统，端到端训练吞吐量提升高达1.35倍，并消除了DP/PP中的掉队者现象。</p>
 <hr/>
 <h2>A3 背景知识、关键观察与设计原则</h2>

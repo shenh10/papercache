@@ -21,10 +21,8 @@ title: FP8 FORMATS FOR DEEP LEARNING
 <p><strong>发表时间</strong>: 2022-09 · arXiv:2209.05433</p>
 <p><strong>原文</strong>: <a href="https://arxiv.org/abs/2209.05433" rel="noopener" target="_blank">https://arxiv.org/abs/2209.05433</a></p>
 <p><strong>文章标题</strong>：用于深度学习的FP8格式<br/>
-<strong>作者/机构</strong>：<br/>
-- Paulius Micikevicius, Dusan Stosic, Patrick Judd, John Kamalu, Stuart Oberman, Mohammad Shoeybi, Michael Siu, Hao Wu (NVIDIA)<br/>
-- Neil Burgess, Sangwon Ha, Richard Grisenthwaite (Arm)<br/>
-- Naveen Mellempudi, Marius Cornea, Alexander Heinecke, Pradeep Dubey (Intel)</p>
+<strong>作者/机构</strong>：</p>
+<ul><li>Paulius Micikevicius, Dusan Stosic, Patrick Judd, John Kamalu, Stuart Oberman, Mohammad Shoeybi, Michael Siu, Hao Wu (NVIDIA)</li><li>Neil Burgess, Sangwon Ha, Richard Grisenthwaite (Arm)</li><li>Naveen Mellempudi, Marius Cornea, Alexander Heinecke, Pradeep Dubey (Intel)</li></ul>
 <hr/>
 <details class="tldr-block" open="">
 <summary class="tldr-summary">速读</summary>
@@ -47,18 +45,8 @@ $$Y_{\text{high\_precision}} = Y_{\text{FP8\_compute\_result}} \times S^{-1}$$
 <p>本文针对深度学习训练和推理加速的需求，提出了一种8位浮点数（FP8）的二进制交换格式。随着深度学习模型规模和训练所需计算资源的持续增长，例如GPT-3、Turing-Megatron等大型语言模型需要在数千个处理器上训练数周，低精度数值表示已成为加速的关键。FP8被视为从现有的16位浮点格式（如FP16、bfloat16）自然演进的下一步。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>
 现有的16位浮点格式在加速深度学习训练和推理方面已广泛应用，但为了进一步降低计算和内存带宽需求，需要探索更低位宽的格式。虽然INT8定点格式在推理中很流行，但有时难以维持必要的模型精度，且需要额外的量化校准或量化感知训练。本文旨在设计一种8位浮点格式，使其能够在不改变模型或优化器超参数的情况下，匹配16位格式训练所达到的模型质量，并简化8位推理的部署流程。</p>
-<p><strong>主要创新点与贡献</strong>：<br/>
-1.  <strong>提出双编码FP8格式</strong>：本文提出了一种包含两种编码的8位浮点（FP8）二进制交换格式：<br/>
-    *   <strong>E4M3</strong>：4位指数，3位尾数。<br/>
-    *   <strong>E5M2</strong>：5位指数，2位尾数。<br/>
-2.  <strong>格式设计与权衡</strong>：<br/>
-    *   E5M2遵循IEEE 754标准关于特殊值（无穷大、NaN）的表示约定。<br/>
-    *   E4M3通过不表示无穷大并将NaN的编码减少到一种，扩展了其动态范围，使其更适用于权重和激活值的表示。<br/>
-3.  <strong>广泛的实证验证</strong>：<br/>
-    *   在多种图像（CNNs、Transformers）和语言（RNNs、Transformers）任务上验证了FP8格式的有效性，证明FP8训练能够匹配16位训练的结果质量，且无需修改任何超参数。<br/>
-    *   实验覆盖了从标准尺寸到高达1750亿参数的大型语言模型，证明了该格式在不同规模模型上的普适性。<br/>
-4.  <strong>FP8在推理中的优势</strong>：<br/>
-    *   研究了FP8在后训练量化（Post-Training Quantization, PTQ）中的应用，表明对于一些难以用INT8量化的16位预训练语言模型，FP8能够更好地保持模型精度。</p>
+<p><strong>主要创新点与贡献</strong>：</p>
+<ol><li><strong>提出双编码FP8格式</strong>：本文提出了一种包含两种编码的8位浮点（FP8）二进制交换格式：<ul><li><strong>E4M3</strong>：4位指数，3位尾数。</li><li><strong>E5M2</strong>：5位指数，2位尾数。</li></ul></li><li><strong>格式设计与权衡</strong>：<ul><li>E5M2遵循IEEE 754标准关于特殊值（无穷大、NaN）的表示约定。</li><li>E4M3通过不表示无穷大并将NaN的编码减少到一种，扩展了其动态范围，使其更适用于权重和激活值的表示。</li></ul></li><li><strong>广泛的实证验证</strong>：<ul><li>在多种图像（CNNs、Transformers）和语言（RNNs、Transformers）任务上验证了FP8格式的有效性，证明FP8训练能够匹配16位训练的结果质量，且无需修改任何超参数。</li><li>实验覆盖了从标准尺寸到高达1750亿参数的大型语言模型，证明了该格式在不同规模模型上的普适性。</li></ul></li><li><strong>FP8在推理中的优势</strong>：<ul><li>研究了FP8在后训练量化（Post-Training Quantization, PTQ）中的应用，表明对于一些难以用INT8量化的16位预训练语言模型，FP8能够更好地保持模型精度。</li></ul></li></ol>
 <hr/>
 <h3 id="a3-observation">A3 背景知识/关键Observation/设计原则</h3>
 <p><strong>FP8在深度学习中的使用考量</strong><br/>

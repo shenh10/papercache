@@ -177,20 +177,11 @@ title: 'Transformers: State-of-the-Art Natural Language Processing'
 </ul>
 <h3 id="a4">A4 实验</h3>
 <h4 id="_1">实验环境</h4>
-<p>本文作为一篇系统性论文，并未提供一个统一的、标准的实验环境配置。相关配置信息散布在不同章节的描述中。<br/>
--   <strong>数据集</strong>: 论文未指定用于库本身性能基准测试的数据集。但提及了社区模型所使用的数据集，例如 <code>SciBERT</code> 使用 <code>PubMed</code> 数据集进行训练。<br/>
--   <strong>模型</strong>: 库支持多种 Transformer 架构，包括 BERT, GPT-2, RoBERTa, DistilBERT, SciBERT, FlauBERT, BART 等。<br/>
--   <strong>硬件配置</strong>: 未明确提及。<br/>
--   <strong>软件配置</strong>:<br/>
-    -   <strong>核心框架</strong>: 支持 PyTorch 和 TensorFlow，并具备两者之间的互操作性。<br/>
-    -   <strong>高性能组件</strong>: Tokenizer 部分使用了以 Rust 语言编写的 <code>tokenizers</code> 库来提升性能。<br/>
-    -   <strong>部署工具</strong>: 支持 <code>TorchScript</code>, <code>TorchServing</code>, TensorFlow Serving, ONNX, JAX/XLA, TVM, 以及用于移动端的 <code>CoreML</code>。</p>
+<p>本文作为一篇系统性论文，并未提供一个统一的、标准的实验环境配置。相关配置信息散布在不同章节的描述中。</p>
+<ul><li><strong>数据集</strong>: 论文未指定用于库本身性能基准测试的数据集。但提及了社区模型所使用的数据集，例如 <code>SciBERT</code> 使用 <code>PubMed</code> 数据集进行训练。</li><li><strong>模型</strong>: 库支持多种 Transformer 架构，包括 BERT, GPT-2, RoBERTa, DistilBERT, SciBERT, FlauBERT, BART 等。</li><li><strong>硬件配置</strong>: 未明确提及。</li><li><strong>软件配置</strong>:<ul><li><strong>核心框架</strong>: 支持 PyTorch 和 TensorFlow，并具备两者之间的互操作性。</li><li><strong>高性能组件</strong>: Tokenizer 部分使用了以 Rust 语言编写的 <code>tokenizers</code> 库来提升性能。</li><li><strong>部署工具</strong>: 支持 <code>TorchScript</code>, <code>TorchServing</code>, TensorFlow Serving, ONNX, JAX/XLA, TVM, 以及用于移动端的 <code>CoreML</code>。</li></ul></li></ul>
 <h4 id="_2">实验结果</h4>
-<p>本文的实验结果主要体现在库的采用率、社区活跃度以及部署性能上。<br/>
--   <strong>模型流行度与社区采纳 (图 1)</strong>:<br/>
-    -   <strong>实验内容</strong>: 统计了2019年10月至2020年5月期间，模型中心中最受欢迎的预训练模型的日均独立下载量。<br/>
-    -   <strong>实验结果</strong>: 图表显示 BERT, GPT-2 等核心模型以及库原生开发的 DistilBERT 模型下载量持续增长，证明了该库和模型中心在社区中的巨大吸引力和实用价值。<br/>
-    -   <strong>分析结论</strong>: Transformers 库成功地促进了 SOTA 模型的传播和使用，其社区模型中心已经成为获取预训练 NLP 模型的重要资源，拥有超过2097个社区贡献的模型。</p>
+<p>本文的实验结果主要体现在库的采用率、社区活跃度以及部署性能上。</p>
+<ul><li><strong>模型流行度与社区采纳 (图 1)</strong>:<ul><li><strong>实验内容</strong>: 统计了2019年10月至2020年5月期间，模型中心中最受欢迎的预训练模型的日均独立下载量。</li><li><strong>实验结果</strong>: 图表显示 BERT, GPT-2 等核心模型以及库原生开发的 DistilBERT 模型下载量持续增长，证明了该库和模型中心在社区中的巨大吸引力和实用价值。</li><li><strong>分析结论</strong>: Transformers 库成功地促进了 SOTA 模型的传播和使用，其社区模型中心已经成为获取预训练 NLP 模型的重要资源，拥有超过2097个社区贡献的模型。</li></ul></li></ul>
 <ul>
 <li>
 <p><strong>推理性能优化 (图 4)</strong>:</p>
