@@ -116,7 +116,7 @@ $Y=XW^{\top}, X: [128, 768], W: [128, 768]$<br/>
 <p><strong>选择局部填充的原因</strong>。在本文中，我们选择了第三种方案，因为它兼具透明（不产生存储开销和额外算子）和可通用地应用于大小形状（而循环划分仅在大形状上效果最佳）的优点。我们在第 5 节的评估中证明，局部填充是解决边界检查挑战的有效方案。</p>
 <h4>4.2 基于微内核的成本模型</h4>
 <p><strong>成本模型的设计</strong>。为了准确预测基于微内核的完整程序的性能，我们在成本模型中设计了三个项，分别用于解释：① 微内核的性能，② 硬件核心占用率惩罚（与执行该微内核以构成完整程序的次数相关），以及 ③ 填充惩罚。成本模型的数学表达式如下：</p>
-<p>$Cost_M (P) = f_{MK}(FeatureExtractor(M))① \cdot$ $$\textcircled{2}f_{\text{occ}}(P/M) \cdot f_{\text{pad}}(P, M)\textcircled{3} \atop \underbrace{\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad}_{f_{\text{adapt}}(P,M)}$$</p>
+<p>$Cost_M (P) = f_{MK}(FeatureExtractor(M))① \cdot$ $$②f_{\text{occ}}(P/M) \cdot f_{\text{pad}}(P, M)③ \atop \underbrace{\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad}_{f_{\text{adapt}}(P,M)}$$</p>
 <p>其中 M 表示微内核，P 表示完整程序。适应成本 $f_{adapt}$ 的两个函数 $f_{OCC}$ 和 $f_{padding}$ 分别对应：</p>
 <p><strong>硬件核心占用率惩罚 $f_{OCC}$</strong>。我们使用线性回归模型来建模此项：</p>
 <p>$$f_{\text{occ}}(P/M) = k \frac{P/M}{\text{ceil\_by}(P/M, \text{NumCores})} + b$$</p>

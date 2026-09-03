@@ -246,7 +246,7 @@ f(i) = f(2n - 1) + \displaystyle \sum_{j=i}^{2n - 2} a_j, \\
 其中最后一个不等式使用了 $|\mathcal{E}_{A, B}| = n^2$ 和方程14。如果 $A_0 = \{1, 3, \cdots, 2n - 1\}$ 且 $B_0 = \{2, 4, \cdots, 2n\}$，我们有<div>$$\begin{aligned}
 
 \begin{array}{rl}
-\displaystyle \sum_{x \in A_0} \displaystyle \sum_{y \in B_0} f(|x - y|) = \displaystyle \sum_{i=1}^{2n - 1} |\mathcal{D}_{A_0, B_0, i}| f(i) = \displaystyle \sum_{i=1}^n |\mathcal{D}_{A_0, B_0, 2i - 1}| f(2i - 1) \medskip \\
+\displaystyle \sum_{x \in A_0} \displaystyle \sum_{y \in B_0} f(|x - y|) = \displaystyle \sum_{i=1}^{2n - 1} |\mathcal{D}_{A_0, B_0, i}| f(i) = \displaystyle \sum_{i=1}^n |\mathcal{D}_{A_0, B_0, 2i - 1}| f(2i - 1) \\
 \displaystyle &amp; = \displaystyle \sum_{i=1}^n (2n - 2i + 1) \left( f(2n - 1) + \sum_{j=2i - 1}^{2n - 2} (j - 2i + 2) b_j \right) \\
 \displaystyle &amp; = n^2 f(2n - 1) + \sum_{j=1}^{2n - 2} \sum_{i=1}^{\lfloor \frac{j + 1}{2} \rfloor} (2n - 2i + 1) (j - 2i + 2) b_j.
 \end{array}

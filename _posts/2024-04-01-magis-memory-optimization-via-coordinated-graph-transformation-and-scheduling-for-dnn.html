@@ -285,7 +285,7 @@ $$ \text{score}(v) = \left(1 - \frac{1}{n} \text{heat}(v) - \sum_{u \in G, \text
 <p><strong>关键函数 GetRescheduleInterval</strong>：<code>GetRescheduleInterval</code>是算法2中的一个关键过程，旨在找到原始调度中需要重新调度的区间。该区间不应太小，否则重新调度的结果将是次优的甚至不正确。同时，区间也不应太大，否则重新调度过程将消耗太多时间。在优化质量和时间成本之间进行权衡非常重要。</p>
 </li>
 <li>
-<p><strong>窄腰（Narrow Waist, NW）值</strong>：我们引入一个节点的窄腰（NW）值<code>nw(v)</code>来解决这个问题。对于图G和节点v ∈ V(G)，<code>nw(v)</code>定义为$|V(G)| - |G.anc(v)| - |G.des(v)| - 1$，即$|V(G) \setminus G.anc(v) \setminus G.des(v)| - 1$。NW值可用于衡量与给定节点无关的节点数量。较低的<code>nw(v)</code>意味着更多的节点依赖于v，并且v依赖于更多的节点，这使得v成为拓扑排序问题的合适划分点。具体来说，所有v依赖的节点都应在v之前调度，所有依赖于v的节点都应在v之后调度，这为调度问题提供了自然的划分。此外，在我们分别为G.anc(v)和G.des(v)找到最优调度后，峰值内存消耗保证小于$M_{opt} + Σ_{u∈V(G)\G.anc(v)\G.des(v)} |u|$，其中$M_{opt}$表示在v的最优调度下达到的峰值内存。如果<code>nw(v) = 0</code>，则图的调度问题可以在v处被划分为两个完全独立的子问题。我们设计了一种基于NW值的启发式算法来选择区间，使其边界的NW值尽可能小（第2-6行），其中常数20、10、4是实践中表现良好的经验性超参数。<code>GraphPartition</code>背后的思想是使用<code>nw(v) ≤ 1</code>的节点作为划分点，将给定图的每个连通分量划分为多个子图。</p>
+<p><strong>窄腰（Narrow Waist, NW）值</strong>：我们引入一个节点的窄腰（NW）值<code>nw(v)</code>来解决这个问题。对于图G和节点v ∈ V(G)，<code>nw(v)</code>定义为$|V(G)| - |G.anc(v)| - |G.des(v)| - 1$，即$|V(G) \setminus G.anc(v) \setminus G.des(v)| - 1$。NW值可用于衡量与给定节点无关的节点数量。较低的<code>nw(v)</code>意味着更多的节点依赖于v，并且v依赖于更多的节点，这使得v成为拓扑排序问题的合适划分点。具体来说，所有v依赖的节点都应在v之前调度，所有依赖于v的节点都应在v之后调度，这为调度问题提供了自然的划分。此外，在我们分别为G.anc(v)和G.des(v)找到最优调度后，峰值内存消耗保证小于$M_{opt} + \sum_{u \in V(G) \setminus G.anc(v) \setminus G.des(v)} |u|$，其中$M_{opt}$表示在v的最优调度下达到的峰值内存。如果<code>nw(v) = 0</code>，则图的调度问题可以在v处被划分为两个完全独立的子问题。我们设计了一种基于NW值的启发式算法来选择区间，使其边界的NW值尽可能小（第2-6行），其中常数20、10、4是实践中表现良好的经验性超参数。<code>GraphPartition</code>背后的思想是使用<code>nw(v) ≤ 1</code>的节点作为划分点，将给定图的每个连通分量划分为多个子图。</p>
 </li>
 </ul>
 <h5>6.2 顶层搜索算法</h5>

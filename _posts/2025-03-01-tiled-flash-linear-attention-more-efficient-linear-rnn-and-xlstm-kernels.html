@@ -243,7 +243,7 @@ $$\underset{(d_{qk} \times d_{hv})}{\boldsymbol{C}_k} = \underset{(d_{qk} \times
 <p></p>
 $$\underset{(L_{hq} \times d_{hv})}{\mathbf{H}^{(k)}} = \underset{(L_{hq} \times d_{qk})}{\boldsymbol{Q}^{(k)}} \underset{(d_{qk} \times d_{hv})}{\boldsymbol{C}_{k-1}} + \left( \underset{(L_{hq} \times d_{qk})}{\boldsymbol{Q}^{(k)}} \underset{(d_{qk} \times L_{kv})}{\boldsymbol{K}^{(k)\top}} \right) \underbrace{\left( \underset{(L_{kv} \times d_{hv})}{\boldsymbol{U}^{(k)}} - \underset{(L_{kv} \times d_{qk})}{\boldsymbol{W}^{(k)}} \underset{(d_{qk} \times d_{hv})}{\boldsymbol{C}_{k-1}} \right)}_{\boldsymbol{V}^{*(k)}},$$
 
-<p>为清晰起见，我们省略了 DeltaNet 中应用于 $QK^T$ 的掩码 M。关于矩阵 $U^{(k)}$ 和 $W^{(k)}$ 的定义，请参考 Yang 等人【索引[82]，Parallelizing linear transformers with the delta rule over sequence length，2024，NeurIPS】。通过定义新的值 $V^{<em>(k)} = U^{(k)} - W^{(k)}C_{k-1}$，我们可以恢复 TFLA 用于块内并行前向传播的核心公式（见公式 (20)），并对其应用 3.2 节中的 TFLA 分块策略。为了计算矩阵 $U^{(k)}$、$W^{(k)}$ 和新的值 $V^{</em>(k)}$，可以遵循 DeltaNet 中的相同策略，即在循环核函数之前，在一个单独的核函数中计算 $U^{(k)}$ 和 $W^{(k)}$。然后，在循环核函数中计算并存储新的值 $V^{*(k)}$ 和内存状态 $C_k$ 到 HBM。我们得出结论，TFLA 可以应用于任何遵循或可以重新表述为公式 (20) 的简化分块并行形式的线性 RNN。</p>
+<p>为清晰起见，我们省略了 DeltaNet 中应用于 $QK^T$ 的掩码 M。关于矩阵 $U^{(k)}$ 和 $W^{(k)}$ 的定义，请参考 Yang 等人【索引[82]，Parallelizing linear transformers with the delta rule over sequence length，2024，NeurIPS】。通过定义新的值 $V^{*(k)} = U^{(k)} - W^{(k)}C_{k-1}$，我们可以恢复 TFLA 用于块内并行前向传播的核心公式（见公式 (20)），并对其应用 3.2 节中的 TFLA 分块策略。为了计算矩阵 $U^{(k)}$、$W^{(k)}$ 和新的值 $V^{*(k)}$，可以遵循 DeltaNet 中的相同策略，即在循环核函数之前，在一个单独的核函数中计算 $U^{(k)}$ 和 $W^{(k)}$。然后，在循环核函数中计算并存储新的值 $V^{*(k)}$ 和内存状态 $C_k$ 到 HBM。我们得出结论，TFLA 可以应用于任何遵循或可以重新表述为公式 (20) 的简化分块并行形式的线性 RNN。</p>
 <h3>mLSTM 扩展公式</h3>
 <h4>完全并行公式</h4>
 <p><strong>公式描述</strong>。对于并行公式，假设所有输入一次性可用。然后，可以将查询、键和值 $q_t, k_t, v_t$ 堆叠成矩阵 $Q, K \in \mathbb{R}^{T \times d_{qk}}$, $V \in \mathbb{R}^{T \times d_{hv}}$，以便并行计算所有隐藏状态 $H \in \mathbb{R}^{T \times d_{hv}}$，使用以下方程：</p>
@@ -326,7 +326,7 @@ $$\mathbf{D}^{(k)}=\exp (\widetilde{\mathbf{D}}^{(k)}-\boldsymbol{m}_{k}^{(\text
 $$\mathbf{S}^{(k)}=\frac{1}{\sqrt{d_{qk}}}\boldsymbol{Q}^{(k)}\boldsymbol{K}^{(k)\top}$$
 $$\overline{\mathbf{S}}^{(k)}=\mathbf{S}^{(k)} \odot \mathbf{D}^{(k)}$$
 &lt;p&gt;其中 exp 是逐元素作用的。<p></p>
-<p><strong>输出计算</strong>。块内并行部分的贡献 $H^{(k)}<em>{intra}$ 与块间循环部分的贡献 $H^{(k)}</em>$（见图 1）：}$ 相结合，得到每个块 k 的隐藏状态 $H^{(k)</p>
+<p><strong>输出计算</strong>。块内并行部分的贡献 $H^{(k)}_{intra}$ 与块间循环部分的贡献 $H^{(k)}_{inter}$ 相结合，得到每个块 k 的隐藏状态 $H^{(k)}$（见图 1）：</p>
 <p></p>
 $$m_k^{(\text{combine})} = \max \left\{ \mathbf{b}_k + m_{k-1}^{(\text{inter})}, m_k^{(\text{intra})} \right\}$$
 
@@ -346,7 +346,7 @@ $$\begin{aligned}
 <h4>分块并行反向传播</h4>
 <p><strong>概述</strong>。本节我们提供分块并行 mLSTM 反向传播的详细描述。</p>
 <p><strong>通过归一化状态的梯度</strong>。遵循 Sun 等人【索引[64]，Retentive network: A successor to transformer for large language models，2023，ArXiv】的做法，我们不计算通过归一化状态 n 的梯度。由于 mLSTM 单元隐藏状态 H 上的 Layer- 或 RMS-Norm，这些梯度会相互抵消，因为归一化状态在嵌入或特征维度（即归一化维度）上是常数。</p>
-<p><strong>块间循环反向传播</strong>。给定来自下一个块的输入内存单元状态梯度 $\delta C_k$ 和块 k 的隐藏状态输出梯度 $\delta H^{(k)}$，我们可以计算块间循环反向传播。块间循环部分的查询、键和值梯度 $\delta Q^{(k)}_{inter}$, $\delta K^{(k)}_$ 计算如下：}$ 和 $\delta V^{(k)}_{inter</p>
+<p><strong>块间循环反向传播</strong>。给定来自下一个块的输入内存单元状态梯度 $\delta C_k$ 和块 k 的隐藏状态输出梯度 $\delta H^{(k)}$，我们可以计算块间循环反向传播。块间循环部分的查询、键和值梯度 $\delta Q^{(k)}_{inter}$, $\delta K^{(k)}_{inter}$ 和 $\delta V^{(k)}_{inter}$ 计算如下：</p>
 <p></p>
 $$\delta \widetilde{\mathbf{H}}^{(k)}=\frac{\delta \mathbf{H}^{(k)}}{\mathbf{h}_{\text {denom }}^{(k)}}$$
 
@@ -355,7 +355,7 @@ $$\delta\overline{\boldsymbol{K}}^{(k)}=\boldsymbol{V}^{(k)}\delta\boldsymbol{C}
 $$\delta \boldsymbol{K}_{\mathrm{inter}}^{(k)}=\delta \overline{\boldsymbol{K}}^{(k)} \odot \overline{\boldsymbol{a}}_{k} \mathbf{1}^{\top}$$
 $$\delta \overline{\boldsymbol{Q}}^{(k)}=\delta \widetilde{\mathbf{H}}^{(k)} \boldsymbol{C}_{k-1}^{\top}$$
 $$\delta \boldsymbol{Q}_{\text {inter }}^{(k)}=\frac{1}{\sqrt{d_{q k}}} \delta \overline{\boldsymbol{Q}}^{(k)} \odot \overline{\boldsymbol{b}}_{k} \mathbf{1}^{\top}$$
-<p>内存单元状态梯度 $\delta C_{k-1}$ 接收来自下一个时间步的贡献 $\delta C^{(rec)}_{k-1}$ 和输出的贡献 $\delta C^{(out)}_$。它们由以下公式给出：</p>
+<p>内存单元状态梯度 $\delta C_{k-1}$ 接收来自下一个时间步的贡献 $\delta C^{(rec)}_{k-1}$ 和输出的贡献 $\delta C^{(out)}_{k-1}$。它们由以下公式给出：</p>
 <p></p>
 $$\begin{aligned}
 
@@ -375,7 +375,7 @@ $$\delta\overline{\boldsymbol{a}}_{k}=(\delta\overline{\boldsymbol{K}}^{(k)}\odo
 $$\delta \boldsymbol{a}_{k}=\delta \overline{\boldsymbol{a}}_{k} \odot \overline{\boldsymbol{a}}_{k}$$
 $$\delta \overline{\boldsymbol{b}}_{k} = (\delta \overline{\boldsymbol{Q}}^{(k)} \odot \frac{\boldsymbol{Q}^{(k)}}{\sqrt{d_{qk}}}) \mathbf{1}$$
 $$\delta \boldsymbol{b}_{k}=\delta \overline{\boldsymbol{b}}_{k} \odot \overline{\boldsymbol{b}}_{k} .$$
-<p><strong>块内并行反向传播</strong>。给定 mLSTM 隐藏状态输出梯度 $\delta H^{(k)}$，块内查询、键和值的梯度 $\delta Q^{(k)}_{intra}, \delta K^{(k)}_$ 计算如下：}$ 和 $\delta V^{(k)}_{intra</p>
+<p><strong>块内并行反向传播</strong>。给定 mLSTM 隐藏状态输出梯度 $\delta H^{(k)}$，块内查询、键和值的梯度 $\delta Q^{(k)}_{intra}, \delta K^{(k)}_{intra}$ 和 $\delta V^{(k)}_{intra}$ 计算如下：</p>
 <p></p>
 $$\delta \widetilde{\mathbf{H}}^{(k)}=\frac{\delta \mathbf{H}^{(k)}}{\mathbf{h}_{\text {denom }}^{(k)}}$$
 
@@ -395,7 +395,7 @@ $$\boldsymbol{b}_{k}^{(k v)}=\operatorname{cumsum}\left(\overline{\mathbf{f}}_{k
 <p></p>
 $$\mathbf{D}^{(k)}=\boldsymbol{b}_k^{(q)} \mathbf{1}_{k v}^{\top}-\mathbf{1}_q \boldsymbol{b}_k^{(k v) \top}+\mathbf{1}_q \overline{\mathbf{i}}_{k v}^{(k) \top},$$
 
-<p>其中 $1_q \in \mathbb{R}^{L_q}$ 和 $1_{kv} \in \mathbb{R}^{L_{kv}}$ 是用于表示广播操作的全一向量，而 $i^{(k)}_{kv} \in \mathbb{R}^{L_$ 是块 k 的对数输入门。梯度计算如下：}</p>
+<p>其中 $1_q \in \mathbb{R}^{L_q}$ 和 $1_{kv} \in \mathbb{R}^{L_{kv}}$ 是用于表示广播操作的全一向量，而 $i^{(k)}_{kv} \in \mathbb{R}^{L_{kv}}$ 是块 k 的对数输入门。梯度计算如下：</p>
 <p></p>
 $$\delta \mathbf{D}^{(k)}=\delta \overline{\mathbf{S}}^{(k)} \odot \mathbf{S}^{(k)}$$
 
@@ -417,7 +417,7 @@ $$\delta\bar{\mathbf{f}}^{(k)} = \text{rev\_cumsum}(\delta\boldsymbol{a}_k)$$
 $$\delta \bar{\dot{\mathbf{i}}}^{(k)}=\delta \boldsymbol{a}_k$$
 <h3>Tiled Flash Linear Attention 扩展</h3>
 <h4>分块计算</h4>
-<p><strong>分块计算过程</strong>。对于块内隐藏状态贡献 $H_{intra}$ 在一个块内的分块计算，我们考虑矩阵 $S = [S^{(1)}, S^{(2)}]$ 和门矩阵 $D = [D^{(1)}, D^{(2)}]$ 的块，其中 $S^{(i)}, D^{(i)} \in \mathbb{R}^{B_{L_{hq}} \times B_{L_{kv}}}$。这里的上标 i 表示沿 $L_{kv}$ 维度的块索引（而非块 k 的索引）。类似地，我们考虑值矩阵 $V = [V^{(1)}, V^{(2)}]$ 的块，其中 $V^{(i)} \in \mathbb{R}^{B_{L_{kv}} \times B_{d_{hv}}}$。然后，我们累加未归一化的隐藏状态块 $H^{(i)}_{intra,num} \in \mathbb{R}^{B_$ 如下：}} \times B_{d_{hv}}}$ 和相应的归一化器 $l^{(i)} \in \mathbb{R}^{B_{L_{kv}}</p>
+<p><strong>分块计算过程</strong>。对于块内隐藏状态贡献 $H_{intra}$ 在一个块内的分块计算，我们考虑矩阵 $S = [S^{(1)}, S^{(2)}]$ 和门矩阵 $D = [D^{(1)}, D^{(2)}]$ 的块，其中 $S^{(i)}, D^{(i)} \in \mathbb{R}^{B_{L_{hq}} \times B_{L_{kv}}}$。这里的上标 i 表示沿 $L_{kv}$ 维度的块索引（而非块 k 的索引）。类似地，我们考虑值矩阵 $V = [V^{(1)}, V^{(2)}]$ 的块，其中 $V^{(i)} \in \mathbb{R}^{B_{L_{kv}} \times B_{d_{hv}}}$。然后，我们累加未归一化的隐藏状态块 $H^{(i)}_{intra,num} \in \mathbb{R}^{B_{L_{kv}} \times B_{d_{hv}}}$ 和相应的归一化器 $l^{(i)} \in \mathbb{R}^{B_{L_{kv}}}$ 如下：</p>
 <p></p>
 $$m^{(1)}=\max_j \widetilde{\mathbf{D}}_{ij}^{(1)}$$
 
@@ -426,7 +426,7 @@ $$\mathbf{H}_{\mathrm{intra,num}}^{(1)} = (\mathbf{S}^{(1)} \odot \exp(\widetild
 $$ \boldsymbol{m}^{(2)}=\max \left(\boldsymbol{m}^{(1)}, \max _{j} \widetilde{\mathbf{D}}_{i j}^{(2)}\right) $$
 $$l^{(2)} = \exp(m^{(1)} - m^{(2)}) \  l^{(1)} + (\mathbf{S}^{(2)} \odot \exp(\widetilde{\mathbf{D}}^{(2)} - m^{(2)})) \ \mathbf{1}$$
 $$\mathbf{H}_{\text{intra,num}}^{(2)} = \exp(\boldsymbol{m}^{(1)} - \boldsymbol{m}^{(2)}) \mathbf{H}_{\text{intra,num}}^{(1)} + (\mathbf{S}^{(2)} \odot \exp(\widetilde{\mathbf{D}}^{(2)} - \boldsymbol{m}^{(2)})) \boldsymbol{V}^{(2)}$$
-<p><strong>最终输出组合</strong>。在计算完这个块内部分后，我们需要再进行一次重新缩放步骤，以组合隐藏状态输出 $H^{(k)}$ 的块内和块间部分，因为 $H^{(k)}<em>{intra}$ 和 $H^{(k)}</em>$ 如下：}$ 是用不同的最大值状态计算的。因此，我们计算最终的隐藏状态输出 $H^{(k)</p>
+<p><strong>最终输出组合</strong>。在计算完这个块内部分后，我们需要再进行一次重新缩放步骤，以组合隐藏状态输出 $H^{(k)}$ 的块内和块间部分，因为 $H^{(k)}_{intra}$ 和 $H^{(k)}_{inter}$ 是用不同的最大值状态计算的。因此，我们计算最终的隐藏状态输出 $H^{(k)}$ 如下：</p>
 <p></p>
 $$\begin{aligned}
 
@@ -437,10 +437,10 @@ $$\begin{aligned}
 
 \end{aligned}$$
 
-<p>其中我们假设 $m^{(2)}<em>k$ 是块 k 的块内计算的最后一个 $B</em>_k$ 是相应的归一化器。}}$ 块之后的最大值，而 $l^{(2)</p>
+<p>其中我们假设 $m^{(2)}_k$ 是块 k 的块内计算的最后一个 $B_{L_{kv}}$ 块之后的最大值，而 $l^{(2)}_k$ 是相应的归一化器。</p>
 <h4>TFLA 前向传播</h4>
 <p><strong>算法描述</strong>。为简化符号，我们省略了查询、键和值矩阵的 k 索引，分别表示为 $Q \in \mathbb{R}^{L_{hq} \times d_{qk}}$, $K \in \mathbb{R}^{L_{kv} \times d_{qk}}$ 和 $V \in \mathbb{R}^{L_{kv} \times d_v}$。我们利用重新加权（如附录 C.1 中讨论）来跟踪门矩阵瓦片上的最大值，这与【索引[11]，FlashAttention: Fast and memory-efficient exact attention with IO-awareness，2022，NeurIPS】类似。TFLA 对于一个线程块的前向传播算法在算法 1 中描述。</p>
-<p><strong>实现细节</strong>。请注意，算法 1 中第 27 行的循环与第 6 行的循环相同。在这两个循环中，我们加载了矩阵 Q 的相同块。融合这两个循环可以避免两次加载这些数据。不幸的是，由于在线计算循环中（第 4 行）的最大值 $m_{old}$ 和 $m_{new}$，以及 $m^{(combine)}<em>k$ 和 $b_k$ 对最终 $m</em>$ 的依赖性（见附录 D.1 和 C.1），高效地融合这些循环存在问题。我们在第 4 节通过修改 mLSTM 的输入门来解决这个问题。</p>
+<p><strong>实现细节</strong>。请注意，算法 1 中第 27 行的循环与第 6 行的循环相同。在这两个循环中，我们加载了矩阵 Q 的相同块。融合这两个循环可以避免两次加载这些数据。不幸的是，由于在线计算循环中（第 4 行）的最大值 $m_{old}$ 和 $m_{new}$，以及 $m^{(combine)}_k$ 和 $b_k$ 对最终 $m_{new}$ 的依赖性（见附录 D.1 和 C.1），高效地融合这些循环存在问题。我们在第 4 节通过修改 mLSTM 的输入门来解决这个问题。</p>
 <p><strong>算法1. mLSTMexp 的 TFLA 块内前向传播 ($H^{(k)}$ 核函数)</strong></p>
 <pre><code>需要：矩阵 Q ∈ R^(Lhq×dqk), K ∈ R^(Lkv×dqk), V ∈ R^(Lkv×dhv)。状态 Ck−1 ∈ R^(dqk×dv), nk−1 ∈ R^dqk。输入门和累积遗忘门向量 ik, bk ∈ R^Lhq。块大小 Bdqk, Bdhv, BLhq 和 BLkv，其中 BLhq ⩾ BLkv。块 Q 索引 iLq 和块 HV 索引 idhv。
 1: 在 SRAM 中初始化 mold, mnew ∈ R^Lq 为 −∞。 ▷ 计算块内贡献
@@ -531,7 +531,7 @@ $$\begin{aligned}
 
 \end{aligned}$$
 
-<p>现在我们选择最大值状态为 $m_t = \max{\log(\sigma(\tilde{f}_t)) + m_}, \tilde{i_t}$，并通过将分母更改为 $\max{|n_t^T q_t|, \exp(m_)$，以便它能够抵消。总而言之，我们看到归一化器对于抵消最大值状态是必要的，而指数输入门的参数通过最大值状态得到了限制。})}$ 来得到稳定化的 mLSTM 公式。我们必须在最大值的右侧也加上 $\exp(m_{t-1</p>
+<p>现在我们选择最大值状态为 $m_t = \max\{\log(\sigma(\tilde{f}_t)) + m_{t-1}, \tilde{i}_t\}$，并通过将分母更改为 $\max\{|\tilde{n}_t^T q_t|, \exp(m_{t-1})\}$ 来得到稳定化的 mLSTM 公式。我们必须在最大值的右侧也加上 $\exp(m_{t-1})$，以便它能够抵消。总而言之，我们看到归一化器对于抵消最大值状态是必要的，而指数输入门的参数通过最大值状态得到了限制。</p>
 <h4>mLSTM 的实证传递行为分析</h4>
 <p><strong>实验设置</strong>。我们提供第 4.2 节中 mLSTMexp 和 mLSTMsig 传递行为分析的细节。我们分析了单个头和单个长度为 T=512 的输入序列下 mLSTM 的传递行为。查询、键和值的输入 $q_t, k_t$ 和 $v_t$ 从标准正态分布 $N(0, 1)$ 中采样。我们将头维度设置为 $d_{qk}=128$ 和 $d_{hv}=128$。作为归一化层 NORM(x)，我们使用 RMS-norm。将归一化层改为 layernorm 不会改变结果，因为在本实验中我们将输入的均值设置为零。对于每个图，我们测量了在输入和遗忘门预激活值分别在 [-12, 8] 和 [-5, 12] 范围内变化时，如 (26) 定义的增益 $G_{before}$ 和 $G_{after}$。</p>
 <p><strong>归一化层 Epsilon 对传递行为的影响</strong>。基于我们在 4.2 节中对门控线性 RNN 操作后归一化层的分析，我们假设归一化层，特别是其 epsilon $\epsilon$，是门控机制的一个组成部分。在本实验中，我们探究了 epsilon 值对 mLSTM 传递行为的影响。图 9a 和图 10a 分别展示了 mLSTMexp 和 mLSTMsig 在 $\epsilon = [1e-2, 1e-6, 1e-8]$ 时的传递行为。我们观察到，epsilon 对 mLSTMexp 和 mLSTMsig 的作用方式相同。增加 $\epsilon$ 会导致增益在 y 轴正方向上偏移，减小 $\epsilon$ 则导致在 y 轴负方向上偏移。我们将默认值设为 $\epsilon=1e-6$，这在我们的实验中取得了最佳性能（见 5.1 节）。</p>

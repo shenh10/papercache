@@ -185,7 +185,7 @@ $$[\mathbf{q}^1 ; \mathbf{q}^2] = \mathbf{q}_t$$
 <p></p></li>
 <li><strong>计算子键得分</strong>: <div>$$s_i^{\{1,2\}} = -\log(\epsilon + \|\mathbf{q}^{\{1,2\}} - K_i^{\{1,2\}}\|_2^2)$$</div></li>
 <li><strong>选择子键索引</strong>: <div>$$\mathcal{I}^{\{1,2\}}=\mathcal{T}_{k}\left(\mathbf{s}^{\{1,2\}}\right)$$</div></li>
-<li><strong>归一化子键得分</strong>: <div>$${s_{i}^{\{1,2\}'}\} = \text{softmax}(\{s_{j}^{\{1,2\}}\}_{j \in \mathcal{I}})$$</div></li>
+<li><strong>归一化子键得分</strong>: <div>$$\{s_{i}^{\{1,2\}'}\} = \text{softmax}(\{s_{j}^{\{1,2\}}\}_{j \in \mathcal{I}})$$</div></li>
 <li><strong>选择最终索引</strong>: <div>$$\mathcal{I}=\mathcal{T}_{k}(\{s_{i}^{1}+s_{j}^{2} | i \in \mathcal{I}^{1}, j \in \mathcal{I}^{2}\})$$</div></li>
 <li><strong>检索值</strong>: <div>$$\hat{\mathbf{v}}_{t+1} = \sum_{i \in \mathcal{I}} V_i s'_i$$</div></li>
 </ol>

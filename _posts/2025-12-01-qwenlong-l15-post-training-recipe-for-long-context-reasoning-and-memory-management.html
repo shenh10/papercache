@@ -178,7 +178,7 @@ $$ \mathcal{J}_{\mathrm{GRPO}}(\theta)=\mathbb{E}_{c, q \sim \mathcal{D},\left\{
 <p>其中 $I(i, t)$ 是一个指示函数，定义为：</p>
 <p></p>
 $$\begin{aligned}
-\mathbb{I}(i, t)=\left\{\begin{array}{ll}0 &amp; \text { if } A_{i}&lt;0 \text { and }\left(\left(P_{\text {token_level }} \wedge H(t \mid i)&gt;\tau_{\text {token }}\right.\right. \\&amp; \left.\vee\left(\neg P_{\text {token_level }} \wedge \bar{H}(i)&gt;\tau_{\text {sequence }}\right)\right) \\1 &amp; \text { otherwise }\end{array}\right.
+\mathbb{I}(i, t)=\left\{\begin{array}{ll}0 &amp; \text { if } A_{i}&lt;0 \text { and }\left(\left(P_{\text {token\_level }} \wedge H(t \mid i)&gt;\tau_{\text {token }}\right.\right. \\&amp; \left.\vee\left(\neg P_{\text {token\_level }} \wedge \bar{H}(i)&gt;\tau_{\text {sequence }}\right)\right) \\1 &amp; \text { otherwise }\end{array}\right.
 \end{aligned}$$
 
 <p>这里，$H(t|i) = - \sum_{v \in V} \pi_\theta(y_{i,t}|c, q, y_{i,&lt;t}) \log \pi_\theta(y_{i,t}|c, q, y_{i,&lt;t})$ 和 $\bar{H}(i) = \frac{1}{|y_i|} \sum_{t=1}^{|y_i|} H(t|i)$ 分别表示响应 $i$（在位置 $t$）的词元级和序列级熵。$\tau_\text{token}$ 和 $\tau_\text{sequence}$ 是它们对应的阈值。$P_\text{token\_level}$ 是一个布尔参数，用于在词元级（True）和序列级（False）裁剪之间进行选择。&lt;/p&gt;

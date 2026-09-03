@@ -270,7 +270,7 @@ $$\mathcal{L}_{u}=-E+\frac{A_{1}}{N_{\mathrm{nv}}^{\alpha_{1}}}+\frac{A_{2}}{N_{
 
 <p>其中$\beta = \alpha_1$。在实践中，我们尝试最小化：</p>
 <p></p>
-$$ \min_{a_1, a_2, b, e, \alpha_1, \alpha_2} \text{Huber}_\delta ( - \exp(e) + \exp(a_1 - \alpha_1 * \log(N_{\text{nv}}) + \exp(a_2 - \alpha_2 * \log(N_{\text{v}}) + \exp(b - \beta * \log([Hf(V)])), \quad \mathcal{L}_u), $$
+$$ \min_{a_1, a_2, b, e, \alpha_1, \alpha_2} \text{Huber}_\delta ( - \exp(e) + \exp(a_1 - \alpha_1 * \log(N_{\text{nv}})) + \exp(a_2 - \alpha_2 * \log(N_{\text{v}})) + \exp(b - \beta * \log([Hf(V)])), \quad \mathcal{L}_u), $$
 
 <p>其中$A_1 = \exp(a_1)$, $A_2 = \exp(a_2)$, $B = \exp(b)$, $E = \exp(e)$。我们从同一个均匀网格中初始化所有属性，其中$a_1 \in [0, 5]$, $a_2 \in [0, 5]$, $b \in [0, 5]$, $e \in [0, 2]$, $\alpha_1 \in [0, 1]$和$\alpha_2 \in [0, 1]$，分别有3个初始猜测。鉴于先验知识，即缩放因子通常在0到1之间【索引26，Training compute-optimal large language models，2022，arXiv】，我们在拟合过程中添加了约束$0.1 &lt; \alpha_1, \alpha_2 &lt; 1$。拟合过程也耗时不到半分钟。</p>
 <h3>A.8 拟合词元-字符关系函数f(V)的细节</h3>

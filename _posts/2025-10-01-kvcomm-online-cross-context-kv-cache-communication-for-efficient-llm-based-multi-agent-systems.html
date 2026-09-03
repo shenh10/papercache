@@ -109,11 +109,11 @@ $$\mathcal{P}_{anchor}(\phi) = (\mathcal{L}_\phi &gt; \max_{\psi \in \mathcal{A}
 <p></p>
 $$(\hat{\mathbf{k}} / \hat{\mathbf{v}})_{\phi_{(m, i)}}=(\mathbf{k} / \mathbf{v})_{\phi_{(m, i)}}+\sum_{\psi \in \mathcal{A}_{\phi_{(m, i)}}} w_{\phi_{(m, i)} \rightarrow \psi} \cdot \Delta(\mathbf{k} / \mathbf{v})_{(m, \psi)}^{\phi},$$
 
-<p>其中$(\hat{k}/\hat{v})_{\phi_$的近似K/V缓存。$(k/v)}}$指的是占位符$\phi_{(m,i)_{\phi_$是锚点$\psi$在第m个智能体中占位符$\phi$的缓存偏移。前缀段的更新遵循一个类似的过程：}}$是占位符$\phi_{(m,i)}$的基础K/V缓存。$w_{\phi_{(m,i)} \to \psi}$是$-|h_{\phi_{(m,i)}} - h_\psi|$在锚点维度上的softmax映射。$\Delta(k/v)^{\phi}_{(m,\psi)</p>
+<p>其中$(\hat{k}/\hat{v})_{\phi_{(m,i)}}$指的是占位符$\phi_{(m,i)}$的近似K/V缓存。$(k/v)_{\phi_{(m,i)}}$是占位符$\phi_{(m,i)}$的基础K/V缓存。$w_{\phi_{(m,i)} \to \psi}$是$-|h_{\phi_{(m,i)}} - h_\psi|$在锚点维度上的softmax映射。$\Delta(k/v)^{\phi}_{(m,\psi)}$是锚点$\psi$在第m个智能体中占位符$\phi$的缓存偏移。前缀段的更新遵循一个类似的过程：</p>
 <p></p>
 $$(\hat{\mathbf{k}} / \hat{\mathbf{v}})_{\mathbf{p}_{(m, i)}}=(\mathbf{k} / \mathbf{v})_{\mathbf{p}_{(m, i)}}+\sum_{\psi \in \mathcal{A}_{\phi(m, i)}} w_{\phi_{(m, i)} \rightarrow \psi} \cdot \Delta(\mathbf{k} / \mathbf{v})_{(m, \psi)}^{\mathbf{p}},$$
 
-<p>其中$(\hat{k}/\hat{v})_{p_$的近似K/V缓存。$(k/v)}}$指的是前缀段$p_{(m,i)<em>{p</em>$是锚点$\psi$在第m个智能体中对应前缀段的缓存偏移。}}$是前缀段$p_{(m,i)}$的基础K/V缓存。$\Delta(k/v)^{p}_{(m,\psi)</p>
+<p>其中$(\hat{k}/\hat{v})_{p_{(m,i)}}$指的是前缀段$p_{(m,i)}$的近似K/V缓存。$(k/v)_{p_{(m,i)}}$是前缀段$p_{(m,i)}$的基础K/V缓存。$\Delta(k/v)^{p}_{(m,\psi)}$是锚点$\psi$在第m个智能体中对应前缀段的缓存偏移。</p>
 <p><strong>最终步骤</strong>。近似后，更新的缓存被连接起来并直接送入解码阶段，通过并行处理大大减少了预填充延迟。整体算法在附录6.2.5中列出。</p>
 <h2>A4 实验环境</h2>
 <ul>
@@ -243,7 +243,7 @@ $$\Delta^l \leq \delta_n \prod_{j=1}^{l-1} (1 + \sigma^j).$$
 $$\|\mathbf{k}_{n}^{l}-\tilde{\mathbf{k}}_{n}^{l}\| \leq C_{R} C_{K}^{l} \delta_{n} \prod_{j=1}^{l-1}(1+\sigma^{j}),$$
 
 <p>这完成了命题1的证明。由于推理过程类似，Value向量的界限除了没有RoPE投影外是相似的。</p>
-<p><strong>命题2的证明</strong>。让两个不同的提示$p_a$和$p_b$作为Token u和v的前缀。当以$p_a$为前缀时，它们在位置$n_a$的Key向量分别表示为$k_{n_a}^l, \tilde{k}_{n_a}^l$；当以$p_b$为前缀时，在位置$n_b$的Key向量分别表示为$\bar{k}_^l$。定义两个Key向量的偏差如下：}^l, \tilde{\bar{k}}_{n_b</p>
+<p><strong>命题2的证明</strong>。让两个不同的提示$p_a$和$p_b$作为Token u和v的前缀。当以$p_a$为前缀时，它们在位置$n_a$的Key向量分别表示为$k_{n_a}^l, \tilde{k}_{n_a}^l$；当以$p_b$为前缀时，在位置$n_b$的Key向量分别表示为$\bar{k}_{n_b}^l, \tilde{\bar{k}}_{n_b}^l$。定义两个Key向量的偏差如下：</p>
 <p></p>
 $$\Delta^{l}=\bar{\mathbf{k}}_{n_{b}}^{l}-\mathbf{k}_{n_{a}}^{l}, \quad \tilde{\Delta}^{l}=\tilde{\bar{\mathbf{k}}}_{n_{b}}^{l}-\tilde{\mathbf{k}}_{n_{a}}^{l}$$
 
@@ -261,7 +261,7 @@ $$\begin{aligned}
 $$\|\mathbf{k}_{n_a}^l - \tilde{\mathbf{k}}_{n_a}^l\| \le C_R C_K^l \delta_{n_a} \prod_{j=1}^{l-1} (1 + \sigma^j),$$
 
 $$\|\bar{\mathbf{k}}_{n_{b}}^{l}-\tilde{\bar{\mathbf{k}}}_{n_{b}}^{l}\| \leq C_{R} C_{K}^{l} \delta_{n_{b}} \prod_{j=1}^{l-1}(1+\sigma^{j}),$$
-<p>其中$\delta_{n_a} = \max_{k \le n_a} |h_k^1 - \tilde{h}_k^1|, \delta_} = \max_{k \le n_b} |\bar{h_k^1 - \tilde{\bar{h}}_k^1|$。因为对于$k \le n_a - 1$有$h_k^1 = \tilde{h}_k^1$（相同的前缀$p_a$），对于$k \le n_b - 1$有$\bar{h}_k^1 = \tilde{\bar{h}}_k^1$（相同的前缀$p_b$），且$h_}^1 = \bar{h_{n_b}^1$（相同的Token u），$\tilde{h}_}^1 = \tilde{\bar{h}_{n_b}^1$（相同的Token v），所以我们有$\delta_^1|$。因此，我们得出结论：} = \delta_{n_b} = |h_{n_a}^1 - \tilde{h}_{n_a</p>
+<p>其中$\delta_{n_a} = \max_{k \le n_a} |h_k^1 - \tilde{h}_k^1|, \delta_{n_b} = \max_{k \le n_b} |\bar{h}_k^1 - \tilde{\bar{h}}_k^1|$。因为对于$k \le n_a - 1$有$h_k^1 = \tilde{h}_k^1$（相同的前缀$p_a$），对于$k \le n_b - 1$有$\bar{h}_k^1 = \tilde{\bar{h}}_k^1$（相同的前缀$p_b$），且$h_{n_a}^1 = \bar{h}_{n_b}^1$（相同的Token u），$\tilde{h}_{n_a}^1 = \tilde{\bar{h}}_{n_b}^1$（相同的Token v），所以我们有$\delta_{n_a} = \delta_{n_b} = |h_{n_a}^1 - \tilde{h}_{n_a}^1|$。因此，我们得出结论：</p>
 <p></p>
 $$\|\Delta^{l}-\tilde{\Delta}^{l}\| \leq 2 C_{R} C_{K}^{l} \delta_{n_{a}} \prod_{j=1}^{l-1}(1+\sigma^{j}),$$
 

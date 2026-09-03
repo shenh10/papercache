@@ -76,8 +76,8 @@ $$\boldsymbol{h}_{\leq t+1}, \boldsymbol{o}_{t+1}=f_{\text {Large }}\left(\bolds
 <h3>2.3 $M_{Small}$ 的架构</h3>
 <p><strong>$M_{Small}$ 的架构分类</strong>。推测解码的架构大致分为两类：独立型（independent）和自起草型（self-drafting）。独立型草稿模型通常是与 $M_{Large}$ 同一模型家族的较小版本【索引24，Nearest neighbor speculative decoding for llm generation and attribution，2024；索引41，Ouroboros: Speculative decoding with large model enhanced drafting，2024；索引13，Rest: Retrieval-based speculative decoding，2023】，而自起草方法则利用 $M_{Large}$ 的一部分和/或新初始化的参数【索引1，Hydra: Sequentially-dependent draft heads for medusa decoding，2024；索引2，Medusa: Simple llm inference acceleration framework with multiple decoding heads，2024】。</p>
 <p><strong>本文基于 EAGLE 架构进行构建</strong>。本文的贡献建立在 EAGLE【索引25，EAGLE-2: Faster inference of language models with dynamic draft trees，2024】之上，这是一种自起草架构，在 Spec-Bench【索引37，Unlocking efficiency in large language model inference: A comprehensive survey of speculative decoding，2024】排行榜上取得了目前最好的成绩。该草稿模型重用了 $M_{Large}$ 的 <code>token embed</code> 和 <code>LM head</code> 参数。它接收 $M_{Large}$ 最后一个解码器层的真实激活值 $o_1, \dots, o_t$ 以及序列词元 $y_1, \dots, y_t$ 作为输入，来预测下一个激活值 $\hat{o}_{t+1}$，该激活值随后被传递给 <code>LM head</code> 来预测下一个词元的分布：<br/>
-$\hat{o}_} = M_{EAGLESmall}((o_1, \dots, o_t), \text{token embed}(y_1, \dots, y_t)), \quad \hat{y_{t+1} \sim \text{Softmax}(\text{LM head}(\hat{o}_))$<br/>
-这个过程通过将 $\hat{o}_{t+1}, \hat{y}_$ 附加到输入中来重复进行，从而自回归地起草后续词元 $\hat{y}_{t+2}$。</p>
+$\hat{o}_{t+1} = M_{EAGLESmall}((o_1, \dots, o_t), \text{token embed}(y_1, \dots, y_t)), \quad \hat{y}_{t+1} \sim \text{Softmax}(\text{LM head}(\hat{o}_{t+1}))$<br/>
+这个过程通过将 $\hat{o}_{t+1}, \hat{y}_{t+1}$ 附加到输入中来重复进行，从而自回归地起草后续词元 $\hat{y}_{t+2}$。</p>
 <h2>A2 方法细节</h2>
 <h3>3.1 注意力混合</h3>
 <p>我们首先定义 $M_{Small}$ 的重要属性，然后详细阐述架构选择。</p>
