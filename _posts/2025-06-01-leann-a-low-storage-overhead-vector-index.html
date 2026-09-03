@@ -211,11 +211,8 @@ $$|\mathcal{S}_q| = k \text{ with } \|q - x_i\| \le \|q - x_j\| \forall x_i \in 
 $$O(M \cdot efC + efC^{2} + M^{3}),$$
 
 <p>其中$efC$是构建队列长度，$M$是最大节点度数。</p>
-<p><strong>复杂度分析</strong>。我们首先分析<code>SHRINKNEIGHBORLIST</code>的复杂度。每个被放入保留集 $R$ 的节点可能会被重新检查多达 $|W|$ 次，因此单次调用的成本为 $O(|W|^2)$。具体来说：<br/>
-* <code>SEARCHNEIGHBORSTOADD</code> 执行一次性的邻居搜索，不重复访问节点，复杂度为 $O(M \cdot efC)$。缓存没有好处，因为节点不会被重访。<br/>
-* <code>SHRINKNEIGHBORLIST</code>（第12行）的运行时间为 $O(efC^2)$，因为它在多达 $efC$ 个候选者之间计算成对距离。<br/>
-* 添加前向边不需要重计算，因为每个节点最多维护 $M$ 个链接。<br/>
-* 添加反向边的成本为 $O(M^3)$，因为最多有 $M$ 个邻居被更新，每次更新都会触发一个 $O(M^2)$ 的基于RNG的收缩操作。</p>
+<p><strong>复杂度分析</strong>。我们首先分析<code>SHRINKNEIGHBORLIST</code>的复杂度。每个被放入保留集 $R$ 的节点可能会被重新检查多达 $|W|$ 次，因此单次调用的成本为 $O(|W|^2)$。具体来说：</p>
+<ul><li><code>SEARCHNEIGHBORSTOADD</code> 执行一次性的邻居搜索，不重复访问节点，复杂度为 $O(M \cdot efC)$。缓存没有好处，因为节点不会被重访。</li><li><code>SHRINKNEIGHBORLIST</code>（第12行）的运行时间为 $O(efC^2)$，因为它在多达 $efC$ 个候选者之间计算成对距离。</li><li>添加前向边不需要重计算，因为每个节点最多维护 $M$ 个链接。</li><li>添加反向边的成本为 $O(M^3)$，因为最多有 $M$ 个邻居被更新，每次更新都会触发一个 $O(M^2)$ 的基于RNG的收缩操作。</li></ul>
 <p><strong>缓存优化</strong>。为了提高效率，LEANN引入了一个距离缓存来消除<code>SHRINK</code>步骤中的冗余计算，将总体复杂度降低到：</p>
 <p></p>
 $$O(M \cdot efC + efC + M^2),$$

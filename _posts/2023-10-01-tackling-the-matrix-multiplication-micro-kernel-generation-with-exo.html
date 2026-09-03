@@ -270,10 +270,8 @@ TABLE II: VGG16 DNN 模型（批大小为1）的各层应用 IM2ROW 转换后得
 <h3>E. 实验工作流</h3>
 <p><strong>微内核生成</strong>。对于微内核生成，我们只需执行以下脚本：<code>./microkernel_generator.sh</code>。此脚本将生成论文第三节中解释的微内核，并显示过程中每一步生成的代码，如前述章节所示。</p>
 <h3>F. 评估和预期结果</h3>
-<p><strong>复现评估</strong>。为了复现评估，我们需要使用两个不同的脚本，对应论文中的不同评估。<br/>
-1.  <strong>solo-mode 评估</strong>：要评估微内核在 solo-mode 下的性能，我们需要执行相应的脚本：<code>./execute_ukernel_solo.sh</code>。此脚本将执行图13中显示的实验。<br/>
-2.  <strong>算法实验复现</strong>：为了复现图14-18的实验，我们应该执行以下脚本：<code>./execute_algorithm.sh</code>。由于算法、微内核和 GEMM 尺寸（包括方形和 DL 模型）的不同组合，这项评估耗时最长。<br/>
-3.  <strong>生成图表</strong>：要生成图表，我们应该执行绘图脚本：<code>./do_plots.sh</code>。论文的图表将位于 <code>plots</code> 文件夹中。</p>
+<p><strong>复现评估</strong>。为了复现评估，我们需要使用两个不同的脚本，对应论文中的不同评估。</p>
+<ol><li><strong>solo-mode 评估</strong>：要评估微内核在 solo-mode 下的性能，我们需要执行相应的脚本：<code>./execute_ukernel_solo.sh</code>。此脚本将执行图13中显示的实验。</li><li><strong>算法实验复现</strong>：为了复现图14-18的实验，我们应该执行以下脚本：<code>./execute_algorithm.sh</code>。由于算法、微内核和 GEMM 尺寸（包括方形和 DL 模型）的不同组合，这项评估耗时最长。</li><li><strong>生成图表</strong>：要生成图表，我们应该执行绘图脚本：<code>./do_plots.sh</code>。论文的图表将位于 <code>plots</code> 文件夹中。</li></ol>
 <p>请注意，用户可以使用一个脚本来构建和执行制品：<code>./build_and_execute_all.sh</code>。此脚本将构建环境并自行执行所有实验。</p>
 <h3>G. 实验定制</h3>
 <p><strong>定制化选项</strong>。此制品可以通过多种方式进行定制。用户能够修改生成的微内核或 GEMM 的评估。</p>

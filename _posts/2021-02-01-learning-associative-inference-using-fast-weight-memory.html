@@ -109,27 +109,14 @@ title: LEARNING ASSOCIATIVE INFERENCE USING FAST WEIGHT MEMORY
 <p><strong>与近期工作的关系</strong>。我们的工作直接建立在两个可微快速权重记忆的例子之上：Schlag &amp; Schmidhuber (2018) 的 TPR-RNN【Learning to reason with third order tensor products】和 Munkhdalai et al. (2019) 的元学习神经记忆（MNM）【Metalearned neural memory】。TPR-RNN 是一个用于文本推理的句子级模型。它在常规 bAbI 任务上取得了优异的结果，但在词级 bAbI【Schlag et al., 2019, Enhancing the transformer with explicit relational encoding for math problem solving】或算法玩具问题【Le et al., 2020, Self-attentive associative memory】上表现不佳。相比之下，MNM 是一个词级模型，它通过一个全连接的多层前馈网络来增强 LSTM 作为其记忆，并使用元学习目标进行训练。MNM 和 TPR-RNN 都是在常规 bAbI 数据集上开发的，该数据集只包含短序列，并且不要求模型从其记忆中移除过时的关联。在这项工作中，我们在一个无限的 bAbI 故事序列上进行训练，我们的 FWM 取得了优异的性能，并优于 MNM。我们进一步在小规模语言建模和元强化学习中展示了强大的性能，证明了我们贡献的通用性。</p>
 <hr/>
 <h2>A4 实验环境</h2>
-<p><strong>数据集</strong>：<br/>
-1.  <strong>concatenated-bAbI (catbAbI)</strong>：这是一个基于 bAbI 数据集【Weston et al., 2015a, Towards ai-complete question answering: A set of prerequisite toy tasks】的更具挑战性的变体。它将 bAbI 故事拼接成一个无限序列，用于自回归方式的训练，模拟闭卷问答。它被用于监督学习实验。<br/>
-2.  <strong>部分可观察马尔可夫决策过程 (POMDPs)</strong>：这是一个为元强化学习设计的任务集。每个环境是一个由5个状态和3个动作组成的稀疏有向图。代理需要在训练中未见过的新图中最大化奖励。<br/>
-3.  <strong>Penn Treebank (PTB)</strong> 和 <strong>WikiText-2 (WT2)</strong>：这是两个流行的小规模词级语言建模基准数据集，用于自监督学习实验。</p>
-<p><strong>模型架构</strong>：<br/>
-*   <strong>FWM</strong>：核心模型。在 catbAbI 实验中，LSTM 隐藏层大小 $d_{LSTM}=256$，FWM 维度 $d_{FWM}=32$，读取次数 $N_r=3$。在语言建模实验中，FWM 使用了与 AWD-LSTM 相同的三层 LSTM 作为其慢速 RNN 部分。<br/>
-*   <strong>基线模型</strong>：<br/>
-    *   <strong>正则化 LSTM</strong>：一个4层、带残差连接的 LSTM。<br/>
-    *   <strong>Transformer-XL (TXL)</strong>：一个3层、注意力窗口为1400个词元的 TXL 模型。<br/>
-    *   <strong>Metalearned Neural Memory (MNM)</strong>：当前词级 bAbI 的 SOTA 模型。<br/>
-    *   <strong>Ba's Fast Weights (JBFW)</strong>：一种早期的快速权重模型，在实验中未能收敛。<br/>
-    *   <strong>AWD-LSTM</strong>：在语言建模实验中作为基线。<br/>
-    *   <strong>AWD-TXL</strong>：在语言建模实验中作为基线。</p>
-<p><strong>硬件配置</strong>：<br/>
-*   <strong>GPU</strong>：实验被限制在约 16GB 显存的 GPU 上运行。<br/>
-*   <strong>致谢中提及</strong>：NVIDIA 捐赠了多台 DGX 服务器，IBM 捐赠了一台 Minsky 服务器。</p>
-<p><strong>软件配置</strong>：<br/>
-*   <strong>优化器</strong>：Adam 优化器。在语言建模实验中，后期切换到平均随机梯度下降（ASGD）。<br/>
-*   <strong>训练细节 (catbAbI)</strong>：所有模型使用截断的反向传播（tBPTT），截断长度为200个词元。<br/>
-*   <strong>训练细节 (Meta-RL)</strong>：使用优势演员-评论家（A2C）算法进行优化。<br/>
-*   <strong>代码库</strong>：语言建模实验代码基于 Uber AI Lab 和 Salesforce 的 AWD-LSTM-LM 代码库。</p>
+<p><strong>数据集</strong>：</p>
+<ol><li><strong>concatenated-bAbI (catbAbI)</strong>：这是一个基于 bAbI 数据集【Weston et al., 2015a, Towards ai-complete question answering: A set of prerequisite toy tasks】的更具挑战性的变体。它将 bAbI 故事拼接成一个无限序列，用于自回归方式的训练，模拟闭卷问答。它被用于监督学习实验。</li><li><strong>部分可观察马尔可夫决策过程 (POMDPs)</strong>：这是一个为元强化学习设计的任务集。每个环境是一个由5个状态和3个动作组成的稀疏有向图。代理需要在训练中未见过的新图中最大化奖励。</li><li><strong>Penn Treebank (PTB)</strong> 和 <strong>WikiText-2 (WT2)</strong>：这是两个流行的小规模词级语言建模基准数据集，用于自监督学习实验。</li></ol>
+<p><strong>模型架构</strong>：</p>
+<ul><li><strong>FWM</strong>：核心模型。在 catbAbI 实验中，LSTM 隐藏层大小 $d_{LSTM}=256$，FWM 维度 $d_{FWM}=32$，读取次数 $N_r=3$。在语言建模实验中，FWM 使用了与 AWD-LSTM 相同的三层 LSTM 作为其慢速 RNN 部分。</li><li><strong>基线模型</strong>：<ul><li><strong>正则化 LSTM</strong>：一个4层、带残差连接的 LSTM。</li><li><strong>Transformer-XL (TXL)</strong>：一个3层、注意力窗口为1400个词元的 TXL 模型。</li><li><strong>Metalearned Neural Memory (MNM)</strong>：当前词级 bAbI 的 SOTA 模型。</li><li><strong>Ba's Fast Weights (JBFW)</strong>：一种早期的快速权重模型，在实验中未能收敛。</li><li><strong>AWD-LSTM</strong>：在语言建模实验中作为基线。</li><li><strong>AWD-TXL</strong>：在语言建模实验中作为基线。</li></ul></li></ul>
+<p><strong>硬件配置</strong>：</p>
+<ul><li><strong>GPU</strong>：实验被限制在约 16GB 显存的 GPU 上运行。</li><li><strong>致谢中提及</strong>：NVIDIA 捐赠了多台 DGX 服务器，IBM 捐赠了一台 Minsky 服务器。</li></ul>
+<p><strong>软件配置</strong>：</p>
+<ul><li><strong>优化器</strong>：Adam 优化器。在语言建模实验中，后期切换到平均随机梯度下降（ASGD）。</li><li><strong>训练细节 (catbAbI)</strong>：所有模型使用截断的反向传播（tBPTT），截断长度为200个词元。</li><li><strong>训练细节 (Meta-RL)</strong>：使用优势演员-评论家（A2C）算法进行优化。</li><li><strong>代码库</strong>：语言建模实验代码基于 Uber AI Lab 和 Salesforce 的 AWD-LSTM-LM 代码库。</li></ul>
 <hr/>
 <h2>A4 实验结果</h2>
 <h3>4.1 CONCATENATED-BABI 实验</h3>

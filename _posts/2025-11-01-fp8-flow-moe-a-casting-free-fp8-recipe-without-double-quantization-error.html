@@ -33,10 +33,8 @@ title: 'FP8-Flow-MoE: A Casting-Free FP8 Recipe without Double Quantization Erro
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>: 训练大型混合专家（MoE）模型因其极高的计算和内存需求而成本高昂。尽管低精度训练（如FP8）有望加速计算并减少内存占用，但现有实现仍严重依赖于以BF16为主的数据流，其中包含频繁的量化-反量化（Q/DQ）转换。这些冗余的类型转换削弱了FP8的理论效率。此外，若简单地通过在FP8中保持整个数据流来移除这些转换，会引入“双重量化误差”：沿不同维度量化的张量会累积不一致的缩放因子，从而降低数值稳定性。</p>
 <p><strong>研究目标</strong>: 本文旨在解决现有FP8 MoE训练中的效率瓶颈和数值稳定性问题，提出一种系统性的、以FP8为中心的数据流训练方案，以充分发挥FP8格式的性能优势，同时避免双重量化误差，确保训练的稳定收敛。</p>
-<p><strong>创新点</strong>:<br/>
-1. <strong>避免FP8数据流中的双重量化误差</strong>：通过引入一种<strong>感知缩放的转置算子（scaling-aware transpose operator）</strong>，可以直接在行式和列式布局的FP8张量之间进行转换，同时保持缩放一致性。该设计消除了跨算子进行反量化再量化的循环，有效避免了FP8数据流中的双重量化误差。<br/>
-2. <strong>提出无类型转换的FP8训练方案及原生FP8算子套件</strong>：本文提出了FP8-Flow-MoE方案，整个MoE阶段均在FP8下运行，除了入口点外没有显式的类型转换。与简单的算子替换方法相比，类型转换操作的数量从12次减少到2次，标志着从以BF16为中心到以FP8为中心的计算范式转变。为支持该方案，本文还提供了一套原生FP8算子，其中一些已合并到上游仓库（如NVIDIA/TransformerEngine），其余将作为开源实现的一部分发布。<br/>
-3. <strong>对FP8训练进行全面的系统级分析</strong>：本文深入研究并比较了FP8和BF16在MoE组件中的表现，分析了算子层面和量化相关的影响。在671B参数的MoE模型上的评估表明，与BF16基线和朴素的FP8算子替换方法相比，FP8-Flow-MoE实现了高达21%的吞吐量提升和每GPU 7.4 GB的内存减少。而朴素的FP8替换方法仅带来3%的增益，内存节省微乎其微甚至为负。</p>
+<p><strong>创新点</strong>:</p>
+<ol><li><strong>避免FP8数据流中的双重量化误差</strong>：通过引入一种<strong>感知缩放的转置算子（scaling-aware transpose operator）</strong>，可以直接在行式和列式布局的FP8张量之间进行转换，同时保持缩放一致性。该设计消除了跨算子进行反量化再量化的循环，有效避免了FP8数据流中的双重量化误差。</li><li><strong>提出无类型转换的FP8训练方案及原生FP8算子套件</strong>：本文提出了FP8-Flow-MoE方案，整个MoE阶段均在FP8下运行，除了入口点外没有显式的类型转换。与简单的算子替换方法相比，类型转换操作的数量从12次减少到2次，标志着从以BF16为中心到以FP8为中心的计算范式转变。为支持该方案，本文还提供了一套原生FP8算子，其中一些已合并到上游仓库（如NVIDIA/TransformerEngine），其余将作为开源实现的一部分发布。</li><li><strong>对FP8训练进行全面的系统级分析</strong>：本文深入研究并比较了FP8和BF16在MoE组件中的表现，分析了算子层面和量化相关的影响。在671B参数的MoE模型上的评估表明，与BF16基线和朴素的FP8算子替换方法相比，FP8-Flow-MoE实现了高达21%的吞吐量提升和每GPU 7.4 GB的内存减少。而朴素的FP8替换方法仅带来3%的增益，内存节省微乎其微甚至为负。</li></ol>
 <h2>A3 背景知识与相关工作</h2>
 <h3>2.1 低精度训练和FP8量化</h3>
 <p><strong>低精度计算的演进</strong>。低精度计算已成为高效大规模模型训练的关键技术。早期的FP16和BF16混合精度方案在保持收敛性的同时显著降低了训练成本【11，Mixed precision training，2018，International Conference on Learning Representations (ICLR)】【18，Training deep neural networks with 8-bit floating point numbers，2018，Advances in neural information processing systems】。近年来，FP8格式因其能在现代加速器上将算术吞吐量翻倍而备受关注【13，Nvidia hopper architecture whitepaper，2022，Technical Whitepaper】【12，FP8 Formats for Deep Learning，2022，arXiv e-prints】【3，Deepseek-v3 technical report，2024，arXiv preprint arXiv:2412.19437】。FP8通常遵循IEEE 754约定，但定义了多种变体，最著名的是E4M3和E5M2，它们在精度和动态范围之间做出了不同的权衡【18，Training deep neural networks with 8-bit floating point numbers，2018，Advances in neural information processing systems】。E4M3提供更高的精度，而E5M2提供更宽的数值范围。另一种变体UE8M0用于编码2的幂，通常用于缩放因子而非激活值。</p>
@@ -135,9 +133,8 @@ $$=(-1)^{SN} \cdot 2^{E-7+T} \cdot (1+M/8)$$
 <p><strong>传统BF16训练的数据流</strong>。在传统的基于BF16的训练中，端到端数据流涉及跨这些阶段的多种数据格式转换。Token首先通过all-to-all通信原语进行路由和分发，然后进行置换和打包，形成连续的专家批次，以进行高效的GEMM计算。每个专家执行第一个分组线性变换，接着是激活、第二个分组线性变换，最后是逆置换和组合步骤以聚合输出。这个结构定义了MoE层计算图的核心。</p>
 <p><strong>现有FP8集成策略的局限性</strong>。当将此流程扩展到FP8计算时，现有框架主要采用保守的集成策略。例如，NVIDIA的Transformer Engine实现了一个分块（blockwise）的FP8方案，其中FP8的量化和计算严格限制在分组线性模块内部。这种设计允许在矩阵乘法（分组GEMM）中利用FP8加速，实现了比BF16更高的算术吞吐量，但将所有通信和数据移动阶段——特别是分发all-to-all操作——保留在更高精度的格式中。因此，虽然GEMM算子受益于FP8张量核，但整个MoE层的性能仍然受到高精度通信和频繁格式转换的限制。</p>
 <p><strong>DeepSeek-V3 FP8方案的分析</strong>。另一个代表性的实现是DeepSeek-V3训练系统，它展示了成功的规模化FP8 MoE训练并取得了最先进的性能。尽管完整的训练框架未完全开源，但其公开的描述和发布的库——特别是DeepGEMM和DeepEP——表明专家计算和专家间通信都使用了定制的高性能FP8算子进行加速。然而，整个数据流仍然存在大量的量化开销。我们的分析表明，这种方法在单个MoE前向-反向传播过程中引入了多达十二次量化/反量化操作。此外，在权重梯度计算（wgrad）阶段，FP8激活值通常是行式量化、反量化，然后再次以列式方式量化。由于这些是逐token的量化方案，其缩放沿特定方向进行，重复的量化步骤会放大舍入和缩放误差（“双重量化误差”），对数值稳定性和收敛性产生负面影响。</p>
-<p><strong>FP8-Flow-MoE数据流设计</strong>。为了在保持数值稳定性的同时充分利用FP8的计算优势，我们设计了一个以FP8为中心的数据流，称为FP8-Flow-MoE，它最小化了格式转换，并尽可能在整个MoE专家路径中保持FP8表示。在此设计中，输入激活和输出梯度在整个前向和反向传播过程中都保持为FP8格式，除了两个特定的边界：<br/>
-1. 第一个分组线性层的输出和激活函数之间。<br/>
-2. 第二个分组线性层和反向传播中的组合/分发操作之间。</p>
+<p><strong>FP8-Flow-MoE数据流设计</strong>。为了在保持数值稳定性的同时充分利用FP8的计算优势，我们设计了一个以FP8为中心的数据流，称为FP8-Flow-MoE，它最小化了格式转换，并尽可能在整个MoE专家路径中保持FP8表示。在此设计中，输入激活和输出梯度在整个前向和反向传播过程中都保持为FP8格式，除了两个特定的边界：</p>
+<ol><li>第一个分组线性层的输出和激活函数之间。</li><li>第二个分组线性层和反向传播中的组合/分发操作之间。</li></ol>
 <p><strong>保留BF16的考量</strong>。这两个例外对应于FP8算术的基本数值挑战。第一个涉及归约操作（如求和），在有限的指数范围内极易发生溢出；第二个涉及非线性变换（如GELU或ReLU），可能会放大微小的量化误差。由于这两个计算在计算图中是相邻的，我们局部保留BF16精度以确保稳定性，同时将所有其他张量严格保持在FP8格式。这种设计产生了一个近乎连续的FP8数据流，并与先前的MoE中FP8实现相比，大幅减少了量化边界。</p>
 <h3>3.3 高性能FP8算子</h3>
 <p><strong>高性能FP8算子的必要性</strong>。为了使所提出的以FP8为中心的计算流实用且高效，我们进一步开发了一套全面的支持算子，这些算子专门针对MoE层内的数据依赖和数值模式进行了定制。这些算子解决了在大规模MoE训练中应用FP8时出现的关键挑战，包括累积的舍入和缩放误差、冗余的数据转换，以及由碎片化算子引起的调度效率低下问题。它们共同实现了FP8-Flow-MoE的无缝和高吞吐量执行，确保了FP8张量核的优势从孤立的算子扩展到完整的端到端训练流水线。</p>
@@ -175,10 +172,8 @@ $$=(-1)^{SN} \cdot 2^{E-7+T} \cdot (1+M/8)$$
 <figcaption class="figure-caption">图6：训练2000亿token的损失比较</figcaption>
 </figure>
 <h3>4.2 效率评估</h3>
-<p><strong>实验配置</strong>: 我们接下来对多种精度和数据流配置的端到端训练效率进行基准测试。具体来说，我们比较了以下三种代表性配置：<br/>
-1. <strong>BF16</strong>: 使用标准FP32-BF16混合精度的基线配置。<br/>
-2. <strong>Blockwise</strong>: 采用FP8分组GEMM算子的TE风格分块式方案。<br/>
-3. <strong>FP8-Flow-MoE (ours)</strong>: 具有融合算子和最小化量化开销的以FP8为中心的数据流。</p>
+<p><strong>实验配置</strong>: 我们接下来对多种精度和数据流配置的端到端训练效率进行基准测试。具体来说，我们比较了以下三种代表性配置：</p>
+<ol><li><strong>BF16</strong>: 使用标准FP32-BF16混合精度的基线配置。</li><li><strong>Blockwise</strong>: 采用FP8分组GEMM算子的TE风格分块式方案。</li><li><strong>FP8-Flow-MoE (ours)</strong>: 具有融合算子和最小化量化开销的以FP8为中心的数据流。</li></ol>
 <p>所有实验都在DeepSeek-V3 (671B)模型上进行，以验证FP8-Flow-MoE在真实大规模训练条件下的可扩展性和鲁棒性。模型使用标准的专家和流水线并行配置（EP/PP = 8/32, 16/16, 32/8）进行训练，并在两种激活检查点（AC）策略下进行评估：<code>AC = full</code>，对所有模块应用完整检查点；以及<code>AC = sel (+MoE expert)</code>，选择性地对MoE层进行检查点，但排除专家以评估FP8激活压缩。后者是与Megatron中1F1B重叠调度兼容的最节省内存的配置。为隔离计算效率与通信重叠的影响，所有端到端实验均在没有计算-通信重叠的情况下进行。</p>
 <p><strong>吞吐量分析</strong>: 表2和表3总结了在三种EP设置下测得的吞吐量（TGS，tokens/GPU/s）和峰值内存（Mem，GB）。在所有激活检查点模式下，FP8-Flow-MoE始终优于BF16基线，实现了+6% (EP8)、+8% (EP16)和+16% (EP32)的吞吐量提升。与Blockwise方案相比，FP8-Flow-MoE进一步将吞吐量提高了3% (EP8)、8% (EP16)和高达21% (EP32)。性能差距在更高的EP级别上扩大，这是因为减少的量化开销和算子融合的累积影响变得更加显著。</p>
 <p><strong>内存效率</strong>: 在<code>AC = sel (+MoE expert)</code>和EP8的设置下，FP8-Flow-MoE的峰值内存相比BF16减少了约8GB，相比Blockwise减少了16.5GB，这直接得益于FP8检查点压缩机制，该机制将中间激活以FP8而非BF16存储。在最大的EP=32规模下，BF16和Blockwise基线都遇到了内存不足（OOM）错误，而FP8-Flow-MoE保持稳定，清晰地展示了其卓越的可扩展性和内存效率。</p>

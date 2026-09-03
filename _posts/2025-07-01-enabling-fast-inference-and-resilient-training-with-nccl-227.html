@@ -83,10 +83,8 @@ $$NCCLCHECK(ncclCommShrink(comm[i], \&amp;excludeRank, 1, \&amp;newcomm[i], NULL
 <li><strong>默认模式 (Default mode)</strong>: 用于计划内的重新配置，允许修改设备拓扑，同时确保所有操作都能完成。</li>
 <li><strong>错误模式 (Error mode)</strong>: 自动中止正在进行的操作，以便从意外的设备故障中恢复。</li>
 </ul>
-<p><strong>NCCL Shrink 的核心能力</strong>。NCCL Shrink 使开发者能够：<br/>
-* 通过动态重建通信器来维持不间断的训练。<br/>
-* 通过可配置的资源共享，尽可能地重用资源。<br/>
-* 以最小的中断优雅地处理设备故障。</p>
+<p><strong>NCCL Shrink 的核心能力</strong>。NCCL Shrink 使开发者能够：</p>
+<ul><li>通过动态重建通信器来维持不间断的训练。</li><li>通过可配置的资源共享，尽可能地重用资源。</li><li>以最小的中断优雅地处理设备故障。</li></ul>
 <p><strong>NCCL Shrink 使用示例</strong>。以下是用于计划内重构和错误恢复场景的NCCL Shrink使用示例代码：<br/>
 <strong>计划内重构：</strong></p>
 <pre><code>NCCLCHECK(ncclGroupStart());   
@@ -125,15 +123,12 @@ NCCLCHECK(ncclGroupEnd());</code></pre>
 <p><strong>代理事件的统一</strong>。之前，NCCL暴露了<code>ncclProfileProxyOp</code>和<code>ncclProfileProxyStep</code>两个事件来跟踪网络代理线程的进度。虽然这些事件提供了不同粒度的信息，但它们也造成了许多监测点的重复。在2.27版本中，NCCL通过移除冗余的ProxyOp状态并引入一个统一的<code>ncclProfilerProxyOpInProgress_v4</code>状态，简化并优化了这一模型。这在不牺牲细节的情况下减少了分析器的开销，并提高了跟踪通信进度时的清晰度。此外，还引入了一个新的ProxyStep事件状态<code>ncclProfilerProxyStepPeerWait_v4</code>，用于反映发送方rank等待接收方发布发送许可信号的时间，整合了以前的功能，同时最大限度地减少了重复。</p>
 <p><strong>GPU内核事件的准确性</strong>。为了提高计时精度，NCCL现在支持原生GPU时间戳传播。GPU现在使用其内部的全局计时器记录并导出开始和停止时间戳，而不是依赖于通过GPU工作计数器进行的主机端事件计时——这种方法容易受到延迟伪影（例如，内核延迟或合并）的影响。这使得分析工具能够直接从GPU获取精确的内核运行时长，不过开发者在将时间戳转换为主机时间时需要进行校准或插值。</p>
 <p><strong>网络插件事件更新</strong>。NCCL分析器接口现在支持对网络定义的事件使用<code>recordEventState</code>。这一新机制允许分析器更新正在进行的操作的状态，这对于将实时的网络反馈（如重传信号或拥塞提示）注入性能时间线非常有用。</p>
-<p><strong>其他增强功能</strong>。<br/>
-* <strong>分析器初始化</strong>：NCCL现在在分析器初始化期间报告通信器元数据，包括名称、ID、节点数、rank数和调试级别。<br/>
-* <strong>通道报告</strong>：报告的通道数量反映的是实际使用情况，而不是理论上的限制。这包括点对点（P2P）操作。<br/>
-* <strong>通信器标记</strong>：<code>ncclConfig_t</code>已扩展，可包含通信器名称，从而改善了被分析操作与特定通信器之间的关联性。</p>
+<p><strong>其他增强功能</strong>。</p>
+<ul><li><strong>分析器初始化</strong>：NCCL现在在分析器初始化期间报告通信器元数据，包括名称、ID、节点数、rank数和调试级别。</li><li><strong>通道报告</strong>：报告的通道数量反映的是实际使用情况，而不是理论上的限制。这包括点对点（P2P）操作。</li><li><strong>通信器标记</strong>：<code>ncclConfig_t</code>已扩展，可包含通信器名称，从而改善了被分析操作与特定通信器之间的关联性。</li></ul>
 <p>这些更新共同提升了NCCL分析器插件接口的保真度，为开发者提供了对网络动态、GPU计时和操作结构的更深入洞察，这些对于诊断和调优大规模AI工作负载至关重要。</p>
 <h3>前瞻性支持</h3>
-<p>前瞻性支持包括：<br/>
-* <strong>跨数据中心通信</strong>：提供初步支持，允许跨地理分布的数据中心执行集合操作。<br/>
-* <strong>多NIC插件可见性</strong>：支持同时利用多种网络配置。</p>
+<p>前瞻性支持包括：</p>
+<ul><li><strong>跨数据中心通信</strong>：提供初步支持，允许跨地理分布的数据中心执行集合操作。</li><li><strong>多NIC插件可见性</strong>：支持同时利用多种网络配置。</li></ul>
 <h2>A4 实验环境</h2>
 <p>本文主要介绍NCCL 2.27的功能，未提供完整的基准测试实验设置，但提及了相关的软硬件配置：</p>
 <ul>

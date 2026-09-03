@@ -33,11 +33,8 @@ title: 'PipeFusion: Patch-level Pipeline Parallelism for Diffusion Transformers 
 <p>本文提出了一种名为 PipeFusion 的创新并行方法，旨在解决使用扩散变换器（Diffusion Transformers, DiTs）模型生成高分辨率图像时遇到的高延迟问题。</p>
 <p><strong>核心问题</strong>：随着AI生成内容（AIGC）的发展，DiT模型正逐渐取代U-Net架构。然而，由于注意力计算的二次方延迟增长，DiT在处理长序列（如高分辨率图像）时面临严重的性能瓶颈。现有的并行方法，如张量并行（TP）和序列并行（SP），在应用于DiT时效率不高，前者因激活值体积大而导致通信成本过高，后者则需要在每个注意力层进行数据交换。DistriFusion虽利用了扩散过程中的时间冗余来重叠通信，但应用于DiT时内存效率低下。</p>
 <p><strong>研究目标</strong>：开发一种新的并行策略，以更有效地利用DiT推理过程中的输入时间冗余，显著降低通信成本和内存消耗，从而加速高分辨率图像的生成。</p>
-<p><strong>创新点 (PipeFusion)</strong>：<br/>
-1. <strong>分块级流水线并行策略</strong>：PipeFusion将图像分割成多个补丁（patch），并将模型的网络层划分到多个GPU上。它采用一种补丁级的流水线并行策略，高效地协调通信与计算。<br/>
-2. <strong>利用时间冗余减少通信</strong>：通过利用连续扩散步骤之间输入的高度相似性，PipeFusion重用前一步的“陈旧”特征图（stale feature maps）为当前流水线步骤提供上下文。这与现有的DiT并行方法（如张量并行、序列并行和DistriFusion）相比，极大地减少了通信开销，因为它仅需在每个设备上各阶段的边界传输输入和输出，而非每层都传输激活值。<br/>
-3. <strong>高内存效率</strong>：通过将模型参数分布在不同设备上，PipeFusion提升了内存效率。与DistriFusion需要每个设备缓存完整的K和V激活不同，PipeFusion所需的注意力K、V缓存大小减少为1/N（N为并行度），使其非常适合像12B参数的Flux.1这样的大型DiT模型。<br/>
-4. <strong>更高的生成精度</strong>：相比于DistriFusion，PipeFusion在更长的时间内使用更新的（fresh）K和V值，从而实现了更高的图像生成精度。</p>
+<p><strong>创新点 (PipeFusion)</strong>：</p>
+<ol><li><strong>分块级流水线并行策略</strong>：PipeFusion将图像分割成多个补丁（patch），并将模型的网络层划分到多个GPU上。它采用一种补丁级的流水线并行策略，高效地协调通信与计算。</li><li><strong>利用时间冗余减少通信</strong>：通过利用连续扩散步骤之间输入的高度相似性，PipeFusion重用前一步的“陈旧”特征图（stale feature maps）为当前流水线步骤提供上下文。这与现有的DiT并行方法（如张量并行、序列并行和DistriFusion）相比，极大地减少了通信开销，因为它仅需在每个设备上各阶段的边界传输输入和输出，而非每层都传输激活值。</li><li><strong>高内存效率</strong>：通过将模型参数分布在不同设备上，PipeFusion提升了内存效率。与DistriFusion需要每个设备缓存完整的K和V激活不同，PipeFusion所需的注意力K、V缓存大小减少为1/N（N为并行度），使其非常适合像12B参数的Flux.1这样的大型DiT模型。</li><li><strong>更高的生成精度</strong>：相比于DistriFusion，PipeFusion在更长的时间内使用更新的（fresh）K和V值，从而实现了更高的图像生成精度。</li></ol>
 <p>实验结果表明，在8块L40 PCIe GPU上，PipeFusion在Pixart、Stable-Diffusion 3和Flux.1模型上均取得了当前最先进的性能。</p>
 <h2>A3 背景知识</h2>
 <p><strong>扩散模型与扩散变换器 (DiTs)</strong>：扩散模型使用一个噪声预测深度神经网络（DNN），表示为$\epsilon_{\theta}$，来生成高质量图像。该过程从纯高斯噪声$x_T \sim N (0, I)$开始，通过多个步骤迭代去噪，最终生成图像$x_0$，其中$T$是总扩散步数。如图1所示，在每一步$t$，模型$\epsilon_{\theta}$接收带噪图像$x_t$、时间步$t$以及一个附加条件$c$（如文本、图像）作为输入，以预测$x_t$中的噪声$\epsilon_t$。前一步的图像$x_{t-1}$通过以下方式获得：</p>
@@ -91,19 +88,14 @@ $$x_{t-1} = \text{Update}(x_t, t, \epsilon_t), \quad \epsilon_t = \epsilon_\thet
 <p><strong>各方法通信成本比较</strong>：在所有方法中，只要$N &lt; 2L$，PipeFusion的通信成本最低，这很容易满足，因为网络层数$L$通常很大，例如在StableDiffusion-3中$L = 38$。此外，PipeFusion可以重叠通信和计算。Ulysses序列并行的通信成本随着$N$的增加而降低，优于其余三种方法。然而，它的通信无法被计算隐藏。Ring序列并行和DistriFusion具有相似的通信成本和重叠行为。区别在于重叠的范围：Ring序列并行中的计算在注意力模块内部重叠，而DistriFusion中的计算则在整个前向传播过程中重叠。</p>
 <p><strong>各方法内存成本分析</strong>：为了分析内存成本，我们用$P$表示模型参数的总数。在PipeFusion和张量并行中，内存成本随着使用更多GPU而降低，这对于快速增长的DiT模型大小是一个很好的特性。PipeFusion和DistriFusion都为每个Transformer层维护一个KV缓冲区，导致显著的激活内存开销，特别是对于长序列。PipeFusion中的KV缓冲区随着设备数$N$的增加而减小，而DistriFusion则没有这种减少。</p>
 <h2>A4 实验环境</h2>
-<p><strong>硬件配置</strong>：<br/>
-* 主要平台：一个由8块L40-48GB GPU组成的集群，通过PCIe Gen4x16连接。<br/>
-* 对比平台（附录）：8块A100 GPU，通过NVLink（高带宽）连接。</p>
-<p><strong>模型架构</strong>：<br/>
-* <strong>Pixart</strong> 【索引编号21, Junsong Chen et al., Pixart-α: Fast training of diffusion transformer for photorealistic text-to-image synthesis, 2023, arXiv; 索引编号3, Junsong Chen et al., Pixart-σ: Weak-to-strong training of diffusion transformer for 4k text-to-image generation, 2024, arXiv】：主干是一个包含6亿（0.6B）参数的Transformer模型，基于原始DiT框架，并集成了用于合并文本条件的交叉注意力模块。<br/>
-* <strong>Stable-Diffusion-3 (SD3-medium)</strong> 【索引编号2, Patrick Esser et al., Scaling rectified flow transformers for high-resolution image synthesis, 2024, Forty-first International Conference on Machine Learning】：利用多模态（MM）-DiT，其主干Transformer模型包含20亿（2B）参数。使用20步的FlowMatchEulerDiscreteScheduler。<br/>
-* <strong>Flux.1-dev</strong> 【索引编号1, BlackForestLabs, Announcing black forest labs, 2024, <a href="https://blackforestlabs.ai/" rel="noopener noreferrer" target="_blank">https://blackforestlabs.ai/</a> announcing-black-forest-labs/】：主干Transformer模型包含120亿（12B）参数，采用增强的MM-DiT设计。使用28步的FlowMatchEulerDiscreteScheduler。</p>
-<p><strong>软件配置</strong>：<br/>
-* PyTorch 2.4.1<br/>
-* CUDA Runtime 12.1.105<br/>
-* diffusers 0.30.3</p>
-<p><strong>数据集</strong>：<br/>
-* <strong>COCO Captions 2014</strong> 【索引编号37, Xinlei Chen et al., Microsoft coco captions: Data collection and evaluation server, 2015, arXiv】：用于评估Fréchet Inception Distance (FID) 分数。从验证集中采样30,000张图像作为参考，并为每个实验生成30,000张图像进行比较。</p>
+<p><strong>硬件配置</strong>：</p>
+<ul><li>主要平台：一个由8块L40-48GB GPU组成的集群，通过PCIe Gen4x16连接。</li><li>对比平台（附录）：8块A100 GPU，通过NVLink（高带宽）连接。</li></ul>
+<p><strong>模型架构</strong>：</p>
+<ul><li><strong>Pixart</strong> 【索引编号21, Junsong Chen et al., Pixart-α: Fast training of diffusion transformer for photorealistic text-to-image synthesis, 2023, arXiv; 索引编号3, Junsong Chen et al., Pixart-σ: Weak-to-strong training of diffusion transformer for 4k text-to-image generation, 2024, arXiv】：主干是一个包含6亿（0.6B）参数的Transformer模型，基于原始DiT框架，并集成了用于合并文本条件的交叉注意力模块。</li><li><strong>Stable-Diffusion-3 (SD3-medium)</strong> 【索引编号2, Patrick Esser et al., Scaling rectified flow transformers for high-resolution image synthesis, 2024, Forty-first International Conference on Machine Learning】：利用多模态（MM）-DiT，其主干Transformer模型包含20亿（2B）参数。使用20步的FlowMatchEulerDiscreteScheduler。</li><li><strong>Flux.1-dev</strong> 【索引编号1, BlackForestLabs, Announcing black forest labs, 2024, <a href="https://blackforestlabs.ai/" rel="noopener noreferrer" target="_blank">https://blackforestlabs.ai/</a> announcing-black-forest-labs/】：主干Transformer模型包含120亿（12B）参数，采用增强的MM-DiT设计。使用28步的FlowMatchEulerDiscreteScheduler。</li></ul>
+<p><strong>软件配置</strong>：</p>
+<ul><li>PyTorch 2.4.1</li><li>CUDA Runtime 12.1.105</li><li>diffusers 0.30.3</li></ul>
+<p><strong>数据集</strong>：</p>
+<ul><li><strong>COCO Captions 2014</strong> 【索引编号37, Xinlei Chen et al., Microsoft coco captions: Data collection and evaluation server, 2015, arXiv】：用于评估Fréchet Inception Distance (FID) 分数。从验证集中采样30,000张图像作为参考，并为每个实验生成30,000张图像进行比较。</li></ul>
 <h2>A4 实验结果</h2>
 <p>本节比较了不同并行方法在8块通过PCIe Gen4连接的L40 GPU上的性能。所有延迟数据均不包括VAE解码部分，且为5次运行的平均值。对于DistriFusion和PipeFusion，默认使用1个预热步骤。</p>
 <h3>4.1.1 延迟评估</h3>

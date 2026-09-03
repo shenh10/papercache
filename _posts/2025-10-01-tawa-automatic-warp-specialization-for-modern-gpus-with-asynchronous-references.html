@@ -45,12 +45,8 @@ $$ \frac{\sigma(a).F=1}{\langle\sigma.get(a)\rangle \rightarrow\langle\sigma[a \
 <p><strong>核心问题</strong>: 现代GPU架构（如NVIDIA Hopper和Blackwell）已经从同构处理器演变为集成了多个专用硬件单元（如Tensor Cores和Tensor Memory Accelerator, TMA）的复杂异构系统，支持细粒度的异步数据流执行模型。然而，主流的GPU编程范式，即单指令多线程（SIMT），其为同步、数据并行执行而设计，与硬件的异步、任务并行能力存在根本性的错位。这导致了一个显著的“可编程性鸿沟”：虽然硬件层面的Warp专业化（即不同的warp承担不同的角色，如数据生产和计算消费）是释放硬件潜力的关键，但它迫使开发者手动编排复杂的底层通信和软件流水线，这一过程耗时、易错且难以维护。</p>
 <p><strong>研究目标</strong>: 本文旨在解决上述可编程性鸿沟，目标是创建一个能够从高级、基于Tile的程序中自动、系统地生成高性能、Warp专业化的代码的编译器。该编译器应能将开发者从繁琐的内核重写工作中解放出来，自动处理角色划分、数据流管理和流水线编排。</p>
 <p><strong>创新点与主要贡献</strong>:<br/>
-为了应对上述挑战，本文提出了Tawa，一个自动化编译器，它通过分析从基于Tile的DSL生成的计算图，将程序划分为Warp专业化的组件，并管理通信和流水线。其主要贡献如下：<br/>
-1.  <strong>提出异步引用（aref）</strong>: 这是一种用于Warp级通信的新型IR抽象。<code>aref</code> 表达了异步数据传输的意图，而无需暴露底层的硬件原语（如mbarriers），在IR层面提供了一种清晰、可移植的表示方法。<br/>
-2.  <strong>实现Tawa自动编译流程</strong>: Tawa是一个用于NVIDIA GPU上Warp专业化的自动编译流程。它以Triton程序作为输入，进行任务感知的Warp组划分，应用多粒度流水线，并生成高性能的PTX代码。<br/>
-3.  <strong>高性能评估结果</strong>: 在NVIDIA H100 GPU上对代表性的LLM内核进行评估，结果表明Tawa实现了高硬件利用率。<br/>
-    *   对于GEMM，Tawa的性能比高度优化的cuBLAS GEMM内核最高提升1.1倍。<br/>
-    *   对于Attention负载，Tawa比Triton快1.2倍，并且与手工优化的CUTLASS C++ FlashAttention-3内核性能相当，但编程工作量远小于后者。</p>
+为了应对上述挑战，本文提出了Tawa，一个自动化编译器，它通过分析从基于Tile的DSL生成的计算图，将程序划分为Warp专业化的组件，并管理通信和流水线。其主要贡献如下：</p>
+<ol><li><strong>提出异步引用（aref）</strong>: 这是一种用于Warp级通信的新型IR抽象。<code>aref</code> 表达了异步数据传输的意图，而无需暴露底层的硬件原语（如mbarriers），在IR层面提供了一种清晰、可移植的表示方法。</li><li><strong>实现Tawa自动编译流程</strong>: Tawa是一个用于NVIDIA GPU上Warp专业化的自动编译流程。它以Triton程序作为输入，进行任务感知的Warp组划分，应用多粒度流水线，并生成高性能的PTX代码。</li><li><strong>高性能评估结果</strong>: 在NVIDIA H100 GPU上对代表性的LLM内核进行评估，结果表明Tawa实现了高硬件利用率。<ul><li>对于GEMM，Tawa的性能比高度优化的cuBLAS GEMM内核最高提升1.1倍。</li><li>对于Attention负载，Tawa比Triton快1.2倍，并且与手工优化的CUTLASS C++ FlashAttention-3内核性能相当，但编程工作量远小于后者。</li></ul></li></ol>
 <h2>A3 背景知识</h2>
 <h3>A. 现代NVIDIA GPU架构</h3>
 <p><strong>流式多处理器（SM）作为基本计算单元</strong>。如图1所示，流式多处理器（SM）是现代GPU的基本计算单元，包含了计算和内存资源。每个SM集成了一个大型寄存器文件、一个每个时钟周期可向一个warp（32个线程）分发指令的warp调度器，以及多个处理通用算术的CUDA核心。此外，SM还包括用于加速矩阵计算的专用Tensor Cores和一个作为软件管理的共享内存（SMEM）的内存块。一个线程块（CTA）被调度到一个SM上，并共享其寄存器和SMEM。在像Hopper这样的最新GPU代中，对Tensor Cores的依赖性增加，其贡献了总计算吞吐量的90%。因此，在现代GPU上实现高性能的关键在于用充足且及时的数据来充分饱和这些Tensor Cores。</p>

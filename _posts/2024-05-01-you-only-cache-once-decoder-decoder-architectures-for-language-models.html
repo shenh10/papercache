@@ -41,14 +41,8 @@ $$ Y^l = \text{Attention}(\hat{Q}^l, \hat{K}, \hat{V}) + X^l $$
 <p>本文针对大型语言模型（LLM）中随着输入序列增长而导致的KV缓存（KV Cache）占用大量GPU内存和预填充（prefilling）延迟过高的问题，提出了一种名为YOCO（You Only Cache Once）的新型解码器-解码器（decoder-decoder）架构。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>
 标准的仅解码器（decoder-only）Transformer架构在自回归生成时，需要缓存所有先前计算过的键/值（KV）向量，以避免重复计算。当处理长序列时，这部分KV缓存会变得非常庞大，成为推理过程中的内存瓶颈，并导致预填充阶段耗时极长，这限制了长上下文语言模型的实际部署。例如，一个65B模型处理512K个token，KV缓存就需要约86GB的GPU内存。</p>
-<p><strong>创新点与主要贡献</strong>：<br/>
-1. <strong>提出YOCO架构</strong>：这是一种解码器-解码器架构，由一个自解码器（self-decoder）和一个跨解码器（cross-decoder）堆叠而成。自解码器使用高效的自注意力机制（如滑动窗口注意力或门控保持机制）来编码输入并生成一个全局的、共享的KV缓存。随后，跨解码器通过交叉注意力（cross-attention）机制来复用这个KV缓存进行后续的计算。<br/>
-2. <strong>“只缓存一次”实现内存优化</strong>：由于只有自解码器的输出被用于生成全局KV缓存，且这个缓存被所有跨解码器层共享，因此整个模型的KV缓存大小与模型层数（L）无关，其内存复杂度从Transformer的O(N * L * D)降低到约O(N * D)。这极大地减少了GPU内存消耗，使得在有限的硬件上部署长上下文模型成为可能。<br/>
-3. <strong>预填充提前退出（Early Exit）机制</strong>：YOCO的计算流程允许在预填充阶段，计算完自解码器后即可提前退出，无需经过跨解码器。这一特性显著加快了预填充速度，例如，对于512K上下文，预填充延迟从180秒缩短到不足6秒，极大改善了用户体验。<br/>
-4. <strong>可扩展性与高性能</strong>：实验证明YOCO在模型大小、训练token数量和上下文长度方面都具有良好的可扩展性。<br/>
-    * <strong>训练规模</strong>：将3B规模的YOCO模型扩展到万亿级训练token，其性能与StableLM等主流Transformer模型相当。<br/>
-    * <strong>模型规模</strong>：从160M到13B的模型尺寸扩展曲线表明，YOCO与Transformer相比具有竞争力。<br/>
-    * <strong>上下文长度</strong>：成功将YOCO扩展到100万（1M）上下文长度，并在“大海捞针”测试中实现了近乎完美的检索准确率。</p>
+<p><strong>创新点与主要贡献</strong>：</p>
+<ol><li><strong>提出YOCO架构</strong>：这是一种解码器-解码器架构，由一个自解码器（self-decoder）和一个跨解码器（cross-decoder）堆叠而成。自解码器使用高效的自注意力机制（如滑动窗口注意力或门控保持机制）来编码输入并生成一个全局的、共享的KV缓存。随后，跨解码器通过交叉注意力（cross-attention）机制来复用这个KV缓存进行后续的计算。</li><li><strong>“只缓存一次”实现内存优化</strong>：由于只有自解码器的输出被用于生成全局KV缓存，且这个缓存被所有跨解码器层共享，因此整个模型的KV缓存大小与模型层数（L）无关，其内存复杂度从Transformer的O(N * L * D)降低到约O(N * D)。这极大地减少了GPU内存消耗，使得在有限的硬件上部署长上下文模型成为可能。</li><li><strong>预填充提前退出（Early Exit）机制</strong>：YOCO的计算流程允许在预填充阶段，计算完自解码器后即可提前退出，无需经过跨解码器。这一特性显著加快了预填充速度，例如，对于512K上下文，预填充延迟从180秒缩短到不足6秒，极大改善了用户体验。</li><li><strong>可扩展性与高性能</strong>：实验证明YOCO在模型大小、训练token数量和上下文长度方面都具有良好的可扩展性。<ul><li><strong>训练规模</strong>：将3B规模的YOCO模型扩展到万亿级训练token，其性能与StableLM等主流Transformer模型相当。</li><li><strong>模型规模</strong>：从160M到13B的模型尺寸扩展曲线表明，YOCO与Transformer相比具有竞争力。</li><li><strong>上下文长度</strong>：成功将YOCO扩展到100万（1M）上下文长度，并在“大海捞针”测试中实现了近乎完美的检索准确率。</li></ul></li></ol>
 <ol>
 <li><strong>门控保持机制（Gated Retention）</strong>：为自解码器提出了一种名为门控保持（gated retention）的高效自注意力模块，它通过数据控制的门控机制增强了retention网络，实现了训练并行、高性能和低推理成本的统一。</li>
 </ol>
@@ -288,13 +282,8 @@ B_{ij} = \begin{cases} 0, &amp; i - C &lt; j \le i \\ -\infty, &amp; \text{other
 </figure>
 <h2>A5 结论</h2>
 <p>本文提出了一种用于大型语言建模的解码器-解码器架构（YOCO）。与Transformer相比，YOCO在实现显著更优的推理效率的同时，保持了具有竞争力的性能。实验结果表明，YOCO在各种设置下都取得了良好的效果，包括扩展训练token数量、扩展模型大小以及将上下文长度扩展到1M token。性能剖析结果也显示，YOCO将推理效率提升了几个数量级，尤其是在长序列建模方面。</p>
-<p><strong>未来工作展望</strong>：<br/>
-1. <strong>YOCO + BitNet + Groq的结合</strong>：Groq通过将所有计算置于SRAM中实现极高吞吐量，但受限于内存容量。YOCO可以减少KV缓存内存，而BitNet可以减少模型权重内存。三者结合有望将LLM的部署成本降低几个数量级。<br/>
-2. <strong>YOCO应用于多模态大模型</strong>：YOCO的布局天然支持使用多个自解码器，其交叉注意力层非常适合多模态融合。自解码器的因果依赖性也完美契合流式视频处理，可用于构建异步多模态大模型，避免不同数据流相互阻塞，这对于机器人等实时应用至关重要。<br/>
-3. <strong>优化KV缓存模块机制</strong>：YOCO架构明确了KV缓存模块，为开发原生内存机制开辟了新机会。<br/>
-    * 可以集成缓存压缩机制以获得更紧凑的内存。<br/>
-    * 可以构建索引以实现高效的键值检索，由于YOCO复用缓存，只需维护一个索引。<br/>
-    * 解耦的建模方式支持预缓存上下文，这对于原生RAG和LLM原生搜索引擎具有潜在价值。</p>
+<p><strong>未来工作展望</strong>：</p>
+<ol><li><strong>YOCO + BitNet + Groq的结合</strong>：Groq通过将所有计算置于SRAM中实现极高吞吐量，但受限于内存容量。YOCO可以减少KV缓存内存，而BitNet可以减少模型权重内存。三者结合有望将LLM的部署成本降低几个数量级。</li><li><strong>YOCO应用于多模态大模型</strong>：YOCO的布局天然支持使用多个自解码器，其交叉注意力层非常适合多模态融合。自解码器的因果依赖性也完美契合流式视频处理，可用于构建异步多模态大模型，避免不同数据流相互阻塞，这对于机器人等实时应用至关重要。</li><li><strong>优化KV缓存模块机制</strong>：YOCO架构明确了KV缓存模块，为开发原生内存机制开辟了新机会。<ul><li>可以集成缓存压缩机制以获得更紧凑的内存。</li><li>可以构建索引以实现高效的键值检索，由于YOCO复用缓存，只需维护一个索引。</li><li>解耦的建模方式支持预缓存上下文，这对于原生RAG和LLM原生搜索引擎具有潜在价值。</li></ul></li></ol>
 <h2>A6 附录</h2>
 <h3>A. 用于YOCO长序列训练的块并行（Chunk Parallelism）</h3>
 <p><strong>块并行策略</strong>。为了减少通信频率并加速长序列训练，我们为YOCO引入了块并行。当训练序列极长时，将长序列划分到不同设备上至关重要【索引25，Sequence parallelism: Making 4d parallelism possible，2021，arXiv】、【索引11，Longnet: Scaling transformers to 1,000,000,000 tokens，2023，arXiv】。然而，总吞吐量往往受限于GPU通信【索引27，Ring attention with blockwise transformers for near-infinite context，2023，arXiv】。YOCO的跨解码器设计解耦了自注意力依赖，同时保留了建模能力，为分布式长序列训练带来了独特的优势。在自解码器中，依赖关系仅存在于相邻设备之间，因此通信量相对较小。在跨解码器中，all-gather操作仅对KV缓存触发一次，而不是在每一层都进行通信。这种硬件友好的架构为分布式长序列训练提供了更大的灵活性。</p>

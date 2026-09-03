@@ -33,20 +33,14 @@ title: 'FlashCP: Load-Balanced Communication-Efficient Context Parallelism for L
 </details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决大规模、长上下文语言模型（LLM）训练中上下文并行（Context Parallelism, CP）面临的挑战。</p>
-<p><strong>核心问题</strong>：现有的CP方法通过对序列进行分区来减少内存开销，但存在以下三个核心问题：<br/>
-1. <strong>工作负载不均衡</strong>：由于每个token的注意力计算量随其在序列中的位置变化而不同，静态的序列分片会导致GPU间的工作负载不均衡。<br/>
-2. <strong>通信效率低下</strong>：CP需要跨工作节点（worker）通信键值（KV）张量，现有方法会传输整个KV张量，导致大量冗余通信。<br/>
-3. <strong>计算核效率低</strong>：像FlashAttention这样的高效注意力计算核依赖于足够长的查询（Query）和键值（KV）长度才能实现高GPU利用率，而输入序列被分区后，这种效率难以维持。</p>
+<p><strong>核心问题</strong>：现有的CP方法通过对序列进行分区来减少内存开销，但存在以下三个核心问题：</p>
+<ol><li><strong>工作负载不均衡</strong>：由于每个token的注意力计算量随其在序列中的位置变化而不同，静态的序列分片会导致GPU间的工作负载不均衡。</li><li><strong>通信效率低下</strong>：CP需要跨工作节点（worker）通信键值（KV）张量，现有方法会传输整个KV张量，导致大量冗余通信。</li><li><strong>计算核效率低</strong>：像FlashAttention这样的高效注意力计算核依赖于足够长的查询（Query）和键值（KV）长度才能实现高GPU利用率，而输入序列被分区后，这种效率难以维持。</li></ol>
 <p><strong>研究目标</strong>：设计一个负载均衡且通信高效的CP训练框架，能够同时解决上述三个问题，以实现近乎最优的CP训练性能。</p>
 <p><strong>创新点 (FlashCP)</strong>：<br/>
-FlashCP通过整体优化分片策略和通信流，实现了工作负载均衡、最大化注意力核效率和最小化通信开销。<br/>
-1. <strong>分片感知的通信机制 (Sharding-aware communication mechanism)</strong>：该机制能够识别每个CP工作节点实际需要的KV张量部分，从而只通信必要的数据，消除了冗余的数据传输。<br/>
-2. <strong>全新的Whole-Doc分片策略</strong>：该策略将较短的文档作为一个整体保留在单个CP工作节点上，从而最大程度地减少了通信需求并保持了高计算核效率。对于剩余的文档，它会进行自适应分片，以实现工作负载的均衡。<br/>
-3. <strong>启发式分片算法</strong>：为了有效结合Whole-Doc和Per-Doc（逐文档）分片策略，FlashCP设计了一种启发式算法。该算法能够高效地搜索近乎最优的分片方案，克服了分片问题的NP-hard特性。</p>
-<p><strong>主要贡献总结</strong>：<br/>
-* 揭示了现有CP框架的局限性，即它们无法保持高计算核效率，并遭受冗余KV张量通信的困扰。<br/>
-* 提出了FlashCP框架，该框架通过整体优化输入分片和通信流，实现了均衡的工作负载、减少的通信和高计算核效率。<br/>
-* 实验证明，在不同数据集上，FlashCP相比最先进的CP框架实现了高达1.63倍的加速。</p>
+FlashCP通过整体优化分片策略和通信流，实现了工作负载均衡、最大化注意力核效率和最小化通信开销。</p>
+<ol><li><strong>分片感知的通信机制 (Sharding-aware communication mechanism)</strong>：该机制能够识别每个CP工作节点实际需要的KV张量部分，从而只通信必要的数据，消除了冗余的数据传输。</li><li><strong>全新的Whole-Doc分片策略</strong>：该策略将较短的文档作为一个整体保留在单个CP工作节点上，从而最大程度地减少了通信需求并保持了高计算核效率。对于剩余的文档，它会进行自适应分片，以实现工作负载的均衡。</li><li><strong>启发式分片算法</strong>：为了有效结合Whole-Doc和Per-Doc（逐文档）分片策略，FlashCP设计了一种启发式算法。该算法能够高效地搜索近乎最优的分片方案，克服了分片问题的NP-hard特性。</li></ol>
+<p><strong>主要贡献总结</strong>：</p>
+<ul><li>揭示了现有CP框架的局限性，即它们无法保持高计算核效率，并遭受冗余KV张量通信的困扰。</li><li>提出了FlashCP框架，该框架通过整体优化输入分片和通信流，实现了均衡的工作负载、减少的通信和高计算核效率。</li><li>实验证明，在不同数据集上，FlashCP相比最先进的CP框架实现了高达1.63倍的加速。</li></ul>
 <h2>A3 背景知识与动机</h2>
 <h3>输入打包与文档掩码</h3>
 <p><strong>输入数据长度分布不均与打包技术</strong>。在LLM训练中，输入文档的长度分布高度倾斜【2, Why does the effective context length of llms fall short?, 2024, arXiv preprint arXiv:2410.18745】【12, DynaPipe: Optimizing Multi-task Training through Dynamic Pipelines, 2024, Proceedings of the Nineteenth European Conference on Computer Systems】【31, Wlb-llm: Workload-balanced 4d parallelism for large language model training, 2025b, 19th USENIX Symposium on Operating Systems Design and Implementation (OSDI 25)】。早期的填充（padding）方法会引入冗余的计算、通信和内存开销【23, Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism, 2019, arXiv preprint arXiv:1909.08053】。为了解决这个问题，研究者提出了输入打包（input packing）技术，将多个短文档拼接成一个长序列【35, Analysing the impact ´ of sequence composition on language model pre-training, 2024, arXiv preprint arXiv:2402.13991】【22, Exploring the limits of transfer learning with a unified text-to-text transformer, 2020, Journal of machine learning research】【14, Efficient Sequence Packing without Cross-contamination: Accelerating Large Language Models without Impacting Performance, 2021, arXiv preprint arXiv:2107.02027】【29, Packing analysis: Packing is more appropriate for large models or datasets in supervised fine-tuning, 2024, arXiv preprint arXiv:2410.08081】。在此基础上，文档掩码（Document Mask），也称为文档内因果掩码（intra-document causal masking），被提出来屏蔽跨文档的注意力计算，以确保正确的注意力行为【21, FlexAttention: The Flexibility of PyTorch with the Performance of FlashAttention, 2024, https://pytorch. org/blog/flexattention/】【19, NVIDIA NeMo Framework: Sequence Packing, , <a href="https://docs.nvidia.com/" rel="noopener noreferrer" target="_blank">https://docs.nvidia.com/</a> nemo-framework/user-guide/latest/ sft_peft/packed_sequence.html】【35, Analysing the impact ´ of sequence composition on language model pre-training, 2024, arXiv preprint arXiv:2402.13991】【15, Enhancing training efficiency using packing with flash attention, 2024, arXiv preprint arXiv:2407.09105】。输入打包和文档掩码的结合已成为大规模、长上下文LLM训练的广泛采用范式，并成功应用于Llama3等工业级模型中【31, Wlb-llm: Workload-balanced 4d parallelism for large language model training, 2025b, 19th USENIX Symposium on Operating Systems Design and Implementation (OSDI 25)】【7, Bytescale: Efficient scaling of llm training with a 2048k context length on more than 12,000 gpus, 2025, arXiv preprint arXiv:2502.21231】【5, The Llama 3 Herd of Models, 2024, arXiv preprint arXiv:2407.21783】。</p>

@@ -82,17 +82,8 @@ $$Q = X W_{query}$$
 <p><strong>统一Prefill和Generation阶段的执行过程</strong>：在Pensieve的批处理形成中，处于Prefill阶段的新请求可以与处于Generation阶段的现有请求分组。这是因为Generation阶段执行的单Token注意力可以被视为Query大小等于1的多Token注意力的特例。Pensieve调度器连接所有请求要处理的输入Token，并维护辅助数据结构来跟踪每个请求对应的区域。在工作节点执行期间，这些批处理的输入Token通过线性层生成每个Token的QKV表示。新生成的KV-tokens存储在GPU KV缓存分配的槽中。然后工作节点应用多Token注意力内核为所有请求生成输出Token。</p>
 <p><strong>多GPU支持机制</strong>：对于无法装入单个GPU的大型LLM模型，系统采用在Megatron-LM 【45，Megatron-lm: Training multi-billion parameter language models using model parallelism + 2019 + arXiv】中实现的张量并行化，将大型模型划分到多个GPU上。Pensieve中的KV缓存也相应地被划分。每个模型分区由一个工作节点进程管理，该进程拥有自己的GPU和CPU缓存分区来存储分配给它的注意力状态分区。由于模型划分发生在KV缓存的特征维度上，它不影响决定迁移或丢弃哪个Token的驱逐策略。因此，每个工作节点遵循相同的迁移计划。</p>
 <p><strong>实现细节与优化</strong>：Pensieve原型使用约7000行C++/CUDA代码实现。系统依赖PyTorch (v2.0.0, CUDA 11.8) C++前端API来执行LLM中的GPU算子。系统开发了融合多Token注意力内核。在优化方面，系统发现当CPU到GPU的数据传输与GPU到CPU的数据传输并发进行时，两个方向的吞吐量都会显著下降（$18-20\%$）。为了防止驱逐操作减慢过去KV-token的换入速度，系统设置了等待机制：如果工作节点有任何正在进行的换入任务，它会等待执行GPU到CPU的复制，直到换入任务完成。</p>
-<p><strong>方法细节引用的参考文献汇总</strong>：<br/>
-* 【5，Language models are few-shot learners + 2020 + NeurIPS】：在“LLM与注意力机制”段落中提及GPT-3模型时引用。<br/>
-* 【55，Opt: Open pre-trained transformer language models + 2022 + arXiv】：在“LLM与注意力机制”段落中提及OPT模型时引用。<br/>
-* 【46，Llama: Open and efficient foundation language models + 2023 + arXiv】：在“LLM与注意力机制”段落中提及Llama模型时引用。<br/>
-* 【48，Attention is all you need + 2017 + NeurIPS】：在“LLM与注意力机制”段落中说明基础模型架构时引用，指出流行大模型基于Transformer架构。<br/>
-* 【35，FasterTransformer + 2021 + GitHub】：在“LLM的服务方式”段落中引用，作为采用典型LLM推理过程的系统代表。<br/>
-* 【52，Orca: A distributed serving system for Transformer-Based generative models + 2022 + OSDI】：在“LLM的服务方式”段落中引用，作为采用典型推理过程及迭代级批处理策略的系统代表。<br/>
-* 【27，Efficient Memory Management for Large Language Model Serving with PagedAttention + 2023 + SOSP】：在“LLM的服务方式”段落中引用，作为支持动态分配非连续缓存及PagedAttention内核的系统代表。<br/>
-* 【10，FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness + 2022 + NeurIPS】：在“融合因果掩码与内核实现”段落中引用，说明将因果掩码操作融合在内核内部以避免物化中间矩阵的技术来源。<br/>
-* 【33，CUTLASS + 2017 + GitHub】：在“融合因果掩码与内核实现”段落中引用，说明内核底层使用了NVIDIA Cutlass模板库。<br/>
-* 【45，Megatron-lm: Training multi-billion parameter language models using model parallelism + 2019 + arXiv】：在“多GPU支持机制”段落中引用，说明张量并行化方案的实现参考。</p>
+<p><strong>方法细节引用的参考文献汇总</strong>：</p>
+<ul><li>【5，Language models are few-shot learners + 2020 + NeurIPS】：在“LLM与注意力机制”段落中提及GPT-3模型时引用。</li><li>【55，Opt: Open pre-trained transformer language models + 2022 + arXiv】：在“LLM与注意力机制”段落中提及OPT模型时引用。</li><li>【46，Llama: Open and efficient foundation language models + 2023 + arXiv】：在“LLM与注意力机制”段落中提及Llama模型时引用。</li><li>【48，Attention is all you need + 2017 + NeurIPS】：在“LLM与注意力机制”段落中说明基础模型架构时引用，指出流行大模型基于Transformer架构。</li><li>【35，FasterTransformer + 2021 + GitHub】：在“LLM的服务方式”段落中引用，作为采用典型LLM推理过程的系统代表。</li><li>【52，Orca: A distributed serving system for Transformer-Based generative models + 2022 + OSDI】：在“LLM的服务方式”段落中引用，作为采用典型推理过程及迭代级批处理策略的系统代表。</li><li>【27，Efficient Memory Management for Large Language Model Serving with PagedAttention + 2023 + SOSP】：在“LLM的服务方式”段落中引用，作为支持动态分配非连续缓存及PagedAttention内核的系统代表。</li><li>【10，FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness + 2022 + NeurIPS】：在“融合因果掩码与内核实现”段落中引用，说明将因果掩码操作融合在内核内部以避免物化中间矩阵的技术来源。</li><li>【33，CUTLASS + 2017 + GitHub】：在“融合因果掩码与内核实现”段落中引用，说明内核底层使用了NVIDIA Cutlass模板库。</li><li>【45，Megatron-lm: Training multi-billion parameter language models using model parallelism + 2019 + arXiv】：在“多GPU支持机制”段落中引用，说明张量并行化方案的实现参考。</li></ul>
 <h2>实验环境</h2>
 <ul>
 <li><strong>硬件配置</strong>：评估在Azure NC A100 v4系列上进行，配备多达4个A100-80GB GPU，24核AMD EPYC 7003处理器，每个GPU 220 GB CPU内存。为公平比较，每个系统配置在每个GPU上分配40 GB内存用于KV缓存。</li>
@@ -110,10 +101,8 @@ $$Q = X W_{query}$$
 <li><strong>用户思考时间的影响</strong>：使用Llama 2-13B评估了不同平均用户思考时间（30s至600s）对性能的影响。结果表明，随着思考时间增加，吞吐量下降，因为过去的KV-tokens以更高速率从缓存中丢弃。但即使思考时间增加到600秒，Pensieve的延迟和吞吐量仍优于vLLM。图表引用：图15。</li>
 </ul>
 <h2>补充细节</h2>
-<p><strong>相关工作</strong>：<br/>
-* <strong>LLM推理与服务系统</strong>：近期开发了许多优化系统（如vLLM, ORCA, TensorRT-LLM, DeepSpeed等），它们研究了与Pensieve不同的优化机会，如增量解码、迭代级批处理、内核融合、推测解码和量化。DistServe主张在不同GPU上分离Prefill和Generation阶段以满足SLA，而Pensieve执行统一批处理以优化吞吐量。<br/>
-* <strong>缓存LLM注意力状态的系统</strong>：与Pensieve同期的系统（PromptCache, SGLang, RAGCache, CachedAttention）也缓存注意力状态。PromptCache需要用户预先定义Schema；SGLang和RAGCache采用基于树的缓存以共享前缀，且优先从树底部（即尾端）驱逐。CachedAttention在整个对话粒度上驱逐且不重算被截断的上下文。Pensieve专为多轮对话设计，其驱逐策略在前端的细粒度Token组层面进行以降低重算成本，并通过其多Token注意力内核解决非连续区域计算的挑战。CacheGen优化远程网络存储的上下文加载延迟，与Pensieve使用本地缓存的技术正交。<br/>
-* <strong>解决GPU内存限制的技术</strong>：针对DNN训练的GPU-CPU交换技术（如SwapAdvisor, ZeroOffload）或针对弱GPU推理的系统（DeepSpeed-ZeroInference, FlexGen）主要面向延迟不敏感的应用，且不在请求间持久化KV缓存。DNN训练中的重算技术通常在层或算子粒度进行，而Pensieve在Token(Chunk)级别进行细粒度重算以利用因果注意力特性。Pensieve未采用统一内存（Unified Memory）或直接主机访问（Direct Host Access），因为系统需要显式管理数据移动以预取KV缓存，且直接主机访问在生成步骤重复使用缓存时效率显著降低。</p>
+<p><strong>相关工作</strong>：</p>
+<ul><li><strong>LLM推理与服务系统</strong>：近期开发了许多优化系统（如vLLM, ORCA, TensorRT-LLM, DeepSpeed等），它们研究了与Pensieve不同的优化机会，如增量解码、迭代级批处理、内核融合、推测解码和量化。DistServe主张在不同GPU上分离Prefill和Generation阶段以满足SLA，而Pensieve执行统一批处理以优化吞吐量。</li><li><strong>缓存LLM注意力状态的系统</strong>：与Pensieve同期的系统（PromptCache, SGLang, RAGCache, CachedAttention）也缓存注意力状态。PromptCache需要用户预先定义Schema；SGLang和RAGCache采用基于树的缓存以共享前缀，且优先从树底部（即尾端）驱逐。CachedAttention在整个对话粒度上驱逐且不重算被截断的上下文。Pensieve专为多轮对话设计，其驱逐策略在前端的细粒度Token组层面进行以降低重算成本，并通过其多Token注意力内核解决非连续区域计算的挑战。CacheGen优化远程网络存储的上下文加载延迟，与Pensieve使用本地缓存的技术正交。</li><li><strong>解决GPU内存限制的技术</strong>：针对DNN训练的GPU-CPU交换技术（如SwapAdvisor, ZeroOffload）或针对弱GPU推理的系统（DeepSpeed-ZeroInference, FlexGen）主要面向延迟不敏感的应用，且不在请求间持久化KV缓存。DNN训练中的重算技术通常在层或算子粒度进行，而Pensieve在Token(Chunk)级别进行细粒度重算以利用因果注意力特性。Pensieve未采用统一内存（Unified Memory）或直接主机访问（Direct Host Access），因为系统需要显式管理数据移动以预取KV缓存，且直接主机访问在生成步骤重复使用缓存时效率显著降低。</li></ul>
 <h2>结论</h2>
 <p>在为多轮对话提供大型语言模型服务时，一个主要的低效源于对话累积历史上下文的重复计算。论文开发了Pensieve，这是一个有状态的LLM服务系统，它将历史嵌入保存在多级GPU-CPU缓存中。它使用新的GPU注意力内核，在请求的新多Token输入与其存储在非连续GPU内存中的已保存上下文之间执行注意力计算。实验表明，对于小型模型（OPT-13B, Llama 2-13B），Pensieve实现了基线系统 $1.14 - 1.70\times$ 的吞吐量，对于大型模型（OPT-66B, Llama 2-70B），则达到了 $1.64 - 3.0\times$ 的吞吐量。</p>
 </div>

@@ -40,12 +40,8 @@ $$T_{effective} = T_{compute} + \max(T_{prefetch} - 2 \times T_{layer}, 0)$$
 </details>
 <h2>主要贡献</h2>
 <p>大型语言模型（LLMs）在自回归解码过程中，键值（KV）缓存会消耗海量的GPU内存，这极大限制了批处理大小和系统整体吞吐量。传统的解决方案包括内存卸载【41，Flexgen: High-throughput generative inference of large language models with a single gpu+2023+arXiv】、KV缓存压缩【16，Kvquant: Towards 10 million context length llm inference with kv cache quantization+2024+arXiv】和推测解码【20，Fast inference from transformers via speculative decoding+2023+arXiv】，但这些方法分别受限于带宽瓶颈、精度下降或持续的内存限制。最近Compute Express Link (CXL)【11，Compute Express Link Specification Revision 2.0+2022】和FPGA架构【12，Intel Agilex 7 FPGA Architecture+2024】的发展提供了新的契机。</p>
-<p>为了解决内存墙挑战，本文提出了CXL-SpecKV，这是一种新颖的解耦KV缓存架构，结合了CXL内存解耦与FPGA加速的推测执行技术。该研究的核心创新点和贡献如下：<br/>
-1. <strong>首个专门针对LLM KV缓存管理的CXL解耦内存架构</strong>：实现了将KV缓存透明卸载到CXL内存，有效扩展了4至8倍的内存容量，证明了内存池化在推理工作负载中的可行性和优势。<br/>
-2. <strong>推测性KV缓存预取机制</strong>：利用自回归token生成的周期性可预测模式，预测并预加载未来token的缓存条目，在保持低计算开销的同时实现了高达95%的预测准确率，有效隐藏了CXL的访问延迟。<br/>
-3. <strong>FPGA加速的KV缓存压缩与管理引擎</strong>：设计并实现了用于KV缓存压缩（3-4倍压缩率）、解压缩和地址转换的高效FPGA加速器，卸载了GPU的计算负担。<br/>
-4. <strong>无缝的系统集成</strong>：开发了与主流LLM服务框架（vLLM, TensorRT-LLM）集成的完整系统原型，证明了实际部署的可行性。<br/>
-5. <strong>全面的性能评估</strong>：在最先进的LLM模型上评估显示，与仅使用GPU的基线相比，CXL-SpecKV实现了高达3.2倍的吞吐量提升，降低了2.8倍的内存成本，同时保持了模型精度，对于内存受限的工作负载可潜在降低30-40%的基础设施成本。</p>
+<p>为了解决内存墙挑战，本文提出了CXL-SpecKV，这是一种新颖的解耦KV缓存架构，结合了CXL内存解耦与FPGA加速的推测执行技术。该研究的核心创新点和贡献如下：</p>
+<ol><li><strong>首个专门针对LLM KV缓存管理的CXL解耦内存架构</strong>：实现了将KV缓存透明卸载到CXL内存，有效扩展了4至8倍的内存容量，证明了内存池化在推理工作负载中的可行性和优势。</li><li><strong>推测性KV缓存预取机制</strong>：利用自回归token生成的周期性可预测模式，预测并预加载未来token的缓存条目，在保持低计算开销的同时实现了高达95%的预测准确率，有效隐藏了CXL的访问延迟。</li><li><strong>FPGA加速的KV缓存压缩与管理引擎</strong>：设计并实现了用于KV缓存压缩（3-4倍压缩率）、解压缩和地址转换的高效FPGA加速器，卸载了GPU的计算负担。</li><li><strong>无缝的系统集成</strong>：开发了与主流LLM服务框架（vLLM, TensorRT-LLM）集成的完整系统原型，证明了实际部署的可行性。</li><li><strong>全面的性能评估</strong>：在最先进的LLM模型上评估显示，与仅使用GPU的基线相比，CXL-SpecKV实现了高达3.2倍的吞吐量提升，降低了2.8倍的内存成本，同时保持了模型精度，对于内存受限的工作负载可潜在降低30-40%的基础设施成本。</li></ol>
 <h2>背景知识与关键观察</h2>
 <p><strong>KV缓存内存需求分析</strong>：对于具有$L$层、隐藏维度$d_h$和$H$个注意力头的Transformer模型，每个token在每层生成维度为$(H, d_h/H)$的KV张量。对于最大序列长度为$S_{max}$且批大小为$B$的请求，总内存需求公式为$M_{KV} = 2 \cdot L \cdot B \cdot S_{max} \cdot d_h \cdot P_{bits}$，其中$P_{bits}$为精度。以LLaMA-2 70B为例（$L = 80$，$d_h = 8192$，$B = 32$，$S_{max} = 2048$，FP16），仅KV缓存就消耗640GB，远超A100的80GB容量。</p>
 <p><strong>KV缓存访问模式的关键观察</strong>：通过性能分析，发现了可被CXL-SpecKV利用的六个关键特征：（1）顺序的时间局部性：生成token $t$时会访问位置$[0, t-1]$，这使得预测性预取成为可能；（2）层间独立性：允许逐层流水线处理；（3）读密集型负载：读写比$\mathcal{R}_{r/w} \approx 5:1$，非常适合缓存；（4）数值聚集于零附近：支持INT8量化，精度损失极小（$&gt;99\%$），压缩比$\mathcal{R}_c = 2\times$；（5）注意力头的空间相关性：可通过增量编码$\delta_i = x_i - x_{i-1}$进一步压缩；（6）特定层的可压缩性：早期层压缩率可达$\mathcal{R}_c(\ell &lt; L/3) \in [3,4]$，后期层为$\mathcal{R}_c(\ell &gt; 2L/3) \in [2.5,3]$。这些观察指导了系统的推测预取、流水线压缩和自适应算法选择设计。</p>

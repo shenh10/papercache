@@ -32,10 +32,8 @@ title: 'LASP-2: Rethinking Sequence Parallelism for Linear Attention and its Hyb
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>: Transformer模型的核心自注意力机制具有关于序列长度的二次复杂度，导致训练成本高昂。虽然线性注意力等方法将复杂度降至线性，但现有的序列并行（Sequence Parallelism, SP）方法并未充分利用线性注意力的“右乘优先”特性，或者采用环式（ring-style）通信策略，这导致了较低的计算并行度，限制了其在分布式系统中处理更长序列时的可扩展性。</p>
 <p><strong>研究目标</strong>: 本文旨在提出一种新的SP方法LASP-2，以提升训练具有超长输入序列的线性注意力Transformer模型时的通信和计算并行性。同时，将该方法扩展到包含线性和标准注意力层的混合模型中。</p>
-<p><strong>创新点</strong>:<br/>
-* <strong>重构通信与计算工作流</strong>: 本文重新思考了线性注意力上SP的最小通信需求，并重组了整个通信与计算工作流。LASP-2采用单一的AllGather集体通信操作来处理中间内存状态，这些状态的大小与序列长度无关。这种设计显著提升了SP在线性注意力上的通信和计算并行性。<br/>
-* <strong>提出LASP-2H以支持混合模型</strong>: 将LASP-2的设计理念扩展，提出了LASP-2H，为同时包含线性和标准注意力层的混合模型提供了一个高效的SP解决方案。该方案采用统一的基于AllGather的通信设计。<br/>
-* <strong>构建并验证Linear-Llama3模型</strong>: 本文构建了一系列Linear-Llama3模型，包括纯线性和混合版本。通过在序列长度高达2048K的实验中，验证了LASP-2和LASP-2H的效率提升和性能。实验结果表明，在64个GPU上处理2048K序列长度时，LASP-2的训练速度比LASP提升了15.2%，比Ring Attention提升了36.6%。</p>
+<p><strong>创新点</strong>:</p>
+<ul><li><strong>重构通信与计算工作流</strong>: 本文重新思考了线性注意力上SP的最小通信需求，并重组了整个通信与计算工作流。LASP-2采用单一的AllGather集体通信操作来处理中间内存状态，这些状态的大小与序列长度无关。这种设计显著提升了SP在线性注意力上的通信和计算并行性。</li><li><strong>提出LASP-2H以支持混合模型</strong>: 将LASP-2的设计理念扩展，提出了LASP-2H，为同时包含线性和标准注意力层的混合模型提供了一个高效的SP解决方案。该方案采用统一的基于AllGather的通信设计。</li><li><strong>构建并验证Linear-Llama3模型</strong>: 本文构建了一系列Linear-Llama3模型，包括纯线性和混合版本。通过在序列长度高达2048K的实验中，验证了LASP-2和LASP-2H的效率提升和性能。实验结果表明，在64个GPU上处理2048K序列长度时，LASP-2的训练速度比LASP提升了15.2%，比Ring Attention提升了36.6%。</li></ul>
 <h2>A3 背景知识</h2>
 <p><strong>符号表示</strong><br/>
 本文确保使用一致的符号以提高清晰度。表1提供了全文使用的所有符号的完整列表，包括索引、常量、向量和矩阵。向量和矩阵以粗体表示。为简化起见，我们省略了张量形状中与批大小和头数相关的维度。</p>
@@ -219,21 +217,14 @@ LASP-1：$2(W-1)$，LASP-2：$2$。这取决于这两种算法的不同通信方
 <h4>4.5.2. 序列并行</h4>
 <p>SP【19, Li, S. et al., Sequence parallelism: Long sequence training from system perspective, 2022】是一种为更高效地训练语言模型而设计的分布式技术，它通过将长序列划分为多个较短的子序列，并在多个计算设备上并行处理这些子序列来实现。现有的SP方法【17, Korthikanti, V. et al., Reducing activation recomputation in large transformer models, 2022】、【13, Jacobs, S. A. et al., Deepspeed Ulysses: System optimizations for enabling training of extreme long sequence transformer models, 2023】的并行度不能超过注意力头的数量，这限制了它们的可扩展性。Ring Attention【21, Liu, H. et al., Ring attention with blockwise transformers for near-infinite context, 2023】被提出来解决长序列建模中的高内存成本问题，它通过在不同设备上分布子序列并重叠KV块的通信来实现。LASP【46, Sun, W. et al., Linear attention sequence parallelism, 2024a】提出了一种新的、为线性注意力量身定制的SP策略，该策略基于GPU友好的实现，利用了P2P环式通信策略，但仍然缺乏对混合模型架构的优化。</p>
 <h2>A4 实验环境</h2>
-<p><strong>模型架构</strong>:<br/>
-* <strong>基础模型</strong>: Linear-Llama3，一个基于Llama3【10, Dubey, A. et al., The Llama 3 herd of models, 2024】的模型，其中标准softmax注意力被多种线性注意力模块替代（包括原始线性注意力、Lightning Attention、Retention、GLA、Based、Rebased）。模型包含16个线性Transformer层，总计10亿参数。<br/>
-* <strong>混合模型</strong>: 在Linear-Llama3的每第四层保留标准softmax注意力的Transformer层，构成一个1/4混合架构。</p>
-<p><strong>数据集</strong>:<br/>
-* <strong>名称</strong>: SlimPajama【45, Soboleva, D. et al., SlimPajama: A 627B token cleaned and deduplicated version of RedPajama, 2023】。<br/>
-* <strong>规模</strong>: 完整数据集包含6270亿个token，实验中使用的是从训练集第一个块派生的500亿token的子集。<br/>
-* <strong>用途</strong>: 用于GPT风格的自回归语言模型任务。</p>
-<p><strong>硬件配置</strong>:<br/>
-* <strong>平台</strong>: 多达16台DGX-A100服务器。<br/>
-* <strong>GPU</strong>: 每台服务器配备8个A100 GPU，通过NVSwitch连接。<br/>
-* <strong>互联带宽</strong>: GPU间带宽为600 GBps。</p>
-<p><strong>软件配置</strong>:<br/>
-* <strong>框架与库</strong>: PyTorch 2.3.1, CUDA 12.1, cuDNN 8.9.2, NCCL 2.20.5。<br/>
-* <strong>基础代码</strong>: 算法在NVIDIA的Megatron-Core 0.9.0【40, Shoeybi, M. et al., Megatron-LM: Training multibillion parameter language models using model parallelism, 2019】之上开发。<br/>
-* <strong>加速库</strong>: 使用Triton 2.3.1【52, Tillet, P. et al., Triton: an intermediate language and compiler for tiled neural network computations, 2019】加速GPU上的线性注意力计算，使用FlashAttention2【6, Dao, T., Flashattention-2: Faster attention with better parallelism and work partitioning, 2023】作为标准注意力的实现。</p>
+<p><strong>模型架构</strong>:</p>
+<ul><li><strong>基础模型</strong>: Linear-Llama3，一个基于Llama3【10, Dubey, A. et al., The Llama 3 herd of models, 2024】的模型，其中标准softmax注意力被多种线性注意力模块替代（包括原始线性注意力、Lightning Attention、Retention、GLA、Based、Rebased）。模型包含16个线性Transformer层，总计10亿参数。</li><li><strong>混合模型</strong>: 在Linear-Llama3的每第四层保留标准softmax注意力的Transformer层，构成一个1/4混合架构。</li></ul>
+<p><strong>数据集</strong>:</p>
+<ul><li><strong>名称</strong>: SlimPajama【45, Soboleva, D. et al., SlimPajama: A 627B token cleaned and deduplicated version of RedPajama, 2023】。</li><li><strong>规模</strong>: 完整数据集包含6270亿个token，实验中使用的是从训练集第一个块派生的500亿token的子集。</li><li><strong>用途</strong>: 用于GPT风格的自回归语言模型任务。</li></ul>
+<p><strong>硬件配置</strong>:</p>
+<ul><li><strong>平台</strong>: 多达16台DGX-A100服务器。</li><li><strong>GPU</strong>: 每台服务器配备8个A100 GPU，通过NVSwitch连接。</li><li><strong>互联带宽</strong>: GPU间带宽为600 GBps。</li></ul>
+<p><strong>软件配置</strong>:</p>
+<ul><li><strong>框架与库</strong>: PyTorch 2.3.1, CUDA 12.1, cuDNN 8.9.2, NCCL 2.20.5。</li><li><strong>基础代码</strong>: 算法在NVIDIA的Megatron-Core 0.9.0【40, Shoeybi, M. et al., Megatron-LM: Training multibillion parameter language models using model parallelism, 2019】之上开发。</li><li><strong>加速库</strong>: 使用Triton 2.3.1【52, Tillet, P. et al., Triton: an intermediate language and compiler for tiled neural network computations, 2019】加速GPU上的线性注意力计算，使用FlashAttention2【6, Dao, T., Flashattention-2: Faster attention with better parallelism and work partitioning, 2023】作为标准注意力的实现。</li></ul>
 <h2>A4 实验结果</h2>
 <h3>速度</h3>
 <ul>

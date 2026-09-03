@@ -34,12 +34,8 @@ title: 'Inside NVIDIA Groq 3 LPX: The Low-Latency Inference Accelerator for the 
 <p>本文介绍了NVIDIA Groq 3 LPX，这是一款专为NVIDIA Vera Rubin平台设计的全新机架级推理加速器，旨在满足智能体系统（agentic systems）对低延迟和长上下文的需求。随着AI生成速度接近每用户每秒1000个token，AI系统正从对话式交互转向“思想速度”计算，这使得AI能够进行连续的推理、模拟和响应，从而实现实时协作般的体验。这种转变也推动了多智能体系统的发展，其中协同工作的智能体群体能完成远超单个智能体的任务。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>
 当前AI工作负载对基础设施提出了双重挑战：既要实现高吞吐量以支持大规模后台服务，又要保证低延迟以提供响应迅速的交互体验。传统单一架构难以同时满足这两个要求。为了解决这一问题，本文提出了一种异构加速架构，将专为低延迟、可预测token生成而优化的NVIDIA Groq 3 LPX与作为通用训练和推理引擎的NVIDIA Vera Rubin NVL72相结合。其目标是创建一个既能保持AI工厂高吞吐量，又能为下一代智能体应用提供快速token生成能力的系统。</p>
-<p><strong>主要创新点</strong>:<br/>
-1. <strong>异构推理架构</strong>: 提出了Vera Rubin NVL72与LPX相结合的异构架构。Vera Rubin NVL72作为灵活的通用工作引擎，负责训练和推理中的高吞吐量任务（如预填充、解码注意力、长上下文处理等）；而LPX则作为专用引擎，专注于加速延迟敏感的解码环节（如FFN和MoE专家执行）。<br/>
-2. <strong>NVIDIA Groq 3 LPX系统</strong>: 推出了一款机架级推理加速器，内置256个互连的NVIDIA Groq 3 LPU加速器。该系统强调确定性执行、高片上SRAM带宽（40 PB/s）和高基数片间通信（机架级640 TB/s），以在并发量增加时仍能保持低且稳定的推理延迟。<br/>
-3. <strong>NVIDIA Groq 3 LPU芯片架构</strong>: 详细介绍了作为Vera Rubin平台第七款芯片的LPU。其核心设计理念是通过编译器控制，紧密耦合计算、内存和通信，强调确定性执行和显式数据移动，而非单纯追求峰值算力。这使其特别适合解码密集型、延迟敏感的推理场景。<br/>
-4. <strong>NVIDIA Dynamo软件协同</strong>: 通过NVIDIA Dynamo软件层实现异构解码的落地。Dynamo负责对请求进行分类、在解耦的后端（GPU和LPU）之间进行任务路由和协同（即AFD循环），将预填充和注意力计算分配给Rubin GPU，将延迟敏感的FFN/MoE解码分配给LPU，从而在保证AI工厂高吞-吐量的同时，实现高响应度的交互体验。<br/>
-5. <strong>显著的性能与经济效益</strong>: 该组合架构宣称可为万亿参数模型带来高达35倍的每兆瓦推理吞吐量提升和高达10倍的收入机会。它通过扩展帕累托前沿，创建了一个新的高级性能层级，能够支持多智能体系统和LLM的推测性解码等高级AI用例。</p>
+<p><strong>主要创新点</strong>:</p>
+<ol><li><strong>异构推理架构</strong>: 提出了Vera Rubin NVL72与LPX相结合的异构架构。Vera Rubin NVL72作为灵活的通用工作引擎，负责训练和推理中的高吞吐量任务（如预填充、解码注意力、长上下文处理等）；而LPX则作为专用引擎，专注于加速延迟敏感的解码环节（如FFN和MoE专家执行）。</li><li><strong>NVIDIA Groq 3 LPX系统</strong>: 推出了一款机架级推理加速器，内置256个互连的NVIDIA Groq 3 LPU加速器。该系统强调确定性执行、高片上SRAM带宽（40 PB/s）和高基数片间通信（机架级640 TB/s），以在并发量增加时仍能保持低且稳定的推理延迟。</li><li><strong>NVIDIA Groq 3 LPU芯片架构</strong>: 详细介绍了作为Vera Rubin平台第七款芯片的LPU。其核心设计理念是通过编译器控制，紧密耦合计算、内存和通信，强调确定性执行和显式数据移动，而非单纯追求峰值算力。这使其特别适合解码密集型、延迟敏感的推理场景。</li><li><strong>NVIDIA Dynamo软件协同</strong>: 通过NVIDIA Dynamo软件层实现异构解码的落地。Dynamo负责对请求进行分类、在解耦的后端（GPU和LPU）之间进行任务路由和协同（即AFD循环），将预填充和注意力计算分配给Rubin GPU，将延迟敏感的FFN/MoE解码分配给LPU，从而在保证AI工厂高吞-吐量的同时，实现高响应度的交互体验。</li><li><strong>显著的性能与经济效益</strong>: 该组合架构宣称可为万亿参数模型带来高达35倍的每兆瓦推理吞吐量提升和高达10倍的收入机会。它通过扩展帕累托前沿，创建了一个新的高级性能层级，能够支持多智能体系统和LLM的推测性解码等高级AI用例。</li></ol>
 <figure class="image-figure">
 <img alt="LPX机架的渲染图。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/LPX-Rack-1024x576.png"/>
 <figcaption class="figure-caption">LPX机架的渲染图。</figcaption>
@@ -176,10 +172,8 @@ title: 'Inside NVIDIA Groq 3 LPX: The Low-Latency Inference Accelerator for the 
 <em>图3. NVIDIA Groq 3 LPU芯片架构</em></p>
 <h4>张量优先计算与显式数据移动</h4>
 <p><strong>以向量为单位的工作组织</strong>。LPU中的计算和通信围绕320字节的向量作为工作单元进行组织。算术运算、内存访问和设备间传输都操作于这些固定大小的向量，从而简化了调度和同步。</p>
-<p><strong>专用执行模块</strong>。专门的执行模块处理不同类别的操作：<br/>
-* <strong>矩阵执行模块 (MXM)</strong>：为张量运算提供密集的乘法累加能力，操作于固定的数据类型，具有可预测的吞吐量。<br/>
-* <strong>向量执行模块 (VXM)</strong>：处理逐点算术、类型转换和激活函数，每条通道使用一个算术逻辑单元(ALU)网格。<br/>
-* <strong>交换执行模块 (SXM)</strong>：执行结构化数据移动，包括向量的排列、旋转、分发和转置。</p>
+<p><strong>专用执行模块</strong>。专门的执行模块处理不同类别的操作：</p>
+<ul><li><strong>矩阵执行模块 (MXM)</strong>：为张量运算提供密集的乘法累加能力，操作于固定的数据类型，具有可预测的吞吐量。</li><li><strong>向量执行模块 (VXM)</strong>：处理逐点算术、类型转换和激活函数，每条通道使用一个算术逻辑单元(ALU)网格。</li><li><strong>交换执行模块 (SXM)</strong>：执行结构化数据移动，包括向量的排列、旋转、分发和转置。</li></ul>
 <p><strong>显式数据移动的优势</strong>。通过使数据移动变得显式和可编程，LPU使得内存访问、计算和通信可以重叠执行，而不是依赖硬件启发式方法。</p>
 <h4>MEM实现极致的片上内存带宽</h4>
 <p><strong>SRAM优先的内存架构</strong>。LPU的一个核心元素是MEM块——一个扁平的、SRAM优先的内存架构，其中500MB的高速片上SRAM作为推理的主要工作存储。编译器和运行时不依赖硬件管理的缓存，而是将活动工作集（包括权重、激活和KV状态）放入片上内存，并显式地移动数据。这减少了不可预测的停顿，并通过将最延迟敏感的数据保持在靠近计算单元的位置，帮助提供低且稳定的延迟。</p>
@@ -188,10 +182,8 @@ title: 'Inside NVIDIA Groq 3 LPX: The Low-Latency Inference Accelerator for the 
 <p><strong>为确定性数据交换设计</strong>。为了在多个设备间扩展推理，LPU包含专为确定性数据交换设计的高基数、高速C2C链路。每个LPU通过96条C2C链路连接，每条链路运行速度为112 Gbps，从而实现了简化的LPX纵向扩展拓扑，具有2.5 TB/s的高聚合双向I/O带宽和可预测的通信时序。这对于分布式推理流水线尤其重要，因为在这些流水线中，通信开销否则会成为延迟的主要来源。</p>
 <h4>确定性的、由编译器编排的执行</h4>
 <p><strong>空间执行模型</strong>。LPU建立在Groq的空间执行模型之上，其中编译器显式地调度计算、数据移动和同步。编译器不依赖运行时的动态硬件调度器，而是依赖硬件中的近同步（plesiosynchronous）芯片间协议，该协议可以消除自然时钟漂移，并将数百个LPU加速器对齐，使其像一个单一协调的系统一样工作。通过可预测的数据到达和定期的软件同步，开发人员可以更直接地对时序进行推理，系统也能够以更高的确定性来协调计算和网络行为。</p>
-<p><strong>执行模型的优势</strong>。这种执行模型能够实现：<br/>
-* 内存和计算之间的精确协调。<br/>
-* 对指令时序的显式控制。<br/>
-* 在可变工作负载下减少执行抖动。</p>
+<p><strong>执行模型的优势</strong>。这种执行模型能够实现：</p>
+<ul><li>内存和计算之间的精确协调。</li><li>对指令时序的显式控制。</li><li>在可变工作负载下减少执行抖动。</li></ul>
 <p><strong>对实时推理的意义</strong>。对于实时推理，这种确定性有助于即使在小批量大小下也能保持首个token生成时间和每token延迟的稳定。</p>
 <h3>Vera Rubin NVL72与LPX的相遇</h3>
 <p><strong>推理工作负载的接力赛比喻</strong>。现代推理就像一场接力赛。运行繁重上下文处理环节的硬件不必也负责冲刺到下一个token。Rubin GPU是用于训练和推理的灵活、通用的主力。它们在多种模型大小、批处理方案和服务模式下提供高吞吐量，从长上下文预填充到解码注意力和大规模高并发推理。</p>
@@ -213,9 +205,8 @@ title: 'Inside NVIDIA Groq 3 LPX: The Low-Latency Inference Accelerator for the 
 <h3>利用LPX加速推测性解码</h3>
 <p><strong>推测性解码的原理</strong>。推测性解码（Speculative decoding）是降低LLM推理延迟的一项日益重要的技术。该方法使用一个较小的草稿模型提前生成多个候选token，而一个较大的目标模型则并行验证和接受这些token。当预测匹配时，可以一次性提交多个token，从而显著提高有效每秒token数并减少响应延迟。</p>
 <p><strong>LPX在推测性解码中的角色</strong>。LPX非常适合在这种架构中充当草稿生成引擎。LPU的确定性执行模型和极高的片上SRAM带宽使其能够非常快速地生成草稿token，从而使草稿模型能够领先于验证器运行。与此同时，像Rubin这样的GPU在大型模型执行任务（如预填充、注意力处理和token验证）方面仍然非常高效。</p>
-<p><strong>异构处理器协同</strong>。通过将两者配对，系统结合了两种处理器的优势：<br/>
-* LPX利用其低延迟架构快速生成草稿token。<br/>
-* Rubin GPU利用高吞吐量计算和巨大的内存容量高效地验证和最终确定token。</p>
+<p><strong>异构处理器协同</strong>。通过将两者配对，系统结合了两种处理器的优势：</p>
+<ul><li>LPX利用其低延迟架构快速生成草稿token。</li><li>Rubin GPU利用高吞吐量计算和巨大的内存容量高效地验证和最终确定token。</li></ul>
 <p><strong>分离执行的优势</strong>。这种分离使得推测性解码可以跨异构处理器运行，而不是在同一硬件上运行草稿和验证模型。其结果是一个能够提供更快草稿生成而又不牺牲基于GPU的验证效率的系统。</p>
 <p><img alt="展示推测性解码的图表，其中一个GPU目标模型验证由运行在LPX上的草稿模型生成的token，允许每步接受多个token并减少推理延迟。" class="figure-image" src="https://developer-blogs.nvidia.com/wp-content/uploads/2026/03/Speculative-Decoding.gif"/><br/>
 <em>图8. 使用GPU验证和LPU草稿生成的推测性解码</em></p>

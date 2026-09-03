@@ -49,9 +49,8 @@ $$ \ell_{\text{dist}}^{\text{Fed}}(x, y; \tilde{W}_k) = \ell(x, y; \tilde{W}_k) 
 <li><strong>主动层采样 (Active layers sampling)</strong>：在训练过程中动态选择残差网络（如 ResNets 和 Transformers）的一个子集层进行训练。这使得训练出的模型能够更好地适应并部署在不同能力的异构设备上。</li>
 <li><strong>自动蒸馏 (Auto-distillation)</strong>：将在较大模型配置上学到的知识蒸馏到较小的模型配置中，从而提升在低容量设备上的模型性能。</li>
 </ol>
-<p>通过这些技术，FlexTrain 旨在实现以下目标：<br/>
-* <strong>高效部署</strong>：训练一个单一的全局模型，该模型可以轻松地部署到具有不同资源限制的设备上，从而节省训练时间和能耗。<br/>
-* <strong>性能提升</strong>：在联邦学习环境中，FlexTrain 通过有效分享从能力较弱的设备上学到的知识给能力更强的设备，从而超越了标准的联邦学习基准。这种优势在设备数量众多和数据非独立同分布（non-i.i.d.）的场景下尤为明显。</p>
+<p>通过这些技术，FlexTrain 旨在实现以下目标：</p>
+<ul><li><strong>高效部署</strong>：训练一个单一的全局模型，该模型可以轻松地部署到具有不同资源限制的设备上，从而节省训练时间和能耗。</li><li><strong>性能提升</strong>：在联邦学习环境中，FlexTrain 通过有效分享从能力较弱的设备上学到的知识给能力更强的设备，从而超越了标准的联邦学习基准。这种优势在设备数量众多和数据非独立同分布（non-i.i.d.）的场景下尤为明显。</li></ul>
 <p>本文通过在 CIFAR-100 数据集上的实验证明了 FlexTrain 在集中式训练中的有效性，并将其扩展到联邦学习场景，在 CIFAR-10 和 CIFAR-100 数据集上展示了其相对于标准联邦学习基准的优越性。</p>
 <h2>A2 方法细节</h2>
 <p>在本节中，我们首先描述 FlexTrain 中使用的逐层采样和激活技术，这些技术使我们能够实现所需的灵活性。然后，我们介绍我们提出的自动蒸馏方法，该方法促进了各种采样模型学习到的特征之间的知识交换，从而实现了更好的整体性能。借助这些技术，我们可以创建一个高度优化的模型，该模型可以高效部署，同时在对时间敏感的环境中最大限度地降低通信成本，并确保与各种设备无缝集成。</p>
@@ -89,13 +88,8 @@ $$\overline{\mathcal{L}}(W) = \mathbb{E}_{k \sim \boldsymbol{\pi}}[\mathcal{L}(\
 </figure>
 <p><strong>实现细节与算法总结</strong>。其中 $\beta$ 是一个固定常数。注意，在通过 $N_k$ 传播损失梯度时，项 $f_{\tilde{W}}(x)$ 不进行微分。理想情况下，人们会从包含最多知识的最大配置 $N$ 中蒸馏知识到较小的配置中。然而，对于大型神经网络来说，这在计算上可能非常昂贵。我们在第 4 节的实验表明，将 $k'$ 固定为 $k + 1$ 已经提供了一个良好的性能基准。综合以上所有内容，我们在算法 1 中总结了整个 FlexTrain 框架。</p>
 <p><strong>算法 1: FlexTrain</strong></p>
-<p><strong>输入</strong>: 模型 $N$，分布 $\pi$，学习率 $\alpha$，数据集 $D$<br/>
-1. 初始化 $W$;<br/>
-2. <strong>while</strong> 未收敛 <strong>do</strong><br/>
-3. 采样配置 $k \sim \pi$;<br/>
-4. 从 $D$ 中采样大小为 $B$ 的批次 $(x, y)$;<br/>
-5. $\tilde{W}_k \leftarrow \tilde{W}_k - \alpha \frac{1}{B} \sum_{j=1}^B \nabla_{\tilde{W}_k} \ell_{dist}(x, y; \tilde{W}_k)$;<br/>
-6. <strong>end while</strong></p>
+<p><strong>输入</strong>: 模型 $N$，分布 $\pi$，学习率 $\alpha$，数据集 $D$</p>
+<ol><li>初始化 $W$;</li><li><strong>while</strong> 未收敛 <strong>do</strong></li><li>采样配置 $k \sim \pi$;</li><li>从 $D$ 中采样大小为 $B$ 的批次 $(x, y)$;</li><li>$\tilde{W}_k \leftarrow \tilde{W}_k - \alpha \frac{1}{B} \sum_{j=1}^B \nabla_{\tilde{W}_k} \ell_{dist}(x, y; \tilde{W}_k)$;</li><li><strong>end while</strong></li></ol>
 <h3>3 联邦 FlexTrain</h3>
 <p><strong>联邦学习中的异构性挑战</strong>。在联邦学习环境中，设备的异构性对大规模深度学习应用构成了重大挑战【【6】Peter Kairouz, et al. Advances and open problems in federated learning. Foundations and Trends® in Machine Learning, 2021.】。由于数据不能共享，这一问题变得更加复杂，导致同时训练多种尺寸的模型变得不太理想，因为能力较差的设备的数据只能用于训练较小的模型，从而导致数据倾斜，并限制了较大模型的丰富性，尤其是在非独立同分布（non-i.i.d.）数据的情况下。为了应对这一挑战，一个能够适应不同训练和推理场景的灵活训练算法对于利用所有设备的数据至关重要。认识到联邦学习环境在广泛应用中的重要性，例如移动键盘预测【【20】Andrew Hard, et al. Federated learning for mobile keyboard prediction. CoRR, 2018.】，我们将 FlexTrain 方法扩展到联邦学习环境，以开发能够提高整体性能的自适应模型。</p>
 <p><strong>Federated FlexTrain的核心思想</strong>。在联邦学习领域，首要目标是在维护数据隐私的同时，最小化跨多个设备的损失函数。通常，这涉及将损失函数定义为所有设备各自损失函数的加权和，权重为每个设备上的数据样本数量。具体而言，给定 $J$ 个设备中设备 $j$ 上的数据集 $D_j$，神经网络模型 $N \in N^\theta$，以及如公式(2)所述的损失函数 $L(·, ·; W)$，联邦学习环境下的总损失函数由下式给出：</p>

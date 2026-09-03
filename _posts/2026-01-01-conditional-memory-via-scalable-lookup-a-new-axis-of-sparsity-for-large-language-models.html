@@ -37,13 +37,8 @@ title: 'Conditional Memory via Scalable Lookup: A New Axis of Sparsity for Large
 <h2>A1 主要贡献</h2>
 <p>本文探讨了大型语言模型（LLMs）中一个结构性优化的机会。当前模型主要通过专家混合（MoE）实现稀疏性，但这迫使它们通过计算来低效地模拟知识检索。语言建模包含两种性质不同的子任务：组合推理和知识检索。前者需要深度动态计算，而后者涉及大量局部、静态和高度模式化的文本（如命名实体、固定短语），这些内容更适合通过计算开销低的查找操作来处理。由于标准Transformer缺乏原生的知识查找机制，当前LLMs被迫消耗宝贵的计算深度来重建静态查找表，而这些计算资源本可用于更高级的推理。</p>
 <p>为了解决这一问题，本文提出了一个与条件计算互补的稀疏性轴：<strong>条件记忆（conditional memory）</strong>。条件计算通过稀疏激活参数来处理动态逻辑，而条件记忆则依赖稀疏查找操作来检索固定知识的静态嵌入。本文通过<strong>Engram模块</strong>实例化了这一概念，这是一个基于经典n-gram嵌入结构并结合了现代技术（如分词器压缩、多头哈希、上下文感知门控和多分支集成）的模块。</p>
-<p><strong>核心贡献如下：</strong><br/>
-1. <strong>提出条件记忆作为新的稀疏性轴</strong>：与MoE的条件计算相辅相成，通过Engram模块实现高效的O(1)知识查找，以处理语言中的静态和局部模式。<br/>
-2. <strong>构建稀疏性分配问题并发现U型缩放定律</strong>：研究了在固定总参数和计算预算下，如何在MoE专家（计算）和Engram记忆之间分配容量。实验揭示了一个明确的U型关系，表明混合分配策略优于纯MoE模型。<br/>
-3. <strong>大规模实验验证有效性</strong>：遵循该分配定律，将Engram扩展至一个27B参数的模型。在与参数量和计算量严格相等的MoE基线模型的对比中，Engram-27B在多个领域均表现出优越性。<br/>
-    * <strong>知识密集型任务</strong>：MMLU提升3.4分，CMMLU提升4.0分。<br/>
-    * <strong>通用推理任务</strong>：BBH提升5.0分，ARC-Challenge提升3.7分。<br/>
-    * <strong>代码/数学领域</strong>：HumanEval提升3.0分，MATH提升2.4分。</p>
+<p><strong>核心贡献如下：</strong></p>
+<ol><li><strong>提出条件记忆作为新的稀疏性轴</strong>：与MoE的条件计算相辅相成，通过Engram模块实现高效的O(1)知识查找，以处理语言中的静态和局部模式。</li><li><strong>构建稀疏性分配问题并发现U型缩放定律</strong>：研究了在固定总参数和计算预算下，如何在MoE专家（计算）和Engram记忆之间分配容量。实验揭示了一个明确的U型关系，表明混合分配策略优于纯MoE模型。</li><li><strong>大规模实验验证有效性</strong>：遵循该分配定律，将Engram扩展至一个27B参数的模型。在与参数量和计算量严格相等的MoE基线模型的对比中，Engram-27B在多个领域均表现出优越性。<ul><li><strong>知识密集型任务</strong>：MMLU提升3.4分，CMMLU提升4.0分。</li><li><strong>通用推理任务</strong>：BBH提升5.0分，ARC-Challenge提升3.7分。</li><li><strong>代码/数学领域</strong>：HumanEval提升3.0分，MATH提升2.4分。</li></ul></li></ol>
 <ol>
 <li><strong>机制分析揭示其工作原理</strong>：通过LogitLens和CKA分析发现，Engram通过减轻模型早期层重建静态知识的负担，有效地增加了网络的“有效深度”，从而为复杂推理释放了更多资源。此外，它将局部依赖关系委托给查找操作，释放了注意力容量以关注全局上下文，显著提升了长上下文检索能力（例如，在MultiQuery NIAH上从84.2提升到97.0）。</li>
 <li><strong>实现基础设施感知的系统效率</strong>：Engram采用确定性寻址，允许在运行时从主机内存预取数据，实现了计算与通信的重叠。实验证明，将一个100B参数的查找表卸载到主机内存，其开销可以忽略不计（&lt;3%），有效绕过了GPU内存的限制。</li>
@@ -102,25 +97,20 @@ $$\alpha_t^{(m)}=\sigma\left(\frac{\text{RMSNorm}(\mathbf{h}_t^{(m)})^\top \text
 <li><strong>无限内存情境</strong>。考虑到Engram的非缩放性O(1)开销，如果内存预算被放宽或积极扩展，Engram本身会表现出什么样的缩放行为？</li>
 </ol>
 <h3>3.1. MoE与Engram之间的最优分配比例</h3>
-<p><strong>计算匹配的公式化</strong>。我们使用三个参数指标来分析这种权衡：<br/>
-* $P_{tot}$：总可训练参数，不包括词汇嵌入和LM头。<br/>
-* $P_{act}$：每个token激活的参数。该数量决定了训练成本（FLOPs）。<br/>
-* $P_{sparse} \triangleq P_{tot} - P_{act}$：非激活参数，代表了可用于扩展模型大小而不增加计算成本的“免费”参数预算（例如，未被选择的专家或未被检索的嵌入）。<br/>
-我们在每个FLOPs预算内保持 $P_{tot}$ 和 $P_{act}$ 固定，因此模型具有相同数量的参数和相同的每token FLOPs。对于MoE，$P_{act}$ 由top-k选择的专家决定，而未选择的专家的参数贡献给 $P_{sparse}$。对于Engram，每个token只检索恒定数量的槽位，因此扩展嵌入槽的数量会增加 $P_{tot}$ 而不增加每token的FLOPs。</p>
+<p><strong>计算匹配的公式化</strong>。我们使用三个参数指标来分析这种权衡：</p>
+<ul><li>$P_{tot}$：总可训练参数，不包括词汇嵌入和LM头。</li><li>$P_{act}$：每个token激活的参数。该数量决定了训练成本（FLOPs）。</li><li>$P_{sparse} \triangleq P_{tot} - P_{act}$：非激活参数，代表了可用于扩展模型大小而不增加计算成本的“免费”参数预算（例如，未被选择的专家或未被检索的嵌入）。</li></ul>
+<p>我们在每个FLOPs预算内保持 $P_{tot}$ 和 $P_{act}$ 固定，因此模型具有相同数量的参数和相同的每token FLOPs。对于MoE，$P_{act}$ 由top-k选择的专家决定，而未选择的专家的参数贡献给 $P_{sparse}$。对于Engram，每个token只检索恒定数量的槽位，因此扩展嵌入槽的数量会增加 $P_{tot}$ 而不增加每token的FLOPs。</p>
 <p><strong>分配比例</strong>。我们将分配比例 $\rho \in [0, 1]$ 定义为分配给MoE专家容量的非激活参数预算的比例：</p>
 <p></p>
 $$P_{\mathrm{MoE}}^{(\text {sparse})}=\rho P_{\text {sparse }}, \quad P_{\text {Engram }}=(1-\rho) P_{\text {sparse }} .$$
 
-<p>直观上：<br/>
-* $\rho = 1$ 对应于一个纯MoE模型（所有非激活参数都是路由专家）。<br/>
-* $\rho &lt; 1$ 减少了路由专家的数量，并将释放的参数重新分配给Engram嵌入槽。</p>
-<p><strong>实验协议</strong>。我们评估了两种计算规模下的这种权衡，并在两种设置中都保持了恒定的稀疏比率 $P_{tot}/P_{act} \approx 10$：<br/>
-* $C = 2 \times 10^{20}$ FLOPs: $P_{tot} \approx 5.7B$，$P_{act} = 568M$。基线模型（$\rho = 1$）共有106个专家。<br/>
-* $C = 6 \times 10^{20}$ FLOPs: $P_{tot} \approx 9.9B$，$P_{act} = 993M$。基线模型（$\rho = 1$）共有99个专家。<br/>
-对于不同的 $\rho$，我们仅通过调整路由专家的数量和Engram嵌入槽的数量来构建相应的模型。所有运行都使用相同的训练流程和优化超参数。</p>
-<p><strong>结果与分析</strong>。图3（左）揭示了验证损失与分配比例 $\rho$ 之间存在一致的U型关系。值得注意的是，即使MoE的分配比例减少到仅 $\rho \approx 40\%$（对于5.7B模型为46个专家，9.9B模型为43个专家），Engram模型的性能也与纯MoE基线（$\rho = 100\%$）相当。此外，纯MoE基线被证明是次优的：将大约20%–25%的稀疏参数预算重新分配给Engram可以产生最佳性能。从数量上看，在10B规模（$C = 6 \times 10^{20}$）下，验证损失从1.7248（$\rho = 100\%$）提高到最优值 $\rho \approx 80\%$ 附近的1.7109（$\Delta = 0.0139$）。关键的是，这个最优值的位置在不同规模下是稳定的（$\rho \approx 75\%–80\%$），表明在所考察的规模范围内（在固定稀疏度下）存在一个稳健的分配偏好。这种观察到的U型关系证实了这两个模块之间的结构互补性：<br/>
-* <strong>MoE主导</strong>（$\rho \rightarrow 100\%$）：模型缺乏用于存储静态模式的专用内存，迫使其通过深度和计算来低效地重建它们。<br/>
-* <strong>Engram主导</strong>（$\rho \rightarrow 0\%$）：模型失去了条件计算能力，损害了需要动态、上下文依赖推理的任务；在这种情况下，内存无法替代计算。</p>
+<p>直观上：</p>
+<ul><li>$\rho = 1$ 对应于一个纯MoE模型（所有非激活参数都是路由专家）。</li><li>$\rho &lt; 1$ 减少了路由专家的数量，并将释放的参数重新分配给Engram嵌入槽。</li></ul>
+<p><strong>实验协议</strong>。我们评估了两种计算规模下的这种权衡，并在两种设置中都保持了恒定的稀疏比率 $P_{tot}/P_{act} \approx 10$：</p>
+<ul><li>$C = 2 \times 10^{20}$ FLOPs: $P_{tot} \approx 5.7B$，$P_{act} = 568M$。基线模型（$\rho = 1$）共有106个专家。</li><li>$C = 6 \times 10^{20}$ FLOPs: $P_{tot} \approx 9.9B$，$P_{act} = 993M$。基线模型（$\rho = 1$）共有99个专家。</li></ul>
+<p>对于不同的 $\rho$，我们仅通过调整路由专家的数量和Engram嵌入槽的数量来构建相应的模型。所有运行都使用相同的训练流程和优化超参数。</p>
+<p><strong>结果与分析</strong>。图3（左）揭示了验证损失与分配比例 $\rho$ 之间存在一致的U型关系。值得注意的是，即使MoE的分配比例减少到仅 $\rho \approx 40\%$（对于5.7B模型为46个专家，9.9B模型为43个专家），Engram模型的性能也与纯MoE基线（$\rho = 100\%$）相当。此外，纯MoE基线被证明是次优的：将大约20%–25%的稀疏参数预算重新分配给Engram可以产生最佳性能。从数量上看，在10B规模（$C = 6 \times 10^{20}$）下，验证损失从1.7248（$\rho = 100\%$）提高到最优值 $\rho \approx 80\%$ 附近的1.7109（$\Delta = 0.0139$）。关键的是，这个最优值的位置在不同规模下是稳定的（$\rho \approx 75\%–80\%$），表明在所考察的规模范围内（在固定稀疏度下）存在一个稳健的分配偏好。这种观察到的U型关系证实了这两个模块之间的结构互补性：</p>
+<ul><li><strong>MoE主导</strong>（$\rho \rightarrow 100\%$）：模型缺乏用于存储静态模式的专用内存，迫使其通过深度和计算来低效地重建它们。</li><li><strong>Engram主导</strong>（$\rho \rightarrow 0\%$）：模型失去了条件计算能力，损害了需要动态、上下文依赖推理的任务；在这种情况下，内存无法替代计算。</li></ul>
 <h3>3.2. 无限内存情境下的Engram</h3>
 <p><strong>无限内存情境下的Engram缩放</strong>。在3.1节中，我们在固定参数预算下优化了分配。现在我们探索互补的设置：激进的内存扩展。这项研究的动机是Engram具有在2.5节中详述的将存储与计算解耦的独特能力。</p>
 <p><strong>实验协议</strong>。我们使用一个固定的MoE主干网络，其 $P_{tot} \approx 3B$，$P_{act} = 568M$，训练了100B个token以确保收敛。在此主干网络之上，我们附加了一个Engram表，并将槽位数 $S$ 从 $2.58 \times 10^5$ 扫描到 $1.0 \times 10^7$（增加了约130亿参数）。作为基线，我们与OverEncoding【索引54, Over-tokenized transformer: Vocabulary is generally worth scaling+2025+ICML】进行比较，该方法通过与词汇嵌入求平均来集成n-gram嵌入。我们注意到，虽然其他工作如SCONE【索引118, Scaling embedding layers in language models+2025+URL】也研究了大规模嵌入，但它主要关注推理，并包含额外的模块（f-gram模型）和额外的训练FLOPs，使其与本研究严格的等计算量约束不兼容。</p>

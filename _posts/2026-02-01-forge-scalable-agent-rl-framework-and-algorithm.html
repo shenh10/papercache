@@ -29,10 +29,8 @@ title: 'Forge: Scalable Agent RL Framework and Algorithm'
 </div>
 </details>
 <h1>1. 主要贡献</h1>
-<p>本文介绍了MiniMax为解决大规模强化学习（RL）在复杂真实世界Agent应用中面临的“不可能三角”（系统吞吐量、训练稳定性和Agent灵活性）而开发的内部RL框架——Forge。主要贡献如下：<br/>
-1. <strong>整体架构创新</strong>：提出了Forge框架，通过灵活的系统架构、标准化的交互协议（Middleware设计），解耦了Agent推理逻辑与底层训练设施，支持任意Agent脚手架（Scaffold）的训练。<br/>
-2. <strong>大规模工程实践</strong>：该系统支持了MiniMax M2.5模型的构建，处理了超过10万种不同的真实世界Agent脚手架和环境，支持长达200k的上下文长度，保持了每日百万级样本的处理吞吐量。<br/>
-3. <strong>算法与调度优化</strong>：引入了Windowed FIFO混合调度策略解决效率与分布一致性的冲突；提出了前缀树合并（Prefix Tree Merging）技术消除计算冗余；采用CISPO算法结合混合域训练和复合奖励框架（包含时间成本奖励），实现了高效且稳定的训练。</p>
+<p>本文介绍了MiniMax为解决大规模强化学习（RL）在复杂真实世界Agent应用中面临的“不可能三角”（系统吞吐量、训练稳定性和Agent灵活性）而开发的内部RL框架——Forge。主要贡献如下：</p>
+<ol><li><strong>整体架构创新</strong>：提出了Forge框架，通过灵活的系统架构、标准化的交互协议（Middleware设计），解耦了Agent推理逻辑与底层训练设施，支持任意Agent脚手架（Scaffold）的训练。</li><li><strong>大规模工程实践</strong>：该系统支持了MiniMax M2.5模型的构建，处理了超过10万种不同的真实世界Agent脚手架和环境，支持长达200k的上下文长度，保持了每日百万级样本的处理吞吐量。</li><li><strong>算法与调度优化</strong>：引入了Windowed FIFO混合调度策略解决效率与分布一致性的冲突；提出了前缀树合并（Prefix Tree Merging）技术消除计算冗余；采用CISPO算法结合混合域训练和复合奖励框架（包含时间成本奖励），实现了高效且稳定的训练。</li></ol>
 <h1>2. 问题定义与背景</h1>
 <p>在详细介绍架构之前，论文首先将Agent RL系统的优化目标形式化为最大化有效Agent训练产出（$J$）：</p>
 <p></p>
@@ -42,16 +40,13 @@ $$ \text{s.t. } \forall A \in \Omega_{agent} (\text{Arbitrary Agent}) $$
 <p></p><div>$$ E[\text{Update Variance}] &lt; \delta (\text{Stability}) $$</div><div>$$ E[||J(T) - J^*||] &lt; \epsilon (\text{Convergence}) $$</div><p></p>
 <p>其中系统吞吐量受限于Rollout、训练、数据处理和I/O四个组件；样本效率取决于数据分布、质量、算法效率和Off-policy程度。</p>
 <p><strong>1.1 Agent扩展性与框架灵活性挑战</strong><br/>
-当前RL范式存在“玻璃天花板”：<br/>
-* <strong>受限的Agent自主性</strong>：标准框架将Agent视为白盒函数并共享状态，难以模拟复杂的认知架构（如动态上下文管理、多智能体协作），阻碍了模型在任意黑盒Agent上的泛化。<br/>
-* <strong>Token一致性障碍</strong>：现有的TITO（Token-In-Token-Out）架构强制Agent与底层Token逻辑耦合。在复杂的上下文管理（Context Management, CM）下，维持高层推理抽象与底层训练表示的一致性计算成本极高。</p>
+当前RL范式存在“玻璃天花板”：</p>
+<ul><li><strong>受限的Agent自主性</strong>：标准框架将Agent视为白盒函数并共享状态，难以模拟复杂的认知架构（如动态上下文管理、多智能体协作），阻碍了模型在任意黑盒Agent上的泛化。</li><li><strong>Token一致性障碍</strong>：现有的TITO（Token-In-Token-Out）架构强制Agent与底层Token逻辑耦合。在复杂的上下文管理（Context Management, CM）下，维持高层推理抽象与底层训练表示的一致性计算成本极高。</li></ul>
 <p><strong>1.2 系统效率与计算冗余</strong><br/>
-Agent的Rollout完成时间方差极大（从秒级到数小时），导致调度死锁：<br/>
-* <strong>异步控制器困境</strong>：严格的FIFO/同步调度受“掉队者效应”（Straggler Effect）影响导致集群空闲；而贪婪/FFFO模式虽然最大化了吞吐量，但会导致严重的数据分布偏移（Data Distribution Shift），造成非平稳训练环境和梯度震荡。<br/>
-* <strong>前缀冗余</strong>：Tokenizer机制与上下文管理的相互作用导致大量请求共享相同的前缀，在训练期间造成显著的计算浪费。</p>
-<p><strong>1.3 算法挑战：信用分配与优化稳定性</strong><br/>
-* <strong>稀疏奖励与高梯度方差</strong>：Agent任务涉及超长视界和延迟反馈，在200k上下文窗口内将信用分配给特定Token极其困难，导致低信噪比和高梯度方差。<br/>
-* <strong>忽略延迟的优化</strong>：传统RL目标仅关注正确性而忽略执行的时间成本。在现实场景中，不同轨迹的延迟差异巨大，标准范式未能激励并行化或高效工具的使用。</p>
+Agent的Rollout完成时间方差极大（从秒级到数小时），导致调度死锁：</p>
+<ul><li><strong>异步控制器困境</strong>：严格的FIFO/同步调度受“掉队者效应”（Straggler Effect）影响导致集群空闲；而贪婪/FFFO模式虽然最大化了吞吐量，但会导致严重的数据分布偏移（Data Distribution Shift），造成非平稳训练环境和梯度震荡。</li><li><strong>前缀冗余</strong>：Tokenizer机制与上下文管理的相互作用导致大量请求共享相同的前缀，在训练期间造成显著的计算浪费。</li></ul>
+<p><strong>1.3 算法挑战：信用分配与优化稳定性</strong></p>
+<ul><li><strong>稀疏奖励与高梯度方差</strong>：Agent任务涉及超长视界和延迟反馈，在200k上下文窗口内将信用分配给特定Token极其困难，导致低信噪比和高梯度方差。</li><li><strong>忽略延迟的优化</strong>：传统RL目标仅关注正确性而忽略执行的时间成本。在现实场景中，不同轨迹的延迟差异巨大，标准范式未能激励并行化或高效工具的使用。</li></ul>
 <h1>3. 方法细节</h1>
 <h2>2. 系统架构与Agent RL范式</h2>
 <p>为了缓解“效率 vs. Off-Policyness”的权衡并减少冗余，系统采用了以下架构创新。</p>
@@ -181,29 +176,22 @@ Agent的Rollout完成时间方差极大（从秒级到数小时），导致调�
 </ul>
 <h2>4. 可扩展Agent RL算法</h2>
 <h3>4.1 RL算法</h3>
-<p>核心算法采用<strong>CISPO</strong>，并专门针对长视界Agent的特性进行了调整。<br/>
-* <strong>统一混合域训练</strong>：不同于导致负迁移或域间干扰的多阶段强化学习，采用统一训练策略。同时混合推理（Reasoning）、通用问答（General QA）和Agent领域的任务。这种联合训练方法减轻了顺序训练中常见的性能下降，并显著增强了模型在不同任务间的泛化能力。</p>
+<p>核心算法采用<strong>CISPO</strong>，并专门针对长视界Agent的特性进行了调整。</p>
+<ul><li><strong>统一混合域训练</strong>：不同于导致负迁移或域间干扰的多阶段强化学习，采用统一训练策略。同时混合推理（Reasoning）、通用问答（General QA）和Agent领域的任务。这种联合训练方法减轻了顺序训练中常见的性能下降，并显著增强了模型在不同任务间的泛化能力。</li></ul>
 <p></p>
 $$\mathcal{J}_{\text {CISPO }}(\theta)=\mathbb{E}_{(q, a) \sim \mathcal{D},\left\{o_i\right\}_{i=1}^G \sim \pi_{\theta_{\text {old }}}(\cdot \mid q)}\left[\frac{1}{\sum_{i=1}^G\left|o_i\right|} \sum_{i=1}^G \sum_{t=1}^{\left|o_i\right|} \operatorname{sg}\left(\hat{r}_{i, t}(\theta)\right) \hat{A}_{i, t} \log \pi_\theta\left(o_{i, t} \mid q, o_{i,&lt;t}\right)\right]$$
 
 &lt;h3 id="42-dense-and-efficiency-aware-reward"&gt;4.2 密集与效率感知奖励（Dense and Efficiency-Aware Reward）
-<p>提出了一个复合奖励框架，旨在解决超长上下文（高达200k）的信用分配挑战，同时确保训练稳定性：<br/>
-* <strong>过程奖励（Process Reward）</strong>：为了提供密集反馈，针对中间行为（例如惩罚语言混合或特定工具调用错误），而不是仅依赖最终结果。<br/>
-* <strong>任务完成时间奖励（Task Completion Time Reward）</strong>：在Agent场景中，将相对完成时间纳入奖励信号。这不仅取决于Token生成，还取决于特定工具执行和子Agent调用的延迟。这激励Agent利用并行性，从而加速任务执行。<br/>
-* <strong>Reward-to-go用于方差减少</strong>：采用Reward-to-go公式对回报进行归一化，有效降低梯度方差并提高信用分配的精度，稳定优化过程。</p>
+<p>提出了一个复合奖励框架，旨在解决超长上下文（高达200k）的信用分配挑战，同时确保训练稳定性：</p>
+<ul><li><strong>过程奖励（Process Reward）</strong>：为了提供密集反馈，针对中间行为（例如惩罚语言混合或特定工具调用错误），而不是仅依赖最终结果。</li><li><strong>任务完成时间奖励（Task Completion Time Reward）</strong>：在Agent场景中，将相对完成时间纳入奖励信号。这不仅取决于Token生成，还取决于特定工具执行和子Agent调用的延迟。这激励Agent利用并行性，从而加速任务执行。</li><li><strong>Reward-to-go用于方差减少</strong>：采用Reward-to-go公式对回报进行归一化，有效降低梯度方差并提高信用分配的精度，稳定优化过程。</li></ul>
 <p></p>
 $$\hat{r}_{i,t}(\theta) = \text{clip} \left( r_{i,t}(\theta), 0, 1 + \epsilon_{high}^{IS} \right)$$
 <p></p><div>$$\widehat{A}_{i,t} = \sum_{p=t}^{T} (r_p^{\text{speed}} + r_p^{\text{perf}}) - B_i$$</div><p></p>
 <h1>4. 实验环境与结果</h1>
-<p><strong>实验配置与环境</strong><br/>
-* <strong>模型</strong>：MiniMax M2.5。<br/>
-* <strong>数据规模与上下文</strong>：支持高达200k的上下文长度，处理了超过10万种不同的真实世界Agent脚手架。<br/>
-* <strong>硬件与吞吐量</strong>：系统保持了每日百万级样本的处理吞吐量。<br/>
-* <strong>验证对象</strong>：包括OpenCode Agent（代码中心）、Truncate BC策略等多种黑盒与白盒Agent。</p>
-<p><strong>实验结果</strong><br/>
-* <strong>训练稳定性与收敛性</strong>：通过CISPO算法与复合奖励框架，系统实现了奖励的持续收敛（见图2）。Reward-to-go机制有效降低了梯度方差。<br/>
-* <strong>训练效率提升</strong>：Prefix Tree Merging技术消除了前缀冗余，实现了<strong>40倍</strong>的训练速度提升，并显著减少了内存开销。<br/>
-* <strong>泛化能力</strong>：通过解耦架构和混合域训练，M2.5在数百种脚手架和数千种工具格式上展示了广泛的兼容性和性能提升，证明了在黑盒Agent上的鲁棒性。</p>
+<p><strong>实验配置与环境</strong></p>
+<ul><li><strong>模型</strong>：MiniMax M2.5。</li><li><strong>数据规模与上下文</strong>：支持高达200k的上下文长度，处理了超过10万种不同的真实世界Agent脚手架。</li><li><strong>硬件与吞吐量</strong>：系统保持了每日百万级样本的处理吞吐量。</li><li><strong>验证对象</strong>：包括OpenCode Agent（代码中心）、Truncate BC策略等多种黑盒与白盒Agent。</li></ul>
+<p><strong>实验结果</strong></p>
+<ul><li><strong>训练稳定性与收敛性</strong>：通过CISPO算法与复合奖励框架，系统实现了奖励的持续收敛（见图2）。Reward-to-go机制有效降低了梯度方差。</li><li><strong>训练效率提升</strong>：Prefix Tree Merging技术消除了前缀冗余，实现了<strong>40倍</strong>的训练速度提升，并显著减少了内存开销。</li><li><strong>泛化能力</strong>：通过解耦架构和混合域训练，M2.5在数百种脚手架和数千种工具格式上展示了广泛的兼容性和性能提升，证明了在黑盒Agent上的鲁棒性。</li></ul>
 <h1>5. 结论</h1>
 <p>MiniMax通过Forge框架成功解决了扩展Agent RL面临的“不可能三角”。通过整合灵活的解耦架构、Windowed FIFO调度、Prefix Tree Merging以及稳定的CISPO算法，Forge实现了RL系统吞吐量的突破，同时确保了跨任意Agent脚手架的鲁棒泛化。这一整体方法支持了MiniMax M2.5的大规模训练，交付了高效的真实世界Agent能力，推进了“Intelligence with Everyone”的使命。</p>
 </div>

@@ -114,21 +114,21 @@ title: 'MOBA: MIXTURE OF BLOCK ATTENTION FOR LONG-CONTEXT LLMS'
 <p><strong>算法 1 MoBA（混合块注意力）实现</strong><br/>
 <strong>需要</strong>：查询、键和值矩阵 $Q, K, V \in R^{N \times h \times d}$；MoBA 超参数（块大小 $B$ 和 top-k）；$h$ 和 $d$ 分别表示注意力头的数量和头的维度。另记 $n = N/B$ 为块的数量。<br/>
 1: // 将 KV 分割成块<br/>
-2: $\{ \tilde{K}_i, \tilde{V}_i \} = \text{split_blocks}(K, V, B)$，其中 $\tilde{K}_i, \tilde{V}_i \in R^{B \times h \times d}, i \in [n]$<br/>
+2: $\{ \tilde{K}_i, \tilde{V}_i \} = \text{split\_blocks}(K, V, B)$，其中 $\tilde{K}_i, \tilde{V}_i \in R^{B \times h \times d}, i \in [n]$<br/>
 3: // 计算门控分数以进行动态块选择<br/>
-4: $\bar{K} = \text{mean_pool}(K, B) \in R^{n \times h \times d}$<br/>
+4: $\bar{K} = \text{mean\_pool}(K, B) \in R^{n \times h \times d}$<br/>
 5: $S = Q\bar{K}^\top \in R^{N \times h \times n}$<br/>
 6: // 使用因果约束选择块（不对未来块进行注意力计算）<br/>
-7: $M = \text{create_causal_mask}(N, n)$<br/>
+7: $M = \text{create\_causal\_mask}(N, n)$<br/>
 8: $G = \text{topk}(S + M, k)$<br/>
 9: // 组织注意力模式以提高计算效率<br/>
-10: $Q_s, \tilde{K}_s, \tilde{V}_s = \text{get_self_attn_block}(Q, \tilde{K}, \tilde{V})$<br/>
-11: $Q_m, \tilde{K}_m, \tilde{V}_m = \text{index_select_moba_attn_block}(Q, \tilde{K}, \tilde{V}, G)$<br/>
+10: $Q_s, \tilde{K}_s, \tilde{V}_s = \text{get\_self\_attn\_block}(Q, \tilde{K}, \tilde{V})$<br/>
+11: $Q_m, \tilde{K}_m, \tilde{V}_m = \text{index\_select\_moba\_attn\_block}(Q, \tilde{K}, \tilde{V}, G)$<br/>
 12: // 分别计算注意力<br/>
-13: $O_s = \text{flash_attention_varlen}(Q_s, \tilde{K}_s, \tilde{V}_s, \text{causal=True})$<br/>
-14: $O_m = \text{flash_attention_varlen}(Q_m, \tilde{K}_m, \tilde{V}_m, \text{causal=False})$<br/>
+13: $O_s = \text{flash\_attention\_varlen}(Q_s, \tilde{K}_s, \tilde{V}_s, \text{causal=True})$<br/>
+14: $O_m = \text{flash\_attention\_varlen}(Q_m, \tilde{K}_m, \tilde{V}_m, \text{causal=False})$<br/>
 15: // 使用在线 softmax 合并结果<br/>
-16: $O = \text{combine_with_online_softmax}(O_s, O_m)$<br/>
+16: $O = \text{combine\_with\_online\_softmax}(O_s, O_m)$<br/>
 17: return $O$</p>
 <h2 id="a4">A4 实验环境</h2>
 <ul>

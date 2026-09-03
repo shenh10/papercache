@@ -321,19 +321,8 @@ GLM-5.3-Flash推动了Artificial Analysis Intelligence Index v4.1.1的帕累托�
 <h2>补充细节</h2>
 <p><strong>模型发布与应用集成</strong>：<br/>
 GLM-5.3-Flash已向所有GLM Coding Plan用户推出，提供3倍于GLM-5.3的可用配额。用户可以在ZCode中通过Browser Use和Computer Use解锁其多模态能力：代理可以通过点击和视觉验证网页，并操作桌面应用程序。GLM-5.3-Flash的模型权重已在Hugging Face上公开。对于本地部署，GLM-5.3-Flash目前支持SGLang、vLLM和TokenSpeed等推理框架，对更多框架的支持正在开发中。</p>
-<p><strong>详细评估参数与策略配置</strong>：<br/>
-* <strong>HLE w/ tools (full set)</strong>：使用采样参数<code>temperature=1.0</code>和<code>top_p=0.95</code>进行评估，最大生成长度为<code>163,840</code> tokens。评估在最大上下文长度<code>300,000</code> tokens下进行，使用上下文管理策略。使用GPT-5.6-luna (medium)作为裁判模型。<br/>
-* <strong>NL2Repo</strong>：在1M上下文中，使用<code>temperature=1.0</code>、<code>top_p=1.0</code>和<code>max_new_tokens=64k</code>评估NL2Repo。为了防止黑客攻击，使用了基于规则和基于LLM的判断来防止恶意行为（例如未经授权的pip或curl操作）。<br/>
-* <strong>DeepSWE</strong>：使用mini-swe-agent测试工具运行DeepSWE，参数为<code>temperature=0.95</code>、<code>top_p=1.0</code>、<code>timeout=6h</code>，上下文长度为400K。<br/>
-* <strong>Terminal-Bench 2.1</strong>：在Claude Code 2.1.207中评估，参数为<code>temperature=1.0</code>、<code>top_p=1</code>、<code>max_new_tokens=65536</code>，6小时超时。<br/>
-* <strong>Agent’s Last Exam (ALE)</strong>：使用官方评估协议和Claude Code测试工具评估ALE（推理努力=max，1M上下文，64K最大输出）。工具搜索被禁用，结果由官方ALE评估器评分。<br/>
-* <strong>Toolathlon Verified</strong>：通过官方评估服务获取所有结果，并报告3次独立运行的平均pass@1。<br/>
-* <strong>AutomationBench</strong>：在AutomationBench <strong>v1.0.6</strong>上进行评估，包含了修复PR #13中引入的<code>null</code>类型处理问题的补丁。<br/>
-* <strong>GDPval-AA v2</strong>：模型由Artificial Analysis进行独立评估。<br/>
-* <strong>BabyVision</strong>：使用<code>temperature=1.0</code>、<code>top_p=0.95</code>，最大上下文长度为164K tokens。将输入图像调整大小，使其较短边至少为1.5K像素，这与其他基线的设置保持一致。<br/>
-* <strong>OfficeQA Pro</strong>：在不提供嵌入文本访问权限的情况下，在Treasury Bulletin PDF语料库上评估代理。使用<code>temperature=1.0</code>、<code>top_p=0.95</code>，最大上下文长度为512K tokens。<br/>
-* <strong>CharXiv Reasoning与Chartography</strong>：使用<code>temperature=1.0</code>、<code>top_p=0.95</code>，最大上下文长度为256K tokens。<br/>
-* <strong>MVBench和MMVU</strong>：使用<code>temperature=1.0</code>、<code>top_p=0.95</code>，最大上下文长度为256K tokens。对于原生接受视频输入的模型（如Gemini 3.7 Flash），直接输入原始视频进行评估。对于不支持视频输入的模型，采用默认的1 fps帧提取策略。如果提取的总帧数超过API的最大限制，则在视频中执行均匀帧采样，直到达到此最大帧数限制。</p>
+<p><strong>详细评估参数与策略配置</strong>：</p>
+<ul><li><strong>HLE w/ tools (full set)</strong>：使用采样参数<code>temperature=1.0</code>和<code>top_p=0.95</code>进行评估，最大生成长度为<code>163,840</code> tokens。评估在最大上下文长度<code>300,000</code> tokens下进行，使用上下文管理策略。使用GPT-5.6-luna (medium)作为裁判模型。</li><li><strong>NL2Repo</strong>：在1M上下文中，使用<code>temperature=1.0</code>、<code>top_p=1.0</code>和<code>max_new_tokens=64k</code>评估NL2Repo。为了防止黑客攻击，使用了基于规则和基于LLM的判断来防止恶意行为（例如未经授权的pip或curl操作）。</li><li><strong>DeepSWE</strong>：使用mini-swe-agent测试工具运行DeepSWE，参数为<code>temperature=0.95</code>、<code>top_p=1.0</code>、<code>timeout=6h</code>，上下文长度为400K。</li><li><strong>Terminal-Bench 2.1</strong>：在Claude Code 2.1.207中评估，参数为<code>temperature=1.0</code>、<code>top_p=1</code>、<code>max_new_tokens=65536</code>，6小时超时。</li><li><strong>Agent’s Last Exam (ALE)</strong>：使用官方评估协议和Claude Code测试工具评估ALE（推理努力=max，1M上下文，64K最大输出）。工具搜索被禁用，结果由官方ALE评估器评分。</li><li><strong>Toolathlon Verified</strong>：通过官方评估服务获取所有结果，并报告3次独立运行的平均pass@1。</li><li><strong>AutomationBench</strong>：在AutomationBench <strong>v1.0.6</strong>上进行评估，包含了修复PR #13中引入的<code>null</code>类型处理问题的补丁。</li><li><strong>GDPval-AA v2</strong>：模型由Artificial Analysis进行独立评估。</li><li><strong>BabyVision</strong>：使用<code>temperature=1.0</code>、<code>top_p=0.95</code>，最大上下文长度为164K tokens。将输入图像调整大小，使其较短边至少为1.5K像素，这与其他基线的设置保持一致。</li><li><strong>OfficeQA Pro</strong>：在不提供嵌入文本访问权限的情况下，在Treasury Bulletin PDF语料库上评估代理。使用<code>temperature=1.0</code>、<code>top_p=0.95</code>，最大上下文长度为512K tokens。</li><li><strong>CharXiv Reasoning与Chartography</strong>：使用<code>temperature=1.0</code>、<code>top_p=0.95</code>，最大上下文长度为256K tokens。</li><li><strong>MVBench和MMVU</strong>：使用<code>temperature=1.0</code>、<code>top_p=0.95</code>，最大上下文长度为256K tokens。对于原生接受视频输入的模型（如Gemini 3.7 Flash），直接输入原始视频进行评估。对于不支持视频输入的模型，采用默认的1 fps帧提取策略。如果提取的总帧数超过API的最大限制，则在视频中执行均匀帧采样，直到达到此最大帧数限制。</li></ul>
 </div>
 
 

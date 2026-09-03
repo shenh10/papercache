@@ -41,12 +41,8 @@ NVIDIA 在 NCCL 2.23 版本中通过引入对数级扩展的 PAT 算法、多 ID
 <h3>背景介绍</h3>
 <p>NVIDIA集合通信库（NCCL）是为NVIDIA GPU和网络优化的多GPU及多节点通信原语实现。它是多GPU深度学习训练的核心软件组件，负责处理各种GPU间通信，无论是通过PCI、NVLink还是网络。NCCL利用先进的拓扑检测、优化的通信图和调优模型，在NVIDIA GPU平台上实现开箱即用的最佳性能。本文将讨论NCCL 2.23版本中发布的新功能和修复。</p>
 <h3>主要贡献</h3>
-<p>NVIDIA Magnum IO NCCL库旨在优化GPU间和多节点通信，这对AI和高性能计算（HPC）应用中的高效并行计算至关重要。此版本的价值在于其新功能：<br/>
-* <strong>针对ReduceScatter和AllGather的全新PAT算法</strong>：引入了基于Brucks算法的并行聚合树（PAT）算法，用于AllGather和ReduceScatter，实现了对数级扩展性。<br/>
-* <strong>加速初始化</strong>：提升了初始化性能，包括能够使用带内网络进行引导通信。<br/>
-* <strong>ncclCommInitRankScalable</strong>：一个新的初始化API，用于在创建通信器时使用多个<code>ncclUniqueId</code>，以加速大规模场景下的初始化。<br/>
-* <strong>节点内用户缓冲区注册</strong>：利用已注册的用户缓冲区进行节点内操作，提升性能。<br/>
-* <strong>新的分析器插件API</strong>：提供API钩子以测量细粒度的NCCL性能。</p>
+<p>NVIDIA Magnum IO NCCL库旨在优化GPU间和多节点通信，这对AI和高性能计算（HPC）应用中的高效并行计算至关重要。此版本的价值在于其新功能：</p>
+<ul><li><strong>针对ReduceScatter和AllGather的全新PAT算法</strong>：引入了基于Brucks算法的并行聚合树（PAT）算法，用于AllGather和ReduceScatter，实现了对数级扩展性。</li><li><strong>加速初始化</strong>：提升了初始化性能，包括能够使用带内网络进行引导通信。</li><li><strong>ncclCommInitRankScalable</strong>：一个新的初始化API，用于在创建通信器时使用多个<code>ncclUniqueId</code>，以加速大规模场景下的初始化。</li><li><strong>节点内用户缓冲区注册</strong>：利用已注册的用户缓冲区进行节点内操作，提升性能。</li><li><strong>新的分析器插件API</strong>：提供API钩子以测量细粒度的NCCL性能。</li></ul>
 <h3>方法细节</h3>
 <h4>PAT对数级扩展算法（用于ReduceScatter和AllGather）</h4>
 <ul>

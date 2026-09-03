@@ -34,15 +34,11 @@ title: Towards Fully FP8 GEMM LLM Training at Scale
 </details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决大型语言模型（LLM）预训练中采用FP8数据格式所面临的稳定性挑战，从而充分发挥其潜力。现有方法因依赖于次优的细粒度FP8内核，或在注意力投影等敏感组件中回退到更高精度的矩阵乘法（GEMMs），从而限制了吞吐量的提升。</p>
-<p><strong>核心问题与研究目标</strong><br/>
-- <strong>核心问题</strong>: 在大规模LLM训练中，FP8格式因其动态范围有限，难以处理激活值中出现的大幅离群特征，导致训练不稳定甚至发散。现有FP8训练方法为了维持稳定，要么采用开销较大的细粒度缩放策略，要么在关键计算（如注意力）中保留BF16精度，这都削弱了FP8带来的性能优势。<br/>
-- <strong>研究目标</strong>: 设计一种新的LLM架构，使其能够在Transformer块内的所有GEMMs（包括线性投影和注意力机制）中，在整个前向和后向传播过程中都使用FP8计算，从而在不牺牲模型性能的前提下，实现前所未有的训练吞吐量提升。</p>
+<p><strong>核心问题与研究目标</strong></p>
+<ul><li><strong>核心问题</strong>: 在大规模LLM训练中，FP8格式因其动态范围有限，难以处理激活值中出现的大幅离群特征，导致训练不稳定甚至发散。现有FP8训练方法为了维持稳定，要么采用开销较大的细粒度缩放策略，要么在关键计算（如注意力）中保留BF16精度，这都削弱了FP8带来的性能优势。</li><li><strong>研究目标</strong>: 设计一种新的LLM架构，使其能够在Transformer块内的所有GEMMs（包括线性投影和注意力机制）中，在整个前向和后向传播过程中都使用FP8计算，从而在不牺牲模型性能的前提下，实现前所未有的训练吞吐量提升。</li></ul>
 <p><strong>创新点与主要贡献</strong><br/>
-本文的主要贡献如下：<br/>
-- <strong>提出FOG架构集</strong>: 引入了FOG（Fast and Outlier-Guarded）系列LLM架构，该架构专门设计用于在训练过程中最小化离群特征。该方法能够在Transformer块内的所有GEMMs中稳定地使用FP8计算，与标准的BF16方法相比，吞吐量提升高达43%。<br/>
-- <strong>性能与稳定性验证</strong>: FOG架构在达到与BF16基线相当的下游任务质量的同时，显著提升了训练速度。本文通过在多种模型尺寸（0.4B、1.5B、8B）和高达Chinchilla最佳数据预算15倍的数据量下进行实验，经验性地证明了其性能和稳定性【12, Jordan Hoffmann, et al. Training Compute-Optimal Large Language Models. NeurIPS 2022】。<br/>
-- <strong>设计的灵活性</strong>: 证明了FOG设计的灵活性，它可以适应多种架构，包括使用不同激活函数的变体，甚至可以应用于专家混合（MoE）设置。<br/>
-- <strong>提出基于峰度的稳定性诊断方法</strong>: 使用峰度（kurtosis）作为关键指标，提出了一套方法，可以通过短期运行的诊断数据来判断一个架构在长数据量下进行FP8训练的鲁棒性。该方法不仅解释了先前观察到的规模化训练中的发散行为，还为社区未来开发的Transformer变体提供了评估FP8训练适用性的工具，无需进行昂贵的全面实验。</p>
+本文的主要贡献如下：</p>
+<ul><li><strong>提出FOG架构集</strong>: 引入了FOG（Fast and Outlier-Guarded）系列LLM架构，该架构专门设计用于在训练过程中最小化离群特征。该方法能够在Transformer块内的所有GEMMs中稳定地使用FP8计算，与标准的BF16方法相比，吞吐量提升高达43%。</li><li><strong>性能与稳定性验证</strong>: FOG架构在达到与BF16基线相当的下游任务质量的同时，显著提升了训练速度。本文通过在多种模型尺寸（0.4B、1.5B、8B）和高达Chinchilla最佳数据预算15倍的数据量下进行实验，经验性地证明了其性能和稳定性【12, Jordan Hoffmann, et al. Training Compute-Optimal Large Language Models. NeurIPS 2022】。</li><li><strong>设计的灵活性</strong>: 证明了FOG设计的灵活性，它可以适应多种架构，包括使用不同激活函数的变体，甚至可以应用于专家混合（MoE）设置。</li><li><strong>提出基于峰度的稳定性诊断方法</strong>: 使用峰度（kurtosis）作为关键指标，提出了一套方法，可以通过短期运行的诊断数据来判断一个架构在长数据量下进行FP8训练的鲁棒性。该方法不仅解释了先前观察到的规模化训练中的发散行为，还为社区未来开发的Transformer变体提供了评估FP8训练适用性的工具，无需进行昂贵的全面实验。</li></ul>
 <h2>A3 背景知识</h2>
 <p><strong>FP8格式与缩放策略</strong>: 由于动态范围有限，FP8张量在表示极端值时特别容易发生上溢和下溢。FP8格式有两种标准形式【20, Paulius Micikevicius, et al. FP8 Formats for Deep Learning. arXiv 2022】：E4M3和E5M2，各有优劣。E4M3（4位指数，3位尾数）提供更高的精度，而E5M2（5位指数，2位尾数）则以牺牲精度为代价提供更宽的动态范围。现有的大规模分布式训练框架，如DeepSpeed或Megatron【29, Mohammad Shoeybi, et al. Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism. arXiv 2020】，利用这种差异，在前向传播中使用E4M3以保持精度，在后向传播中使用E5M2以有效处理梯度更宽的动态范围。然而，这两种格式的表示能力都远低于半精度或单精度格式。因此，在将张量转换为FP8时，会应用各种缩放策略以更有效地利用其有限的范围。这些策略主要是张量级别的，分为两大类：延迟缩放（delayed scaling）和即时缩放（just-in-time scaling, JIT）。延迟缩放利用先前训练迭代的信息来确定当前迭代的张量缩放因子，只需要对数据进行单次遍历，并存储过去一段时间内观察到的有用指标的简短历史。相比之下，JIT缩放会阻碍使用FP8带来的增益，因为它需要先以更高精度生成张量，计算其分布以确定缩放因子，然后再将输入转换为FP8并执行GEMM，这至少需要两次数据遍历。一种更新的方法旨在通过为单个张量使用多个缩放因子来使缩放更鲁棒，允许不同的张量块有不同的缩放因子【27, Bita Darvish Rouhani, et al. Microscaling Data Formats for Deep Learning. arXiv 2023; 3, DeepSeek-AI, et al. DeepSeek-V3 Technical Report. arXiv 2025】。这种更精细的缩放策略自然会相对于张量级的延迟缩放方法在GEMM内核上引入更大的开销。</p>
 <p><strong>训练稳定性的挑战与现有解决方案</strong>: 确保FP8训练的稳定性仍然具有挑战性。当某些激活值在训练过程中产生大的离群值时，问题就变得尤为突出，这使得低精度表示变得不可行，并导致快速发散。先前的工作引入了“巨量激活”（massive activations）这一术语，这一现象类似于离群特征，并显示了它们在LLM能力中的关键作用【30, Mingjie Sun, et al. Massive Activations in Large Language Models. CoLM 2024】。理解这些离群值的动态对于解释FP8发散现象和识别网络中导致这些问题的组件至关重要。一个显著的离群值放大源头已被确定为广泛采用的SwiGLU（Swish Gated-Linear-Unit）激活函数【28, Noam Shazeer. GLU Variants Improve Transformer. arXiv 2020】。通过将其替换为一个缩放变体SmoothSwiGLU，可以调节大的离群值，并被证明可以稳定先前发散的FP8训练运行并确保其收敛【6, Maxim Fishman, et al. Scaling FP8 Training to Trillion-Token LLMs. ICLR 2025】。</p>
@@ -203,12 +199,8 @@ $$\operatorname{kurt}(\mathbf{x}) := \frac{\mu[\mathbf{x}^4]}{\sigma^2[\mathbf{x
 <figcaption class="figure-caption">Table 6: 实验中使用的超参数。请注意，FFN隐藏大小指的是门控激活函数中每个线性投影的维度；没有GLU的网络使用该值的1.5倍以匹配参数数量。指定的Softmax scale仅适用于FOG模型，所有其他模型遵循标准的s = 1/√DQK。</figcaption>
 </figure>
 <h3>B 架构</h3>
-<p><strong>架构细节</strong>: 我们为本文中出现的所有架构提供详细的公式。我们的transformer架构按顺序由以下组件构成：<br/>
-1. 输入token嵌入<br/>
-2. 一个输入缩放因子 $u \in (0, \infty)$，可能等于1<br/>
-3. 一系列L个如下所述的transformer块<br/>
-4. 一个最终的归一化函数 $N^{(\text{final})}$，可能为恒等函数<br/>
-5. 一个线性输出层</p>
+<p><strong>架构细节</strong>: 我们为本文中出现的所有架构提供详细的公式。我们的transformer架构按顺序由以下组件构成：</p>
+<ol><li>输入token嵌入</li><li>一个输入缩放因子 $u \in (0, \infty)$，可能等于1</li><li>一系列L个如下所述的transformer块</li><li>一个最终的归一化函数 $N^{(\text{final})}$，可能为恒等函数</li><li>一个线性输出层</li></ol>
 <p><strong>Transformer块定义</strong>: Transformer块定义如下：<br/>
 </p>
 $$\operatorname{block}(\mathbf{X}):=\hat{\mathbf{X}}+\left(N_{2}^{(\text {post })} \circ \mathrm{FFN} \circ N_{2}^{(\text {pre })}\right)(\hat{\mathbf{X}}), \quad \hat{\mathbf{X}}:=\mathbf{X}+\left(N_{1}^{(\text {post })} \circ \mathrm{GQA} \circ N_{1}^{(\text {pre })}\right)(\mathbf{X}) .$$

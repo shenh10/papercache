@@ -39,10 +39,8 @@ $$
 
 <p>其中 $L_E$ 是MoE层数，$S$ 是序列长度，$\mathrm{GBS}$ 是全局批大小，$K$ 是路由的 top-$K$，$D$ 是分发隐藏层维度，$b_x$ 和 $b_p$ 分别是每个隐藏层元素（例如BF16）和每个路由概率（FP32）的字节数。</p>
 <p>系统级的优化（如集合通信算法、计算与通信重叠等）可以降低暴露的通信成本，而本文的研究目标是与其正交且互补的：<strong>从架构层面直接减少移动数据的总通信体积</strong>。基于上述公式，本文提出了一种通信高效的MoE模型（CE-MoE）。</p>
-<p><strong>核心创新点：</strong><br/>
-1. <strong>异构层布局设计</strong>：打破了传统模型在每个Token混合层（如注意力机制、Mamba-2）后交替堆叠MoE层的常规做法，解耦了Token混合（token-mixing）和通道混合（channel-mixing）的深度。<br/>
-2. <strong>重分配专家容量</strong>：大幅减少路由MoE层的数量（降低 $L_E$），将专家容量集中在少数几个路由MoE层中，并通过增加额外的Token混合层和密集前馈网络（Dense-FFN）层来维持模型的整体深度。<br/>
-3. <strong>规模化验证</strong>：在总参数量从2B到31.5B的缩放阶梯上，在总参数和激活参数匹配的情况下，CE-MoE模型持续降低了训练成本，同时在验证损失和下游基准测试上与全MoE基线模型表现持平。在31.5B规模下，CE-MoE减少了 $33.3\%$ 的GPU小时消耗，同时提高了下游平均得分和推理吞吐量。</p>
+<p><strong>核心创新点：</strong></p>
+<ol><li><strong>异构层布局设计</strong>：打破了传统模型在每个Token混合层（如注意力机制、Mamba-2）后交替堆叠MoE层的常规做法，解耦了Token混合（token-mixing）和通道混合（channel-mixing）的深度。</li><li><strong>重分配专家容量</strong>：大幅减少路由MoE层的数量（降低 $L_E$），将专家容量集中在少数几个路由MoE层中，并通过增加额外的Token混合层和密集前馈网络（Dense-FFN）层来维持模型的整体深度。</li><li><strong>规模化验证</strong>：在总参数量从2B到31.5B的缩放阶梯上，在总参数和激活参数匹配的情况下，CE-MoE模型持续降低了训练成本，同时在验证损失和下游基准测试上与全MoE基线模型表现持平。在31.5B规模下，CE-MoE减少了 $33.3\%$ 的GPU小时消耗，同时提高了下游平均得分和推理吞吐量。</li></ol>
 <hr/>
 <h2>背景知识与设计原则</h2>
 <p><strong>相关工作涵盖多个层级的MoE训练优化</strong>。在内核级别，SonicMoE【12，SonicMoE: Accelerating MoE with IO and tile-aware optimizations + 2025 + arXiv + <a href="https://arxiv.org/abs/2512.14080" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2512.14080</a>】通过感知分块的优化提高了MoE效率。在系统和框架级别，DeepEP【8 ，DeepEP: An efficient expert-parallel communication library + 2025 + GitHub + <a href="https://github.com/deepseek-ai/DeepEP" rel="noopener noreferrer" target="_blank">https://github.com/deepseek-ai/DeepEP</a>】提供了高吞吐低延迟的all-to-all内核，Megatron-Core【28 ，Scalable training of mixture-of-experts models with Megatron Core + 2026 + arXiv + <a href="https://arxiv.org/abs/2603.07685" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2603.07685</a>】 和 MegaScale-MoE【15，MegaScale-MoE: Large-Scale Communication-Efficient Training of Mixture-of-Experts Models in Production + 2026 + EuroSys + <a href="https://dl.acm.org/doi/10.1145/3767295.3769325" rel="noopener noreferrer" target="_blank">https://dl.acm.org/doi/10.1145/3767295.3769325</a>】提供了可扩展的系统栈。在架构-系统边界 ，Shortcut-connected MoE【2，Shortcut-connected expert parallelism for accelerating mixture-of-experts + 2024 + arXiv + <a href="https://arxiv.org/abs/2404.05019" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2404.05019</a>】改变了依赖结构以实现通信与计算的重叠。此外，LatentMoE【10 ，LatentMoE: Toward optimal accuracy per FLOP and parameter in mixture of experts + 2026 + arXiv + <a href="https://arxiv.org/abs/2601.18089" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2601.18089</a>】 和Multi-Head LatentMoE【6，Multi-head LatentMoE and head parallel: Communication-efficient and deterministic MoE parallelism + 2026 + arXiv + <a href="https://arxiv.org/abs/2602.04870" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2602.04870</a>】通过降低有效分发维 度 $D$ 来减少流量。</p>
@@ -74,12 +72,9 @@ $$
 <h3>生成层模式</h3>
 <p><strong>采用分阶段贪婪策略排序</strong>。层组成确定了块的多重集，但未确定顺序。CE-MoE使用算法1中的分阶段贪婪过程分配层顺序，其中M、E、$\star$ 和 - 分别表示Mamba、MoE、注意力和密集FFN块。该算法将自注意力和通道混合块分布在Mamba-2骨干上，同时避免不良的局部排序。</p>
 <p><strong>算法执行的四个阶段</strong>。<br/>
-首先，算法运行在四个连续阶段中：<br/>
-1. 计算常规虚拟块的名义Mamba预算 $\ell = \lceil n_M / n_{\mathrm{vb}} \rceil$。<br/>
-2. 阶段1和阶段2贪婪地创建包含 $m = \ell$ 的注意力承载块（集合 $A$）和常规非注意力块（集合 $N$）。<br/>
-3. 阶段3将任何剩余的层存储在残余块（集合 $R$）中，其Mamba数量可能较小。<br/>
-4. 阶段4执行 <code>Distribute(A, N)</code>，将每个虚拟块视为原子，均匀地将 $N$ 块分配以划分 $A$ 块序列，从左到右打破平局。最后将 $R$ 中的块追加到末尾。<br/>
-在每个虚拟块内部，应用相同的间距原则：通道混合块分布在Mamba骨干上，注意力（如果存在）位于Token混合的尾部，并且该块以通道混合结束，以便下一个虚拟块可以以Token混合开始。</p>
+首先，算法运行在四个连续阶段中：</p>
+<ol><li>计算常规虚拟块的名义Mamba预算 $\ell = \lceil n_M / n_{\mathrm{vb}} \rceil$。</li><li>阶段1和阶段2贪婪地创建包含 $m = \ell$ 的注意力承载块（集合 $A$）和常规非注意力块（集合 $N$）。</li><li>阶段3将任何剩余的层存储在残余块（集合 $R$）中，其Mamba数量可能较小。</li><li>阶段4执行 <code>Distribute(A, N)</code>，将每个虚拟块视为原子，均匀地将 $N$ 块分配以划分 $A$ 块序列，从左到右打破平局。最后将 $R$ 中的块追加到末尾。</li></ol>
+<p>在每个虚拟块内部，应用相同的间距原则：通道混合块分布在Mamba骨干上，注意力（如果存在）位于Token混合的尾部，并且该块以通道混合结束，以便下一个虚拟块可以以Token混合开始。</p>
 <pre><code># Algorithm 1 Generate CE-MoE layer pattern
 Require: Composition (a, b, c, d) over (Mamba, MoE, attention, dense FFN), b &gt;= c
 Ensure: Layer pattern over M, E, *, and -

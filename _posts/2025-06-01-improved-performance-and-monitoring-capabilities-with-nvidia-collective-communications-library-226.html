@@ -68,9 +68,8 @@ title: Improved Performance and Monitoring Capabilities with NVIDIA Collective C
 <p><strong>新的事件类型及当前实现的局限性。</strong> 分析器插件接口扩展了一个新的<code>ncclProfileKernelCh</code>事件，用于捕获NCCL主机代码观察到的内核活动。该事件的父事件为<code>ncclProfileColl</code>或<code>ncclProfileP2p</code>。需要注意的是，NCCL报告的内核事件的准确性受到当前设计的限制，该设计利用了同时也用于推进网络操作的代理线程来监控GPU内核活动。这一限制将在未来的NCCL版本中得到解决。</p>
 <h5>网络定义的事件</h5>
 <p><strong>扩展分析器接口以支持网络插件定义的事件。</strong> NCCL 2.23版本中引入的分析器插件接口仅限于NCCL核心事件。然而，用户通常对网络层面产生的事件更感兴趣。为了解决这一局限性，2.26版本扩展了分析器插件接口，增加了对网络定义事件的支持。网络插件的开发者现在可以定义特定于插件的事件，并将它们传播到分析器插件。</p>
-<p><strong>实现网络事件支持的NCCL扩展。</strong> 这一功能通过NCCL中的以下扩展得以实现：<br/>
-* <strong>新的<code>ncclProfileNetPlugin</code>事件</strong>：这是一个包装器事件，当NCCL代表网络插件调用分析器时使用。<br/>
-* <strong>V10网络插件接口扩展</strong>：将这些新事件接入所有相关的初始化和数据操作函数中。</p>
+<p><strong>实现网络事件支持的NCCL扩展。</strong> 这一功能通过NCCL中的以下扩展得以实现：</p>
+<ul><li><strong>新的<code>ncclProfileNetPlugin</code>事件</strong>：这是一个包装器事件，当NCCL代表网络插件调用分析器时使用。</li><li><strong>V10网络插件接口扩展</strong>：将这些新事件接入所有相关的初始化和数据操作函数中。</li></ul>
 <pre><code>ncclResult_t (*init)(ncclDebugLogger_t logFunction, ncclProfilerCallback_t profFunction)
 
 ncclResult_t (*isend)(void* sendComm, void* data, 
@@ -124,9 +123,8 @@ ncclResult_t (*irecv)(void* recvComm, int n, void** data,
 <li><strong>按操作类型报告失配</strong>：针对每种操作类型分别报告集合操作计数的失配情况。这可能有助于识别非确定性的启动顺序场景。</li>
 <li><strong>提供未报告rank的详细信息</strong>：在2.26之前，当某个rank未能报告时，只提供rank编号，RAS无法可靠地区分信息缺失是由于该rank无法访问，还是因为该rank已不再是当前通信器的成员。现在这两种情况可以被区分：前者报告为<code>INCOMPLETE</code>错误，后者报告为<code>MISMATCH</code>警告，并附带一个新的<code>NOCOMM</code> rank状态（取代了之前使用的<code>UNKNOWN</code>）。</li>
 </ul>
-<p><strong>RAS相关的特定修复。</strong> 具体的RAS修复包括：<br/>
-* <strong>避免计算图捕获的集合操作</strong>：根据所使用的集合算法，一些图捕获的集合操作可能导致rank间的集合操作计数不同步，从而引发RAS的假阳性警告。目前已禁用对图捕获集合操作的计数。<br/>
-* <strong>终止前清理RAS资源</strong>：这不仅避免了各种第三方内存泄漏检测工具产生的额外干扰，也避免了在<code>libnccl.so</code>库被动态卸载而进程未终止时，仍在运行的RAS线程尝试执行已被卸载的代码而导致的崩溃。</p>
+<p><strong>RAS相关的特定修复。</strong> 具体的RAS修复包括：</p>
+<ul><li><strong>避免计算图捕获的集合操作</strong>：根据所使用的集合算法，一些图捕获的集合操作可能导致rank间的集合操作计数不同步，从而引发RAS的假阳性警告。目前已禁用对图捕获集合操作的计数。</li><li><strong>终止前清理RAS资源</strong>：这不仅避免了各种第三方内存泄漏检测工具产生的额外干扰，也避免了在<code>libnccl.so</code>库被动态卸载而进程未终止时，仍在运行的RAS线程尝试执行已被卸载的代码而导致的崩溃。</li></ul>
 <h3>A7 补充细节</h3>
 <p>NCCL 2.26还提供了以下额外的更新和修复：</p>
 <ul>

@@ -36,16 +36,10 @@ title: 'LLaMA: Open and Efficient Foundation Language Models'
 </details>
 <h2>A1 主要贡献</h2>
 <p>本文介绍了一个名为LLaMA（Large Language Model Meta AI）的基础语言模型集合，其参数规模从70亿（7B）到650亿（65B）不等。这项工作的核心目标是通过在比通常使用的数据量更多的tokens上进行训练，来为各种推理预算（inference budgets）提供性能最佳的一系列语言模型，从而挑战了“模型越大性能越好”的传统观念。</p>
-<p><strong>核心问题与研究动机</strong>:<br/>
-1.  <strong>推理成本问题</strong>: 现有的大模型（LLM）虽然性能强大，但其巨大的参数量导致推理成本高昂，这在规模化部署时成为关键瓶颈。<br/>
-2.  <strong>训练与推理的权衡</strong>: Hoffmann等人提出的Chinchilla缩放定律【【36】Training compute-optimal large language models, 2022】关注于在给定的训练计算预算下，如何平衡模型和数据大小以达到最佳性能，但忽略了推理预算。研究发现，对于一个给定的性能目标，训练一个更大的模型可能在训练阶段更便宜，但一个训练时间更长的较小模型在推理阶段最终会更具成本效益。例如，一个7B模型的性能在训练超过1T tokens后仍在持续提升，这超出了Chinchilla定律推荐的200B tokens。</p>
-<p><strong>研究目标与主要贡献</strong>:<br/>
-1.  <strong>构建高效的开源基础模型</strong>: 训练并发布一系列在不同推理预算下性能最优的语言模型（LLaMA），参数范围为7B到65B。<br/>
-2.  <strong>验证小模型+大数据的有效性</strong>: 实验证明，通过使用远超常规数量的tokens进行训练，较小的模型也能达到甚至超越参数量远大于自身的模型。<br/>
-    *   LLaMA-13B在大多数基准测试上优于GPT-3（175B），尽管其尺寸小了10倍以上，并且可以在单个GPU上运行。<br/>
-    *   LLaMA-65B的性能与Chinchilla-70B和PaLM-540B等顶尖模型相当。<br/>
-3.  <strong>完全使用公开数据集</strong>: 与依赖专有或未公开数据集（如GPT-3、PaLM）的主流模型不同，LLaMA完全使用公开可用的数据进行训练。这使得研究工作与开源精神兼容，促进了LLM领域研究的民主化和可复现性。<br/>
-4.  <strong>发布模型以促进研究</strong>: 向研究社区公开发布所有LLaMA模型，旨在推动LLM的普及、研究及其鲁棒性和安全性的提升。</p>
+<p><strong>核心问题与研究动机</strong>:</p>
+<ol><li><strong>推理成本问题</strong>: 现有的大模型（LLM）虽然性能强大，但其巨大的参数量导致推理成本高昂，这在规模化部署时成为关键瓶颈。</li><li><strong>训练与推理的权衡</strong>: Hoffmann等人提出的Chinchilla缩放定律【【36】Training compute-optimal large language models, 2022】关注于在给定的训练计算预算下，如何平衡模型和数据大小以达到最佳性能，但忽略了推理预算。研究发现，对于一个给定的性能目标，训练一个更大的模型可能在训练阶段更便宜，但一个训练时间更长的较小模型在推理阶段最终会更具成本效益。例如，一个7B模型的性能在训练超过1T tokens后仍在持续提升，这超出了Chinchilla定律推荐的200B tokens。</li></ol>
+<p><strong>研究目标与主要贡献</strong>:</p>
+<ol><li><strong>构建高效的开源基础模型</strong>: 训练并发布一系列在不同推理预算下性能最优的语言模型（LLaMA），参数范围为7B到65B。</li><li><strong>验证小模型+大数据的有效性</strong>: 实验证明，通过使用远超常规数量的tokens进行训练，较小的模型也能达到甚至超越参数量远大于自身的模型。<ul><li>LLaMA-13B在大多数基准测试上优于GPT-3（175B），尽管其尺寸小了10倍以上，并且可以在单个GPU上运行。</li><li>LLaMA-65B的性能与Chinchilla-70B和PaLM-540B等顶尖模型相当。</li></ul></li><li><strong>完全使用公开数据集</strong>: 与依赖专有或未公开数据集（如GPT-3、PaLM）的主流模型不同，LLaMA完全使用公开可用的数据进行训练。这使得研究工作与开源精神兼容，促进了LLM领域研究的民主化和可复现性。</li><li><strong>发布模型以促进研究</strong>: 向研究社区公开发布所有LLaMA模型，旨在推动LLM的普及、研究及其鲁棒性和安全性的提升。</li></ol>
 <h2>A2 方法细节</h2>
 <p>本文的训练方法与先前的工作【【8】Language models are few-shot learners, 2020; 【12】Palm: Scaling language modeling with pathways, 2022】相似，并受到了Chinchilla缩放定律【【36】Training compute-optimal large language models, 2022】的启发。我们使用标准优化器在大量文本数据上训练大型Transformer模型。</p>
 <h3>2.1 预训练数据</h3>

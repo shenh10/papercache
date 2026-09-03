@@ -36,14 +36,10 @@ $$M_{\text{KV}} = 2 \cdot S \cdot L \cdot h \cdot d \cdot \text{sizeof}(\text{FP
 </div>
 </details>
 <h2>主要贡献</h2>
-<p>在大型语言模型（LLM）服务中，键值（KV）缓存是至关重要的优化手段，尤其在长上下文推理场景中。然而，现有的KV存储设计依赖CPU来编排KV的存储和检索，这种以CPU为中心的方法导致了KV缓存存储与GPU加速计算之间的根本性不匹配。具体而言，该问题体现在两个主要方面：<br/>
-1. 有限的CPU核心限制了I/O并发性。现代推理框架通常采用类似页表的抽象（如PagedAttention）来最小化GPU内存碎片，导致KV数据分散在不连续的物理地址中。此外，量化、跨头KV共享和并行推理等优化进一步降低了内存中数据的粒度。这引发了GPU在存储/检索KV数据时产生大量高并发、细粒度的I/O请求，而CPU的低并行性和高软件开销导致可用带宽利用率低下。<br/>
-2. CPU和GPU之间的同步阻碍了底层优化（如CUDA Graph）的采用。CUDA Graph缺乏对动态控制流、内存操作或同步API调用（如<code>cudaStreamSynchronize()</code>）的支持，而现有KV缓存方案的层级异步KV传输恰恰依赖GPU内核来精细同步数据，这使得CUDA Graph的捕获过程被中断。</p>
-<p>为了解决上述问题，本文提出了TARDIS，这是一个用于高效长上下文LLM推理的GPU中心化KV缓存服务。受传统CPU文件系统（如ext4）支持的文件到内存映射（mmap）的启发，TARDIS的核心思想是通过现代GPU文件系统（如GeminiFS）将KV数据直接映射到GPU的高带宽内存（HBM）上。通过在KV文件和GPU进程内的逻辑Token对象之间建立一对一的映射，GPU内核可以在无需CPU干预的情况下访问KV数据，从而实现高并发、细粒度的KV存储与检索。TARDIS包含以下核心创新点：<br/>
-* <strong>GStore</strong>：TARDIS的核心是一个由GPU驱动的KV存储系统，它利用GeminiFS允许GPU直接访问NVMe SSD上的KV数据。<br/>
-* <strong>GPU端调度器</strong>：基于GStore，TARDIS设计了一个GPU端调度器，能够自适应地将KV请求调度到HBM或SSD上。<br/>
-* <strong>基于CUDA Graph的异步交换</strong>：实现了完全异步、零气泡（Zero-bubble）的块级交换，允许KV传输无缝集成到计算图中，在没有CPU同步开销的情况下实现计算与KV缓存访问的高效重叠。<br/>
-* <strong>显著的性能提升</strong>：将TARDIS作为SOTA分布式LLM服务框架vLLM的集成组件进行评估，结果显示TARDIS的带宽比SOTA KV存储LMcache高出15.6倍至21倍，将服务吞吐量提升高达20.52%，同时将性能保持在理想内存KV缓存的2.04%以内。</p>
+<p>在大型语言模型（LLM）服务中，键值（KV）缓存是至关重要的优化手段，尤其在长上下文推理场景中。然而，现有的KV存储设计依赖CPU来编排KV的存储和检索，这种以CPU为中心的方法导致了KV缓存存储与GPU加速计算之间的根本性不匹配。具体而言，该问题体现在两个主要方面：</p>
+<ol><li>有限的CPU核心限制了I/O并发性。现代推理框架通常采用类似页表的抽象（如PagedAttention）来最小化GPU内存碎片，导致KV数据分散在不连续的物理地址中。此外，量化、跨头KV共享和并行推理等优化进一步降低了内存中数据的粒度。这引发了GPU在存储/检索KV数据时产生大量高并发、细粒度的I/O请求，而CPU的低并行性和高软件开销导致可用带宽利用率低下。</li><li>CPU和GPU之间的同步阻碍了底层优化（如CUDA Graph）的采用。CUDA Graph缺乏对动态控制流、内存操作或同步API调用（如<code>cudaStreamSynchronize()</code>）的支持，而现有KV缓存方案的层级异步KV传输恰恰依赖GPU内核来精细同步数据，这使得CUDA Graph的捕获过程被中断。</li></ol>
+<p>为了解决上述问题，本文提出了TARDIS，这是一个用于高效长上下文LLM推理的GPU中心化KV缓存服务。受传统CPU文件系统（如ext4）支持的文件到内存映射（mmap）的启发，TARDIS的核心思想是通过现代GPU文件系统（如GeminiFS）将KV数据直接映射到GPU的高带宽内存（HBM）上。通过在KV文件和GPU进程内的逻辑Token对象之间建立一对一的映射，GPU内核可以在无需CPU干预的情况下访问KV数据，从而实现高并发、细粒度的KV存储与检索。TARDIS包含以下核心创新点：</p>
+<ul><li><strong>GStore</strong>：TARDIS的核心是一个由GPU驱动的KV存储系统，它利用GeminiFS允许GPU直接访问NVMe SSD上的KV数据。</li><li><strong>GPU端调度器</strong>：基于GStore，TARDIS设计了一个GPU端调度器，能够自适应地将KV请求调度到HBM或SSD上。</li><li><strong>基于CUDA Graph的异步交换</strong>：实现了完全异步、零气泡（Zero-bubble）的块级交换，允许KV传输无缝集成到计算图中，在没有CPU同步开销的情况下实现计算与KV缓存访问的高效重叠。</li><li><strong>显著的性能提升</strong>：将TARDIS作为SOTA分布式LLM服务框架vLLM的集成组件进行评估，结果显示TARDIS的带宽比SOTA KV存储LMcache高出15.6倍至21倍，将服务吞吐量提升高达20.52%，同时将性能保持在理想内存KV缓存的2.04%以内。</li></ul>
 <h2>背景知识与设计动机</h2>
 <p><strong>自回归推理与KV缓存机制</strong><br/>
 在基于Transformer的LLM（如GPT-4 【1，GPT-4 technical report 2023 arXiv】）中，推理以自回归方式运行，模型通过关注所有先前生成的Token来一次预测一个Token。对于长度为$S$的输入，注意力机制的计算复杂度为$O(S^2)$。KV缓存通过存储历史Token的K和V矩阵来解决这个问题，避免了重新计算，将每次解码步骤的复杂度降低到$O(S)$。此外，通过重用具有相同输入Prompt的先前请求的KV缓存，LLM推理可以避免冗余计算。然而，KV缓存也会产生与序列长度成正比的线性内存开销。单个请求的内存需求可以表示为：<br/>
@@ -75,9 +71,8 @@ KV管理器驻留在每个GPU Worker上，以统一的粒度管理GPU HBM和磁�
 <p><strong>可扩展的GPU文件池与GPU-NVMe文件映射</strong><br/>
 现有的GPU中心化存储系统依赖于集中的元数据服务器来维护全局文件状态并强制执行访问控制。然而，在多GPU环境中，这种对集中式元数据的依赖会导致昂贵的同步开销，因为必须跨GPU使用一致性原语来保护元数据更新，这极大限制了可扩展性和性能。GStore移除了集中的访问控制，让框架管理一切。基于这一原则，TARDIS设计了一个可扩展的GPU文件池。可扩展的GPU文件池首先通过GPU-NVMe文件映射机制将GStore使用的GPU端文件抽象与底层NVMe设备解耦。文件池向GPU端应用程序呈现统一的GPU文件抽象，并以一致的方式管理分布在多个NVMe设备上的文件。GPU文件使用块级（Chunk-level）条带化将多个NVMe文件统一为一个逻辑文件。这允许GPU将I/O请求分布到不同的存储设备上，充分利用它们的并行性并加速KV缓存的读写操作。这种解耦设计具有灵活性，能够调整数据布局以匹配推理框架的动态调度行为。即使GPU Worker因执行上下文或资源可用性的变化而被重新分配，系统也可以即时重构元数据，或者在单个文件的粒度上重新配置GPU文件抽象，以适应新的并行策略。</p>
 <p><strong>NVMe文件格式设计</strong><br/>
-TARDIS在GPU中心化文件系统之上构建了一个NVMe文件对象抽象。该对象维护启动GPU中心化I/O操作所需的基本元数据，包括文件大小、块映射和相关的NVMe控制器，确保对底层存储设备的正确和一致访问。TARDIS向GPU文件池提供两种类型的NVMe文件：<br/>
-* <strong>KV文件</strong>：用于存储模型生成的KV。在文件中写入KV缓存数据后，其对应的哈希值及其在KV矩阵中的位置都记录在元数据中。该格式采用块级粒度设计，与vLLM的块管理机制保持一致。<br/>
-* <strong>元数据文件</strong>：包含两个子类型：一个是记录GPU文件池使用状态的Meta文件；另一个是持久化用于前缀缓存的哈希表的Hash文件。为了确保崩溃一致性，每个元数据文件都包含一个脏位图（Dirty bitmap），用于跟踪单个文件区域或哈希表条目的修改状态。例如，当一个KV文件被分配给新的KV并写入数据时，对应的脏位会被设置。修改后的数据随后会在稍后阶段异步刷新到持久存储中。</p>
+TARDIS在GPU中心化文件系统之上构建了一个NVMe文件对象抽象。该对象维护启动GPU中心化I/O操作所需的基本元数据，包括文件大小、块映射和相关的NVMe控制器，确保对底层存储设备的正确和一致访问。TARDIS向GPU文件池提供两种类型的NVMe文件：</p>
+<ul><li><strong>KV文件</strong>：用于存储模型生成的KV。在文件中写入KV缓存数据后，其对应的哈希值及其在KV矩阵中的位置都记录在元数据中。该格式采用块级粒度设计，与vLLM的块管理机制保持一致。</li><li><strong>元数据文件</strong>：包含两个子类型：一个是记录GPU文件池使用状态的Meta文件；另一个是持久化用于前缀缓存的哈希表的Hash文件。为了确保崩溃一致性，每个元数据文件都包含一个脏位图（Dirty bitmap），用于跟踪单个文件区域或哈希表条目的修改状态。例如，当一个KV文件被分配给新的KV并写入数据时，对应的脏位会被设置。修改后的数据随后会在稍后阶段异步刷新到持久存储中。</li></ul>
 <p><strong>基于CUDA Graph的KV存储/检索API</strong><br/>
 基于GStore，TARDIS提供了用于管理KV Cache的简单对象级API，其接口用法如下方代码块所示。KV访问模式通过分析数据依赖关系被CUDA Graph捕获，从而构建了一个包含注意力内核和KV存储访问内核的数据流图。该图完全由GPU运行时调度，消除了显式的CPU-GPU同步。此外，KV访问内核是异步启动的，实现了计算和KV访问的最佳重叠。此外，API允许显式指定KV矩阵的层索引（<code>layer_idx</code>），从而实现细粒度的层级KV访问。</p>
 <pre><code># init uniform block manager 
@@ -106,16 +101,12 @@ destroy_uniformed_block_manager(device_id)</code></pre>
 </li>
 </ul>
 <h2>实验结果</h2>
-<p><strong>实验一：带宽利用率对比（GStore vs. SOTA解决方案）</strong><br/>
-* <strong>实验内容</strong>：在真实条件下比较GStore与现有KV传输方法的传输带宽。评估涵盖了从32KB到2MB的KV块大小，以模拟单块文件中不同的量化精度和Token数量。为了模拟推理运行时的条件，基准应用程序同时发出1,024个并行I/O请求。<br/>
-* <strong>实验结果</strong>：图3显示，在顺序和随机I/O下，GStore实现了比LMcache高出15.6倍至21倍的带宽利用率。此外，与GDS相比，GStore展示了69.5%至483.4%的更高带宽效率，在较小粒度的I/O下观察到的改进更大。特别是对于低于1MB的I/O操作，GStore的性能超过主机内存带宽3%至90%。<br/>
-* <strong>分析结论</strong>：LMcache的显著性能差距源于其基于Python的单线程实现，该实现难以应对高并发I/O，并因额外的CPU-GPU内存复制而产生大量开销。GStore的收益源于两个关键的架构优势：（1）直接由GPU发起的I/O消除了CPU端的软件开销；（2）与CPU线程（GDS限制为128）相比，GPU线程提供了卓越的I/O并行性。这一成就得益于现代NVMe设备的能力和GPU驱动的I/O范式，该范式避免了CPU-GPU通信成本，并为细粒度、高并发工作负载提供了特别强大的带宽增益。<br/>
-<img alt="图3：在不同I/O大小下，GStore与cudaMemcpyAsync、GDS、LMCache的读取带宽比较。" class="figure-image" src="images/figure3.jpg"/></p>
-<p><strong>实验二：端到端工作负载性能</strong><br/>
-* <strong>实验内容</strong>：在离线推理场景中测量端到端系统吞吐量（每分钟完成的请求数），以展示在Llama-3.1-8B、Yi-6B和Mistral-7B模型上的性能提升。比较了三种KV访问方法：重新计算（Recomputation）、基于LMcache的检索（数据存储在DRAM中代表最佳情况，在SSD中代表最差情况）以及TARDIS方法。<br/>
-* <strong>实验结果</strong>：图4展示了吞吐量比较结果。与完全重新计算的方法相比，LMCache-DRAM和TARDIS的吞吐量分别提高了11.79%和9.51%。然而，与完全重新计算相比，LMCache-SSD会导致高达约9.13%的吞吐量下降。<br/>
-* <strong>分析结论</strong>：尽管LMCache-SSD是为KV缓存重用而设计的，但由于带宽利用率的限制，其性能不如重新计算。其开销与频繁访问或从SSD交换大量小I/O有关。这一瓶颈抵消了KV缓存重用的任何潜在好处，使其在此给定工作负载下不如直接在内存中重新计算整个上下文高效。而TARDIS凭借GPU中心化的设计，在使用SSD的情况下依然实现了接近DRAM缓存的性能提升。<br/>
-<img alt="图4：TARDIS与重新计算、LMCache-SSD和LMCache-DRAM的吞吐量比较。" class="figure-image" src="images/figure4.jpg"/></p>
+<p><strong>实验一：带宽利用率对比（GStore vs. SOTA解决方案）</strong></p>
+<ul><li><strong>实验内容</strong>：在真实条件下比较GStore与现有KV传输方法的传输带宽。评估涵盖了从32KB到2MB的KV块大小，以模拟单块文件中不同的量化精度和Token数量。为了模拟推理运行时的条件，基准应用程序同时发出1,024个并行I/O请求。</li><li><strong>实验结果</strong>：图3显示，在顺序和随机I/O下，GStore实现了比LMcache高出15.6倍至21倍的带宽利用率。此外，与GDS相比，GStore展示了69.5%至483.4%的更高带宽效率，在较小粒度的I/O下观察到的改进更大。特别是对于低于1MB的I/O操作，GStore的性能超过主机内存带宽3%至90%。</li><li><strong>分析结论</strong>：LMcache的显著性能差距源于其基于Python的单线程实现，该实现难以应对高并发I/O，并因额外的CPU-GPU内存复制而产生大量开销。GStore的收益源于两个关键的架构优势：（1）直接由GPU发起的I/O消除了CPU端的软件开销；（2）与CPU线程（GDS限制为128）相比，GPU线程提供了卓越的I/O并行性。这一成就得益于现代NVMe设备的能力和GPU驱动的I/O范式，该范式避免了CPU-GPU通信成本，并为细粒度、高并发工作负载提供了特别强大的带宽增益。</li></ul>
+<p><img alt="图3：在不同I/O大小下，GStore与cudaMemcpyAsync、GDS、LMCache的读取带宽比较。" class="figure-image" src="images/figure3.jpg"/></p>
+<p><strong>实验二：端到端工作负载性能</strong></p>
+<ul><li><strong>实验内容</strong>：在离线推理场景中测量端到端系统吞吐量（每分钟完成的请求数），以展示在Llama-3.1-8B、Yi-6B和Mistral-7B模型上的性能提升。比较了三种KV访问方法：重新计算（Recomputation）、基于LMcache的检索（数据存储在DRAM中代表最佳情况，在SSD中代表最差情况）以及TARDIS方法。</li><li><strong>实验结果</strong>：图4展示了吞吐量比较结果。与完全重新计算的方法相比，LMCache-DRAM和TARDIS的吞吐量分别提高了11.79%和9.51%。然而，与完全重新计算相比，LMCache-SSD会导致高达约9.13%的吞吐量下降。</li><li><strong>分析结论</strong>：尽管LMCache-SSD是为KV缓存重用而设计的，但由于带宽利用率的限制，其性能不如重新计算。其开销与频繁访问或从SSD交换大量小I/O有关。这一瓶颈抵消了KV缓存重用的任何潜在好处，使其在此给定工作负载下不如直接在内存中重新计算整个上下文高效。而TARDIS凭借GPU中心化的设计，在使用SSD的情况下依然实现了接近DRAM缓存的性能提升。</li></ul>
+<p><img alt="图4：TARDIS与重新计算、LMCache-SSD和LMCache-DRAM的吞吐量比较。" class="figure-image" src="images/figure4.jpg"/></p>
 <h2>结论</h2>
 <p>本文提出了一种用于LLM推理框架的GPU中心化KV存储（TARDIS）。TARDIS通过现代GPU文件系统将KV直接映射到GPU的HBM上，并实现了CPU-GPU协同哈希以支持高并发的KV索引。这允许GPU内核在没有CPU干预的情况下访问KV，从而实现高并发、细粒度的KV存储和检索。此外，TARDIS设计了一个GPU端调度器，能够自适应地将KV请求调度到HBM/SSD上，并通过CUDA Graph实现异步、层级的Token交换，在没有CPU同步开销的情况下重叠计算和KV缓存访问。</p>
 </div>

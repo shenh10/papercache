@@ -96,24 +96,15 @@ $$\begin{aligned}
 $$</div>
 这个公式是实现序列并行的关键。<p></p>
 <h3>CP=2 序列并行算法实现</h3>
-<p><strong>CP=2并行算法步骤</strong>。基于上述推导，可以设计出如下的序列并行算法：<br/>
-1. <strong>第一个SM的任务</strong>：负责计算第一个子序列（chunks 0-63）。其计算逻辑与原始的串行方式完全一致，通过循环计算最终得到真实的 $\mathbf{S}_{[64]}$。<br/>
-2. <strong>第二个SM的任务</strong>：负责计算第二个子序列（chunks 64-127）。<br/>
-    - 首先，初始化其初始状态为零矩阵，即 $\mathbf{S}_{[64]}^{\Delta}=0$。<br/>
-    - 然后，循环地计算增量状态 $\mathbf{S}_{[i+1]}^{\Delta}=\mathbf{S}_{[i]}^{\Delta} + \left(\mathbf{U}_{[i]} - \mathbf{W}_{[i]}\mathbf{S}_{[i]}^\top\right)^\top \mathbf{K}_{[i]}$。<br/>
-    - 同时，初始化一个缩放矩阵 $\mathbf M_{[64]}=\mathbf I$（单位矩阵），并循环地更新它：$\mathbf M_{[i+1]}=\mathbf M_{[i]}(\mathbf{I}-\mathbf{W}_{[i]}^\top \mathbf{K}_{[i]})$。<br/>
-    - 在计算过程中，将每一时间步的增量状态 $\mathbf{S}_{[i+1]}^{\Delta}$ 和缩放矩阵 $\mathbf M_{[i+1]}$ 存储到全局内存（global memory）中。</p>
+<p><strong>CP=2并行算法步骤</strong>。基于上述推导，可以设计出如下的序列并行算法：</p>
+<ol><li><strong>第一个SM的任务</strong>：负责计算第一个子序列（chunks 0-63）。其计算逻辑与原始的串行方式完全一致，通过循环计算最终得到真实的 $\mathbf{S}_{[64]}$。</li><li><strong>第二个SM的任务</strong>：负责计算第二个子序列（chunks 64-127）。<ul><li>首先，初始化其初始状态为零矩阵，即 $\mathbf{S}_{[64]}^{\Delta}=0$。</li><li>然后，循环地计算增量状态 $\mathbf{S}_{[i+1]}^{\Delta}=\mathbf{S}_{[i]}^{\Delta} + \left(\mathbf{U}_{[i]} - \mathbf{W}_{[i]}\mathbf{S}_{[i]}^\top\right)^\top \mathbf{K}_{[i]}$。</li><li>同时，初始化一个缩放矩阵 $\mathbf M_{[64]}=\mathbf I$（单位矩阵），并循环地更新它：$\mathbf M_{[i+1]}=\mathbf M_{[i]}(\mathbf{I}-\mathbf{W}_{[i]}^\top \mathbf{K}_{[i]})$。</li><li>在计算过程中，将每一时间步的增量状态 $\mathbf{S}_{[i+1]}^{\Delta}$ 和缩放矩阵 $\mathbf M_{[i+1]}$ 存储到全局内存（global memory）中。</li></ul></li></ol>
 <ol>
 <li><strong>状态校正</strong>：当第一个SM计算完成后，真实的 $\mathbf{S}_{[64]}$ 就绪。此时，可以利用之前存储的增量信息，通过校正公式 $\mathbf S_{[i]}=\mathbf S_{[i]}^{\Delta} +\mathbf S_{[64]}\mathbf M_{i}$ 来计算出第二个子序列所有真实的最终状态 $\mathbf S_{[i]}$。值得注意的是，这个校正步骤本身不是循环的，可以并行地对所有时间步进行计算，并且能够与输出 $\mathbf O$ 的计算过程融合（fuse），以减少访存开销。</li>
 </ol>
 <p>该算法的主要开销在于，会额外增加缩放矩阵 $\mathbf M_{[i]}$ 从全局内存的写出和读入操作。</p>
 <h3>CP=4 序列并行算法实现</h3>
-<p><strong>CP=4并行算法步骤</strong>。对于 CP=4 的情况，计算被分配到4个SM上，每个SM处理32个chunk，其原理与CP=2类似：<br/>
-1. <strong>第一个SM的任务</strong>：负责计算第一个子序列（chunks 0-31），计算逻辑保持不变，最终得到真实的 $\mathbf{S}_{[32]}$。<br/>
-2. <strong>其他三个SM的任务</strong>：分别负责计算后三个子序列。<br/>
-    - 它们的初始状态均被设置为零矩阵：$\mathbf{S}_{[32]}^{\Delta}=\mathbf{S}_{[64]}^{\Delta}=\mathbf{S}_{[96]}^{\Delta}=0$。<br/>
-    - 在每个SM内部，以循环方式计算各自的增量状态 $\mathbf{S}_{[i+1]}^{\Delta}$ 和缩放矩阵 $\mathbf M_{[i+1]}$，其中缩放矩阵的初始值 $\mathbf M_{[32]}=\mathbf M_{[64]}=\mathbf M_{[96]}=\mathbf I$。<br/>
-    - 计算出的 $\mathbf{S}_{[i+1]}^{\Delta}$ 和 $\mathbf M_{[i+1]}$ 被存储到全局内存中。</p>
+<p><strong>CP=4并行算法步骤</strong>。对于 CP=4 的情况，计算被分配到4个SM上，每个SM处理32个chunk，其原理与CP=2类似：</p>
+<ol><li><strong>第一个SM的任务</strong>：负责计算第一个子序列（chunks 0-31），计算逻辑保持不变，最终得到真实的 $\mathbf{S}_{[32]}$。</li><li><strong>其他三个SM的任务</strong>：分别负责计算后三个子序列。<ul><li>它们的初始状态均被设置为零矩阵：$\mathbf{S}_{[32]}^{\Delta}=\mathbf{S}_{[64]}^{\Delta}=\mathbf{S}_{[96]}^{\Delta}=0$。</li><li>在每个SM内部，以循环方式计算各自的增量状态 $\mathbf{S}_{[i+1]}^{\Delta}$ 和缩放矩阵 $\mathbf M_{[i+1]}$，其中缩放矩阵的初始值 $\mathbf M_{[32]}=\mathbf M_{[64]}=\mathbf M_{[96]}=\mathbf I$。</li><li>计算出的 $\mathbf{S}_{[i+1]}^{\Delta}$ 和 $\mathbf M_{[i+1]}$ 被存储到全局内存中。</li></ul></li></ol>
 <ol>
 <li><strong>状态校正</strong>：此过程存在一个串行的依赖链。<ul>
 <li>当第一个SM计算完成并得到真实的 $\mathbf{S}_{[32]}$ 后，可以利用它和第二个SM计算的增量信息，通过校正公式计算出第二个子序列的真实状态，并得到真实的 $\mathbf{S}_{[64]}$。</li>
@@ -125,9 +116,8 @@ $$</div>
 </li>
 </ol>
 <h2>A4 参考文献</h2>
-<p>[1] DeltaNet Explained (Part II). (2024). Retrieved from <a href="https://sustcsonglin.github.io/blog/2024/deltanet-2/" rel="noopener noreferrer" target="_blank">https://sustcsonglin.github.io/blog/2024/deltanet-2/</a><br/>
-    - <strong>引用位置</strong>: 方法细节 - 状态更新的循环公式<br/>
-    - <strong>引用内容</strong>: 引用了该博客文章中关于DeltaNet分块并行形式（Chunkwise Parallel Form）的状态更新公式。</p>
+<p>[1] DeltaNet Explained (Part II). (2024). Retrieved from <a href="https://sustcsonglin.github.io/blog/2024/deltanet-2/" rel="noopener noreferrer" target="_blank">https://sustcsonglin.github.io/blog/2024/deltanet-2/</a></p>
+<ul><li><strong>引用位置</strong>: 方法细节 - 状态更新的循环公式</li><li><strong>引用内容</strong>: 引用了该博客文章中关于DeltaNet分块并行形式（Chunkwise Parallel Form）的状态更新公式。</li></ul>
 </div>
 
 

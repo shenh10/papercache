@@ -77,42 +77,11 @@ $$\begin{aligned}
 <p><strong>将各词元接受决策进行耦合</strong>。本节将上述直觉扩展为一个通用的块验证算法，该算法适用于标准的部分信息推测解码场景。其高层思想是将每个草稿词元的接受决策与其他草稿词元耦合起来。为此，算法会考虑不同长度的草稿子块，并独立地决定是否接受每个子块。最终被接受的草稿块是上述过程中被接受的最长的子块。每个子块的接受概率和残差分布都经过精心选择，以维持最终输出的分布保证，并实现最优的加速效果。</p>
 <p><strong>算法1与算法2的对比</strong>。算法2展示了块验证的简要实现，算法1则为标准词元验证以供比较。请注意，两种实现遵循相同的整体结构（差异已高亮显示）。</p>
 <p><strong>算法1 词元验证</strong><br/>
-输入：草稿块 $X^\gamma$；小型模型分布 $\forall i &lt; \gamma, M_s(\cdot | c, X^i)$；大型模型分布 $\forall i \le \gamma, M_b(\cdot | c, X^i)$。<br/>
-1. 采样 $\eta_1, \dots, \eta_\gamma \sim U(0, 1)$。<br/>
-2. 设置 $\tau = 0$。<br/>
-3. 对于 $i = 1, \dots, \gamma$：<br/>
-4. 设置 $h_{i}^{\text{token}} = \min\left\{\frac{M_s(X_i|c,X^{i-1})}{M_b(X_i|c,X^{i-1})}, 1\right\}$。<br/>
-5. 如果 $\eta_i \le h_{i}^{\text{token}}$：<br/>
-6. 设置 $\tau = i$。<br/>
-7. 否则：<br/>
-8. <strong>break</strong>。<br/>
-9. 结束如果。<br/>
-10. 结束循环。<br/>
-11. 如果 $\tau = \gamma$：<br/>
-12. 从 $M_b(\cdot | c, X^\gamma)$ 中采样 $Y$。<br/>
-13. 否则：<br/>
-14. 从方程(3)中的 $p_{\text{res}}^{\text{token}}(\cdot | c, X^\tau)$ 中采样 $Y$。<br/>
-15. 结束如果。<br/>
-16. 返回 $X^\tau, Y$。</p>
+输入：草稿块 $X^\gamma$；小型模型分布 $\forall i &lt; \gamma, M_s(\cdot | c, X^i)$；大型模型分布 $\forall i \le \gamma, M_b(\cdot | c, X^i)$。</p>
+<ol><li>采样 $\eta_1, \dots, \eta_\gamma \sim U(0, 1)$。</li><li>设置 $\tau = 0$。</li><li>对于 $i = 1, \dots, \gamma$：</li><li>设置 $h_{i}^{\text{token}} = \min\left\{\frac{M_s(X_i|c,X^{i-1})}{M_b(X_i|c,X^{i-1})}, 1\right\}$。</li><li>如果 $\eta_i \le h_{i}^{\text{token}}$：</li><li>设置 $\tau = i$。</li><li>否则：</li><li><strong>break</strong>。</li><li>结束如果。</li><li>结束循环。</li><li>如果 $\tau = \gamma$：</li><li>从 $M_b(\cdot | c, X^\gamma)$ 中采样 $Y$。</li><li>否则：</li><li>从方程(3)中的 $p_{\text{res}}^{\text{token}}(\cdot | c, X^\tau)$ 中采样 $Y$。</li><li>结束如果。</li><li>返回 $X^\tau, Y$。</li></ol>
 <p><strong>算法2 块验证</strong><br/>
-输入：草稿块 $X^\gamma$；小型模型分布 $\forall i &lt; \gamma, M_s(\cdot | c, X^i)$；大型模型分布 $\forall i \le \gamma, M_b(\cdot | c, X^i)$。<br/>
-1. 采样 $\eta_1, \dots, \eta_\gamma \sim U(0, 1)$。<br/>
-2. 设置 $\tau = 0, p_0 = 1$。<br/>
-3. 对于 $i = 1, \dots, \gamma$：<br/>
-4. 设置 $p_i = \min\left\{p_{i-1}\frac{M_b(X_i|c,X^{i-1})}{M_s(X_i|c,X^{i-1})}, 1\right\}$。<br/>
-5. 设置 $h_{i}^{\text{block}}$ 如方程(5)。<br/>
-6. 如果 $\eta_i \le h_{i}^{\text{block}}$：<br/>
-7. 设置 $\tau = i$。<br/>
-8. 否则：<br/>
-9. <strong>continue</strong>。<br/>
-10. 结束如果。<br/>
-11. 结束循环。<br/>
-12. 如果 $\tau = \gamma$：<br/>
-13. 从 $M_b(\cdot | c, X^\gamma)$ 中采样 $Y$。<br/>
-14. 否则：<br/>
-15. 从方程(4)中的 $p_{\text{res}}^{\text{block}}(\cdot | c, X^\tau)$ 中采样 $Y$。<br/>
-16. 结束如果。<br/>
-17. 返回 $X^\tau, Y$。</p>
+输入：草稿块 $X^\gamma$；小型模型分布 $\forall i &lt; \gamma, M_s(\cdot | c, X^i)$；大型模型分布 $\forall i \le \gamma, M_b(\cdot | c, X^i)$。</p>
+<ol><li>采样 $\eta_1, \dots, \eta_\gamma \sim U(0, 1)$。</li><li>设置 $\tau = 0, p_0 = 1$。</li><li>对于 $i = 1, \dots, \gamma$：</li><li>设置 $p_i = \min\left\{p_{i-1}\frac{M_b(X_i|c,X^{i-1})}{M_s(X_i|c,X^{i-1})}, 1\right\}$。</li><li>设置 $h_{i}^{\text{block}}$ 如方程(5)。</li><li>如果 $\eta_i \le h_{i}^{\text{block}}$：</li><li>设置 $\tau = i$。</li><li>否则：</li><li><strong>continue</strong>。</li><li>结束如果。</li><li>结束循环。</li><li>如果 $\tau = \gamma$：</li><li>从 $M_b(\cdot | c, X^\gamma)$ 中采样 $Y$。</li><li>否则：</li><li>从方程(4)中的 $p_{\text{res}}^{\text{block}}(\cdot | c, X^\tau)$ 中采样 $Y$。</li><li>结束如果。</li><li>返回 $X^\tau, Y$。</li></ol>
 <p>Residual distribution in Algorithm 1 (Line 15): $\forall x \in \mathcal{X}$,<br/>
 </p>
 $$p_{\text {res }}^{\text {token }}\left(x \mid \boldsymbol{c}, X^{i}\right)=\frac{\max \left\{\mathcal{M}_{b}\left(x \mid \boldsymbol{c}, X^{i}\right)-\mathcal{M}_{s}\left(x \mid \boldsymbol{c}, X^{i}\right), 0\right\}}{\sum_{x^{\prime} \in \mathcal{X}} \mathcal{M}_{b}\left(x^{\prime} \mid \boldsymbol{c}, X^{i}\right)-\mathcal{M}_{s}\left(x^{\prime} \mid \boldsymbol{c}, X^{i}\right), 0} .$$
@@ -126,13 +95,8 @@ Acceptance probability in Algorithm 2 (Line 5): $h_{\gamma}^{\text {block }}=p_{
 </figure>
 <p><strong>推测解码外循环保持不变</strong>。算法3展示了推测解码算法的外循环，它对于两种验证方法都保持不变。图2提供了额外的定义。附录A提供了简要的Python实现。由于改动非常简单，该算法可以轻松地在实际系统中实现，而不会引入额外的代码复杂性。</p>
 <p><strong>算法3 推测解码 (SPECDEC)</strong> (Leviathan et al., 2022)<br/>
-输入：前缀c，目标模型Mb，草稿模型Ms。草稿长度γ。验证算法VERIFY。<br/>
-1. 当 E.O.S ∉ ($X^\tau$, Y) 时循环：<br/>
-2. 使用自回归采样从 $M_s(\cdot | c)$ 采样 $X_1, \dots, X_\gamma$，并保留每一步的条件概率 $M_s(\cdot | c, X^i)$，其中 $i=0, \dots, \gamma-1$。{获取草稿块}<br/>
-3. 调用大模型Mb并并行计算条件概率 $M_b(\cdot | c, X^i)$，其中 $i=0, 1, \dots, \gamma$。{并行评分}<br/>
-4. 通过草稿验证获得接受的词元 {草稿验证与校正} $X^\tau, Y = \text{VERIFY}(X^\gamma, \{M_s(\cdot | c, X^i)\}_{i=0}^{\gamma-1}, \{M_b(\cdot | c, X^i)\}_{i=0}^\gamma)$。<br/>
-5. c ← c, $X^\tau$, Y。{将解码的词元添加到前缀}<br/>
-6. 结束循环。</p>
+输入：前缀c，目标模型Mb，草稿模型Ms。草稿长度γ。验证算法VERIFY。</p>
+<ol><li>当 E.O.S ∉ ($X^\tau$, Y) 时循环：</li><li>使用自回归采样从 $M_s(\cdot | c)$ 采样 $X_1, \dots, X_\gamma$，并保留每一步的条件概率 $M_s(\cdot | c, X^i)$，其中 $i=0, \dots, \gamma-1$。{获取草稿块}</li><li>调用大模型Mb并并行计算条件概率 $M_b(\cdot | c, X^i)$，其中 $i=0, 1, \dots, \gamma$。{并行评分}</li><li>通过草稿验证获得接受的词元 {草稿验证与校正} $X^\tau, Y = \text{VERIFY}(X^\gamma, \{M_s(\cdot | c, X^i)\}_{i=0}^{\gamma-1}, \{M_b(\cdot | c, X^i)\}_{i=0}^\gamma)$。</li><li>c ← c, $X^\tau$, Y。{将解码的词元添加到前缀}</li><li>结束循环。</li></ol>
 <p><strong>理论保证</strong>。使用块验证的推测解码保留了其输出的分布（定理1）。此外，块验证在推测解码外循环（算法3）中，在所有有效的草稿验证算法中实现了最优的加速，从而比标准词元验证有了严格的改进（定理2）。我们将在第4节中详细阐述算法2中参数选择的形式化陈述和直觉。</p>
 <h3>4 理论保证</h3>
 <p><strong>本节提供块验证的正式理论保证</strong>。本节我们将展示块验证的正式理论保证，即它能产生正确的分布，并且在期望生成词元数方面是最优的。我们用 $M^*(· | c)$ 表示在模型M和上下文c下，直到生成过程结束的序列分布。</p>

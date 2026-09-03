@@ -33,9 +33,8 @@ title: 'BOLT: BRIDGING THE GAP BETWEEN AUTO-TUNERS AND HARDWARE-NATIVE PERFORMAN
 </details>
 <h2>A1 主要贡献</h2>
 <p>本文旨在解决当前深度学习（DNN）编译器中自动调优器（如 AutoTVM, Ansor）与设备厂商提供的硬件原生库（如 cuBLAS, cuDNN）之间的性能鸿沟。</p>
-<p><strong>核心问题</strong>:<br/>
-1.  <strong>性能差距</strong>: 自动调优器通过在高层抽象上搜索优化方案，通常难以完全发掘底层硬件的潜力，尤其是在利用如NVIDIA Tensor Cores等专用硬件时，其生成的代码性能远不如厂商手动优化的原生库。例如，Ansor在NVIDIA T4 GPU上执行FP16 GEMM（通用矩阵乘法）的性能仅达到cuBLAS的20%。<br/>
-2.  <strong>调优效率低下</strong>: 由于缺乏底层硬件的详细信息，自动调优器的搜索过程效率不高，对一个复杂模型（如ResNet-50）的调优可能需要数小时甚至数天。对于动态模型，依赖缓存调优日志的方法效果不佳。</p>
+<p><strong>核心问题</strong>:</p>
+<ol><li><strong>性能差距</strong>: 自动调优器通过在高层抽象上搜索优化方案，通常难以完全发掘底层硬件的潜力，尤其是在利用如NVIDIA Tensor Cores等专用硬件时，其生成的代码性能远不如厂商手动优化的原生库。例如，Ansor在NVIDIA T4 GPU上执行FP16 GEMM（通用矩阵乘法）的性能仅达到cuBLAS的20%。</li><li><strong>调优效率低下</strong>: 由于缺乏底层硬件的详细信息，自动调优器的搜索过程效率不高，对一个复杂模型（如ResNet-50）的调优可能需要数小时甚至数天。对于动态模型，依赖缓存调优日志的方法效果不佳。</li></ol>
 <p><strong>研究目标</strong>:<br/>
 本文的目标是结合自动调优器的灵活性、可定制性和自动化优势，以及厂商原生库的高性能，实现“两全其美”的效果。</p>
 <p><strong>核心创新点 (Bolt)</strong>:<br/>

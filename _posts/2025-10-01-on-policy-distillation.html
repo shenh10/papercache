@@ -31,13 +31,12 @@ title: On-Policy Distillation
 <h2>A1 主要贡献</h2>
 <p>本文探讨了一种名为“在策略蒸馏”（On-policy Distillation）的高效模型后训练（post-training）方法，旨在结合在策略学习（on-policy learning）和知识蒸馏（distillation）的优点，以训练出性能更强的专用小型模型。</p>
 <p><strong>核心问题与研究目标</strong>:<br/>
-大型语言模型（LLM）的训练通常分为预训练、中训练和后训练三个阶段。为了在特定领域获得专家级性能，同时利用小型模型在部署、隐私、更新和推理成本上的优势，选择合适的后训练方法至关重要。现有的后训练方法主要有两类：<br/>
-1. <strong>在策略训练（如强化学习 RL）</strong>：从学生模型自身采样轨迹进行训练。优点是直接针对学生模型的行为进行优化，能有效避免其自身错误。缺点是奖励信号稀疏，学习效率低下，无法精确定位错误根源。<br/>
-2. <strong>离策略训练（如监督微调 SFT/离策略蒸馏）</strong>：从外部来源（如教师模型）获取目标输出进行模仿学习。优点是监督信号密集，学习效率高。缺点是学生模型在训练中遇到的状态分布与其实际应用中遇到的可能不同，导致误差累积（compounding error）；此外，学生可能只学会模仿教师的风格而非事实准确性。</p>
+大型语言模型（LLM）的训练通常分为预训练、中训练和后训练三个阶段。为了在特定领域获得专家级性能，同时利用小型模型在部署、隐私、更新和推理成本上的优势，选择合适的后训练方法至关重要。现有的后训练方法主要有两类：</p>
+<ol><li><strong>在策略训练（如强化学习 RL）</strong>：从学生模型自身采样轨迹进行训练。优点是直接针对学生模型的行为进行优化，能有效避免其自身错误。缺点是奖励信号稀疏，学习效率低下，无法精确定位错误根源。</li><li><strong>离策略训练（如监督微调 SFT/离策略蒸馏）</strong>：从外部来源（如教师模型）获取目标输出进行模仿学习。优点是监督信号密集，学习效率高。缺点是学生模型在训练中遇到的状态分布与其实际应用中遇到的可能不同，导致误差累积（compounding error）；此外，学生可能只学会模仿教师的风格而非事实准确性。</li></ol>
 <p>本文的研究目标是提出并验证一种能结合二者优势的后训练方法，即在策略蒸馏。该方法旨在利用在策略采样的相关性，同时获得知识蒸馏的密集奖励信号，从而实现高效且高性能的模型后训练。</p>
 <p><strong>创新点与主要贡献</strong>:<br/>
-本文的核心创新在于系统性地提出、实现并验证了“在策略蒸馏”方法。<br/>
-1. <strong>方法提出</strong>：明确提出了在策略蒸馏的核心思想——从学生模型采样轨迹，并使用一个高性能的教师模型对学生轨迹中的<em>每一个词元（token）</em>进行评分。这与RL的稀疏序列级奖励和离策略蒸馏的非自身轨迹学习形成对比。</p>
+本文的核心创新在于系统性地提出、实现并验证了“在策略蒸馏”方法。</p>
+<ol><li><strong>方法提出</strong>：明确提出了在策略蒸馏的核心思想——从学生模型采样轨迹，并使用一个高性能的教师模型对学生轨迹中的<em>每一个词元（token）</em>进行评分。这与RL的稀疏序列级奖励和离策略蒸馏的非自身轨迹学习形成对比。</li></ol>
 <p>| 方法 | 采样 | 奖励信号 |
 | :--- | :--- | :--- |
 | 监督微调 | 离策略 | 密集 |
@@ -58,14 +57,11 @@ title: On-Policy Distillation
 </ol>
 <p>总之，本文论证了在策略蒸馏是一种强大且经济的后训练技术，它能够高效地将大型教师模型的复杂能力迁移到小型学生模型中，特别适用于提升模型在推理、个性化和持续学习等方面的表现。</p>
 <h2>A3 背景知识</h2>
-<p>大型语言模型（LLM）在特定领域展现出专家级的性能，这是多种能力叠加的结果：输入感知、知识检索、计划选择和可靠执行。这需要一系列训练方法，大致可分为三个阶段：<br/>
-* <strong>预训练（Pre-training）</strong>：教授通用能力，如语言使用、广泛的推理能力和世界知识。<br/>
-* <strong>中训练（Mid-training）</strong>：灌输领域知识，如代码、医学数据库或公司内部文件。<br/>
-* <strong>后训练（Post-training）</strong>：引出目标行为，如指令遵循、解决数学问题或聊天。</p>
+<p>大型语言模型（LLM）在特定领域展现出专家级的性能，这是多种能力叠加的结果：输入感知、知识检索、计划选择和可靠执行。这需要一系列训练方法，大致可分为三个阶段：</p>
+<ul><li><strong>预训练（Pre-training）</strong>：教授通用能力，如语言使用、广泛的推理能力和世界知识。</li><li><strong>中训练（Mid-training）</strong>：灌输领域知识，如代码、医学数据库或公司内部文件。</li><li><strong>后训练（Post-training）</strong>：引出目标行为，如指令遵循、解决数学问题或聊天。</li></ul>
 <p>经过更强训练的小型模型通常在其专业领域内胜过更大型的通用模型。使用小型模型有许多好处：它们可以为隐私或安全考虑进行本地部署，可以更容易地持续训练和更新，并节省推理成本。要利用这些优势，需要为训练的后期阶段选择正确的方法。</p>
-<p>后训练“学生”模型的方法可分为两种：<br/>
-* <strong>在策略训练（On-policy training）</strong>：从学生模型本身采样轨迹（rollouts），并为其分配某种奖励。<br/>
-* <strong>离策略训练（Off-policy training）</strong>：依赖于某个外部来源的目标输出，学生学习模仿这些输出。</p>
+<p>后训练“学生”模型的方法可分为两种：</p>
+<ul><li><strong>在策略训练（On-policy training）</strong>：从学生模型本身采样轨迹（rollouts），并为其分配某种奖励。</li><li><strong>离策略训练（Off-policy training）</strong>：依赖于某个外部来源的目标输出，学生学习模仿这些输出。</li></ul>
 <p>例如，我们可能希望训练一个紧凑模型来解决如下数学问题：<br/>
 <img alt="" class="figure-image" src="images/prompt.svg"/></p>
 <p>我们可以通过强化学习进行在策略训练，通过评判每个学生轨迹是否解决了问题来打分。这种评分可以由人类完成，或者由一个能可靠得到正确答案的“教师”模型完成。<br/>
@@ -129,11 +125,8 @@ $$\text{KL}\Bigl(\pi_\theta \lvert\rvert \pi_\text{teacher}\Bigr) = \mathbb{E}_{
 由教师模型评分的示例轨迹。颜色更深的红色词元对应更高的反向KL散度。</p>
 <h3>伪代码</h3>
 <p><strong>在Tinker的RL脚本基础上实现</strong>。我们在【Tinker中的RL脚本】（<a href="https://github.com/thinking-machines-lab/tinker-cookbook/blob/main/tinker_cookbook/rl/train.py">https://github.com/thinking-machines-lab/tinker-cookbook/blob/main/tinker_cookbook/rl/train.py</a>）之上实现了在策略蒸馏，该脚本已经实现了采样、奖励计算和策略梯度风格的训练。我们的实现实际上可以是在使用KL正则化的RL实现上进行一行代码的更改：我们只需替换掉正则化器模型。</p>
-<p><strong>实现步骤</strong>：<br/>
-1. <strong>初始化教师客户端</strong>。Tinker API可以轻松地为不同模型创建不同的客户端，而无需担心模型引擎的利用率。我们使用一个采样客户端，因为我们不需要通过教师模型传播对数概率。<br/>
-2. <strong>采样轨迹</strong>。我们像在RL中一样从学生模型中采样轨迹。在采样过程中，RL已经计算了学生的对数概率 $\log \pi_\theta(x)$，用作【重要性采样】（<a href="https://tinker-docs.thinkingmachines.ai/losses#policy-gradient-importance_sampling">https://tinker-docs.thinkingmachines.ai/losses#policy-gradient-importance_sampling</a>）损失的一部分。<br/>
-3. <strong>计算奖励</strong>。我们使用 <code>compute_logprobs</code> 函数查询教师客户端，传入采样的轨迹，该函数返回教师模型在学生采样的词元 $x$ 上的对数概率 $\log \pi_\text{teacher}(x)$。在本文中，我们所有实验均未考虑logit（top-k）蒸馏，该方法可用于进一步提高计算效率。然后我们用它来计算反向KL散度。<br/>
-4. <strong>使用RL进行训练</strong>。我们将逐词元的优势（advantage）设置为负的反向KL散度，并调用RL的重要性采样损失函数对学生模型执行训练更新。</p>
+<p><strong>实现步骤</strong>：</p>
+<ol><li><strong>初始化教师客户端</strong>。Tinker API可以轻松地为不同模型创建不同的客户端，而无需担心模型引擎的利用率。我们使用一个采样客户端，因为我们不需要通过教师模型传播对数概率。</li><li><strong>采样轨迹</strong>。我们像在RL中一样从学生模型中采样轨迹。在采样过程中，RL已经计算了学生的对数概率 $\log \pi_\theta(x)$，用作【重要性采样】（<a href="https://tinker-docs.thinkingmachines.ai/losses#policy-gradient-importance_sampling">https://tinker-docs.thinkingmachines.ai/losses#policy-gradient-importance_sampling</a>）损失的一部分。</li><li><strong>计算奖励</strong>。我们使用 <code>compute_logprobs</code> 函数查询教师客户端，传入采样的轨迹，该函数返回教师模型在学生采样的词元 $x$ 上的对数概率 $\log \pi_\text{teacher}(x)$。在本文中，我们所有实验均未考虑logit（top-k）蒸馏，该方法可用于进一步提高计算效率。然后我们用它来计算反向KL散度。</li><li><strong>使用RL进行训练</strong>。我们将逐词元的优势（advantage）设置为负的反向KL散度，并调用RL的重要性采样损失函数对学生模型执行训练更新。</li></ol>
 <pre><code># 初始化教师客户端 (main):
 teacher_client = service_client.create_sampling_client(
     base_model=teacher_config.base_model,
@@ -400,9 +393,8 @@ AIME'24得分随在策略蒸馏进程的变化。我们以训练FLOPs来衡量�
 <img alt="" class="figure-image" src="images/experiment-self-distillation.svg"/><br/>
 从相同的初始化开始，在策略蒸馏学习RL训练的策略所需的梯度步数大约减少了7-10倍，对应于50-100倍的计算效率提升。</li>
 </ol>
-<p><strong>计算效率的累计提升</strong>。累计来看，所需计算量的减少量级在50-100倍之间：<br/>
-* RL需要在接近评估上下文长度的环境中训练（以便策略学习上下文限制，避免格式惩罚），而蒸馏在较短的上下文长度下也能合理学习，因为完成采样和继续采样的轨迹之间没有奖励的急剧截断。<br/>
-* 当SFT初始化很强时（即教师策略在学生策略的支持域内；如果不是，如“推理蒸馏”部分所示，则需要更大的批次大小），在策略蒸馏能以小得多的批次大小有效工作，因为它每个回合提供的信息比特数要多得多，从而减少了梯度噪声。</p>
+<p><strong>计算效率的累计提升</strong>。累计来看，所需计算量的减少量级在50-100倍之间：</p>
+<ul><li>RL需要在接近评估上下文长度的环境中训练（以便策略学习上下文限制，避免格式惩罚），而蒸馏在较短的上下文长度下也能合理学习，因为完成采样和继续采样的轨迹之间没有奖励的急剧截断。</li><li>当SFT初始化很强时（即教师策略在学生策略的支持域内；如果不是，如“推理蒸馏”部分所示，则需要更大的批次大小），在策略蒸馏能以小得多的批次大小有效工作，因为它每个回合提供的信息比特数要多得多，从而减少了梯度噪声。</li></ul>
 <p>尽管通常用过程监督来训练强化学习模型很困难，但这些结果表明，作为一个大方向，过程监督和密集奖励有潜力将学习效率提高一个数量级。这与Lightman等人的早期RL研究结果相符。</p>
 <h3>蒸馏可以有效地重用训练数据以提高数据效率</h3>
 <p><strong>数据复用的重要性</strong>。对于实践者来说，收集大量的训练提示可能既困难又耗时。因此，我们希望能够在训练中多次重用提示。对于RL，尤其是在大型模型上，对同一提示进行多轮训练常常导致简单地记忆最终答案。（【Wang等人，2025年的论文“Reinforcement Learning for Reasoning in Large Language Models with One Training Example”】（<a href="https://arxiv.org/abs/2504.20571">https://arxiv.org/abs/2504.20571</a>)在某些设置下呈现了积极的结果）。相比之下，在策略蒸馏通过最小化反向KL散度来学习近似教师的完整分布，而不是记忆单个答案。这使我们能够从同一个提示中训练多个样本。</p>

@@ -72,9 +72,8 @@ Delta-rule家族（如Gated DeltaNet, GDN）通过更复杂的计算获得了擦
 </p>
 $$S_t = a_t S_{t-1} + \Delta_t (v_t k_t^\top) = \sum_{i \le t} \Big( \textstyle\prod_{i &lt; j \le t} a_j \Big) \Delta_i (v_i k_i^\top)$$
 <p><br/>
-这两个表达式暗示了两种计算状态的方式：<br/>
-1. <strong>摘要路线（左）</strong>：加载摘要$S_{t-1}$并用新输入$v_t, k_t$更新。<br/>
-2. <strong>历史路线（右）</strong>：从最近的输入窗口$(v_i, k_i)$重建$S_t$。</p>
+这两个表达式暗示了两种计算状态的方式：</p>
+<ol><li><strong>摘要路线（左）</strong>：加载摘要$S_{t-1}$并用新输入$v_t, k_t$更新。</li><li><strong>历史路线（右）</strong>：从最近的输入窗口$(v_i, k_i)$重建$S_t$。</li></ol>
 <p><strong>ReplaySSM</strong>改变了每步存储到内存的内容。它不存储循环状态，而是在小缓冲区中<strong>缓存最近的输入</strong>（对于Mamba-2，存储$(v, k)$对和衰减因子）。当需要状态时，ReplaySSM选择历史路线从缓冲的输入重建状态。当缓冲区足够大，加载它的成本超过写回状态时，ReplaySSM会<strong>刷新（flush）</strong>缓冲区：将缓冲的历史输入汇总到状态中，清空缓冲区，并重新开始缓存。状态写回仅在刷新步骤发生，大多数步骤只缓存小输入。</p>
 <h3>一项改变带来的三大优势</h3>
 <p><strong>减少内存流量</strong><br/>
@@ -87,10 +86,9 @@ $$S_t = a_t S_{t-1} + \Delta_t (v_t k_t^\top) = \sum_{i \le t} \Big( \textstyle\
 </figure>
 <p><strong>放宽要求与仅输出解码（Output-only decode）</strong><br/>
 在两次刷新之间，检查点状态不改变，最近的历史在缓冲区中，这意味着大多数解码步骤<strong>只需要当前token的输出</strong>。这解锁了新的解码方式：直接从检查点状态和缓存输入计算输出，而不物化状态。<br/>
-假设零初始状态，输出为$y = S q = (v k^\top) q$。这可以有两种结合方式：<br/>
-1. $(v k^\top) q$：构建完整状态然后读取。用于刷新缓冲区时。<br/>
-2. $v (k^\top q)$：先计算标量内积，再缩放$v$，从建物化状态。用于大多数解码步骤。<br/>
-对于非零检查点状态$S_0$和缓冲区，输出为：<br/>
+假设零初始状态，输出为$y = S q = (v k^\top) q$。这可以有两种结合方式：</p>
+<ol><li>$(v k^\top) q$：构建完整状态然后读取。用于刷新缓冲区时。</li><li>$v (k^\top q)$：先计算标量内积，再缩放$v$，从建物化状态。用于大多数解码步骤。</li></ol>
+<p>对于非零检查点状态$S_0$和缓冲区，输出为：<br/>
 </p>
 $$y_t = \bar a_t (S_0 q_t) + \sum_{j=1}^{t} s_{j,t} v_j (k_j^\top q_t)$$
 <p><br/>
@@ -104,16 +102,12 @@ $$y_t = \bar a_t (S_0 q_t) + \sum_{j=1}^{t} s_{j,t} v_j (k_j^\top q_t)$$
 <figcaption class="figure-caption">图5b ReplaySSM的两种路线与矩阵形状。状态和输出路线物化$S_t$，而仅输出路线先计算$K^\top q_t$</figcaption>
 </figure>
 <h3>算法实现</h3>
-<p><strong>Mamba-2 标准解码</strong><br/>
-- <strong>基线</strong>：每步计算衰减$a \gets e^{A\Delta}$，加载$S$，更新$S \gets a S + \Delta (v k^\top)$，计算$y \gets S q$，并将$S$存回HBM。<br/>
-- <strong>ReplaySSM</strong>：维护检查点$S_0$和容量为$L$的缓冲区$\mathcal{B}$。每步将$(v, \Delta, k)$追加到缓冲区；计算衰减权重$\bar a$和$s_j$；通过$y \gets \bar a (S_0 q) + \sum_{j=1}^{h+1} s_j (k_j^\top q) v_j$计算输出。如果缓冲区满，则执行刷新：$S_0 \gets \bar a S_0 + \sum_{j=1}^{h+1} s_j (v_j k_j^\top)$，并清空缓冲区。</p>
-<p><strong>投机解码</strong><br/>
-- <strong>基线</strong>：为每个草稿位置串行执行状态更新，并为每个草稿存储完整的状态快照以备回滚。<br/>
-- <strong>ReplaySSM</strong>：将草稿输入追加到缓冲区。对每个草稿$s$，计算衰减权重，读取检查点$H_{:,s} \gets \bar a_s (S_0 q_s)$；计算掩码GEMM $M_{j,s} \gets k_j^\top q_s$；计算输出$Y_{:,s} \gets H_{:,s} + \sum_{j \le p_s} w_{j,s} M_{j,s} v_j$。刷新时，仅将已提交的缓存输入汇总到状态中。<br/>
-- <strong>刷新决策机制</strong>：设$h$为当前缓存数，$T$为投机窗口。ReplaySSM在$h + 2T &gt; L$时提前一个窗口刷新，而不是自然的$h + T &gt; L$。这保证了每步至少有$T$个空闲槽，防止因空间不足导致投机窗口被静默截断。</p>
-<p><strong>内核设计细节</strong><br/>
-1. <strong>预计算共享内积</strong>：在Mamba-2中，组内所有头需要相同的内积$k_j^\top q$。ReplaySSM在一个小型的预计算内核中计算它们（每组运行一次），主SSM更新内核读取暂存缓冲区，以降低寄存器压力。<br/>
-2. <strong>环形缓冲区</strong>：为了避免在投机解码中将接受的token重新定位回缓冲区前面，ReplaySSM使用环形缓冲区并在内核中进行索引，使得回滚纯粹变成指针移动。</p>
+<p><strong>Mamba-2 标准解码</strong></p>
+<ul><li><strong>基线</strong>：每步计算衰减$a \gets e^{A\Delta}$，加载$S$，更新$S \gets a S + \Delta (v k^\top)$，计算$y \gets S q$，并将$S$存回HBM。</li><li><strong>ReplaySSM</strong>：维护检查点$S_0$和容量为$L$的缓冲区$\mathcal{B}$。每步将$(v, \Delta, k)$追加到缓冲区；计算衰减权重$\bar a$和$s_j$；通过$y \gets \bar a (S_0 q) + \sum_{j=1}^{h+1} s_j (k_j^\top q) v_j$计算输出。如果缓冲区满，则执行刷新：$S_0 \gets \bar a S_0 + \sum_{j=1}^{h+1} s_j (v_j k_j^\top)$，并清空缓冲区。</li></ul>
+<p><strong>投机解码</strong></p>
+<ul><li><strong>基线</strong>：为每个草稿位置串行执行状态更新，并为每个草稿存储完整的状态快照以备回滚。</li><li><strong>ReplaySSM</strong>：将草稿输入追加到缓冲区。对每个草稿$s$，计算衰减权重，读取检查点$H_{:,s} \gets \bar a_s (S_0 q_s)$；计算掩码GEMM $M_{j,s} \gets k_j^\top q_s$；计算输出$Y_{:,s} \gets H_{:,s} + \sum_{j \le p_s} w_{j,s} M_{j,s} v_j$。刷新时，仅将已提交的缓存输入汇总到状态中。</li><li><strong>刷新决策机制</strong>：设$h$为当前缓存数，$T$为投机窗口。ReplaySSM在$h + 2T &gt; L$时提前一个窗口刷新，而不是自然的$h + T &gt; L$。这保证了每步至少有$T$个空闲槽，防止因空间不足导致投机窗口被静默截断。</li></ul>
+<p><strong>内核设计细节</strong></p>
+<ol><li><strong>预计算共享内积</strong>：在Mamba-2中，组内所有头需要相同的内积$k_j^\top q$。ReplaySSM在一个小型的预计算内核中计算它们（每组运行一次），主SSM更新内核读取暂存缓冲区，以降低寄存器压力。</li><li><strong>环形缓冲区</strong>：为了避免在投机解码中将接受的token重新定位回缓冲区前面，ReplaySSM使用环形缓冲区并在内核中进行索引，使得回滚纯粹变成指针移动。</li></ol>
 <h2>实验环境</h2>
 <ul>
 <li><strong>数据集</strong>：使用GSM8K数据集的提示词评估端到端吞吐量。</li>
@@ -132,9 +126,8 @@ $$y_t = \bar a_t (S_0 q_t) + \sum_{j=1}^{t} s_{j,t} v_j (k_j^\top q_t)$$
 </ul>
 <h2>实验结果</h2>
 <h3>标准解码</h3>
-<p>在批处理大小256下，测试1K解码步骤。<br/>
-- <strong>结果</strong>：ReplaySSM在Nemotron-3上实现了1.43x至1.84x的内核加速和1.20x至1.48x的端到端加速；在Qwen3.5上实现了1.43x至1.64x的内核加速和1.20x至1.27x的端到端加速（图6）。端到端加速较小是因为仅优化了SSM内核。<br/>
-- <strong>缓冲区容量权衡</strong>：图7显示，中等缓冲区（Nemotron-3为8，Qwen3.5为16）平衡了频繁刷新的高成本和长缓冲区带来的计算瓶颈，呈现最佳的钟形曲线性能。</p>
+<p>在批处理大小256下，测试1K解码步骤。</p>
+<ul><li><strong>结果</strong>：ReplaySSM在Nemotron-3上实现了1.43x至1.84x的内核加速和1.20x至1.48x的端到端加速；在Qwen3.5上实现了1.43x至1.64x的内核加速和1.20x至1.27x的端到端加速（图6）。端到端加速较小是因为仅优化了SSM内核。</li><li><strong>缓冲区容量权衡</strong>：图7显示，中等缓冲区（Nemotron-3为8，Qwen3.5为16）平衡了频繁刷新的高成本和长缓冲区带来的计算瓶颈，呈现最佳的钟形曲线性能。</li></ul>
 <figure class="image-figure">
 <img alt="图6 跨Nemotron-3和Qwen3.5家族的内核级别和端到端每步加速比" class="figure-image" src="https://tridao.me/assets/img/2026-06-15-replayssm/ar-e2espeedup.png"/>
 <figcaption class="figure-caption">图6 跨Nemotron-3和Qwen3.5家族的内核级别和端到端每步加速比</figcaption>

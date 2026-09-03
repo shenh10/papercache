@@ -39,13 +39,8 @@ $$S_i = \sum_{j=0}^{|h_i^w|-1} \alpha_j \max_{0 \le h &lt; H} A_i[h, j]$$
 <p>本文针对大语言模型（LLM）在长上下文推理阶段因KV缓存导致GPU显存占用巨大的问题，提出了一种名为OmniKV的推理方法。</p>
 <p><strong>核心问题</strong>：在长上下文场景下，LLM的KV缓存会占用大量GPU显存，且其大小随序列长度线性增长。现有方法通常通过识别并丢弃注意力分数较低的不重要token来减少显存占用。然而，作者认为这种方法存在缺陷，因为注意力分数是基于当前隐藏状态计算的，只能反映token对当前推理步骤的重要性，而无法预示其在未来生成步骤中的重要性。被丢弃的token可能在后续推理中变得关键，导致信息丢失（如图1b所示）。</p>
 <p><strong>研究目标</strong>：设计一种无需丢弃token、无需训练的推理方法，既能保持与原始模型相当的性能，又能显著提升长上下文场景下的推理效率并减少KV缓存的显存占用。</p>
-<p><strong>创新点与核心洞见</strong>：<br/>
-1. <strong>核心洞见：层间注意力相似性 (Inter-Layer Attention Similarity)</strong>。本文发现，对于一个特定的上下文，在单次生成迭代中，不同层级之间识别出的重要token集合具有高度相似性（如图1a所示）。这意味着少数几层的注意力模式可以代表大多数层的注意力模式。<br/>
-2. <strong>动态上下文选择机制</strong>：基于上述洞见，OmniKV提出了一种动态选择机制。它在解码阶段仅在少数几个“过滤器”层（filter layers）上计算完整的注意力，并用它们来选择一个重要的token子集。<br/>
-3. <strong>高效的KV缓存管理与卸载 (Offloading)</strong>：<br/>
-    * 在预填充（prefill）阶段，OmniKV将大部分非“过滤器”层的KV缓存卸载到CPU内存。<br/>
-    * 在解码（decode）阶段，其他层直接复用“过滤器”层选择的token索引，仅从CPU加载所需的一小部分KV缓存子集到GPU进行稀疏注意力计算。<br/>
-    * 由于多个层共享相同的token索引，加载可以打包进行（Packed Load），并利用异步传输来重叠计算和数据传输时间，从而最小化PCIe传输开销。</p>
+<p><strong>创新点与核心洞见</strong>：</p>
+<ol><li><strong>核心洞见：层间注意力相似性 (Inter-Layer Attention Similarity)</strong>。本文发现，对于一个特定的上下文，在单次生成迭代中，不同层级之间识别出的重要token集合具有高度相似性（如图1a所示）。这意味着少数几层的注意力模式可以代表大多数层的注意力模式。</li><li><strong>动态上下文选择机制</strong>：基于上述洞见，OmniKV提出了一种动态选择机制。它在解码阶段仅在少数几个“过滤器”层（filter layers）上计算完整的注意力，并用它们来选择一个重要的token子集。</li><li><strong>高效的KV缓存管理与卸载 (Offloading)</strong>：<ul><li>在预填充（prefill）阶段，OmniKV将大部分非“过滤器”层的KV缓存卸载到CPU内存。</li><li>在解码（decode）阶段，其他层直接复用“过滤器”层选择的token索引，仅从CPU加载所需的一小部分KV缓存子集到GPU进行稀疏注意力计算。</li><li>由于多个层共享相同的token索引，加载可以打包进行（Packed Load），并利用异步传输来重叠计算和数据传输时间，从而最小化PCIe传输开销。</li></ul></li></ol>
 <ol>
 <li><strong>性能与效率</strong>：<ul>
 <li><strong>无损性能</strong>：由于不丢弃任何token的KV缓存，OmniKV能够保持与原始模型相当的性能，尤其在多步推理（如思维链）场景下表现优越。</li>

@@ -35,14 +35,8 @@ title: 'FlexiCache: Leveraging Temporal Stability of Attention Heads for Efficie
 <h2>A1 主要贡献</h2>
 <p>大型语言模型（LLM）服务日益受到键值（KV）缓存大小的限制，其大小随上下文长度和生成长度的增加而增长。先前的工作表明，注意力计算由一小部分关键的token主导，但现有系统难以在不降低准确性的情况下有效利用这一点，尤其是在长文本生成场景中。本文提出了一个关键观察：这些关键token的时间稳定性在不同的KV头之间存在显著差异。一些头（稳定头）持续关注相同的token，而另一些头（不稳定头）的关注点则频繁变化。</p>
 <p>基于这一发现，本文引入了 <strong>FlexiCache</strong>，一个分层KV缓存管理系统，它利用KV头的时间稳定性来减少GPU内存使用和计算开销，同时保持模型准确性。FlexiCache 将KV头分为稳定或不稳定两类：它将不稳定头的所有KV缓存页保留在GPU内存中，而对于稳定头，仅在GPU上保留Top-K的页，并将其余页卸载到主机内存中。通过利用时间稳定性，FlexiCache对稳定头进行周期性重排序，以获取新晋升的Top页。</p>
-<p><strong>核心贡献如下：</strong><br/>
-* <strong>发现KV头的模型内在时间稳定性</strong>：本文识别出KV头在选择其Top-K KV页进行注意力计算时，表现出一种模型固有的、跨任务一致的时间稳定性。<br/>
-* <strong>开发FlexiCache系统</strong>：设计并实现了一个利用KV头时间稳定性的LLM服务系统，该系统具有分层KV缓存管理机制。<br/>
-* <strong>显著的性能提升</strong>：在vLLM基础上实现的FlexiCache，能够：<br/>
-    * 将长上下文请求的GPU内存占用减少高达70%。<br/>
-    * 将离线服务吞吐量提高1.38-1.55倍。<br/>
-    * 将在线服务的token延迟降低1.6-2.1倍。<br/>
-    * 在长上下文、长生成场景中保持模型的高准确性。</p>
+<p><strong>核心贡献如下：</strong></p>
+<ul><li><strong>发现KV头的模型内在时间稳定性</strong>：本文识别出KV头在选择其Top-K KV页进行注意力计算时，表现出一种模型固有的、跨任务一致的时间稳定性。</li><li><strong>开发FlexiCache系统</strong>：设计并实现了一个利用KV头时间稳定性的LLM服务系统，该系统具有分层KV缓存管理机制。</li><li><strong>显著的性能提升</strong>：在vLLM基础上实现的FlexiCache，能够：<ul><li>将长上下文请求的GPU内存占用减少高达70%。</li><li>将离线服务吞吐量提高1.38-1.55倍。</li><li>将在线服务的token延迟降低1.6-2.1倍。</li><li>在长上下文、长生成场景中保持模型的高准确性。</li></ul></li></ul>
 <ul>
 <li><strong>即将开源</strong>：FlexiCache将很快开源。</li>
 </ul>

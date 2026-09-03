@@ -218,11 +218,8 @@ $$\pi_{\text{TokenV1}}(v) = q_t(v) \cdot \mathbf{1}(v \in \mathcal{T}_\alpha) + 
 <p><strong>与有损推测采样的对比</strong>。有损推测采样也旨在模仿 $q_t$ 和 $p_t$ 的特定于token的交错，但其目标分布的选择可能严重限制可实现的成本-质量权衡范围，特别是在使用小温度或top-P采样时，因为 $q_t$ 和 $p_t$ 的支持集可能不重叠。相比之下，我们提出的方法通过在未缩放的 $q_t$ 和 $p_t$ 上计算延迟规则 $r$ ，同时在缩放后的版本之间进行交错，从而在各种采样方案下都能实现更广泛的权衡。有趣的是，我们提出的TokenV3方法在温度趋于0时，会简化为【32, Yaniv Leviathan, Matan Kalman, and Yossi Matias. Fast inference from transformers via speculative decoding. 2023. ICML】为贪婪解码提出的一个有损推测解码变体，因此它可以被看作是适用于贪婪和非贪婪解码的通用延迟规则。</p>
 <hr/>
 <h3>A4 实验环境</h3>
-<p><strong>数据集</strong><br/>
-* <strong>T5模型</strong>：<br/>
-    * WMT EN→DE 翻译 【5, Ondˇrej Bojar, Christian Buck, Christian Federmann, et al. Findings of the 2014 workshop on statistical machine translation. 2014. WMT】<br/>
-    * CNN/DM 摘要 【24, Karl Moritz Hermann, Tomas Kocisky, Edward Grefenstette, et al. Teaching machines to read and comprehend. 2015. NeurIPS】<br/>
-    * XSum 抽象摘要 【39, Shashi Narayan, Shay B Cohen, and Mirella Lapata. Don’t give me the details, just the summary! topic-aware convolutional neural networks for extreme summarization. 2018. EMNLP】</p>
+<p><strong>数据集</strong></p>
+<ul><li><strong>T5模型</strong>：<ul><li>WMT EN→DE 翻译 【5, Ondˇrej Bojar, Christian Buck, Christian Federmann, et al. Findings of the 2014 workshop on statistical machine translation. 2014. WMT】</li><li>CNN/DM 摘要 【24, Karl Moritz Hermann, Tomas Kocisky, Edward Grefenstette, et al. Teaching machines to read and comprehend. 2015. NeurIPS】</li><li>XSum 抽象摘要 【39, Shashi Narayan, Shay B Cohen, and Mirella Lapata. Don’t give me the details, just the summary! topic-aware convolutional neural networks for extreme summarization. 2018. EMNLP】</li></ul></li></ul>
 <ul>
 <li><strong>Gemma模型</strong>：除了WMT和CNN/DM，还使用了以下6个基准测试，其中许多来自SpecBench套件【62, Heming Xia, Zhe Yang, Qingxiu Dong, et al. Unlocking efficiency in large language model inference: A comprehensive survey of speculative decoding. 2024. arXiv】：<ul>
 <li>GSM8K (数学推理) 【14, Karl Cobbe, Vineet Kosaraju, Mohammad Bavarian, et al. Training verifiers to solve math word problems. 2021. arXiv】</li>
@@ -239,16 +236,10 @@ $$\pi_{\text{TokenV1}}(v) = q_t(v) \cdot \mathbf{1}(v \in \mathcal{T}_\alpha) + 
 <li><strong>T5</strong>：使用T5 v1.1系列编码器-解码器模型，包括T5-small (77M)、T5-large (800M)和T5-XL (3B)。</li>
 <li><strong>Gemma</strong>：使用Gemma v2指令调优的仅解码器模型。使用2B参数模型作为草稿模型，9B或27B模型作为验证模型。</li>
 </ul>
-<p><strong>硬件配置</strong><br/>
-* T5模型的实验在TPUv4设备上运行。</p>
-<p><strong>软件配置</strong><br/>
-* <strong>T5模型</strong>：使用公开检查点初始化，进一步预训练100K步，然后在各个任务上进行监督微调。<br/>
-* <strong>Gemma模型</strong>：采用少样本（few-shot）推理方式。<br/>
-* <strong>通用参数</strong>：<br/>
-    * 延迟测量：使用批大小为1的壁钟解码时间。<br/>
-    * 块大小 $\gamma$：T5实验中通常为5，Gemma实验中为1。<br/>
-    * 温度 T：0, 0.1, 0.5, 1.0。<br/>
-    * Top-P采样也进行了评估。</p>
+<p><strong>硬件配置</strong></p>
+<ul><li>T5模型的实验在TPUv4设备上运行。</li></ul>
+<p><strong>软件配置</strong></p>
+<ul><li><strong>T5模型</strong>：使用公开检查点初始化，进一步预训练100K步，然后在各个任务上进行监督微调。</li><li><strong>Gemma模型</strong>：采用少样本（few-shot）推理方式。</li><li><strong>通用参数</strong>：<ul><li>延迟测量：使用批大小为1的壁钟解码时间。</li><li>块大小 $\gamma$：T5实验中通常为5，Gemma实验中为1。</li><li>温度 T：0, 0.1, 0.5, 1.0。</li><li>Top-P采样也进行了评估。</li></ul></li></ul>
 <hr/>
 <h3>A5 实验结果</h3>
 <p><strong>评估协议</strong>：本文的评估协议与标准推测解码算法的评估不同。标准评估的目标是在保持大模型输出分布的同时加速推理。而本文的重点是通过交错使用不同大小的两个模型来权衡质量与推理成本。</p>

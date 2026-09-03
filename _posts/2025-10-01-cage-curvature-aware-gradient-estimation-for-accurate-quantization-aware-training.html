@@ -37,14 +37,8 @@ title: 'CAGE: Curvature-Aware Gradient Estimation for Accurate Quantization-Awar
 <p><strong>核心问题与研究目标</strong>:<br/>
 核心问题是标准的QAT方法（如STE）存在性能瓶颈，导致量化后模型精度下降。研究目标是开发一种新的QAT方法，该方法不仅在实践中能提高模型准确性，而且具备坚实的理论基础和收敛保证。</p>
 <p><strong>创新点与主要贡献</strong>:<br/>
-本文提出了一种名为CAGE（Curvature-Aware Gradient Estimation，曲率感知梯度估计）的新型QAT方法，其主要贡献如下：<br/>
-* <strong>提出CAGE方法</strong>: 该方法通过一个曲率感知的校正项来增强标准的STE梯度。这个校正项是基于将QAT视为一个多目标优化问题（同时最小化任务损失和量化误差）推导出的帕累托最优性条件，旨在明确地抵消由量化步骤引起的损失增加。它利用了损失景观的局部二阶信息（即Hessian矩阵）。<br/>
-* <strong>提供理论保证</strong>: CAGE在平滑非凸设定下具有强遍历性收敛到帕累托最优点（Pareto-optimal point）的保证，解决了现有工作缺乏理论保证的主要限制。<br/>
-* <strong>高效且优化器无关的实现</strong>: 该方法与优化器无关，但本文提供了一个利用自适应优化器（如Adam）中现有统计量的高效实现。<br/>
-* <strong>全面的实验验证</strong>:<br/>
-    * 在QAT微调任务中，CAGE将相对于先前最佳方法的压缩精度损失减半。<br/>
-    * 在Llama模型的QAT预训练中，使用CAGE进行3比特权重和激活（W3A3）训练达到的准确性，与使用先前最佳方法进行4比特（W4A4）训练的准确性相匹配。<br/>
-    * 实验证明CAGE在多种优化器（包括AdamW, Muon, Shampoo）上均能带来一致的性能提升。</p>
+本文提出了一种名为CAGE（Curvature-Aware Gradient Estimation，曲率感知梯度估计）的新型QAT方法，其主要贡献如下：</p>
+<ul><li><strong>提出CAGE方法</strong>: 该方法通过一个曲率感知的校正项来增强标准的STE梯度。这个校正项是基于将QAT视为一个多目标优化问题（同时最小化任务损失和量化误差）推导出的帕累托最优性条件，旨在明确地抵消由量化步骤引起的损失增加。它利用了损失景观的局部二阶信息（即Hessian矩阵）。</li><li><strong>提供理论保证</strong>: CAGE在平滑非凸设定下具有强遍历性收敛到帕累托最优点（Pareto-optimal point）的保证，解决了现有工作缺乏理论保证的主要限制。</li><li><strong>高效且优化器无关的实现</strong>: 该方法与优化器无关，但本文提供了一个利用自适应优化器（如Adam）中现有统计量的高效实现。</li><li><strong>全面的实验验证</strong>:<ul><li>在QAT微调任务中，CAGE将相对于先前最佳方法的压缩精度损失减半。</li><li>在Llama模型的QAT预训练中，使用CAGE进行3比特权重和激活（W3A3）训练达到的准确性，与使用先前最佳方法进行4比特（W4A4）训练的准确性相匹配。</li><li>实验证明CAGE在多种优化器（包括AdamW, Muon, Shampoo）上均能带来一致的性能提升。</li></ul></li></ul>
 <p>总结而言，CAGE通过引入曲率感知的梯度校正，为缩小低比特量化模型与全精度模型之间的性能差距提供了一个有前景的方案。</p>
 <h2>A2 先前工作</h2>
 <p><strong>QAT的核心挑战与STE的局限性</strong>。量化感知训练（QAT）的核心挑战在于量化函数不可微，其梯度几乎处处为零。标准方法是直通估计器（STE），最初由Hinton (2012)提出并由Bengio等人(2013b)形式化，它在反向传播过程中绕过了量化算子。然而，STE常导致训练不稳定和次优收敛【Yin et al., Understanding straight-through estimator in training activation quantized neural nets, 2019, ICLR】。</p>

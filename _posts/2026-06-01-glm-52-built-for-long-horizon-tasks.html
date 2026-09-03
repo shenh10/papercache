@@ -421,51 +421,30 @@ title: 'GLM-5.2: Built for Long-Horizon Tasks'
 <p>GLM-5.2在长时程任务能力上取得了重大突破，核心在于其坚实可靠的1M-token上下文，这不仅仅是技术指标的提升，更是工程实用性的保证。通过引入创新的架构设计，如<strong>IndexShare</strong>和优化的<strong>MTP层</strong>，模型在支持超长上下文的同时，显著降低了计算成本并提升了推测解码效率。在编码能力方面，GLM-5.2不仅在各项基准测试中成为最强的开源模型，还通过<strong>灵活的精力级别控制</strong>为用户提供了在性能和成本之间权衡的能力。为了支持复杂的智能体强化学习，我们开发了<strong>slime框架</strong>，并设计了<strong>反“黑客”模块</strong>以确保训练的有效性和鲁棒性。最终，GLM-5.2以完全开放的MIT许可证发布，旨在推动长时程AI应用的边界，为社区提供一个强大、高效且可信赖的基础模型。</p>
 <h2>A6 附录</h2>
 <h3>脚注（评估设置）</h3>
-<p><strong>Humanity's Last Exam (HLE) &amp; 其他推理任务</strong><br/>
-* <strong>采样参数：</strong> 我们使用<code>temperature=1.0</code>, <code>top_p=0.95</code>进行评估。<br/>
-* <strong>生成长度：</strong> 我们评估时最大生成长度为163,840个token。<br/>
-* <strong>报告范围：</strong> 默认情况下，我们报告纯文本子集的结果；标有<em>的结果来自完整数据集。<br/>
-* </em><em>特定任务设置：</em><em> 对于AIME、HMMT和IMOAnswerBench，我们使用固定的答案格式系统提示来评估每个问题。<br/>
-* </em><em>裁判模型：</em><em> 我们使用GPT-5.5 (medium)作为裁判模型。<br/>
-* </em><em>HLE-with-tools：</em>* 我们使用的最大上下文长度为300,000个token，没有使用上下文管理策略。</p>
-<p><strong>SWE-Bench Pro</strong><br/>
-* <strong>运行方式：</strong> 我们使用OpenHands运行SWE-Bench Pro套件，并采用量身定制的指令提示。<br/>
-* <strong>设置：</strong> <code>temperature=1</code>, <code>top_p=1</code>, <code>max_new_tokens=32k</code>，上下文窗口为400K。</p>
-<p><strong>NL2Repo</strong><br/>
-* <strong>评估参数：</strong> 我们在400K上下文下，使用<code>temperature=1.0</code>, <code>top_p=1.0</code>和<code>max_new_tokens=48k</code>对NL2Repo进行评估。<br/>
-* <strong>反“黑客”：</strong> 为防止“黑客”行为，我们使用基于规则和基于LLM的判断来阻止恶意行为（例如，未经授权的pip或curl操作）。</p>
-<p><strong>DeepSWE</strong><br/>
-* <strong>运行方式：</strong> 我们使用官方的pier评估框架和mini-swe-agent测试工具运行DeepSWE。<br/>
-* <strong>设置：</strong> <code>temperature=1.0</code>, <code>top_p=1.0</code>, <code>timeout=2h</code>，上下文为400K。<br/>
-* <strong>环境：</strong> 每个任务都在一个隔离的容器中解决，配备2个CPU，8GB RAM，并且没有互联网访问权限。</p>
-<p><strong>ProgramBench</strong><br/>
-* <strong>运行方式：</strong> 我们使用Claude-Code 2.1.156评估ProgramBench（200个实例）。<br/>
-* <strong>设置：</strong> <code>temperature=1.0, top_p=1.0, max_tokens=64000, max_turns=2000, sample_timeout=6h, reasoning_effort=max</code>，上下文窗口为400K。<br/>
-* <strong>环境：</strong> 每个实例在一个（4个CPU，8GB RAM）的沙箱中运行，禁用了互联网访问。</p>
-<p><strong>Terminal-Bench 2.1 (Terminus 2)</strong><br/>
-* <strong>运行方式：</strong> 我们使用Terminus-2框架评估Terminal-Bench 2.1。<br/>
-* <strong>设置：</strong> <code>parser=json</code>, <code>timeout=4h</code>, <code>temperature=1.0</code>, <code>top_p=1.0</code>, <code>max_new_tokens=48k</code>, <code>max_episodes=500</code>，上下文窗口为256K。<br/>
-* <strong>资源限制：</strong> 资源上限为4个CPU和8GB RAM。</p>
-<p><strong>Terminal-Bench 2.1 (Claude Code)</strong><br/>
-* <strong>运行方式：</strong> 我们在Claude Code 2.1.167中进行评估。<br/>
-* <strong>设置：</strong> <code>temperature=1.0, top_p=0.95, max_new_tokens=131072</code>。我们通过一个透明代理将max_new_tokens覆盖为128k，绕过了64k的CLI上限，以恢复<code>CLAUDE_CODE_MAX_OUTPUT_TOKENS</code>的可配置性。<br/>
-* <strong>限制：</strong> 我们移除了挂钟时间限制，但保留了每个任务的CPU和内存限制。<br/>
-* <strong>结果：</strong> 分数是5次运行的平均值。在评估Gemini 3.1 Pro和GPT-5.4时，这两个模型有时会识别出任务存在安全风险并拒绝执行，这可能会降低它们的分数。</p>
-<p><strong>MCP-Atlas</strong><br/>
-* <strong>运行方式：</strong> 所有模型都在“思考模式”（think mode）下对500个任务的公共子集进行评估，每个任务有10分钟的超时限制。<br/>
-* <strong>裁判模型：</strong> 我们使用Gemini-3.0-Pro作为评估的裁判模型。</p>
-<p><strong>Tool-Decathlon</strong><br/>
-* <strong>运行方式：</strong> 我们使用官方评估服务，并将max_token设置为128K。</p>
-<p><strong>FrontierSWE</strong><br/>
-* <strong>评估方：</strong> 评估由<a href="https://www.proximal.ai">https://www.proximal.ai</a>进行。<br/>
-* <strong>设置：</strong> 1M上下文长度，最大精力级别（max effort level），以及128K最大输出token。<br/>
-* <strong>报告时间：</strong> 报告的优势分数为截至2026年6月16日的数据。</p>
-<p><strong>PostTrainBench</strong><br/>
-* <strong>评估方：</strong> 评估由<a href="https://posttrainbench.com">https://posttrainbench.com</a>进行。<br/>
-* <strong>设置：</strong> 1M上下文长度，最大精力级别，以及128K最大输出token。</p>
-<p><strong>SWE-Marathon</strong><br/>
-* <strong>评估方：</strong> 评估由<a href="https://www.abundant.ai">https://www.abundant.ai</a>进行。<br/>
-* <strong>设置：</strong> 1M上下文长度，最大精力级别，以及128K最大输出token。</p>
+<p><strong>Humanity's Last Exam (HLE) &amp; 其他推理任务</strong></p>
+<ul><li><strong>采样参数：</strong> 我们使用<code>temperature=1.0</code>, <code>top_p=0.95</code>进行评估。</li><li><strong>生成长度：</strong> 我们评估时最大生成长度为163,840个token。</li><li><strong>报告范围：</strong> 默认情况下，我们报告纯文本子集的结果；标有<em>的结果来自完整数据集。</em></li><li><em>特定任务设置：</em><em> 对于AIME、HMMT和IMOAnswerBench，我们使用固定的答案格式系统提示来评估每个问题。</em></li><li><em>裁判模型：</em><em> 我们使用GPT-5.5 (medium)作为裁判模型。</em></li><li><em>HLE-with-tools：</em>* 我们使用的最大上下文长度为300,000个token，没有使用上下文管理策略。</li></ul>
+<p><strong>SWE-Bench Pro</strong></p>
+<ul><li><strong>运行方式：</strong> 我们使用OpenHands运行SWE-Bench Pro套件，并采用量身定制的指令提示。</li><li><strong>设置：</strong> <code>temperature=1</code>, <code>top_p=1</code>, <code>max_new_tokens=32k</code>，上下文窗口为400K。</li></ul>
+<p><strong>NL2Repo</strong></p>
+<ul><li><strong>评估参数：</strong> 我们在400K上下文下，使用<code>temperature=1.0</code>, <code>top_p=1.0</code>和<code>max_new_tokens=48k</code>对NL2Repo进行评估。</li><li><strong>反“黑客”：</strong> 为防止“黑客”行为，我们使用基于规则和基于LLM的判断来阻止恶意行为（例如，未经授权的pip或curl操作）。</li></ul>
+<p><strong>DeepSWE</strong></p>
+<ul><li><strong>运行方式：</strong> 我们使用官方的pier评估框架和mini-swe-agent测试工具运行DeepSWE。</li><li><strong>设置：</strong> <code>temperature=1.0</code>, <code>top_p=1.0</code>, <code>timeout=2h</code>，上下文为400K。</li><li><strong>环境：</strong> 每个任务都在一个隔离的容器中解决，配备2个CPU，8GB RAM，并且没有互联网访问权限。</li></ul>
+<p><strong>ProgramBench</strong></p>
+<ul><li><strong>运行方式：</strong> 我们使用Claude-Code 2.1.156评估ProgramBench（200个实例）。</li><li><strong>设置：</strong> <code>temperature=1.0, top_p=1.0, max_tokens=64000, max_turns=2000, sample_timeout=6h, reasoning_effort=max</code>，上下文窗口为400K。</li><li><strong>环境：</strong> 每个实例在一个（4个CPU，8GB RAM）的沙箱中运行，禁用了互联网访问。</li></ul>
+<p><strong>Terminal-Bench 2.1 (Terminus 2)</strong></p>
+<ul><li><strong>运行方式：</strong> 我们使用Terminus-2框架评估Terminal-Bench 2.1。</li><li><strong>设置：</strong> <code>parser=json</code>, <code>timeout=4h</code>, <code>temperature=1.0</code>, <code>top_p=1.0</code>, <code>max_new_tokens=48k</code>, <code>max_episodes=500</code>，上下文窗口为256K。</li><li><strong>资源限制：</strong> 资源上限为4个CPU和8GB RAM。</li></ul>
+<p><strong>Terminal-Bench 2.1 (Claude Code)</strong></p>
+<ul><li><strong>运行方式：</strong> 我们在Claude Code 2.1.167中进行评估。</li><li><strong>设置：</strong> <code>temperature=1.0, top_p=0.95, max_new_tokens=131072</code>。我们通过一个透明代理将max_new_tokens覆盖为128k，绕过了64k的CLI上限，以恢复<code>CLAUDE_CODE_MAX_OUTPUT_TOKENS</code>的可配置性。</li><li><strong>限制：</strong> 我们移除了挂钟时间限制，但保留了每个任务的CPU和内存限制。</li><li><strong>结果：</strong> 分数是5次运行的平均值。在评估Gemini 3.1 Pro和GPT-5.4时，这两个模型有时会识别出任务存在安全风险并拒绝执行，这可能会降低它们的分数。</li></ul>
+<p><strong>MCP-Atlas</strong></p>
+<ul><li><strong>运行方式：</strong> 所有模型都在“思考模式”（think mode）下对500个任务的公共子集进行评估，每个任务有10分钟的超时限制。</li><li><strong>裁判模型：</strong> 我们使用Gemini-3.0-Pro作为评估的裁判模型。</li></ul>
+<p><strong>Tool-Decathlon</strong></p>
+<ul><li><strong>运行方式：</strong> 我们使用官方评估服务，并将max_token设置为128K。</li></ul>
+<p><strong>FrontierSWE</strong></p>
+<ul><li><strong>评估方：</strong> 评估由<a href="https://www.proximal.ai">https://www.proximal.ai</a>进行。</li><li><strong>设置：</strong> 1M上下文长度，最大精力级别（max effort level），以及128K最大输出token。</li><li><strong>报告时间：</strong> 报告的优势分数为截至2026年6月16日的数据。</li></ul>
+<p><strong>PostTrainBench</strong></p>
+<ul><li><strong>评估方：</strong> 评估由<a href="https://posttrainbench.com">https://posttrainbench.com</a>进行。</li><li><strong>设置：</strong> 1M上下文长度，最大精力级别，以及128K最大输出token。</li></ul>
+<p><strong>SWE-Marathon</strong></p>
+<ul><li><strong>评估方：</strong> 评估由<a href="https://www.abundant.ai">https://www.abundant.ai</a>进行。</li><li><strong>设置：</strong> 1M上下文长度，最大精力级别，以及128K最大输出token。</li></ul>
 </div>
 
 

@@ -32,25 +32,16 @@ title: 'Inkling: Our Open-Weights Model'
 </details>
 <h2>A1 主要贡献</h2>
 <p><strong>研究目标与核心问题</strong>：Thinking Machines的使命是构建能够扩展人类意志和判断力的AI。为了推进这一使命，他们发布了一款名为Inkling的开源权重模型，旨在让更多人能够根据自身需求定制模型。Inkling并非当前最强的模型，但其多方面的优良特性使其成为一个理想的定制化基础模型。</p>
-<p><strong>模型概览</strong>：<br/>
-* <strong>模型名称</strong>：Inkling<br/>
-* <strong>架构</strong>：拥有9750亿总参数和410亿活跃参数的混合专家（Mixture-of-Experts, MoE）Transformer。<br/>
-* <strong>上下文窗口</strong>：支持高达100万个token。<br/>
-* <strong>预训练数据</strong>：在包含文本、图像、音频和视频的45万亿个token上进行了预训练。<br/>
-* <strong>模型家族</strong>：Inkling是一个模型家族中的首个产品，同时发布的还有轻量级预览版Inkling-Small，拥有120亿活跃参数。</p>
-<p><strong>核心创新与特点</strong>：<br/>
-1. <strong>广泛而均衡的基础模型</strong>：Inkling被设计为一个在多领域表现均衡的通用模型，而非针对单一基准进行优化的“专才”。其优势在于强大的适应性，能够满足不同用户的定制化需求。<br/>
-2. <strong>多模态能力</strong>：原生支持处理文本、图像和音频，为丰富的交互体验和应用场景提供基础。<br/>
-3. <strong>高效且可控的“思考努力”</strong>：模型允许用户在性能和成本（如token消耗和延迟）之间进行权衡，通过调整“思考努力”来适应不同应用场景的约束。<br/>
-4. <strong>开放与可定制性</strong>：Inkling在Thinking Machines的Tinker平台上开放微调，并提供了完整的模型权重。为了展示其定制能力，文章演示了Inkling使用Tinker平台自我微调的案例：模型自主编写微调任务，生成训练数据，执行训练，评估结果，并最终更新自身权重，成功转变为一个不使用字母“e”的“缺字文”（lipogram）模型。</p>
+<p><strong>模型概览</strong>：</p>
+<ul><li><strong>模型名称</strong>：Inkling</li><li><strong>架构</strong>：拥有9750亿总参数和410亿活跃参数的混合专家（Mixture-of-Experts, MoE）Transformer。</li><li><strong>上下文窗口</strong>：支持高达100万个token。</li><li><strong>预训练数据</strong>：在包含文本、图像、音频和视频的45万亿个token上进行了预训练。</li><li><strong>模型家族</strong>：Inkling是一个模型家族中的首个产品，同时发布的还有轻量级预览版Inkling-Small，拥有120亿活跃参数。</li></ul>
+<p><strong>核心创新与特点</strong>：</p>
+<ol><li><strong>广泛而均衡的基础模型</strong>：Inkling被设计为一个在多领域表现均衡的通用模型，而非针对单一基准进行优化的“专才”。其优势在于强大的适应性，能够满足不同用户的定制化需求。</li><li><strong>多模态能力</strong>：原生支持处理文本、图像和音频，为丰富的交互体验和应用场景提供基础。</li><li><strong>高效且可控的“思考努力”</strong>：模型允许用户在性能和成本（如token消耗和延迟）之间进行权衡，通过调整“思考努力”来适应不同应用场景的约束。</li><li><strong>开放与可定制性</strong>：Inkling在Thinking Machines的Tinker平台上开放微调，并提供了完整的模型权重。为了展示其定制能力，文章演示了Inkling使用Tinker平台自我微调的案例：模型自主编写微调任务，生成训练数据，执行训练，评估结果，并最终更新自身权重，成功转变为一个不使用字母“e”的“缺字文”（lipogram）模型。</li></ol>
 <figure class="image-figure">
 <img alt="OpenCode" class="figure-image" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NDEiIGhlaWdodD0iMTE1IiBmaWxsPSJub25lIiB2aWV3Qm94PSIwIDAgNjQxIDExNSI+PGcgY2xpcC1wYXRoPSJ1cmwoI2NsaXAwXzE0MDFfODYyOTIpIj48bWFzayBpZD0ibWFzazBfMTQwMV84NjI5MiIgd2lkdGg9IjY0MSIgaGVpZ2h0PSIxMTUiIHg9IjAiIHk9IjAiIG1hc2tVbml0cz0idXNlclNwYWNlT25Vc2UiIHN0eWxlPSJtYXNrLXR5cGU6bHVtaW5hbmNlIj48cGF0aCBmaWxsPSIjZmZmIiBkPSJNNjQwLjcxNCAwSDB2MTE1aDY0MC43MTR6Ii8+PC9tYXNrPjxnIG1hc2s9InVybCgjbWFzazBfMTQwMV84NjI5MikiPjxwYXRoIGZpbGw9IiM0YjQ2NDYiIGQ9Ik00OS4yODcgODIuMTQzSDE2LjQzVjQ5LjI4NmgzMi44NTd6Ii8+PHBhdGggZmlsbD0iI2I3YjFiMSIgZD0iTTQ5LjI4NiAzMi44NTdIMTYuNDI5djQ5LjI4NmgzMi44NTd6bTE2LjQyOCA2NS43MTVIMFYxNi40MjloNjUuNzE0eiIvPjxwYXRoIGZpbGw9IiM0YjQ2NDYiIGQ9Ik0xMzEuNDI3IDgyLjE0M0g5OC41N1Y0OS4yODZoMzIuODU3eiIvPjxwYXRoIGZpbGw9IiNiN2IxYjEiIGQ9Ik05OC41NyA4Mi4xNDNoMzIuODU2VjMyLjg1N0g5OC41Njl6bTQ5LjI4NSAxNi40MjlIOTguNTY5VjExNUg4Mi4xNDFWMTYuNDI5aDY1LjcxNHoiLz48cGF0aCBmaWxsPSIjNGI0NjQ2IiBkPSJNMjI5Ljk5NyA2NS43MTR2MTYuNDI4aC00OS4yODZWNjUuNzE0eiIvPjxwYXRoIGZpbGw9IiNiN2IxYjEiIGQ9Ik0yMzAuMDAzIDY1LjcxNGgtNDkuMjg1djE2LjQyOWg0OS4yODV2MTYuNDI5aC02NS43MTRWMTYuNDI5aDY1LjcxNHptLTQ5LjI4NS0xNi40MjhoMzIuODU3VjMyLjg1N2gtMzIuODU3eiIvPjxwYXRoIGZpbGw9IiM0YjQ2NDYiIGQ9Ik0yOTUuNzE3IDk4LjU3MmgtMzIuODU4VjQ5LjI4NmgzMi44NTh6Ii8+PHBhdGggZmlsbD0iI2I3YjFiMSIgZD0iTTI5NS43MTUgMzIuODU3aC0zMi44NTd2NjUuNzE1SDI0Ni40M1YxNi40MjloNDkuMjg1em0xNi40MjkgNjUuNzE1aC0xNi40MjlWMzIuODU3aDE2LjQyOXoiLz48cGF0aCBmaWxsPSIjNGI0NjQ2IiBkPSJNMzk0LjI4NiA4Mi4xNDNIMzQ1VjQ5LjI4Nmg0OS4yODZ6Ii8+PHBhdGggZmlsbD0iI2YxZWNlYyIgZD0iTTM5NC4yODUgMzIuODU3aC00OS4yODZ2NDkuMjg2aDQ5LjI4NnYxNi40MjlIMzI4LjU3VjE2LjQyOWg2NS43MTV6Ii8+PHBhdGggZmlsbD0iIzRiNDY0NiIgZD0iTTQ1OS45OTggODIuMTQzaC0zMi44NTdWNDkuMjg2aDMyLjg1N3oiLz48cGF0aCBmaWxsPSIjZjFlY2VjIiBkPSJNNDU5Ljk5NyAzMi44NTdINDI3LjE0djQ5LjI4NmgzMi44NTd6bTE2LjQyOCA2NS43MTVoLTY1LjcxNFYxNi40MjloNjUuNzE0eiIvPjxwYXRoIGZpbGw9IiM0YjQ2NDYiIGQ9Ik01NDIuMTQ2IDgyLjE0M2gtMzIuODU3VjQ5LjI4NmgzMi44NTd6Ii8+PHBhdGggZmlsbD0iI2YxZWNlYyIgZD0iTTU0Mi4xNDUgMzIuODU3aC0zMi44NTd2NDkuMjg2aDMyLjg1N3ptMTYuNDI5IDY1LjcxNGgtNjUuNzE1VjE2LjQzaDQ5LjI4NlYwaDE2LjQyOXoiLz48cGF0aCBmaWxsPSIjNGI0NjQ2IiBkPSJNNjQwLjcxNSA2NS43MTR2MTYuNDI4SDU5MS40M1Y2NS43MTR6Ii8+PHBhdGggZmlsbD0iI2YxZWNlYyIgZD0iTTU5MS40MjkgMzIuODU3djE2LjQyOWgzMi44NTdWMzIuODU3em00OS4yODUgMzIuODU3aC00OS4yODV2MTYuNDI5aDQ5LjI4NXYxNi40MjlINTc1VjE2LjQyOWg2NS43MTR6Ii8+PC9nPjwvZz48ZGVmcz48Y2xpcFBhdGggaWQ9ImNsaXAwXzE0MDFfODYyOTIiPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0wIDBoNjQwLjcxNHYxMTVIMHoiLz48L2NsaXBQYXRoPjwvZGVmcz48L3N2Zz4="/>
 <figcaption class="figure-caption">OpenCode</figcaption>
 </figure>
-<p>以下为Inkling自我微调过程的演示：<br/>
-1. <strong>初始状态</strong>：Inkling作为AI助手运行，可以访问工作区和Tinker平台。<br/>
-2. <strong>任务指令</strong>：用户要求Inkling将自己微调成一个在回答中从不使用字母“e”的模型。<br/>
-3. <strong>生成微调代码</strong>：Inkling编写了<code>objective.py</code>文件，定义了微调目标（避免使用“e”）、评分函数（包含“e”则得0分，否则得10分）和系统提示。</p>
+<p>以下为Inkling自我微调过程的演示：</p>
+<ol><li><strong>初始状态</strong>：Inkling作为AI助手运行，可以访问工作区和Tinker平台。</li><li><strong>任务指令</strong>：用户要求Inkling将自己微调成一个在回答中从不使用字母“e”的模型。</li><li><strong>生成微调代码</strong>：Inkling编写了<code>objective.py</code>文件，定义了微调目标（避免使用“e”）、评分函数（包含“e”则得0分，否则得10分）和系统提示。</li></ol>
 <pre><code>+ """Lipogram: no 'e' or 'E' in any output."""
 + OBJECTIVE = "A lipogram model that avoids using the letter e in all answers."
 + GEN_SYS = (
@@ -349,10 +340,8 @@ title: 'Inkling: Our Open-Weights Model'
 <tr><td>StrongREJECT</td><td>98.6%</td><td>98.7%</td><td>99.5%</td><td>99.8%</td><td>98.5%</td><td>98.6%</td><td>98.0%</td><td>98.7%</td><td>98.5%</td></tr>
 </tbody></table>
 <p><em>SWEBench Verified: Inkling的数字是使用纯bash框架报告的。外部模型使用自报数字。</em>Terminal Bench 2.1: Inkling的数字是使用内部编码框架报告的。少量解决方案被发现受到网络搜索污染，得分为0。外部模型尽可能使用自报数字，否则使用我们的内部框架报告性能。†Audio MC: 其他模型由于不在官方排行榜上，因此在内部进行了评估。†VoiceBench: VoiceBench使用基于规则的硬编码字符串匹配进行评分，使得评估对输出格式差异敏感。因此，我们添加了系统消息，指示模型遵循预期的答案格式。†CharXiv RQ with tools: 我们使用内部Python框架对Claude Fable 5和GPT 5.6 Sol (max/xhigh)进行了基准测试。*</p>
-<p><strong>结论分析</strong>：<br/>
-* <strong>全面的通用能力</strong>：如雷达图（图2）所示，Inkling在各项评估中表现均衡，没有明显的短板，这证实了其作为“广泛、均衡的通用模型”的设计目标。<br/>
-* <strong>高效的思考努力</strong>：如努力/性能曲线图（图5）所示，Inkling在达到同等性能水平时所需的token数量显著更少。例如，在Terminal Bench 2.1上，它仅用约三分之一的token就达到了与Nemotron 3 Ultra相当的性能，这在成本和延迟敏感的应用中具有巨大优势。<br/>
-* <strong>强大的可定制性潜力</strong>：大规模RL训练（图10）显示，模型的推理能力随着训练推演次数的增加呈对数线性提升，表明Inkling具有巨大的学习和改进潜力，非常适合通过微调来适应特定任务。</p>
+<p><strong>结论分析</strong>：</p>
+<ul><li><strong>全面的通用能力</strong>：如雷达图（图2）所示，Inkling在各项评估中表现均衡，没有明显的短板，这证实了其作为“广泛、均衡的通用模型”的设计目标。</li><li><strong>高效的思考努力</strong>：如努力/性能曲线图（图5）所示，Inkling在达到同等性能水平时所需的token数量显著更少。例如，在Terminal Bench 2.1上，它仅用约三分之一的token就达到了与Nemotron 3 Ultra相当的性能，这在成本和延迟敏感的应用中具有巨大优势。</li><li><strong>强大的可定制性潜力</strong>：大规模RL训练（图10）显示，模型的推理能力随着训练推演次数的增加呈对数线性提升，表明Inkling具有巨大的学习和改进潜力，非常适合通过微调来适应特定任务。</li></ul>
 <h2>A7 补充细节：Inkling-Small</h2>
 <p><strong>除了Inkling，我们还分享了Inkling-Small的预览版</strong>。这是一个拥有2760亿参数的混合专家模型（120亿活跃参数，而Inkling为410亿），具有不同的性能/延迟权衡。Inkling-Small在许多基准测试中达到或超过了其更大的同类产品——这是我们对较小模型的预训练数据和配方进行改进的结果。这两个模型共享相同的可扩展后训练技术栈。</p>
 <table>
@@ -517,15 +506,10 @@ title: 'Inkling: Our Open-Weights Model'
 <h2>A5 结论</h2>
 <p><strong>论文核心结论</strong>：<br/>
 Inkling作为一个开放权重的多模态基础模型，成功地在广泛的能力和高效的性能之间取得了平衡。它并非追求在所有基准上登顶，而是被设计为一个强大、可靠且易于定制的平台。其核心优势在于：广泛的通用能力、原生的多模态处理、可控的思考努力、良好的认知学特性（校准、指令遵循）和强大的内置安全性。通过在Tinker平台上开放微调，并与广泛的生态系统合作，Inkling旨在将强大的AI定制能力交到更多开发者和组织手中，以解决现实世界中的专业问题。</p>
-<p><strong>未来工作展望</strong>：<br/>
-1. <strong>模型家族的持续发展</strong>：Inkling是模型家族的第一个版本，未来将继续构建和发布更多不同规模和特性的模型，如即将发布的Inkling-Small。<br/>
-2. <strong>能力的持续提升</strong>：团队将继续扩展模型和训练流水线，以进一步提升其多模态能力和其他各项性能。<br/>
-3. <strong>推动定制化应用</strong>：通过Tinker平台和生态合作，支持用户在金融、预测、软件开发等领域进行深度微调，探索和解决更多专业化问题。<br/>
-4. <strong>安全性的深入研究</strong>：将继续研究可定制模型中的安全行为和能力提升，特别是在微调过程中安全性的变化和保障。</p>
-<p><strong>模型可用性</strong>：<br/>
-* Inkling现已在Tinker平台上提供，支持64K和256K的上下文长度。<br/>
-* 完整的模型权重已在Hugging Face上发布，包括原始检查点和用于NVIDIA Blackwell系统高效推理的NVFP4检查点。<br/>
-* 通过与TogetherAI、Fireworks、RadixArk、Inferact、Unsloth、Hugging Face等生态伙伴的合作，Inkling在多种主流平台和框架上得到了推理和微调支持。</p>
+<p><strong>未来工作展望</strong>：</p>
+<ol><li><strong>模型家族的持续发展</strong>：Inkling是模型家族的第一个版本，未来将继续构建和发布更多不同规模和特性的模型，如即将发布的Inkling-Small。</li><li><strong>能力的持续提升</strong>：团队将继续扩展模型和训练流水线，以进一步提升其多模态能力和其他各项性能。</li><li><strong>推动定制化应用</strong>：通过Tinker平台和生态合作，支持用户在金融、预测、软件开发等领域进行深度微调，探索和解决更多专业化问题。</li><li><strong>安全性的深入研究</strong>：将继续研究可定制模型中的安全行为和能力提升，特别是在微调过程中安全性的变化和保障。</li></ol>
+<p><strong>模型可用性</strong>：</p>
+<ul><li>Inkling现已在Tinker平台上提供，支持64K和256K的上下文长度。</li><li>完整的模型权重已在Hugging Face上发布，包括原始检查点和用于NVIDIA Blackwell系统高效推理的NVFP4检查点。</li><li>通过与TogetherAI、Fireworks、RadixArk、Inferact、Unsloth、Hugging Face等生态伙伴的合作，Inkling在多种主流平台和框架上得到了推理和微调支持。</li></ul>
 <h2>参考文献引用说明</h2>
 <ol>
 <li>

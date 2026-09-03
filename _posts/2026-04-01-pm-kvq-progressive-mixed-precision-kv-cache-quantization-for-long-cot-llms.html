@@ -41,9 +41,8 @@ $$ \mathbf{X}_b = \left( (2^{2b} - 2^b + 1) (\mathbf{X}_{2b} + 2^{b-1}) \right) 
 <p>最近，通过长思维链（Chain-of-Thought, CoT）技术开发具备推理能力的大型语言模型（LLMs）取得了显著进展。然而，这种长CoT推理过程由于庞大的键值（Key-Value, KV）缓存内存开销，带来了巨大的内存负担。训练后KV缓存量化作为一种极具前景的压缩技术，已在短上下文场景中得到广泛研究。但是，直接将现有方法应用于长CoT LLMs会导致显著的性能下降，原因主要有两个方面：<br/>
 （1）<strong>累积误差大</strong>：现有方法未能充分利用可用内存，它们在每个解码步骤中直接对KV缓存进行量化，导致较大的累积量化误差。<br/>
 （2）<strong>短上下文校准失效</strong>：由于旋转位置编码（Rotary Positional Embedding, RoPE）的存在，在校准过程中使用短上下文数据无法捕捉到Key缓存中低频通道的数据分布，从而导致性能损失。</p>
-<p>为了解决上述问题，本文针对长CoT LLMs提出了<strong>渐进式混合精度KV缓存量化（Progressive Mixed-Precision KV Cache Quantization, PM-KVQ）</strong>方法，主要创新点包括：<br/>
-1. 为了减少累积误差，设计了一种渐进式量化策略，在每个Transformer块中逐步降低KV缓存的位宽。同时，提出了分块内存分配（block-wise memory allocation）技术，为更敏感的Transformer块分配更高的位宽。<br/>
-2. 为了在不增加额外开销的情况下增加校准长度，提出了一种结合位置插值（positional interpolation）的新校准策略，利用带有位置插值的短校准数据来近似长上下文数据的分布。</p>
+<p>为了解决上述问题，本文针对长CoT LLMs提出了<strong>渐进式混合精度KV缓存量化（Progressive Mixed-Precision KV Cache Quantization, PM-KVQ）</strong>方法，主要创新点包括：</p>
+<ol><li>为了减少累积误差，设计了一种渐进式量化策略，在每个Transformer块中逐步降低KV缓存的位宽。同时，提出了分块内存分配（block-wise memory allocation）技术，为更敏感的Transformer块分配更高的位宽。</li><li>为了在不增加额外开销的情况下增加校准长度，提出了一种结合位置插值（positional interpolation）的新校准策略，利用带有位置插值的短校准数据来近似长上下文数据的分布。</li></ol>
 <p>广泛的实验表明，在7B–70B的长CoT LLMs上，在相同的内存预算下，PM-KVQ在推理基准测试中的性能比SOTA基线提升了最高$8\%$，并且相比原始16位LLMs实现了$2.73 - 5.18\times$的吞吐量提升。</p>
 <p>表1展示了长CoT LLMs的内存开销。批处理大小为16，上下文长度为32K。可以看出KV缓存的内存开销远超模型权重。</p>
 <table>
@@ -197,11 +196,8 @@ $$\begin{aligned}
 <h2>结论</h2>
 <p>本文提出了一种专为长CoT LLMs设计的训练后KV缓存量化方法——渐进式混合精度KV缓存量化（PM-KVQ）。为了减少统一位宽量化引起的大量累积误差，设计了渐进式量化和分块内存分配技术。为了在不产生额外开销的情况下增加有效校准长度，提出了一种带有位置插值的新校准策略。广泛的实验和消融研究证明了PM-KVQ及其各项技术的有效性。总体而言，PM-KVQ在推理相关的数学和编码基准测试中显著优于SOTA基线（最高提升$8\%$），并实现了原始16位LLMs $2.73 - 5.18\times$的吞吐量。未来工作将探索该方法与MLA等其他注意力机制、系统级优化技术和推理引擎的结合。</p>
 <h2>参考文献引用汇总</h2>
-<p>本文在方法设计和分析中引用了以下关键文献：<br/>
-* 在描述分块位宽分配的整数规划问题求解时，引用了【Diamond &amp; Boyd, 2016，CVXPY: A Python-embedded modeling language for convex optimization+2016+Journal of Machine Learning Research】，指出该问题可以通过CVXPY在几秒钟内有效求解。<br/>
-* 在描述长上下文校准策略时，引用了【Chen et al., 2023，Extending context window of large language models via positional interpolation+2023+arXiv】，提出利用位置插值将长上下文位置信息嵌入到短校准数据中。<br/>
-* 在讨论现有通道级重参数化技术时，引用了【Lin* et al., 2024，QServe: W4A8KV4 Quantization and System Co-design for Efficient LLM Serving+2024+arXiv】，说明了如何通过校准转移Key张量中的异常值。<br/>
-* 在解释短序列校准失效原因时，引用了【Su et al., 2024，Roformer: Enhanced transformer with rotary position embedding+2024+Neurocomputing】，指出了RoPE将位置信息注入Key缓存后引入的周期性变化。</p>
+<p>本文在方法设计和分析中引用了以下关键文献：</p>
+<ul><li>在描述分块位宽分配的整数规划问题求解时，引用了【Diamond &amp; Boyd, 2016，CVXPY: A Python-embedded modeling language for convex optimization+2016+Journal of Machine Learning Research】，指出该问题可以通过CVXPY在几秒钟内有效求解。</li><li>在描述长上下文校准策略时，引用了【Chen et al., 2023，Extending context window of large language models via positional interpolation+2023+arXiv】，提出利用位置插值将长上下文位置信息嵌入到短校准数据中。</li><li>在讨论现有通道级重参数化技术时，引用了【Lin* et al., 2024，QServe: W4A8KV4 Quantization and System Co-design for Efficient LLM Serving+2024+arXiv】，说明了如何通过校准转移Key张量中的异常值。</li><li>在解释短序列校准失效原因时，引用了【Su et al., 2024，Roformer: Enhanced transformer with rotary position embedding+2024+Neurocomputing】，指出了RoPE将位置信息注入Key缓存后引入的周期性变化。</li></ul>
 </div>
 
 

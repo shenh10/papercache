@@ -1,10 +1,9 @@
 ---
-added_date: '2026-03-11'
+added_date: '2026-04-01'
 author: shenh10
 categories:
 - mlsys
 - networking
-- nccl
 comments: true
 date: '2025-10-01'
 layout: post
@@ -24,10 +23,16 @@ title: 'SuperMesh: Energy-Efficient Collective Communications for Accelerators'
 <details class="tldr-block" open="">
 <summary class="tldr-summary">速读</summary>
 <div class="tldr-body">
-<p><strong>一句话结论</strong> 本文针对基于小芯片（chiplet）加速器中 2D 网格拓扑的边界节点通信瓶颈，提出了仅在边缘增加短链路的 SuperMesh 拓扑及其协同设计的流水线集体通信算法，在 AllReduce、ReduceScatter 和 AllGather 操作上实现了显著的加速与能耗降低。</p>
-<p><strong>要解决什么问题</strong> 现有基于小芯片的加速器普遍采用 2D 网格（mesh）拓扑。由于裸片间接口的引脚数量受限且长距离链路会引入高功耗，加速器只能依赖短距离的点对点互连。这种架构在执行深度学习中至关重要的集体通信（如 AllReduce、ReduceScatter 和 AllGather）时，会遭遇严重的边界节点通信瓶颈。具体机制在于，网格内部节点拥有 4 条链路，而边界节点只有 2 到 3 条链路。在集体通信中，所有节点需要处理同等量级的数据，这种物理连接的不对等导致边界链路长时间处于高负载占用状态，而内部节点却因等待数据而被迫空闲，造成链路利用率极度不均衡。此外，现有的流水线 AllReduce 算法（如 TTO）受限于网格链路数量，最多只能构建 3 棵不相交的通信树，这不仅导致必须牺牲一个小芯片的计算能力，而且完全无法支持现代大模型训练中需要所有节点参与数据分发的 ReduceScatter 和 AllGather 操作。</p>
-<p><strong>怎么做的</strong> 核心思路是放弃对网格内部结构的全局修改或引入高延迟的长距离链路，仅通过增强边界节点的局部连接性来打破通信瓶颈。具体而言，方法由新型拓扑和协同设计的通信算法构成。首先是拓扑层面的改造，作者提出了两种 SuperMesh 变体：SuperMeshBi（SMBi）在现有网格的所有外围链路旁并行添加双向链路；SuperMeshAlter（SMAlter）则在外围链路上交替添加双向链路，以保证在偶数维度网格下不增加路由器的端口度数。这两种设计都确保了新增链路仅连接相邻节点，维持了原有的低延迟和高能效。其次是算法层面的协同设计，核心在于利用新增链路构建 4 棵不相交的通信树。在传统的 $N \times N$ 网格中，总链路数为 $4N^2 - 4N$，而构建 4 棵不相交的树需要 $4N^2 - 4$ 条链路，由于 $$4N^2 - 4N &lt; 4N^2 - 4$$ 这一硬性物理限制，传统网格无法实现。SuperMesh 补足了这一缺口，使得所有节点都能参与计算。在流水线 AllReduce 中，4 棵不相交的树同时工作，每棵树处理 $D/4$ 的数据量（$D$ 为总数据大小）。对于 ReduceScatter 和 AllGather，算法优先从内部连接边界节点来控制树高，并按系统顺序从外边界向内策略性地选择树根，确保各树高度均匀。数据块在这些不相交的树中以流水线方式传输，当第一个数据块进入下一层节点时，后续数据块可立即复用已释放的链路。在流水线 ReduceScatter 和 AllGather 中，每个树集传输 $D/N$ 的数据量，所有操作在 $\lceil N/4 \rceil$ 个流水线集合中完成，极大压缩了流水线气泡，最大化了带宽利用率。</p>
-<p><strong>效果如何</strong> 实验基于 BookSim 和 SCALE-Sim 搭建，模拟了每个小芯片包含 16 个计算单元、链路带宽 25 GBps 的硬件环境，测试规模覆盖 9 到 256 个小芯片。对比基线包括代表 2D 网格流水线路线的 TTO、代表自动拓扑感知综合路线的 TACOS、基于多商品流的 TE-CCL 以及基于树的 MultiTree，同时对比了 Double Butterfly 等其他中介层拓扑。在带宽利用率测试中，SuperMesh 在 AllReduce 上相比 TTO 实现了 1.18 到 1.33 倍的加速；在 ReduceScatter 和 AllGather 上相比 TACOS 实现了 1.77 到 2.22 倍的加速，且在扩展过程中表现出完美的线性可扩展性。在端到端任务中，6×6 拓扑下的经典 DNN 模型训练实现了 1.27 到 1.33 倍的加速，4×4 拓扑下的大语言模型（如 LLaMA 405B）预填充阶段张量并行推理实现了 1.08 到 1.12 倍的加速。在能耗方面，虽然更高的链路利用率导致动态链路功耗微增，但通信时间的显著缩短使得静态路由器能耗大幅下降，最终总能耗仅为传统网格的 0.72 到 0.84 倍。该方法的主要代价是中介层网络面积的增加，SMBi 和 SMAlter 的面积开销分别为传统网格的 1.15 到 1.23 倍和 1.04 到 1.11 倍。此外，SMBi 需要部分边界路由器的端口度数增加到 6，而奇数维度的 SMAlter 受限于角落节点链路数，一次只能构建 3 棵通信树，其性能增益会有所打折。</p>
+<p><strong>一句话结论</strong>
+本文针对基于小芯片的加速器在2D网格拓扑下的通信瓶颈，通过仅在边界节点添加短链路提出SuperMesh拓扑，并协同设计了流水线集体通信算法，在AllReduce、ReduceScatter和AllGather操作上实现了最高2.22倍的加速，并将总能耗降低至传统网格的0.72到0.84倍。</p>
+<p><strong>要解决什么问题</strong>
+现有的基于小芯片（chiplet）的加速器普遍采用2D网格（mesh）拓扑结构，但在执行集体通信（如AllReduce、ReduceScatter和AllGather）时存在严重的边界节点通信瓶颈。具体而言，在网格拓扑中，内部节点拥有4条链路，而边界节点（如角节点）只有2到3条链路。然而在集体通信中，所有节点需要处理完全相同量的数据。这种物理链路数量与数据处理需求的不匹配，导致边界链路的利用率极高且长时间被占用，而内部节点却因等待数据而处于空闲状态。这一卡点直接限制了通信算法的并行度。例如，在为2D网格设计的流水线AllReduce算法中，由于角节点只有2条链路，无法支持4棵不相交通信树的构建。对于一个$N \times N$的网格，其总链路数为$4N^2 - 4N$，而构建4棵不相交树至少需要$4N^2 - 4$条链路，因此传统网格最多只能构建3棵树，且必须牺牲一个角节点的计算能力将其排除在训练之外。在ReduceScatter和AllGather操作中，如果根节点不在角落，传统网格最多只能形成2棵不相交的树，导致大量内部链路未被利用，带宽利用率大幅下降。</p>
+<p><strong>怎么做的</strong>
+本文的核心思路是：无需全局修改网格拓扑或引入高延迟、高能耗的长距离链路，仅通过增强边界节点的局部连接性，即可打破通信瓶颈。为此，作者提出了SuperMesh拓扑及其协同设计的流水线集体通信算法。在拓扑层面，设计了两个变体以增加边界带宽。第一个是SuperMeshBi（SMBi），它在现有网格的所有外围链路旁并行添加双向链路，使得所有角节点都拥有4条链路，但代价是部分边界节点的路由器需要增加到6个端口。第二个是SuperMeshAlter（SMAlter），它在外围链路上交替添加双向链路，在保证所有节点拥有4条链路的同时，维持了路由器的5端口设计，对硬件改动更小。这两种设计都严格遵循仅连接相邻节点的原则，确保了新增链路的低延迟和低能耗特性。在算法层面，作者为新拓扑协同设计了流水线AllReduce、ReduceScatter和AllGather算法。由于边界节点现在具备了充足的链路，算法能够在包含所有计算节点的拓扑上构建4棵不相交的通信树。对于总数据量$D$，每棵树负责处理$D/4$的数据。在流水线机制下，数据被切分为多个小数据块，一旦某个数据块在某条链路上完成传输，下一个数据块可立即跟进。由于4棵树在物理链路上完全不相交，网络中可以同时传输$4 \times D/N$的数据。为了最小化流水线气泡并保证各树同步，算法采用了一种由外向内的系统性选根策略，确保同一集合内各树的高度均匀。以归约$K$个数据块为例，流水线ReduceScatter的总延迟可由下式定义：
+$$ L = 4 \times (K + H - 1) \times T $$
+其中$H$为不相交树的高度，$T$为单个数据块的单跳传输延迟。虽然内部建树会略微增加树高$H$，但在海量数据块$K$的流水线传输下，初始的建树延迟被完全隐藏，从而实现了成倍的通信效率提升。</p>
+<p><strong>效果如何</strong>
+实验基于16个计算单元的小芯片架构（每个包含128x128 MAC阵列），链路带宽25 GBps，评估了从9节点到256节点的拓扑规模。对比基线涵盖了代表流水线路线的TTO算法、代表自动综合路线的TACOS和TE-CCL算法、代表树形路线的MultiTree算法，以及代表长链路与集中式拓扑路线的Double Butterfly、Folded Torus和Kite。量化结果显示，在纯通信带宽测试中，SuperMesh在AllReduce上比TTO加速1.18至1.33倍，比TACOS加速1.25至2.13倍；在ReduceScatter和AllGather上比TACOS加速1.77至2.22倍。在端到端任务中，6x6规模下的DNN（如ResNet152）训练实现了1.27至1.33倍的加速；4x4规模下的LLM（如BLOOM 176B、LLaMA 405B）张量并行预填充推理实现了1.08至1.12倍的加速。在能效方面，由于通信时间大幅缩短降低了静态能耗，SuperMesh的总能耗仅为传统网格的0.72至0.84倍，比Double Butterfly等长链路拓扑节能1.2至3.79倍。该方法也存在一定代价和局限性。首先是面积开销，新增的外围链路使得中介层网络面积相比传统网格增加了1.04至1.23倍。其次，SMAlter拓扑在奇数维度（如3x3或5x5）的网格中，由于角节点链路分配的几何限制，最多只能构建3棵不相交的树，导致其在奇数尺寸下的性能略逊于SMBi。</p>
 </div>
 </details>
 <h3><strong>A1 主要贡献</strong></h3>
@@ -176,22 +181,13 @@ title: 'SuperMesh: Energy-Efficient Collective Communications for Accelerators'
 22: return SemiRSSchedules, SemiAGSchedules</code></pre>
 <hr/>
 <h3><strong>A4 实验环境</strong></h3>
-<p><strong>硬件配置</strong><br/>
-* <strong>计算单元 (PE)</strong>: 每个小芯片（chiplet）包含16个PE，每个PE内含一个128×128的MAC阵列（用于主要实验）或一个32×32的MAC阵列（用于小型配置对比实验），工作频率为1 GHz。<br/>
-* <strong>互连网络</strong>:<br/>
-    * <strong>链路带宽</strong>: 每个链路25 GBps。<br/>
-    * <strong>跳延迟</strong>: 每跳20 ns。<br/>
-    * <strong>流量控制</strong>: 虚通道（Virtual Channel, VC）直通流控，每个物理通道配置4个VC，VC缓冲深度为318。<br/>
-    * <strong>拓扑</strong>: 实验涵盖了从3×3到16×16（即9到256个小芯片）的各种规模的Mesh和SuperMesh（SMBi, SMAlter）配置。</p>
+<p><strong>硬件配置</strong></p>
+<ul><li><strong>计算单元 (PE)</strong>: 每个小芯片（chiplet）包含16个PE，每个PE内含一个128×128的MAC阵列（用于主要实验）或一个32×32的MAC阵列（用于小型配置对比实验），工作频率为1 GHz。</li><li><strong>互连网络</strong>:<ul><li><strong>链路带宽</strong>: 每个链路25 GBps。</li><li><strong>跳延迟</strong>: 每跳20 ns。</li><li><strong>流量控制</strong>: 虚通道（Virtual Channel, VC）直通流控，每个物理通道配置4个VC，VC缓冲深度为318。</li><li><strong>拓扑</strong>: 实验涵盖了从3×3到16×16（即9到256个小芯片）的各种规模的Mesh和SuperMesh（SMBi, SMAlter）配置。</li></ul></li></ul>
 <ul>
 <li><strong>功耗模型</strong>: 基于DSENT工具，采用32nm bulk/SOI low-Vt工艺节点，小芯片间链路的互连能耗为1.75 pJ/bit。</li>
 </ul>
-<p><strong>软件配置</strong><br/>
-* <strong>模拟器</strong>:<br/>
-    * <strong>网络模拟</strong>: BookSim，已修改以支持并行链路。<br/>
-    * <strong>计算模拟</strong>: SCALE-Sim，采用其支持训练时间评估的扩展版本。<br/>
-    * <strong>功耗模拟</strong>: DSENT。<br/>
-    * <strong>集成</strong>: 使用Python接口连接SCALE-Sim和BookSim。</p>
+<p><strong>软件配置</strong></p>
+<ul><li><strong>模拟器</strong>:<ul><li><strong>网络模拟</strong>: BookSim，已修改以支持并行链路。</li><li><strong>计算模拟</strong>: SCALE-Sim，采用其支持训练时间评估的扩展版本。</li><li><strong>功耗模拟</strong>: DSENT。</li><li><strong>集成</strong>: 使用Python接口连接SCALE-Sim和BookSim。</li></ul></li></ul>
 <ul>
 <li><strong>数据流</strong>: 采用输出固定（output stationary）数据流。</li>
 <li>
@@ -207,13 +203,8 @@ title: 'SuperMesh: Energy-Efficient Collective Communications for Accelerators'
 <p><strong>调度机制</strong>: 在每个加速器中维护一个调度表，记录集体操作、源、目的地和依赖关系。该表在初始化时计算一次并加载到网络接口中复用。对于64节点拓扑，调度表开销为3.2KB。</p>
 </li>
 </ul>
-<p><strong>数据集与模型</strong><br/>
-* <strong>带宽测试</strong>: 数据量从1MB到512MB不等。<br/>
-* <strong>可扩展性测试</strong>: 总数据量为 375KB × N，其中N为小芯片数量。<br/>
-* <strong>DNN模型</strong>:<br/>
-    * <strong>模型</strong>: InceptionV4, Densenet201, ResNet152, VGG19。<br/>
-    * <strong>数据集</strong>: 模拟ImageNet规模（120万样本）。<br/>
-    * <strong>批大小</strong>: N节点拓扑下，mini-batch大小为16 × N。</p>
+<p><strong>数据集与模型</strong></p>
+<ul><li><strong>带宽测试</strong>: 数据量从1MB到512MB不等。</li><li><strong>可扩展性测试</strong>: 总数据量为 375KB × N，其中N为小芯片数量。</li><li><strong>DNN模型</strong>:<ul><li><strong>模型</strong>: InceptionV4, Densenet201, ResNet152, VGG19。</li><li><strong>数据集</strong>: 模拟ImageNet规模（120万样本）。</li><li><strong>批大小</strong>: N节点拓扑下，mini-batch大小为16 × N。</li></ul></li></ul>
 <ul>
 <li><strong>LLM模型</strong>:<ul>
 <li><strong>模型</strong>: BLOOM 176B, Gemma 7B, Falcon 40B, LLaMA 405B, GPT-3, Qwen3-32B。</li>

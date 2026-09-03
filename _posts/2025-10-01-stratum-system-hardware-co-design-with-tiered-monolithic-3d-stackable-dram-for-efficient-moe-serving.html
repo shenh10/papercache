@@ -22,18 +22,8 @@ title: 'Stratum: System-Hardware Co-Design with Tiered Monolithic 3D-Stackable D
 <p><strong>发表时间</strong>: 2025-10 · arXiv:2510.05245</p>
 <p><strong>原文</strong>: <a href="https://arxiv.org/abs/2510.05245" rel="noopener" target="_blank">https://arxiv.org/abs/2510.05245</a></p>
 <p><strong>文章标题</strong>：Stratum：一种采用分层单片3D可堆叠DRAM进行高效MoE服务的系统-硬件协同设计<br/>
-<strong>作者/机构</strong>：<br/>
-- Yue Pan (加州大学圣地亚哥分校)<br/>
-- Zihan Xia (加州大学圣地亚哥分校)<br/>
-- Po-Kai Hsu (佐治亚理工学院)<br/>
-- Lanxiang Hu (加州大学圣地亚哥分校)<br/>
-- Hyungyo Kim (伊利诺伊大学厄巴纳-香槟分校)<br/>
-- Janak Sharda (佐治亚理工学院)<br/>
-- Minxuan Zhou (伊利诺伊理工学院)<br/>
-- Nam Sung Kim (伊利诺伊大学厄巴纳-香槟分校)<br/>
-- Shimeng Yu (佐治亚理工学院)<br/>
-- Tajana Rosing (加州大学圣地亚哥分校)<br/>
-- Mingu Kang (加州大学圣地亚哥分校)</p>
+<strong>作者/机构</strong>：</p>
+<ul><li>Yue Pan (加州大学圣地亚哥分校)</li><li>Zihan Xia (加州大学圣地亚哥分校)</li><li>Po-Kai Hsu (佐治亚理工学院)</li><li>Lanxiang Hu (加州大学圣地亚哥分校)</li><li>Hyungyo Kim (伊利诺伊大学厄巴纳-香槟分校)</li><li>Janak Sharda (佐治亚理工学院)</li><li>Minxuan Zhou (伊利诺伊理工学院)</li><li>Nam Sung Kim (伊利诺伊大学厄巴纳-香槟分校)</li><li>Shimeng Yu (佐治亚理工学院)</li><li>Tajana Rosing (加州大学圣地亚哥分校)</li><li>Mingu Kang (加州大学圣地亚哥分校)</li></ul>
 <details class="tldr-block" open="">
 <summary class="tldr-summary">速读</summary>
 <div class="tldr-body">
@@ -50,8 +40,8 @@ title: 'Stratum: System-Hardware Co-Design with Tiered Monolithic 3D-Stackable D
 <p><strong>研究目标</strong>：<br/>
 为解决服务大型MoE模型的挑战，本文提出一个名为Stratum的系统-硬件协同设计方案，旨在集成一种新兴的内存技术——单片3D可堆叠DRAM（Mono3D DRAM）、近内存处理（NMP）和GPU加速，以构建一个高吞吐量、高能效且成本效益高的MoE服务系统。</p>
 <p><strong>创新点</strong>：<br/>
-本文的主要贡献如下：<br/>
-* <strong>首次提出基于Mono3D DRAM的MoE服务系统-硬件协同设计方案Stratum</strong>。该方案通过3D混合键合技术将高密度Mono3D DRAM裸片与高性能逻辑裸片进行异构集成，并利用2.5D硅中介层将此Mono3D DRAM堆栈与GPU集成。这为传统的基于GPU-HBM的MoE服务系统提供了一种高吞吐量且具有成本效益的替代方案。</p>
+本文的主要贡献如下：</p>
+<ul><li><strong>首次提出基于Mono3D DRAM的MoE服务系统-硬件协同设计方案Stratum</strong>。该方案通过3D混合键合技术将高密度Mono3D DRAM裸片与高性能逻辑裸片进行异构集成，并利用2.5D硅中介层将此Mono3D DRAM堆栈与GPU集成。这为传统的基于GPU-HBM的MoE服务系统提供了一种高吞吐量且具有成本效益的替代方案。</li></ul>
 <ul>
 <li>
 <p><strong>硬件层面的创新设计</strong>。引入了一种内存内分层（in-memory tiering）机制，利用了Mono3D DRAM因垂直扩展而产生的固有访问延迟差异。此外，还提出了一种专为基于混合键合的Mono3D DRAM设计的NMP处理器，该处理器为专家计算和注意力计算集成了优化的数据映射与通信策略。</p>

@@ -41,16 +41,11 @@ $$ S^* = \arg \max_{S \in \mathbb{S}} f(S) \left( 1 + \lambda \mathrm{CACHESCORE
 <h2>主要贡献</h2>
 <p>在大型语言模型（LLMs）的推理过程中，键值（KV）缓存已成为提高效率的基石，它允许模型重用先前计算的隐藏状态从而减少冗余计算。然而，KV缓存的内存占用随输入序列长度呈线性增长，自注意力的二次复杂度使得在保留完整缓存时，长上下文推理变得极其缓慢。</p>
 <p>现有的KV缓存压缩方法主要依赖于基于规则的启发式策略，例如跨层统一分配缓存或静态驱逐策略。这些方法未能考虑到特定层特征模式与任务性能之间的关键相互作用，从而导致泛化能力下降。为了解决这一问题，本文提出了EvolKV，这是一个用于逐层、任务驱动的KV缓存压缩的自适应框架，旨在联合优化内存效率和下游任务性能。</p>
-<p>本文的核心创新点包括：<br/>
-1. 首次提出将逐层KV缓存预算分配形式化为一个多目标黑盒优化问题。<br/>
-2. EvolKV利用进化搜索算法动态配置各层的缓存预算，同时直接最大化下游任务的性能表现。<br/>
-3. EvolKV在冻结参数的LLMs上运行，支持任意评估指标，无需进行模型微调或架构修改。<br/>
-4. 广泛的实验表明，任务感知的KV缓存分配模式始终偏离传统的启发式规则，倾向于打破固定或金字塔规则的非均匀分布。在11个任务中，EvolKV在广泛的KV缓存预算下均优于所有基线方法，在代码补全任务中仅使用原始预算的$1.5\%$即可超越完整KV缓存设置的性能。</p>
+<p>本文的核心创新点包括：</p>
+<ol><li>首次提出将逐层KV缓存预算分配形式化为一个多目标黑盒优化问题。</li><li>EvolKV利用进化搜索算法动态配置各层的缓存预算，同时直接最大化下游任务的性能表现。</li><li>EvolKV在冻结参数的LLMs上运行，支持任意评估指标，无需进行模型微调或架构修改。</li><li>广泛的实验表明，任务感知的KV缓存分配模式始终偏离传统的启发式规则，倾向于打破固定或金字塔规则的非均匀分布。在11个任务中，EvolKV在广泛的KV缓存预算下均优于所有基线方法，在代码补全任务中仅使用原始预算的$1.5\%$即可超越完整KV缓存设置的性能。</li></ol>
 <h2>背景知识与设计原则</h2>
-<p><strong>KV缓存压缩的现有范式</strong>：现有的KV缓存压缩方法主要分为三类：<br/>
-1. <strong>固定位置保留</strong>：在所有层中保留相同位置的KV缓存【11，Generating long sequences with sparse transformers+2019】【5，Longformer: The long-document transformer+2020】【47，Efficient streaming language models with attention sinks+2024】。<br/>
-2. <strong>相同预算分配</strong>：每层保留相同预算的KV缓存，但保留的位置因层而异，通常驱逐累积注意力权重最低的缓存【51，H2O: Heavy-hitter oracle for efficient generative inference of large language models+2023】【35，Scissorhands: Exploiting the persistence of importance hypothesis for llm kv cache compression at test time+2023】【33，Snapkv: Llm knows what you are looking for before generation+2024】。<br/>
-3. <strong>金字塔形分配</strong>：KV缓存预算分配呈现金字塔模式，从底层到高层逐渐减少【6，Pyramidkv: Dynamic kv cache compression based on pyramidal information funneling+2024】【48，Pyramidinfer: Pyramid kv cache compression for high-throughput llm inference+2024】。</p>
+<p><strong>KV缓存压缩的现有范式</strong>：现有的KV缓存压缩方法主要分为三类：</p>
+<ol><li><strong>固定位置保留</strong>：在所有层中保留相同位置的KV缓存【11，Generating long sequences with sparse transformers+2019】【5，Longformer: The long-document transformer+2020】【47，Efficient streaming language models with attention sinks+2024】。</li><li><strong>相同预算分配</strong>：每层保留相同预算的KV缓存，但保留的位置因层而异，通常驱逐累积注意力权重最低的缓存【51，H2O: Heavy-hitter oracle for efficient generative inference of large language models+2023】【35，Scissorhands: Exploiting the persistence of importance hypothesis for llm kv cache compression at test time+2023】【33，Snapkv: Llm knows what you are looking for before generation+2024】。</li><li><strong>金字塔形分配</strong>：KV缓存预算分配呈现金字塔模式，从底层到高层逐渐减少【6，Pyramidkv: Dynamic kv cache compression based on pyramidal information funneling+2024】【48，Pyramidinfer: Pyramid kv cache compression for high-throughput llm inference+2024】。</li></ol>
 <p><strong>现有方法的局限性与动机</strong>：先前的研究表明，LLMs的不同层在信息处理中的重要性和处理粒度存在差异。然而，大多数现有的压缩方法忽略了这种异质性，并采用基于规则或启发式的策略进行KV缓存压缩（例如设置衰减系数来控制每层的预算，忽略了每层实际需要的缓存预算并不一定呈现单调递减的模式），这通常会导致次优的推理性能。这些观察结果凸显了为每一层单独自适应调整KV缓存预算的必要性。</p>
 <h2>方法细节</h2>
 <p><strong>应对启发式策略的局限性</strong>：为了解决基于规则或启发式分配策略的局限性，引入了EvolKV，这是一个动态的、任务驱动的进化框架，通过利用来自下游任务的性能反馈，自适应地为每一层分配KV cache预算。<br/>

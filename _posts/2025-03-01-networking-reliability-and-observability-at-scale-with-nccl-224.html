@@ -36,13 +36,8 @@ title: Networking Reliability and Observability at Scale with NCCL 2.24
 </details>
 <h3>A1 主要贡献</h3>
 <p>NVIDIA集合通信库（NCCL）是专为NVIDIA GPU和网络优化的多GPU和多节点（MGMN）通信原语实现库，是多GPU深度学习训练的核心软件。它负责处理各种GPU间的通信，无论是通过PCI、NVLink还是网络。NCCL利用先进的拓扑检测、优化的通信图和调优模型，在NVIDIA GPU平台上实现开箱即用的最佳性能。</p>
-<p>本文介绍了NCCL 2.24版本中发布的新功能和修复，其核心贡献在于提升大规模场景下的可靠性、性能和易用性。具体创新点如下：<br/>
-* <strong>可靠性、可用性与服务性（RAS）子系统</strong>：引入了一个低开销的基础设施，用于在生产环境中查询NCCL作业的健康状况，帮助用户诊断应用程序的崩溃和挂起问题，并检测无响应节点或落后进程等异常情况。<br/>
-* <strong>多节点集合操作的用户缓冲区（UB）注册</strong>：扩展了用户缓冲区注册功能，使其支持多节点集合通信，特别是针对IB SHARP和标准的点对点网络中的Ring算法，从而减少开销，提升性能和计算通信重叠效率。<br/>
-* <strong>NIC Fusion（网卡融合）</strong>：实现了一个灵活的系统，用于将多个物理网卡融合成一个逻辑设备，以解决在每GPU拥有多个网卡的系统上，NCCL算法可能出现的崩溃或调优不当问题。<br/>
-* <strong>可选接收完成（Optional Receive Completions）</strong>：针对LL和LL128协议引入的一项优化，允许网络插件在特定情况下跳过轮询网络接收完成事件，从而降低开销并减少大规模下的拥塞。<br/>
-* <strong>FP8支持</strong>：在NVIDIA Hopper及更新架构上，增加了对e4m3和e5m2两种格式的FP8数据类型的原生归约（reduction）支持。<br/>
-* <strong>严格强制执行NCCL_ALGO和NCCL_PROTO</strong>：改变了先前对无效算法和协议选择进行静默回退的行为，现在会直接报错，以减少用户在基准测试或自定义调优时的困惑。</p>
+<p>本文介绍了NCCL 2.24版本中发布的新功能和修复，其核心贡献在于提升大规模场景下的可靠性、性能和易用性。具体创新点如下：</p>
+<ul><li><strong>可靠性、可用性与服务性（RAS）子系统</strong>：引入了一个低开销的基础设施，用于在生产环境中查询NCCL作业的健康状况，帮助用户诊断应用程序的崩溃和挂起问题，并检测无响应节点或落后进程等异常情况。</li><li><strong>多节点集合操作的用户缓冲区（UB）注册</strong>：扩展了用户缓冲区注册功能，使其支持多节点集合通信，特别是针对IB SHARP和标准的点对点网络中的Ring算法，从而减少开销，提升性能和计算通信重叠效率。</li><li><strong>NIC Fusion（网卡融合）</strong>：实现了一个灵活的系统，用于将多个物理网卡融合成一个逻辑设备，以解决在每GPU拥有多个网卡的系统上，NCCL算法可能出现的崩溃或调优不当问题。</li><li><strong>可选接收完成（Optional Receive Completions）</strong>：针对LL和LL128协议引入的一项优化，允许网络插件在特定情况下跳过轮询网络接收完成事件，从而降低开销并减少大规模下的拥塞。</li><li><strong>FP8支持</strong>：在NVIDIA Hopper及更新架构上，增加了对e4m3和e5m2两种格式的FP8数据类型的原生归约（reduction）支持。</li><li><strong>严格强制执行NCCL_ALGO和NCCL_PROTO</strong>：改变了先前对无效算法和协议选择进行静默回退的行为，现在会直接报错，以减少用户在基准测试或自定义调优时的困惑。</li></ul>
 <h3>A2 方法细节</h3>
 <h4>RAS子系统</h4>
 <p><strong>RAS子系统的设计目标</strong> NCCL 2.24中新增了可靠性、可用性与服务性（RAS）子系统，旨在帮助用户诊断应用程序的崩溃和挂起问题。在大规模场景下，对于不熟悉NCCL内部机制的用户而言，定位应用程序无进展的根本原因可能非常具有挑战性。</p>
@@ -89,25 +84,18 @@ The missing rank: 21</code></pre>
 <h4>多节点集合操作的用户缓冲区（UB）注册</h4>
 <p><strong>用户缓冲区注册的性能权衡</strong> NCCL本身不要求用户注册和维护任何持久性缓冲区即可运行。尽管这个特性极大地提升了易用性，但也带来了性能上的权衡。如果没有直接访问权限，NCCL在传输数据时必须进行更多的控制流和缓冲操作，这会消耗更多的GPU资源，导致与显式注册和映射的缓冲区相比，移动相同数量数据时的开销更高。</p>
 <p><strong>缓冲区注册的优势</strong> 只要有可能，建议NCCL开发者使用<code>ncclCommRegister</code>来注册他们的缓冲区，以使NCCL能够利用所有可用的优化。这包括来自NvSwitch或IB SHARP等特殊硬件的优化，以及对点对点传输的更好优化。NCCL团队一直在努力为注册用户缓冲区增加更多的使用场景。</p>
-<p><strong>NCCL 2.24中UB注册的新增支持</strong> NCCL 2.24为UB注册增加了对以下场景的支持：<br/>
-* <strong>多rank/节点集合网络通信</strong>：最显著的是支持IB SHARP。<code>AllReduce</code>、<code>AllGather</code>和<code>ReduceScatter</code>操作均受支持。这意味着使用单进程/GPU模式和FSDP通信后端的应用程序可以更好地利用IB SHARP技术。<br/>
-* <strong>标准点对点网络中的Ring算法</strong>：NCCL现在可以在标准点对点网络（如默认的IB插件）中，对<code>ncclAllReduce</code>、<code>ncclAllGather</code>和<code>ncclBroadcast</code>的Ring算法使用已注册的用户缓冲区。</p>
+<p><strong>NCCL 2.24中UB注册的新增支持</strong> NCCL 2.24为UB注册增加了对以下场景的支持：</p>
+<ul><li><strong>多rank/节点集合网络通信</strong>：最显著的是支持IB SHARP。<code>AllReduce</code>、<code>AllGather</code>和<code>ReduceScatter</code>操作均受支持。这意味着使用单进程/GPU模式和FSDP通信后端的应用程序可以更好地利用IB SHARP技术。</li><li><strong>标准点对点网络中的Ring算法</strong>：NCCL现在可以在标准点对点网络（如默认的IB插件）中，对<code>ncclAllReduce</code>、<code>ncclAllGather</code>和<code>ncclBroadcast</code>的Ring算法使用已注册的用户缓冲区。</li></ul>
 <p><strong>UB注册的资源优化</strong> 此外，对于纯基于网络的<code>AllGather</code>和<code>Broadcast</code> Ring操作，NCCL将仅使用单个SM（流式多处理器），从而为计算节省GPU资源。只要用户缓冲区已通过<code>ncclCommRegister</code>调用注册，或者NCCL在CUDA graph内部使用，应用程序无需任何更改即可使用此功能。</p>
 <p><strong>UB注册的性能收益</strong> 初步性能测试显示，对于单GPU/节点的<code>AllGather</code>和<code>Broadcast</code>操作，性能有显著提升，同时SM使用量从4个减少到1个。对于8 GPU/节点的<code>AllReduce</code>和<code>AllGather</code>，通过用户缓冲区注册可实现5%的峰值带宽增长。预计应用程序将从改善的计算通信重叠中获得最大的性能收益。</p>
 <h4>NIC Fusion（网卡融合）</h4>
-<p><strong>多NIC系统带来的挑战</strong> 随着NCCL支持的系统类型不断扩展，NCCL必须能适应并在所有这些系统上实现开箱即用的良好表现。特别是在拥有多个NIC（每GPU多于一个NIC）的系统上，观察到了以下问题：<br/>
-1. NCCL算法设计为每GPU一个NIC，因此在每GPU两个或四个NIC的系统上，这些算法可能会崩溃。<br/>
-2. NCCL核心调优代码也针对每GPU一个NIC设计。如果NIC过多，NCCL可能会过度调优，为通信占用过多SM，或者根本不使用某些NIC。</p>
+<p><strong>多NIC系统带来的挑战</strong> 随着NCCL支持的系统类型不断扩展，NCCL必须能适应并在所有这些系统上实现开箱即用的良好表现。特别是在拥有多个NIC（每GPU多于一个NIC）的系统上，观察到了以下问题：</p>
+<ol><li>NCCL算法设计为每GPU一个NIC，因此在每GPU两个或四个NIC的系统上，这些算法可能会崩溃。</li><li>NCCL核心调优代码也针对每GPU一个NIC设计。如果NIC过多，NCCL可能会过度调优，为通信占用过多SM，或者根本不使用某些NIC。</li></ol>
 <p><strong>历史方案：Port Fusion</strong> 为了解决这个问题，NCCL 2.21实现了一个名为Port Fusion的功能。在这个初始方案中，默认的IB插件在返回给NCCL核心之前，会自动将双端口设备合并为单个逻辑设备。这对于双端口NIC系统是有效的，但并未解决其他多NIC用例。</p>
-<p><strong>Port Fusion未覆盖的场景</strong> 自那时起，NCCL团队扩展了此功能，以解决以下一些场景：<br/>
-* 未被检测为双端口的NIC（无论是它们本身就不是，还是虚拟机管理程序未将其显示为双端口）。<br/>
-* 四端口系统。<br/>
-* 任意设备合并。<br/>
-* 按拓扑距离自动合并。</p>
-<p><strong>Port Fusion的局限性</strong> 此外，Port Fusion还有一些需要克服的局限性：<br/>
-* 它期望每个端口都表现为同一PCI设备的独立VF。<br/>
-* 它在插件中覆盖了每个NIC的物理属性，如果用户想将拓扑转储到文件，会呈现一个虚假的拓扑。<br/>
-* 在决定是否合并NIC时，它不尊重用户提供的拓扑，而只使用操作系统提供的PCI地址。这在PCI地址可能呈现不同的虚拟化场景中是个问题。</p>
+<p><strong>Port Fusion未覆盖的场景</strong> 自那时起，NCCL团队扩展了此功能，以解决以下一些场景：</p>
+<ul><li>未被检测为双端口的NIC（无论是它们本身就不是，还是虚拟机管理程序未将其显示为双端口）。</li><li>四端口系统。</li><li>任意设备合并。</li><li>按拓扑距离自动合并。</li></ul>
+<p><strong>Port Fusion的局限性</strong> 此外，Port Fusion还有一些需要克服的局限性：</p>
+<ul><li>它期望每个端口都表现为同一PCI设备的独立VF。</li><li>它在插件中覆盖了每个NIC的物理属性，如果用户想将拓扑转储到文件，会呈现一个虚假的拓扑。</li><li>在决定是否合并NIC时，它不尊重用户提供的拓扑，而只使用操作系统提供的PCI地址。这在PCI地址可能呈现不同的虚拟化场景中是个问题。</li></ul>
 <p><strong>NIC Fusion的引入与设计</strong> 为了解决这些限制，NIC Fusion被创建出来。它是一个灵活的系统，其中NCCL核心区分物理设备和虚拟设备，并根据用户指定的标准明确选择要融合的设备。此外，NIC Fusion确保NCCL转储的任何拓扑文件仅包含系统上的物理设备，虚拟设备是在初始化过程的后期创建的。</p>
 <p><strong>NIC Fusion的工作流程</strong> NIC Fusion的工作过程分为多个步骤。首先，NCCL像以前一样枚举网络插件返回的所有网络设备，并将它们作为物理设备存储在其拓扑中。然后，它检查插件是否与NIC Fusion兼容。如果兼容，NCCL将启动一个合并过程。如果用户定义了一组要显式合并的NIC（使用<code>NCCL_NET_FORCE_MERGE</code>变量），NCCL会在进行自动合并之前，先执行一轮任意合并。</p>
 <p><strong>自动合并过程</strong> 自动合并是一个相当复杂的过程，始于搜索每对物理NIC之间的距离。NCCL遍历每个物理NIC，将每个NIC与最多三个在自动合并距离级别内（由<code>NCCL_NET_MERGE_LEVEL</code>指定）的其他NIC放入一个新的虚拟设备中。此过程最终会将所有物理设备都放入虚拟设备中。</p>
@@ -129,9 +117,8 @@ ncclResult_t (*makeVDevice)(int* d, ncclNetVDeviceProps_t* props);</code></pre>
 <p><strong>自动合并级别配置</strong> 所有剩余的NIC将通过<code>NCCL_NET_MERGE_LEVEL</code>进行合并。这个变量控制NCCL自动融合物理NIC的拓扑距离。默认值为<code>PORT</code>，这使得NIC Fusion的默认行为与NCCL 2.21到2.23版本中的行为相同，即合并双端口NIC。</p>
 <p><strong>其他合并级别选项</strong> 其他可能的选项包括<code>LOC</code>（禁用任何融合）、<code>PIX</code>（同一PCI交换机）、<code>PXB</code>（同一PCI交换机树）、<code>PHB</code>（同一CPU）或<code>SYS</code>（同一系统）。NIC Fusion将自动使用提供的拓扑文件中的PCI路径（如果指定），或者直接使用系统返回的值（<code>realpath</code>）。</p>
 <p><strong>默认行为兼容性</strong> NIC Fusion不应改变NCCL的默认行为。尽管其底层工作方式大不相同，但默认情况下它仍然只会像Port Fusion那样合并双端口NIC。</p>
-<p><strong>NIC Fusion使用说明</strong><br/>
-* 在不需要它的系统上，NIC Fusion不会提升性能。建议保持NIC Fusion设置为默认值，除非您在每GPU拥有两个或更多NIC的系统上运行，并且发现性能或SM使用存在问题。<br/>
-* 将与GPU距离不同的NIC融合在一起可能会导致性能不佳或不可预测。</p>
+<p><strong>NIC Fusion使用说明</strong></p>
+<ul><li>在不需要它的系统上，NIC Fusion不会提升性能。建议保持NIC Fusion设置为默认值，除非您在每GPU拥有两个或更多NIC的系统上运行，并且发现性能或SM使用存在问题。</li><li>将与GPU距离不同的NIC融合在一起可能会导致性能不佳或不可预测。</li></ul>
 <p><strong>NIC Fusion的未来潜力</strong> 这是一项基础功能，可以帮助插件更清晰地实现更高级的功能，例如NIC故障转移和动态负载均衡。</p>
 <h4>可选接收完成（Optional Receive Completions）</h4>
 <p><strong>优化动机</strong> NCCL团队持续分析网络插件API，以确定新的API或现有API的扩展是否能为NVIDIA客户带来更多价值和性能。一项可能的优化得益于NCCL LL和LL128协议的特性，NCCL 2.24中增加了对此的支持。</p>
@@ -147,27 +134,15 @@ ncclResult_t (*makeVDevice)(int* d, ncclNetVDeviceProps_t* props);</code></pre>
 <h4>实验环境</h4>
 <p>本文作为一篇功能发布介绍，并未提供详细的实验环境配置信息，例如所使用的具体硬件平台（GPU型号/数量、网卡、CPU）、软件栈（CUDA版本、操作系统）或用于性能测试的模型及数据集。</p>
 <h4>实验结果</h4>
-<p>文章中提到了关于用户缓冲区（UB）注册功能的一些初步性能测试结果：<br/>
-* <strong>单GPU/节点场景的性能</strong>: 针对<code>AllGather</code>和<code>Broadcast</code>操作，启用UB注册后观察到“强大的性能增益”，同时，GPU上用于通信的流式多处理器（SM）使用量从4个减少到1个。<br/>
-* <strong>八GPU/节点场景的性能</strong>: 对于<code>AllReduce</code>和<code>AllGather</code>操作，使用用户缓冲区注册可实现峰值带宽提升5%。<br/>
-* <strong>性能分析结论</strong>: 启用UB注册带来的最大性能好处来自于改善了计算与通信之间的重叠效率。</p>
+<p>文章中提到了关于用户缓冲区（UB）注册功能的一些初步性能测试结果：</p>
+<ul><li><strong>单GPU/节点场景的性能</strong>: 针对<code>AllGather</code>和<code>Broadcast</code>操作，启用UB注册后观察到“强大的性能增益”，同时，GPU上用于通信的流式多处理器（SM）使用量从4个减少到1个。</li><li><strong>八GPU/节点场景的性能</strong>: 对于<code>AllReduce</code>和<code>AllGather</code>操作，使用用户缓冲区注册可实现峰值带宽提升5%。</li><li><strong>性能分析结论</strong>: 启用UB注册带来的最大性能好处来自于改善了计算与通信之间的重叠效率。</li></ul>
 <h3>A7 补充细节</h3>
-<p>NCCL 2.24提供了以下额外的更新和错误修复：<br/>
-* 调整PAT调优，以改善PAT和Ring算法在大规模场景下的转换。<br/>
-* 默认使用<code>cuMem*</code>系列函数进行主机内存分配。<br/>
-* 当<code>NCCL_SOCKET_IFNAME</code>设置为不正确的值时，返回<code>ncclInvalidUsage</code>错误，而不是之前的<code>ncclInternalError</code>。<br/>
-* 修复了UDS（Unix Domain Sockets）中的文件描述符泄漏问题。<br/>
-* 修复了混合使用缓冲区注册和图缓冲区注册时可能发生的崩溃。<br/>
-* 修复了使用dmabuf进行用户缓冲区注册的问题。<br/>
-* 修复了IB代码中因字段未初始化导致的崩溃。<br/>
-* 修复了非阻塞<code>ncclSend</code>/<code>ncclRecv</code>的问题。<br/>
-* 各种编译器相关的调整和修复。<br/>
-* 修复了<code>ncclTopoPrintGraph</code>中的一个拼写错误。</p>
+<p>NCCL 2.24提供了以下额外的更新和错误修复：</p>
+<ul><li>调整PAT调优，以改善PAT和Ring算法在大规模场景下的转换。</li><li>默认使用<code>cuMem*</code>系列函数进行主机内存分配。</li><li>当<code>NCCL_SOCKET_IFNAME</code>设置为不正确的值时，返回<code>ncclInvalidUsage</code>错误，而不是之前的<code>ncclInternalError</code>。</li><li>修复了UDS（Unix Domain Sockets）中的文件描述符泄漏问题。</li><li>修复了混合使用缓冲区注册和图缓冲区注册时可能发生的崩溃。</li><li>修复了使用dmabuf进行用户缓冲区注册的问题。</li><li>修复了IB代码中因字段未初始化导致的崩溃。</li><li>修复了非阻塞<code>ncclSend</code>/<code>ncclRecv</code>的问题。</li><li>各种编译器相关的调整和修复。</li><li>修复了<code>ncclTopoPrintGraph</code>中的一个拼写错误。</li></ul>
 <h3>A5 结论</h3>
 <p>NCCL 2.24引入了数项重要的新功能和改进，关键增强包括RAS子系统、对多节点集合操作的用户缓冲区注册支持、NIC Fusion以及可选接收完成功能，同时还增加了对FP8数据类型的支持。这些更新旨在提升NCCL在大规模AI数据中心网络中的可靠性、可观测性和性能。</p>
-<p>对于未来的工作，文中提到：<br/>
-* RAS子系统计划在未来的NCCL版本中进行功能上的显著扩展。<br/>
-* NIC Fusion作为一项基础性功能，为将来实现NIC故障转移和动态负载均衡等更高级的插件功能奠定了基础。</p>
+<p>对于未来的工作，文中提到：</p>
+<ul><li>RAS子系统计划在未来的NCCL版本中进行功能上的显著扩展。</li><li>NIC Fusion作为一项基础性功能，为将来实现NIC故障转移和动态负载均衡等更高级的插件功能奠定了基础。</li></ul>
 </div>
 
 

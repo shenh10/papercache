@@ -70,11 +70,11 @@ $$\mathbb{E}_{x \sim X}\Big[(1-\alpha) E_{y \sim p_{\mathrm{S}}^{\theta}(\cdot \
 </figure>
 <h2>A3 背景知识</h2>
 <h3><strong>自回归生成序列模型</strong></h3>
-<p>我们将输入和输出序列分别表示为x和y。令V表示包含M个词元（token）的词汇表，$y_{&amp;lt;n+1} = (y_1, y_2, ..., y_n)$表示到第n个词元为止已生成的输出序列，$L_y$表示序列y的长度。一个词元级的自回归策略$p(\cdot|y_{&amp;lt;n}, x) \in (0, 1)^M$会输出一个在V中所有词元上的下一词元概率分布，该分布以输入x和输出序列$y_{&amp;lt;n}$为条件。此外，$y \sim p(\cdot|x)$对应于给定输入x采样得到的输出序列y。为简化符号，我们定义$p(y_n|x) := p(y_n|y_{&amp;lt;n}, x)$。自回归生成涉及逐个预测词元，每个预测都基于先前生成的词元。预测第n个词元$y_n$的概率$p(y_n|x)$通过带有温度$\gamma$的softmax函数确定：$p(y_n|x) = \frac{\exp(z_n/\gamma)}{\sum_{i=1}^{M} \exp(z_i/\gamma)}$，其中$z_n$是词元$y_n$的logit分数。较高的$\gamma$值会引入更多随机性，而较低的值则通过偏爱最可能的词语使输出更具确定性。在训练期间，学生的温度保持为1。评估时，我们使用贪婪采样($\gamma \to 0$)或温度采样($\gamma &amp;gt; 0$)。</p>
+<p>我们将输入和输出序列分别表示为x和y。令V表示包含M个词元（token）的词汇表，$y_{&lt;n+1} = (y_1, y_2, ..., y_n)$表示到第n个词元为止已生成的输出序列，$L_y$表示序列y的长度。一个词元级的自回归策略$p(\cdot|y_{&lt;n}, x) \in (0, 1)^M$会输出一个在V中所有词元上的下一词元概率分布，该分布以输入x和输出序列$y_{&lt;n}$为条件。此外，$y \sim p(\cdot|x)$对应于给定输入x采样得到的输出序列y。为简化符号，我们定义$p(y_n|x) := p(y_n|y_{&lt;n}, x)$。自回归生成涉及逐个预测词元，每个预测都基于先前生成的词元。预测第n个词元$y_n$的概率$p(y_n|x)$通过带有温度$\gamma$的softmax函数确定：$p(y_n|x) = \frac{\exp(z_n/\gamma)}{\sum_{i=1}^{M} \exp(z_i/\gamma)}$，其中$z_n$是词元$y_n$的logit分数。较高的$\gamma$值会引入更多随机性，而较低的值则通过偏爱最可能的词语使输出更具确定性。在训练期间，学生的温度保持为1。评估时，我们使用贪婪采样($\gamma \to 0$)或温度采样($\gamma &gt; 0$)。</p>
 <h3><strong>基于KL的散度</strong></h3>
 <p>两个概率分布之间的散度是衡量分布相似性的度量，其中KL散度是一种常用的度量。两个离散分布P(C)和Q(C)之间的KL散度由以下公式给出：$D_{KL}(P \| Q) = \sum_{c \in C} P(c) \log \frac{P(c)}{Q(c)}$。KL散度是不对称的：$D_{KL}(P \| Q) \neq D_{KL}(Q \| P)$。因此，我们称$D_{KL}(P \| Q)$为P和Q之间的前向KL散度，而$D_{KL}(Q \| P)$为反向KL散度。在经验数据分布下的前向KL散度对应于最大似然估计，这是我们在监督学习中优化的目标。在模型容量不匹配的情况下，当使用分布$Q_\theta(C)$来近似$P(C)$时，最小化反向和前向KL散度分别会导致“模式寻求”（mode-seeking）和“模式覆盖”（mode-covering）的行为（如图A.16所示）。</p>
 <h3><strong>广义JSD</strong></h3>
-<p>虽然KL散度可能是无界的，但一种著名的即使对于支撑集不相交的概率分布也是有界的散度是广义JSD（Jensen-Shannon散度）。JSD($\beta$)使用有界系数$0 &amp;lt; \beta &amp;lt; 1$在前向和反向KL散度之间进行插值：</p>
+<p>虽然KL散度可能是无界的，但一种著名的即使对于支撑集不相交的概率分布也是有界的散度是广义JSD（Jensen-Shannon散度）。JSD($\beta$)使用有界系数$0 &lt; \beta &lt; 1$在前向和反向KL散度之间进行插值：</p>
 <p></p>
 $$\mathcal{D}_{JSD(\beta)}(P \| Q)=\beta \mathcal{D}_{KL}(P \| \beta P+(1-\beta) Q)+(1-\beta) \mathcal{D}_{KL}(Q \| \beta P+(1-\beta) Q)$$
 
@@ -85,7 +85,7 @@ $$\mathcal{D}_{JSD(\beta)}(P \| Q)=\beta \mathcal{D}_{KL}(P \| \beta P+(1-\beta)
 <p></p>
 $$\mathcal{D}(p_{\text{T}}\|p_{\text{S}}^{\theta})(y|x) := \frac{1}{L_{y}} \sum_{n=1}^{L_{y}} \mathcal{D}(p_{\text{T}}(\cdot|y_{&lt;n}, x) \| p_{\text{S}}^{\theta}(\cdot|y_{&lt;n}, x)),$$
 
-&lt;p&gt;这是一个针对输入x和输出序列y的定义。例如，在公式2中使用JSD($\beta$)作为D，会得到$D_{JSD(\beta)}(p_T \| p_\theta^S)(y|x) = \frac{1}{L_y} \sum_n D_{JSD(\beta)}(p_T(\cdot|y_{&amp;lt;n}, x) \| p_\theta^S(\cdot|y_{&amp;lt;n}, x))$。<p></p>
+&lt;p&gt;这是一个针对输入x和输出序列y的定义。例如，在公式2中使用JSD($\beta$)作为D，会得到$D_{JSD(\beta)}(p_T \| p_\theta^S)(y|x) = \frac{1}{L_y} \sum_n D_{JSD(\beta)}(p_T(\cdot|y_{&lt;n}, x) \| p_\theta^S(\cdot|y_{&lt;n}, x))$。<p></p>
 <p><strong>监督微调（Supervised FT）</strong>。如果我们只有一个固定的真实输出序列数据集，但无法查询教师策略，那么一个简单的方法是最小化这些序列在学生策略下的负对数似然：$L_{SFT}(\theta) = \mathbb{E}_{(x,y) \sim (X,Y)}[-\log p_\theta^S(y|x)]$。</p>
 <p><strong>序列级知识蒸馏（Sequence-Level KD）</strong>。由Kim和Rush（2016）【19, Sequence-level knowledge distillation by Yoon Kim and Alexander M. Rush, 2016, arXiv preprint】提出，SeqKD最大化由教师模型生成的高概率序列的似然，可以看作是在教师生成的输出上进行监督微调。</p>
 <p><strong>监督知识蒸馏（Supervised KD）</strong>。由Hinton等人（2015）【12, Distilling the knowledge in a neural network by Geoffrey Hinton, Oriol Vinyals, and Jeff Dean, 2015, arXiv preprint】和Sanh等人（2019）【39, Distilbert, a distilled version of bert: smaller, faster, cheaper and lighter by Victor Sanh et al., 2019, arXiv preprint】推广，这是一种广泛使用的技术，其中学生模型被训练来模仿教师模型的词元级概率分布。学生模型$p_S$通过监督目标$L_{SD}$进行训练，该目标针对教师模型$p_T$的目标词元级概率：</p>
@@ -96,7 +96,7 @@ $$L_{SD}(\theta) := \mathbb{E}_{(x,y)\sim(X,Y)} \left[ \mathcal{D}_{KL} (p_{\tex
 <h3><strong>3.1 广义知识蒸馏（GKD）</strong></h3>
 <p><strong>训练-推理分布不匹配问题</strong>。如上所述，常用的KD方法使用固定的输出序列数据集，无论是真实目标还是教师生成的序列。然而，使用这些方法蒸馏自回归学生模型会导致训练-推理分布不匹配。这是因为学生在推理时自回归生成阶段遇到的部分序列，可能与训练阶段看到的序列大相径庭。</p>
 <p><strong>在策略模仿学习的应用</strong>。由于在自回归模型中，任何步骤的预测都取决于之前的步骤，这种不匹配会产生级联效应，即早期步骤的预测错误会影响未来的预测，从而导致文本生成质量差。为了解决这种不匹配，我们大量借鉴了模仿学习（IL）。特别是，在策略（on-policy）模仿方法（例如Ross等人，2011【38, A reduction of imitation learning and structured ´ prediction to no-regret online learning by Stephane Ross, Geoffrey Gordon, and Drew Bagnell, 2011, JMLR Workshop and Conference Proceedings】）会迭代地使用学生策略收集序列，获取这些序列的专家标签，然后在这个数据集上重新训练学生。尽管在机器人学和深度强化学习中很受欢迎（Parisotto等人，2015【31, Actor-mimic: Deep multitask and transfer reinforcement learning by Emilio Parisotto, Jimmy Lei Ba, and Ruslan Salakhutdinov, 2015, arXiv preprint】；Kelly等人，2019【18, Hg-dagger: Interactive imitation learning with human experts by Michael Kelly et al., 2019, ICRA】；Agarwal等人，2022【1, Reincarnating reinforcement learning: Reusing prior computation to accelerate progress by Rishabh Agarwal et al., 2022, Advances in Neural Information Processing Systems】），但在策略方法通常不用于蒸馏自回归模型。</p>
-<p><strong>在策略蒸馏的反馈机制</strong>。将策略性模仿学习扩展到蒸馏领域，我们提出了在策略知识蒸馏。在蒸馏过程中使用策略性数据时，学生模型会从教师模型的logits中获得针对其自生成输出序列中错误词元的具体反馈。这形成了一种类似于我们在强化学习中观察到的反馈循环，有助于最小化训练-推理分布不匹配。此外，随着学生在训练过程中的演进，它生成的数据质量也会提高。给定一个输入x，学生生成输出序列y，并模仿教师在中间状态$y_{&amp;lt;n}$上的词元级分布$p_T(y_n|x)$。具体而言，在策略损失$L_{OD}$由以下公式给出：</p>
+<p><strong>在策略蒸馏的反馈机制</strong>。将策略性模仿学习扩展到蒸馏领域，我们提出了在策略知识蒸馏。在蒸馏过程中使用策略性数据时，学生模型会从教师模型的logits中获得针对其自生成输出序列中错误词元的具体反馈。这形成了一种类似于我们在强化学习中观察到的反馈循环，有助于最小化训练-推理分布不匹配。此外，随着学生在训练过程中的演进，它生成的数据质量也会提高。给定一个输入x，学生生成输出序列y，并模仿教师在中间状态$y_{&lt;n}$上的词元级分布$p_T(y_n|x)$。具体而言，在策略损失$L_{OD}$由以下公式给出：</p>
 <p></p>
 $$L_{OD}(\theta) := \mathbb{E}_{x \sim X} \left[ \mathbb{E}_{y \sim p_{\text{S}}(\cdot | x)} \left[ \mathcal{D}_{KL}(p_{\text{T}} \| p_{\text{S}}^{\theta})(y | x) \right] \right],$$
 
@@ -107,7 +107,7 @@ $$L_{\mathrm{GKD}}(\theta):=(1-\lambda) \mathbb{E}_{(x, y) \sim(X, Y)}\left[\mat
 
 <p>其中$D(p_T, p_S)(y|x)$是教师和学生分布之间的散度（公式2），$\lambda \in [0, 1]$是一个超参数，用于控制学生数据比例，即在策略学生生成输出的比例。与在策略KD类似，我们不通过学生的采样过程反向传播梯度。在策略KD和监督KD分别是GKD的实例，其中散度D分别设置为前向KL，学生数据比例$\lambda$分别为1和0。尽管如此，GKD允许$\lambda$和散度有其他选择，我们在这项工作中进行了探索。</p>
 <p><strong>备注：学生模型初始化</strong>。与随机初始化的学生模型不同，我们假设可以访问一个能够生成足够质量序列的学生模型，教师可以对其提供反馈。在我们的实验中，我们从经过监督微调（supervised FT）的学生模型开始。这类似于两阶段的RLHF训练，该方法广泛用于语言模型，即首先进行SFT，然后进行在线RL微调。因此，GKD可以利用RLHF的超参数调优经验，并且可以与RLHF结合，计算开销小，且无需额外超参数。</p>
-<p><strong>GKD中散度的选择</strong>。虽然前向KL散度常用于蒸馏，但它要求学生覆盖教师词元级分布$p_T(\cdot|y_{&amp;lt;n}, x)$的整个支撑集。这样做可能会导致学生为在$p_T(\cdot|y_{&amp;lt;n}, x)$下概率较低的词元v分配概率质量，从而可能导致幻觉和低质量的生成。当学生的模型容量远低于教师时，使用温度采样时很可能会出现这个问题（例如，图A.16）。或者，模式寻求型散度，如反向KL散度，会优先考虑教师分配高概率的词元，这可以避免低质量的生成，但代价是对于给定输入生成的样本多样性较低。我们的实验表明，最优散度似乎是任务依赖的。总的来说，在选择GKD散度时，需要考虑特定任务的多样性和性能权衡（例如，图4、10）。</p>
+<p><strong>GKD中散度的选择</strong>。虽然前向KL散度常用于蒸馏，但它要求学生覆盖教师词元级分布$p_T(\cdot|y_{&lt;n}, x)$的整个支撑集。这样做可能会导致学生为在$p_T(\cdot|y_{&lt;n}, x)$下概率较低的词元v分配概率质量，从而可能导致幻觉和低质量的生成。当学生的模型容量远低于教师时，使用温度采样时很可能会出现这个问题（例如，图A.16）。或者，模式寻求型散度，如反向KL散度，会优先考虑教师分配高概率的词元，这可以避免低质量的生成，但代价是对于给定输入生成的样本多样性较低。我们的实验表明，最优散度似乎是任务依赖的。总的来说，在选择GKD散度时，需要考虑特定任务的多样性和性能权衡（例如，图4、10）。</p>
 <h3><strong>3.2 强化学习微调 + 在策略GKD</strong></h3>
 <p><strong>结合RL的目标</strong>。在某些任务中，从教师模型进行蒸馏可能只是我们主要目标的一个代理，而这个主要目标也可能是不可微的。我们可以使用强化学习（RL）直接优化这个目标。方便的是，在策略GKD可以很容易地与来自人类（RLHF）或AI反馈（RLAIF）的RL微调相结合，因为它只需要学生的输出样本。</p>
 <p><strong>正则化RL微调目标</strong>。实际上，如果我们希望为一个标量奖励r优化学生策略，同时保持其与教师策略的接近度，我们会得到一个形式如下的正则化RL微调目标：</p>

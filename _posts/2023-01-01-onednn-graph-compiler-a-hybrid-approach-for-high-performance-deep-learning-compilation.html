@@ -41,14 +41,8 @@ Jianhui Li, Zhennan Qin, Yijie Mei, Jingze Cui, Yunfei Song, Ciyong Chen, Yifei 
 当前DL框架通常逐个操作地执行计算图，并依赖算子库来加速关键操作。然而，随着模型演进（如自然语言处理和推荐系统模型）和硬件发展，内存密集型操作的比例显著增加，这使得传统的基于算子库的方法性能受限。张量编译器（如XLA、Triton、TVM）应运而生，它们通过循环变换、并行化、向量化等技术来优化整个计算图，但要在性能上媲美专家手工调优的内核仍是一个巨大的挑战，通常需要复杂的自动调优过程。</p>
 <p>oneDNN Graph Compiler的目标是，在自动编译过程中融入专家在开发高性能内核时积累的领域知识，从而为整个DNN计算图生成代码，使其性能不仅能与专家调优的算子相媲美，甚至在图级别上超越它们。</p>
 <p><strong>创新点与主要贡献:</strong><br/>
-本文的主要贡献如下：<br/>
-1.  <strong>提出了一种包含两级中间表示（IR）的张量编译器设计。</strong><br/>
-    *   <strong>Graph IR</strong>：支持图级别的转换，如低精度计算转换、常量权重预处理、内存布局传播以及细粒度融合区域的形成。<br/>
-    *   <strong>Tensor IR</strong>：支持为细粒度融合生成<code>parallel-for</code>循环，将多个融合操作（Fused OP）合并为一个并行循环以实现粗粒度融合，以及内存缓冲区优化。<br/>
-2.  <strong>引入了一种基于模板的计算密集型操作降级（lowering）方法。</strong><br/>
-    *   该方法实现了从业界专家调优内核中学到的最优算法。通过使用微内核（microkernel）和分块布局（blocked layout），它避免了冗长且困难的编译器变换过程，就能生成专家级别的算子性能。<br/>
-3.  <strong>引入了融合操作模板（fused operation template）以生成高效的细粒度融合代码。</strong><br/>
-    *   该模板为融合提供了多个“锚点”（anchor points），使得编译器可以选择最佳位置来组合一个与邻近可融合操作循环合并的<code>parallel-for</code>循环。这使得编译器能够支持包括归约（reduction）和重排序（reordering）操作在内的多种灵活融合，而无需在低级IR中使用传统的编译器技术来处理复杂的并行循环合并问题。</p>
+本文的主要贡献如下：</p>
+<ol><li><strong>提出了一种包含两级中间表示（IR）的张量编译器设计。</strong><ul><li><strong>Graph IR</strong>：支持图级别的转换，如低精度计算转换、常量权重预处理、内存布局传播以及细粒度融合区域的形成。</li><li><strong>Tensor IR</strong>：支持为细粒度融合生成<code>parallel-for</code>循环，将多个融合操作（Fused OP）合并为一个并行循环以实现粗粒度融合，以及内存缓冲区优化。</li></ul></li><li><strong>引入了一种基于模板的计算密集型操作降级（lowering）方法。</strong><ul><li>该方法实现了从业界专家调优内核中学到的最优算法。通过使用微内核（microkernel）和分块布局（blocked layout），它避免了冗长且困难的编译器变换过程，就能生成专家级别的算子性能。</li></ul></li><li><strong>引入了融合操作模板（fused operation template）以生成高效的细粒度融合代码。</strong><ul><li>该模板为融合提供了多个“锚点”（anchor points），使得编译器可以选择最佳位置来组合一个与邻近可融合操作循环合并的<code>parallel-for</code>循环。这使得编译器能够支持包括归约（reduction）和重排序（reordering）操作在内的多种灵活融合，而无需在低级IR中使用传统的编译器技术来处理复杂的并行循环合并问题。</li></ul></li></ol>
 <p>通过结合编译器技术和内核库技术，并专注于深度学习领域的特定优化问题（如低精度计算、激进的图操作融合、静态张量形状和内存布局优化、常量权重优化和内存缓冲区重用），oneDNN Graph Compiler在CPU上为性能关键的DNN计算图和端到端模型带来了显著的性能提升。</p>
 <hr/>
 <h3>A2 方法细节</h3>

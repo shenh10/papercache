@@ -33,24 +33,16 @@ title: 'BatchLLM: Optimizing Large Batched LLM Inference with Global Prefix Shar
 </details>
 <h2>A1 主要贡献</h2>
 <p>大型语言模型（LLMs）在信息处理和管理任务中日益重要，许多此类任务以大规模批处理或离线方式执行，其性能指标主要是吞吐量。这些任务通常表现出前缀共享的特性，即不同的提示输入可以部分共享相同的前缀。然而，现有的LLM推理引擎倾向于优化流式请求，在支持具有前缀共享特性的大规模批处理任务方面存在局限性。</p>
-<p><strong>核心问题与研究目标</strong>：<br/>
-1. <strong>全局前缀共享缺失</strong>：现有SOTA引擎如vLLM采用基于LRU的缓存来重用请求间的KV上下文，但对于大规模批处理任务，这种隐式缓存管理可能过早地驱逐即将被重用的KV上下文，导致不必要的重新计算。<br/>
-2. <strong>次优的Token批处理策略</strong>：现有系统通常按先到先服务的顺序独立调度请求，未能将共享公共前缀的请求聚集在一起，这增加了KV内存的占用时间并可能导致上下文被过早驱逐。此外，为保证流式请求的公平性和延迟，其调度顺序可能导致解码（decoding）步骤与预填充（prefill）块的混合不充分，无法有效利用硬件。同时，基于Token数和请求数的批处理阈值限制了批次大小，使得以解码为主的迭代中GPU无法饱和。<br/>
-3. <strong>Attention核优化空间</strong>：SOTA的前缀共享Attention优化可以通过对不同KV块的计算进行水平内核融合来进一步优化，以减少尾部效应和内核启动开销。</p>
+<p><strong>核心问题与研究目标</strong>：</p>
+<ol><li><strong>全局前缀共享缺失</strong>：现有SOTA引擎如vLLM采用基于LRU的缓存来重用请求间的KV上下文，但对于大规模批处理任务，这种隐式缓存管理可能过早地驱逐即将被重用的KV上下文，导致不必要的重新计算。</li><li><strong>次优的Token批处理策略</strong>：现有系统通常按先到先服务的顺序独立调度请求，未能将共享公共前缀的请求聚集在一起，这增加了KV内存的占用时间并可能导致上下文被过早驱逐。此外，为保证流式请求的公平性和延迟，其调度顺序可能导致解码（decoding）步骤与预填充（prefill）块的混合不充分，无法有效利用硬件。同时，基于Token数和请求数的批处理阈值限制了批次大小，使得以解码为主的迭代中GPU无法饱和。</li><li><strong>Attention核优化空间</strong>：SOTA的前缀共享Attention优化可以通过对不同KV块的计算进行水平内核融合来进一步优化，以减少尾部效应和内核启动开销。</li></ol>
 <p><strong>创新点与主要贡献</strong>：<br/>
-本文提出了BatchLLM，一个针对吞吐量导向的大规模批处理LLM推理的整体优化方案。其核心洞察是，在处理大批量任务前，提示（prompt）的特征是已知的。基于此，BatchLLM进行了一系列优化：<br/>
-1. <strong>全局前缀预处理</strong>：BatchLLM预先对整个大批量任务进行分析，显式地识别全局的公共前缀，构建全局前缀树，从而避免隐式缓存（如LRU）导致的KV上下文过早被驱逐的问题。它还通过动态规划算法将多级前缀简化为单级，以降低系统复杂性。<br/>
-2. <strong>前缀感知和吞吐量导向的Token批处理</strong>：<br/>
-    * <strong>请求重排序</strong>：根据提示长度和（估计的）解码长度的比例对请求进行重排序，优先调度解码比例更高的请求，使其解码Token能与后续更长的预填充块更好地混合。<br/>
-    * <strong>分组调度</strong>：将共享相同前缀的请求作为一个组进行调度，以最大化KV上下文的重用。<br/>
-    * <strong>以内存为中心的Token批处理</strong>：根据KV内存使用量而非请求数量来批处理Token，从而形成更大的Token批次，提升GPU利用率。</p>
+本文提出了BatchLLM，一个针对吞吐量导向的大规模批处理LLM推理的整体优化方案。其核心洞察是，在处理大批量任务前，提示（prompt）的特征是已知的。基于此，BatchLLM进行了一系列优化：</p>
+<ol><li><strong>全局前缀预处理</strong>：BatchLLM预先对整个大批量任务进行分析，显式地识别全局的公共前缀，构建全局前缀树，从而避免隐式缓存（如LRU）导致的KV上下文过早被驱逐的问题。它还通过动态规划算法将多级前缀简化为单级，以降低系统复杂性。</li><li><strong>前缀感知和吞吐量导向的Token批处理</strong>：<ul><li><strong>请求重排序</strong>：根据提示长度和（估计的）解码长度的比例对请求进行重排序，优先调度解码比例更高的请求，使其解码Token能与后续更长的预填充块更好地混合。</li><li><strong>分组调度</strong>：将共享相同前缀的请求作为一个组进行调度，以最大化KV上下文的重用。</li><li><strong>以内存为中心的Token批处理</strong>：根据KV内存使用量而非请求数量来批处理Token，从而形成更大的Token批次，提升GPU利用率。</li></ul></li></ol>
 <ol>
 <li><strong>优化的前缀共享Attention核</strong>：通过水平融合（horizontal fusion）优化了前缀共享的Attention核，将对不同KV块的计算合并，减少了尾部效应和内核启动开销。</li>
 </ol>
-<p><strong>总结贡献如下</strong>：<br/>
-* <strong>开创性工作</strong>：首次针对吞吐量导向、具有前缀共享特性的大规模批处理场景，利用批次的全局信息进行LLM推理优化。<br/>
-* <strong>新颖设计</strong>：设计了预先的前缀识别和扩大方法以实现全局视角下的高效前缀重用；提出了请求重排序和以内存为中心的Token批处理方法以提高单次迭代的GPU利用率；并实现了水平融合的前缀共享Attention核。<br/>
-* <strong>实现与评估</strong>：在vLLM基础上实现了BatchLLM，并通过广泛的评估证明了其有效性。实验表明，在一系列微基准测试和典型的工业工作负载下，BatchLLM的性能比vLLM和SGLang高出1.3倍至10.8倍。</p>
+<p><strong>总结贡献如下</strong>：</p>
+<ul><li><strong>开创性工作</strong>：首次针对吞吐量导向、具有前缀共享特性的大规模批处理场景，利用批次的全局信息进行LLM推理优化。</li><li><strong>新颖设计</strong>：设计了预先的前缀识别和扩大方法以实现全局视角下的高效前缀重用；提出了请求重排序和以内存为中心的Token批处理方法以提高单次迭代的GPU利用率；并实现了水平融合的前缀共享Attention核。</li><li><strong>实现与评估</strong>：在vLLM基础上实现了BatchLLM，并通过广泛的评估证明了其有效性。实验表明，在一系列微基准测试和典型的工业工作负载下，BatchLLM的性能比vLLM和SGLang高出1.3倍至10.8倍。</li></ul>
 <h2>A3 背景知识、关键观察与设计原则</h2>
 <h3>2. LLM推理背景</h3>
 <h4>2.1 LLM推理的性能因素</h4>
@@ -77,8 +69,8 @@ O &amp;= online\_softmax(O_{prefix}, O_{distinct})
 <p><strong>大规模批处理与前缀共享特性</strong>。LLM凭借其上下文学习和推理能力，越来越多地被用于广泛的工业任务中，如搜索引擎【35, Large Search Model: Redefining Search Stack in the Era of LLMs, SIGIR Forum 2023】【38, When Search Engine Services meet Large Language Models: Visions and Challenges, CoRR 2024】、广告【21, How Good are LLMs in Generating Personalized Advertisements?, WWW '24】和推荐系统【17, Large Language Models meet Collaborative Filtering: An Efficient All-round LLM-based Recommender System, KDD '24】【43, Recommender Systems in the Era of Large Language Models (LLMs), IEEE Transactions on Knowledge and Data Engineering 2024】。由于这些任务处理的数据量巨大且LLM推理成本高昂，许多任务以非常大的批量（甚至离线）方式处理，其性能指标主要是吞吐量而非延迟。以搜索引擎中的摘要生成任务【35, Large Search Model: Redefining Search Stack in the Era of LLMs, SIGIR Forum 2023】【38, When Search Engine Services meet Large Language Models: Visions and Challenges, CoRR 2024】为例，该任务根据文档和用户查询为搜索结果页中的网页文档生成摘要。一个例子是：“根据给定的文档生成一个简短的摘要来回答给定的查询。文档：&lt;...&gt; 查询：&lt;...&gt;”。由于在线执行大规模LLM推理很难满足服务等级目标（SLO），一种常见的做法是为高频网页文档和查询离线运行摘要生成任务，并在在线服务期间当相应的文档-查询对出现时检索离线结果。</p>
 <p><strong>前缀共享的来源与演变</strong>。许多基于LLM的信息处理和管理任务在不同请求的提示之间显示出共享前缀的特性，这源于不同任务可能在相同内容（例如，网页文档）上执行的本质。以搜索引擎任务为例，它可能从同一个网页文档中提取不同的信息，因此该文档可以成为提示中的共享前缀。具体来说，对于摘要生成任务，由于它是提取文档-查询对的摘要，一个文档可以成为不同查询的公共前缀。共享前缀可以按多级管理。例如，第一级前缀可以是全局系统信息和指令，第二级可以是网页文档。然而，随着LLM的发展和任务特定模型微调的使用，系统信息和指令的前缀变得越来越短，前缀的长度最终将由网页文档本身主导。一方面，LLM模型正在将越来越多的推理能力融入自身（如OpenAI o1【23, Introducing OpenAI o1-preview, 2024】），将不再依赖复杂的提示。另一方面，任务特定的微调可以帮助将复杂的提示融入模型权重。因此，长上下文而非指令的前缀共享可能对许多工业任务最为重要。这启发了第4.2节中的第一级前缀扩大。</p>
 <h4>3.2 新的优化需求</h4>
-<p><strong>现有方案的局限性</strong>。如第2节所述，现有工作已提出支持前缀共享和逐迭代Token批处理的解决方案以支持LLM推理。然而，最先进的解决方案仍然缺乏针对第3.1节中描述的日益重要的大规模批处理场景的专门优化，表现出三个主要局限性：<br/>
-1. <strong>隐式前缀缓存无法为大规模批处理推理带来最优的KV重用</strong>。现有的LLM服务系统【18, Efficient Memory Management for Large Language Model Serving with PagedAttention, SOSP 2023】【44, Efficiently Programming Large Language Models using SGLang, 2023】使用前缀树来维护KV块。相同的前缀（通过运行时哈希识别）可以映射到相同的KV块以避免重复计算。它使用LRU策略从块表中驱逐块。对于要处理的一大批输入，它不是从全局视角在大批次中保留前缀在内存中，而只是根据历史输入。结果，可共享的KV块很容易被过早驱逐。我们用一个典型的工业工作负载评估了vLLM的前缀共享。通过分析输入数据集，前缀重用的最优Token节省率为58.1%。注意，节省率计算公式为：</p>
+<p><strong>现有方案的局限性</strong>。如第2节所述，现有工作已提出支持前缀共享和逐迭代Token批处理的解决方案以支持LLM推理。然而，最先进的解决方案仍然缺乏针对第3.1节中描述的日益重要的大规模批处理场景的专门优化，表现出三个主要局限性：</p>
+<ol><li><strong>隐式前缀缓存无法为大规模批处理推理带来最优的KV重用</strong>。现有的LLM服务系统【18, Efficient Memory Management for Large Language Model Serving with PagedAttention, SOSP 2023】【44, Efficiently Programming Large Language Models using SGLang, 2023】使用前缀树来维护KV块。相同的前缀（通过运行时哈希识别）可以映射到相同的KV块以避免重复计算。它使用LRU策略从块表中驱逐块。对于要处理的一大批输入，它不是从全局视角在大批次中保留前缀在内存中，而只是根据历史输入。结果，可共享的KV块很容易被过早驱逐。我们用一个典型的工业工作负载评估了vLLM的前缀共享。通过分析输入数据集，前缀重用的最优Token节省率为58.1%。注意，节省率计算公式为：</li></ol>
 <pre>$$R_{saving} = (1 - \frac{N_{processed\_prefill\_tokens}}{N_{logical\_prefill\_tokens}}) \times 100$$
 
 其中，$N_{processed\_prefill\_tokens}$ 是前缀共享后处理的预填充Token数，$N_{logical\_prefill\_tokens}$ 是所有请求的原始预填充Token数。vLLM的隐式前缀缓存仅实现了35.8%（参见第6.3.1节）。因此，需要为大规模批处理任务实现更好的前缀共享，特别是考虑到批次中所有的预填充特征都是预先已知的。
@@ -96,10 +88,8 @@ O &amp;= online\_softmax(O_{prefix}, O_{distinct})
 </li>
 </ol>
 <h4>3.3 洞察</h4>
-<p><strong>BatchLLM的核心洞察</strong>。BatchLLM基于以下洞察来解决第3.2节中描述的局限性：<br/>
-1. <strong>显式前缀识别和共享</strong>。BatchLLM不是在运行时哈希和匹配公共前缀并使用LRU缓存管理前缀，而是在处理大批次前预先全局地显式识别公共前缀，这不会因隐式缓存而错失前缀共享的机会。此外，BatchLLM通过动态规划算法重构前缀树，以扩大第一级前缀，从而避免多级前缀带来的系统复杂性和内核开销。<br/>
-2. <strong>分组调度、请求重排序和以内存为中心的Token批处理</strong>。BatchLLM以共享公共前缀的请求组为粒度进行调度，这使得前缀共享变得方便，并缩短了前缀KV内存的生命周期。BatchLLM根据提示的长度和估计的解码长度对请求进行重排序。如图1所示，BatchLLM将优先调度解码长度与提示长度比较大的请求。这样，较长的提示会较晚被调度，从而能更好地与较早的解码Token混合。它还考虑了KV内存的使用情况来形成Token批次，允许将更多Token批处理在一起，以增加Token批次的大小并减少图2中的“谷值”。<br/>
-3. <strong>通过水平融合优化Attention核</strong>。BatchLLM将不同KV块上的计算水平融合成同一个核，以减少尾部效应和核启动开销。</p>
+<p><strong>BatchLLM的核心洞察</strong>。BatchLLM基于以下洞察来解决第3.2节中描述的局限性：</p>
+<ol><li><strong>显式前缀识别和共享</strong>。BatchLLM不是在运行时哈希和匹配公共前缀并使用LRU缓存管理前缀，而是在处理大批次前预先全局地显式识别公共前缀，这不会因隐式缓存而错失前缀共享的机会。此外，BatchLLM通过动态规划算法重构前缀树，以扩大第一级前缀，从而避免多级前缀带来的系统复杂性和内核开销。</li><li><strong>分组调度、请求重排序和以内存为中心的Token批处理</strong>。BatchLLM以共享公共前缀的请求组为粒度进行调度，这使得前缀共享变得方便，并缩短了前缀KV内存的生命周期。BatchLLM根据提示的长度和估计的解码长度对请求进行重排序。如图1所示，BatchLLM将优先调度解码长度与提示长度比较大的请求。这样，较长的提示会较晚被调度，从而能更好地与较早的解码Token混合。它还考虑了KV内存的使用情况来形成Token批次，允许将更多Token批处理在一起，以增加Token批次的大小并减少图2中的“谷值”。</li><li><strong>通过水平融合优化Attention核</strong>。BatchLLM将不同KV块上的计算水平融合成同一个核，以减少尾部效应和核启动开销。</li></ol>
 <h2>A2 方法细节</h2>
 <h3>4.1 概览</h3>
 <p>图3展示了BatchLLM优化的概览。首先，它分析大批量的输入提示并显式地识别公共前缀。这是在请求调度之前完成的。它将多级前缀简化为单级前缀，基于工业任务的前缀通常由一个长上下文（例如，网页文档）主导的洞察，如3.1节所讨论。显式前缀处理在4.2节中阐述。请求将被组织成组，每个组对应共享相同前缀的查询。组将成为任务调度的基本单位。在调度组之前，BatchLLM还将根据预填充长度的比例对组进行重排序，并推迟具有较长预填充的组。然后，它考虑KV内存使用情况来形成Token批次。这旨在更好地将解码步骤与预填充块混合，以增加整体的Token批次大小。面向吞吐量的调度和Token批处理优化在4.3节中描述。BatchLLM还实现了水平融合的Attention核以减少尾部效应和核启动开销，这在第5节中描述。</p>
@@ -140,14 +130,10 @@ $$R_{group} = \frac{1}{L_{prefix} + \sum L_{distinct}}$$
 <p><strong>Token批处理实现</strong>。我们将Token批处理优化（4.3节）集成到vLLM【18, Efficient Memory Management for Large Language Model Serving with PagedAttention, SOSP 2023】中。具体来说，我们定制了vLLM，使其接受预处理脚本生成的前缀共享组元组列表，并在vLLM的Token批处理函数之上实现了分组调度和Token批处理逻辑。</p>
 <h2>A4 实验环境</h2>
 <p><strong>基线规范</strong>。我们将BatchLLM与vLLM和SGLang进行比较，这是两种具有前缀共享功能的最先进的LLM推理引擎，用于端到端比较以展示其效果（第6.2节）。我们将我们所有的设计集成在vLLM v0.6.4中，用于比较的基线也是vLLM v0.6.4（除非另有说明）。我们在NVIDIA GPU环境中使用FlashAttention【5, FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness, NeurIPS 2022】作为vLLM基线的Attention后端。SGLang的版本是v0.4.1。在第6.2节的端到端比较中，我们在vLLM基线中启用了前缀缓存和分块预填充。前缀缓存使用隐式的基于LRU的缓存策略。在启用vLLM基线的分块预填充时，我们使用2048作为Token批处理大小以最大化其吞吐量。对于第6.3.3节中的核性能比较，我们将BatchLLM与Cascade-Inference【41, Cascade Inference: Memory Bandwidth Efficient Shared Prefix Batch Decoding, 2024】进行比较，这是NVIDIA平台上最先进的前缀共享Attention实现。</p>
-<p><strong>硬件和系统规范</strong>。<br/>
-* <strong>硬件</strong>：NVIDIA A100 80GB GPU 和 AMD MI200 GPU。CPU是AMD EPYC 7V12 @2.45GHz。<br/>
-* <strong>软件</strong>：NVIDIA平台上的CUDA版本为12.1，AMD平台上的ROCm版本为6.1。操作系统为Ubuntu 20.04。所有其他软件包（如PyTorch和Huggingface transformers）均依赖于vLLM v0.6.4的docker文件。</p>
-<p><strong>模型和数据集</strong>。<br/>
-* <strong>模型</strong>：我们使用Llama-3.1-8B【2, Llama 3 Model Card, 2024】、Qwen-2.5-14B【28, Qwen2.5 Technical Report, arXiv 2025】和Llama-3.1-70B（4位GPTQ）来评估BatchLLM和基线。对于一个典型的工业任务，我们使用Qwen-2.5-7B。<br/>
-* <strong>数据集</strong>：<br/>
-    * <strong>微基准测试</strong>：我们使用三种不同的公共前缀和不同提示长度的设置。前缀/不同部分的长度分别为2000/200、2000/1000和1000/1000，而生成的Token长度为100。我们在不同的共享度下评估这三个微基准。共享度指的是共享相同前缀的不同提示的数量。我们分别使用共享度为4和16进行评估。所有请求都随机打乱。<br/>
-    * <strong>工业任务</strong>：我们在一个网络搜索引擎的典型场景上进行评估，即摘要生成任务，该任务为用户查询生成文档的摘要。</p>
+<p><strong>硬件和系统规范</strong>。</p>
+<ul><li><strong>硬件</strong>：NVIDIA A100 80GB GPU 和 AMD MI200 GPU。CPU是AMD EPYC 7V12 @2.45GHz。</li><li><strong>软件</strong>：NVIDIA平台上的CUDA版本为12.1，AMD平台上的ROCm版本为6.1。操作系统为Ubuntu 20.04。所有其他软件包（如PyTorch和Huggingface transformers）均依赖于vLLM v0.6.4的docker文件。</li></ul>
+<p><strong>模型和数据集</strong>。</p>
+<ul><li><strong>模型</strong>：我们使用Llama-3.1-8B【2, Llama 3 Model Card, 2024】、Qwen-2.5-14B【28, Qwen2.5 Technical Report, arXiv 2025】和Llama-3.1-70B（4位GPTQ）来评估BatchLLM和基线。对于一个典型的工业任务，我们使用Qwen-2.5-7B。</li><li><strong>数据集</strong>：<ul><li><strong>微基准测试</strong>：我们使用三种不同的公共前缀和不同提示长度的设置。前缀/不同部分的长度分别为2000/200、2000/1000和1000/1000，而生成的Token长度为100。我们在不同的共享度下评估这三个微基准。共享度指的是共享相同前缀的不同提示的数量。我们分别使用共享度为4和16进行评估。所有请求都随机打乱。</li><li><strong>工业任务</strong>：我们在一个网络搜索引擎的典型场景上进行评估，即摘要生成任务，该任务为用户查询生成文档的摘要。</li></ul></li></ul>
 <h2>A4 实验结果</h2>
 <h3>6.2 端到端比较</h3>
 <h4>6.2.1 微基准评估</h4>

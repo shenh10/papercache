@@ -31,15 +31,10 @@ title: 'Roofline: An Insightful Visual Performance Model for Floating-Point Prog
 </details>
 <h2>A1 主要贡献</h2>
 <p>本文针对当前多核处理器设计多样化给程序员、编译器编写者和架构师带来的挑战，提出了一个易于理解的可视化性能模型——Roofline模型。随着行业向多核架构转型，传统同构设计的共识不复存在，出现了诸如“多而简”核与“少而精”核、多线程、本地存储替代缓存等多种设计，这加剧了软件优化的难度。因此，一个能够提供性能指导的简洁模型尤为重要。</p>
-<p><strong>核心问题与研究目标</strong>:<br/>
-* <strong>问题</strong>: 多核架构的多样性使得性能优化变得复杂，缺乏一个统一、易懂的指导模型。<br/>
-* <strong>目标</strong>: 提出一个像缓存领域的3Cs模型【19，M. Hill and A. Smith, "Evaluating Associativity in CPU Caches," IEEE Trans. on Computers, 1989】一样，虽不完美但富有洞察力的模型，帮助相关人员改进并行软硬件设计。</p>
-<p><strong>创新点（Roofline模型）</strong>:<br/>
-1. <strong>核心理念</strong>: 该模型基于一个关键洞察——在可预见的未来，片外内存带宽通常是性能的瓶颈资源【23，D. Patterson, “Latency Lags Bandwidth,” CACM, 2004】。因此，模型的核心是将处理器性能与片外内存流量联系起来。<br/>
-2. <strong>关键度量衡“计算强度” (Operational Intensity)</strong>: 定义为每次DRAM访问所执行的浮点运算次数（Flops/Byte）。它衡量的是经过缓存层次过滤后，在缓存与主存之间的流量，而非处理器与缓存之间的流量。这使得模型的边界和瓶颈分析能够包含计算机的内存优化效果。<br/>
-3. <strong>可视化表示</strong>: 模型采用对数-对数坐标图，Y轴为可达到的浮点性能（GFlops/sec），X轴为计算强度。<br/>
-    * <strong>性能上限（“屋顶”）</strong>: 由两条线构成：一条代表处理器峰值浮点性能的水平线，和一条代表峰值内存带宽的斜线。一个计算核心（kernel）的性能上限由这两条线的下界决定，即<code>可达 GFlops/sec = Min(峰值浮点性能, 峰值内存带宽 × 计算强度)</code>。<br/>
-    * <strong>计算/内存瓶颈判断</strong>: 根据一个核心的计算强度，其性能点落在屋顶的水平部分（计算瓶颈）或倾斜部分（内存瓶颈）。</p>
+<p><strong>核心问题与研究目标</strong>:</p>
+<ul><li><strong>问题</strong>: 多核架构的多样性使得性能优化变得复杂，缺乏一个统一、易懂的指导模型。</li><li><strong>目标</strong>: 提出一个像缓存领域的3Cs模型【19，M. Hill and A. Smith, "Evaluating Associativity in CPU Caches," IEEE Trans. on Computers, 1989】一样，虽不完美但富有洞察力的模型，帮助相关人员改进并行软硬件设计。</li></ul>
+<p><strong>创新点（Roofline模型）</strong>:</p>
+<ol><li><strong>核心理念</strong>: 该模型基于一个关键洞察——在可预见的未来，片外内存带宽通常是性能的瓶颈资源【23，D. Patterson, “Latency Lags Bandwidth,” CACM, 2004】。因此，模型的核心是将处理器性能与片外内存流量联系起来。</li><li><strong>关键度量衡“计算强度” (Operational Intensity)</strong>: 定义为每次DRAM访问所执行的浮点运算次数（Flops/Byte）。它衡量的是经过缓存层次过滤后，在缓存与主存之间的流量，而非处理器与缓存之间的流量。这使得模型的边界和瓶颈分析能够包含计算机的内存优化效果。</li><li><strong>可视化表示</strong>: 模型采用对数-对数坐标图，Y轴为可达到的浮点性能（GFlops/sec），X轴为计算强度。<ul><li><strong>性能上限（“屋顶”）</strong>: 由两条线构成：一条代表处理器峰值浮点性能的水平线，和一条代表峰值内存带宽的斜线。一个计算核心（kernel）的性能上限由这两条线的下界决定，即<code>可达 GFlops/sec = Min(峰值浮点性能, 峰值内存带宽 × 计算强度)</code>。</li><li><strong>计算/内存瓶颈判断</strong>: 根据一个核心的计算强度，其性能点落在屋顶的水平部分（计算瓶颈）或倾斜部分（内存瓶颈）。</li></ul></li></ol>
 <ol>
 <li><strong>“屋脊点” (Ridge Point)</strong>: 水平线与斜线的交点。该点的X坐标代表了要达到系统最高性能所需的最低计算强度。屋脊点的位置揭示了在该计算机上实现峰值性能的难度。</li>
 <li><strong>优化指导（“天花板” Ceilings）</strong>: 在“屋顶”之下，可以加入多个代表不同优化技术所能达到的性能水平的“天花板”。这些天花板为程序员指明了应当采取何种优化措施（如改进ILP/SIMD、内存亲和性等）以及优化的潜在收益（天花板之间的性能差距）。</li>

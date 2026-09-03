@@ -34,14 +34,10 @@ $$lba_{start}(n+1) = lba_{start}(n) + \text{bytes}(\text{tensor } n) / lba_{size
 </details>
 <h2>主要贡献</h2>
 <p>随着隐私要求的提高和对低延迟本地推理的需求，大语言模型（LLM）推理正越来越多地从云端迁移到边缘AI系统。这些边缘系统通常是单GPU平台，具有严格的内存预算（8–32 GB DRAM）。在此限制下，7–8B参数模型成为主流。然而，边缘AI系统面临一个核心挑战：在加载模型参数后，GPU设备内存通常已接近饱和。当KV Cache（用于存储每个Token的Key/Value向量以避免注意力机制重复计算）超出GPU内存时，它会被推入主机DRAM。由于KV Cache的大小随上下文长度和批处理大小动态变化，它极易耗尽GPU内存和剩余的主机DRAM，从而形成结构性瓶颈。</p>
-<p>现有的解决方案通常利用NVMe SSD作为扩展内存层，通过标准文件系统（如基于mmap的OS Page Cache）来映射SSD。然而，这种设计存在三个根本性缺陷：<br/>
-1. <strong>Page Cache抖动</strong>：在Decode阶段，自回归模式导致反复读取积累的KV Cache，触发严重的页面缓存抖动（缓存页在重用前被驱逐），使得缓存命中率崩溃。<br/>
-2. <strong>高昂的软件栈开销</strong>：遍历虚拟文件系统（VFS）、文件系统、块层和设备驱动程序的软件开销引入了严重的延迟，阻碍了对NVMe SSD带宽的充分利用。<br/>
-3. <strong>设备级顺序局部性丢失</strong>：Linux多队列块层（<code>blk-mq</code>）将请求分布到多个队列，导致原本连续的KV Cache流在到达SSD控制器时变得碎片化和交错。</p>
-<p>针对上述问题，本文提出了DUAL-BLADE，一个为边缘LLM推理设计的双路径NVMe-direct KV Cache卸载架构。其主要创新点包括：<br/>
-* <strong>双路径KV驻留（Dual-Path KV Residency）</strong>：根据运行时可用的Page Cache预算，动态地将KV张量组分配到Page Cache路径或NVMe-direct路径，从而避免缓存抖动并维持高命中率。<br/>
-* <strong>带有顺序LBA放置的NVMe-direct（NVMe-direct with Sequential-LBA Placement）</strong>：在NVMe-direct路径上绕过内核存储栈，并将KV张量映射到连续的逻辑块地址（LBA）区域，以实现低开销的直接存储访问并保留设备级顺序性。<br/>
-* <strong>自适应流水线并行（Adaptive Pipeline Parallelism）</strong>：动态协调线程间的I/O和GPU DMA计算，在带宽争用下隐藏残余I/O延迟，最大化端到端推理吞吐量。</p>
+<p>现有的解决方案通常利用NVMe SSD作为扩展内存层，通过标准文件系统（如基于mmap的OS Page Cache）来映射SSD。然而，这种设计存在三个根本性缺陷：</p>
+<ol><li><strong>Page Cache抖动</strong>：在Decode阶段，自回归模式导致反复读取积累的KV Cache，触发严重的页面缓存抖动（缓存页在重用前被驱逐），使得缓存命中率崩溃。</li><li><strong>高昂的软件栈开销</strong>：遍历虚拟文件系统（VFS）、文件系统、块层和设备驱动程序的软件开销引入了严重的延迟，阻碍了对NVMe SSD带宽的充分利用。</li><li><strong>设备级顺序局部性丢失</strong>：Linux多队列块层（<code>blk-mq</code>）将请求分布到多个队列，导致原本连续的KV Cache流在到达SSD控制器时变得碎片化和交错。</li></ol>
+<p>针对上述问题，本文提出了DUAL-BLADE，一个为边缘LLM推理设计的双路径NVMe-direct KV Cache卸载架构。其主要创新点包括：</p>
+<ul><li><strong>双路径KV驻留（Dual-Path KV Residency）</strong>：根据运行时可用的Page Cache预算，动态地将KV张量组分配到Page Cache路径或NVMe-direct路径，从而避免缓存抖动并维持高命中率。</li><li><strong>带有顺序LBA放置的NVMe-direct（NVMe-direct with Sequential-LBA Placement）</strong>：在NVMe-direct路径上绕过内核存储栈，并将KV张量映射到连续的逻辑块地址（LBA）区域，以实现低开销的直接存储访问并保留设备级顺序性。</li><li><strong>自适应流水线并行（Adaptive Pipeline Parallelism）</strong>：动态协调线程间的I/O和GPU DMA计算，在带宽争用下隐藏残余I/O延迟，最大化端到端推理吞吐量。</li></ul>
 <p>实验表明，DUAL-BLADE在各种内存预算下大幅缓解了I/O瓶颈，将Prefill和Decode延迟分别降低了最高$33.1\%$和$42.4\%$，同时将SSD利用率提高了$2.2\times$。</p>
 <h2>背景知识与关键观察</h2>
 <p><strong>LLM Transformer推理与KV Cache</strong>。LLM由堆叠的Transformer块组成。每个块包含多头注意力（MHA）和前馈网络（FFN）。推理分为Prefill和Decode两个阶段。在Prefill阶段，所有Prompt Token并行处理以生成第一个Token。在Decode阶段，模型以自回归方式逐个生成Token。在每次Decode步骤中，模型从KV Cache加载所有先前的KV对以计算当前Token的注意力，然后将新生成的KV对存回KV Cache。KV Cache的大小随上下文长度和批处理大小变化，极易超出GPU内存。<br/>

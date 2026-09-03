@@ -44,11 +44,8 @@ $$ \sum_{k} S_{k} \cdot P_{k j}+\frac{D_{k} \cdot S_{k}}{\mathrm{N}} \leq C $$
 <p><strong>核心问题与研究目标</strong>：<br/>
 长上下文微调中的异构序列长度分布给现有分布式LLM训练框架带来了巨大挑战。长序列因其巨大的内存需求，需要上下文并行和其他内存削减策略，但这些策略会因通信开销和GPU利用率不足而损害短序列的训练效率。此外，序列长度的广泛分布加剧了Attention模块计算特性的不匹配（计算复杂度为二次方，内存消耗为线性），导致负载均衡问题。本文的目标是通过动态数据调度来平衡长短序列的计算需求，从而提高整体训练效率。</p>
 <p><strong>创新点与主要贡献</strong>：<br/>
-本文提出了Skrull，一个专为高效长上下文微调设计的动态数据调度器。其主要贡献如下：<br/>
-* <strong>新的数据调度视角</strong>：提出了一种新的数据调度视角来解决异构序列长度分布的问题。<br/>
-* <strong>分布式感知上下文并行（DACP）</strong>：提出了一种新的上下文并行技术DACP，它基于细粒度的数据调度，既能保持处理长序列的能力，又能保证短序列的处理效率，从而实现了在异构数据分布下的高效训练。<br/>
-* <strong>全局数据调度（GDS）</strong>：实现了粗粒度的全局数据调度（GDS），并将GDS和DACP的调度过程共同建模为一个联合优化问题。<br/>
-* <strong>轻量级启发式算法</strong>：设计了一种轻量级的启发式算法，在真实世界数据集上实现了平均3.76倍（峰值7.54倍）的性能提升。</p>
+本文提出了Skrull，一个专为高效长上下文微调设计的动态数据调度器。其主要贡献如下：</p>
+<ul><li><strong>新的数据调度视角</strong>：提出了一种新的数据调度视角来解决异构序列长度分布的问题。</li><li><strong>分布式感知上下文并行（DACP）</strong>：提出了一种新的上下文并行技术DACP，它基于细粒度的数据调度，既能保持处理长序列的能力，又能保证短序列的处理效率，从而实现了在异构数据分布下的高效训练。</li><li><strong>全局数据调度（GDS）</strong>：实现了粗粒度的全局数据调度（GDS），并将GDS和DACP的调度过程共同建模为一个联合优化问题。</li><li><strong>轻量级启发式算法</strong>：设计了一种轻量级的启发式算法，在真实世界数据集上实现了平均3.76倍（峰值7.54倍）的性能提升。</li></ul>
 <h2>A3 背景知识与关键观察</h2>
 <h3>背景知识</h3>
 <p><strong>数据并行（Data Parallelism, DP）</strong>：数据并行【15, Pytorch distributed: experiences on accelerating data parallel training, 2020, VLDB Endow.】【24, Pytorch fsdp: Experiences on scaling fully sharded data parallel, 2023, arXiv】【20, Zero: memory optimizations toward training trillion parameter models, 2020, SC】将训练样本划分给多个工作节点（worker），每个工作节点维护一个完整的模型权重副本。在每次迭代中，所有工作节点独立处理全局批次的一个子集，然后同步所有DP rank之间的梯度。然而，由于DP中固有的同步语义，负载均衡成为一个显著问题，尤其是在长上下文场景中。</p>

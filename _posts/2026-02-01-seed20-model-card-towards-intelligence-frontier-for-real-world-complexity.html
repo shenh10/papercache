@@ -61,30 +61,15 @@ Seed2.0 的一个关键优势在于其成本结构。如 Table 1 所示，Seed2.
 <p><strong>基础语言能力评估框架</strong><br/>
 为了衡量基础能力，Seed2.0 在包括 AIME 2025、GPQA Diamond [76]、LiveCodeBench [44] 等一系列基准上进行了评估。除了标准基准，本文特别强调了<strong>长尾专业知识（Long-tail Professional Knowledge）</strong>的评估。受 SuperGPQA [28] 启发，设计了 <strong>LPFQA</strong> [132] 和 <strong>Encyclo-K</strong> [48] 两个新基准。LPFQA 基于专业论坛和专家社区的长尾问题构建，涵盖编程、金融、工程等领域，用于衡量检索和综合长尾专业知识的可靠性。Encyclo-K 则从书籍中提取原子知识陈述并动态组合成评估实例，支持零样本和少样本上下文学习（ICL）评估，以测试模型是否真正掌握了长篇来源中的结构化知识。此外，还构建了 <strong>HLE-Verified</strong>，这是 Humanity’s Last Exam 的经过专家审查的子集，剔除了模糊或不可验证的问题。</p>
 <p><strong>基础视觉能力评估框架</strong><br/>
-Seed2.0 的图像理解能力通过 50 个公共图像基准和 24 个公共视频基准进行评估。图像基准涵盖九大类：<br/>
-* <strong>MultiModal Math</strong>：评估视觉上下文中的数学推理，使用 MathVista [52]、DynaMath [133] 等。其中 DynaMath 报告最坏情况准确率（需答对所有 10 个变体）。<br/>
-* <strong>MultiModal STEM</strong>：评估科学和工程领域的专业知识，使用 MMMU [117]、PhyX [80] 等。<br/>
-* <strong>Visual Puzzles</strong>：通过 LogicVista [106] 和 ArcAGI (Image) [72] 等测试抽象推理和模式识别。<br/>
-* <strong>Perception &amp; Cognition</strong>：使用 VLMsAreBiased [90] 等评估幻觉最小化和偏差缓解。<br/>
-* <strong>General VQA</strong>：通过 SimpleVQA [20]、VibeEval [66] 等评估处理开放式查询的能力。MTVQA [83] 使用 LLM-judge 进行评估。<br/>
-* <strong>Pointing &amp; Counting</strong>：使用 CountBench [67] 等测试细粒度视觉定位和计数。<br/>
-* <strong>2D &amp; 3D Spatial Understanding</strong>：使用 BLINK [33]、MMSIBench [112] 等评估几何关系和深度理解。<br/>
-* <strong>Document &amp; Chart Understanding</strong>：涵盖 ChartQAPro [58]、OmniDocBench [65] 等，测试密集文本提取和复杂图表解读。<br/>
-* <strong>LongContext Understanding</strong>：使用 DUDE [89]、MMLongBench [98] 等测试多页文档或长视频的处理能力。</p>
+Seed2.0 的图像理解能力通过 50 个公共图像基准和 24 个公共视频基准进行评估。图像基准涵盖九大类：</p>
+<ul><li><strong>MultiModal Math</strong>：评估视觉上下文中的数学推理，使用 MathVista [52]、DynaMath [133] 等。其中 DynaMath 报告最坏情况准确率（需答对所有 10 个变体）。</li><li><strong>MultiModal STEM</strong>：评估科学和工程领域的专业知识，使用 MMMU [117]、PhyX [80] 等。</li><li><strong>Visual Puzzles</strong>：通过 LogicVista [106] 和 ArcAGI (Image) [72] 等测试抽象推理和模式识别。</li><li><strong>Perception &amp; Cognition</strong>：使用 VLMsAreBiased [90] 等评估幻觉最小化和偏差缓解。</li><li><strong>General VQA</strong>：通过 SimpleVQA [20]、VibeEval [66] 等评估处理开放式查询的能力。MTVQA [83] 使用 LLM-judge 进行评估。</li><li><strong>Pointing &amp; Counting</strong>：使用 CountBench [67] 等测试细粒度视觉定位和计数。</li><li><strong>2D &amp; 3D Spatial Understanding</strong>：使用 BLINK [33]、MMSIBench [112] 等评估几何关系和深度理解。</li><li><strong>Document &amp; Chart Understanding</strong>：涵盖 ChartQAPro [58]、OmniDocBench [65] 等，测试密集文本提取和复杂图表解读。</li><li><strong>LongContext Understanding</strong>：使用 DUDE [89]、MMLongBench [98] 等测试多页文档或长视频的处理能力。</li></ul>
 <p>视频理解评估涵盖六个维度：视频知识（VideoMMMU [39]）、视频推理（VideoReasonBench [51], Morse-500 [9]）、动作与感知（TVBench [21]）、长视频理解（VideoMME [30]）、多视频理解（CrossVid [46]）和流媒体视频理解（OVBench [43]）。对于 Morse-500 和动作感知基准，分别提高了输入帧率以适应推理需求。</p>
 <p><strong>基础 Agent 能力评估框架</strong><br/>
-为了评估模型规划、调用工具和完成多步骤任务的能力，本文对测试脚本进行了系统重构以优化执行稳定性和可复现性，包括消除冗余环境配置、修复参考脚本环境和使用内部镜像替换外部包存储库。评估排除了具有不确定性行为或网络依赖的低质量测试用例。评估维度包括：<br/>
-* <strong>Coding Agents</strong>：涵盖存储库级软件工程，如 Terminal-Bench [59]、SWE-Bench [45]、NL2Repo-Bench [25]。<br/>
-* <strong>Search Agents</strong>：如 BrowseComp [101]、WideSearch [102]。<br/>
-* <strong>Tool Use</strong>：如 $\tau^2$-Bench [5]、BFCL-v4 [68]。<br/>
-* <strong>GUI Agents</strong>：如 Minedojo-Verified [29]。<br/>
-* <strong>Deep Research</strong>：如 DeepResearch [27]、ResearchRubrics [79]。</p>
+为了评估模型规划、调用工具和完成多步骤任务的能力，本文对测试脚本进行了系统重构以优化执行稳定性和可复现性，包括消除冗余环境配置、修复参考脚本环境和使用内部镜像替换外部包存储库。评估排除了具有不确定性行为或网络依赖的低质量测试用例。评估维度包括：</p>
+<ul><li><strong>Coding Agents</strong>：涵盖存储库级软件工程，如 Terminal-Bench [59]、SWE-Bench [45]、NL2Repo-Bench [25]。</li><li><strong>Search Agents</strong>：如 BrowseComp [101]、WideSearch [102]。</li><li><strong>Tool Use</strong>：如 $\tau^2$-Bench [5]、BFCL-v4 [68]。</li><li><strong>GUI Agents</strong>：如 Minedojo-Verified [29]。</li><li><strong>Deep Research</strong>：如 DeepResearch [27]、ResearchRubrics [79]。</li></ul>
 <p><strong>高级经济与科学价值任务评估</strong><br/>
-为了反映 Agent 时代的范式转变，评估框架包含四个高级维度：<br/>
-1. <strong>Scientific Discovery</strong>：引入 <strong>Ainstain Bench</strong> [27] 评估科学编码能力，以及 <strong>BABE</strong> [129] 评估生物领域的跨模态科学推理。<br/>
-2. <strong>Vibe Coding</strong>：构建 <strong>NL2Repo-Bench</strong>，衡量模型是否能根据自然语言规范在单次端到端过程中完成整个软件存储库的构建，关注跨文件一致性和依赖管理。<br/>
-3. <strong>Economically Valuable Fields</strong>：开发了内部基准测试，涵盖 <strong>教育</strong>（K-12 问题解决）、<strong>文本分类</strong>（意图识别、情感分析）和 <strong>信息提取</strong>（从合同、会议记录等异构文档中提取结构化元素）。<br/>
-4. <strong>Context Learning &amp; Real-World Tasks</strong>：引入 <strong>DeR2</strong> [115] 评估从嘈杂的长篇技术文档中提取信息的能力。构建 <strong>Customer Support Q&amp;A</strong> 和 <strong>Complex Workflow</strong> 场景以反映企业工作负载。此外，使用 <strong>WorldTravel</strong> [97] 评估现实场景中的多步骤计划生成能力。</p>
+为了反映 Agent 时代的范式转变，评估框架包含四个高级维度：</p>
+<ol><li><strong>Scientific Discovery</strong>：引入 <strong>Ainstain Bench</strong> [27] 评估科学编码能力，以及 <strong>BABE</strong> [129] 评估生物领域的跨模态科学推理。</li><li><strong>Vibe Coding</strong>：构建 <strong>NL2Repo-Bench</strong>，衡量模型是否能根据自然语言规范在单次端到端过程中完成整个软件存储库的构建，关注跨文件一致性和依赖管理。</li><li><strong>Economically Valuable Fields</strong>：开发了内部基准测试，涵盖 <strong>教育</strong>（K-12 问题解决）、<strong>文本分类</strong>（意图识别、情感分析）和 <strong>信息提取</strong>（从合同、会议记录等异构文档中提取结构化元素）。</li><li><strong>Context Learning &amp; Real-World Tasks</strong>：引入 <strong>DeR2</strong> [115] 评估从嘈杂的长篇技术文档中提取信息的能力。构建 <strong>Customer Support Q&amp;A</strong> 和 <strong>Complex Workflow</strong> 场景以反映企业工作负载。此外，使用 <strong>WorldTravel</strong> [97] 评估现实场景中的多步骤计划生成能力。</li></ol>
 <h1>A4 实验环境</h1>
 <ul>
 <li><strong>模型标识</strong>：Seed2.0 Pro (Doubao-Seed-2.0-pro), Seed2.0 Lite, Seed2.0 Mini。</li>
@@ -156,17 +141,10 @@ Seed2.0 的图像理解能力通过 50 个公共图像基准和 24 个公共视�
 <li><strong>迭代代码调试 (Section 5.1.3)</strong>：在 SWE-bench Pro 的 Qt 日志重构任务中，Seed2.0 展示了零回归（Zero-regression）调试能力。任务要求将 <code>hide_qt_warning</code> 从 <code>log.py</code> 移至 <code>qtlog.py</code>。模型不仅移动了代码和测试，还通过在原位置保留导入层（import layer）来维持向后兼容性。验证过程包括边界扫描、迁移、单元测试和集成验证，最终确保了行为的严格等效性 (Fig 5)。</li>
 <li><strong>竞赛级编程 (Section 5.1.5)</strong>：在 2025 年下半年的 5 场 ICPC 官方比赛中，Seed2.0 Pro 均达到了金牌水平，Pass@8 得分为 73.02%，显著优于 GPT-5.2 和 Gemini-3-Pro (Fig 7)。</li>
 </ul>
-<p><strong>现实世界应用操作</strong><br/>
-* <strong>FreeCAD 操作 (Section 5.2.1)</strong>：Seed2.0 在参数化实体建模任务中展示了语义 GUI 理解能力。面对工具选择错误或对话框无响应等 UI 噪音，模型通过自我反思机制（Self-Reflection）进行纠正，例如重新定位菜单中的工具或确认点击。它通过 Python 控制台（<code>obj.Shape.Volume</code>）进行数值验证，而非仅仅依赖视觉检查，确保了工程级的精确性 (Fig 8)。<br/>
-* <strong>CapCut 操作 (Section 5.2.2)</strong>：在视频编辑任务中，Seed2.0 能够处理具有时间依赖性的多步操作（分割、转场、特效）。面对 UI 状态不一致（如双击失败），系统会重新锚定工作流，例如将播放头重置到 <code>00:00:00:00</code> 以防止误差传播。模型展示了在部分失败下的自适应控制能力 (Fig 9)。</p>
-<p><strong>多学科科学研究</strong><br/>
-* <strong>量子计算代码 (Section 5.3.1)</strong>：在 AInstein Bench 中，Seed2.0 修复了 Qiskit Solovay-Kitaev 编译器中的一个细微 Bug。该 Bug 源于 SU(2)（双覆盖）到 SO(3) 映射时的全局相位丢失。Seed2.0 并没有简单地进行数值修补，而是从群论角度识别了根因，并在后处理阶段通过计算相位 $\phi$使得 $e^{i\phi}U_{decomp} = U_{target}$ 来恢复相位信息，展示了领域理论与软件工程的结合 (Fig 12)。<br/>
-* <strong>广义相对论代码</strong>：Seed2.0 在 Einstein Toolkit (Cactus 框架) 中实现了计算黑洞视界间<strong>固有时（Proper Distance）</strong>的功能。它正确地区分了坐标距离与弯曲时空中的测地线距离，实现了度规张量 $g_{ij}$ 的积分 $s = \int \sqrt{g_{ij} dx^i dx^j}$，并处理了 Fortran/C++ 混合代码库中的依赖关系 (Fig 13)。<br/>
-* <strong>计算化学代码</strong>：Seed2.0 修复了 PySCF 在复数密度矩阵下的密度拟合（Density Fitting）J/K 矩阵构建错误。通过诊断，模型发现底层 C 例程仅支持实数数组。修复方案利用线性性原理 $K(D_{re} + iD_{im}) = K(D_{re}) + iK(D_{im})$，将复数矩阵分解处理，成功将误差从 0.9 Hartree 降低到数值精度级别。<br/>
-* <strong>科学分析 (Section 5.4)</strong>：<br/>
-    * <strong>生物分子模拟</strong>：设计了使用 GROMACS 研究 CBD 与 $\alpha 7$ nAChR 受体结合的粗粒度分子动力学（CG-MD）方案。方案包括 PDB 结构选择、Martini 力场参数化、周期性边界条件处理以及基于 RMSD 和氢键的分析策略 (Fig 16)。<br/>
-    * <strong>高分子合成分析</strong>：分析了通过 ROMP 和氧化两步法合成马来酰亚胺聚乙炔（mPA）的路线。模型正确解释了前体聚合物的 $sp^3$ 杂化带来的加工性优势，以及氧化后形成共轭平面结构对导电性和 LUMO 能级（n 型半导体特性）的影响 (Fig 17)。<br/>
-    * <strong>实验设计</strong>：设计了基于 Cre-LoxP 系统的转基因小鼠模型，用于研究特定脑区细胞类型特异性的高尔基体蛋白失调。方案详细说明了 CRISPR/Cas9 靶向、高尔基体免疫沉淀（Golgi-IP）及多组学（蛋白质组、脂质组、代谢组）分析流程 (Fig 18)。</p>
+<p><strong>现实世界应用操作</strong></p>
+<ul><li><strong>FreeCAD 操作 (Section 5.2.1)</strong>：Seed2.0 在参数化实体建模任务中展示了语义 GUI 理解能力。面对工具选择错误或对话框无响应等 UI 噪音，模型通过自我反思机制（Self-Reflection）进行纠正，例如重新定位菜单中的工具或确认点击。它通过 Python 控制台（<code>obj.Shape.Volume</code>）进行数值验证，而非仅仅依赖视觉检查，确保了工程级的精确性 (Fig 8)。</li><li><strong>CapCut 操作 (Section 5.2.2)</strong>：在视频编辑任务中，Seed2.0 能够处理具有时间依赖性的多步操作（分割、转场、特效）。面对 UI 状态不一致（如双击失败），系统会重新锚定工作流，例如将播放头重置到 <code>00:00:00:00</code> 以防止误差传播。模型展示了在部分失败下的自适应控制能力 (Fig 9)。</li></ul>
+<p><strong>多学科科学研究</strong></p>
+<ul><li><strong>量子计算代码 (Section 5.3.1)</strong>：在 AInstein Bench 中，Seed2.0 修复了 Qiskit Solovay-Kitaev 编译器中的一个细微 Bug。该 Bug 源于 SU(2)（双覆盖）到 SO(3) 映射时的全局相位丢失。Seed2.0 并没有简单地进行数值修补，而是从群论角度识别了根因，并在后处理阶段通过计算相位 $\phi$使得 $e^{i\phi}U_{decomp} = U_{target}$ 来恢复相位信息，展示了领域理论与软件工程的结合 (Fig 12)。</li><li><strong>广义相对论代码</strong>：Seed2.0 在 Einstein Toolkit (Cactus 框架) 中实现了计算黑洞视界间<strong>固有时（Proper Distance）</strong>的功能。它正确地区分了坐标距离与弯曲时空中的测地线距离，实现了度规张量 $g_{ij}$ 的积分 $s = \int \sqrt{g_{ij} dx^i dx^j}$，并处理了 Fortran/C++ 混合代码库中的依赖关系 (Fig 13)。</li><li><strong>计算化学代码</strong>：Seed2.0 修复了 PySCF 在复数密度矩阵下的密度拟合（Density Fitting）J/K 矩阵构建错误。通过诊断，模型发现底层 C 例程仅支持实数数组。修复方案利用线性性原理 $K(D_{re} + iD_{im}) = K(D_{re}) + iK(D_{im})$，将复数矩阵分解处理，成功将误差从 0.9 Hartree 降低到数值精度级别。</li><li><strong>科学分析 (Section 5.4)</strong>：<ul><li><strong>生物分子模拟</strong>：设计了使用 GROMACS 研究 CBD 与 $\alpha 7$ nAChR 受体结合的粗粒度分子动力学（CG-MD）方案。方案包括 PDB 结构选择、Martini 力场参数化、周期性边界条件处理以及基于 RMSD 和氢键的分析策略 (Fig 16)。</li><li><strong>高分子合成分析</strong>：分析了通过 ROMP 和氧化两步法合成马来酰亚胺聚乙炔（mPA）的路线。模型正确解释了前体聚合物的 $sp^3$ 杂化带来的加工性优势，以及氧化后形成共轭平面结构对导电性和 LUMO 能级（n 型半导体特性）的影响 (Fig 17)。</li><li><strong>实验设计</strong>：设计了基于 Cre-LoxP 系统的转基因小鼠模型，用于研究特定脑区细胞类型特异性的高尔基体蛋白失调。方案详细说明了 CRISPR/Cas9 靶向、高尔基体免疫沉淀（Golgi-IP）及多组学（蛋白质组、脂质组、代谢组）分析流程 (Fig 18)。</li></ul></li></ul>
 <p><strong>自动化的模型对模型行为诊断 (Section 5.5)</strong><br/>
 构建了一个自动化诊断管道，利用 LLM 分析同行模型在异构基准上的评估结果。该系统聚合了指标得分和行为统计数据（Token 使用、格式合规性等），能够有效暴露模型的具体弱点，如代码切换问题或重复的思维链（CoT）模式 (Table 15)。</p>
 <h1>A6 附录</h1>
@@ -188,15 +166,10 @@ Seed2.0 的图像理解能力通过 50 个公共图像基准和 24 个公共视�
 <li><strong>实现细节</strong>：推导 F 函数的逆 $F^{-1}$。构建 $k_0$ 的差分表（Delta Map）以加速查找。利用已知明文对 $(P_0, P_1)$ 构建表，用 $(P_2, P_3)$ 验证候选密钥。</li>
 <li><strong>结果</strong>：将复杂度从 $O(2^{80})$ 降低至 $O(2^{21})$，在 22.6 秒内恢复所有子密钥并解密了 100 个密文。</li>
 </ul>
-<p><strong>NL2Repo 与 SWE-bench Pro 实现细节 (Appendix C &amp; D)</strong><br/>
-* <strong>NL2Repo</strong>：从 39KB 的自然语言规范中提取需求，实现了 <code>python-decouple</code> 库。关键在于处理 Python 3.12 的 <code>ConfigParser</code> API 变更，并确保布尔转换逻辑处理空字符串的边界情况。<br/>
-* <strong>SWE-bench Pro</strong>：在 <code>qutebrowser</code> 重构中，通过 <code>from qutebrowser.utils.qtlog import ...</code> 的重新导出模式（Re-export pattern）维持了 API 兼容性，并通过 <code>grep</code> 分析确保所有依赖模块均未受损。</p>
-<p><strong>高级数学推理评估细节 (Appendix E)</strong><br/>
-* <strong>自然语言证明</strong>：采用 solve-verify-refine 框架。Seed2.0 Pro 在 IMO 2025 和 CMO 2025 中均达到金牌水平。<br/>
-* <strong>形式化定理证明</strong>：在 Putnam-200 基准上，Seed2.0 Pro 达到 35.5% Pass@8，优于 Gemini-3-Pro (26.5%)。<br/>
-* <strong>Erdős 问题案例</strong>：<br/>
-    * <strong>Erdős 652</strong>：关于平面点集的不同距离。模型构建了点与圆的关联图，利用 Crossing Number Inequality（$cr(G) \ge \frac{m^3}{64n^2}$）推导出矛盾，证明了 $\alpha_k \to \infty$。<br/>
-    * <strong>Erdős 1051</strong>：关于无限级数 $\sum \frac{1}{a_n a_{n+1}}$ 的无理性。模型通过假设 $S = P/Q$ 为有理数，利用递推关系 $r_n - r_m \le \sum \frac{C}{2^k}$ 证明收敛性，并最终导出 $x_m \to 0$ 与 $x_m \ge 1/Q$ 的矛盾。证明过程涉及复杂的数论不等式放缩。</p>
+<p><strong>NL2Repo 与 SWE-bench Pro 实现细节 (Appendix C &amp; D)</strong></p>
+<ul><li><strong>NL2Repo</strong>：从 39KB 的自然语言规范中提取需求，实现了 <code>python-decouple</code> 库。关键在于处理 Python 3.12 的 <code>ConfigParser</code> API 变更，并确保布尔转换逻辑处理空字符串的边界情况。</li><li><strong>SWE-bench Pro</strong>：在 <code>qutebrowser</code> 重构中，通过 <code>from qutebrowser.utils.qtlog import ...</code> 的重新导出模式（Re-export pattern）维持了 API 兼容性，并通过 <code>grep</code> 分析确保所有依赖模块均未受损。</li></ul>
+<p><strong>高级数学推理评估细节 (Appendix E)</strong></p>
+<ul><li><strong>自然语言证明</strong>：采用 solve-verify-refine 框架。Seed2.0 Pro 在 IMO 2025 和 CMO 2025 中均达到金牌水平。</li><li><strong>形式化定理证明</strong>：在 Putnam-200 基准上，Seed2.0 Pro 达到 35.5% Pass@8，优于 Gemini-3-Pro (26.5%)。</li><li><strong>Erdős 问题案例</strong>：<ul><li><strong>Erdős 652</strong>：关于平面点集的不同距离。模型构建了点与圆的关联图，利用 Crossing Number Inequality（$cr(G) \ge \frac{m^3}{64n^2}$）推导出矛盾，证明了 $\alpha_k \to \infty$。</li><li><strong>Erdős 1051</strong>：关于无限级数 $\sum \frac{1}{a_n a_{n+1}}$ 的无理性。模型通过假设 $S = P/Q$ 为有理数，利用递推关系 $r_n - r_m \le \sum \frac{C}{2^k}$ 证明收敛性，并最终导出 $x_m \to 0$ 与 $x_m \ge 1/Q$ 的矛盾。证明过程涉及复杂的数论不等式放缩。</li></ul></li></ul>
 <h1>A5 结论</h1>
 <p>Seed2.0 系列模型在解决复杂现实世界任务的智能化进程中迈出了关键一步。Seed 团队通过识别用户真实需求，构建了可靠且前瞻性的评估体系。基于此，Seed2.0 重点解决了长尾知识和复杂指令遵循问题，增强了模型在长周期任务中的可靠性。凭借世界领先的推理、视觉理解和搜索能力，Seed2.0 已具备处理初步复杂现实世界任务的能力，能为数亿用户带来更大价值。</p>
 </div>

@@ -23,10 +23,8 @@ title: 'TailorKV: A Hybrid Framework for Long-Context Inference via Tailored KV 
 <p><strong>发表时间</strong>: 2025-07 · ACL 2025 Findings</p>
 <p><strong>原文</strong>: <a href="https://aclanthology.org/2025.findings-acl.1043" rel="noopener" target="_blank">https://aclanthology.org/2025.findings-acl.1043</a></p>
 <p><strong>作者/机构：</strong><br/>
-Dingyu Yao$^{1,2}$, Bowen Shen$^{1,2}$, Zheng Lin$^{1,2}$, Wei Liu$^3$, Jian Luan$^3$, Bin Wang$^3$, Weiping Wang$^1$<br/>
-1. Institute of Information Engineering, Chinese Academy of Sciences, Beijing, China<br/>
-2. School of Cyber Security, University of Chinese Academy of Sciences, Beijing, China <br/>
-3. MiLM Plus, Xiaomi Inc, Beijing, China</p>
+Dingyu Yao$^{1,2}$, Bowen Shen$^{1,2}$, Zheng Lin$^{1,2}$, Wei Liu$^3$, Jian Luan$^3$, Bin Wang$^3$, Weiping Wang$^1$</p>
+<ol><li>Institute of Information Engineering, Chinese Academy of Sciences, Beijing, China</li><li>School of Cyber Security, University of Chinese Academy of Sciences, Beijing, China</li><li>MiLM Plus, Xiaomi Inc, Beijing, China</li></ol>
 <hr/>
 <details class="tldr-block" open="">
 <summary class="tldr-summary">速读</summary>
@@ -48,10 +46,8 @@ $$ \mathcal{P} = n_q - \sum_{(i,j) \in \hat{\mathcal{I}}} \hat{\mathbf{A}}_{i,j}
 </details>
 <h2>主要贡献</h2>
 <p>生成式大型语言模型（LLMs）中的键值（KV）缓存引入了巨大的内存开销。现有的工作通过卸载或压缩KV缓存来减轻这一负担。然而，由于CPU-GPU通信中的PCIe带宽瓶颈，加载整个缓存会引发显著的延迟，而激进的压缩则会导致明显的性能下降。本文的核心研究目标是同时优化长上下文LLM推理中的准确性、内存和延迟。</p>
-<p>本文的主要创新点如下：<br/>
-1. 确定了特定层的压缩偏好，并开发了一种识别指标来确定模型中不同层的最佳压缩策略。浅层具有密集的注意力模式并强调全局信息，更适合统一压缩（如量化）；而其他层主要关注少数具有主导激活的tokens，存在大量冗余信息，适合稀疏性（如选择性加载）。<br/>
-2. 提出了一种名为 TailorKV 的混合KV缓存压缩框架，该框架通过算法-系统协同设计，将量化和卸载技术无缝集成，在保留模型精度的同时保持了执行效率。<br/>
-3. 在长上下文基准测试上的广泛实验表明，TailorKV在激进的压缩设置下实现了几乎无损的性能，超越了现有最先进的方法。特别是，具有128k上下文的 Llama-3.1-8B 可以在单块 RTX 3090 GPU 上提供服务，解码期间达到每个token $82\mathrm{ms}$ 的速度。</p>
+<p>本文的主要创新点如下：</p>
+<ol><li>确定了特定层的压缩偏好，并开发了一种识别指标来确定模型中不同层的最佳压缩策略。浅层具有密集的注意力模式并强调全局信息，更适合统一压缩（如量化）；而其他层主要关注少数具有主导激活的tokens，存在大量冗余信息，适合稀疏性（如选择性加载）。</li><li>提出了一种名为 TailorKV 的混合KV缓存压缩框架，该框架通过算法-系统协同设计，将量化和卸载技术无缝集成，在保留模型精度的同时保持了执行效率。</li><li>在长上下文基准测试上的广泛实验表明，TailorKV在激进的压缩设置下实现了几乎无损的性能，超越了现有最先进的方法。特别是，具有128k上下文的 Llama-3.1-8B 可以在单块 RTX 3090 GPU 上提供服务，解码期间达到每个token $82\mathrm{ms}$ 的速度。</li></ol>
 <hr/>
 <h2>背景知识与关键观察</h2>
 <p><strong>LLM推理的两阶段过程。</strong> LLM推理包含prefill和decode两个阶段。在prefill阶段，使用整个提示（prompt）生成第一个token。给定提示嵌入 $\mathbf{X} \in \mathbb{R}^{n \times d}$ 以及权重矩阵 $\mathbf{W}_i^q, \mathbf{W}_i^k, \mathbf{W}_i^v \in \mathbb{R}^{d \times d_h}$（对于头 $i \in [1, h]$），其中 $n$ 是序列长度，$d$ 是隐藏维度，$d_h$ 是头维度。计算并缓存头 $i$ 的键和值：$\mathbf{K}_i = \mathbf{X} \mathbf{W}_i^k, \mathbf{V}_i = \mathbf{X} \mathbf{W}_i^v$。在decode阶段，迭代计算新的token嵌入 $\mathbf{x} \in \mathbb{R}^{1 \times d}$ 以产生查询、键和值向量。缓存被更新，每个注意力头的输出 $\mathbf{o}_i$ 计算如下：$\mathbf{K}_i \gets \mathrm{Cat}[\mathbf{K}_i, \mathbf{xW}_i^k], \mathbf{V}_i \gets \mathrm{Cat}[\mathbf{V}_i, \mathbf{xW}_i^v]$，$\mathbf{a}_i = \mathrm{Softmax}\big(\mathbf{q}_i \mathbf{K}_i^\top / \sqrt{d_h}\big), \mathbf{o}_i = \mathbf{a}_i \mathbf{V}_i$，其中 $\mathbf{q}_i = \mathbf{x} \mathbf{W}_i^q$，所有头的注意力输出被拼接并发送到FFN。</p>

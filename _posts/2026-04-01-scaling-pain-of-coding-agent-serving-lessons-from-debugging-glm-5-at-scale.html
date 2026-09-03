@@ -33,19 +33,15 @@ title: 'Scaling Pain of Coding Agent Serving: Lessons from Debugging GLM-5 at Sc
 </details>
 <h2>主要贡献</h2>
 <p>在大模型应用从简单对话全面转向更复杂、长程的 Coding Agent 任务背景下，推理基础设施每天承受数亿次调用，面临前所未有的压力。GLM-5 系列模型在执行高并发、长上下文的 Coding Agent 任务时，遭遇了难以稳定复现的乱码、复读及偶现生僻字等异常。本文的核心目标是定位并解决这些因极高系统负载引发的底层状态管理与并发竞态问题，以克服推理系统在规模化服务中的“Scaling Pain”。</p>
-<p>核心创新点与贡献包括：<br/>
-1. 创新性地将投机采样（Speculative Decoding）的性能指标转化为在线异常监控的实时信号，解决了长文本生成中乱码和复读难以高效检测的瓶颈。<br/>
-2. 准确定位并修复了 PD（Prefill-Decode）分离架构下异步 Abort 引发的 KV Cache 复用竞态问题，建立显式的跨节点时序一致性保证。<br/>
-3. 发现并修复了 DSA HiCache 加载流水线中的同步约束缺失（Read-before-Ready）问题，重构了算子流水线的原子性。<br/>
-4. 设计并实现了 KV Cache 分层存储方案（LayerSplit），通过消除 Context Parallel 并行策略下的显存冗余，大幅降低了 Prefill 侧的显存压力，显著提升了系统的整体吞吐量。</p>
+<p>核心创新点与贡献包括：</p>
+<ol><li>创新性地将投机采样（Speculative Decoding）的性能指标转化为在线异常监控的实时信号，解决了长文本生成中乱码和复读难以高效检测的瓶颈。</li><li>准确定位并修复了 PD（Prefill-Decode）分离架构下异步 Abort 引发的 KV Cache 复用竞态问题，建立显式的跨节点时序一致性保证。</li><li>发现并修复了 DSA HiCache 加载流水线中的同步约束缺失（Read-before-Ready）问题，重构了算子流水线的原子性。</li><li>设计并实现了 KV Cache 分层存储方案（LayerSplit），通过消除 Context Parallel 并行策略下的显存冗余，大幅降低了 Prefill 侧的显存压力，显著提升了系统的整体吞吐量。</li></ol>
 <h2>背景知识与关键观察</h2>
 <p><strong>异常现象的观察与初步推断</strong>。自三月起，在 GLM-5 的线上监控和用户反馈中观察到三类异常现象：乱码（garbled output）、复读（repetition），以及生僻字（rare character）。这些现象在表面上与长上下文场景下常见的“降智”相似，但由于并没有上线任何降低模型精度的优化，一个更关键的问题是：异常究竟源于模型本身，还是源于推理链路？如果源于模型，异常会表现为针对特定输入的稳定、可重复行为；反之，若异常与系统压力或运行时状态相关，则更可能指向推理基础设施中的链路或状态管理问题。</p>
 <p><strong>线下复现过程与异常特征定位</strong>。排查初期，先对用户反馈的 bad cases 做本地回放，并将同一批请求重复推理数百次，但始终未能复现异常，说明大概率不是模型本身的问题。为进一步模拟线上环境的压力，对线上日志做脱敏处理，并尽可能保留原始并发分布与请求时序，在本地进行全量回放。起初仍未复现异常，直到进一步调整 PD 分离比例并持续提高系统负载，模拟高峰期的 Prefill 堆积和 Decode 侧 KV Cache 压力后，才在约每万次请求中稳定复现 3-5 次异常。这种“与请求内容无关、与系统压力相关”的特征，说明问题可能来自高负载下的推理状态管理。与此同时，线下复现的异常频率仍低于线上反馈的频率，说明现有检测方法可能存在漏检，或仍有部分触发场景尚未覆盖。</p>
 <p><strong>异常检测方法的局限性</strong>。如何可靠识别异常输出成为了新的挑战。三类异常中，复读相对容易检测，而乱码与生僻字比较棘手。尝试过正则表达式、字符集匹配等启发式方法，也尝试过基于模型判别的方式，但前者存在明显的漏判与误伤，后者则难以满足大规模消融实验的效率要求。上述限制使异常检测本身成为定位流程中的一个瓶颈。</p>
-<p><strong>投机采样指标作为异常检测信号的发现</strong>。在反复分析推理日志后，发现了一个意想不到的切入点：投机采样（Speculative Decoding）指标可以作为异常检测的重要参考。投机采样原本是一个性能优化技术，先由草稿模型生成候选 token，再由目标模型校验并决定是否接受，从而在不改变最终输出分布的前提下提升 decode 效率。观察到两个指标（<code>spec_accept_length</code>：目标模型连续接受的 draft token 前缀长度；<code>spec_accept_rate</code>：draft token 被接受的比例）在异常发生时呈现出稳定模式：<br/>
-- 乱码和生僻字：通常伴随极低的 <code>spec_accept_length</code>，即草稿模型生成的候选 token 几乎全部被目标模型拒绝；表明目标模型所看到的 KV Cache 状态与草稿模型预期之间存在显著偏差。<br/>
-- 复读：通常伴随偏高的 <code>spec_accept_rate</code>，表明损坏的 KV Cache 可能使注意力模式退化，并将生成过程推向高置信度的重复循环。<br/>
-<img alt="图1: 投机采样指标可以作为异常检测的重要参考" class="figure-image" src="https://z-cdn-media.chatglm.cn/prompts-rich-media-resources/scaling-pain-blog/HyN3gRk0Zg.png"/></p>
+<p><strong>投机采样指标作为异常检测信号的发现</strong>。在反复分析推理日志后，发现了一个意想不到的切入点：投机采样（Speculative Decoding）指标可以作为异常检测的重要参考。投机采样原本是一个性能优化技术，先由草稿模型生成候选 token，再由目标模型校验并决定是否接受，从而在不改变最终输出分布的前提下提升 decode 效率。观察到两个指标（<code>spec_accept_length</code>：目标模型连续接受的 draft token 前缀长度；<code>spec_accept_rate</code>：draft token 被接受的比例）在异常发生时呈现出稳定模式：</p>
+<ul><li>乱码和生僻字：通常伴随极低的 <code>spec_accept_length</code>，即草稿模型生成的候选 token 几乎全部被目标模型拒绝；表明目标模型所看到的 KV Cache 状态与草稿模型预期之间存在显著偏差。</li><li>复读：通常伴随偏高的 <code>spec_accept_rate</code>，表明损坏的 KV Cache 可能使注意力模式退化，并将生成过程推向高置信度的重复循环。</li></ul>
+<p><img alt="图1: 投机采样指标可以作为异常检测的重要参考" class="figure-image" src="https://z-cdn-media.chatglm.cn/prompts-rich-media-resources/scaling-pain-blog/HyN3gRk0Zg.png"/></p>
 <p><strong>在线异常监控策略的实现</strong>。基于上述观察，进一步实现了一套在线异常监控策略：当 <code>spec_accept_length</code> 持续低于 1.4 且生成长度已超过 128 token，或 <code>spec_accept_rate</code> 超过 0.96 时，系统主动中止当前生成，并将请求交由负载均衡器重试。该策略使投机采样从单纯的性能优化技术，拓展为输出质量的实时监控信号，成为后续消融实验中的关键工具。</p>
 <h2>方法细节</h2>
 <p><strong>KV Cache 复用冲突的定位</strong>。在观察到异常输出与并发压力具有明显相关性后，进一步分析其原因。通过对请求生命周期以及推理引擎中 PD 分离执行时序的分析，发现该问题源于请求生命周期与 KV Cache 回收与复用时序之间的不一致，从而引发的 KV Cache 复用冲突。</p>

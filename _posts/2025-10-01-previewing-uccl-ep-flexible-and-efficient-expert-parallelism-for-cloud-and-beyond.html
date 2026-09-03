@@ -31,16 +31,11 @@ title: 'Previewing UCCL-EP: Flexible and Efficient Expert Parallelism for Cloud 
 </details>
 <h2>A1 主要贡献</h2>
 <p>本文针对专家并行（Expert Parallelism, EP）中存在的通信效率和平台可移植性问题，提出了UCCL-EP，一个灵活且高效的专家并行解决方案，旨在推动EP在公有云和异构设备（包括不同厂商的GPU和NIC）上的普及。</p>
-<p><strong>核心问题：</strong><br/>
-1.  <strong>现有方案的局限性</strong>：当前高效的EP通信库，如DeepEP，严重依赖于NVIDIA特定的硬件（NVIDIA GPU、NVIDIA NIC）和软件栈（NVSHMEM、GPUDirect、IBGDA），导致其无法在采用不同硬件（如AWS EFA网卡）的公有云或其他异构环境中运行，限制了其可移植性和部署灵活性。<br/>
-2.  <strong>细粒度通信的挑战</strong>：EP通信涉及大量小消息（例如，推理时7KB，训练时256KB）的频繁交换，这使得为大负载优化的通用集合通信库（如NCCL）效率低下，因为延迟和同步开销成为主要瓶瓶颈。<br/>
-3.  <strong>控制与可观察性缺失</strong>：DeepEP通过IBGDA技术将NIC驱动逻辑移至GPU核心执行，虽然提升了小消息效率，但也牺牲了对通信过程的精细控制和可观察性。GPU线程“盲目”地发出RDMA操作，难以实现流量控制、拥塞避免和完成状态监控，可能导致网络拥塞或高尾延迟。</p>
+<p><strong>核心问题：</strong></p>
+<ol><li><strong>现有方案的局限性</strong>：当前高效的EP通信库，如DeepEP，严重依赖于NVIDIA特定的硬件（NVIDIA GPU、NVIDIA NIC）和软件栈（NVSHMEM、GPUDirect、IBGDA），导致其无法在采用不同硬件（如AWS EFA网卡）的公有云或其他异构环境中运行，限制了其可移植性和部署灵活性。</li><li><strong>细粒度通信的挑战</strong>：EP通信涉及大量小消息（例如，推理时7KB，训练时256KB）的频繁交换，这使得为大负载优化的通用集合通信库（如NCCL）效率低下，因为延迟和同步开销成为主要瓶瓶颈。</li><li><strong>控制与可观察性缺失</strong>：DeepEP通过IBGDA技术将NIC驱动逻辑移至GPU核心执行，虽然提升了小消息效率，但也牺牲了对通信过程的精细控制和可观察性。GPU线程“盲目”地发出RDMA操作，难以实现流量控制、拥塞避免和完成状态监控，可能导致网络拥塞或高尾延迟。</li></ol>
 <p><strong>研究目标与创新点：</strong><br/>
-UCCL-EP旨在解决上述挑战，其核心设计思想是在不牺牲性能的前提下，实现GPU与CPU职责的清晰分离，从而获得高度的灵活性和可移植性。<br/>
-1.  <strong>解耦GPU与NIC的控制</strong>：UCCL-EP的核心创新在于，虽然通信仍由GPU发起以实现计算与通信的重叠，但实际的RDMA网络操作由一个轻量级的多线程CPU代理来处理。GPU通过高效的共享内存通道向CPU发送轻量级控制命令，CPU代理再使用标准化的<code>libibverbs</code>接口代表GPU执行这些网络操作。<br/>
-2.  <strong>跨厂商的硬件支持</strong>：通过依赖于Linux-RDMA社区维护的、厂商中立的<code>libibverbs</code>库，UCCL-EP能够支持各种符合该标准的RDMA网卡，如AWS EFA、Broadcom Thor、AMD Pensando等，并计划支持AMD和Intel的GPU，从而打破厂商生态系统的锁定。<br/>
-3.  <strong>高效的GPU-CPU通信机制</strong>：UCCL-EP设计并实现了一个无锁的FIFO队列作为GPU（生产者）和CPU（消费者）之间的共享内存通道。通过每个GPU配置多个通道和专用的RDMA队列对（QP），该机制能够支持每秒数千万次的RDMA请求，确保GPU到CPU的命令转发不会成为性能瓶颈。<br/>
-4.  <strong>软件层面的功能模拟与增强</strong>：针对不同NIC硬件能力的差异，UCCL-EP在软件层面实现了关键功能。例如，为解决AWS EFA网卡不保证包内有序性的问题，UCCL-EP通过在控制消息中嵌入序列号实现软件层面的消息重排；为解决EFA不支持硬件RDMA原子操作的问题，它通过常规的RDMA写操作和立即数（immediate data）来模拟原子操作，甚至通过将原子信号附加到数据写操作中，将两次操作合并为一次，提高了效率。</p>
+UCCL-EP旨在解决上述挑战，其核心设计思想是在不牺牲性能的前提下，实现GPU与CPU职责的清晰分离，从而获得高度的灵活性和可移植性。</p>
+<ol><li><strong>解耦GPU与NIC的控制</strong>：UCCL-EP的核心创新在于，虽然通信仍由GPU发起以实现计算与通信的重叠，但实际的RDMA网络操作由一个轻量级的多线程CPU代理来处理。GPU通过高效的共享内存通道向CPU发送轻量级控制命令，CPU代理再使用标准化的<code>libibverbs</code>接口代表GPU执行这些网络操作。</li><li><strong>跨厂商的硬件支持</strong>：通过依赖于Linux-RDMA社区维护的、厂商中立的<code>libibverbs</code>库，UCCL-EP能够支持各种符合该标准的RDMA网卡，如AWS EFA、Broadcom Thor、AMD Pensando等，并计划支持AMD和Intel的GPU，从而打破厂商生态系统的锁定。</li><li><strong>高效的GPU-CPU通信机制</strong>：UCCL-EP设计并实现了一个无锁的FIFO队列作为GPU（生产者）和CPU（消费者）之间的共享内存通道。通过每个GPU配置多个通道和专用的RDMA队列对（QP），该机制能够支持每秒数千万次的RDMA请求，确保GPU到CPU的命令转发不会成为性能瓶颈。</li><li><strong>软件层面的功能模拟与增强</strong>：针对不同NIC硬件能力的差异，UCCL-EP在软件层面实现了关键功能。例如，为解决AWS EFA网卡不保证包内有序性的问题，UCCL-EP通过在控制消息中嵌入序列号实现软件层面的消息重排；为解决EFA不支持硬件RDMA原子操作的问题，它通过常规的RDMA写操作和立即数（immediate data）来模拟原子操作，甚至通过将原子信号附加到数据写操作中，将两次操作合并为一次，提高了效率。</li></ol>
 <p>通过这些设计，UCCL-EP不仅在功能和接口上与DeepEP保持一致，支持解码的低延迟模式和预填充/训练的常规模式，还在AWS等异构云平台上展现出超越现有技术的卓越性能。</p>
 <h2>A3 背景知识与设计原则</h2>
 <p><strong>专家并行（EP）的通信模式</strong>。专家并行（EP）被广泛应用于大规模混合专家（MoE）模型中，模型的不同“专家”子集被放置在跨多个节点的不同GPU上。在推理或训练过程中，每个输入token都根据一个学习到的门控函数被路由到一个或几个选定的专家。这种选择性路由需要在网络中进行频繁的“分发”（dispatch，将token嵌入发送到正确的专家GPU）和“合并”（combine，将专家输出收集回发送方rank，然后进行加权求和）操作。这些数据交换通常通过远程直接内存访问（RDMA）在高速互连（如InfiniBand或RoCE）上执行。<br/>
@@ -118,11 +113,8 @@ UCCL-EP旨在解决上述挑战，其核心设计思想是在不牺牲性能的�
 </ul>
 <h2>A5 结论与未来工作</h2>
 <p>UCCL-EP目前仍处于积极开发阶段，预计在未来几个月内会有新的成果发布。团队计划发布一篇正式的博客，介绍其在应用层面的性能以及在AMD GPU和其他NIC厂商硬件上的表现。</p>
-<p><strong>当前路线图包括：</strong><br/>
-*   进一步提升UCCL-EP在EFA平台上的性能。<br/>
-*   完成向AMD GPU和Broadcom NIC的移植工作（PR #457）。<br/>
-*   在CPU代理中实现更高级的流控制和拥塞管理机制。<br/>
-*   将UCCL-EP集成到vLLM和SGLang等流行的推理框架中，并欢迎社区贡献。</p>
+<p><strong>当前路线图包括：</strong></p>
+<ul><li>进一步提升UCCL-EP在EFA平台上的性能。</li><li>完成向AMD GPU和Broadcom NIC的移植工作（PR #457）。</li><li>在CPU代理中实现更高级的流控制和拥塞管理机制。</li><li>将UCCL-EP集成到vLLM和SGLang等流行的推理框架中，并欢迎社区贡献。</li></ul>
 </div>
 
 

@@ -35,12 +35,8 @@ title: 'WaferLLM: Large Language Model Inference at Wafer Scale'
 </details>
 <h2>A1 主要贡献</h2>
 <p>新兴的人工智能（AI）加速器越来越多地采用晶圆级制造技术，将数十万个AI核心集成在网状架构中，配备了庞大的分布式片上内存（总计几十GB）和超高的片上内存带宽（几十PB/s）。然而，当前的LLM推理系统主要为GPU等共享内存架构优化，无法充分利用这些加速器的潜力。本文介绍了WaferLLM，这是首个晶圆级LLM推理系统。</p>
-<p>本文的主要贡献如下：<br/>
-1. <strong>晶圆级加速器设备模型</strong>：提出了PLMR模型（发音为“Plummer”），用于捕捉晶圆级加速器的关键硬件特性：<br/>
-    * <strong>海量并行核心 (P)</strong>：晶圆上可集成数百万核心，要求系统能有效划分LLM及其操作。<br/>
-    * <strong>高度非均匀的内存访问延迟 (L)</strong>：核心间数据访问延迟差异巨大（可达1000倍），系统必须设法缓解此问题。<br/>
-    * <strong>受限的每核心本地内存 (M)</strong>：每个核心的内存有限（几十KB到几MB），要求高效的内存使用。<br/>
-    * <strong>有限的硬件辅助路由 (R)</strong>：片上网络（NoC）的路由硬件受限于每个核心的面积，只能支持有限的路由路径（如Cerebras WSE-2上少于25条）。</p>
+<p>本文的主要贡献如下：</p>
+<ol><li><strong>晶圆级加速器设备模型</strong>：提出了PLMR模型（发音为“Plummer”），用于捕捉晶圆级加速器的关键硬件特性：<ul><li><strong>海量并行核心 (P)</strong>：晶圆上可集成数百万核心，要求系统能有效划分LLM及其操作。</li><li><strong>高度非均匀的内存访问延迟 (L)</strong>：核心间数据访问延迟差异巨大（可达1000倍），系统必须设法缓解此问题。</li><li><strong>受限的每核心本地内存 (M)</strong>：每个核心的内存有限（几十KB到几MB），要求高效的内存使用。</li><li><strong>有限的硬件辅助路由 (R)</strong>：片上网络（NoC）的路由硬件受限于每个核心的面积，只能支持有限的路由路径（如Cerebras WSE-2上少于25条）。</li></ul></li></ol>
 <ol>
 <li>
 <p><strong>晶圆级LLM并行策略</strong>：提出了一种有效的、符合PLMR模型的LLM并行策略。</p>
@@ -174,15 +170,10 @@ title: 'WaferLLM: Large Language Model Inference at Wafer Scale'
 <strong>(3) 聚合</strong>: 聚合步骤主要涉及使用我们设计的K-tree allreduce。关键步骤如下：（i）在第一阶段，每个组执行组内归约，并在每个组的根核心处获得$C_{sub}$的部分和。（ii）在第k阶段，来自第(k-1)阶段的结果被归约到第k阶段每个组的根核心。重复K次后，通过拼接所有K-tree根核心的$C_{sub}$可以获得C。（iii）可选地，根据是否需要连续的GEMV，可能会有一个从K-tree根核心的广播操作。</p>
 <p><strong>可扩展性分析</strong>。如图8中③所示，该方法通过选择合适的K，能够有效地随并行度扩展并满足L属性。它在树根核心处需要K+1条路径，但允许根据硬件限制灵活调整K以解决R问题。与流水线和环形all-reduce相比，K-tree all-reduce通过消耗路由资源，在远距离核心之间建立了直通路径，从而减少了路由延迟。然而，更大的K并不总是更好，因为它取决于N和R的约束。此外，更大的K会增加路由复杂性和开销。考虑到这些因素，我们在当前实现中选择了K=2，并在后续章节中进行了评估。</p>
 <h2>A4 实验环境</h2>
-<p><strong>硬件配置</strong>：<br/>
-* <strong>晶圆级加速器</strong>：一台配备Cerebras WSE-2的服务器。WSE-2拥有850,000个核心，每个核心的计算引擎（CE）最高运行频率为1.1 GHz。每个时钟周期可以从SRAM获取两个32位操作数，执行一次乘法累加操作，然后写回SRAM。每个核心还有一个Fabric路由器，可以在一个时钟周期内与相邻核心发送或接收32位消息。此外，每个核心包含48KB的SRAM，整个芯片总计40GB的聚合SRAM。<br/>
-* <strong>GPU集群</strong>：使用NVIDIA A100进行GPU对比实验，该GPU与WSE-2采用相同的7nm工艺。实验最多使用两台节点上的16个GPU（2x8配置）。单个节点内的8个A100 GPU通过NVLink互连，节点间通信通过高性能InfiniBand（IB）网络处理。</p>
-<p><strong>软件配置</strong>：<br/>
-* <strong>WaferLLM实现</strong>：使用约7000行CSL（一种类C语言）实现了LLM并行、MeshGEMM和MeshGEMV，以及约2000行Python用于加载LLM检查点、启动推理和执行并行策略。<br/>
-* <strong>对比系统</strong>：<br/>
-    * T10【25, Scaling deep learning computation over the inter-core connected intelligence processor with T10, 2024】：在WSE-2上实现，将每个核心视为由交叉开关互连的分布式内存系统的一部分。<br/>
-    * Ladder【45, Ladder: Enabling efficient lowprecision deep learning computing through hardwareaware tensor transformation, 2024】：在WSE-2上实现，将分布式内存架构视为统一内存。<br/>
-    * SGLang【53, Sglang: Efficient execution of structured language model programs, 2024】：在A100 GPU上使用，是性能最高的LLM推理系统之一。</p>
+<p><strong>硬件配置</strong>：</p>
+<ul><li><strong>晶圆级加速器</strong>：一台配备Cerebras WSE-2的服务器。WSE-2拥有850,000个核心，每个核心的计算引擎（CE）最高运行频率为1.1 GHz。每个时钟周期可以从SRAM获取两个32位操作数，执行一次乘法累加操作，然后写回SRAM。每个核心还有一个Fabric路由器，可以在一个时钟周期内与相邻核心发送或接收32位消息。此外，每个核心包含48KB的SRAM，整个芯片总计40GB的聚合SRAM。</li><li><strong>GPU集群</strong>：使用NVIDIA A100进行GPU对比实验，该GPU与WSE-2采用相同的7nm工艺。实验最多使用两台节点上的16个GPU（2x8配置）。单个节点内的8个A100 GPU通过NVLink互连，节点间通信通过高性能InfiniBand（IB）网络处理。</li></ul>
+<p><strong>软件配置</strong>：</p>
+<ul><li><strong>WaferLLM实现</strong>：使用约7000行CSL（一种类C语言）实现了LLM并行、MeshGEMM和MeshGEMV，以及约2000行Python用于加载LLM检查点、启动推理和执行并行策略。</li><li><strong>对比系统</strong>：<ul><li>T10【25, Scaling deep learning computation over the inter-core connected intelligence processor with T10, 2024】：在WSE-2上实现，将每个核心视为由交叉开关互连的分布式内存系统的一部分。</li><li>Ladder【45, Ladder: Enabling efficient lowprecision deep learning computing through hardwareaware tensor transformation, 2024】：在WSE-2上实现，将分布式内存架构视为统一内存。</li><li>SGLang【53, Sglang: Efficient execution of structured language model programs, 2024】：在A100 GPU上使用，是性能最高的LLM推理系统之一。</li></ul></li></ul>
 <p><strong>模型与数据集</strong>：</p>
 <ul>
 <li>
@@ -199,55 +190,44 @@ title: 'WaferLLM: Large Language Model Inference at Wafer Scale'
 </ul>
 <h2>A4 实验结果</h2>
 <h3>7.1 LLM推理性能</h3>
-<p><strong>端到端吞吐量 (表2)</strong>：<br/>
-* WaferLLM在WSE-2上对LLaMA3-8B和LLaMA2-13B的推理性能远超T10和Ladder。与T10相比，WaferLLM平均提速160倍（最高180倍）；与Ladder相比，平均提速625倍（最高677倍）。<br/>
-* 与在A100 GPU集群上运行的SGLang相比，WaferLLM实现了10-20倍的端到端速度提升。<br/>
-* T10和Ladder未能有效利用WSE-2的硬件能力，性能甚至不如单个A100上的SGLang，这突显了PLMR感知设计的重要性。</p>
+<p><strong>端到端吞吐量 (表2)</strong>：</p>
+<ul><li>WaferLLM在WSE-2上对LLaMA3-8B和LLaMA2-13B的推理性能远超T10和Ladder。与T10相比，WaferLLM平均提速160倍（最高180倍）；与Ladder相比，平均提速625倍（最高677倍）。</li><li>与在A100 GPU集群上运行的SGLang相比，WaferLLM实现了10-20倍的端到端速度提升。</li><li>T10和Ladder未能有效利用WSE-2的硬件能力，性能甚至不如单个A100上的SGLang，这突显了PLMR感知设计的重要性。</li></ul>
 <p>表2: 端到端LLM推理TPR<br/>
 <img alt="" class="figure-image" src="images/3eee17bef44008bc4ae441dbec7ced1dcf6186c1d3aef931c2c7071c2fd93ab7.jpg"/></p>
-<p><strong>预填充吞吐量 (表3)</strong>：<br/>
-* WaferLLM相较于T10平均提速160倍（最高178倍），相较于Ladder提速270-450倍。<br/>
-* WaferLLM在增加核心数量时表现出良好的可扩展性，而T10和Ladder的性能甚至会下降，因为它们没有考虑空间局部性（L属性），导致通信开销增加。</p>
+<p><strong>预填充吞吐量 (表3)</strong>：</p>
+<ul><li>WaferLLM相较于T10平均提速160倍（最高178倍），相较于Ladder提速270-450倍。</li><li>WaferLLM在增加核心数量时表现出良好的可扩展性，而T10和Ladder的性能甚至会下降，因为它们没有考虑空间局部性（L属性），导致通信开销增加。</li></ul>
 <p>表3: 预填充每请求吞吐量(TPR)<br/>
 <img alt="" class="figure-image" src="images/6bbd70336d9b54099ed07d6339102408a8e63ce8d19eb4635a23e8896d58b911.jpg"/></p>
-<p><strong>解码吞吐量 (表4)</strong>：<br/>
-* WaferLLM相较于T10平均提速5.7倍（最高6.5倍），相较于Ladder平均提速217倍（最高260倍）。<br/>
-* WaferLLM对T10的解码阶段提速幅度小于预填充阶段，因为解码的dist-GEMV对通信顺序不敏感，T10的分布式内存设计在此场景下有一定收益。而Ladder完全为共享内存设计，在两种情况下都表现不佳。</p>
+<p><strong>解码吞吐量 (表4)</strong>：</p>
+<ul><li>WaferLLM相较于T10平均提速5.7倍（最高6.5倍），相较于Ladder平均提速217倍（最高260倍）。</li><li>WaferLLM对T10的解码阶段提速幅度小于预填充阶段，因为解码的dist-GEMV对通信顺序不敏感，T10的分布式内存设计在此场景下有一定收益。而Ladder完全为共享内存设计，在两种情况下都表现不佳。</li></ul>
 <p>表4: 解码每请求吞吐量(TPR)<br/>
 <img alt="" class="figure-image" src="images/9d03c76545ae3c9caf2c088f47994973b96f03ff637c2743a25c1677db7a5247.jpg"/></p>
 <h3>7.2 MeshGEMM性能</h3>
-<p><strong>核心数扩展性 (图9)</strong>：<br/>
-* 在不同矩阵大小和核心数量下，MeshGEMM的延迟始终低于SUMMA和Cannon。其交错传输（interleave transmission）最小化了通信开销，表现出强大的可扩展性，即使在接近硬件极限时也能保持70%以上的计算效率。<br/>
-* 对于小矩阵，增加核心数可能导致SUMMA和Cannon性能下降，因为通信开销增长超过了计算收益。而MeshGEMM的通信开销增长缓慢，性能更稳定。</p>
-<p><strong>矩阵大小扩展性 (图9)</strong>：<br/>
-* 对于大矩阵，MeshGEMM同样优于SUMMA和Cannon，总周期减少约17%。<br/>
-* 一个有趣的现象是，对于8K矩阵，通信周期随着核心数增加而减少。这是因为此时通信受带宽限制，增加核心数可以提升聚合带宽。</p>
+<p><strong>核心数扩展性 (图9)</strong>：</p>
+<ul><li>在不同矩阵大小和核心数量下，MeshGEMM的延迟始终低于SUMMA和Cannon。其交错传输（interleave transmission）最小化了通信开销，表现出强大的可扩展性，即使在接近硬件极限时也能保持70%以上的计算效率。</li><li>对于小矩阵，增加核心数可能导致SUMMA和Cannon性能下降，因为通信开销增长超过了计算收益。而MeshGEMM的通信开销增长缓慢，性能更稳定。</li></ul>
+<p><strong>矩阵大小扩展性 (图9)</strong>：</p>
+<ul><li>对于大矩阵，MeshGEMM同样优于SUMMA和Cannon，总周期减少约17%。</li><li>一个有趣的现象是，对于8K矩阵，通信周期随着核心数增加而减少。这是因为此时通信受带宽限制，增加核心数可以提升聚合带宽。</li></ul>
 <p><img alt="" class="figure-image" src="images/91660a8c3b78bb057d97ad608e8b85150b9816b7c36d5c97f30ccbad1cbe4e70.jpg"/><br/>
 图9: MeshGEMM vs. SUMMA &amp; Cannon</p>
 <h3>7.3 MeshGEMV性能</h3>
-<p><strong>通信延迟瓶颈 (图10)</strong>：<br/>
-* 在WSE-2上，通信是dist-GEMV计算的主要瓶颈，尤其是在大规模并行时，通信开销可占总时间的90%。<br/>
-* MeshGEMV通过K-tree Allreduce显著减少了通信开销，比Cerebras基线GEMV实现了约4.6倍的端到端性能提升。</p>
-<p><strong>核心数和矩阵大小扩展性 (图10)</strong>：<br/>
-* MeshGEMV的通信开销随核心数增长得更慢，表现出更好的可扩展性，使得更灵活的片上映射策略成为可能。</p>
+<p><strong>通信延迟瓶颈 (图10)</strong>：</p>
+<ul><li>在WSE-2上，通信是dist-GEMV计算的主要瓶颈，尤其是在大规模并行时，通信开销可占总时间的90%。</li><li>MeshGEMV通过K-tree Allreduce显著减少了通信开销，比Cerebras基线GEMV实现了约4.6倍的端到端性能提升。</li></ul>
+<p><strong>核心数和矩阵大小扩展性 (图10)</strong>：</p>
+<ul><li>MeshGEMV的通信开销随核心数增长得更慢，表现出更好的可扩展性，使得更灵活的片上映射策略成为可能。</li></ul>
 <p><img alt="" class="figure-image" src="images/9012d04faa293de90850c60fec563f0f02a4a55317817e9fa87ed0bea7c41e30.jpg"/><br/>
 图10: MeshGEMV vs. GEMV-Cerebras</p>
 <h3>7.4 基于移位的KV缓存管理</h3>
-<p><strong>KV缓存容量 (表5)</strong>：<br/>
-* WaferLLM的基于移位的KV缓存管理方法，由于实现了均衡的核心利用率，与PagedAttention中基于拼接的方法相比，支持的令牌数量分别在LLaMA3-8B和LLaMA2-13B上多出360倍和385倍。</p>
+<p><strong>KV缓存容量 (表5)</strong>：</p>
+<ul><li>WaferLLM的基于移位的KV缓存管理方法，由于实现了均衡的核心利用率，与PagedAttention中基于拼接的方法相比，支持的令牌数量分别在LLaMA3-8B和LLaMA2-13B上多出360倍和385倍。</li></ul>
 <p>表5: 最大解码输出长度<br/>
 <img alt="" class="figure-image" src="images/322b81ddc0f8972f1d5a61bf1ddfec21d74bd6ce85ec06bacd1fc35289a126b3.jpg"/></p>
 <h3>7.5 与GPU的比较</h3>
-<p><strong>GEMV性能 (表6)</strong>：<br/>
-* 与单个A100 GPU相比，MeshGEMV在不同矩阵大小下快280-606倍，能效高7.5-16倍。<br/>
-* 多GPU上的分布式GEMV扩展性有限，性能从1个GPU扩展到8个仅提升1.32倍，到16个时甚至下降。<br/>
-* 与最佳GPU集群结果相比，MeshGEMV性能高166-210倍，能效高45-70倍。</p>
+<p><strong>GEMV性能 (表6)</strong>：</p>
+<ul><li>与单个A100 GPU相比，MeshGEMV在不同矩阵大小下快280-606倍，能效高7.5-16倍。</li><li>多GPU上的分布式GEMV扩展性有限，性能从1个GPU扩展到8个仅提升1.32倍，到16个时甚至下降。</li><li>与最佳GPU集群结果相比，MeshGEMV性能高166-210倍，能效高45-70倍。</li></ul>
 <p>表6: MeshGEMV (WSE-2) 与 SGLang(A100)中TP的GEMV延迟和能耗对比<br/>
 <img alt="" class="figure-image" src="images/24a00dea9f5cf761b3d7b28a18d2092dda8f8b546ace24647fc217f816cfad21.jpg"/></p>
-<p><strong>LLM推理性能 (表2, 7, 8)</strong>：<br/>
-* WaferLLM的TPR比A100多GPU集群高6-20倍，对于长输出和大型号，差距更大。<br/>
-* SGLang在GPU上的扩展性不佳，从1个扩展到8个GPU，预填充提速1.2-1.6倍，解码提速3.3-3.6倍，远低于线性扩展。<br/>
-* 在能效方面，尽管WSE-2的面积、功耗和成本远高于A100，WaferLLM在SGLang的最佳多GPU配置下仍实现了2-2.5倍的能效优势，这主要归功于GPU在解码任务上非线性的扩展性。</p>
+<p><strong>LLM推理性能 (表2, 7, 8)</strong>：</p>
+<ul><li>WaferLLM的TPR比A100多GPU集群高6-20倍，对于长输出和大型号，差距更大。</li><li>SGLang在GPU上的扩展性不佳，从1个扩展到8个GPU，预填充提速1.2-1.6倍，解码提速3.3-3.6倍，远低于线性扩展。</li><li>在能效方面，尽管WSE-2的面积、功耗和成本远高于A100，WaferLLM在SGLang的最佳多GPU配置下仍实现了2-2.5倍的能效优势，这主要归功于GPU在解码任务上非线性的扩展性。</li></ul>
 <p>表7: WaferLLM (WSE-2) 与 SGLang(A100) 在预填充吞吐量和能耗上的对比<br/>
 <img alt="" class="figure-image" src="images/443dc1ad5373e44e66a5c9876884910084deabd123198d407efd32f19171cea1.jpg"/></p>
 <p>表8: WaferLLM (WSE-2) 与 SGLang(A100) 在解码吞吐量和能耗上的对比<br/>

@@ -51,13 +51,11 @@ Warp Decode 的核心思路是彻底翻转并行化轴，不再将 GPU 的计算
 <img alt="Warp Decode架构明色" class="figure-image" src="https://ptht05hbb1ssoooe.public.blob.vercel-storage.com/assets/blog/warp-decode-architecture-r4.svg"/><br/>
 <img alt="Warp Decode架构暗色" class="figure-image" src="https://ptht05hbb1ssoooe.public.blob.vercel-storage.com/assets/blog/warp-decode-architecture-r4-dark.svg"/></p>
 <p><strong>Down内核的工作机制</strong>：在down内核中，每个warp负责一个token的一个输出维度。它循环遍历所有top-k路由专家，加载相关的向下投影（down-projection）权重行，并流式传输中间激活，同时将每个专家的路由权重折叠到一个单一的运行FP32累加器中。在处理完所有专家后，系统使用<code>__shfl_xor_sync</code>通过warp级别的蝶形归约（butterfly reduction）来归约32个通道本地的部分和。该操作直接编译为PTX的<code>shfl.sync.bfly</code>指令，这是一种单一的硬件原语，可在warp内的通道之间交换寄存器，从而完全绕过共享内存。这种设计的优势在于不需要L1缓存往返、不存在bank冲突、也不需要显式的屏障（barriers），因为同步已经通过通道掩码（lane mask）内置于指令中。最终的加权top-k组合不是作为一个单独的epilogue，而是直接成为投影本身的一部分。Warp decode中的每个warp都是独立的，并在其整个生命周期内获得一个单一且稳定的分配：产生一个输出标量。正是这种warp独立性消除了传统路径所需的共享内存暂存、跨warp同步和中间缓冲区。</p>
-<p><strong>通过消除阶段提升吞吐量</strong>：Warp decode通过消除传统路径所需的阶段和缓冲区，以及创建允许更好调度和延迟隐藏的warp独立性来实现性能提升。阶段消除提供了大部分吞吐量增益，具体包括消除填充（padding）、分散（scattering）和组合（combine）步骤。这种消除需要从根本上重新组织并行性，而不仅仅是融合传统流水线的各个阶段。<br/>
-* <strong>消除填充</strong>：传统路径将每个专家的token列表填充到2的幂或128字节边界，以符合分组内核的要求。在单token解码时，这是无法摊销的开销。Warp decode路径通过从不形成每个专家的批次，完全避免了这种开销。<br/>
-* <strong>消除分散和组合</strong>：传统路径在每个专家完成后，将八个中间结果写入GPU内存，然后运行单独的归约步骤来组合它们。Warp decode路径将每个专家的路由权重折叠到warp内的运行累加器中，这八个中间结果永远不会在内存中具体化，从而节省了后续归约通道的写入和读取成本。</p>
-<p><strong>通过消除缓冲区释放缓存容量</strong>：这种重组还移除了传统路径因其以专家为中心的布局而需要的两个中间内存缓冲区。<br/>
-* 第一个是激活收集缓冲区（activation gather buffer），它是输入激活向量的副本，并重新排列为以专家为主的布局。在批处理大小为1时，这是对已存在数据的完整复制。<br/>
-* 第二个是每个专家的输出缓冲区（per-expert output buffer）。假设有8个专家和2048的隐藏维度，每个token在BF16格式下会分配、写入、立即读取一次并丢弃 $8 \times 2048 \times 2$ 字节 = 32 KB的数据。<br/>
-Warp decode通过将8个专家的贡献折叠到跨32个warp通道的寄存器累加器中来消除这两个缓冲区，在最终写入单标量之前没有任何数据到达全局内存。每个token移除超过32 KB的中间缓冲区流量，为真正决定性能的权重行释放了L2缓存容量。</p>
+<p><strong>通过消除阶段提升吞吐量</strong>：Warp decode通过消除传统路径所需的阶段和缓冲区，以及创建允许更好调度和延迟隐藏的warp独立性来实现性能提升。阶段消除提供了大部分吞吐量增益，具体包括消除填充（padding）、分散（scattering）和组合（combine）步骤。这种消除需要从根本上重新组织并行性，而不仅仅是融合传统流水线的各个阶段。</p>
+<ul><li><strong>消除填充</strong>：传统路径将每个专家的token列表填充到2的幂或128字节边界，以符合分组内核的要求。在单token解码时，这是无法摊销的开销。Warp decode路径通过从不形成每个专家的批次，完全避免了这种开销。</li><li><strong>消除分散和组合</strong>：传统路径在每个专家完成后，将八个中间结果写入GPU内存，然后运行单独的归约步骤来组合它们。Warp decode路径将每个专家的路由权重折叠到warp内的运行累加器中，这八个中间结果永远不会在内存中具体化，从而节省了后续归约通道的写入和读取成本。</li></ul>
+<p><strong>通过消除缓冲区释放缓存容量</strong>：这种重组还移除了传统路径因其以专家为中心的布局而需要的两个中间内存缓冲区。</p>
+<ul><li>第一个是激活收集缓冲区（activation gather buffer），它是输入激活向量的副本，并重新排列为以专家为主的布局。在批处理大小为1时，这是对已存在数据的完整复制。</li><li>第二个是每个专家的输出缓冲区（per-expert output buffer）。假设有8个专家和2048的隐藏维度，每个token在BF16格式下会分配、写入、立即读取一次并丢弃 $8 \times 2048 \times 2$ 字节 = 32 KB的数据。</li></ul>
+<p>Warp decode通过将8个专家的贡献折叠到跨32个warp通道的寄存器累加器中来消除这两个缓冲区，在最终写入单标量之前没有任何数据到达全局内存。每个token移除超过32 KB的中间缓冲区流量，为真正决定性能的权重行释放了L2缓存容量。</p>
 <p><strong>Warp独立性优化硬件调度</strong>：重组使得保留的计算速度更快，因为内核在设计上是极度并行（embarrassingly parallel）的：每个warp完全独立于其他所有warp。由于每个warp拥有正好一个输出标量并仅读取其所需的权重行，因此warp之间没有共享的可变状态。在单个warp层面，这种独立性是完全的：输入激活是只读的，累加器存在于私有寄存器中，输出写入到一个唯一的地址。从硬件调度程序的角度来看，整个输出维度是一个扁平的独立工作项池。GPU的warp调度程序可以随时以任何顺序发出任何warp，而没有任何正确性约束。当一个warp因等待内存加载而停顿时，调度程序会立即切换到另一个warp。在B200的148个流式多处理器（SM）中，有数千个warp在运行，内存延迟几乎完全被其他warp的有用计算所隐藏。此外，该内核呈线性扩展，使得输出维度翻倍就会使独立的warp数量翻倍，而无需增加同步。在token批处理维度上也是如此，因此调度程序看到的是一个扁平的工作命名空间，节点之间没有边缘。这与传统路径形成鲜明对比，传统路径中专家级别的GEMM内核需要块内（intra-block）协调。</p>
 <h3>实验环境</h3>
 <ul>
@@ -67,20 +65,17 @@ Warp decode通过将8个专家的贡献折叠到跨32个warp通道的寄存器�
 <li><strong>软件配置</strong>：内部推理系统，结合底层 PTX 指令优化。</li>
 </ul>
 <h3>实验结果</h3>
-<p><strong>端到端解码吞吐量</strong>：<br/>
-* <strong>实验内容</strong>：在 NVIDIA B200 GPU 上运行 Qwen-3 风格模型，测试内部推理系统在不同上下文长度下的吞吐量表现。<br/>
-* <strong>实验结果与分析</strong>：Warp decode 实现了 1.84 倍的吞吐量提升。吞吐量增益在所有上下文长度桶（context-length buckets）中保持平坦（flat），证实这是一种纯粹的生成时（generation-time）性能改进，不依赖于提示词（prompt）的长度。<br/>
-<img alt="吞吐量增益图表明色" class="figure-image" src="https://ptht05hbb1ssoooe.public.blob.vercel-storage.com/assets/blog/warp-decode-chart-throughput-gain-r4.svg"/><br/>
+<p><strong>端到端解码吞吐量</strong>：</p>
+<ul><li><strong>实验内容</strong>：在 NVIDIA B200 GPU 上运行 Qwen-3 风格模型，测试内部推理系统在不同上下文长度下的吞吐量表现。</li><li><strong>实验结果与分析</strong>：Warp decode 实现了 1.84 倍的吞吐量提升。吞吐量增益在所有上下文长度桶（context-length buckets）中保持平坦（flat），证实这是一种纯粹的生成时（generation-time）性能改进，不依赖于提示词（prompt）的长度。</li></ul>
+<p><img alt="吞吐量增益图表明色" class="figure-image" src="https://ptht05hbb1ssoooe.public.blob.vercel-storage.com/assets/blog/warp-decode-chart-throughput-gain-r4.svg"/><br/>
 <img alt="吞吐量增益图表暗色" class="figure-image" src="https://ptht05hbb1ssoooe.public.blob.vercel-storage.com/assets/blog/warp-decode-chart-throughput-gain-r4-dark.svg"/></p>
-<p><strong>准确度提升</strong>：<br/>
-* <strong>实验内容</strong>：对比 Warp decode 与传统路径在数据量化转换上的误差积累情况。<br/>
-* <strong>实验结果与分析</strong>：Warp decode 的输出比传统路径更接近完整的 32 位基准（ground truth），准确度提升了 1.4 倍。传统方法将 BF16 激活转换为 MXFP8 再转换回来，引入了在模型层间累积的舍入误差底线；而 Warp decode 始终保持激活为 BF16，累加器为 FP32，归约操作从未在降级的输入上进行，从而显著提升了计算质量。<br/>
-<img alt="FP32基准对比图表明色" class="figure-image" src="https://ptht05hbb1ssoooe.public.blob.vercel-storage.com/assets/blog/warp-decode-chart-fp32-ground-truth-r3.svg"/><br/>
+<p><strong>准确度提升</strong>：</p>
+<ul><li><strong>实验内容</strong>：对比 Warp decode 与传统路径在数据量化转换上的误差积累情况。</li><li><strong>实验结果与分析</strong>：Warp decode 的输出比传统路径更接近完整的 32 位基准（ground truth），准确度提升了 1.4 倍。传统方法将 BF16 激活转换为 MXFP8 再转换回来，引入了在模型层间累积的舍入误差底线；而 Warp decode 始终保持激活为 BF16，累加器为 FP32，归约操作从未在降级的输入上进行，从而显著提升了计算质量。</li></ul>
+<p><img alt="FP32基准对比图表明色" class="figure-image" src="https://ptht05hbb1ssoooe.public.blob.vercel-storage.com/assets/blog/warp-decode-chart-fp32-ground-truth-r3.svg"/><br/>
 <img alt="FP32基准对比图表暗色" class="figure-image" src="https://ptht05hbb1ssoooe.public.blob.vercel-storage.com/assets/blog/warp-decode-chart-fp32-ground-truth-r3-dark.svg"/></p>
-<p><strong>硬件效率</strong>：<br/>
-* <strong>实验内容</strong>：测试 Warp decode 接近 B200 硬件最大吞吐量（连续内存读取峰值为 6.8 TB/s）的程度，并验证结果正确性。<br/>
-* <strong>实验结果与分析</strong>：在批处理大小 B=32 时，Warp decode 维持了 3.95 TB/s 的吞吐量，达到硬件峰值的 58%。剩余的差距主要反映了专家路由产生的随机访问模式（如单个token可能路由到非相邻的专家 5, 8, 14, 19 等）带来的内存延迟成本。在所有批处理大小下，算法与参考实现的正确性保持高度一致：最小余弦相似度 &gt; 0.999996，最大绝对差值为 0.001953。<br/>
-<img alt="吞吐量对比图表明色" class="figure-image" src="https://ptht05hbb1ssoooe.public.blob.vercel-storage.com/assets/blog/warp-decode-chart-throughput-r3.svg"/><br/>
+<p><strong>硬件效率</strong>：</p>
+<ul><li><strong>实验内容</strong>：测试 Warp decode 接近 B200 硬件最大吞吐量（连续内存读取峰值为 6.8 TB/s）的程度，并验证结果正确性。</li><li><strong>实验结果与分析</strong>：在批处理大小 B=32 时，Warp decode 维持了 3.95 TB/s 的吞吐量，达到硬件峰值的 58%。剩余的差距主要反映了专家路由产生的随机访问模式（如单个token可能路由到非相邻的专家 5, 8, 14, 19 等）带来的内存延迟成本。在所有批处理大小下，算法与参考实现的正确性保持高度一致：最小余弦相似度 &gt; 0.999996，最大绝对差值为 0.001953。</li></ul>
+<p><img alt="吞吐量对比图表明色" class="figure-image" src="https://ptht05hbb1ssoooe.public.blob.vercel-storage.com/assets/blog/warp-decode-chart-throughput-r3.svg"/><br/>
 <img alt="吞吐量对比图表暗色" class="figure-image" src="https://ptht05hbb1ssoooe.public.blob.vercel-storage.com/assets/blog/warp-decode-chart-throughput-r3-dark.svg"/></p>
 <h3>结论</h3>
 <p>Warp decode 并不是对以专家为中心的执行方式的通用替代方案。对于 Prefill 和大批量推理等高容量工作负载，由于许多 token 共享同一个专家，组织数据的开销可以被有效摊销，以专家为中心的方法仍然具有优势。然而，在缺乏足够共享工作的场景（如 MoE 自回归解码）中，Warp decode 通过消除大量管理开销展现出巨大优势。作为持续改进 Composer 模型的重要组成部分，Warp decode 这种推理端的优化决定了模型输出到达开发者的速度和准确性，其价值与预训练数据和强化学习（RL）的投入同等重要。</p>

@@ -33,19 +33,11 @@ title: 'Inside NVIDIA Rubin GPU Architecture: Powering the Era of Agentic AI'
 <h2>A1 主要贡献</h2>
 <p>本文介绍了 NVIDIA Rubin GPU 架构，它是 NVIDIA Vera Rubin 平台的核心，专为代理式（Agentic）AI 工作负载而设计。随着 AI 从离散的模型训练和聊天界面演变为持续产生智能的“AI 工厂”，新的工作负载需要支持推理、规划、工具使用、结果验证和执行复杂多步任务。</p>
 <p><strong>核心问题与研究目标</strong>：<br/>
-代理式工作负载的特点是持续的推理过程，而非单一的问答交互。这对计算平台提出了新的要求：<br/>
-1. <strong>低延迟</strong>：每一步推理的延迟要低。<br/>
-2. <strong>高吞吐量</strong>：解码吞吐量要高。<br/>
-3. <strong>长上下文效率</strong>：需要高效处理长上下文注意力机制。<br/>
-4. <strong>大容量</strong>：需要巨大的 KV 缓存容量。<br/>
-5. <strong>可扩展性</strong>：能够在紧密耦合的 GPU 集群中扩展模型。<br/>
-为了应对这些挑战，NVIDIA 的目标是重新构想数据中心，将其视为一个单一的计算单元，并通过 NVIDIA Vera Rubin 平台及其核心 Rubin GPU 实现这一愿景。</p>
-<p><strong>主要创新点与贡献</strong>：<br/>
-1. <strong>性能飞跃</strong>：Rubin GPU 旨在提供比 NVIDIA Blackwell 高出 10 倍的单位能耗代理式吞吐量。如图 1 所示，Vera Rubin 平台在代理式推理性能上实现了巨大的代际提升。<br/>
-2. <strong>核心硬件升级</strong>：<br/>
-    * <strong>增强的 Tensor Cores</strong>：具有更强的精度灵活性，支持高达 50 petaflops 的 NVFP4 推理性能。<br/>
-    * <strong>第三代 Transformer 引擎</strong>：协同 Tensor Cores，高效加速代理式工作负载。<br/>
-    * <strong>全新 HBM4 内存子系统</strong>：提供前所未有的内存带宽和容量。</p>
+代理式工作负载的特点是持续的推理过程，而非单一的问答交互。这对计算平台提出了新的要求：</p>
+<ol><li><strong>低延迟</strong>：每一步推理的延迟要低。</li><li><strong>高吞吐量</strong>：解码吞吐量要高。</li><li><strong>长上下文效率</strong>：需要高效处理长上下文注意力机制。</li><li><strong>大容量</strong>：需要巨大的 KV 缓存容量。</li><li><strong>可扩展性</strong>：能够在紧密耦合的 GPU 集群中扩展模型。</li></ol>
+<p>为了应对这些挑战，NVIDIA 的目标是重新构想数据中心，将其视为一个单一的计算单元，并通过 NVIDIA Vera Rubin 平台及其核心 Rubin GPU 实现这一愿景。</p>
+<p><strong>主要创新点与贡献</strong>：</p>
+<ol><li><strong>性能飞跃</strong>：Rubin GPU 旨在提供比 NVIDIA Blackwell 高出 10 倍的单位能耗代理式吞吐量。如图 1 所示，Vera Rubin 平台在代理式推理性能上实现了巨大的代际提升。</li><li><strong>核心硬件升级</strong>：<ul><li><strong>增强的 Tensor Cores</strong>：具有更强的精度灵活性，支持高达 50 petaflops 的 NVFP4 推理性能。</li><li><strong>第三代 Transformer 引擎</strong>：协同 Tensor Cores，高效加速代理式工作负载。</li><li><strong>全新 HBM4 内存子系统</strong>：提供前所未有的内存带宽和容量。</li></ul></li></ol>
 <ol>
 <li><strong>端到端瓶颈优化</strong>：本文详细阐述了 Rubin GPU 及其协同设计的扩展系统如何解决代理式推理中的端到端瓶颈，涵盖了从数据移动、计算效率到长上下文执行和机架级部署的各个方面。</li>
 </ol>
@@ -159,10 +151,8 @@ Rubin 为设备发起的 NVLink 通信引入了“计数的写入”（counted w
 <p><strong>HBM4 与高效子系统的结合</strong><br/>
 Rubin 通过将 HBM4 与一个高效的本地化内存子系统相结合来解决这个问题。HBM4 的接口宽度是 HBM3e 的两倍。结合新的内存控制器、与内存生态系统的深度协同工程以及更紧密的计算-内存集成，该子系统提供了高达 22 TB/s 的内存带宽：比 Blackwell 和 Blackwell Ultra 增加了 2.8 倍。</p>
 <p><strong>容量与带宽的互补作用</strong><br/>
-Rubin 每颗 GPU 还提供高达 288 GB 的 HBM4，相对于 Blackwell 增加了可用的片上容量。容量和带宽扮演着不同但互补的角色：<br/>
-* <strong>容量</strong>：支持模型常驻、更大的上下文窗口、更大的 KV 缓存以及更高的并发性，而无需不必要的 KV 缓存卸载。<br/>
-* <strong>带宽</strong>：支持逐个 token 的生成阶段，在此期间，模型权重和 KV 状态必须被足够快地移动，以保持计算引擎的生产力。<br/>
-* <strong>内存子系统</strong>：TMA 和内存局部性策略帮助软件高效地使用内存子系统，为复杂的数据布局提供高实际带宽。</p>
+Rubin 每颗 GPU 还提供高达 288 GB 的 HBM4，相对于 Blackwell 增加了可用的片上容量。容量和带宽扮演着不同但互补的角色：</p>
+<ul><li><strong>容量</strong>：支持模型常驻、更大的上下文窗口、更大的 KV 缓存以及更高的并发性，而无需不必要的 KV 缓存卸载。</li><li><strong>带宽</strong>：支持逐个 token 的生成阶段，在此期间，模型权重和 KV 状态必须被足够快地移动，以保持计算引擎的生产力。</li><li><strong>内存子系统</strong>：TMA 和内存局部性策略帮助软件高效地使用内存子系统，为复杂的数据布局提供高实际带宽。</li></ul>
 <p><strong>综合作用</strong><br/>
 高容量、高带宽的 HBM4 对于托管数万亿参数模型、在不卸载 KV 缓存的情况下扩展上下文长度，以及支持高并发、长周期的推理工作负载至关重要。</p>
 <h2>A7 补充细节：设计、可扩展性与可靠性</h2>

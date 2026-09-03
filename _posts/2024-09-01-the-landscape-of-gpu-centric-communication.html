@@ -31,11 +31,8 @@ title: The Landscape of GPU-Centric Communication
 <p>近年来，GPU因其大规模并行性和高内存带宽，已成为高性能计算（HPC）和机器学习（ML）应用的首选加速器。截至2025年11月，Top500超级计算机排名前10的系统中，有9个依赖GPU集群进行加速【79, TOP500 Supercomputer Sites, 2023, <a href="https://www.top500.org/" rel="noopener noreferrer" target="_blank">https://www.top500.org/</a>】 。</p>
 <p><strong>核心问题</strong>: 尽管大量使用GPU能显著加速计算，但GPU之间的通信很快成为可扩展性的瓶颈【136, Peta-Scale Phase-Field Simulation for Dendritic Solidification on the TSUBAME 2.0 Supercomputer, 2011, SC ’11】【149, The Persistent Challenge of Data locality in Post-Exascale Era, 2025, Computing in Science and Engineering】。传统上，多GPU通信（无论是节点内还是节点间）一直由CPU负责，这种以CPU为中心的执行模型将GPU视为仅提供大量计算的设备，而在通信等辅助任务上依赖CPU。</p>
 <p><strong>研究目标</strong>: 过去十年中，一系列被称为“以GPU为中心的通信”的进步旨在挑战CPU在多GPU执行中的主导地位。这些进步从高层次上减少了CPU在关键执行路径上的参与，赋予GPU在发起和同步通信方面更多的自主权，并试图解决多GPU通信与计算之间的语义不匹配问题。</p>
-<p><strong>本文贡献</strong>: 本文对以GPU为中心的通信进行了全面的综述，重点关注供应商提供的机制和用户级库的支持。本文旨在：<br/>
-1. <strong>澄清复杂性</strong>：帮助研究人员、程序员、工程师以及库设计者理解该领域中各种可用选项的复杂性和多样性。以GPU为中心的通信涵盖了从专有硬件（如GPU间互连）到软件机制的广泛方法，这些方法各有优缺点，使得选择变得困难。<br/>
-2. <strong>定义术语和分类</strong>：定义“以GPU为中心的通信”，并对现有节点内和节点间的通信方法进行分类和抽象，以消除文献和供应商之间术语不一致造成的混淆。<br/>
-3. <strong>综述技术和库</strong>：介绍和讨论供应商为实现多GPU通信、网络和内存管理所提供的机制，这些机制是更高级别软件库的构建块。同时，回顾主要的通信库，讨论它们的优势、挑战和性能特点。<br/>
-4. <strong>展望未来</strong>：探讨以GPU为中心的通信背后的主要研究范式、未来前景和开放的研究问题。</p>
+<p><strong>本文贡献</strong>: 本文对以GPU为中心的通信进行了全面的综述，重点关注供应商提供的机制和用户级库的支持。本文旨在：</p>
+<ol><li><strong>澄清复杂性</strong>：帮助研究人员、程序员、工程师以及库设计者理解该领域中各种可用选项的复杂性和多样性。以GPU为中心的通信涵盖了从专有硬件（如GPU间互连）到软件机制的广泛方法，这些方法各有优缺点，使得选择变得困难。</li><li><strong>定义术语和分类</strong>：定义“以GPU为中心的通信”，并对现有节点内和节点间的通信方法进行分类和抽象，以消除文献和供应商之间术语不一致造成的混淆。</li><li><strong>综述技术和库</strong>：介绍和讨论供应商为实现多GPU通信、网络和内存管理所提供的机制，这些机制是更高级别软件库的构建块。同时，回顾主要的通信库，讨论它们的优势、挑战和性能特点。</li><li><strong>展望未来</strong>：探讨以GPU为中心的通信背后的主要研究范式、未来前景和开放的研究问题。</li></ol>
 <p>本文通过广泛描述跨越软硬件堆栈的以GPU为中心的通信技术，为研究人员和开发者提供了如何最佳利用多GPU系统的见解。</p>
 <h2>A3 背景知识、关键观察与设计原则</h2>
 <p>我们可以将以GPU为中心的通信宽泛地定义为减少CPU在多GPU执行关键路径中参与的机制。这是一个非常宽泛的定义，涵盖了从赋予GPU通信自主权的供应商级改进到利用这些改进的用户级实现。为了明确区分，我们在不同章节中讨论它们。第3节关注NVIDIA CUDA和AMD ROCm运行时原生提供的通信机制和原语。第4节讨论这些机制如何催生更高级别的、以GPU为中心的通信库，并介绍AMD、Intel和NVIDIA提供的软件支持以及其他工业界和学术界的解决方案。</p>

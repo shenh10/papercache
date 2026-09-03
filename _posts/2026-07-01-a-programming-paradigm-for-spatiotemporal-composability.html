@@ -40,14 +40,10 @@ $$ \varepsilon_d(\sigma) := \langle \sigma(k) \mid k \in d \rangle $$
 </details>
 <h2>核心问题与主要贡献</h2>
 <p>现代软件工程中，组合（Composition）是构建复杂系统的基础原则【1，On the criteria to be used in decomposing systems into modules + 1972 + Communications of the ACM + doi: 10.1145/361598.361623】。传统的组合通常是静态的（如函数调用、模块导入），但在插件系统【2，On Plug-ins and Extensible Architectures + 2005 + ACM Queue + doi: 10.1145/1053331.1053345】和自进化智能体框架等现代软件中，越来越需要动态组合（在运行时加载、卸载和重新配置组件）。目前的实践通常依赖于粗粒度的机制【3，Borg, Omega, and Kubernetes + 2016 + Communications of the ACM + doi: 10.1145/2890784】（如重启进程或容器），这会丢失运行时状态。与静态组合丰富的形式化框架相比，动态组合的理论基础仍然很不完善。</p>
-<p>为了刻画动态组合的需求，本文识别了超出传统代数组合的两个正交维度：<br/>
-* <strong>时间可组合性（Temporal composability）</strong>：在移除组件时，必须完全且安全地撤销其对共享环境所做的修改。这要求跟踪资源分配、事件注册和状态突变，并保证在卸载时有序回收。<br/>
-* <strong>空间可组合性（Spatial composability）</strong>：组件必须能够以结构化和可验证的方式声明、发现和解析它们之间的依赖关系。这要求管理依赖拓扑并响应依赖变化来协调组件生命周期。</p>
-<p>本文提出了一种统一的形式化基础和编程范式来解决上述问题，主要贡献如下：<br/>
-1. <strong>形式化可逆效应（Revertible effects）</strong>：将每个上下文转换配备一个显式的逆函数，使得效应跟踪和恢复成为保持组合的操作，为动态时间可组合性提供代数基础。<br/>
-2. <strong>形式化响应式协效应（Reactive coeffects）</strong>：构建一个类型化的依赖上下文，组件在其中声明需求为依赖集，基于满足度的通知机制自动触发组件的激活和停用，为动态空间可组合性提供代数基础。<br/>
-3. <strong>建立组件生命周期模型</strong>：使可逆效应和响应式协效应与多种控制流交互，产生一个将效应和协效应上下文集成到连贯编程范式中的统一上下文类型。<br/>
-4. <strong>实现Cordis元框架</strong>：提供了一个包含效应跟踪和协效应解析的核心库，以及一个带有配置协调和热模块替换（HMR）的声明式组件加载器，并在拥有4000多个社区插件的Koishi聊天机器人平台上验证了该设计。</p>
+<p>为了刻画动态组合的需求，本文识别了超出传统代数组合的两个正交维度：</p>
+<ul><li><strong>时间可组合性（Temporal composability）</strong>：在移除组件时，必须完全且安全地撤销其对共享环境所做的修改。这要求跟踪资源分配、事件注册和状态突变，并保证在卸载时有序回收。</li><li><strong>空间可组合性（Spatial composability）</strong>：组件必须能够以结构化和可验证的方式声明、发现和解析它们之间的依赖关系。这要求管理依赖拓扑并响应依赖变化来协调组件生命周期。</li></ul>
+<p>本文提出了一种统一的形式化基础和编程范式来解决上述问题，主要贡献如下：</p>
+<ol><li><strong>形式化可逆效应（Revertible effects）</strong>：将每个上下文转换配备一个显式的逆函数，使得效应跟踪和恢复成为保持组合的操作，为动态时间可组合性提供代数基础。</li><li><strong>形式化响应式协效应（Reactive coeffects）</strong>：构建一个类型化的依赖上下文，组件在其中声明需求为依赖集，基于满足度的通知机制自动触发组件的激活和停用，为动态空间可组合性提供代数基础。</li><li><strong>建立组件生命周期模型</strong>：使可逆效应和响应式协效应与多种控制流交互，产生一个将效应和协效应上下文集成到连贯编程范式中的统一上下文类型。</li><li><strong>实现Cordis元框架</strong>：提供了一个包含效应跟踪和协效应解析的核心库，以及一个带有配置协调和热模块替换（HMR）的声明式组件加载器，并在拥有4000多个社区插件的Koishi聊天机器人平台上验证了该设计。</li></ol>
 <h2>背景知识与设计原则</h2>
 <p><strong>效应系统（Effect Systems）的基础概念</strong>：在简单类型Lambda演算（STLC）【19，A Formulation of the Simple Theory of Types + 1940 + The Journal of Symbolic Logic + doi: 10.2307/2266170】【20，Types and Programming Languages + 2002 + MIT Press】中，效应系统通过记录计算可能产生的副作用来细化类型，形式化为 $\Gamma \vdash t : T_{effect}$。Moggi【15，Notions of computation and monads + 1991 + Information and Computation + doi: 10.1016/0890-5401(91)90052-4】首次通过单子（Monads）对副作用进行分类建模，随后Wadler【22，Monads for functional programming + 1993 + Program Design Calculi】将其在Haskell中推广。Plotkin等人【16，Adequacy for Algebraic Effects + 2001 + Foundations of Software Science and Computation Structures】【23，Notions of Computation Determine Monads + 2002 + Foundations of Software Science and Computation Structures】引入了代数效应，将效应接口与实现解耦。</p>
 <p><strong>协效应系统（Coeffect Systems）的基础概念</strong>：与效应相反，协效应系统丰富了上下文而不是类型，形式化为 $\Gamma_{coeffect} \vdash t : T$。它描述了计算对环境的要求（如资源、能力或服务）。Petricek等人【17，Coeffects: unified static analysis of context-dependence + 2013 + ICALP'13 + doi: 10.1007/978-3-642-39212-2_35】【30，Coeffects: a calculus of context-dependent computation + 2014 + ICFP '14 + doi: 10.1145/2628136.2628160】基于余单子（Comonads）提出了协效应作为上下文依赖的统一静态分析。分级协效应（Graded coeffects）进一步使用预序半环来实现更细粒度的资源跟踪。</p>
@@ -168,22 +164,16 @@ function refresh(fiber):
 <p><strong>声明式配置层</strong>：为了组装预先存在的组件，加载器引入了声明式配置层。配置树由 Entry 组成，记录了模块 URL、隔离/拦截注解、配置数据等。当配置发生变化时，加载器执行增量协调（Reconciliation）：仅对改变的字段应用最小破坏性操作（如仅更新配置而不重载组件，或重写领域映射表）。</p>
 <p><strong>热模块替换（HMR）</strong>：HMR 引擎将可逆效应模式应用于模块级别。由于 Fiber 已经绑定了组件的所有效应，替换模块只需销毁旧 Fiber 并用新模块实例化新 Fiber，无需开发者手动编写接收边界。引擎分三阶段运行：1. 模块分类（计算受影响的依赖图）；2. 识别陈旧 Entry；3. 事务性重载（备份缓存，销毁旧 Fiber，加载新 Fiber，若出错则回滚）。</p>
 <h2>实验环境与配置</h2>
-<p>本文的验证并非传统的机器学习基准测试，而是通过在生产环境中部署 <strong>Koishi</strong> 聊天机器人平台来进行系统级验证。<br/>
-* <strong>软件配置/依赖</strong>：Cordis 框架（本文提出的元框架，使用 TypeScript 实现，利用 Proxy 和模块化特性）。<br/>
-* <strong>应用规模</strong>：Koishi 平台是一个开源聊天机器人框架，拥有超过 4000 个由社区贡献的生产环境插件。<br/>
-* <strong>组件类型</strong>：包括即时通讯（IM）适配器、数据库驱动程序、管理控制台和终端用户功能插件。</p>
+<p>本文的验证并非传统的机器学习基准测试，而是通过在生产环境中部署 <strong>Koishi</strong> 聊天机器人平台来进行系统级验证。</p>
+<ul><li><strong>软件配置/依赖</strong>：Cordis 框架（本文提出的元框架，使用 TypeScript 实现，利用 Proxy 和模块化特性）。</li><li><strong>应用规模</strong>：Koishi 平台是一个开源聊天机器人框架，拥有超过 4000 个由社区贡献的生产环境插件。</li><li><strong>组件类型</strong>：包括即时通讯（IM）适配器、数据库驱动程序、管理控制台和终端用户功能插件。</li></ul>
 <h2>实验结果与分析</h2>
-<p>通过 Koishi 平台的案例研究，验证了 Cordis 模型的以下特性：<br/>
-1. <strong>元框架的表达能力与通用性</strong>：Koishi 将每个功能都实现为基于 Cordis 核心原语的插件。同样的模型也被应用于完全不同的运行时——Koishi 的 Web 控制台（浏览器环境），证明了该范式不依赖于特定领域或特定运行时。<br/>
-2. <strong>无认知负担的时间可组合性</strong>：传统的插件系统（如 VSCode）无法在不重启宿主的情况下卸载包含代码的扩展。在 Koishi 中，控制台禁用插件或 HMR 重新应用插件时，效应会被就地撤销，同时保留系统其他部分的缓存和连接。开发者无需编写卸载路径，系统自动复合逆函数，消除了资源泄漏的风险。<br/>
-3. <strong>开放生态系统中的空间可组合性</strong>：Koishi 生态系统展现了真实的依赖拓扑（如功能插件依赖数据库驱动）。在运行时重新配置提供者（如切换存储后端）只会重新激活解析结果发生变化的依赖组件。这证明了响应式协效应能够在由独立贡献者组成的开放生态系统中保持一致性。</p>
+<p>通过 Koishi 平台的案例研究，验证了 Cordis 模型的以下特性：</p>
+<ol><li><strong>元框架的表达能力与通用性</strong>：Koishi 将每个功能都实现为基于 Cordis 核心原语的插件。同样的模型也被应用于完全不同的运行时——Koishi 的 Web 控制台（浏览器环境），证明了该范式不依赖于特定领域或特定运行时。</li><li><strong>无认知负担的时间可组合性</strong>：传统的插件系统（如 VSCode）无法在不重启宿主的情况下卸载包含代码的扩展。在 Koishi 中，控制台禁用插件或 HMR 重新应用插件时，效应会被就地撤销，同时保留系统其他部分的缓存和连接。开发者无需编写卸载路径，系统自动复合逆函数，消除了资源泄漏的风险。</li><li><strong>开放生态系统中的空间可组合性</strong>：Koishi 生态系统展现了真实的依赖拓扑（如功能插件依赖数据库驱动）。在运行时重新配置提供者（如切换存储后端）只会重新激活解析结果发生变化的依赖组件。这证明了响应式协效应能够在由独立贡献者组成的开放生态系统中保持一致性。</li></ol>
 <h2>补充探讨与相关工作</h2>
 <p><strong>服务多路复用与访问控制</strong>：通过服务代理（Service broker）模式，框架支持负载均衡、滚动更新（平滑过渡请求）和跨进程 RPC 调用。在安全方面，依赖声明充当了基于能力（Capability-based）的访问控制请求，而拦截机制允许在不修改组件代码的情况下，由上下文强制执行细粒度的安全策略（如只读文件系统访问）。</p>
 <p><strong>语言独立性</strong>：该范式与语言无关。时间可组合性依赖于闭包（捕获逆函数和状态）以及运行时的模块加载/卸载机制（如托管运行时的注册表或 Native 的动态链接）。空间可组合性依赖于类型级的依赖声明（如 Rust 的 traits、TypeScript 的模块增强）和运行时的访问拦截（如 Proxy 或反射）。</p>
-<p><strong>相关工作对比</strong>：<br/>
-* <strong>效应/协效应系统</strong>：与 Effekt 语言【70，Effects as capabilities: effect handlers and lightweight effect polymorphism + 2020 + OOPSLA + doi: 10.1145/3428194】将效应视为能力不同，Cordis 在运行时处理效应以实现资源恢复；与可逆计算【73，Reversible Effects as Inverse Arrows + 2018 + MFPS XXXIV + doi: 10.1016/j.entcs.2018.11.009】要求全局可逆不同，Cordis 仅要求原子效应提供逆函数。<br/>
-* <strong>编程范式</strong>：与面向上下文编程（COP）【78，Context-oriented Programming + 2008 + Journal of Object Technology + doi: 10.5381/jot.2008.7.3.a4】相比，Cordis 通过显式上下文管理生命周期，而不是隐式修改方法分派；与面向切面编程（AOP）【81，Aspect-Oriented Programming + 1997 + ECOOP'97 + doi: 10.1007/BFb0053381】相比，Cordis 的拦截局限于组件显式声明的依赖，避免了 AOP 的不可预测性。<br/>
-* <strong>时间/空间可组合性</strong>：相比于动态软件更新（DSU）【85，Dynamic Software Updating + 2001 + PLDI '01 + doi: 10.1145/378795.378798】的手写迁移函数，或 React <code>useEffect</code> 的局部作用域限制，Cordis 提供了结构化的全局可逆保证。相比于传统依赖注入（如 Spring【100，Spring in Action + 2022】），Cordis 提供了基于生命周期的组件级响应式更新，填补了细粒度动态组合的空白。</p>
+<p><strong>相关工作对比</strong>：</p>
+<ul><li><strong>效应/协效应系统</strong>：与 Effekt 语言【70，Effects as capabilities: effect handlers and lightweight effect polymorphism + 2020 + OOPSLA + doi: 10.1145/3428194】将效应视为能力不同，Cordis 在运行时处理效应以实现资源恢复；与可逆计算【73，Reversible Effects as Inverse Arrows + 2018 + MFPS XXXIV + doi: 10.1016/j.entcs.2018.11.009】要求全局可逆不同，Cordis 仅要求原子效应提供逆函数。</li><li><strong>编程范式</strong>：与面向上下文编程（COP）【78，Context-oriented Programming + 2008 + Journal of Object Technology + doi: 10.5381/jot.2008.7.3.a4】相比，Cordis 通过显式上下文管理生命周期，而不是隐式修改方法分派；与面向切面编程（AOP）【81，Aspect-Oriented Programming + 1997 + ECOOP'97 + doi: 10.1007/BFb0053381】相比，Cordis 的拦截局限于组件显式声明的依赖，避免了 AOP 的不可预测性。</li><li><strong>时间/空间可组合性</strong>：相比于动态软件更新（DSU）【85，Dynamic Software Updating + 2001 + PLDI '01 + doi: 10.1145/378795.378798】的手写迁移函数，或 React <code>useEffect</code> 的局部作用域限制，Cordis 提供了结构化的全局可逆保证。相比于传统依赖注入（如 Spring【100，Spring in Action + 2022】），Cordis 提供了基于生命周期的组件级响应式更新，填补了细粒度动态组合的空白。</li></ul>
 <h2>结论与展望</h2>
 <p>本文通过将效应和协效应的类型理论概念提升为运行时机制，为动态可组合性提供了形式化基础。可逆效应为上下文转换配备了显式的逆函数，保证了组件移除时的完全状态恢复。响应式协效应通过基于满足度的通知、隔离和拦截机制，形式化了类型化的依赖上下文。结合支持多种控制流的组件生命周期模型，这些机制产生了一个连贯的编程范式。该范式通过 Cordis 元框架实现，并在 Koishi 生产系统中得到了验证。</p>
 <p>未来的工作方向是将该框架应用于自进化智能体（Self-evolving agent harnesses），在这些系统中，AI 智能体在极少人类监督下持续生成和替换自身的框架组件。Cordis 能够为这种高频组件替换和拓扑变化提供完全恢复和依赖协调的保证，有望成为自主系统持续自进化的坚实基础。</p>

@@ -166,12 +166,8 @@ title: 'WLB-LLM: Workload-Balanced 4D Parallelism for Large Language Model Train
 图12：WLB-LLM和Fixed-4D相对于Plain-4D在各种配置下的训练性能加速比。</p>
 <h4>6.3 优化分析</h4>
 <p><strong>实验内容</strong>：对WLB-LLM的各项优化技术进行分解分析和敏感性研究。</p>
-<p><strong>实验结果与分析</strong>：<br/>
-* <strong>加速比分解</strong>：在7B-128K配置下，单独应用WLB-LLM的各项优化技术（图13）。<br/>
-    * 仅应用CP层级的细粒度按文档分片，获得1.02倍加速，受限于内核效率与分片平衡的权衡。<br/>
-    * 加入自适应分片选择后，CP层级优化可将加速比提升至1.05倍。<br/>
-    * 仅应用PP层级的启发式可变长度打包与异常值延迟，获得了1.28倍的显著加速。<br/>
-    * 结合CP和PP层级的优化，最终实现了1.33倍的加速。</p>
+<p><strong>实验结果与分析</strong>：</p>
+<ul><li><strong>加速比分解</strong>：在7B-128K配置下，单独应用WLB-LLM的各项优化技术（图13）。<ul><li>仅应用CP层级的细粒度按文档分片，获得1.02倍加速，受限于内核效率与分片平衡的权衡。</li><li>加入自适应分片选择后，CP层级优化可将加速比提升至1.05倍。</li><li>仅应用PP层级的启发式可变长度打包与异常值延迟，获得了1.28倍的显著加速。</li><li>结合CP和PP层级的优化，最终实现了1.33倍的加速。</li></ul></li></ul>
 <ul>
 <li><strong>上下文窗口大小敏感性分析</strong>：在7B模型上，评估不同上下文窗口大小（32K到160K）下WLB-LLM的加速比（图14）。随着上下文窗口增大，加速比也越显著，在160K上下文窗口下达到1.40倍。这是因为更大的上下文窗口增加了出现异常长文档的概率，并放大了注意力计算不平衡对训练延迟的影响。</li>
 </ul>
@@ -181,11 +177,8 @@ title: 'WLB-LLM: Workload-Balanced 4D Parallelism for Large Language Model Train
 图14：WLB-LLM在7B模型上跨不同上下文窗口大小的加速比。</p>
 <h4>6.4 消融研究</h4>
 <p><strong>实验内容</strong>：分析WLB-LLM中打包和分片优化的有效性，并验证其系统优化不影响模型收敛。</p>
-<p><strong>实验结果与分析</strong>：<br/>
-* <strong>打包平衡与开销分析</strong>：在7B-128K训练任务中，使用指标 $\frac{\text{Max\_Latency} \times \text{PP\_size}}{\text{Total\_Latency}}$ 评估不同打包策略的不平衡度（越低越好），并记录打包开销（表2）。<br/>
-    * Fixed-Len Greedy（Fixed-4D使用）仅能轻微缓解不平衡。跨多全局批次打包可改善平衡度，但会增加训练损失（如图6）。<br/>
-    * Fixed-Len Solver能获得更好的平衡度，但打包开销巨大（例如，跨4个全局批次打包，每批次耗时超25秒）。<br/>
-    * WLB-LLM（使用2个异常队列时）实现了接近最优的1.05不平衡度，且每批次打包开销仅20毫秒，占单步训练时长的不到0.65%。</p>
+<p><strong>实验结果与分析</strong>：</p>
+<ul><li><strong>打包平衡与开销分析</strong>：在7B-128K训练任务中，使用指标 $\frac{\text{Max\_Latency} \times \text{PP\_size}}{\text{Total\_Latency}}$ 评估不同打包策略的不平衡度（越低越好），并记录打包开销（表2）。<ul><li>Fixed-Len Greedy（Fixed-4D使用）仅能轻微缓解不平衡。跨多全局批次打包可改善平衡度，但会增加训练损失（如图6）。</li><li>Fixed-Len Solver能获得更好的平衡度，但打包开销巨大（例如，跨4个全局批次打包，每批次耗时超25秒）。</li><li>WLB-LLM（使用2个异常队列时）实现了接近最优的1.05不平衡度，且每批次打包开销仅20毫秒，占单步训练时长的不到0.65%。</li></ul></li></ul>
 <ul>
 <li>
 <p><strong>CP分片性能分析</strong>：在7B模型的单个Transformer层上（CP=4），比较不同分片策略的前向和反向延迟（图15）。</p>

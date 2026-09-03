@@ -38,9 +38,8 @@ title: Attention Is Off By One
 </ul>
 <h2>A3 背景知识与关键观察</h2>
 <h3>异常值（Outliers）问题</h3>
-<p>LLM中存在着难以消除的异常值，这些值在数量级上远超同类。研究表明，这些异常值对于模型的运作至关重要，但其存在与神经网络的常规认知相悖。<br/>
-- 现有研究（如：[Quantizable Transformers: Removing Outliers by Helping Attention Heads Do Nothing, 2023, Qualcomm AI Research, <a href="https://arxiv.org/abs/2306.12929" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2306.12929</a>]）指出，超过97%的LLM异常激活值出现在空格和标点符号位置 。<br/>
-- 现有针对这些异常值的量化方案（如位压缩技术）往往会导致模型性能显著下降。</p>
+<p>LLM中存在着难以消除的异常值，这些值在数量级上远超同类。研究表明，这些异常值对于模型的运作至关重要，但其存在与神经网络的常规认知相悖。</p>
+<ul><li>现有研究（如：[Quantizable Transformers: Removing Outliers by Helping Attention Heads Do Nothing, 2023, Qualcomm AI Research, <a href="https://arxiv.org/abs/2306.12929" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2306.12929</a>]）指出，超过97%的LLM异常激活值出现在空格和标点符号位置 。</li><li>现有针对这些异常值的量化方案（如位压缩技术）往往会导致模型性能显著下降。</li></ul>
 <h3>Softmax机制的局限性</h3>
 <p>Attention机制的原始公式为：<br/>
 $[ \textrm{Attention}(Q, K, V) = \textrm{softmax}\left(\frac{QK^T}{\sqrt{d}}\right)V ]$</p>
@@ -97,8 +96,8 @@ $[ \textrm{QuietAttention}(Q, K, V) := \textrm{softmax}_1 \left(\frac{QK^T}{\sqr
 <li><strong>展望</strong>：通过采用Softmax1（QuietAttention），有望解决异常激活值问题，从而使LLM更易于量化和部署。作者邀请社区进行实验，通过观察权重峰度（kurtosis）和激活无穷范数（infinity norms）的变化来验证该方法的有效性。</li>
 </ul>
 <hr/>
-<p><strong>参考文献说明：</strong><br/>
-1. [Quantizable Transformers: Removing Outliers by Helping Attention Heads Do Nothing, 2023, Qualcomm AI Research, <a href="https://arxiv.org/abs/2306.12929" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2306.12929</a>]：该论文被引用以说明LLM中异常激活值 （outlier activations）的分布特征（97%+出现在空格和标点位置）。</p>
+<p><strong>参考文献说明：</strong></p>
+<ol><li>[Quantizable Transformers: Removing Outliers by Helping Attention Heads Do Nothing, 2023, Qualcomm AI Research, <a href="https://arxiv.org/abs/2306.12929" rel="noopener noreferrer" target="_blank">https://arxiv.org/abs/2306.12929</a>]：该论文被引用以说明LLM中异常激活值 （outlier activations）的分布特征（97%+出现在空格和标点位置）。</li></ol>
 </div>
 
 

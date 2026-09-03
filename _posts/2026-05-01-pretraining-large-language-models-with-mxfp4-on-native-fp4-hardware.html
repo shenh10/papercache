@@ -154,11 +154,8 @@ $$\nabla W = \tilde{G}^T \tilde{X} = (\nabla Y)^T H H^T X = (\nabla Y)^T X$$
 </ul>
 <h2>A4 实验结果</h2>
 <h4>实验假设</h4>
-<p>实验旨在验证四个核心假设：<br/>
-1. <strong>(H1)</strong> 逐步启用MXFP4会揭示，收敛性恶化主要由量化Wgrad（权重梯度）引起，其影响远大于Fprop（前向传播）或Dgrad（激活梯度）。<br/>
-2. <strong>(H2)</strong> 随机方法（如随机舍入或随机Hadamard）提供的益处有限，因为它们只增加了噪声，而未能解决由离群值驱动的MXFP4微缩放误差。<br/>
-3. <strong>(H3)</strong> 确定性Hadamard旋转能够减少进入MXFP4块的离群值的影响，从而稳定全流程优化。<br/>
-4. <strong>(H4)</strong> 在更多GEMM路径中启用MXFP4会提高训练步吞吐量，并且当token开销很小时，这能转化为端到端的训练加速。</p>
+<p>实验旨在验证四个核心假设：</p>
+<ol><li><strong>(H1)</strong> 逐步启用MXFP4会揭示，收敛性恶化主要由量化Wgrad（权重梯度）引起，其影响远大于Fprop（前向传播）或Dgrad（激活梯度）。</li><li><strong>(H2)</strong> 随机方法（如随机舍入或随机Hadamard）提供的益处有限，因为它们只增加了噪声，而未能解决由离群值驱动的MXFP4微缩放误差。</li><li><strong>(H3)</strong> 确定性Hadamard旋转能够减少进入MXFP4块的离群值的影响，从而稳定全流程优化。</li><li><strong>(H4)</strong> 在更多GEMM路径中启用MXFP4会提高训练步吞吐量，并且当token开销很小时，这能转化为端到端的训练加速。</li></ol>
 <h4>分阶段MXFP4启用与稳定策略评估</h4>
 <p>为隔离导致收敛下降的组件，实验逐步在训练流程中启用MXFP4，并评估了不同稳定策略的效果。</p>
 <ul>

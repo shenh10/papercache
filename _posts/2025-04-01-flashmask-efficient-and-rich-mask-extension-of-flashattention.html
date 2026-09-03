@@ -33,10 +33,8 @@ title: 'Flashmask: Efficient and Rich Mask Extension of Flashattention'
 <h2>A1 主要贡献</h2>
 <p><strong>核心问题</strong>: 传统（vanilla）注意力机制的计算和内存需求随序列长度 N 呈二次方（$O(N^2)$）增长，给处理长序列带来了巨大挑战。FlashAttention 通过消除 $O(N^2)$ 的内存依赖和IO感知的内存优化，缓解了这些问题，但其对特定注意力掩码类型的原生支持有限，无法内在支持更复杂的掩码需求。以往的方法采用内存复杂度为 $O(N^2)$ 的密集掩码，导致效率低下。</p>
 <p><strong>研究目标</strong>: 本文旨在扩展 FlashAttention 的能力，提出一种名为 FLASHMASK 的新方法，以高效地表示和处理更广泛、更复杂的注意力掩码类型，同时保持线性内存复杂度和高计算效率，特别适用于长上下文序列建模。</p>
-<p><strong>创新点</strong>:<br/>
-1. <strong>提出了一种新颖的列式稀疏掩码表示法</strong>：该方法可以高效地支持更广泛的掩码类型，从而实现更灵活的注意力机制。它将二维的密集掩码压缩为一维表示，实现了 $O(N)$ 的线性内存复杂度。<br/>
-2. <strong>扩展了 FlashAttention 的掩码能力</strong>：通过集成优化的核函数实现，确保了高计算效率，同时不牺牲计算精度。这种方法利用注意力掩码中的稀疏性来跳过不必要的计算。<br/>
-3. <strong>在多种场景下验证了有效性</strong>：通过在 SFT、LoRA、DPO 和 RM 等大语言模型（LLM）微调和对齐训练中的评估，证明了 FLASHMASK 的多功能性和鲁棒性。实验表明，与现有的 FlashAttention 密集掩码方法相比，端到端速度提升了1.65倍至3.22倍，显著减少了计算和内存开销，非常适合长上下文建模。</p>
+<p><strong>创新点</strong>:</p>
+<ol><li><strong>提出了一种新颖的列式稀疏掩码表示法</strong>：该方法可以高效地支持更广泛的掩码类型，从而实现更灵活的注意力机制。它将二维的密集掩码压缩为一维表示，实现了 $O(N)$ 的线性内存复杂度。</li><li><strong>扩展了 FlashAttention 的掩码能力</strong>：通过集成优化的核函数实现，确保了高计算效率，同时不牺牲计算精度。这种方法利用注意力掩码中的稀疏性来跳过不必要的计算。</li><li><strong>在多种场景下验证了有效性</strong>：通过在 SFT、LoRA、DPO 和 RM 等大语言模型（LLM）微调和对齐训练中的评估，证明了 FLASHMASK 的多功能性和鲁棒性。实验表明，与现有的 FlashAttention 密集掩码方法相比，端到端速度提升了1.65倍至3.22倍，显著减少了计算和内存开销，非常适合长上下文建模。</li></ol>
 <h2>A3 背景知识</h2>
 <h3>2.1 注意力掩码类型</h3>
 <p><strong>Transformer模型中的多种注意力掩码类型</strong>。Transformer 模型在各种任务中表现出卓越的通用性，每种任务都受益于不同的注意力掩码类型，如图1所示。<strong>因果掩码 (Causal Mask)</strong> 主要用于自回归模型中预测序列中的下一个词元，确保每个词元只关注前面的词元，避免未来信息泄露【Vaswani et al. (2017), Attention is all you need, 2017, NIPS】。<strong>滑动窗口掩码 (Sliding Window Mask)</strong> 通过允许词元关注一个固定大小的邻近词元窗口来捕捉局部上下文，平衡了计算效率与捕捉局部依赖的能力【Beltagy et al. (2020), Longformer: The long-document transformer, 2020, arXiv】。<strong>因果文档掩码 (Causal Document Mask)</strong> 应用于高效序列打包和批内/词元内技术等方法中，通过确保词元只关注同一文档内的先前词元，在不降低性能的情况下加速大语言模型【Krell et al. (2021), Efficient sequence packing without cross-contamination: Accelerating large language models without impacting performance, 2021, arXiv; Iyer et al. (2022), Opt-iml: Scaling language model instruction meta learning through the lens of generalization, 2022, arXiv; Dubey et al. (2024), The llama 3 herd of models, 2024, arXiv】。<strong>文档掩码 (Document Mask)</strong>，或称双向注意力，允许词元关注同一文档内的所有其他词元，有助于从两个方向学习上下文，广泛应用于BERT和像NaViT这样的视觉Transformer模型中【Devlin et al. (2018), Bert: Pre-training of deep bidirectional transformers for language understanding, 2018, arXiv; Dehghani et al. (2024), Patch n’ pack: Navit, a vision transformer for any aspect ratio and resolution, 2024, NeurIPS】。</p>
@@ -71,23 +69,16 @@ $$M_j = [start_j, end_j), \quad \forall j \in \{1, \dots, N\}$$
 <p><strong>表示法的通用性</strong>。这种区间表示的概念可以推广到其他形式的连续区间。例如，通过转置注意力矩阵，我们可以得到使用列索引区间的行式表示。这种方法的灵活性允许高效处理各种注意力模式，同时保持一种紧凑的表示形式，有利于优化计算。</p>
 <h2>A2 方法细节</h2>
 <h3>4.1 列式掩码表示法</h3>
-<p><strong>FLASHMASK的列式稀疏表示法</strong>。为了在因果和双向注意力场景中高效处理复杂的掩码模式，我们为FLASHMASK提出了一种新颖的列式稀疏表示法。注意力分数矩阵被划分为相对于对角线的左下和右上三角部分。FLASHMASK使用四个一维向量来表示掩码：<br/>
-- $LTS$: 左下三角起始 (Lower Triangular Start) - 左下三角中掩码的起始行。<br/>
-- $LTE$: 左下三角结束 (Lower Triangular End) - 左下三角中掩码的结束行。<br/>
-- $UTS$: 右上三角起始 (Upper Triangular Start) - 右上三角中掩码的起始行。<br/>
-- $UTE$: 右上三角结束 (Upper Triangular End) - 右上三角中掩码的结束行。</p>
+<p><strong>FLASHMASK的列式稀疏表示法</strong>。为了在因果和双向注意力场景中高效处理复杂的掩码模式，我们为FLASHMASK提出了一种新颖的列式稀疏表示法。注意力分数矩阵被划分为相对于对角线的左下和右上三角部分。FLASHMASK使用四个一维向量来表示掩码：</p>
+<ul><li>$LTS$: 左下三角起始 (Lower Triangular Start) - 左下三角中掩码的起始行。</li><li>$LTE$: 左下三角结束 (Lower Triangular End) - 左下三角中掩码的结束行。</li><li>$UTS$: 右上三角起始 (Upper Triangular Start) - 右上三角中掩码的起始行。</li><li>$UTE$: 右上三角结束 (Upper Triangular End) - 右上三角中掩码的结束行。</li></ul>
 <p><strong>掩码区间的定义与示例</strong>。在左下三角部分需要被掩码的行索引由 $[LTS_j, LTE_j)$ 给出，在右上三角部分由 $[UTS_j, UTE_j)$ 给出。具体来说，每一列由两个掩码区间描述。对于第 $j$ 个词元，区间 $[LTS_j, LTE_j) \cup [UTS_j, UTE_j)$ 内的词元不能关注它。例如，如图1(b)(6)所示，对于第五列，$[LTS_5, LTE_5) \cup [UTS_5, UTE_5) = [7, 10) \cup [2, 4)$ 表示第2到4行和第7到9行被掩码。</p>
-<p><strong>该表示法的优势</strong>。这种表示法具有几个优点：<br/>
-1. <strong>紧凑性</strong>：它将一个密集的二维掩码缩减为一个更高效的一维表示。<br/>
-2. <strong>灵活性</strong>：它可以捕捉广泛的实际掩码模式，包括因果、双向和更复杂的注意力机制。<br/>
-3. <strong>计算效率</strong>：它便于在基于平铺的计算中轻松转换为掩码块，从而能够消除不必要的计算。</p>
+<p><strong>该表示法的优势</strong>。这种表示法具有几个优点：</p>
+<ol><li><strong>紧凑性</strong>：它将一个密集的二维掩码缩减为一个更高效的一维表示。</li><li><strong>灵活性</strong>：它可以捕捉广泛的实际掩码模式，包括因果、双向和更复杂的注意力机制。</li><li><strong>计算效率</strong>：它便于在基于平铺的计算中轻松转换为掩码块，从而能够消除不必要的计算。</li></ol>
 <h3>4.2 扩展FLASHATTENTION以支持复杂掩码</h3>
 <p><strong>集成与核函数实现</strong>。我们将FLASHMASK的列式掩码表示法集成到FlashAttention-2算法中，扩展了其掩码支持能力。FLASHMASK的高性能核函数实现包括两个关键步骤：</p>
 <p><strong>预处理步骤</strong>。给定输入的列式稀疏掩码向量，我们首先在高带宽内存（HBM）中沿列维度将它们划分为 $T_c$ 个块。对于每个掩码向量，我们计算每个块内的最大值和最小值。这会产生8个中间向量：$LTS_j^{min}, LTS_j^{max}, LTE_j^{min}, LTE_j^{max}, UTS_j^{min}, UTS_j^{max}, UTE_j^{min}, UTE_j^{max}$，每个向量的大小为 $T_c$。</p>
-<p><strong>实时块跳过计算</strong>。使用这些最小-最大值向量，我们可以在核函数计算期间将注意力分数矩阵的每个平铺块分为三类。块掩码类型 <code>BlockMaskType</code> 的确定方式如下：<br/>
-- <strong>完全掩码</strong>，如果 $i \times B_r \ge LTStart_{j}^{min}$ 且 $i \times B_r &lt; LTEnd_{j}^{max}$ 同时 $i \times B_r \ge UTStart_{j}^{min}$ 且 $i \times B_r &lt; UTEnd_{j}^{max}$<br/>
-- <strong>部分掩码</strong>，如果 $i \times B_r &lt; LTEnd_{j}^{min}$ 或 $i \times B_r &gt; LTStart_{j}^{max}$ 同时 $i \times B_r &lt; UTEnd_{j}^{min}$ 或 $i \times B_r &gt; UTStart_{j}^{max}$<br/>
-- <strong>无掩码</strong>，其他情况</p>
+<p><strong>实时块跳过计算</strong>。使用这些最小-最大值向量，我们可以在核函数计算期间将注意力分数矩阵的每个平铺块分为三类。块掩码类型 <code>BlockMaskType</code> 的确定方式如下：</p>
+<ul><li><strong>完全掩码</strong>，如果 $i \times B_r \ge LTStart_{j}^{min}$ 且 $i \times B_r &lt; LTEnd_{j}^{max}$ 同时 $i \times B_r \ge UTStart_{j}^{min}$ 且 $i \times B_r &lt; UTEnd_{j}^{max}$</li><li><strong>部分掩码</strong>，如果 $i \times B_r &lt; LTEnd_{j}^{min}$ 或 $i \times B_r &gt; LTStart_{j}^{max}$ 同时 $i \times B_r &lt; UTEnd_{j}^{min}$ 或 $i \times B_r &gt; UTStart_{j}^{max}$</li><li><strong>无掩码</strong>，其他情况</li></ul>
 <p>这种分类使我们能够跳过完全掩码的块，减少对无掩码块的计算，并仅对部分掩码的块应用逐元素掩码。图1(c)展示了在左下三角区域具有 $LTS$ 和 $LTE$ 的因果场景的整个核函数计算过程。算法1详细描述了从FlashAttention2扩展而来的FLASHMASK前向计算过程，蓝色阴影部分表示FLASHMASK的计算。</p>
 <p><strong>反向传播的优势</strong>。对于反向传播，FLASHMASK的列稀疏表示法特别有利。$dK$ 和 $dV$ 的计算是列并行的，允许将最大值和最小值高效地加载到寄存器中，以便在块计算期间进行广泛的数据重用，如附录中的算法2所示。</p>
 <h3>4.3 复杂度分析</h3>
