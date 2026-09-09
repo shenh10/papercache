@@ -1,0 +1,70 @@
+---
+added_date: '2026-09-09'
+author: shenh10
+categories:
+- llm
+- algorithm
+- architecture
+- transformer-variant
+comments: true
+date: '2026-09-01'
+layout: post
+mathjax: true
+tag: blog
+title: OpenAI Astra and Looped Transformers
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>OpenAI Astra and Looped Transformers</h1>
+<p><strong>发表时间</strong>: 2026-09 · Blog post by Sebastian Raschka (sebastianraschka.com)</p>
+<p><strong>原文</strong>: <a href="https://sebastianraschka.com/blog/2026/openai-astra-looped-transformers.html" rel="noopener" target="_blank">https://sebastianraschka.com/blog/2026/openai-astra-looped-transformers.html</a></p>
+<p>作者：Sebastian Raschka<br/>
+日期：2026年9月2日</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文澄清了 OpenAI Astra 模型中备受关注的 Looped Transformer 架构，指出其本质仅是通过重复利用相同的 Transformer 层来在不增加参数量和显存占用的情况下提升模型容量，而并非一种旨在神秘隐藏模型推理过程的全新技术。</p>
+<p><strong>要解决什么问题</strong> 传统的语言模型在追求更高容量和更强推理能力时，通常的做法是直接增加网络层数或扩大模型规模。这种做法的卡点在于，层数的增加会导致模型参数量呈线性增长，进而对存储空间和运行内存提出极高的要求，使得大模型的部署和托管成本极其高昂。此外，业界和媒体对近期的新架构存在一种误解，认为某些新技术在机制上故意掩盖了人工智能的推理过程（即 Chain-of-Thought），导致计算过程变成了无法被人类读取的黑盒。本文要解决的核心问题就是如何打破模型容量与显存占用之间的强绑定关系，在不增加物理参数负担的前提下加深计算深度，同时从机制层面厘清这种架构调整是否真的在刻意隐藏模型的思维链。</p>
+<p><strong>怎么做的</strong> 核心思路是放弃物理层面上的层数堆叠，转而在前向传播中多次重复利用同一个 Transformer 块中的层。以 Nanbeige 架构为例，其关键设计是将一个包含 22 层的网络堆叠（即 Transformer 块）循环传递两次，而不是像常规模型那样只传递一次。这种设计之所以能绕开显存卡点，是因为它在逻辑上将 22 层的架构扩展到了 44 层，在忽略嵌入层和输出层的前提下，这大致相当于将模型规模翻倍，但完全没有复制任何权重。因此，模型的存储和内存占用保持不变。我们可以用公式表示这种机制的核心不变量：设物理层数为 $L$，循环次数为 $R$，则有效计算深度为 $D = L \times R$，而参数量始终与 $L$ 成正比，计算成本则与 $O(L \times R)$ 成正比。这一思路最早可追溯到 NeurIPS 会议上的 Mixture-of-recursions 论文。该论文提出了一种更精细的部件：引入一个可学习的路由器（learned router）。这个路由器的职责是进行 token 级别的自适应计算，它会动态决定每个 token 需要经过一次、两次还是更多次的循环传递。通过这种路由机制，简单的 token 可以提前退出以节省算力，而更难的 token 则会接受额外的循环计算。针对媒体认为该技术会掩盖思维链的争议，文章指出重复利用层本身只是在发射下一个 token 前，在隐藏状态中增加了计算量，这与普通的 Transformer 层完全一样。如果模型因为增加了循环次数而减少了中间推理 token 的生成，使得更多计算发生在无法作为文本读取的潜在激活中，这仅仅是因为模型单步计算能力变强了，与直接扩大模型规模（例如从 GPT 5.6 Luna 升级到 GPT 5.6 Sol）所产生的效果在机制上是完全等价的，并非刻意压制可见的思维链。</p>
+<p><strong>效果如何</strong> 在 Nanbeige 4.2 的技术报告中，研究人员在一个从头开始预训练、参数量为 3B、训练数据量达到 28T tokens 的模型上测试了这种方法，这也是已知首个采用该方法的知名开源权重模型。实验对比的基线是标准的非循环 Transformer 架构。量化结果表明，将循环次数设置为两次能够提供最佳的权衡，在这种设置下，模型保留了标准架构约 75% 的 token 效率。该方法的主要代价是计算成本的显著上升：因为输入的文本需要穿过几乎两倍的层数，导致计算开销几乎翻倍。作者明确指出了该方法的局限性和失效场景：当循环传递的次数超过两次时，模型几乎无法获得任何额外的收益，反而会使得训练过程变得极其缓慢且成本高昂。因此，Looped Transformer 只能算是一个微小的架构调整，它在提升容量的同时必须以牺牲计算速度为代价。</p>
+</div>
+</details>
+<h3>主要贡献</h3>
+<p>本文旨在澄清近期围绕 OpenAI Astra 模型使用“循环深度（recurrent depth）或循环 Transformer（looped transformer）”所产生的过度炒作。文章的核心目标是揭示该架构的本质：循环 Transformer 的创新点仅仅是在 Transformer 块中重复使用相同的层，从而在不增加模型参数量的前提下提升模型容量。此外，作者反驳了媒体关于该技术会主动“掩盖 AI 推理过程（思维链）”的误解，指出其本质上只是在生成下一个 token 之前，在隐藏状态中增加了计算量，这与直接扩大模型规模的效果相似。</p>
+<h3>背景知识与核心观察</h3>
+<p><strong>对 OpenAI Astra 架构的炒作</strong>：近期，关于 OpenAI Astra 模型采用“循环深度或循环 Transformer”架构的讨论引发了大量关注。作者认为有必要对这一概念进行澄清和祛魅，指出这只是一个微小的架构调整。</p>
+<p><strong>关于掩盖思维链的误解</strong>：有媒体报道（如 The Information）声称，这项新技术的工作方式会掩盖部分或全部的 AI 推理过程（即“思维链”）。作者明确指出，这一说法对于循环 Transformer 方法而言未必真实，记者可能误解了该方法或指的是其他完全不同的技术。</p>
+<h3>方法细节</h3>
+<p><strong>循环 Transformer 的核心思想</strong>：循环 Transformer（looped transformer）的概念非常简单，即在 Transformer 块（transformer block）中重复使用相同的层。通过这种方式，模型可以在不增加额外参数的情况下增加计算深度。</p>
+<p><strong>Nanbeige 模型的架构实践</strong>：以 Nanbeige4.2-3B 模型为例，该模型从头开始在 28T tokens 上进行了预训练。其主要思想是将相同的 22 层堆叠（即 Transformer 块）重复使用两次，而不是仅使用一次。这意味着它在不复制权重的情况下，有效地将 22 层架构扩展到了 44 层。</p>
+<p><strong>计算与存储的权衡分析</strong>：简单来说，如果忽略嵌入层（embedding）和输出层，这种设计大致使模型的大小翻倍。然而，由于组件被重复使用，托管该模型所需的存储和 RAM 保持不变，不需要两倍的资源。但是，在计算成本方面，它几乎昂贵了两倍，因为输入的文本需要通过几乎两倍数量的层进行前向传播。</p>
+<p><strong>循环次数的选择与效率</strong>：为什么选择重复两次？在【1，Nanbeige 4.2 技术报告】中，研究人员发现两次传递（two passes）提供了最佳的权衡，并保留了标准架构约 75% 的 token 效率。如果进行更多次的传递，几乎不会带来任何收益，反而会使训练过程变得更慢且更加昂贵。</p>
+<p><strong>自适应 Token 级计算的起源</strong>：虽然 Nanbeige 4.2 可能是第一个采用这种方法的著名开源权重模型，但这个想法可以追溯到 NeurIPS 论文【2，Mixture-of-recursions: Learning dynamic recursive depths for adaptive token-level computation】。实际上，该论文提出了一种更为复杂的机制，通过引入一个可学习的路由器（learned router）来决定每个 token 是接受一次、两次还是更多次的传递。因此，简单的 token 可以提前退出（exit early），而更难的 token 则会接受额外的计算。</p>
+<p><strong>循环层对推理过程的实际影响</strong>：重复使用层本身并不会抑制可见的思维链（chain of thought）。与普通的 Transformer 层一样，它只是在发出下一个 token 之前，在隐藏状态（hidden states）中增加了计算量。基于现有信息，唯一合理的解释是：如果模型使用更多这种循环传递，它可能需要生成较少的中间推理 token。因此，更多的计算发生在无法作为文本读取的潜在激活（latent activations）中。但这与扩大模型规模（例如从 GPT 5.6 Luna 升级到 GPT 5.6 Sol）所产生的效果是完全相同的。</p>
+<p><img alt="比较关于 OpenAI Astra 循环深度、Nanbeige 4.2 的重复 Transformer 层以及 Mixture-of-Recursions 路由的声明的复合图" class="figure-image" src="https://sebastianraschka.com/images/blog/2026/openai-astra-looped-transformers/openai-astra-looped-transformers.webp"/><br/>
+图 1. 关于 OpenAI Astra 的循环深度、Nanbeige 4.2 的循环 Transformer 以及 Mixture-of-Recursions 中 token 级路由的报告对比。</p>
+<h3>实验环境</h3>
+<ul>
+<li><strong>模型架构关键参数</strong>：Nanbeige4.2-3B，采用 22 层 Transformer 堆叠。</li>
+<li><strong>数据集规模</strong>：预训练使用了 28T（28万亿）个 tokens。</li>
+<li><strong>核心配置</strong>：采用循环 Transformer 架构，将 22 层堆叠重复使用两次，等效于 44 层的计算深度，但不增加额外参数，保持了原有的存储和内存需求，但增加了近两倍的计算开销。</li>
+</ul>
+<h3>实验结果</h3>
+<ul>
+<li><strong>循环次数的权衡实验</strong>：Nanbeige 4.2 的研究人员对循环传递的次数进行了测试。实验结果表明，两次传递（two passes）能够实现最佳的性能权衡，保留了标准架构约 75% 的 token 效率。</li>
+<li><strong>增加循环次数的负面影响</strong>：实验分析得出结论，超过两次的传递几乎无法带来额外的性能提升，反而会导致训练过程变得非常缓慢，并显著增加训练成本。</li>
+</ul>
+<h3>结论</h3>
+<p>作者总结道，Astra 可能确实是一个非常优秀的模型，但其卓越性不应仅仅归功于“循环 Transformer”这一特性，这仅仅是一个微小的架构调整。此外，重复使用层并不会直接抑制可见的思维链，它只是增加了潜在的计算量。这种通过增加循环次数来减少中间推理 token 生成的现象，本质上与单纯扩大模型规模所带来的效果是一致的。</p>
+<h3>参考文献汇总</h3>
+<ul>
+<li>【1】Nanbeige 4.2 技术报告。在“方法细节”中引用，用于说明循环次数的选择依据。原文描述了 Nanbeige 4.2 的研究人员发现两次传递提供了最佳的权衡，并保留了标准架构约 75% 的 token 效率，而更多传递会导致训练变慢且成本增加。</li>
+<li>【2】Mixture-of-recursions: Learning dynamic recursive depths for adaptive token-level computation，发表于 NeurIPS 会议。在“方法细节”中引用，用于追溯循环 Transformer 思想的起源。原文描述了该论文提出了一种通过可学习的路由器来决定每个 token 传递次数的复杂机制，实现简单 token 提前退出，复杂 token 增加计算。</li>
+</ul>
+</div>
+
+
+</div>
