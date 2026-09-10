@@ -4248,6 +4248,13 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'DeepSeek-V4.1-Flash: Pushing the Limits of KV Cache Compression'
+        date: '2026-09-01'
+        url: /papers/llm/algorithm/models/2026/09/01/deepseek-v41-flash-pushing-the-limits-of-kv-cache-compression.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: MiMo-V2-Flash Technical Report
         date: '2025-12-01'
         url: /papers/llm/algorithm/models/2025/12/01/mimo-v2-flash-technical-report.html
