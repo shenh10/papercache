@@ -5077,6 +5077,14 @@ llm:
         - llm
         - algorithm
         - pretrain_sft
+      - title: 'Pre-Training Distillation for Large Language Models: A Design Space
+          Exploration'
+        date: '2024-10-01'
+        url: /papers/llm/algorithm/pretrain_sft/2024/10/01/pre-training-distillation-for-large-language-models-a-design-space-exploration.html
+        categories:
+        - llm
+        - algorithm
+        - pretrain_sft
       - title: 'Fusechat: Knowledge Fusion of Chat Models'
         date: '2024-08-01'
         url: /papers/llm/algorithm/pretrain_sft/2024/08/01/fusechat-knowledge-fusion-of-chat-models.html
