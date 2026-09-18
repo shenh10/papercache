@@ -3924,6 +3924,13 @@ llm:
         - llm
         - algorithm
         - rl
+      - title: Score Centering Stabilizes Off-Policy Reinforcement Learning
+        date: '2026-09-01'
+        url: /papers/llm/algorithm/rl/2026/09/01/score-centering-stabilizes-off-policy-reinforcement-learning.html
+        categories:
+        - llm
+        - algorithm
+        - rl
       - title: 'DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open
           Language Models'
         date: '2024-02-01'
