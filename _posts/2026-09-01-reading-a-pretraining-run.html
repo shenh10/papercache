@@ -1,0 +1,335 @@
+---
+added_date: '2026-09-19'
+author: shenh10
+categories:
+- llm
+- engineering
+- train
+comments: true
+date: '2026-09-01'
+layout: post
+mathjax: true
+tag: blog
+title: Reading a Pretraining Run
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>Reading a Pretraining Run</h1>
+<p><strong>发表时间</strong>: 2026-09 · Blog post by Chunyuan Deng (charlesdddd.github.io)</p>
+<p><strong>原文</strong>: <a href="https://charlesdddd.github.io/blog/reading-a-pretraining-run.html" rel="noopener" target="_blank">https://charlesdddd.github.io/blog/reading-a-pretraining-run.html</a></p>
+<p>作者/机构：Chunyuan Deng (2026 年 9 月)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong> 本文提出了一套用于大模型预训练的系统性监控与探针排查方法论，通过对成百上千个训练指标进行优先级分级和频率控制，实现了对训练崩溃、硬件故障和模型退化的低开销早期预警。</p>
+<p><strong>要解决什么问题</strong> 在大规模预训练中，系统会吐出成千上万个监控指标，原有的做法往往卡在“信息过载”与“监控开销过大”之间的矛盾上。这种卡点具体体现在两个机制上：一是关键的数值损坏（如局部梯度爆炸、下溢或死路径）和系统异常（如单个慢节点拖慢全局、路由塌缩导致算力不均）很容易被全局平均损失掩盖，等到 loss 飞点或显存溢出发生时，训练已经浪费了大量算力；二是如果对所有张量都进行高频的细粒度扫描，探针本身的计算、通信和落盘延迟会严重阻塞训练主路径，导致监控系统反而成为拖慢吞吐的元凶。因此，如何以极低的代价精准盯住最关键的少数指标，并在不干扰异步计算的前提下捕获瞬态的尖峰与静默退化，是保障大规模训练顺利进行的核心卡点。</p>
+<p><strong>怎么做的</strong> 核心思路是将所有探针按重要性和开销划分为 P0（报警，每步采样）、P1（诊断，每 100 步采样）和 P2（取证，按需开启）三个优先级，并构建了一条从任务状态、损失、梯度范数、单步耗时到专家负载的固定排查链路。这种分级机制能有效绕开监控开销的卡点：便宜的标量统计每步都算，而昂贵的张量扫描降频执行。关键设计由以下几个部件构成：第一是梯度与稳定性检测器，为了不假设数据服从高斯分布也能抓到真实的梯度尖峰，引入了稳健尖峰分数，利用滑动中位数 $q_t$ 与偏差 $D_t$ 对当前对数标量 $u_t$ 进行归一化：<br/>
+</p>
+$$z_t=0.6745\frac{|u_t-q_t|}{D_t+\varepsilon}$$
+<p><br/>
+只有当 loss 和全局梯度范数在同一步同时尖刺时，才触发真正的 P0 报警。第二是张量与优化器探针，为了衡量参数更新是否有效，设计了相对更新幅度 $\rho$，通过对比实际施加的更新 $\Delta w$ 与参数 $w$ 的均方根（RMS）来判断更新是失效还是过大：</p><div>$$\rho=\frac{\operatorname{RMS}(\Delta w)}{\operatorname{RMS}(w)+\varepsilon}$$</div>
+第三是残差与模态路径探针，为了判断深层网络的某一层是否还在起作用，定义了分支相对尺度 $R_b$，即分支范数 $N_b$ 与残差流范数 $N_s$ 的比值：<div>$$R_b=\frac{N_b}{N_s+\varepsilon}$$</div>
+此外针对多模态训练，还设计了媒体特征尺度比和编码器梯度占比，用于监控媒体输入是否被语言主干静默忽略。在工程实现上，严格要求探针只注册一次、在一次内存遍历中算完所有局部统计量、按归约类型批量发送集合通信，并保持异步落盘，绝不把存储延迟放在训练主路径上。<p></p>
+<p><strong>效果如何</strong> 由于本文是一篇指导实际训练的监控方法论，作者并未搭建特定模型规模、特定训练数据量或硬件集群的对比实验，也没有设置传统意义上的基线方法，而是直接定义了在关键 checkpoint 处应如何进行评测，以及探针系统本身的工程代价。评测方面，明确了跨训练对比应使用对分词器不敏感的每字节比特数（BPB），并提出用媒体增益（有无媒体输入时的指标差值）来验证多模态模型是否真正利用了视觉信息。在代价与失效场景方面，作者指出了该监控体系的几个局限与常见错误：如果把所有指标都设为 P0，报警疲劳会导致整个看板失效；如果平滑曲线时没有保留原始数据，会直接藏掉需要排查的短尖峰；如果引入任意的参数名和样本 ID 等高基数标签，会撑爆在线指标存储；此外，低频的 P1 探针无法把触发报警之前的昂贵测量补回来，必须依赖内存中的短环形缓冲，或者在遇到不可复现的硬件重放错误时，用更密集的探针重新跑一遍出问题的 batch。</p>
+</div>
+</details>
+<h2>主要贡献</h2>
+<p>本文档针对大规模模型预训练过程中的监控与诊断问题，提出了一套系统化、结构化的“探针（probe）”测量体系。核心问题在于，一次大规模训练会产生海量的监控数据，难点不在于采集更多数据，而在于如何精准定位最关键的指标。</p>
+<p>研究目标是通过对指标进行严格的优先级划分和频率控制，建立一套高效的训练健康度观测面板。其核心创新点在于：</p>
+<ol>
+<li><strong>优先级分级系统</strong>：将所有监控指标划分为 P0（报警，直接触发 on-call，每步采样）、P1（诊断，按层/张量视图，每 100 步采样）和 P2（取证，极细粒度，按需开启）三个级别。</li>
+<li><strong>多维度诊断逻辑</strong>：从全局损失、梯度稳定性、系统健康度、张量数值状态、专家负载均衡、残差路径有效性到多模态特征融合，构建了自顶向下的排查链路。</li>
+<li><strong>严谨的指标数学定义</strong>：对每一种监控指标（如稳健尖峰分数、相对更新幅度、块重要性等）给出了严格的数学聚合公式与观测时点，消除了分布式训练中常见的统计谬误。</li>
+</ol>
+<h2>背景知识与设计原则</h2>
+<p><strong>第一屏监控原则</strong>：在构建监控看板时，首屏应聚焦于九个核心的 P0 信号（除留出集损失外均需每步采样）。排查问题的标准顺序应为：任务状态 -&gt; 损失 (Loss) -&gt; 梯度范数与尖峰 -&gt; 单步耗时 -&gt; 显存 -&gt; 专家均衡。只有当这条主线索无法解释当前现象时，才应进一步下钻打开按层的视图。这九个核心信号包括：</p>
+<ul>
+<li>损失：全局均值与最差 rank 均值（反映收敛情况及单一节点/数据分片异常）。</li>
+<li>损失：按数据源与模态（反映全局平稳时局部的退化）。</li>
+<li>梯度：全局范数与裁剪率（最早的数值告警信号）。</li>
+<li>稳定性：共同尖峰计数（Loss与梯度同频突变）。</li>
+<li>系统：单步耗时与吞吐（反映卡顿、重放、慢节点等）。</li>
+<li>系统：显存峰值，跨 rank 取最大（反映 OOM 余量）。</li>
+<li>专家：专家负载 MaxVio（反映路由塌缩及算力不均）。</li>
+<li>数值：输出端绝对值最大（在传导至 Loss 前捕获溢出和数值损坏）。</li>
+<li>质量：留出集每字节损失（验证算力是否有效转化为质量，每 0.5-2% 进度执行）。</li>
+</ul>
+<p><strong>指标监控频率与对比原则</strong>：便宜的报警指标必须每步计算，张量扫描每 100 步执行一次，评测每 0.5-2% 训练进度执行。一旦发现异常，需临时加密探针或重放该步。在进行不同次训练的横向对比时，若 batch size 发生变化，横轴必须使用累计 token 数或估计的浮点运算量，绝对不能使用 step 数进行对比。</p>
+<h2>方法细节</h2>
+<h3>损失 (Loss) 监控</h3>
+<p><strong>前置定义</strong>：设 $R$ 为 GPU rank 数，每个 rank 是一个独立的训练进程。rank $r$ 上存在 $T_r$ 个 token 位置。对于 rank $r$ 上的 token $t$，其负对数似然记为 $\ell_{r,t}$，指示变量 $m_{r,t}$ 在该 token 为有效目标时取 1，否则取 0。</p>
+<p><strong>全局平均损失 $L$</strong>：P0 级别指标。计算方式为先在所有 rank 上分别求出有效 token 的 loss 之和与 token 计数，随后再进行相除。公式为：<br/>
+</p>
+$$L = \frac{\sum_{r=1}^{R}\sum_{t=1}^{T_r} m_{r,t}\ell_{r,t}} {\sum_{r=1}^{R}\sum_{t=1}^{T_r} m_{r,t}}$$
+<p><br/>
+该指标是所有收敛判断和 scaling 对比的基石。</p>
+<p><strong>单 rank 平均损失 $L_r$</strong>：P1 级别指标。计算 rank $r$ 上有效 token 的平均损失：<br/>
+</p>
+$$L_r = \frac{\sum_{t=1}^{T_r}m_{r,t}\ell_{r,t}} {\sum_{t=1}^{T_r}m_{r,t}}$$
+<p><br/>
+若某个 rank 没有有效目标，需直接跳过，严禁将其记为 0。</p>
+<p><strong>最差 rank 损失 $L_{\max}$</strong>：P0 级别指标。在所有 rank 的局部均值中提取最大值：<br/>
+</p>
+$$L_{\max}=\max_{1\le r\le R}L_r$$
+<p><br/>
+该指标是对 GPU rank 取最大值，而非对 token 或样本取最大。其核心作用是捕获被全局 $L$ 平均掉的损坏 worker 或异常数据分片。</p>
+<p><strong>按数据源与模态的损失</strong>：P0 级别指标。设 $\mu$ 表示稳定的数据源或模态，当 rank $r$ 上的 token $t$ 属于 $\mu$ 且为有效目标时，$m^{(\mu)}_{r,t}$ 取 1。汇报该组 loss 时必须同步汇报其 token 占比：<br/>
+</p>
+$$L^{(\mu)}=\frac{\sum_{r,t} m^{(\mu)}_{r,t}\ell_{r,t}} {\sum_{r,t} m^{(\mu)}_{r,t}}, \qquad \pi^{(\mu)}=\frac{\sum_{r,t} m^{(\mu)}_{r,t}} {\sum_{r,t} m_{r,t}}$$
+<p><br/>
+对于仅占几个百分点 token 的数据组，其连续退化几千步可能完全不会引起全局 $L$ 的波动。每一组只能与自身的历史数据进行对比，因为不同数据源的 token 熵存在差异，绝对数值之间不具备可比性。</p>
+<p><strong>聚合逻辑要求</strong>：当各 rank 有效 token 数不一致时，绝对不能直接平均 $L_r$。必须将 loss 之和与 token 计数分别进行 reduce 操作后，再进行相除。</p>
+<h3>梯度与尖峰监控</h3>
+<p><strong>前置定义</strong>：设 $g=(g_1,\ldots,g_P)$ 包含全部 $P$ 个梯度元素。测量时间点严格限制在梯度累积完成、去掉 loss scale 之后，且在全局裁剪之前。</p>
+<p><strong>全局梯度范数 $G_2$</strong>：P0 级别指标。计算所有梯度元素上的欧氏范数：<br/>
+</p>
+$$G_2=\sqrt{\sum_{j=1}^{P}g_j^2}$$
+<p><br/>
+这是最主要的数值稳定性信号，在训练即将崩溃时，通常是该指标最先发生异动。</p>
+<p><strong>裁剪率</strong>：P0 级别指标。设定裁剪阈值 $c$，在最近 $W$ 步的窗口上统计裁剪触发的频率：<br/>
+</p>
+$$\operatorname{Clip}=\frac{1}{W}\sum_{t}\mathbf{1}[G_{2,t}&gt;c]$$
+<p><br/>
+该指标维持在低值属于正常现象。若持续上升，则表明裁剪机制已经变相成为了一条未被设计过的学习率调度策略。</p>
+<p><strong>梯度绝对值均值 $G_{\mathrm{mean}}$</strong>：P1 级别指标。计算所有梯度元素绝对值的平均数：<br/>
+</p>
+$$G_{\mathrm{mean}}=\frac{1}{P}\sum_{j=1}^{P}|g_j|$$
+<p><br/>
+该指标反映了梯度的典型量级，相较于最大值，它更不容易被单一的离群值带偏。</p>
+<p><strong>梯度绝对值最大 $G_{\max}$</strong>：P1 级别指标。提取绝对值最大的梯度元素：<br/>
+</p>
+$$G_{\max}=\max_{1\le j\le P}|g_j|$$
+<p><br/>
+其作用是抓取被均值稀释掉的局部数值爆炸现象。</p>
+<p><strong>梯度零元素比例 $Z_g$</strong>：P1 级别指标。统计严格等于 0 的元素数量并除以总元素数：<br/>
+</p>
+$$Z_g=\frac{1}{P}\sum_{j=1}^{P}\mathbf{1}[g_j=0]$$
+<p><br/>
+（注：示性函数 $\mathbf{1}[\mathcal{C}]$ 在条件 $\mathcal{C}$ 成立时为 1，否则为 0）。该指标上升意味着存在死路径、下溢，或者部分参数完全无法获取梯度。embedding 和 expert 参数的零元素比例需要单独汇报，因为它们天然具备稀疏性，但其稀疏度的变化依然具有诊断价值。</p>
+<p><strong>测量时点要求</strong>：每一个梯度指标都必须明确记录其状态（是否带 scale、是单个 microbatch 还是累积后、裁剪前还是裁剪后）。优化器不同位置测量出的范数之间完全没有可比性。</p>
+<p><strong>滑动中位数 $q_t$ 与偏差 $D_t$</strong>：P1 级别指标。针对第 $t$ 步的正标量 $x_t$，定义 $u_t=\log(x_t+\varepsilon)$（$\varepsilon&gt;0$ 为数值下限，$\log$ 为自然对数）。设 $W_t$ 为此前若干 $u$ 值组成的窗口，计算局部基线与离散度估计（该估计不会被尖峰撑大）：<br/>
+</p>
+$$q_t=\operatorname{median}(W_t), \qquad D_t=\operatorname{median}_{u\in W_t}|u-q_t|$$
+
+<p><strong>稳健尖峰分数 $z_t$</strong>：P1 级别指标。利用 $D_t$ 对当前偏差进行归一化处理：<br/>
+</p>
+$$z_t=0.6745\frac{|u_t-q_t|}{D_t+\varepsilon}$$
+<p><br/>
+公式中的系数 0.6745 是基于对数值服从正态分布的假设进行校准的。必须对 $L$ 和 $G_2$ 分别运行两套独立的检测器。</p>
+<p><strong>共同尖峰指示 $C_t$</strong>：P0 级别指标。仅当 loss 和梯度范数在同一步同时发生尖刺时，才对该步进行标记：<br/>
+</p>
+$$C_t=\mathbf{1}[\text{loss spike at step }t]\, \mathbf{1}[\text{gradient-norm spike at step }t]$$
+<p><br/>
+这是真正需要接入报警系统的指标。系统应记录累计次数和累计幅度，而不仅仅是当前步的布尔标志位。</p>
+<p><strong>跳过与重放计数</strong>：P1 级别指标。需分别统计被尖峰保护机制丢掉的更新步数、被重放的步数，以及重放后未能复现原 loss 的次数。最后一点尤为关键：若相同输入重放产生不同 loss，则证明问题根源在于硬件而非数据。</p>
+<p><strong>阈值设定要求</strong>：窗口长度和 $z_t$ 阈值必须在稳定的训练阶段进行校准，严禁利用某次故障数据来反向调节阈值。</p>
+<h3>系统健康监控</h3>
+<p><strong>前置定义</strong>：设 $\tau_r$ 为 rank $r$ 上的本地单步耗时，$\tau=\max_r\tau_r$ 为该步的全局墙钟时间。</p>
+<p><strong>token 吞吐 $\operatorname{TPS}$</strong>：P0 级别指标。记 $N_{\mathrm{tok}}$ 为单步内全局有效 token 数：<br/>
+</p>
+$$\operatorname{TPS}=\frac{N_{\mathrm{tok}}}{\tau}$$
+<p><br/>
+变量 $\tau$ 必须完整包含数据加载、前向传播、反向传播、优化器更新及同步操作的所有时间。</p>
+<p><strong>算力速率 $\Phi$</strong>：P0 级别指标。记 $F_{\mathrm{step}}$ 为单步估计运算量，$D$ 为设备总数：<br/>
+</p>
+$$\Phi=\frac{F_{\mathrm{step}}}{D\tau}$$
+<p><br/>
+参与对比的各次训练必须采用完全一致的 FLOP 估计口径；若口径改变，即使硬件不变，该指标也会发生漂移。</p>
+<p><strong>慢节点分数 $S$</strong>：P1 级别指标。用全局单步耗时除以本地单步耗时的中位数：<br/>
+</p>
+$$S=\frac{\tau}{\operatorname{median}_r(\tau_r)+\varepsilon}$$
+<p><br/>
+当所有 rank 步调一致时 $S\approx1$。若整个任务被某一个慢节点拖累，该分数会显著上升。</p>
+<p><strong>显存峰值</strong>：P0 级别指标。统计规定区间内 allocated 或 reserved 的最大字节数，随后跨 rank 取最大值。只有跨 rank 取最大，才能精准定位到最接近 OOM（内存溢出）的那张显卡。峰值计数器必须在明确约定的边界上清零，否则相邻数据点描述的将是完全不同的时间窗口。</p>
+<p><strong>已分配与已预留显存</strong>：P1 级别指标。allocated 代表活跃张量实际占用的字节；reserved 代表分配器当前持有的字节（包含缓存块）。若 reserved 减去 allocated 的差值持续扩大，表明系统出现了内存碎片化或缓存过大，而非模型本身变大。</p>
+<p><strong>暴露的集合通信等待 $W_{\mathrm{comm}}$</strong>：P1 级别指标。记 $\tau_{\mathrm{wait}}$ 为关键路径上未能与计算重叠的集合通信等待时间：<br/>
+</p>
+$$W_{\mathrm{comm}}=\frac{\tau_{\mathrm{wait}}}{\tau}$$
+<p><br/>
+报告该指标时，必须同时报告集合通信的调用次数和数据传输量，以便区分是“大量的小数据调用”还是“单次受限于带宽的大数据调用”。</p>
+<p><strong>设备与主机遥测</strong>：P1 级别指标。需监控利用率、功耗、温度、频率、进程内存、CPU 压力、缺页中断以及网络流量。这些信号用于区分模型自身的退化与主机、散热、内存分配器或网络层面的硬件故障（吞吐量下降绝大多数归因于后者）。</p>
+<p><strong>计时要求</strong>：device event 必须精确卡在真正的异步等待两侧，并依托已有的同步点进行读取。严禁随意添加额外的主机同步，这会直接破坏并改变原有的计算通信重叠关系。</p>
+<p><strong>节点级计数器要求</strong>：每个网卡在每个节点上只能采样一次。若每个本地 rank 都读取一遍，会导致上报的网络流量成倍虚高。</p>
+<h3>张量探针 (每 100 步)</h3>
+<p><strong>前置定义</strong>：设 $x=(x_1,\ldots,x_N)$ 为展平后包含 $N$ 个元素的张量。以下统计量需在单次内存遍历中一并计算完成。</p>
+<p><strong>绝对值最大</strong>：P0 级别指标。提取绝对值最大的元素：<br/>
+</p>
+$$\operatorname{AbsMax}(x)=\max_{1\le j\le N}|x_j|$$
+<p><br/>
+这是发现离群值、溢出和局部爆炸最敏锐的指标。当部署在模型输出端时，它具有绝对的 P0 优先级，其异动通常早于 loss。</p>
+<p><strong>均方根 RMS</strong>：P1 级别指标。计算元素平方均值的平方根：<br/>
+</p>
+$$\operatorname{RMS}(x)=\sqrt{\frac{1}{N}\sum_{j=1}^{N}x_j^2}$$
+<p><br/>
+RMS 用于衡量能量尺度，且在不同尺寸的张量间具备可比性。落盘时建议保存平方均值 $M_2(x)=\frac1N\sum_j x_j^2$，各 rank 分别 reduce 平方和与元素总数后，即可推导出全局 RMS。</p>
+<p><strong>绝对值均值</strong>：P1 级别指标。计算所有元素绝对值的平均：<br/>
+</p>
+$$\operatorname{AbsMean}(x)=\frac{1}{N}\sum_{j=1}^{N}|x_j|$$
+<p><br/>
+该指标衡量不受正负抵消影响的典型量级，对少数极大元素不敏感。它与 RMS 之间的差值本身即蕴含重要分布信息。</p>
+<p><strong>零元素比例 $Z_x$</strong>：P1 级别指标。统计严格为 0 的元素比例：<br/>
+</p>
+$$Z_x=\frac{1}{N}\sum_{j=1}^{N}\mathbf{1}[x_j=0]$$
+<p><br/>
+用于衡量张量稀疏度、下溢情况以及失活的计算路径。</p>
+<p><strong>超额峰度 $\kappa$</strong>：P2 级别指标。取经验均值 $\mu$，利用方差的平方对四阶中心矩进行归一化：<br/>
+</p>
+$$\kappa= \frac{\frac{1}{N}\sum_{j=1}^{N}(x_j-\mu)^4} {\left(\frac{1}{N}\sum_{j=1}^{N}(x_j-\mu)^2\right)^2}-3$$
+<p><br/>
+当 $\kappa$ 显著为正时，表明分布呈现重尾特征，存在低精度训练风险（方差为 0 时无定义）。该指标建议在权重上跟踪，激活值通常无需监控。</p>
+<p><strong>观测点设置</strong>：需覆盖 embedding、logits、query/key/value、归一化后的 query 与 key、attention 输出、前馈激活、残差流、expert 的输入与输出、参数梯度以及实际施加的更新。前向激活和反向梯度必须采用不同的命名以成对出现，方能具备诊断效力。</p>
+<p><strong>爆炸定位逻辑</strong>：沿着反向传播路径，追踪绝对值最大指标，从输出端向内部逐层排查：模型输出 -&gt; 每个 block 裁剪前的张量 -&gt; attention 和前馈网络内部。第一个出现数值跳变的层即为故障层。</p>
+<p><strong>分布式归约要求</strong>：必须先聚合求和项与元素计数，最后再计算均值；最大值必须使用 max 归约。绝对禁止平均各 rank 的局部最大值，也禁止平均分母不同的比值。</p>
+<p><strong>相对更新幅度 $\rho$</strong>：P1 级别指标。针对参数张量 $w$ 和实际施加的更新 $\Delta w$：<br/>
+</p>
+$$\rho=\frac{\operatorname{RMS}(\Delta w)} {\operatorname{RMS}(w)+\varepsilon}$$
+<p><br/>
+若该值持续趋近于 0，说明更新已无实质作用；若突然抬高，说明更新相对于参数尺度过大。此比值在不同层、不同次训练间可比，而更新的绝对范数不可比。</p>
+<p><strong>优化器链路</strong>：P2 级别指标。将原始梯度、归一化后的梯度、预条件后的方向、最终施加的更新作为四个独立张量分别记录。用于定位具体是哪一环节引入了尺度或方向的突变（仅在排查时按需打开）。</p>
+<p><strong>命名规范</strong>：优化器内部张量必须明确标识其处于归一化、预条件、weight decay、学习率缩放及裁剪之前还是之后。</p>
+<h3>专家负载均衡监控</h3>
+<p><strong>前置定义</strong>：设 $E$ 为 expert 总数，$c_i$ 为路由至 expert $i$ 的有效 token 数，平均负载记为 $\bar c=\frac1E\sum_i c_i$。</p>
+<p><strong>不均衡比 $I$ 与最大违反度</strong>：P0 级别指标。对比最繁忙的 expert 与平均负载：<br/>
+</p>
+$$I=\frac{\max_{1\le i\le E}c_i}{\bar c}, \qquad \operatorname{MaxVio}=\frac{\max_{1\le i\le E}c_i-\bar c}{\bar c}=I-1$$
+<p><br/>
+完全均衡时 $I=1$ 且 $\operatorname{MaxVio}=0$。$\operatorname{MaxVio}=0.25$ 意味着最忙的 expert 承载了超均值 25% 的 token。看板展示推荐使用 MaxVio。</p>
+<p><strong>分片不均衡</strong>：P0 级别指标。将上述比值逻辑应用于 expert 并行的分片负载上。因为单个 expert 的均衡不代表通信组均衡，真正决定单步耗时的是分片层面的负载。</p>
+<p><strong>路由熵 $H$ 与 $H_{\mathrm{norm}}$</strong>：P1 级别指标。基于归一化负载 $p_i=c_i/\sum_j c_j$ 计算：<br/>
+</p>
+$$H=-\sum_{i=1}^{E}p_i\log p_i, \qquad H_{\mathrm{norm}}=\frac{H}{\log E}$$
+<p><br/>
+$H_{\mathrm{norm}}=0$ 代表路由完全集中，1 代表绝对均匀。该指标骤降意味着路由器正向少数 expert 塌缩，通常比指标 $I$ 更早暴露问题。</p>
+<p><strong>单 expert 负载与路由分数</strong>：P2 级别指标。记录每个 expert 的 token 占比、路由 bias 项及 top-$k$ 的 margin 分布。在聚合指标报警后，用于具体定位“是哪个 expert 出了问题”。</p>
+<p><strong>掩码处理要求</strong>：必须严格排除 padding 和无效 token。若某层未收到任何有效 token，该比值需直接跳过不记，空分片绝不能作为测量值 0 处理。</p>
+<h3>残差路径监控</h3>
+<p><strong>前置定义</strong>：设 $s\in\mathbb{R}^{d}$ 为某 token 的残差流向量，$b\in\mathbb{R}^{d}$ 为附加其上的分支输出，$a=s+b$ 为更新后的残差流。</p>
+<p><strong>分支相对尺度 $R_b$</strong>：P0 级别指标。分支范数 $N_b=\lVert b\rVert_2$ 除以残差流范数 $N_s=\lVert s\rVert_2$：<br/>
+</p>
+$$R_b=\frac{N_b}{N_s+\varepsilon}$$
+<p><br/>
+值偏小说明分支作用微乎其微，值偏大则说明分支已完全掩盖主干。沿模型深度绘制此指标，是判断深层网络是否有效利用深度的最佳视图。需同步汇报 $N_s$ 和 $N_b$，以区分是分支缩小还是残差流放大。</p>
+<p><strong>块重要性 $B$ 与角距离 $A$</strong>：P1 级别指标。首先定义余弦相似度：<br/>
+</p>
+$$\cos(u,v)= \frac{u^\top v}{\lVert u\rVert_2\lVert v\rVert_2+\varepsilon}$$
+<p><br/>
+随后评估从 $s$ 到 $a$ 的方向变化：</p><div>$$B=1-\cos(s,a), \qquad A=\frac{\arccos(\cos(s,a))}{\pi}$$</div>
+当更新未改变方向时 $B=0$，$A$ 的取值范围为 $[0,1]$。若某 block 的 $B$ 衰减至 0，无论其分支范数多大，该层已不再产生实际贡献。<p></p>
+<p><strong>BF16 空更新比例 $F_{\mathrm{noop}}$</strong>：P1 级别指标。记 $Q_{\mathrm{BF16}}(\cdot)$ 为 bfloat16 舍入操作，统计非零分支在舍入相加后被完全抹除的比例：<br/>
+</p>
+$$\begin{aligned}
+F_{\mathrm{noop}}= \frac{1}{d}\sum_{j=1}^{d} \mathbf{1}\\!\left[ Q_{\mathrm{BF16}}(s_j+b_j)=Q_{\mathrm{BF16}}(s_j) \ \land\ b_j\ne0 \right]
+\end{aligned}$$
+<p><br/>
+该值偏大说明残差更新正被低精度机制吞噬。因其会随残差流范数增大而增大，必须结合 $N_s$ 综合分析。</p>
+<p><strong>门控饱和比例</strong>：P1 级别指标。对于带可学习门控的分支，记 $\beta_j=\sigma(g_j/T)$（$\sigma$ 为 logistic 函数，$g_j$ 为门控参数，$T$ 为温度）。统计低于阈值 $\theta$ 的通道比例：<br/>
+</p>
+$$F_{\mathrm{gate}}(\theta)=\frac{1}{d}\sum_{j=1}^{d}\mathbf{1}[\beta_j&lt;\theta]$$
+<p><br/>
+建议同时追踪多个阈值（如 $\theta\in\\{0.05,0.1,0.25\\}$）。完全关死的门控分支不再有贡献，且极难自主重新开启。</p>
+<p><strong>聚合逻辑要求</strong>：上述指标必须逐个有效 token 进行计算，最后再汇报均值和高分位数据。若直接将所有 token 和特征展平计算，会直接掩盖掉需要寻找的 token 级离群点。</p>
+<h3>模态路径监控</h3>
+<p><strong>模态 token 占比 $\pi^{(\mu)}$</strong>：P0 级别指标。统计属于模态 $\mu$ 的有效目标占比，需与 $L^{(\mu)}$ 联合展示。数据配比调整、打包代码 bug 或 decoder 丢失分片等问题，都会率先反映在此处，从而解释那些形似模型退化的 loss 波动。</p>
+<p><strong>媒体特征尺度比 $\gamma$</strong>：P0 级别指标。记 $e^{(\mathrm{media})}$ 为编码器与投影层输出给主干的 embedding，$e^{(\mathrm{text})}$ 为同位置的文本 embedding：<br/>
+</p>
+$$\gamma=\frac{\operatorname{RMS}(e^{(\mathrm{media})})} {\operatorname{RMS}(e^{(\mathrm{text})})+\varepsilon}$$
+<p><br/>
+接近 1 表明双路特征尺度一致。长期偏小意味着主干模型正在零代价地忽略媒体 token；长期偏大则说明媒体 token 正在主导浅层网络。这两种异常通常源于投影层而非编码器。</p>
+<p><strong>编码器梯度占比 $S_{\mathrm{enc}}$</strong>：P1 级别指标。计算编码器参数梯度范数平方与全局梯度范数平方的比值：<br/>
+</p>
+$$S_{\mathrm{enc}}= \frac{\lVert g_{\mathrm{enc}}\rVert_2^{2}} {\lVert g\rVert_2^{2}}$$
+<p><br/>
+需将其与编码器参数量占比进行对照。趋近于 0 说明编码器已实质性冻结；训练早期远高于参数占比则指向 $\gamma$ 揭示的投影层尺度问题。按层分解即可获得层级梯度贡献视图。</p>
+<p><strong>媒体长度可变处理要求</strong>：由于不同样本的 tile 或帧数不同，按模态统计时必须使用 token 数进行加权，绝对不能对样本求平均。未收到媒体数据的 rank 状态为“无测量值”，而非 0。</p>
+<h2>实验环境</h2>
+<p>本文档系针对大规模分布式模型预训练的通用监控与诊断方法论，并未局限于单一的数据集、模型架构或硬件配置。其方法普遍适用于采用 GPU 集群、MPI/NCCL 多 rank 通信、混合精度（如 BF16）、以及包含专家并行（MoE）和多模态特征融合机制的现代大规模深度学习训练平台。其核心关注点在于对分布式训练节点、显存分配器、网络通信（集合通信）等软硬件环境状态的泛化监控。</p>
+<h2>实验结果 (评测指标)</h2>
+<p>针对每次生成的关键 checkpoint，需执行以下评测以验证训练结果：<br/>
+<strong>前置定义</strong>：设 $M$ 为留出集中有效 token 数量，$\ell_k$ 为第 $k$ 个 token 的负对数似然。</p>
+<ul>
+<li>
+<p><strong>负对数似然 (NLL) 与困惑度 (PPL)</strong>：P0。对留出集 token 的 loss 求平均并取指数：<br/>
+</p>
+$$\operatorname{NLL}=\frac{1}{M}\sum_{k=1}^{M}\ell_k, \qquad \operatorname{PPL}=\exp(\operatorname{NLL})$$
+<p><br/>
+  结论提示：PPL 必须在分词方式和 loss 归一化完全固定时才具备可比性，其本身不比 NLL 提供更多信息。</p>
+</li>
+<li>
+<p><strong>每字节比特数 (BPB)</strong>：P0。记 $N_{\mathrm{byte}}$ 为留出 token 覆盖的原始字节数：<br/>
+</p>
+$$\operatorname{BPB}=\frac{\sum_{k=1}^{M}\ell_k} {N_{\mathrm{byte}}\log 2}$$
+<p><br/>
+  结论提示：这是跨训练对比的默认首选，因为它对分词器词表和切分方式不敏感。</p>
+</li>
+<li>
+<p><strong>选择题准确率</strong>：P0。在固定评测框架下计算预测答案与参考答案的匹配率：<br/>
+</p>
+$$\operatorname{Accuracy}= \frac{1}{Q}\sum_{q=1}^{Q}\mathbf{1}[\hat a_q=a_q]$$
+<p><br/>
+  结论提示：多选题需使用长度归一化后的选项 NLL 进行决策。prompt 拼接和归一化方式在整个训练周期内严禁修改。</p>
+</li>
+<li>
+<p><strong>贪心生成</strong>：P0。使用 temperature=0 进行解码打分。<br/>
+  结论提示：这是暴露“似然打分无法察觉的失败”的最廉价手段，应在每个关键 checkpoint 运行。</p>
+</li>
+<li>
+<p><strong>媒体增益 $\Delta_{\mathrm{media}}$</strong>：P0。在有无媒体输入的条件下分别计算指标得分并求差：<br/>
+</p>
+$$\Delta_{\mathrm{media}}= Q_{\mathrm{with}}-Q_{\mathrm{without}}$$
+<p><br/>
+  结论提示：这是验证多模态模型是否真正利用媒体输入（而非依赖文本先验）的唯一指标。增益趋于 0 的模型本质上只是高成本的单模态模型。</p>
+</li>
+<li>
+<p><strong>pass@k</strong>：P1。采样 $n$ 次中有 $c$ 次通过，计算覆盖率：<br/>
+</p>
+$$\widehat{\operatorname{pass@}k} =1-\frac{\binom{n-c}{k}}{\binom{n}{k}}$$
+<p><br/>
+  结论提示：用于衡量重复采样下的解空间覆盖率。</p>
+</li>
+<li>
+<p><strong>交并比 (IoU)</strong>：P1。预测区域 $\mathcal{P}$ 与参考区域 $\mathcal{G}$ 的交并比：<br/>
+</p>
+$$\operatorname{IoU}= \frac{|\mathcal{P}\cap\mathcal{G}|} {|\mathcal{P}\cup\mathcal{G}|}$$
+<p><br/>
+  结论提示：若训练目标以 grounding 为主，该指标需提升至 P0。</p>
+</li>
+<li>
+<p><strong>权重平均评测</strong>：P1。同步评测原始权重与权重的滑动平均。<br/>
+  结论提示：训练中途的原始权重包含极大噪声，必须选定一路权重作为长期决策依据。</p>
+</li>
+</ul>
+<h2>结论</h2>
+<p>大规模预训练的成功高度依赖于精准且克制的监控体系。将探针分类为不同的优先级（P0至P2）并设定合理的采样频率，能够有效避免报警疲劳。同时，各项监控指标的计算必须严格遵循数学定义与分布式聚合规则，避免诸如归约错误、掩码遗漏等统计陷阱。未来的大规模训练实践中，在提升任何探针频率前，必须在目标硬件和并行配置上实测其带来的额外计算与通信开销。</p>
+<h2>补充细节</h2>
+<h3>常见错误分析</h3>
+<p>以下错误操作均会产生看似合理但极具误导性的曲线，排查代价极高：</p>
+<ol>
+<li><strong>什么都是 P0</strong>：导致报警泛滥，最终无人响应。</li>
+<li><strong>归约组用错</strong>：混淆了 data、tensor、pipeline、context、expert 等并行组的语义。</li>
+<li><strong>最大值目标含糊</strong>：对张量元素、token、样本、GPU rank 取最大，在同一名称下代表了四个截然不同的指标。</li>
+<li><strong>测量时点含糊</strong>：未区分梯度是否带 scale、是否累积、是否裁剪、是否已施加。</li>
+<li><strong>重复计算</strong>：激活重算机制会导致前向探针执行两次，引发重复计数。</li>
+<li><strong>空分片处理错误</strong>：将“没有数据”强行记为测量值 0，会严重拉低所有平均值。</li>
+<li><strong>将 padding 当成 token</strong>：padding 比例越高，loss、路由和模态统计的失真越严重。</li>
+<li><strong>过度平滑</strong>：平滑曲线背后若不保留原始曲线，会直接掩盖掉需要寻找的短促尖峰。</li>
+<li><strong>高基数标签</strong>：引入任意的参数名或样本 ID，会瞬间撑爆在线指标存储系统。</li>
+<li><strong>敏感产物管理不当</strong>：原始样本和 token 级 trace 必须默认关闭，并实施严格的权限控制与短期保留策略。</li>
+</ol>
+<h3>控制探针开销的设计原则</h3>
+<p>为保证监控体系不拖累训练主路径，需遵循以下实现细节：</p>
+<ol>
+<li><strong>只注册一次</strong>：在模型构建阶段即固化所有观测点。</li>
+<li><strong>尽早判断</strong>：对于不采样的步，必须跳过整个扫描计算过程，而不仅仅是跳过磁盘写入。</li>
+<li><strong>只扫一遍</strong>：张量的所有局部统计量必须在单次内存遍历中全部计算完毕。</li>
+<li><strong>批量归约</strong>：按归约类型（求和、求最大值等）进行分组，每组仅触发一次集合通信。</li>
+<li><strong>只搬摘要</strong>：完整的高维张量必须留在设备显存上，仅将标量摘要回传主机。</li>
+<li><strong>异步落盘</strong>：绝对禁止将存储 I/O 延迟引入训练的计算主路径。</li>
+</ol>
+<p><strong>采样策略</strong>：设 $K$ 为采样间隔（步数）。系统应保留每 $K$ 步的样本、所有触发异常的步、warm-up 阶段与最后若干步，以及异常点前后各 50-100 步的数据。对于小规模训练可设 $K=1$；对于长周期训练，昂贵的视图探针 $K$ 应设在 100 至 200 之间，而低成本的检测器依然保持每步运行。由于检测器无法追溯触发前的昂贵测量数据，若上下文信息关键，需在内存中维护一个短的环形缓冲区，或利用更密集的探针将出问题的 batch 重新前向重放一遍。</p>
+</div>
+
+
+</div>

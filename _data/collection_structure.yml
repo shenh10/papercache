@@ -2609,6 +2609,14 @@ llm:
         - engineering
         - train
         tag: sc21
+      - title: Reading a Pretraining Run
+        date: '2026-09-01'
+        url: /papers/llm/engineering/train/2026/09/01/reading-a-pretraining-run.html
+        categories:
+        - llm
+        - engineering
+        - train
+        tag: blog
       - title: 'MegaScale-Omni: A Hyper-Scale, Workload-Resilient System for MultiModal
           LLM Training in Production'
         date: '2026-05-01'
