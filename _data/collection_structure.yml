@@ -4038,6 +4038,13 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'MiMo-V2.6: Scaling Reinforcement Learning Towards Self-Improvement'
+        date: '2026-09-01'
+        url: /papers/llm/algorithm/models/2026/09/01/mimo-v26-scaling-reinforcement-learning-towards-self-improvement.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: 'GLM-4.5: Agentic, Reasoning, and Coding (ARC) Foundation Models'
         date: '2025-08-01'
         url: /papers/llm/algorithm/models/2025/08/01/glm-45-agentic-reasoning-and-coding-arc-foundation-models.html
