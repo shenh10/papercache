@@ -1967,6 +1967,14 @@ llm:
           - inference
           - kvcache
           tag: asplos25
+        - title: 'Periodic Weak Spots: Phase Sensitivity from Chunked KV-Cache Compression'
+          date: '2026-09-01'
+          url: /papers/llm/engineering/inference/kvcache/2026/09/01/periodic-weak-spots-phase-sensitivity-from-chunked-kv-cache-compression.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'SepLLM: Accelerate Large Language Models by Compressing One Segment
             into One Separator'
           date: '2025-07-01'
