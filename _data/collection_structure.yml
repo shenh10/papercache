@@ -3035,6 +3035,13 @@ llm:
         - llm
         - engineering
         - rl
+      - title: 'ThunderSyncRL: Lossless Acceleration of Agentic Reinforcement Learning'
+        date: '2026-10-01'
+        url: /papers/llm/engineering/rl/2026/10/01/thundersyncrl-lossless-acceleration-of-agentic-reinforcement-learning.html
+        categories:
+        - llm
+        - engineering
+        - rl
     moe:
       posts:
       - title: 'MOE-INFINITY: Efficient MoE Inference on Personal Machines with Sparsity-Aware
