@@ -3966,6 +3966,13 @@ llm:
         - llm
         - algorithm
         - agent
+      - title: Agentic Rubrics as Contextual Verifiers for SWE Agents
+        date: '2026-01-01'
+        url: /papers/llm/algorithm/agent/2026/01/01/agentic-rubrics-as-contextual-verifiers-for-swe-agents.html
+        categories:
+        - llm
+        - algorithm
+        - agent
       - title: 'Tree of Thoughts: Deliberate Problem Solving with Large Language Models'
         date: '2023-09-01'
         url: /papers/llm/algorithm/agent/2023/09/01/tree-of-thoughts-deliberate-problem-solving-with-large-language-models.html
