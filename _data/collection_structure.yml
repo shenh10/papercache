@@ -1589,6 +1589,324 @@ llm:
         - engineering
         - inference
         tag: icml23
+      speculative_decoding:
+        posts:
+        - title: 'DFlash 2: Keep Drafting Parallel'
+          date: '2026-08-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2026/08/01/dflash-2-keep-drafting-parallel.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: blog
+        - title: 'MoE-Spec: Expert Budgeting for Efficient Speculative Decoding'
+          date: '2026-02-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2026/02/01/moe-spec-expert-budgeting-for-efficient-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: 'Multi-Draft Speculative Sampling: Canonical Decomposition and Theoretical
+            Limits'
+          date: '2025-04-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/multi-draft-speculative-sampling-canonical-decomposition-and-theoretical-limits.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: iclr25
+        - title: 'EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty'
+          date: '2024-01-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2024/01/01/eagle-speculative-sampling-requires-rethinking-feature-uncertainty.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: 'DFlash: Block Diffusion for Flash Speculative Decoding'
+          date: '2026-02-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2026/02/01/dflash-block-diffusion-for-flash-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: 'EAGLE-2: Faster Inference of Language Models with Dynamic Draft
+            Trees'
+          date: '2024-06-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2024/06/01/eagle-2-faster-inference-of-language-models-with-dynamic-draft-trees.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: 'MAGICDEC: BREAKING THE LATENCY-THROUGHPUT TRADEOFF FOR LONG CONTEXT
+            GENERATION WITH SPECULATIVE DECODING'
+          date: '2024-08-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2024/08/01/magicdec-breaking-the-latency-throughput-tradeoff-for-long-context-generation-with-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: 'SuffixDecoding: Extreme Speculative Decoding for Emerging AI Applications'
+          date: '2025-11-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/11/01/suffixdecoding-extreme-speculative-decoding-for-emerging-ai-applications.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: nips25
+        - title: Faster Cascades via Speculative Decoding
+          date: '2025-04-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/faster-cascades-via-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: iclr25
+        - title: Towards Optimal Multi-Draft Speculative Decoding
+          date: '2025-04-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/towards-optimal-multi-draft-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: iclr25
+        - title: 'MEDUSA: Simple LLM Inference Acceleration Framework with Multiple
+            Decoding Heads'
+          date: '2024-06-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2024/06/01/medusa-simple-llm-inference-acceleration-framework-with-multiple-decoding-heads.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: 'SpecDiff-2: Scaling Diffusion Drafter Alignment for Faster Speculative
+            Decoding'
+          date: '2025-11-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/11/01/specdiff-2-scaling-diffusion-drafter-alignment-for-faster-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: mlsys26
+        - title: 'Accelerating Large-Scale Reasoning Model Inference: Self-Speculative
+            Decoding with Sparse Attention'
+          date: '2025-12-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/12/01/accelerating-large-scale-reasoning-model-inference-self-speculative-decoding-with-sparse-attention.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: mlsys26
+        - title: 'Speculate Deep and Accurate: Lossless and Training-Free Acceleration
+            for Offloaded LLMs via Substitute Speculative Decoding'
+          date: '2025-10-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/10/01/speculate-deep-and-accurate-lossless-and-training-free-acceleration-for-offloaded-llms-via-substitute-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: nips25
+        - title: Block Verification Accelerates Speculative Decoding
+          date: '2025-04-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/block-verification-accelerates-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: iclr25
+        - title: 'P-EAGLE: Parallel-Drafting EAGLE with Scalable Training'
+          date: '2026-02-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2026/02/01/p-eagle-parallel-drafting-eagle-with-scalable-training.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: 'MoESD: Unveil Speculative Decoding’s Potential for Accelerating
+            Sparse MoE'
+          date: '2025-05-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/05/01/moesd-unveil-speculative-decodings-potential-for-accelerating-sparse-moe.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: nips25
+        - title: 'DEFT: Decoding with Flash Tree-Attention for Efficient Tree-Structured
+            LLM Inference'
+          date: '2024-03-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2024/03/01/deft-decoding-with-flash-tree-attention-for-efficient-tree-structured-llm-inference.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: iclr25
+        - title: 'Distributed Speculative Inference (DSI): Speculation Parallelism
+            for Provably Faster Lossless Language Model Inference'
+          date: '2025-04-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/distributed-speculative-inference-dsi-speculation-parallelism-for-provably-faster-lossless-language-model-inference.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: iclr25
+        - title: 'Yggdrasil: Bridging Dynamic Speculation and Static Runtime for Latency-Optimal
+            Tree-Based LLM Decoding'
+          date: '2025-06-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/06/01/yggdrasil-bridging-dynamic-speculation-and-static-runtime-for-latency-optimal-tree-based-llm-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: nips25
+        - title: 'DSpark: Confidence-Scheduled Speculative Decoding with Semi-Autoregressive
+            Generation'
+          date: '2026-07-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2026/07/01/dspark-confidence-scheduled-speculative-decoding-with-semi-autoregressive-generation.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: Better & Faster Large Language Models via Multi-token Prediction
+          date: '2024-04-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2024/04/01/better-faster-large-language-models-via-multi-token-prediction.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: Mixture of Attentions for Speculative Decoding
+          date: '2025-04-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/mixture-of-attentions-for-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: iclr25
+        - title: 'EasySpec: Layer-Parallel Speculative Decoding for Efficient Multi-GPU
+            Utilization'
+          date: '2025-02-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/02/01/easyspec-layer-parallel-speculative-decoding-for-efficient-multi-gpu-utilization.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: nips25
+        - title: 'EAGLE-3: Scaling up Inference Acceleration of Large Language Models
+            via Training-Time Test'
+          date: '2025-03-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/03/01/eagle-3-scaling-up-inference-acceleration-of-large-language-models-via-training-time-test.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: nips25
+        - title: Scaling Speculative Decoding with Lookahead Reasoning
+          date: '2025-06-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/06/01/scaling-speculative-decoding-with-lookahead-reasoning.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: nips25
+        - title: 'Native Parallel Reasoner: Reasoning in Parallelism via Self-Distilled
+            Reinforcement Learning'
+          date: '2025-12-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/12/01/native-parallel-reasoner-reasoning-in-parallelism-via-self-distilled-reinforcement-learning.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: Fast Inference from Transformers via Speculative Decoding
+          date: '2023-05-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2023/05/01/fast-inference-from-transformers-via-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: icml23
+        - title: 'DARTree: Speculative Diffusion Decoding With Autoregressive Draft
+            Trees'
+          date: '2026-08-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2026/08/01/dartree-speculative-diffusion-decoding-with-autoregressive-draft-trees.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: Blockwise Parallel Decoding for Deep Autoregressive Models
+          date: '2018-11-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2018/11/01/blockwise-parallel-decoding-for-deep-autoregressive-models.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: Speculative Speculative Decoding
+          date: '2026-03-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2026/03/01/speculative-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: 'SWIFT: On-the-Fly Self-Speculative Decoding for LLM Inference Acceleration'
+          date: '2025-04-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/swift-on-the-fly-self-speculative-decoding-for-llm-inference-acceleration.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: iclr25
+        - title: 'GRIFFIN: Effective Token Alignment for Faster Speculative Decoding'
+          date: '2025-10-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2025/10/01/griffin-effective-token-alignment-for-faster-speculative-decoding.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: nips25
+        - title: Accelerating Large Language Model Decoding with Speculative Sampling
+          date: '2023-02-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2023/02/01/accelerating-large-language-model-decoding-with-speculative-sampling.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+        - title: 'LLM-42: Enabling Determinism in LLM Inference with Verified Speculation'
+          date: '2026-01-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2026/01/01/llm-42-enabling-determinism-in-llm-inference-with-verified-speculation.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
       kvcache:
         posts:
         - title: 'LAVa: Layer-wise KV Cache Eviction with Dynamic Budget Allocation'
@@ -2444,315 +2762,6 @@ llm:
           - engineering
           - inference
           - kvcache
-      speculative_decoding:
-        posts:
-        - title: 'MoE-Spec: Expert Budgeting for Efficient Speculative Decoding'
-          date: '2026-02-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2026/02/01/moe-spec-expert-budgeting-for-efficient-speculative-decoding.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-        - title: 'Multi-Draft Speculative Sampling: Canonical Decomposition and Theoretical
-            Limits'
-          date: '2025-04-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/multi-draft-speculative-sampling-canonical-decomposition-and-theoretical-limits.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: iclr25
-        - title: 'EAGLE: Speculative Sampling Requires Rethinking Feature Uncertainty'
-          date: '2024-01-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2024/01/01/eagle-speculative-sampling-requires-rethinking-feature-uncertainty.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-        - title: 'DFlash: Block Diffusion for Flash Speculative Decoding'
-          date: '2026-02-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2026/02/01/dflash-block-diffusion-for-flash-speculative-decoding.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-        - title: 'EAGLE-2: Faster Inference of Language Models with Dynamic Draft
-            Trees'
-          date: '2024-06-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2024/06/01/eagle-2-faster-inference-of-language-models-with-dynamic-draft-trees.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-        - title: 'MAGICDEC: BREAKING THE LATENCY-THROUGHPUT TRADEOFF FOR LONG CONTEXT
-            GENERATION WITH SPECULATIVE DECODING'
-          date: '2024-08-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2024/08/01/magicdec-breaking-the-latency-throughput-tradeoff-for-long-context-generation-with-speculative-decoding.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-        - title: 'SuffixDecoding: Extreme Speculative Decoding for Emerging AI Applications'
-          date: '2025-11-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/11/01/suffixdecoding-extreme-speculative-decoding-for-emerging-ai-applications.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: nips25
-        - title: Faster Cascades via Speculative Decoding
-          date: '2025-04-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/faster-cascades-via-speculative-decoding.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: iclr25
-        - title: Towards Optimal Multi-Draft Speculative Decoding
-          date: '2025-04-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/towards-optimal-multi-draft-speculative-decoding.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: iclr25
-        - title: 'MEDUSA: Simple LLM Inference Acceleration Framework with Multiple
-            Decoding Heads'
-          date: '2024-06-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2024/06/01/medusa-simple-llm-inference-acceleration-framework-with-multiple-decoding-heads.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-        - title: 'SpecDiff-2: Scaling Diffusion Drafter Alignment for Faster Speculative
-            Decoding'
-          date: '2025-11-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/11/01/specdiff-2-scaling-diffusion-drafter-alignment-for-faster-speculative-decoding.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: mlsys26
-        - title: 'Accelerating Large-Scale Reasoning Model Inference: Self-Speculative
-            Decoding with Sparse Attention'
-          date: '2025-12-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/12/01/accelerating-large-scale-reasoning-model-inference-self-speculative-decoding-with-sparse-attention.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: mlsys26
-        - title: 'Speculate Deep and Accurate: Lossless and Training-Free Acceleration
-            for Offloaded LLMs via Substitute Speculative Decoding'
-          date: '2025-10-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/10/01/speculate-deep-and-accurate-lossless-and-training-free-acceleration-for-offloaded-llms-via-substitute-speculative-decoding.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: nips25
-        - title: Block Verification Accelerates Speculative Decoding
-          date: '2025-04-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/block-verification-accelerates-speculative-decoding.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: iclr25
-        - title: 'P-EAGLE: Parallel-Drafting EAGLE with Scalable Training'
-          date: '2026-02-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2026/02/01/p-eagle-parallel-drafting-eagle-with-scalable-training.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-        - title: 'MoESD: Unveil Speculative Decoding’s Potential for Accelerating
-            Sparse MoE'
-          date: '2025-05-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/05/01/moesd-unveil-speculative-decodings-potential-for-accelerating-sparse-moe.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: nips25
-        - title: 'DEFT: Decoding with Flash Tree-Attention for Efficient Tree-Structured
-            LLM Inference'
-          date: '2024-03-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2024/03/01/deft-decoding-with-flash-tree-attention-for-efficient-tree-structured-llm-inference.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: iclr25
-        - title: 'Distributed Speculative Inference (DSI): Speculation Parallelism
-            for Provably Faster Lossless Language Model Inference'
-          date: '2025-04-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/distributed-speculative-inference-dsi-speculation-parallelism-for-provably-faster-lossless-language-model-inference.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: iclr25
-        - title: 'Yggdrasil: Bridging Dynamic Speculation and Static Runtime for Latency-Optimal
-            Tree-Based LLM Decoding'
-          date: '2025-06-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/06/01/yggdrasil-bridging-dynamic-speculation-and-static-runtime-for-latency-optimal-tree-based-llm-decoding.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: nips25
-        - title: 'DSpark: Confidence-Scheduled Speculative Decoding with Semi-Autoregressive
-            Generation'
-          date: '2026-07-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2026/07/01/dspark-confidence-scheduled-speculative-decoding-with-semi-autoregressive-generation.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-        - title: Better & Faster Large Language Models via Multi-token Prediction
-          date: '2024-04-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2024/04/01/better-faster-large-language-models-via-multi-token-prediction.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-        - title: Mixture of Attentions for Speculative Decoding
-          date: '2025-04-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/mixture-of-attentions-for-speculative-decoding.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: iclr25
-        - title: 'EasySpec: Layer-Parallel Speculative Decoding for Efficient Multi-GPU
-            Utilization'
-          date: '2025-02-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/02/01/easyspec-layer-parallel-speculative-decoding-for-efficient-multi-gpu-utilization.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: nips25
-        - title: 'EAGLE-3: Scaling up Inference Acceleration of Large Language Models
-            via Training-Time Test'
-          date: '2025-03-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/03/01/eagle-3-scaling-up-inference-acceleration-of-large-language-models-via-training-time-test.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: nips25
-        - title: Scaling Speculative Decoding with Lookahead Reasoning
-          date: '2025-06-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/06/01/scaling-speculative-decoding-with-lookahead-reasoning.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: nips25
-        - title: 'Native Parallel Reasoner: Reasoning in Parallelism via Self-Distilled
-            Reinforcement Learning'
-          date: '2025-12-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/12/01/native-parallel-reasoner-reasoning-in-parallelism-via-self-distilled-reinforcement-learning.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-        - title: Fast Inference from Transformers via Speculative Decoding
-          date: '2023-05-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2023/05/01/fast-inference-from-transformers-via-speculative-decoding.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: icml23
-        - title: 'DARTree: Speculative Diffusion Decoding With Autoregressive Draft
-            Trees'
-          date: '2026-08-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2026/08/01/dartree-speculative-diffusion-decoding-with-autoregressive-draft-trees.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-        - title: Blockwise Parallel Decoding for Deep Autoregressive Models
-          date: '2018-11-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2018/11/01/blockwise-parallel-decoding-for-deep-autoregressive-models.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-        - title: Speculative Speculative Decoding
-          date: '2026-03-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2026/03/01/speculative-speculative-decoding.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-        - title: 'SWIFT: On-the-Fly Self-Speculative Decoding for LLM Inference Acceleration'
-          date: '2025-04-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/04/01/swift-on-the-fly-self-speculative-decoding-for-llm-inference-acceleration.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: iclr25
-        - title: 'GRIFFIN: Effective Token Alignment for Faster Speculative Decoding'
-          date: '2025-10-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2025/10/01/griffin-effective-token-alignment-for-faster-speculative-decoding.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-          tag: nips25
-        - title: Accelerating Large Language Model Decoding with Speculative Sampling
-          date: '2023-02-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2023/02/01/accelerating-large-language-model-decoding-with-speculative-sampling.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
-        - title: 'LLM-42: Enabling Determinism in LLM Inference with Verified Speculation'
-          date: '2026-01-01'
-          url: /papers/llm/engineering/inference/speculative_decoding/2026/01/01/llm-42-enabling-determinism-in-llm-inference-with-verified-speculation.html
-          categories:
-          - llm
-          - engineering
-          - inference
-          - speculative_decoding
     rl:
       posts:
       - title: 'SeamlessFlow: A Trainer–Agent Isolation RL Framework Achieving Bubble-Free
