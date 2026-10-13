@@ -5100,70 +5100,15 @@ llm:
         - llm
         - algorithm
         - architecture
-    eval:
-      posts:
-      - title: On the Tool Manipulation Capability of Open-source Large Language Models
-        date: '2023-05-01'
-        url: /papers/llm/algorithm/eval/2023/05/01/on-the-tool-manipulation-capability-of-open-source-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - eval
-      - title: Instruction-Following Evaluation for Large Language Models
-        date: '2023-11-01'
-        url: /papers/llm/algorithm/eval/2023/11/01/instruction-following-evaluation-for-large-language-models.html
-        categories:
-        - llm
-        - algorithm
-        - eval
-      - title: 'GAIA: A Benchmark for General AI Assistants'
-        date: '2023-11-01'
-        url: /papers/llm/algorithm/eval/2023/11/01/gaia-a-benchmark-for-general-ai-assistants.html
-        categories:
-        - llm
-        - algorithm
-        - eval
-      - title: 'SWE-BENCH: Can Language Models Resolve Real-world Github Issues?'
-        date: '2024-09-01'
-        url: /papers/llm/algorithm/eval/2024/09/01/swe-bench-can-language-models-resolve-real-world-github-issues.html
-        categories:
-        - llm
-        - algorithm
-        - eval
-        tag: iclr
-      - title: 'MCP-Bench: Benchmarking Tool-Using LLM Agents with Complex Real-World
-          Tasks via MCP Servers'
-        date: '2025-08-01'
-        url: /papers/llm/algorithm/eval/2025/08/01/mcp-bench-benchmarking-tool-using-llm-agents-with-complex-real-world-tasks-via-mcp-servers.html
-        categories:
-        - llm
-        - algorithm
-        - eval
-      - title: 'LiveCodeBench: Holistic and Contamination Free Evaluation of Large
-          Language Models for Code'
-        date: '2024-05-01'
-        url: /papers/llm/algorithm/eval/2024/05/01/livecodebench-holistic-and-contamination-free-evaluation-of-large-language-models-for-code.html
-        categories:
-        - llm
-        - algorithm
-        - eval
-      - title: Measuring Massive Multitask Language Understanding
-        date: '2020-09-01'
-        url: /papers/llm/algorithm/eval/2020/09/01/measuring-massive-multitask-language-understanding.html
-        categories:
-        - llm
-        - algorithm
-        - eval
-        tag: iclr21
-      - title: The LLM Evaluation Guidebook
-        date: '2025-12-01'
-        url: /papers/llm/algorithm/eval/2025/12/01/the-llm-evaluation-guidebook.html
-        categories:
-        - llm
-        - algorithm
-        - eval
     models:
       posts:
+      - title: 'MiMo-V2.6: Scaling Reinforcement Learning Towards Self-Improvement'
+        date: '2026-10-01'
+        url: /papers/llm/algorithm/models/2026/10/01/mimo-v26-scaling-reinforcement-learning-towards-self-improvement.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: DeepSeek-V3 Technical Report
         date: '2024-12-01'
         url: /papers/llm/algorithm/models/2024/12/01/deepseek-v3-technical-report.html
@@ -5584,6 +5529,68 @@ llm:
         - llm
         - algorithm
         - models
+    eval:
+      posts:
+      - title: On the Tool Manipulation Capability of Open-source Large Language Models
+        date: '2023-05-01'
+        url: /papers/llm/algorithm/eval/2023/05/01/on-the-tool-manipulation-capability-of-open-source-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+      - title: Instruction-Following Evaluation for Large Language Models
+        date: '2023-11-01'
+        url: /papers/llm/algorithm/eval/2023/11/01/instruction-following-evaluation-for-large-language-models.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+      - title: 'GAIA: A Benchmark for General AI Assistants'
+        date: '2023-11-01'
+        url: /papers/llm/algorithm/eval/2023/11/01/gaia-a-benchmark-for-general-ai-assistants.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+      - title: 'SWE-BENCH: Can Language Models Resolve Real-world Github Issues?'
+        date: '2024-09-01'
+        url: /papers/llm/algorithm/eval/2024/09/01/swe-bench-can-language-models-resolve-real-world-github-issues.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+        tag: iclr
+      - title: 'MCP-Bench: Benchmarking Tool-Using LLM Agents with Complex Real-World
+          Tasks via MCP Servers'
+        date: '2025-08-01'
+        url: /papers/llm/algorithm/eval/2025/08/01/mcp-bench-benchmarking-tool-using-llm-agents-with-complex-real-world-tasks-via-mcp-servers.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+      - title: 'LiveCodeBench: Holistic and Contamination Free Evaluation of Large
+          Language Models for Code'
+        date: '2024-05-01'
+        url: /papers/llm/algorithm/eval/2024/05/01/livecodebench-holistic-and-contamination-free-evaluation-of-large-language-models-for-code.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+      - title: Measuring Massive Multitask Language Understanding
+        date: '2020-09-01'
+        url: /papers/llm/algorithm/eval/2020/09/01/measuring-massive-multitask-language-understanding.html
+        categories:
+        - llm
+        - algorithm
+        - eval
+        tag: iclr21
+      - title: The LLM Evaluation Guidebook
+        date: '2025-12-01'
+        url: /papers/llm/algorithm/eval/2025/12/01/the-llm-evaluation-guidebook.html
+        categories:
+        - llm
+        - algorithm
+        - eval
 mlsys:
   compiler:
     graph:
