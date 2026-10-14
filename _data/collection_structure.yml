@@ -2116,6 +2116,14 @@ llm:
           - engineering
           - inference
           - kvcache
+        - title: 'ReplaySSM: Cache SSM Inputs, Not State'
+          date: '2026-10-01'
+          url: /papers/llm/engineering/inference/kvcache/2026/10/01/replayssm-cache-ssm-inputs-not-state.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'MOMENTKV: Closing the Directional Gap in KV Cache Eviction for Long-Context
             Inference'
           date: '2026-06-01'
