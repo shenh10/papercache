@@ -2810,6 +2810,14 @@ llm:
         - llm
         - engineering
         - rl
+      - title: Toward RL on Mixed-Precision, Mixed-Accelerator Samplers
+        date: '2026-10-01'
+        url: /papers/llm/engineering/rl/2026/10/01/toward-rl-on-mixed-precision-mixed-accelerator-samplers.html
+        categories:
+        - llm
+        - engineering
+        - rl
+        tag: blog
       - title: 'ECHO-2: A Large-Scale Distributed Rollout Framework for Cost-Efficient
           Reinforcement Learning'
         date: '2026-02-01'
