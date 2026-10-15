@@ -5077,6 +5077,14 @@ llm:
           - algorithm
           - architecture
           - transformer-variant
+        - title: 'PageGram: Multi-Head N-gram Memory at the Read Cost of a Flat Table'
+          date: '2026-10-01'
+          url: /papers/llm/algorithm/architecture/transformer-variant/2026/10/01/pagegram-multi-head-n-gram-memory-at-the-read-cost-of-a-flat-table.html
+          categories:
+          - llm
+          - algorithm
+          - architecture
+          - transformer-variant
         - title: Scaling Latent Reasoning via Looped Language Models
           date: '2025-11-01'
           url: /papers/llm/algorithm/architecture/transformer-variant/2025/11/01/scaling-latent-reasoning-via-looped-language-models.html
