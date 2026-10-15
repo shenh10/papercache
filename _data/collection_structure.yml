@@ -6150,6 +6150,13 @@ mlsys:
       - mlsys
       - gpu
       tag: cgo21
+    - title: 'KernelZero: Co-Evolving Proposer and Coder for Continuously Improved
+        GPU Kernel Generation'
+      date: '2026-09-01'
+      url: /papers/mlsys/gpu/2026/09/01/kernelzero-co-evolving-proposer-and-coder-for-continuously-improved-gpu-kernel-generation.html
+      categories:
+      - mlsys
+      - gpu
     - title: Categorical Foundations for CuTe Layouts
       date: '2025-09-01'
       url: /papers/mlsys/gpu/2025/09/01/categorical-foundations-for-cute-layouts.html
