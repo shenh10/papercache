@@ -5177,6 +5177,14 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'Inside Step 5 Preview: Architecture and Training for Agentic Work'
+        date: '2026-10-01'
+        url: /papers/llm/algorithm/models/2026/10/01/inside-step-5-preview-architecture-and-training-for-agentic-work.html
+        categories:
+        - llm
+        - algorithm
+        - models
+        tag: blog
       - title: 'Seed1.8 Model Card: Towards Generalized Real-World Agency'
         date: '2025-12-01'
         url: /papers/llm/algorithm/models/2025/12/01/seed18-model-card-towards-generalized-real-world-agency.html
