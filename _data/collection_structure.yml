@@ -5497,6 +5497,13 @@ llm:
         - llm
         - algorithm
         - models
+      - title: Frontier Pre-training at Microsoft AI
+        date: '2026-10-01'
+        url: /papers/llm/algorithm/models/2026/10/01/frontier-pre-training-at-microsoft-ai.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: 'KIMI K2.5: VISUAL AGENTIC INTELLIGENCE'
         date: '2026-02-01'
         url: /papers/llm/algorithm/models/2026/02/01/kimi-k25-visual-agentic-intelligence.html
