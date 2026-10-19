@@ -1,0 +1,107 @@
+---
+added_date: '2026-10-20'
+author: shenh10
+categories:
+- llm
+- engineering
+- moe
+comments: true
+date: '2025-07-01'
+layout: post
+mathjax: true
+tag: blog
+title: Deploying Kimi K2 with PD Disaggregation and Large-Scale Expert Parallelism
+  on 128 H200 GPUs
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>Deploying Kimi K2 with PD Disaggregation and Large-Scale Expert Parallelism on 128 H200 GPUs</h1>
+<p><strong>发表时间</strong>: 2025-07 · Blog post by The Mooncake Team (lmsys.org)</p>
+<p><strong>原文</strong>: <a href="https://lmsys.org/blog/2025-07-20-k2-large-scale-ep" rel="noopener" target="_blank">https://lmsys.org/blog/2025-07-20-k2-large-scale-ep</a></p>
+<p>The Mooncake Team (July 20, 2025)</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong><br/>
+本文通过结合 OME 声明式部署框架与 SGLang 的预填充-解码分离及大规模专家并行技术，成功在 128 张 H200 GPU 上实现了拥有万亿参数和 384 个专家的 Kimi K2 模型的高吞吐、低成本推理部署。</p>
+<p><strong>要解决什么问题</strong><br/>
+大规模部署万亿参数混合专家（MoE）模型时，系统面临三个核心机制卡点。首先是 MoE 层的计算稀疏性问题，稀疏激活导致矩阵运算难以达到计算密集型状态，必须依赖极大的批处理大小（Batch Size）来维持硬件利用率；但这会带来巨大的显存压力，因为系统需要预留足够的显存来存放 KV Cache 以支持大批处理。其次是跨节点通信开销，在多机多卡环境下，频繁的张量传递和路由通信会占用大量时间，严重拖慢推理速度。最后是稀疏专家激活导致的负载不均衡问题，由于每个 token 动态路由到不同的专家，部分专家可能被过度激活，而其他专家处于闲置状态，导致计算资源浪费。此外，在工程落地层面还存在操作鸿沟：机器学习工程师设计的复杂分布式服务策略，与生产环境工程师追求的简单可靠部署之间难以对齐，缺乏一种能屏蔽底层硬件拓扑和并行配置复杂度的标准化路径。</p>
+<p><strong>怎么做的</strong><br/>
+为绕开上述卡点，该方案将 OME（Open Model Engine）的模型驱动部署能力与 SGLang 的底层分布式推理优化相结合。核心设计由三个关键部件构成。第一是 OME 声明式部署框架，它将复杂的 GPU 拓扑、分片策略和运行时配置抽象为标准化的 YAML 资源。生产团队无需手动调优，OME 会自动从 Hugging Face 拉取模型、校验文件完整性并完成端点配置，解决了工程部署的复杂性鸿沟。第二是预填充-解码分离（PD Disaggregation）架构，将推理拆分为两个独立服务：预填充（Prefill）节点专门处理计算密集型的长提示词输入，利用大批处理并行化提升吞吐；解码（Decode）节点专注于对延迟敏感的自回归生成。两者独立扩缩容，并通过 RDMA 加速实现高吞吐的 KV Cache 跨节点传输。第三是大规模专家并行（Large-Scale EP）与路由优化。为了应对 384 个专家的路由不均衡，系统在解码节点上配置了 96 个冗余专家，并结合动态专家路由算法和专家并行负载均衡器（EPLB）来打散计算压力；同时开启低延迟解码模式（<code>deepep-mode=low_latency</code>）和 token 感知调度。此外，采用感知 NUMA 架构的 GPU 分组策略，最大化 NVLink 和 PCIe 的带宽利用率。通过将请求聚合到更多 GPU 上，该设计不仅降低了单卡的显存压力，还释放出更多显存用于存放 KV Cache，从而在物理层面支持了更大的批处理大小。整个集群由 SGLang Router 统筹，提供动态服务发现、独立于引擎的自动扩缩容以及最小权限路由模型。</p>
+<p><strong>效果如何</strong><br/>
+实验在 128 张 H200 GPU 上搭建，采用 1P1D 拓扑结构（4 个预填充节点，12 个解码节点），测试负载设定为 2000 个输入 tokens 和 100 个输出 tokens，解码批处理大小设为 480。系统特意向解码节点倾斜资源，以最大化 KV Cache 池容量，这是将批处理大小扩展至 480 的关键。对比基线为此前在 96 张 H100 GPU 上部署 DeepSeek R1（256 个专家）的同类大规模专家并行方案。量化结果显示，尽管 Kimi K2 的专家数量更多且路由更复杂，该方案依然实现了预填充阶段 22.4 万 tokens/秒（单节点 5.6 万）和解码阶段 28.8 万 tokens/秒（单节点 2.4 万）的集群吞吐量，单节点吞吐量均超越了 DeepSeek R1 的基线水平。在成本方面，按照 H200 每小时 2.3 美元的单价计算，每生成 100 万个输出 tokens 的成本仅约为 0.21 美元。作者承认当前的局限性在于测试负载偏短，而 Kimi K2 作为面向智能体（Agentic）任务的模型，实际场景的平均输入长度通常在 3 万到 5 万 tokens 之间，针对此类长上下文场景的评估和优化仍是未来的工作方向。</p>
+</div>
+</details>
+<h2>主要贡献</h2>
+<p><strong>Kimi K2模型的核心特性与应用目标</strong>：Kimi K2由Moonshot AI于2025年发布，是目前最先进的开源混合专家（Mixture-of-Experts, MoE）模型。该模型具有1万亿总参数量，每个Token激活320亿参数，配备384个支持动态路由的专家，并采用多头潜在注意力（Multi-head Latent Attention, MLA）以支持长上下文。Kimi K2在前沿知识、数学和编程领域表现出强大的性能，并且专门针对智能体（Agentic）任务进行了优化，不仅能回答问题，还能执行多步操作。官方开源了两个版本：用于研究和微调的基础模型Kimi-K2-Base，以及用于通用对话和智能体应用的后训练模型Kimi-K2-Instruct。</p>
+<p><strong>大规模部署面临的核心挑战与解决方案</strong>：鉴于该模型的架构，大规模部署能够充分利用硬件能力并降低成本。其优势在于能够提供更高的吞吐量、更低的延迟、更多的并发会话以及更短的队列，同时通过饱和利用硬件来摊销模型加载成本，从而降低每Token的成本。然而，万亿级MoE模型的大规模部署面临着独特的挑战：首先，MoE层的计算稀疏性需要大批量（Batch Size）来使矩阵运算成为计算密集型任务；其次，跨节点通信耗费大量时间，需要进行专项优化；最后，稀疏的专家激活会导致负载不均衡。为了在128张H200 GPU上高效部署Kimi K2，研究团队重新思考了系统设计与部署工作流，提出了结合OME（Open Model Engine）与SGLang的综合解决方案。</p>
+<h2>背景知识与设计原则</h2>
+<p><strong>基于DeepSeek R1的早期部署经验</strong>：在2025年5月关于DeepSeek R1部署的工作中（[Deploying DeepSeek R1 with PD Disaggregation and Large-Scale EP, 2025]），团队已经验证了多项关键技术。首先是预填充-解码（Prefill-Decode, PD）分离技术，该技术成功将计算密集型任务与延迟敏感型任务分离开来。其次是大规模专家并行（Expert Parallelism, EP）技术，该技术在96张GPU上有效处理了MoE路由。与H100上的原生张量并行相比，这些技术实现了5倍的吞吐量提升。大规模EP通过在更多GPU上扩展并行策略、聚合来自多个设备的请求、降低单GPU的内存压力，并释放显存用于更大的KV缓存，从而有效地增加了批处理大小。</p>
+<p><strong>模型驱动部署的演进洞察</strong>：同期发布的OME技术博客（[OME: Model-Driven LLM Deployment, 2025]）引入了“模型驱动部署”的理念。这一理念解决了设计复杂服务策略的机器学习工程师与需要简单可靠部署的生产工程师之间的运营鸿沟。核心洞察在于“应当由模型来驱动部署，而不是让部署去适应模型”。这一原则在扩展到Kimi K2的万亿参数架构时被证明是非常高效的。为了实现这一转变，系统需要将针对DeepSeek设计的PD分离和EP技术适配到Kimi K2多达384个专家的架构中，同时必须保持系统的高性能输出。</p>
+<h2>方法细节</h2>
+<p><strong>基于OME的模型驱动部署机制</strong>：OME（Open Model Engine）通过抽象并行化、分片、扩展和运行时配置的复杂性，极大地简化了Kimi K2等高级模型的部署流程。借助其声明式的配置模型，生产团队无需进行手动调优或编写自定义脚本，即可直接部署和管理大型模型。</p>
+<p><strong>OME核心组件的安装流程</strong>：部署的第一步是直接从OCI注册表安装OME。该过程分为两个阶段，首先需要创建命名空间并安装OME的自定义资源定义（CRDs），接着安装OME的核心资源。具体的安装命令如下所示：</p>
+<pre><code># Step 1: Install OME CRDs
+helm upgrade --install ome-crd oci://ghcr.io/moirai-internal/charts/ome-crd --namespace ome --create-namespace
+
+# Step 2: Install OME core resources
+helm upgrade --install ome oci://ghcr.io/moirai-internal/charts/ome-resources --namespace ome</code></pre>
+<p><strong>Kimi K2模型的注册与校验</strong>：为了使OME能够接管并管理Kimi K2模型系列，系统要求应用特定的<code>ClusterBaseModel</code>资源。部署人员可以下载YAML文件，并通过自定义<code>path</code>字段来指定模型在本地的存储路径。配置完成后，OME将直接从Hugging Face下载具有优化并行策略的模型，并会自动验证工件的校验和（checksum），以此来确保模型文件的完整性。注册模型的命令如下：</p>
+<pre><code>kubectl apply -f https://raw.githubusercontent.com/sgl-project/ome/refs/heads/main/config/models/moonshotai/Kimi-K2-Instruct.yaml</code></pre>
+<p><strong>服务运行时的安装与推理端点部署</strong>：在模型注册之后，系统需要安装Kimi K2最新的SGLang服务运行时。随后，通过应用相应的声明式资源来部署推理端点。一旦这些资源配置就位，OME将自动在后台处理模型下载、运行时编排以及端点配置，从而为Kimi K2模型系列提供可扩展的、生产级别的推理能力。执行步骤如下：</p>
+<pre><code># 安装Kimi K2最新的SGLang服务运行时
+kubectl apply -f https://raw.githubusercontent.com/sgl-project/ome/refs/heads/main/config/runtimes/srt/kimi-k2-pd-rt.yaml
+
+# 部署推理端点
+kubectl apply -f https://raw.githubusercontent.com/sgl-project/ome/refs/heads/main/config/samples/isvc/moonshotai/kimi-k2-pd.yaml</code></pre>
+<p><strong>模型交互与请求路由验证</strong>：部署完成后，可以通过端口转发机制将本地的8080端口路由到模型服务所在的80端口，从而与SGlang路由器建立连接。在第一个终端保持端口转发运行后，用户可以在第二个终端通过发送POST请求来验证模型的文本生成能力。具体的交互命令如下：</p>
+<pre><code># 在终端1执行端口转发
+kubectl port-forward -n kimi-k2-instruct service/kimi-k2-instruct 8080:80
+
+# 在终端2发送生成请求
+curl -s -X POST http://localhost:8080/generate \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer None' \
+  -d '{
+    "text": "The future of AI is",
+    "max_new_tokens": 50,
+    "temperature": 0.7
+  }'</code></pre>
+<p><strong>声明式框架与分离扩展架构设计</strong>：OME提供了一个声明式的、生产就绪的框架，它彻底抽象了GPU拓扑、分布式配置以及运行时调优的复杂性，从而消除了对自定义编排逻辑的需求。团队只需通过单一的<code>ClusterServingRuntime</code>定义，就能大规模启动经过优化的多节点推理工作负载。该配置方案展示了预填充-解码（PD）分离与大规模EP相结合的强大架构，具体实现了以下功能：第一，预填充和解码工作负载的分离扩展，两者具备独立的资源控制能力；第二，通过设置<code>deepep-mode=low_latency</code>以及感知Token的调度调优，实现了低延迟解码；第三，通过启用<code>ep-dispatch-algorithm=dynamic</code>和<code>enable-eplb</code>，实现了高级专家路由；第四，集成了RDMA加速，用于高吞吐量的KV缓存传输。</p>
+<p><strong>SGLang路由器的流量编排机制</strong>：整个系统的部署由一个轻量级的SGLang路由器进行编排。该路由器提供了多项关键能力以支撑底层架构：它通过标签选择器为预填充和解码节点提供动态的服务发现功能；具备独立于引擎和解码器工作负载的自动扩展能力；采用最小权限路由模型，非常适合安全的生产环境；并且提供了专为分离服务模式量身定制的优化负载均衡策略。两者结合，OME与SGLang路由器共同构成了大规模、低延迟且易于维护的推理基础设施的坚实基础。</p>
+<p><strong>预填充与解码任务的物理分离</strong>：系统将推理过程严格分离为两个独立的组件，各自作为独立的服务进行部署、扩展和优化。</p>
+<ul>
+<li><strong>预填充（Prefill）组件</strong>：专门负责处理大型提示词的摄取（例如2000个Token的输入）。由于该阶段受限于计算能力（Compute-bound），因此它能够从大批量并行计算中获得显著收益。</li>
+<li><strong>解码（Decode）组件</strong>：专门负责处理自回归生成（例如100个Token的输出）。该阶段对延迟极其敏感（Latency-sensitive），因此系统针对其高吞吐量输出进行了深度优化。</li>
+</ul>
+<p><strong>适配384个专家的大规模并行策略</strong>：针对Kimi K2在每个Token生成时会激活384个专家中一个子集的特性，系统在128卡集群上实施了特定的并行设计。首先，系统在解码节点上配置了96个冗余专家，以此来有效平衡MoE的路由压力。其次，系统在H200集群上采用了感知NUMA（NUMA-aware）的GPU分组策略，以确保NVLink和PCIe带宽得到最佳利用。这种设计成功最小化了负载不平衡，并确保了整个集群中GPU利用率的均匀性。</p>
+<h2>实验环境</h2>
+<ul>
+<li><strong>硬件配置</strong>：集群由128张NVIDIA H200 GPU组成，采用1P1D架构配置（即4个节点专门用于预填充Prefill，12个节点专门用于解码Decode）。</li>
+<li><strong>软件配置</strong>：部署基于OME（Open Model Engine）和SGLang框架。</li>
+<li><strong>模型参数</strong>：Kimi K2模型（1万亿总参数量，384个专家）。</li>
+<li><strong>工作负载设置</strong>：输入长度设为2000 Tokens，输出长度设为100 Tokens，解码批处理大小（Decode Batch Size）设定为480。预填充与解码节点的比例分配取决于工作负载，本次实验优先保障解码节点数量，以最大化KV缓存池的大小，这对于将批处理大小扩展至480至关重要。</li>
+</ul>
+<h2>实验结果</h2>
+<ul>
+<li><strong>集群级吞吐量与成本分析</strong>：在128张H200 GPU的集群上，系统展现了卓越的处理能力。由4个节点组成的预填充集群实现了224,000 Tokens/秒的吞吐量；由12个节点组成的解码集群实现了288,000 Tokens/秒的吞吐量。在成本效益方面，基于H200单价为 <code>$2.3/hour</code> 的假设，每生成100万个输出Token的成本仅约为 <code>$0.21</code>。</li>
+<li><strong>与DeepSeek R1部署的横向对比</strong>：实验将Kimi K2的表现与此前DeepSeek R1的部署数据进行了对比。DeepSeek R1（256个专家，运行于96张H100 GPU）的单节点预填充吞吐量为52.3k Tokens/秒，单节点解码吞吐量为22.3k Tokens/秒。相比之下，Kimi K2（384个专家，运行于128张H200 GPU）实现了单节点56k Tokens/秒的预填充吞吐量和24k Tokens/秒的解码吞吐量。结论表明，尽管Kimi K2拥有更大规模的MoE结构和更复杂的路由机制，但得益于专家并行负载均衡器（EPLB）带来的均衡专家激活，以及SGLang针对DeepSeek V3架构在H200上的专项优化，该部署方案依然实现了极高的单卡吞吐量。</li>
+</ul>
+<h2>结论</h2>
+<p>通过有机结合OME、SGLang、预填充-解码（PD）分离技术以及大规模专家并行（EP），研究团队成功在128张H200 GPU上部署了万亿参数级的Kimi K2模型。该方案在短上下文场景下实现了极具成本效益的大规模推理（在H200上每100万输出Token成本仅约 <code>$0.21</code> ），并通过模型驱动的配置大幅简化了部署工作流。部署该系统的所有组件均完全开源且可复现，团队鼓励社区在此基础上继续构建。未来的工作将重点评估和优化长上下文场景，因为K2作为专为智能体任务设计的模型，在此类场景下的平均输入长度通常介于30,000到50,000个Token之间。</p>
+<h2>补充细节</h2>
+<p><strong>致谢与硬件支持</strong>：本次部署的成功不仅得益于Mooncake团队（Boxin Zhang, Shangming Cai, Mingxing Zhang等）与SGLang社区（Simo Lin, Jingyi Chen, Qiaolin Yu, Yanbo Yang, Yineng Zhang等）的开放合作，还离不开NVIDIA DGX Cloud慷慨的基础设施支持。NVIDIA通过DGX Cloud为SGLang团队提供了128张H200 GPU的访问权限，使得团队能够极快地将Kimi K2从模型发布推进到生产级推理阶段。此外，团队特别感谢了MoonshotAI团队（Shaowei Liu, Zhengtao Wang, Weiran He, Xinran Xu等）在调试K2模型过程中提供的支持。</p>
+<p><strong>参考文献与相关资源</strong>：</p>
+<ul>
+<li>[Deploying DeepSeek R1 with PD Disaggregation and Large-Scale EP] (<a href="https://lmsys.org/blog/2025-05-05-large-scale-ep/" rel="noopener noreferrer" target="_blank">https://lmsys.org/blog/2025-05-05-large-scale-ep/</a>)</li>
+<li>[OME: Model-Driven LLM Deployment] (<a href="https://lmsys.org/blog/2025-07-08-ome/" rel="noopener noreferrer" target="_blank">https://lmsys.org/blog/2025-07-08-ome/</a>)</li>
+<li>[Kimi K2 Official Release] (<a href="https://moonshotai.github.io/Kimi-K2/" rel="noopener noreferrer" target="_blank">https://moonshotai.github.io/Kimi-K2/</a>)</li>
+<li>[SGLang GitHub Repository] (<a href="https://github.com/sgl-project/sglang" rel="noopener noreferrer" target="_blank">https://github.com/sgl-project/sglang</a>)</li>
+</ul>
+</div>
+
+
+</div>
