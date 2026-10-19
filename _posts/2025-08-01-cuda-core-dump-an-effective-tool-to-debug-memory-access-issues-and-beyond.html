@@ -1,0 +1,297 @@
+---
+added_date: '2026-10-20'
+author: shenh10
+categories:
+- mlsys
+- gpu
+comments: true
+date: '2025-08-01'
+layout: post
+mathjax: true
+tag: blog
+title: 'CUDA Core Dump: An Effective Tool to Debug Memory Access Issues and Beyond'
+---
+
+<div class="paper-content">
+
+
+<div class="container">
+<h1>CUDA Core Dump: An Effective Tool to Debug Memory Access Issues and Beyond</h1>
+<p><strong>发表时间</strong>: 2025-08 · Blog post by Kaichao You (blog.vllm.ai)</p>
+<p><strong>原文</strong>: <a href="https://blog.vllm.ai/blog/2025-08-11-cuda-debugging" rel="noopener" target="_blank">https://blog.vllm.ai/blog/2025-08-11-cuda-debugging</a></p>
+<p>作者：Kaichao You</p>
+<details class="tldr-block" open="">
+<summary class="tldr-summary">速读</summary>
+<div class="tldr-body">
+<p><strong>一句话结论</strong><br/>
+本文提出了一种利用 CUDA Core Dump 机制精准定位 GPU 非法内存访问错误的方法，通过配置特定的环境变量组合，能够在内核崩溃瞬间捕获并保存 GPU 上下文，从而使用 cuda-gdb 直接锁定引发异常的具体内核与代码行。</p>
+<p><strong>要解决什么问题</strong><br/>
+在开发高性能 GPU 算子时，开发者经常会遇到“遇到非法内存访问（IMA）”的报错，而原有的调试做法卡在 GPU 错误异步报告机制上。由于 GPU 是大规模并行处理器，CPU 提交内核执行后不会阻塞等待，当 GPU 内部某个线程发生越界访问等硬件级崩溃时，异常会被传递给 GPU 驱动。但驱动的默认行为仅仅是将当前的 CUDA 上下文标记为不可用，而不会立即终止程序。这导致错误往往在后续调用同步 API（如显存拷贝或设备同步）时才被抛出，此时 Python 抛出的堆栈跟踪信息完全是错误的。为了绕开异步机制，常规做法是开启强制同步环境变量，但这在两种具体场景下依然失效：第一，当开发者使用 <code>&lt;&lt;&lt;&gt;&gt;&gt;</code> 语法启动内核且未对启动状态添加错误检查代码时，即使强制同步也无法定位到出错的内核；第二，如果非法内存访问发生在被封装进 CUDA Graph 的内核中，强制同步只能在回放图（replay）时捕获到图级别的失败，依然无法穿透图结构去精确定位内部究竟是哪一个具体的内核节点发生了崩溃。这种定位盲区使得复杂推理引擎的算子调试极其困难。</p>
+<p><strong>怎么做的</strong><br/>
+核心思路是引入操作系统级别的核心转储（Core Dump）概念，促使 GPU 硬件与驱动协同，在 GPU 线程执行崩溃触发陷阱状态的瞬间，直接接管程序并导出包含内存数据和运行时状态的转储文件，供事后分析。这种方法能绕开异步报错卡点，是因为它将异常响应的时机从“下一次 CPU 同步”提前到了“GPU 硬件发生非法指令的绝对物理时间”。该方法的关键设计由一组协同工作的环境变量构成，各自承担不同职责以保证转储的可用性。首先，通过开启主开关激活异常时的转储行为，并开启进度显示以获取最终生成的文件路径。其次，针对容器化任务崩溃即销毁的特点，通过模板变量指定持久化存储路径。最关键的设计在于显存裁剪部件，由于大模型推理会占满数百 GiB 显存，全量导出极不现实，因此必须通过标志位剔除不必要的内存段。其核心配置定义式如下：<br/>
+</p>
+$$ \text{Flags} = \text{skip\_nonrelocated\_elf\_images, skip\_global\_memory, skip\_shared\_memory, skip\_local\_memory, skip\_constbank\_memory} $$
+<p><br/>
+其中 <code>skip_constbank_memory</code> 是官方文档未记载但极为关键的参数，用于防止大量 GPU 线程同时报错时转储失败。配置完成后，当程序触发非法访问，CPU 进程会被立即终止并生成转储文件。开发者随后使用 cuda-gdb 的 <code>target cudacore</code> 命令加载该文件，即可直接读取到崩溃瞬间的焦点状态。为了让转储文件能映射到具体代码行，还需要在编译时通过注入 <code>-lineinfo</code> 或 <code>-G</code> 标志来保留调试符号信息。</p>
+<p><strong>效果如何</strong><br/>
+实验在 C++ 裸写内核和 PyTorch 复杂计算图两个设置下进行，并应用于 vLLM 框架的真实调试中。对比基线为两种常规路线：一是默认的异步执行路线，二是代表强制同步路线的 <code>CUDA_LAUNCH_BLOCKING=1</code>。在 C++ 越界访问（访问 2 倍分配大小）实验中，默认路线将错误误报在后续的显存拷贝函数上；在 PyTorch 实验中（构建一个神经网络，将其张量长度强行扩大 100 万倍并填充，且封装入 CUDA Graph），强制同步路线只能将错误定位到 <code>g.replay()</code> 这一行。相比之下，采用本文方法后，cuda-gdb 均精准输出了引发异常的内核名称（如 <code>vectorized_elementwise_kernel</code>）、网格大小、具体的 Block 和 Thread 索引以及程序计数器地址。在 vLLM 适配 GLM-4.5V 模型的真实场景中，由于部分旋转位置编码导致 MRope 算子的隐式假设失效，默认报错极具误导性地指向了 <code>custom_all_reduce.cuh</code>，而本文方法一步到位锁定了 MRope 内核。该方法也存在明确的代价与失效场景：首先，开启转储会在 GPU 线程退出时增加错误检查开销，存在性能损耗，严禁在生产环境使用；其次，它无法捕获非特定线程引发的硬件级错误（如 NVLink 错误）或驱动 API 错误（如显存分配 OOM）；第三，在分布式多卡通信的关闭阶段，由于内存映射失效引发的非法访问会被误报，需要人工甄别；最后，官方文档推荐的 <code>skip_abort</code> 标志存在严重缺陷，会导致 GPU 错误被忽略且内存数据损坏，作者明确建议弃用该功能。</p>
+</div>
+</details>
+<h3>主要贡献</h3>
+<p>在开发高性能大语言模型推理引擎（如vLLM）的过程中，开发者经常会在CUDA内核测试中遇到“非法内存访问”（Illegal Memory Access，简称IMA）的报错。本文的核心贡献在于提出并详细验证了使用CUDA Core Dump作为调试此类复杂内存访问问题的有效方案。</p>
+<p>由于CUDA内核错误通常会在其他API调用时异步报告，传统的Python错误堆栈追踪在面对这类异常时往往是不准确且毫无价值的。即使根据官方错误提示添加了<code>CUDA_LAUNCH_BLOCKING=1</code>环境变量，在以下两种常见场景中依然无法准确定位问题：一是开发者使用<code>kernel&lt;&lt;&lt;&gt;&gt;&gt;</code>语法启动内核时未添加内核启动状态的错误检查逻辑；二是非法内存访问发生在CUDA Graph（CUDA计算图）内部的内核中。为了解决这一痛点，本文深入探讨了如何利用CUDA驱动程序原生支持的Core Dump功能，在非法内存访问发生的瞬间捕获并转储GPU状态，从而精准定位导致崩溃的具体内核及代码行。</p>
+<h3>背景知识</h3>
+<p><strong>GPU与CPU异常处理机制的相似性</strong>。GPU本质上是一个大规模并行处理器，它的许多概念都可以在CPU中找到对应的部分。</p>
+<p><strong>操作系统级别的Core Dump机制</strong>。Core dump（核心转储）是由CPU和操作系统共同提供的一项功能。当程序在执行过程中崩溃时，操作系统可以记录程序的内存数据、运行时状态以及其他信息，以便于后续的分析和调试。程序崩溃是一个硬件级别的概念。当CPU在执行某些指令遇到错误时，它会进入一种<code>trap</code>（陷阱）状态。此时，操作系统会接管程序并执行相应的异常处理程序（默认情况下，这只会终止程序，但可以通过配置选项来生成core dump以供分析。例如，通过<code>ulimit -c 1</code>可以启用core dump的生成，通过<code>echo "core.%e.%p" &gt; /proc/sys/kernel/core_pattern</code>可以指定core dump文件的保存路径）。</p>
+<p><strong>GPU Core Dump的工作原理</strong>。以此类推，GPU上的core dump功能需要GPU硬件和GPU驱动程序的协同合作。当GPU上的某个线程在执行过程中崩溃时，GPU硬件需要触发一个异常并将其传递给GPU驱动程序，随后GPU驱动程序会立即处理该异常。然而，根据相关论坛的讨论，GPU驱动程序在处理异常时的默认行为是将当前的CUDA上下文标记为不可用，而不是直接终止程序。</p>
+<h3>方法细节</h3>
+<p><strong>启用CUDA Core Dump的基础与进阶环境变量设置</strong>。启用CUDA core dump非常直接；用户只需要设置<code>CUDA_ENABLE_COREDUMP_ON_EXCEPTION=1</code>环境变量即可。然而，为了获得更流畅的调试体验，还应该设置以下几个额外的环境变量：</p>
+<ol>
+<li>默认情况下，CUDA core dump会将coredump文件保存在当前目录，且不会打印文件路径。可以启用<code>CUDA_COREDUMP_SHOW_PROGRESS=1</code>环境变量来显示coredump过程的进度和细节。最重要的是，它会在转储过程结束后显示coredump文件的路径，从而方便后续的调试和分析。</li>
+<li>许多任务是在容器内部运行的，当任务失败时，容器会被销毁，这使得coredump文件无法保留。在这种情况下，可以使用<code>CUDA_COREDUMP_FILE</code>环境变量来为coredump文件指定一个文件路径模板。例如，可以将coredump文件存储在一个持久化存储目录中：<code>CUDA_COREDUMP_FILE="/persistent_dir/cuda_coredump_%h.%p.%t"</code>，其中<code>%h</code>代表主机名，<code>%p</code>代表进程ID，<code>%t</code>代表coredump的时间戳。</li>
+<li>默认情况下，coredump过程会保存整个GPU上下文。对于像大模型推理这样几乎占用所有GPU内存的程序来说，执行完整的coredump是不切实际的（会产生数百GiB的数据）。可以使用<code>CUDA_COREDUMP_GENERATION_FLAGS='skip_nonrelocated_elf_images,skip_global_memory,skip_shared_memory,skip_local_memory,skip_constbank_memory'</code>环境变量来跳过保存GPU全局内存、共享内存和本地内存，从而减小coredump文件的体积。官方文档中遗漏了<code>skip_constbank_memory</code>标志，但实际上CUDA core dump功能是支持该标志的，并且当有大量GPU线程同时遇到错误时，该标志有时是必不可少的。</li>
+</ol>
+<p><strong>关于skip_abort标志的缺陷与禁用建议</strong>。官方文档还提到，在<code>CUDA_COREDUMP_GENERATION_FLAGS</code>中添加<code>skip_abort</code>可以防止CPU进程在coredump完成后中止。这允许CPU进程添加其自身的错误追踪信息，从而提供更多的调试信息。然而，实验表明该功能存在一个显著的bug，可能会导致GPU上的非法内存访问错误被忽略。在这种情况下，后续代码可能会继续正常运行，但程序的内存数据可能已经被破坏。这对于训练任务是不可接受的，对于推理任务也是不希望发生的。因此，该功能通常是不可靠的，不建议使用。</p>
+<p><strong>CPU Core Dump的实用性说明</strong>。此外，官方文档指出，启用<code>CUDA_ENABLE_COREDUMP_ON_EXCEPTION=1</code>不仅会启用CUDA core dump，而且默认还会生成一个CPU coredump。然而在实际操作中，作者发现CPU coredump包含的有用信息极少，且难以进行分析。</p>
+<p><strong>实时数据调试替代方案</strong>。如果用户希望获取实时数据进行调试，还可以启用<code>CUDA_DEVICE_WAITS_ON_EXCEPTION=1</code>环境变量。该变量不使用CUDA core dump，而是在异常发生时立即停止GPU的执行并挂起，等待用户附加调试器（如<code>cuda-gdb</code>）来检查GPU状态，此时完整的GPU内存仍然完好无损。但是，这种方法的自动化程度较低，需要更多的手动干预。</p>
+<p><strong>推荐的环境变量组合</strong>。综上所述，当使用CUDA core dump功能时，推荐使用以下环境变量组合：<br/>
+<code>CUDA_ENABLE_COREDUMP_ON_EXCEPTION=1 CUDA_COREDUMP_SHOW_PROGRESS=1 CUDA_COREDUMP_GENERATION_FLAGS='skip_nonrelocated_elf_images,skip_global_memory,skip_shared_memory,skip_local_memory,skip_constbank_memory' CUDA_COREDUMP_FILE="/persistent_dir/cuda_coredump_%h.%p.%t"</code></p>
+<p><strong>不当内核启动的调试代码示例</strong>。让我们使用一些代码来验证CUDA core dump的有效性。以下代码包含一个越界访问内存的内核：</p>
+<pre><code>// test.cu
+#include &lt;cuda_runtime.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+ 
+// CUDA error checking macro
+#define cuda_check(call) do { \
+    cudaError_t err = call; \
+    if (err != cudaSuccess) { \
+        printf("CUDA Error at %s:%d - %s: %s\n", __FILE__, __LINE__, #call, cudaGetErrorString(err)); \
+        exit(EXIT_FAILURE); \
+    } \
+} while(0)
+ 
+// Kernel with illegal memory access - accesses memory beyond allocated bounds
+__global__ void illegalMemoryAccessKernel(int* data, int size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    
+    // This will cause illegal memory access - accessing beyond allocated memory
+    // We allocate 'size' elements but access up to size * 2
+    if (idx &lt; size * 2) {  // Access twice the allocated size
+        for (int i = 0; i &lt; 10000; i++) {
+            data[idx - 1000000000 + i] = idx;   // This will cause illegal access for idx == 0
+        }
+    }
+}
+ 
+// Simple kernel with no errors
+__global__ void normalKernel(int* data, int size) {
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    
+ 
+    if (idx &lt; size) {
+        data[idx] = idx; 
+    }
+}
+ 
+int main() {
+    printf("CUDA Illegal Memory Access Test\n");
+    printf("===============================\n\n");
+    
+    int size = 100;
+    int* h_data = (int*)malloc(size * sizeof(int));
+    int* d_data;
+    
+    // Initialize host memory
+    for (int i = 0; i &lt; size; i++) {
+        h_data[i] = 0;
+    }
+    
+    // Allocate device memory
+    cuda_check(cudaMalloc(&amp;d_data, (unsigned long long)(size) * sizeof(int)));
+    cuda_check(cudaMemcpy(d_data, h_data, size * sizeof(int), cudaMemcpyHostToDevice));
+    
+    // Launch kernel with illegal memory access
+    int blockSize = 256;
+    int numBlocks = (size + blockSize - 1) / blockSize;
+    
+    printf("Launching kernel with out-of-bounds access...\n");
+    illegalMemoryAccessKernel&lt;&lt;&lt;numBlocks, blockSize&gt;&gt;&gt;(d_data, size);
+ 
+    normalKernel&lt;&lt;&lt;numBlocks, blockSize&gt;&gt;&gt;(d_data, size);
+ 
+    cuda_check(cudaMemcpy(h_data, d_data, size * sizeof(int), cudaMemcpyDeviceToHost));
+    for (int i = 0; i &lt; 5; i++) {
+        printf("%d ", h_data[i]);
+    }
+    printf("\n");
+    
+    // Synchronize to catch any runtime errors
+    cuda_check(cudaDeviceSynchronize());
+    
+    printf("Test completed.\n");
+    
+    // Cleanup
+    cuda_check(cudaFree(d_data));
+    free(h_data);
+    
+    return 0;
+}</code></pre>
+<p><strong>传统报错信息的局限性</strong>。这段代码连续启动了两个内核（<code>illegalMemoryAccessKernel</code>和<code>normalKernel</code>）。在执行期间，用户会遇到报错信息：<code>CUDA Error at test.cu:62 - cudaMemcpy(h_data, d_data, size * sizeof(int), cudaMemcpyDeviceToHost): an illegal memory access was encountered</code>，并且该错误只会在<code>cudaMemcpy</code>的返回值中被检测到。即使使用了<code>CUDA_LAUNCH_BLOCKING=1</code>，仍然无法识别具体是哪个内核导致了该错误。</p>
+<p><strong>启用Core Dump后的输出观察</strong>。通过添加与CUDA core dump相关的环境变量，可以观察到以下输出：</p>
+<pre><code>[06:43:15.209195] coredump: Detected an exception of type CUDBG_EXCEPTION_WARP_ILLEGAL_ADDRESS (14)
+[06:43:15.209202] coredump:   - Device: 0
+[06:43:15.209206] coredump:   - SM: 124
+[06:43:15.209208] coredump:   - Warp: 0
+[06:43:15.209210] coredump:   - PC 0x7462c3bac310
+[06:43:15.209477] coredump: Stack trace (lane masks: active 0xFFFFFFFF, valid 0xFFFFFFFF):
+[06:43:15.209486] coredump:   #0	0x7462c3bac620	_Z25illegalMemoryAccessKernelPii
+ 
+[00:40:46.806153] coredump: Writing ELF file to /tmp/cuda_coredump_xxx.1799919.1754898045
+ 
+[1]    1799919 IOT instruction (core dumped)  CUDA_ENABLE_COREDUMP_ON_EXCEPTION=1 CUDA_COREDUMP_SHOW_PROGRESS=1 = = ./test3</code></pre>
+<p><strong>使用cuda-gdb定位错误源</strong>。在一个GPU线程触发非法内存访问之后，CPU立即生成一个coredump文件，接着触发一个CPU异常，直接终止程序。此时，我们获得了一个coredump文件<code>/tmp/cuda_coredump_xxx.1799919.1754898045</code>。我们可以使用<code>cuda-gdb</code>来打开它（执行命令：<code>target cudacore /path/to/coredump_file</code>，其中<code>cudacore</code>特指CUDA上的coredump）：</p>
+<pre><code>$ cuda-gdb
+(cuda-gdb) target cudacore /tmp/cuda_coredump_xxx.1799919.1754898045
+Opening GPU coredump: /tmp/cuda_coredump_xxx.1799919.1754898045
+ 
+CUDA Exception: Warp Illegal Address
+The exception was triggered at PC 0x7f31abb9f6d0  illegalMemoryAccessKernel(int*, int)
+[Current focus set to CUDA kernel 0, grid 1, block (0,0,0), thread (0,0,0), device 0, sm 124, warp 0, lane 0]
+#0  0x00007f31abb9f6e0 in illegalMemoryAccessKernel(int*, int)&lt;&lt;&lt;(1,1,1),(256,1,1)&gt;&gt;&gt; ()</code></pre>
+<p>我们可以清楚地看到，异常是由<code>illegalMemoryAccessKernel</code>在<code>kernel 0, grid 1, block (0,0,0), thread (0,0,0), device 0, sm 124, warp 0, lane 0</code>处引起的。</p>
+<p><strong>CUDA Graph异常调试代码示例</strong>。这里展示了一个更复杂的例子，其中一个包含非法内存访问的内核被插入到了CUDA graph中：</p>
+<pre><code># core_dump.py
+import torch
+import torch.nn as nn
+ 
+from dataclasses import dataclass
+ 
+@dataclass
+class CupyWrapper:
+    data_ptr: int
+    size_in_bytes: int
+ 
+    @property
+    def __cuda_array_interface__(self):
+        return {
+            "shape": (self.size_in_bytes,),
+            "typestr": '|u1',
+            "data": (self.data_ptr, False),
+            "version": 3,
+        }
+ 
+def from_buffer(data_ptr: int, size_in_bytes: int) -&gt; torch.Tensor:
+    out = torch.as_tensor(CupyWrapper(data_ptr, size_in_bytes))
+    assert data_ptr == out.data_ptr(), "not zero-copy convert, something must be wrong!"
+    return out
+ 
+ 
+class NeuralNetwork(nn.Module):
+    def __init__(self):
+        super(NeuralNetwork, self).__init__()
+        # First layer: [B, 10] -&gt; [B, 20] with ReLU activation
+        self.layer1 = nn.Linear(10, 20)
+        self.relu = nn.ReLU()
+        # Second layer: [B, 20] -&gt; [B, 30]
+        self.layer2 = nn.Linear(20, 30)
+        self.num_called = 0
+ 
+    def forward(self, x):
+        # Input shape: [B, 10]
+        x = self.layer1(x)  # [B, 20]
+        x = self.relu(x)    # [B, 20] with ReLU activation
+        self.num_called += 1
+        if self.num_called &gt; 1:
+            y = from_buffer(x.data_ptr(), x.numel() * 1024 * 1024)
+            # will trigger illegal memory access
+            y.fill_(1)
+        x = self.layer2(x)  # [B, 30]
+        return x
+ 
+ 
+# Example usage
+if __name__ == "__main__":
+    # Check if CUDA is available
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f"Using device: {device}")
+    
+    # Create the model and move to CUDA
+    model = NeuralNetwork().to(device)
+    
+    # Create sample input with batch size B=4 and move to CUDA
+    batch_size = 4
+    input_tensor = torch.randn(batch_size, 10).to(device)
+    
+    print(f"Input shape: {input_tensor.shape}")
+    print(f"Input device: {input_tensor.device}")
+    
+    # Forward pass
+    with torch.no_grad():
+        # warmup
+        output = model(input_tensor)
+        # capture graph
+        g = torch.cuda.CUDAGraph()
+        with torch.cuda.graph(g):
+            output = model(input_tensor)
+        # replay graph
+        g.replay()
+    
+    print(f"Output shape: {output.shape}")
+    print(f"Output device: {output.device}")
+    
+    print(f"Output: {output.sum()}")
+ 
+    # Print model summary
+    print("\nModel architecture:")
+    print(model)
+    
+    # Print number of parameters
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f"\nTotal parameters: {total_params}")
+    
+    # Verify model is on CUDA
+    print(f"Model device: {next(model.parameters()).device}")</code></pre>
+<p><strong>直接执行的报错表现</strong>。直接执行上述代码会导致报错，直到<code>output.sum()</code>触发了设备同步，非法内存访问的错误才被打印出来。然而，由于CUDA内核是异步执行的，我们无法得知是哪个内核导致了非法内存访问。</p>
+<p><strong>增加同步阻塞后的报错表现</strong>。在添加了<code>CUDA_LAUNCH_BLOCKING=1</code>之后，错误信息发生了变化，堆栈指向了<code>g.replay()</code>。从中可以推断出，异常发生在CUDA graph内部的某个内核中。但是，常规方法只能提供到这一步的信息。</p>
+<p><strong>通过Core Dump精准定位CUDA Graph中的错误</strong>。通过添加环境变量<code>CUDA_ENABLE_COREDUMP_ON_EXCEPTION=1 CUDA_COREDUMP_SHOW_PROGRESS=1 CUDA_COREDUMP_GENERATION_FLAGS='skip_nonrelocated_elf_images,skip_global_memory,skip_shared_memory,skip_local_memory,skip_constbank_memory' CUDA_COREDUMP_FILE="/tmp/cuda_coredump_%h.%p.%t"</code>，我们可以清晰地识别出导致错误的内核：</p>
+<pre><code>(cuda-gdb) target cudacore /tmp/cuda_coredump_flow-matic.1929094.1754901120
+Opening GPU coredump: /tmp/cuda_coredump_flow-matic.1929094.1754901120
+ 
+CUDA Exception: Warp Illegal Address
+The exception was triggered at PC 0x7fc2afba5e30  void at::native::vectorized_elementwise_kernel&lt;4, at::native::FillFunctor&lt;unsigned char&gt;, std::array&lt;char*, 1ul&gt; &gt;(int, at::native::FillFunctor&lt;unsigned char&gt;, std::array&lt;char*, 1ul&gt;)
+[Current focus set to CUDA kernel 0, grid 9, block (17454,0,0), thread (0,0,0), device 0, sm 0, warp 1, lane 0]
+#0  0x00007fc2afba5e70 in void at::native::vectorized_elementwise_kernel&lt;4, at::native::FillFunctor&lt;unsigned char&gt;, std::array&lt;char*, 1ul&gt; &gt;(int, at::native::FillFunctor&lt;unsigned char&gt;, std::array&lt;char*, 1ul&gt;)&lt;&lt;&lt;(40960,1,1),(128,1,1)&gt;&gt;&gt; ()</code></pre>
+<p>显然，这是一个<code>fill</code>函数，并且其grid大小为<code>40960</code>，这是一个非常大的数值。借助这些信息，我们可以轻松地定位到代码行<code>y = from_buffer(x.data_ptr(), x.numel() * 1024 * 1024); y.fill_(1);</code>，该代码强行将<code>x</code>的长度扩大了一百万倍，然后用1填满它，从而触发了<code>illegal memory access</code>异常。</p>
+<p><strong>特定GPU上的Grid大小限制问题</strong>。在某些GPU上，这行代码可能会引发<code>invalid argument</code>错误而不是<code>illegal memory access</code>错误，因为grid的大小超过了最大限制。在这种情况下，无法触发CUDA core dump功能，用户需要稍微调小扩展因子<code>1024 * 1024</code>以避免超过grid大小的限制。</p>
+<h3>实验环境</h3>
+<ul>
+<li><strong>软件配置</strong>：测试代码基于CUDA C++与PyTorch框架编写，利用了PyTorch的CUDA Graph捕获机制。调试工具依赖于NVIDIA提供的<code>cuda-gdb</code>。文中还提及了在vLLM大模型推理引擎源码编译环境下的应用。</li>
+<li><strong>硬件配置</strong>：从Core Dump转储日志中的<code>SM: 124</code>可以推断，实验运行在具有较新架构（如NVIDIA Ada Lovelace或Hopper架构）的GPU上。同时，文中讨论分布式程序时暗示了多GPU及NVLink环境的存在。</li>
+<li><strong>测试模型</strong>：在实际应用案例中，测试了包含MRope Triton内核的GLM-4.5V大语言模型。</li>
+</ul>
+<h3>实验结果</h3>
+<ol>
+<li>
+<p><strong>针对不当内核启动的调试实验</strong>：</p>
+<ul><li><strong>实验内容</strong>：运行一段包含越界内存访问（分配<code>size</code>大小，但访问至<code>size * 2</code>的索引并写入数据）的C++ CUDA代码。</li><li><strong>实验结果</strong>：常规执行时，错误仅能在后续的<code>cudaMemcpy</code>操作中被捕获。在启用推荐的Core Dump环境变量后，程序在崩溃瞬间生成了ELF转储文件。</li><li><strong>分析结论</strong>：通过将转储文件加载至<code>cuda-gdb</code>，可以直接读取出引发<code>Warp Illegal Address</code>异常的精确上下文，包括内核函数名（<code>illegalMemoryAccessKernel</code>）以及具体的线程块坐标（block <code>(0,0,0)</code>, thread <code>(0,0,0)</code>等）。</li></ul>
+</li>
+<li>
+<p><strong>针对CUDA Graph内部异常的调试实验</strong>：</p>
+<ul><li><strong>实验内容</strong>：在PyTorch中构建一个简单的神经网络，并在其前向传播中强行注入一段将张量长度扩大一百万倍并调用<code>fill_(1)</code>的破坏性操作。将该前向传播过程捕获为CUDA Graph并重放。</li><li><strong>实验结果</strong>：默认执行时，错误被推迟到图外部的<code>output.sum()</code>同步时报错。加入<code>CUDA_LAUNCH_BLOCKING=1</code>后，错误堆栈仅能定位到<code>g.replay()</code>。启用Core Dump后，生成了包含崩溃现场的转储文件。</li><li><strong>分析结论</strong>：<code>cuda-gdb</code>解析转储文件后，直接定位到了底层的C++函数<code>at::native::vectorized_elementwise_kernel</code>（对应<code>fill_</code>操作），并显示出异常的超大网格尺寸（Grid Size: 40960）。这验证了Core Dump能够穿透CUDA Graph的黑盒封装，直接揪出图中导致非法内存访问的罪魁祸首。</li></ul>
+</li>
+</ol>
+<h3>补充细节</h3>
+<p><strong>捕获异常的可靠性差异</strong>。理论上，CUDA core dump应该能够捕获由GPU上特定线程引起的各种异常。但在实践中，在特定的GPU和驱动版本上，像<code>operation not supported on global/shared address space</code>这样的异常可能无法触发CUDA core dump。幸运的是，<code>illegal memory access</code>（非法内存访问）通常能够可靠地触发CUDA core dump，这满足了大多数的调试需求。</p>
+<p><strong>硬件错误的不可捕获性</strong>。对于与硬件相关的错误，例如<code>Invalid access of peer GPU memory over nvlink or a hardware error</code>（通过nvlink对对等GPU内存的无效访问或硬件错误），这些并非由特定线程引起，也无法归咎于某个特定的GPU线程。因此，这类问题不会触发CUDA core dumps。</p>
+<p><strong>驱动API错误的非粘性特征</strong>。由不当使用驱动API引起的错误被视为非粘性错误（non-sticky errors），它们与GPU本身无关。这些错误在驱动API层面被报告，不会触发CUDA core dumps。一个常见的例子是调用<code>cudaMalloc</code>期间发生的内存不足（out-of-memory）错误，这不会导致生成CUDA core dump。</p>
+<p><strong>分布式程序中的假阳性问题</strong>。对于涉及多GPU通信的分布式程序，经常使用内存映射（memory mapping）将其他GPU的内存映射到当前GPU。如果另一个GPU上的程序退出，被映射的内存就会失效，访问它将触发<code>illegal memory access</code>。然而，这并不属于典型的<code>illegal memory access</code>问题。这类问题在分布式程序的关闭过程中很常见。如果在关闭期间GPU正在进行通信，关闭的顺序可能会导致某些GPU报告<code>illegal memory access</code>。当对此类程序使用CUDA core dump时，区分这些假阳性（false positives）非常重要。</p>
+<p><strong>生产环境的性能影响</strong>。启用CUDA core dump确实会对CUDA内核产生一定的性能影响（因为它需要在GPU线程退出时检查错误并进行归因）。因此，不建议在生产环境中启用CUDA core dump。建议仅在诸如<code>illegal memory access</code>等错误能够被可靠复现以进行调试时，才启用CUDA core dump。</p>
+<p><strong>编译调试符号的重要性</strong>。为了从CUDA core dump中获得最大收益，建议使用调试符号重新编译vLLM，或者至少在编译期间嵌入行信息。遗憾的是，由于二进制文件大小的限制，vLLM的默认构建不包含此类信息。为了享受这一便利，用户必须从源码编译vLLM，并设置环境变量<code>export NVCC_PREPEND_FLAGS='-lineinfo'</code>或<code>export NVCC_PREPEND_FLAGS='-G'</code>。建议从<code>-lineinfo</code>开始尝试，只有当<code>-lineinfo</code>不足够时才切换到<code>-G</code>。借助丰富的调试信息，CUDA core dump可以追溯到引发异常的确切代码行。</p>
+<h3>结论</h3>
+<p>本文系统地分析了CUDA Core Dump的原理及其实际应用案例，证明了该方法在调试诸如不当内核启动、CUDA Graph内部内核异常等问题时具有显著效果，是解决“非法内存访问”及相关底层错误的强大工具。</p>
+<p>在实际工程中，作者团队近期正是利用该技术成功调试了vLLM中一个复杂的非法内存访问问题：在为MRope引入Triton内核时，该内核隐式假设了<code>head_size == rotary_dim</code>（即全RoPE）。当运行GLM-4.5V这类采用部分RoPE（<code>head_size != rotary_dim</code>）的模型时，内核便会触发非法内存访问。如果没有CUDA Core Dump，报错信息会产生严重的误导；而借助该工具，团队轻松将错误定位到了MRope内核并完成了修复。需要指出的是，虽然Core Dump对于参数配置错误导致的内核崩溃已经足够精准，但对于更复杂的非法内存访问问题，依然需要将出问题的内核隔离出来构建最小复现用例，并结合Compute Sanitizer等专用工具进行深入排查。未来，vLLM项目团队将继续分享更多调试技巧，以共同构建一个强大的LLM推理生态系统。最后，作者对NVIDIA的Ze Long、Vikram Sharma Mailthody、Jeremy Iverson、Sandarbh Jain以及Red Hat的Lucas Wilkinson在本文撰写过程中的讨论与帮助表示了感谢。</p>
+</div>
+
+
+</div>
