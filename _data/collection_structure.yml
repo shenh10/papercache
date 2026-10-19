@@ -1263,6 +1263,14 @@ llm:
         - llm
         - engineering
         - inference
+      - title: 'Hyper Optimizing Kimi K3 in vLLM: Moving Fast and Responsibly'
+        date: '2026-10-01'
+        url: /papers/llm/engineering/inference/2026/10/01/hyper-optimizing-kimi-k3-in-vllm-moving-fast-and-responsibly.html
+        categories:
+        - llm
+        - engineering
+        - inference
+        tag: blog
       - title: 'Helix Parallelism: Rethinking Sharding Strategies for Interactive
           Multi-Million-Token LLM Decoding'
         date: '2025-07-01'
