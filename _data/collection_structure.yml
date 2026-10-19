@@ -2906,6 +2906,14 @@ llm:
         - llm
         - engineering
         - rl
+      - title: 'Finish RL Training Faster: Bitwise-Consistent, High-Performance, Agent-Driven'
+        date: '2026-10-01'
+        url: /papers/llm/engineering/rl/2026/10/01/finish-rl-training-faster-bitwise-consistent-high-performance-agent-driven.html
+        categories:
+        - llm
+        - engineering
+        - rl
+        tag: blog
       - title: 'APRIL: Active Partial Rollouts in Reinforcement Learning to Tame Long-Tail
           Generation'
         date: '2025-09-01'
