@@ -684,6 +684,15 @@ llm:
           - inference
           - low_precision
           tag: iclr25
+        - title: Accelerating Long-Context and Agentic Inference with NVFP4 KV Cache
+          date: '2026-09-01'
+          url: /papers/llm/engineering/inference/low_precision/2026/09/01/accelerating-long-context-and-agentic-inference-with-nvfp4-kv-cache.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - low_precision
+          tag: blog
         - title: 'FP8 Quantization: The Power of the Exponent'
           date: '2022-08-01'
           url: /papers/llm/engineering/inference/low_precision/2022/08/01/fp8-quantization-the-power-of-the-exponent.html
@@ -1829,6 +1838,15 @@ llm:
           - inference
           - speculative_decoding
           tag: nips25
+        - title: 'The Next Generation of Speculative Decoding: DFlash and Spec V2'
+          date: '2026-06-01'
+          url: /papers/llm/engineering/inference/speculative_decoding/2026/06/01/the-next-generation-of-speculative-decoding-dflash-and-spec-v2.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - speculative_decoding
+          tag: blog
         - title: Scaling Speculative Decoding with Lookahead Reasoning
           date: '2025-06-01'
           url: /papers/llm/engineering/inference/speculative_decoding/2025/06/01/scaling-speculative-decoding-with-lookahead-reasoning.html
@@ -3235,6 +3253,15 @@ llm:
         - llm
         - engineering
         - moe
+      - title: Running DeepSeek-V4-Flash and Kimi-K3 on Consumer Hardware with SSD
+          Expert Pack
+        date: '2026-08-01'
+        url: /papers/llm/engineering/moe/2026/08/01/running-deepseek-v4-flash-and-kimi-k3-on-consumer-hardware-with-ssd-expert-pack.html
+        categories:
+        - llm
+        - engineering
+        - moe
+        tag: blog
       - title: 'GLaM: Efficient Scaling of Language Models with Mixture-of-Experts'
         date: '2021-12-01'
         url: /papers/llm/engineering/moe/2021/12/01/glam-efficient-scaling-of-language-models-with-mixture-of-experts.html
