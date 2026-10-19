@@ -3149,6 +3149,14 @@ llm:
         - engineering
         - moe
         tag: mlsys26
+      - title: 'ReLibra: Routing-Replay-Guided Load Balancing for MoE Training in
+          Reinforcement Learning'
+        date: '2026-05-01'
+        url: /papers/llm/engineering/moe/2026/05/01/relibra-routing-replay-guided-load-balancing-for-moe-training-in-reinforcement-learning.html
+        categories:
+        - llm
+        - engineering
+        - moe
       - title: 'fMoE: Fine-Grained Expert Offloading for Large Mixture-of-Experts
           Serving'
         date: '2025-02-01'
