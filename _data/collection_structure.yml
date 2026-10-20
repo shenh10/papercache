@@ -201,6 +201,15 @@ llm:
             - attention
             - sparsity
             tag: iclr25
+          - title: 'DOSA: Dots Sparse Attention'
+            date: '2026-10-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2026/10/01/dosa-dots-sparse-attention.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
           - title: 'Native Sparse Attention: Hardware-Aligned and Natively Trainable
               Sparse Attention'
             date: '2025-02-01'
