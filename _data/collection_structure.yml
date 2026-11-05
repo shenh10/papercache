@@ -6088,6 +6088,14 @@ llm:
         - llm
         - algorithm
         - agent
+      - title: How We Detect Frontier Model Misalignment
+        date: '2026-10-01'
+        url: /papers/llm/algorithm/agent/2026/10/01/how-we-detect-frontier-model-misalignment.html
+        categories:
+        - llm
+        - algorithm
+        - agent
+        tag: blog
       - title: 'Mem0: Building Production-Ready AI Agents with Scalable Long-Term
           Memory'
         date: '2025-04-01'
