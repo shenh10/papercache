@@ -4931,6 +4931,15 @@ llm:
             - architecture
             - attention
             - sparsity
+          - title: 'HySparse2: Hybrid Sparse Attention with Two-Level KV Sharing'
+            date: '2026-09-01'
+            url: /papers/llm/algorithm/architecture/attention/sparsity/2026/09/01/hysparse2-hybrid-sparse-attention-with-two-level-kv-sharing.html
+            categories:
+            - llm
+            - algorithm
+            - architecture
+            - attention
+            - sparsity
           - title: Mixture-of-Depths Attention
             date: '2026-03-01'
             url: /papers/llm/algorithm/architecture/attention/sparsity/2026/03/01/mixture-of-depths-attention.html
