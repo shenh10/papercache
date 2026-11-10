@@ -1363,6 +1363,15 @@ llm:
           - engineering
           - inference
           - kvcache
+        - title: 'FlashOffloading: Low-Latency KV Cache Offloading for Long-Context
+            LLM Serving'
+          date: '2026-11-01'
+          url: /papers/llm/engineering/inference/kvcache/2026/11/01/flashoffloading-low-latency-kv-cache-offloading-for-long-context-llm-serving.html
+          categories:
+          - llm
+          - engineering
+          - inference
+          - kvcache
         - title: 'DiffKV: Differentiated Memory Management for Large Language Models
             with Parallel KV Compaction'
           date: '2025-10-01'
