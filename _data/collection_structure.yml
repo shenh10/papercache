@@ -5472,6 +5472,13 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'System Card: Claude Fable 5.2 & Claude Mythos 5.2'
+        date: '2026-11-01'
+        url: /papers/llm/algorithm/models/2026/11/01/system-card-claude-fable-52-claude-mythos-52.html
+        categories:
+        - llm
+        - algorithm
+        - models
       - title: 'KIMI K2.5: VISUAL AGENTIC INTELLIGENCE'
         date: '2026-02-01'
         url: /papers/llm/algorithm/models/2026/02/01/kimi-k25-visual-agentic-intelligence.html
