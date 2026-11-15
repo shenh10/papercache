@@ -6398,6 +6398,14 @@ mlsys:
       categories:
       - mlsys
       - gpu
+    - title: Top Chinese Frontier AI Models Carry the Fingerprint of Export-Controlled
+        NVIDIA Blackwell GPUs
+      date: '2026-11-01'
+      url: /papers/mlsys/gpu/2026/11/01/top-chinese-frontier-ai-models-carry-the-fingerprint-of-export-controlled-nvidia-blackwell-gpus.html
+      categories:
+      - mlsys
+      - gpu
+      tag: blog
     - title: Offloading communication control logic in GPU accelerated applications
       date: '2017-05-01'
       url: /papers/mlsys/gpu/2017/05/01/offloading-communication-control-logic-in-gpu-accelerated-applications.html
