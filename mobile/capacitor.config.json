@@ -1,0 +1,14 @@
+{
+  "appId": "org.papercache.app",
+  "appName": "PaperCache",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#ffffff"
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}

@@ -66,6 +66,7 @@ exclude:
   - ".jekyll-cache/"
   - "Gemfile"
   - "Gemfile.lock"
+  - "mobile"  # Capacitor 手机 App，独立构建
   # 注意：_slides/ 不再排除，以便在生产环境生成演示文稿
 
 # 增量构建配置（仅用于本地开发，生产环境通过清除缓存强制完全构建）
