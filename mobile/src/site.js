@@ -15,7 +15,7 @@ export function normalizePostUrl(href) {
   return u.pathname.endsWith('.html') ? u.pathname : u.pathname + '.html';
 }
 
-async function fetchText(path) {
+export async function fetchText(path) {
   if (Capacitor.isNativePlatform()) {
     const res = await CapacitorHttp.get({ url: SITE + path, responseType: 'text' });
     if (res.status !== 200) throw new Error('HTTP ' + res.status);
@@ -26,14 +26,24 @@ async function fetchText(path) {
   return res.text();
 }
 
-// 文章页 → 正文 HTML。图片是 base64 内联的，正文本身就是完整的一篇
-export async function fetchArticle(postUrl) {
+export async function fetchArticlePage(postUrl) {
   const html = await fetchText(canonicalPath(postUrl));
-  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return new DOMParser().parseFromString(html, 'text/html');
+}
+
+// 文章页 → 文章头 + 正文，保留网站原有的结构和 class，样式由 sitestyle 按原样套上。
+// 图片是 base64 内联的，这段 HTML 本身就是完整的一篇
+export function articleHtml(doc) {
   const content = doc.querySelector('.post-content');
   if (!content) throw new Error('页面里没有找到正文');
   content.querySelectorAll('script, style, iframe').forEach((n) => n.remove());
-  return content.innerHTML;
+  const header = doc.querySelector('.post-header');
+  if (header) {
+    // 点赞、收藏、分享、离线按钮由 App 工具栏提供
+    header.querySelectorAll('.post-actions-inline, .post-share-inline, .post-meta-separator, .offline-save-btn, script')
+      .forEach((n) => n.remove());
+  }
+  return (header ? header.outerHTML : '') + `<div class="post-content e-content">${content.innerHTML}</div>`;
 }
 
 const POST_FIELDS = 'post_url,title,excerpt,categories,tag,published_date,created_at';

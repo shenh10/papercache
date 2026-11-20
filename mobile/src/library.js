@@ -1,7 +1,8 @@
 // 本机书架：论文目录缓存、离线文章文件、阅读进度、设置。全部按站内 post_url 索引
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
-import { fetchAllPosts, fetchArticle } from './site.js';
+import { fetchAllPosts, fetchArticlePage, articleHtml } from './site.js';
+import { siteStyle } from './sitestyle.js';
 
 const POSTS_FILE = 'catalog/posts.json';
 const DEFAULT_SETTINGS = { autoDownloadFavorites: true, cellularDownload: false, fontScale: 1 };
@@ -36,6 +37,7 @@ class Library extends EventTarget {
   }
 
   async load() {
+    await siteStyle.load();
     this.downloads = await readPref('downloads', {});
     this.progress = await readPref('progress', {});
     this.settings = { ...DEFAULT_SETTINGS, ...(await readPref('settings', {})) };
@@ -70,6 +72,13 @@ class Library extends EventTarget {
 
   /* ---------- 离线文章 ---------- */
 
+  // 联网取文章；样式过期时顺带从同一个页面刷新站点样式，保证下载的文章离线也按原样渲染
+  async fetchArticle(postUrl) {
+    const doc = await fetchArticlePage(postUrl);
+    if (siteStyle.stale) await siteStyle.refreshFrom(doc).catch(() => {});
+    return articleHtml(doc);
+  }
+
   isDownloaded(postUrl) {
     return !!this.downloads[postUrl];
   }
@@ -89,7 +98,7 @@ class Library extends EventTarget {
 
   download(postUrl) {
     if (this.pending.has(postUrl)) return this.pending.get(postUrl);
-    const job = fetchArticle(postUrl)
+    const job = this.fetchArticle(postUrl)
       .then((html) => this.saveArticle(postUrl, html))
       .finally(() => { this.pending.delete(postUrl); this.changed('downloads'); });
     this.pending.set(postUrl, job);

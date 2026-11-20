@@ -1,7 +1,7 @@
 // 三个主页面：书架、发现、我的
 import { library } from './library.js';
 import { account } from './account.js';
-import { paperRow, escapeHtml, formatBytes, toast } from './ui.js';
+import { paperRow, pageHead, escapeHtml, formatBytes, toast } from './ui.js';
 import { updates, DOWNLOAD_URL } from './updates.js';
 
 class View {
@@ -40,7 +40,12 @@ export class ShelfView extends View {
       </section>`;
 
     this.root.innerHTML = `
-      <header class="page-head"><h1>书架</h1></header>
+      ${pageHead('我的书架', '收藏、下载和读到一半的论文都在这里', `
+        <div class="hero-stats">
+          <div class="hero-stat"><b>${reading.length}</b><span>在读</span></div>
+          <div class="hero-stat"><b>${favorites.length}</b><span>收藏</span></div>
+          <div class="hero-stat"><b>${Object.keys(library.downloads).length}</b><span>已下载</span></div>
+        </div>`)}
       ${reading.length ? section('继续阅读', '', reading.map((u) => {
         const label = library.progress[u].label;
         return paperRow(u, { resumeHint: label ? '读到 ' + label : '' });
@@ -70,13 +75,14 @@ export class DiscoverView extends View {
 
   mount() {
     this.root.innerHTML = `
-      <header class="page-head"><h1>发现</h1></header>
-      <div class="search-box"><input type="search" placeholder="搜索标题、摘要、分类" enterkeyhint="search"></div>
+      ${pageHead('搜索论文', `从 ${library.posts.size || '全部'} 篇论文中找到你需要的内容`,
+        '<form class="search-box"><input type="search" placeholder="输入关键词搜索论文…" enterkeyhint="search"><button class="search-go">搜索</button></form>')}
       <div class="chips"></div>
       <div class="list"></div>`;
     const input = this.root.querySelector('input');
     input.value = this.query;
     input.addEventListener('input', () => { this.query = input.value.trim().toLowerCase(); this.limit = 40; this.renderList(); });
+    this.root.querySelector('.search-box').addEventListener('submit', (e) => { e.preventDefault(); input.blur(); });
     this.root.querySelector('.chips').addEventListener('click', (e) => {
       const chip = e.target.closest('[data-cat]');
       if (!chip) return;
@@ -88,6 +94,7 @@ export class DiscoverView extends View {
   }
 
   render() {
+    if (library.posts.size) this.root.querySelector('.page-sub').textContent = `从 ${library.posts.size} 篇论文中找到你需要的内容`;
     const counts = {};
     for (const p of library.posts.values()) {
       const c = (p.categories || [])[0];
@@ -122,7 +129,7 @@ export class MeView extends View {
     const s = library.settings;
     const user = account.user;
     this.root.innerHTML = `
-      <header class="page-head"><h1>我的</h1></header>
+      ${pageHead('我的', user ? '收藏与 papercache.org 同步' : '登录后同步网站上的收藏')}
       <section class="card">
         ${user ? `
           <div class="account-line"><div><div class="muted">已登录</div><div>${escapeHtml(user.email || user.user_metadata?.user_name || '')}</div></div>
@@ -137,6 +144,7 @@ export class MeView extends View {
           <p class="muted">与网站同一个账号，登录后收藏自动同步。</p>`}
       </section>
       <section class="card">
+        <div class="card-title">下载</div>
         <label class="switch-line"><span>收藏后自动下载</span><input type="checkbox" data-set="autoDownloadFavorites" ${s.autoDownloadFavorites ? 'checked' : ''}></label>
         <label class="switch-line"><span>允许用移动网络自动下载</span><input type="checkbox" data-set="cellularDownload" ${s.cellularDownload ? 'checked' : ''}></label>
       </section>

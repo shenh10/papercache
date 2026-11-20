@@ -6,6 +6,15 @@ export function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+export function pageHead(title, sub, extra = '') {
+  return `<header class="page-head">
+    <div class="brand"><img src="/icon.png" alt="">PaperCache</div>
+    <h1>${escapeHtml(title)}</h1>
+    ${sub ? `<p class="page-sub">${escapeHtml(sub)}</p>` : ''}
+    ${extra}
+  </header>`;
+}
+
 export function navigate(hash) {
   location.hash = hash;
 }
@@ -39,12 +48,14 @@ export function paperRow(postUrl, { showExcerpt = false, resumeHint = '' } = {})
   if (library.isDownloading(postUrl)) badges.push('<span class="badge">下载中</span>');
   else if (library.isDownloaded(postUrl)) badges.push('<span class="badge ok">已下载</span>');
   if (fav) badges.push(fav.is_read ? '<span class="badge">★ 已读</span>' : '<span class="badge fav">★</span>');
-  const meta = [p.published_date ? p.published_date.slice(0, 7) : '', (p.categories || []).join(' / '), p.tag === 'blog' ? 'blog' : '']
-    .filter(Boolean).join(' · ');
+  const date = p.published_date ? p.published_date.slice(0, 7) : '';
+  const pills = (p.categories || []).map((c) => `<span class="cat-pill">${escapeHtml(c)}</span>`).join('');
+  const bar = progress && progress.percent >= 0.02 && progress.percent < 0.9
+    ? `<div class="resume-bar"><div style="width:${Math.round(progress.percent * 100)}%"></div></div>` : '';
   return `<a class="paper-row" href="#/read?u=${encodeURIComponent(postUrl)}">
     <div class="paper-title">${escapeHtml(p.title)}</div>
     ${showExcerpt && p.excerpt ? `<div class="paper-excerpt">${escapeHtml(p.excerpt)}</div>` : ''}
-    <div class="paper-meta"><span>${escapeHtml(meta)}</span>${badges.join('')}</div>
-    ${resumeHint ? `<div class="resume-hint">${escapeHtml(resumeHint)}</div>` : ''}
+    <div class="paper-meta">${date ? `<span>${date}</span>` : ''}${pills}${p.tag === 'blog' ? '<span class="badge">blog</span>' : ''}${badges.join('')}</div>
+    ${resumeHint ? `<div class="resume-hint">${escapeHtml(resumeHint)}</div>` : ''}${bar}
   </a>`;
 }

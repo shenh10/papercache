@@ -34,6 +34,7 @@ function render() {
     current.unmount();
   }
   currentKey = next.key;
+  document.getElementById('toast').classList.remove('show'); // 提示属于上一页，换页即收起
   current = next.make();
   document.querySelectorAll('#tabbar a').forEach((a) => a.classList.toggle('active', a.dataset.tab === next.tab));
   current.mount();
