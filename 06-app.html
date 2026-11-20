@@ -1,0 +1,65 @@
+---
+layout: default
+title: App
+permalink: /app/
+sitemap: false
+---
+
+<div class="app-page">
+  <div class="app-hero">
+    <img src="{{ '/assets/images/icons/icon-192.png' | relative_url }}" alt="PaperCache" width="88" height="88">
+    <div>
+      <h1>PaperCache 安卓 App</h1>
+      <p class="app-sub">书架、离线下载、从上次的位置继续读；收藏与网站账号同步。</p>
+    </div>
+  </div>
+
+  <a id="app-download" class="app-download-btn" href="{{ '/download/PaperCache.apk' | relative_url }}" download>下载 APK</a>
+  <p id="app-meta" class="app-meta"></p>
+
+  <h2>安装</h2>
+  <ol>
+    <li>用手机浏览器打开本页，点「下载 APK」。</li>
+    <li>打开下载好的 <code>PaperCache.apk</code>。第一次安装时，系统会提示「允许此来源安装应用」，打开开关后返回继续。</li>
+    <li>以后有新版本，App 的「我的」页会提示更新，下载后直接覆盖安装，书架和离线文章都会保留。</li>
+  </ol>
+
+  <h2>功能</h2>
+  <ul>
+    <li><strong>书架</strong>：继续阅读、我的收藏、已下载三栏，显示进度和读到的章节。</li>
+    <li><strong>离线阅读</strong>：文章连同公式一起存到手机上，断网照常读。收藏后在 Wi-Fi 下自动下载。</li>
+    <li><strong>接着读</strong>：重新打开会回到上次的位置，读完的收藏自动标记已读。</li>
+  </ul>
+
+  <p class="app-note">iPhone 版暂未提供。所有历史版本见 <a id="app-release" href="https://github.com/shenh10/papercache/releases" target="_blank" rel="noopener">GitHub Releases</a>。</p>
+</div>
+
+<style>
+  .app-page { max-width: 720px; margin: 0 auto; padding: 1.5rem 0 3rem; }
+  .app-hero { display: flex; align-items: center; gap: 1.25rem; margin-bottom: 1.5rem; }
+  .app-hero img { border-radius: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.12); flex-shrink: 0; }
+  .app-hero h1 { margin: 0 0 0.3rem; font-size: 1.6rem; }
+  .app-sub { margin: 0; color: #6b7280; }
+  .app-download-btn { display: inline-block; padding: 0.8rem 2rem; border-radius: 10px; color: #fff !important; font-weight: 600; text-decoration: none !important;
+    background: linear-gradient(135deg, #3b82f6 0%, #10b981 100%); }
+  .app-download-btn.disabled { opacity: 0.5; pointer-events: none; }
+  .app-meta { color: #6b7280; font-size: 0.9rem; margin: 0.6rem 0 1.5rem; }
+  .app-note { margin-top: 2rem; color: #6b7280; font-size: 0.9rem; }
+</style>
+
+<script>
+  (function () {
+    var meta = document.getElementById('app-meta');
+    fetch('{{ "/download/app.json" | relative_url }}', { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (info) {
+        meta.textContent = '版本 ' + info.version + '（build ' + info.build + '）· ' +
+          (info.size / 1024 / 1024).toFixed(1) + ' MB · ' + info.date + ' 更新 · 需要 Android 7.0 及以上';
+        document.getElementById('app-release').href = info.release;
+      })
+      .catch(function () {
+        meta.textContent = '安装包正在准备中，请稍后再来。';
+        document.getElementById('app-download').classList.add('disabled');
+      });
+  })();
+</script>

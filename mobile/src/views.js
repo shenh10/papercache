@@ -2,6 +2,7 @@
 import { library } from './library.js';
 import { account } from './account.js';
 import { paperRow, escapeHtml, formatBytes, toast } from './ui.js';
+import { updates, DOWNLOAD_URL } from './updates.js';
 
 class View {
   constructor(root) {
@@ -12,12 +13,14 @@ class View {
   mount() {
     library.addEventListener('change', this.render);
     account.addEventListener('change', this.render);
+    updates.addEventListener('change', this.render);
     this.render();
   }
 
   unmount() {
     library.removeEventListener('change', this.render);
     account.removeEventListener('change', this.render);
+    updates.removeEventListener('change', this.render);
   }
 }
 
@@ -140,6 +143,10 @@ export class MeView extends View {
       <section class="card">
         <div class="account-line"><div><div>离线文章</div><div class="muted">${Object.keys(library.downloads).length} 篇 · ${formatBytes(library.downloadedBytes())}</div></div>
         <button class="btn ghost danger" data-act="clear">清空</button></div>
+      </section>
+      <section class="card">
+        <div class="account-line"><div><div>版本</div><div class="muted">${updates.current ? `${escapeHtml(updates.current.version)}（build ${updates.current.build}）` : '开发版'}</div></div>
+        ${updates.available ? `<a class="btn" href="${DOWNLOAD_URL}" data-external>更新到 build ${updates.latest.build}</a>` : '<span class="muted">已是最新</span>'}</div>
       </section>
       <p class="muted center">PaperCache · <a href="https://www.papercache.org" data-external>papercache.org</a></p>`;
 

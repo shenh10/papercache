@@ -259,6 +259,27 @@ jobs:
             #     SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
             #     SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
 
+            - name: 📱 Bundle latest Android APK
+              run: |
+                TAG=$(gh release list -R "${{ github.repository }}" --limit 50 --json tagName,createdAt \
+                  --jq '[.[] | select(.tagName | startswith("app-v"))] | sort_by(.createdAt) | last | .tagName // empty')
+                if [ -z "$TAG" ]; then
+                  echo "⚠️  还没有 App 发布，跳过"
+                  exit 0
+                fi
+                mkdir -p _site/download
+                gh release download "$TAG" -R "${{ github.repository }}" -p PaperCache.apk -D _site/download --clobber
+                SIZE=$(stat -c %s _site/download/PaperCache.apk)
+                VERSION=${TAG#app-v}
+                BUILD=${VERSION##*-build}
+                printf '{"tag":"%s","version":"%s","build":%s,"size":%s,"date":"%s","release":"%s"}\n' \
+                  "$TAG" "${VERSION%-build*}" "$BUILD" "$SIZE" "$(date -u +%Y-%m-%d)" \
+                  "https://github.com/${{ github.repository }}/releases/tag/$TAG" > _site/download/app.json
+                cat _site/download/app.json
+              continue-on-error: true
+              env:
+                GH_TOKEN: ${{ github.token }}
+
             - name: 📤 Upload artifact
               uses: actions/upload-pages-artifact@v3
 

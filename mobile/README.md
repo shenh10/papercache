@@ -29,3 +29,22 @@ cd android && ./gradlew assembleDebug
 ```
 
 GitHub 登录回跳 `org.papercache.app://auth-callback`，需要在 Supabase Dashboard → Authentication → URL Configuration 的 Redirect URLs 里加上这个地址。
+
+## 发布
+
+推到 main 且改动了 `mobile/` 时，`.github/workflows/android-release.yml` 会：
+
+1. 用 Secrets 里的正式 keystore 打包签名 APK，版本号 = `package.json` 的 version，构建号 = workflow run number；
+2. 发一个 `app-v<version>-build<N>` 的 GitHub Release，附 `PaperCache.apk`；
+3. 触发站点部署。`deploy-pages.yml` 把最新的 App Release 拷到 `_site/download/PaperCache.apk` 并写 `download/app.json`；导航栏「App」页（`06-app.html`）和 App 内的「检查更新」都读这两个文件。
+
+需要的 Secrets（除了站点已有的 `SUPABASE_URL` / `SUPABASE_ANON_KEY`）：
+
+| Secret | 内容 |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | `base64 -w0 papercache-release.jks` |
+| `ANDROID_KEYSTORE_PASSWORD` | keystore 密码 |
+| `ANDROID_KEY_ALIAS` | `papercache` |
+| `ANDROID_KEY_PASSWORD` | key 密码 |
+
+keystore 一旦丢失，已安装的用户就无法覆盖升级，只能卸载重装。务必另外备份。

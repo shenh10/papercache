@@ -7,6 +7,7 @@ import { account } from './account.js';
 import { Reader } from './reader.js';
 import { ShelfView, DiscoverView, MeView } from './views.js';
 import { navigate, toast } from './ui.js';
+import { updates } from './updates.js';
 
 const CATALOG_MAX_AGE = 30 * 60 * 1000;
 const root = document.getElementById('app');
@@ -76,4 +77,7 @@ window.addEventListener('hashchange', render);
   await account.init();
   render();
   refreshCatalog();
+  updates.check()
+    .then(() => { if (updates.available) toast('有新版本可用', { action: '去更新', onAction: () => navigate('#/me') }); })
+    .catch(() => {});
 })();
