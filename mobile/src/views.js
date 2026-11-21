@@ -1,8 +1,10 @@
 // 三个主页面：书架、发现、我的
+import { Browser } from '@capacitor/browser';
 import { library } from './library.js';
 import { account } from './account.js';
 import { paperRow, pageHead, escapeHtml, formatBytes, toast } from './ui.js';
 import { updates, DOWNLOAD_URL } from './updates.js';
+import { SITE } from './site.js';
 
 class View {
   constructor(root) {
@@ -128,11 +130,12 @@ export class MeView extends View {
   render() {
     const s = library.settings;
     const user = account.user;
+    const avatar = account.profile?.avatar_url || user?.user_metadata?.avatar_url;
     this.root.innerHTML = `
       ${pageHead('我的', user ? '收藏与 papercache.org 同步' : '登录后同步网站上的收藏')}
       <section class="card">
         ${user ? `
-          <div class="account-line"><div><div class="muted">已登录</div><div>${escapeHtml(user.email || user.user_metadata?.user_name || '')}</div></div>
+          <div class="account-line"><div class="account-id">${avatar ? `<img class="avatar" src="${escapeHtml(avatar)}" alt="">` : ''}<div><div class="muted">已登录</div><div>${escapeHtml(account.displayName())}</div>${user.email && account.displayName() !== user.email ? `<div class="muted small">${escapeHtml(user.email)}</div>` : ''}</div></div>
           <button class="btn ghost" data-act="logout">退出</button></div>
           <div class="muted">收藏 ${account.favorites.size} 篇，与 papercache.org 同步</div>` : `
           <form class="login-form">
@@ -143,6 +146,11 @@ export class MeView extends View {
           <button class="btn ghost full" data-act="github">用 GitHub 登录</button>
           <p class="muted">与网站同一个账号，登录后收藏自动同步。</p>`}
       </section>
+      ${account.isAdmin ? `
+      <section class="card">
+        <div class="account-line"><div><div>网站管理后台</div><div class="muted">用户、收藏、点赞与访问统计</div></div>
+        <button class="btn ghost" data-act="admin">打开</button></div>
+      </section>` : ''}
       <section class="card">
         <div class="card-title">下载</div>
         <label class="switch-line"><span>收藏后自动下载</span><input type="checkbox" data-set="autoDownloadFavorites" ${s.autoDownloadFavorites ? 'checked' : ''}></label>
@@ -164,6 +172,7 @@ export class MeView extends View {
     const on = (act, fn) => { const b = this.root.querySelector(`[data-act="${act}"]`); if (b) b.onclick = fn; };
     on('logout', () => account.signOut());
     on('github', () => account.signInWithGitHub().catch((e) => toast(e.message)));
+    on('admin', () => Browser.open({ url: SITE + '/admin/' }));
     on('clear', () => { if (confirm('删除本机所有离线文章？')) library.clearDownloads(); });
     const form = this.root.querySelector('.login-form');
     if (form) form.onsubmit = (e) => {

@@ -7,6 +7,7 @@
 - 论文目录：Supabase `posts_search` 表（匿名可读），缓存在 App 文件目录，离线也能浏览。
 - 文章正文：用原生 HTTP 取 papercache.org 页面，抽出 `.post-content`。图片是 base64 内联的，正文就是完整的一篇。
 - 收藏：和网站共用 Supabase 账号与 `favorites` 表；读到 90% 自动标记已读（`is_read`）。
+- 资料：读网站 `profiles` 表，显示用户名和头像；管理员账号在「我的」页提供网站后台入口。
 - 下载：正文写成 App 数据目录下的 HTML 文件；MathJax（tex-svg）打包在 App 里，离线照常排公式。
 - 阅读进度：记「最近的章节标题 + 在该节里的比例」，换字号也能回到同一段；目前只存本机。
 

@@ -209,6 +209,10 @@ a { color: var(--accent); }
 .card-title { font-weight: 700; margin-bottom: 8px; }
 .login-form { display: flex; flex-direction: column; gap: 8px; }
 .account-line { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.account-id { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.account-id > div { min-width: 0; overflow-wrap: anywhere; }
+.avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.small { font-size: 12px; }
 .switch-line { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
 .switch-line + .switch-line { border-top: 1px solid var(--line); }
 .switch-line input { width: 20px; height: 20px; accent-color: var(--accent); }

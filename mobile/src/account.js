@@ -14,6 +14,8 @@ class Account extends EventTarget {
   constructor() {
     super();
     this.user = null;
+    this.profile = null; // 网站 profiles 表：username / full_name / avatar_url
+    this.isAdmin = false;
     this.favorites = new Map(); // post_url → { is_read, created_at }
   }
 
@@ -32,7 +34,7 @@ class Account extends EventTarget {
       this.user = session ? session.user : null;
       if ((this.user && this.user.id) !== was) {
         this.changed('user');
-        if (this.user) this.syncFavorites(); else this.setFavorites(new Map());
+        if (this.user) { this.syncFavorites(); this.syncProfile(); } else { this.setFavorites(new Map()); this.profile = null; this.isAdmin = false; this.changed('profile'); }
       }
     });
 
@@ -42,7 +44,7 @@ class Account extends EventTarget {
     const launch = await App.getLaunchUrl().catch(() => null);
     if (launch && launch.url) this.handleAuthUrl(launch.url);
 
-    if (this.user) this.syncFavorites();
+    if (this.user) { this.syncFavorites(); this.syncProfile(); }
   }
 
   async signInWithPassword(email, password) {
@@ -84,6 +86,31 @@ class Account extends EventTarget {
 
   async signOut() {
     await supabase.auth.signOut();
+  }
+
+  /* ---------- 资料 / 管理员（与网站 profiles 表同步） ---------- */
+
+  displayName() {
+    return this.profile?.full_name || this.profile?.username
+      || this.user?.user_metadata?.full_name || this.user?.user_metadata?.user_name
+      || this.user?.email || '';
+  }
+
+  async syncProfile() {
+    if (!this.user) return;
+    try {
+      const { data } = await supabase.from('profiles')
+        .select('username, full_name, avatar_url')
+        .eq('id', this.user.id)
+        .maybeSingle();
+      this.profile = data || null;
+      const { data: admin } = await supabase.rpc('check_user_is_admin', { p_user_id: this.user.id });
+      this.isAdmin = !!admin;
+    } catch {
+      this.profile = null;
+      this.isAdmin = false;
+    }
+    this.changed('profile');
   }
 
   /* ---------- 收藏 ---------- */
