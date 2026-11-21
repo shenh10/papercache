@@ -128,7 +128,11 @@ sitemap: false
       body.innerHTML = '<p>加载中…</p>';
       viewer.style.display = '';
       var supabase = window.getSupabaseClient();
-      var path = postUrl.replace(/^\/slides\//, '');
+      // 对象键 = sha256(post_url) 前 16 位 + .html（与 CI 同步脚本一致，避开 Storage 中文键 bug）
+      var digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(postUrl));
+      var path = Array.from(new Uint8Array(digest)).map(function (b) {
+        return b.toString(16).padStart(2, '0');
+      }).join('').slice(0, 16) + '.html';
       var res = await supabase.storage.from('slides').download(path);
       if (res.error) { body.innerHTML = '<p>加载失败：' + res.error.message + '</p>'; return; }
       var html = await res.data.text();

@@ -29,13 +29,20 @@ export async function fetchText(path) {
 export async function fetchArticlePage(postUrl) {
   // slides 已私有化：HTML 在 Supabase 私有桶里，登录管理员的会话由 RLS 校验
   if (postUrl.startsWith('/slides/')) {
-    const path = postUrl.replace(/^\/slides\//, '');
+    const path = await slideObjectKey(postUrl);
     const { data, error } = await supabase.storage.from('slides').download(path);
     if (error) throw new Error(error.message || '下载失败');
     return new DOMParser().parseFromString(await data.text(), 'text/html');
   }
   const html = await fetchText(canonicalPath(postUrl));
   return new DOMParser().parseFromString(html, 'text/html');
+}
+
+// 对象键 = sha256(post_url) 前 16 位 + .html。Supabase Storage 对中文文件名有编码 bug，
+// 与 scripts/sync_slides_to_supabase.py 的 object_key() 保持一致
+export async function slideObjectKey(postUrl) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(postUrl));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('').slice(0, 16) + '.html';
 }
 
 // 文章页 → 文章头 + 正文，保留网站原有的结构和 class，样式由 sitestyle 按原样套上。

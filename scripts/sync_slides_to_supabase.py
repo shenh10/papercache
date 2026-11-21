@@ -19,6 +19,12 @@ SLIDES_DIR = os.path.join(SITE_DIR, "slides")
 BUCKET = "slides"
 
 
+def object_key(post_url):
+    """Supabase Storage 对非 ASCII 对象键有编码 bug（中文文件名会 400），
+    统一用 post_url 的 sha256 前 16 位做键；App/网站端用同样规则取回。"""
+    return hashlib.sha256(post_url.encode()).hexdigest()[:16] + ".html"
+
+
 def die(msg):
     print(f"❌ {msg}", file=sys.stderr)
     sys.exit(1)
@@ -77,7 +83,7 @@ def main():
             if existing.get(post_url) == md5:
                 skipped += 1
                 continue
-            obj_path = rel[len("slides/"):]
+            obj_path = object_key(post_url)
             up = requests.post(
                 f"{url}/storage/v1/object/{BUCKET}/{obj_path}?upsert=true",
                 headers={**headers, "Content-Type": "text/html", "x-upsert": "true"},
