@@ -39,3 +39,4 @@ CREATE POLICY "Admins can read slide content" ON storage.objects
 --   AND policyname LIKE '%slides%';
 
 
+
