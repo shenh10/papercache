@@ -1,0 +1,4 @@
+# Cloudflare Pages 响应头：更新元数据和 APK 不允许长时间缓存，
+# 否则 App 会拿到旧的 app.json（比如 build 9 已发布却还看到 build 8）而拒绝更新
+/download/*
+  Cache-Control: public, max-age=0, must-revalidate

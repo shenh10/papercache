@@ -45,7 +45,8 @@ class Updates extends EventTarget {
     if (!Capacitor.isNativePlatform()) return;
     const info = await App.getInfo();
     this.current = { version: info.version, build: Number(info.build) };
-    const res = await CapacitorHttp.get({ url: SITE + '/download/app.json', responseType: 'json', headers: { 'Cache-Control': 'no-cache' } });
+    // 带时间戳绕开任何 CDN 缓存层（曾有 app.json 被 Cloudflare 缓存 4 小时导致检测不到新版本）
+    const res = await CapacitorHttp.get({ url: SITE + '/download/app.json?t=' + Date.now(), responseType: 'json', headers: { 'Cache-Control': 'no-cache' } });
     if (res.status === 200) this.latest = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
     this.changed('check');
     // 检查到新版本时自动在后台下载，下完由 main.js 提示安装

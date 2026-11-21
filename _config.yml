@@ -52,6 +52,9 @@ plugins:
   - jekyll-paginate
 
 # 内存优化设置
+include:
+  - "_headers"   # Cloudflare Pages 头规则，需进 _site
+
 exclude:
   - "*.log"
   - "*.tmp"
