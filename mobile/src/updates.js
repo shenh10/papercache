@@ -5,6 +5,7 @@ import { Capacitor, CapacitorHttp, registerPlugin } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { SITE } from './site.js';
 import { library } from './library.js';
+import { supabase } from './supabase.js';
 
 export const DOWNLOAD_URL = SITE + '/download/PaperCache.apk';
 const APK_PATH = 'updates/PaperCache.apk';
@@ -60,6 +61,10 @@ class Updates extends EventTarget {
     if (this.downloading || !this.latest) return;
     this.progress = -1;
     this.changed('download');
+    // 下载量埋点：匿名写入，失败不影响下载
+    supabase.from('app_downloads')
+      .insert({ source: 'update', from_build: this.current?.build || null, target_build: this.latest.build })
+      .catch(() => {});
     try {
       const res = await fetch(DOWNLOAD_URL, { cache: 'no-store' });
       if (!res.ok) throw new Error('HTTP ' + res.status);

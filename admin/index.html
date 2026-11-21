@@ -61,6 +61,14 @@ permalink: /admin/index.html
             <div class="stat-label">登录记录</div>
           </div>
         </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">📱</div>
+          <div class="stat-content">
+            <div class="stat-value" id="stat-total-downloads">-</div>
+            <div class="stat-label">App 下载</div>
+          </div>
+        </div>
       </div>
       
       <!-- 标签页 -->
@@ -828,12 +836,37 @@ permalink: /admin/index.html
       loadFavoritesStats(),
       loadLikesStats(),
       loadLoginLogsStats(),
+      loadAppDownloadsStats(),
       loadUsersTable(),
       loadFavoritesTable(),
       loadLikesTable(),
       loadLogsTable(),
       loadAnalyticsData()
     ]);
+  }
+
+  // App 下载量：总数 + 近 7 天（来源：网站下载按钮 / App 内检查更新）
+  async function loadAppDownloadsStats() {
+    const statEl = document.getElementById('stat-total-downloads');
+    if (!statEl) return;
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      statEl.textContent = '未初始化';
+      return;
+    }
+
+    try {
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      const [total, recent] = await Promise.all([
+        supabase.from('app_downloads').select('*', { count: 'exact', head: true }),
+        supabase.from('app_downloads').select('*', { count: 'exact', head: true }).gte('created_at', since),
+      ]);
+      statEl.textContent = (total.error ? '-' : total.count || 0) + '（7天 ' + (recent.error ? '-' : recent.count || 0) + '）';
+    } catch (error) {
+      console.error('[Admin] 加载App下载统计失败:', error);
+      statEl.textContent = '错误';
+    }
   }
 
   // 初始化分析页面的日期选择器默认值
@@ -5398,5 +5431,4 @@ permalink: /admin/index.html
   </div>
   {%- endif -%}
 </div>
-
 

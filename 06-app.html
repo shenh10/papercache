@@ -50,9 +50,11 @@ sitemap: false
 <script>
   (function () {
     var meta = document.getElementById('app-meta');
+    var latestBuild = null;
     fetch('{{ "/download/app.json" | relative_url }}', { cache: 'no-store' })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (info) {
+        latestBuild = info.build;
         meta.textContent = '版本 ' + info.version + '（build ' + info.build + '）· ' +
           (info.size / 1024 / 1024).toFixed(1) + ' MB · ' + info.date + ' 更新 · 需要 Android 7.0 及以上';
         document.getElementById('app-release').href = info.release;
@@ -61,5 +63,14 @@ sitemap: false
         meta.textContent = '安装包正在准备中，请稍后再来。';
         document.getElementById('app-download').classList.add('disabled');
       });
+
+    // 下载量埋点：匿名写入 Supabase，fire-and-forget，不阻塞下载
+    document.getElementById('app-download').addEventListener('click', function () {
+      try {
+        var supabase = window.getSupabaseClient && window.getSupabaseClient();
+        if (!supabase) return;
+        supabase.from('app_downloads').insert({ source: 'site', target_build: latestBuild });
+      } catch (e) { /* 统计失败不影响下载 */ }
+    });
   })();
 </script>
