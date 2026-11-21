@@ -74,6 +74,7 @@ export class DiscoverView extends View {
     this.path = [];       // 分类路径，如 ['llm', 'algorithm']，逐级下钻
     this.src = 'papers';  // papers | slides
     this.limit = 40;
+    this.expanded = new Set(); // 抽屉里展开的分类路径
   }
 
   mount() {
@@ -82,9 +83,15 @@ export class DiscoverView extends View {
         '<form class="search-box"><input type="search" placeholder="搜索标题、摘要、分类…" enterkeyhint="search"><button class="search-go">搜索</button></form>')}
       <div class="seg"></div>
       <div class="latest"></div>
-      <div class="crumbs"></div>
-      <div class="chips"></div>
-      <div class="list"></div>`;
+      <button class="cat-bar" data-act="open-drawer"><span class="cat-bar-path"></span><span class="cat-bar-twist">☰</span></button>
+      <div class="list"></div>
+      <div class="drawer-wrap">
+        <div class="drawer-overlay"></div>
+        <aside class="drawer">
+          <div class="drawer-head"><b>分类导航</b><button class="btn ghost" data-act="all">全部</button></div>
+          <div class="drawer-body"></div>
+        </aside>
+      </div>`;
     const input = this.root.querySelector('input');
     input.value = this.query;
     input.addEventListener('input', () => { this.query = input.value.trim().toLowerCase(); this.limit = 40; this.renderList(); });
@@ -97,21 +104,47 @@ export class DiscoverView extends View {
       this.limit = 40;
       this.render();
     });
-    this.root.querySelector('.crumbs').addEventListener('click', (e) => {
-      const b = e.target.closest('[data-depth]');
-      if (!b) return;
-      this.path = this.path.slice(0, +b.dataset.depth);
-      this.limit = 40;
-      this.render();
+    this.root.querySelector('.cat-bar').addEventListener('click', () => this.openDrawer());
+    this.root.querySelector('.drawer-overlay').addEventListener('click', () => this.closeDrawer());
+    this.root.querySelector('.drawer').addEventListener('click', (e) => {
+      const all = e.target.closest('[data-act="all"]');
+      if (all) { this.path = []; this.limit = 40; this.closeDrawer(); this.render(); return; }
+      const twist = e.target.closest('.tree-twist');
+      if (twist) { // 只展开/收起子分类，不选中
+        const path = twist.dataset.path;
+        this.expanded.has(path) ? this.expanded.delete(path) : this.expanded.add(path);
+        this.renderDrawer();
+        return;
+      }
+      const row = e.target.closest('.tree-row');
+      if (row) { // 选中该分类并关闭抽屉
+        this.path = row.dataset.path ? row.dataset.path.split('/') : [];
+        this.limit = 40;
+        this.closeDrawer();
+        this.render();
+      }
     });
-    this.root.querySelector('.chips').addEventListener('click', (e) => {
-      const chip = e.target.closest('[data-cat]');
-      if (!chip) return;
-      this.path = [...this.path, chip.dataset.cat]; // 下钻一级
-      this.limit = 40;
-      this.render();
+    // 左滑收起抽屉
+    let x0 = null;
+    const drawer = this.root.querySelector('.drawer');
+    drawer.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+    drawer.addEventListener('touchend', (e) => {
+      if (x0 != null && e.changedTouches[0].clientX - x0 < -40) this.closeDrawer();
+      x0 = null;
     });
     super.mount();
+  }
+
+  openDrawer() {
+    // 打开时自动展开到当前分类
+    this.expanded = new Set();
+    for (let i = 1; i <= this.path.length; i++) this.expanded.add(this.path.slice(0, i).join('/'));
+    this.renderDrawer();
+    this.root.querySelector('.drawer-wrap').classList.add('open');
+  }
+
+  closeDrawer() {
+    this.root.querySelector('.drawer-wrap')?.classList.remove('open');
   }
 
   dataset() {
@@ -136,24 +169,40 @@ export class DiscoverView extends View {
         <section class="card"><div class="card-title">📰 最新发表</div>${byPublished.slice(0, 5).map((p) => latestRow(p, (p.published_date || '').slice(0, 7))).join('')}</section>`;
     }
 
-    const crumbs = this.root.querySelector('.crumbs');
-    crumbs.innerHTML = this.path.length
-      ? `<button data-depth="0">全部</button>` + this.path.map((c, i) =>
-        `<span class="sep">›</span><button data-depth="${i + 1}">${escapeHtml(c)}</button>`).join('')
-      : '';
+    const barPath = this.root.querySelector('.cat-bar-path');
+    barPath.textContent = this.path.length ? this.path.join(' / ') : '全部分类';
+    barPath.classList.toggle('muted', !this.path.length);
+    this.renderList();
+  }
 
-    const counts = {};
+  renderDrawer() {
+    const body = this.root.querySelector('.drawer-body');
+    if (!body) return;
+    // 聚合分类树：每个节点的数量是子树文章总数
+    const root = { children: new Map() };
     for (const p of this.dataset()) {
-      const cats = p.categories || [];
-      if (cats.length > this.path.length && cats.slice(0, this.path.length).join('/') === this.path.join('/')) {
-        const c = cats[this.path.length];
-        counts[c] = (counts[c] || 0) + 1;
+      let node = root;
+      for (const c of p.categories || []) {
+        if (!node.children.has(c)) node.children.set(c, { name: c, count: 0, children: new Map() });
+        node = node.children.get(c);
+        node.count++;
       }
     }
-    this.root.querySelector('.chips').innerHTML = Object.entries(counts).sort((a, b) => b[1] - a[1])
-      .map(([c, n]) => `<button class="chip" data-cat="${escapeHtml(c)}">${escapeHtml(c)} ${n} ›</button>`)
-      .join('');
-    this.renderList();
+    const html = [];
+    const walk = (node, depth, prefix) => {
+      for (const child of [...node.children.values()].sort((a, b) => b.count - a.count)) {
+        const path = prefix ? prefix + '/' + child.name : child.name;
+        const hasKids = child.children.size > 0;
+        const open = this.expanded.has(path);
+        html.push(`<div class="tree-row ${this.path.join('/') === path ? 'on' : ''}" data-path="${escapeHtml(path)}" style="--depth:${depth}">
+          <span class="tree-name">${escapeHtml(child.name)}</span><span class="tree-count">${child.count}</span>
+          ${hasKids ? `<button class="tree-twist ${open ? 'open' : ''}" data-path="${escapeHtml(path)}" aria-label="展开子分类">▸</button>` : ''}
+        </div>`);
+        if (hasKids && open) walk(child, depth + 1, path);
+      }
+    };
+    walk(root, 0, '');
+    body.innerHTML = html.join('') || '<p class="empty-line">目录还没有加载。</p>';
   }
 
   renderList() {
