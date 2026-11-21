@@ -71,6 +71,8 @@ Network.addListener('networkStatusChange', (status) => {
   if (status.connected) account.downloadMissingFavorites().catch(() => {});
 });
 
+account.addEventListener('autherror', (e) => toast(e.detail));
+
 window.addEventListener('hashchange', render);
 
 (async function start() {

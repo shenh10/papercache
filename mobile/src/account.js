@@ -37,14 +37,10 @@ class Account extends EventTarget {
     });
 
     // GitHub 登录走系统浏览器，回跳 org.papercache.app://auth-callback#access_token=...
-    App.addListener('appUrlOpen', async ({ url }) => {
-      if (!url.startsWith(OAUTH_REDIRECT)) return;
-      Browser.close().catch(() => {});
-      const params = new URLSearchParams(url.split('#')[1] || '');
-      const access_token = params.get('access_token');
-      const refresh_token = params.get('refresh_token');
-      if (access_token && refresh_token) await supabase.auth.setSession({ access_token, refresh_token });
-    });
+    // （授权期间 App 若被系统回收，deep link 会冷启动 App，事件收不到，用 launch url 兜底）
+    App.addListener('appUrlOpen', async ({ url }) => this.handleAuthUrl(url));
+    const launch = await App.getLaunchUrl().catch(() => null);
+    if (launch && launch.url) this.handleAuthUrl(launch.url);
 
     if (this.user) this.syncFavorites();
   }
@@ -62,6 +58,28 @@ class Account extends EventTarget {
     if (error) throw error;
     if (Capacitor.isNativePlatform()) await Browser.open({ url: data.url });
     else window.location.href = data.url;
+  }
+
+  async handleAuthUrl(url) {
+    if (!url.startsWith(OAUTH_REDIRECT) || url === this.lastAuthUrl) return;
+    this.lastAuthUrl = url;
+    Browser.close().catch(() => {});
+    const u = new URL(url);
+    const hash = new URLSearchParams(u.hash.slice(1));
+    const error = u.searchParams.get('error') || hash.get('error');
+    if (error) {
+      this.dispatchEvent(new CustomEvent('autherror', { detail: '登录失败：' + (u.searchParams.get('error_description') || hash.get('error_description') || error) }));
+      return;
+    }
+    try {
+      const code = u.searchParams.get('code'); // PKCE 流：回跳带 ?code=
+      if (code) { await supabase.auth.exchangeCodeForSession(code); return; }
+      const access_token = hash.get('access_token'); // implicit 流：回跳带 #access_token=
+      const refresh_token = hash.get('refresh_token');
+      if (access_token && refresh_token) await supabase.auth.setSession({ access_token, refresh_token });
+    } catch (e) {
+      this.dispatchEvent(new CustomEvent('autherror', { detail: '登录失败：' + e.message }));
+    }
   }
 
   async signOut() {
