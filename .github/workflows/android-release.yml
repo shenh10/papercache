@@ -30,10 +30,10 @@ jobs:
 
       - name: 🔐 Check signing secrets
         env:
-          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          if [ -z "$KEYSTORE" ]; then
-            echo "::error::缺少 ANDROID_KEYSTORE_BASE64 等签名 Secrets，见 mobile/README.md「发布」一节"
+          if [ -z "$KEYSTORE_PASS" ]; then
+            echo "::error::缺少 ANDROID_KEYSTORE_PASSWORD（解密 android/release.jks.enc 用的密码），见 mobile/README.md「发布」一节"
             exit 1
           fi
 
@@ -66,10 +66,10 @@ jobs:
 
       - name: 🩺 Keystore 体检
         env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.jks"
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in android/release.jks.enc -out "$RUNNER_TEMP/release.jks" -pass env:ANDROID_KEYSTORE_PASSWORD
           echo "sha256: $(sha256sum "$RUNNER_TEMP/release.jks" | cut -d' ' -f1)"
           keytool -list -keystore "$RUNNER_TEMP/release.jks" -storepass "$ANDROID_KEYSTORE_PASSWORD" 2>&1 | sed 's/papercache/***/g' | head -6
 
@@ -85,9 +85,9 @@ jobs:
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.jks"
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in android/release.jks.enc -out "$RUNNER_TEMP/release.jks" -pass env:ANDROID_KEYSTORE_PASSWORD
           export ANDROID_KEYSTORE_FILE="$RUNNER_TEMP/release.jks"
           cd android
           ./gradlew --no-daemon assembleRelease \

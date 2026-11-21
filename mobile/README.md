@@ -55,10 +55,19 @@ App 启动和回到前台时检查 `download/app.json`；发现有新 build：
 
 | Secret | 内容 |
 |---|---|
-| `ANDROID_KEYSTORE_BASE64` | `base64 -w0 papercache-release.jks` |
 | `ANDROID_KEYSTORE_PASSWORD` | keystore 密码 |
 | `ANDROID_KEY_ALIAS` | `papercache` |
-| `ANDROID_KEY_PASSWORD` | key 密码 |
 
-keystore 一旦丢失，已安装的用户就无法覆盖升级，只能卸载重装。务必另外备份。
+keystore 本体以 `android/release.jks.enc`（AES-256-CBC + PBKDF2 200k 轮加密）提交在仓库里，
+CI 用 `ANDROID_KEYSTORE_PASSWORD` 解密；PKCS12 的 key 密码与 store 密码相同，构建脚本直接复用。
+需要换签名密钥时：
 
+```bash
+keytool -genkeypair -keystore papercache-release.jks -alias papercache -keyalg RSA -keysize 2048 \
+  -validity 10950 -storepass "$PASS" -keypass "$PASS" -dname "CN=PaperCache, OU=Mobile, O=papercache.org"
+openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in papercache-release.jks \
+  -out mobile/android/release.jks.enc -pass pass:"$PASS"   # -iter 与 workflow 保持一致
+# 然后更新 GitHub Secret ANDROID_KEYSTORE_PASSWORD
+```
+
+keystore 明文一旦丢失，已安装的用户就无法覆盖升级，只能卸载重装。务必另外备份（明文 jks + 密码）。
