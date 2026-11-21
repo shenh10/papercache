@@ -231,6 +231,21 @@ function latestRow(p, date) {
     <span class="latest-title">${escapeHtml(p.title)}</span></a>`;
 }
 
+// 「我的」页的更新控件：下载进度条 / 下载并安装 / 浏览器兜底
+function updateControl() {
+  if (updates.downloading) {
+    const pct = updates.progress > 0 ? Math.round(updates.progress * 100) : null;
+    return `<button class="btn ghost" data-act="update">${pct != null ? `正在下载 ${pct}%` : '正在下载…'}</button>`;
+  }
+  if (updates.available) {
+    return `<button class="btn" data-act="update">${updates.apkReady ? `安装 build ${updates.latest.build}` : `下载并安装 build ${updates.latest.build}`}</button>`;
+  }
+  if (updates.error) {
+    return `<button class="btn" data-act="update">重试</button><a class="btn ghost" href="${DOWNLOAD_URL}" data-external>浏览器下载</a>`;
+  }
+  return '<span class="muted">已是最新</span>';
+}
+
 export class MeView extends View {
   render() {
     const s = library.settings;
@@ -261,6 +276,10 @@ export class MeView extends View {
         <label class="switch-line"><span>深色模式（关灯）</span><input type="checkbox" data-set="theme" ${s.theme === 'dark' ? 'checked' : ''}></label>
       </section>
       <section class="card">
+        <div class="card-title">更新</div>
+        <label class="switch-line"><span>有新版本时自动下载</span><input type="checkbox" data-set="autoUpdate" ${s.autoUpdate ? 'checked' : ''}></label>
+      </section>
+      <section class="card">
         <div class="card-title">下载</div>
         <label class="switch-line"><span>收藏后自动下载</span><input type="checkbox" data-set="autoDownloadFavorites" ${s.autoDownloadFavorites ? 'checked' : ''}></label>
         <label class="switch-line"><span>允许用移动网络自动下载</span><input type="checkbox" data-set="cellularDownload" ${s.cellularDownload ? 'checked' : ''}></label>
@@ -271,7 +290,7 @@ export class MeView extends View {
       </section>
       <section class="card">
         <div class="account-line"><div><div>版本</div><div class="muted">${updates.current ? `${escapeHtml(updates.current.version)}（build ${updates.current.build}）` : '开发版'}</div></div>
-        ${updates.available ? `<a class="btn" href="${DOWNLOAD_URL}" data-external>更新到 build ${updates.latest.build}</a>` : '<span class="muted">已是最新</span>'}</div>
+        ${updateControl()}</div>
       </section>
       <p class="muted center">PaperCache · <a href="https://www.papercache.org" data-external>papercache.org</a></p>`;
 
@@ -284,6 +303,10 @@ export class MeView extends View {
     on('logout', () => account.signOut());
     on('github', () => account.signInWithGitHub().catch((e) => toast(e.message)));
     on('admin', () => Browser.open({ url: SITE + '/admin/' }));
+    on('update', () => {
+      if (updates.apkReady) updates.install().catch((e) => toast('安装失败：' + e.message));
+      else updates.download().then(() => updates.install()).catch((e) => toast('下载失败：' + e.message));
+    });
     on('clear', () => { if (confirm('删除本机所有离线文章？')) library.clearDownloads(); });
     const form = this.root.querySelector('.login-form');
     if (form) form.onsubmit = (e) => {

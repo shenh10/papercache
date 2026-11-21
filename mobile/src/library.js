@@ -5,7 +5,7 @@ import { fetchAllPosts, fetchAllSlides, fetchArticlePage, articleHtml } from './
 import { siteStyle } from './sitestyle.js';
 
 const POSTS_FILE = 'catalog/posts.json';
-const DEFAULT_SETTINGS = { autoDownloadFavorites: true, cellularDownload: false, fontScale: 1, theme: 'light' };
+const DEFAULT_SETTINGS = { autoDownloadFavorites: true, cellularDownload: false, fontScale: 1, theme: 'light', autoUpdate: true };
 
 function articleFile(postUrl) {
   return 'articles/' + postUrl.replace(/^\/+/, '').replace(/\.html$/, '').replace(/[^a-zA-Z0-9_-]+/g, '_') + '.html';

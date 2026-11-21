@@ -40,6 +40,17 @@ GitHub 登录回跳 `org.papercache.app://auth-callback`，需要在 Supabase Da
 2. 发一个 `app-v<version>-build<N>` 的 GitHub Release，附 `PaperCache.apk`；
 3. 触发站点部署。`deploy-pages.yml` 把最新的 App Release 拷到 `_site/download/PaperCache.apk` 并写 `download/app.json`；导航栏「App」页（`06-app.html`）和 App 内的「检查更新」都读这两个文件。
 
+## 应用内自动更新
+
+App 启动和回到前台时检查 `download/app.json`；发现有新 build：
+
+1. 默认在后台直接下载 APK（站点直链带 CORS 头，WebView 里 fetch 流式下载，有进度），存缓存目录；
+2. 下载完成弹提示，点「安装」调起系统安装器（`ApkInstallerPlugin`，走 FileProvider + `ACTION_VIEW`）；
+3. 首次安装系统会要求允许「PaperCache 安装未知应用」（`REQUEST_INSTALL_PACKAGES`），允许后回来再点一次「安装」即可；
+4. 「我的」页可以关闭「有新版本时自动下载」，改为手动点「下载并安装」；下载失败时有「浏览器下载」兜底。
+
+下载前会校验文件头是 zip（`PK`），避免站点用 HTML 兜底 404 时装到坏包。
+
 需要的 Secrets（除了站点已有的 `SUPABASE_URL` / `SUPABASE_ANON_KEY`）：
 
 | Secret | 内容 |

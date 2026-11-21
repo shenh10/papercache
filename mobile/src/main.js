@@ -65,6 +65,7 @@ App.addListener('backButton', () => {
 App.addListener('resume', () => {
   refreshCatalog();
   account.syncFavorites().catch(() => {});
+  updates.check().catch(() => {});
 });
 
 Network.addListener('networkStatusChange', (status) => {
@@ -77,6 +78,15 @@ library.addEventListener('change', (e) => {
   if (e.detail === 'settings') applyTheme();
 });
 
+// 自动更新：后台下载完成提示安装；首次安装需要系统授权
+updates.addEventListener('change', (e) => {
+  if (e.detail === 'downloaded') {
+    toast(`新版本 ${updates.latest.version} 已下载`, { action: '安装', onAction: () => updates.install().catch(() => {}) });
+  } else if (e.detail === 'permission') {
+    toast('请允许 PaperCache 安装应用，回来后再点一次「安装」');
+  }
+});
+
 window.addEventListener('hashchange', render);
 
 (async function start() {
@@ -86,6 +96,10 @@ window.addEventListener('hashchange', render);
   render();
   refreshCatalog();
   updates.check()
-    .then(() => { if (updates.available) toast('有新版本可用', { action: '去更新', onAction: () => navigate('#/me') }); })
+    .then(() => {
+      if (updates.available && !library.settings.autoUpdate) {
+        toast('有新版本可用', { action: '去更新', onAction: () => navigate('#/me') });
+      } // 自动下载开启时静默下载，下完由 downloaded 事件提示安装
+    })
     .catch(() => {});
 })();
