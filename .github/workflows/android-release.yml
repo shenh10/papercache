@@ -64,6 +64,15 @@ jobs:
           echo "code=${{ github.run_number }}" >> $GITHUB_OUTPUT
           echo "tag=app-v$VERSION-build${{ github.run_number }}" >> $GITHUB_OUTPUT
 
+      - name: 🩺 Keystore 体检
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.jks"
+          echo "sha256: $(sha256sum "$RUNNER_TEMP/release.jks" | cut -d' ' -f1)"
+          keytool -list -keystore "$RUNNER_TEMP/release.jks" -storepass "$ANDROID_KEYSTORE_PASSWORD" 2>&1 | sed 's/papercache/***/g' | head -6
+
       - name: 🏗️ Build web + sync
         env:
           VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
