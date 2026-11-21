@@ -155,6 +155,13 @@ jobs:
               run: |
                   if [ -d _site/slides ]; then
                     if [ -n "${{ secrets.SUPABASE_URL }}" ] && [ -n "${{ secrets.SUPABASE_SERVICE_KEY }}" ]; then
+                      # 诊断密钥类型（不打印密钥本身）：sb_secret_=service 角色，sb_publishable_=anon，eyJ=旧版 JWT
+                      case "$SUPABASE_SERVICE_KEY" in
+                        sb_secret_*)       echo "🔑 SUPABASE_SERVICE_KEY 类型: sb_secret (service_role)" ;;
+                        sb_publishable_*)  echo "🔑 SUPABASE_SERVICE_KEY 类型: sb_publishable (anon 角色，不能用于同步！)" ;;
+                        eyJ*)              echo "🔑 SUPABASE_SERVICE_KEY 类型: 旧版 JWT, role=$(echo "$SUPABASE_SERVICE_KEY" | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null | grep -o '"role":"[^"]*"')" ;;
+                        *)                 echo "🔑 SUPABASE_SERVICE_KEY 类型: 未知前缀" ;;
+                      esac
                       python3 scripts/sync_slides_to_supabase.py || echo "⚠️ slides 同步失败（表未建？见 scripts/supabase-slides-schema.sql），本次继续"
                     else
                       echo "⚠️ 缺少 SUPABASE_SERVICE_KEY，slides 未同步；仍将从公开站点移除（fail-closed），配好密钥后下次部署恢复同步"
