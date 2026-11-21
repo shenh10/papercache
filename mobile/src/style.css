@@ -32,6 +32,23 @@ body { padding-bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 12px); }
 body.reading { padding-bottom: var(--safe-bottom); background: #fff; }
 body.reading .tabbar { display: none; }
 
+/* ---------- 深色（关灯） ---------- */
+body.dark {
+  --bg: #0f172a;
+  --card-bg: #1e293b;
+  --fg: #e2e8f0;
+  --muted: #94a3b8;
+  --line: #334155;
+  --card: #172033;
+  color-scheme: dark;
+}
+body.reading.dark { background: #0f172a; }
+body.dark .reader-bar { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+
+/* 站点 CSS 只有亮色：反转内容区，图片再反转回来保持原样 */
+body.dark .reader-content .pc-site { filter: invert(1) hue-rotate(180deg); }
+body.dark .reader-content .pc-site :is(img, video) { filter: invert(1) hue-rotate(180deg); }
+
 a { color: var(--accent); }
 #app { min-height: 100vh; }
 

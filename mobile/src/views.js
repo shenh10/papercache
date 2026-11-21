@@ -152,6 +152,10 @@ export class MeView extends View {
         <button class="btn ghost" data-act="admin">打开</button></div>
       </section>` : ''}
       <section class="card">
+        <div class="card-title">外观</div>
+        <label class="switch-line"><span>深色模式（关灯）</span><input type="checkbox" data-set="theme" ${s.theme === 'dark' ? 'checked' : ''}></label>
+      </section>
+      <section class="card">
         <div class="card-title">下载</div>
         <label class="switch-line"><span>收藏后自动下载</span><input type="checkbox" data-set="autoDownloadFavorites" ${s.autoDownloadFavorites ? 'checked' : ''}></label>
         <label class="switch-line"><span>允许用移动网络自动下载</span><input type="checkbox" data-set="cellularDownload" ${s.cellularDownload ? 'checked' : ''}></label>
@@ -167,7 +171,9 @@ export class MeView extends View {
       <p class="muted center">PaperCache · <a href="https://www.papercache.org" data-external>papercache.org</a></p>`;
 
     this.root.querySelectorAll('[data-set]').forEach((box) => {
-      box.onchange = () => library.updateSettings({ [box.dataset.set]: box.checked });
+      box.onchange = () => library.updateSettings(box.dataset.set === 'theme'
+        ? { theme: box.checked ? 'dark' : 'light' }
+        : { [box.dataset.set]: box.checked });
     });
     const on = (act, fn) => { const b = this.root.querySelector(`[data-act="${act}"]`); if (b) b.onclick = fn; };
     on('logout', () => account.signOut());

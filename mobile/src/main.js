@@ -6,7 +6,7 @@ import { library } from './library.js';
 import { account } from './account.js';
 import { Reader } from './reader.js';
 import { ShelfView, DiscoverView, MeView } from './views.js';
-import { navigate, toast } from './ui.js';
+import { navigate, toast, applyTheme } from './ui.js';
 import { updates } from './updates.js';
 
 const CATALOG_MAX_AGE = 30 * 60 * 1000;
@@ -73,10 +73,15 @@ Network.addListener('networkStatusChange', (status) => {
 
 account.addEventListener('autherror', (e) => toast(e.detail));
 
+library.addEventListener('change', (e) => {
+  if (e.detail === 'settings') applyTheme();
+});
+
 window.addEventListener('hashchange', render);
 
 (async function start() {
   await library.load();
+  applyTheme();
   await account.init();
   render();
   refreshCatalog();

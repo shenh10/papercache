@@ -19,6 +19,11 @@ export function navigate(hash) {
   location.hash = hash;
 }
 
+// 深浅色：App 界面用变量切换；文章内容区（.pc-site）由 CSS 滤镜处理
+export function applyTheme() {
+  document.body.classList.toggle('dark', library.settings.theme === 'dark');
+}
+
 export function formatBytes(n) {
   if (!n) return '0 KB';
   if (n < 1024 * 1024) return Math.round(n / 1024) + ' KB';

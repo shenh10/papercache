@@ -37,6 +37,7 @@ export class Reader {
       <header class="reader-bar">
         <button class="icon-btn" data-act="back" aria-label="返回">‹</button>
         <div class="reader-bar-title">${escapeHtml(this.post.title)}</div>
+        <button class="icon-btn" data-act="theme" aria-label="深浅色"></button>
         <button class="icon-btn" data-act="font" aria-label="字号">Aa</button>
         <button class="icon-btn" data-act="fav" aria-label="收藏"></button>
         <button class="icon-btn" data-act="dl" aria-label="下载"></button>
@@ -149,11 +150,13 @@ export class Reader {
   renderToolbar() {
     const fav = this.root.querySelector('[data-act="fav"]');
     const dl = this.root.querySelector('[data-act="dl"]');
+    const theme = this.root.querySelector('[data-act="theme"]');
     if (!fav) return;
     fav.textContent = account.isFavorite(this.postUrl) ? '★' : '☆';
     fav.classList.toggle('on', account.isFavorite(this.postUrl));
     dl.textContent = library.isDownloading(this.postUrl) ? '…' : library.isDownloaded(this.postUrl) ? '✓' : '⬇';
     dl.classList.toggle('on', library.isDownloaded(this.postUrl));
+    if (theme) theme.textContent = library.settings.theme === 'dark' ? '☀' : '☾';
   }
 
   applyFont() {
@@ -167,6 +170,8 @@ export class Reader {
     try {
       if (act === 'back') {
         history.length > 1 ? history.back() : navigate('#/');
+      } else if (act === 'theme') {
+        await library.updateSettings({ theme: library.settings.theme === 'dark' ? 'light' : 'dark' });
       } else if (act === 'font') {
         const i = FONT_SCALES.indexOf(library.settings.fontScale);
         await library.updateSettings({ fontScale: FONT_SCALES[(i + 1) % FONT_SCALES.length] });
