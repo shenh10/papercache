@@ -310,3 +310,25 @@ body.reading .toast { bottom: calc(var(--safe-bottom) + 20px); }
 
 /* 公式：网站在移动端把公式缩到 0.9em（JS 做的，App 里用 CSS 达到同样效果） */
 .pc-site mjx-container { font-size: 0.9em; }
+
+/* ---------- 发现页：论文/演示文稿切换、最新动态、多级分类 ---------- */
+.seg { display: flex; gap: 8px; margin: 0 0 12px; }
+.seg button { flex: 1; padding: 9px 0; border-radius: 10px; border: 1px solid var(--line); background: var(--card-bg); color: var(--fg); font-size: 14px; }
+.seg button.on { background: var(--brand); color: #fff; border-color: transparent; font-weight: 600; }
+
+.latest { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.latest .card { margin: 0; padding: 10px 14px; }
+.latest .card-title { font-size: 14px; }
+.latest-row { display: flex; align-items: baseline; gap: 6px; padding: 6px 0; border-bottom: 1px solid var(--line); text-decoration: none; }
+.latest-row:last-child { border-bottom: none; }
+.latest-date { flex-shrink: 0; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.latest-row .cat-pill { flex-shrink: 0; }
+.latest-title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; color: var(--fg); }
+
+.crumbs { display: flex; flex-wrap: wrap; align-items: center; margin: 0 0 10px; font-size: 13px; }
+.crumbs button { border: none; background: none; color: var(--accent); font-size: 13px; padding: 2px; }
+.crumbs .sep { color: var(--muted); padding: 0 2px; }
+
+@media (max-width: 360px) {
+  .latest { grid-template-columns: 1fr; }
+}

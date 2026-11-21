@@ -11,7 +11,7 @@ export function canonicalPath(postUrl) {
 
 export function normalizePostUrl(href) {
   const u = new URL(href, SITE);
-  if (u.origin !== SITE || !u.pathname.startsWith('/papers/')) return null;
+  if (u.origin !== SITE || !(u.pathname.startsWith('/papers/') || u.pathname.startsWith('/slides/'))) return null;
   return u.pathname.endsWith('.html') ? u.pathname : u.pathname + '.html';
 }
 
@@ -84,6 +84,28 @@ export async function fetchAllPosts() {
       .range(from, from + pageSize - 1);
     if (error) throw error;
     rows.push(...data.map((r) => ({ ...r, excerpt: (r.excerpt || '').slice(0, 160) })));
-    if (data.length < pageSize) return rows;
+      if (data.length < pageSize) return rows;
+    }
+}
+
+// 演示文稿合集：posts_search 里没有，从 /slides/ 页面解析条目（与论文同构，阅读器直接可读）
+export async function fetchAllSlides() {
+  const html = await fetchText('/slides/');
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const slides = [];
+  for (const li of doc.querySelectorAll('li[data-post-url]')) {
+    const post_url = li.getAttribute('data-post-url');
+    if (!post_url || !post_url.startsWith('/slides/')) continue;
+    const m = post_url.match(/^\/slides\/(.+)\/(\d{4})\/(\d{2})\/\d{2}\/[^/]+\.html$/);
+    slides.push({
+      post_url,
+      title: li.querySelector('.post-card-title-modern')?.textContent.trim()
+        || li.querySelector('a[data-post-title]')?.getAttribute('data-post-title') || '',
+      excerpt: (li.querySelector('.post-card-excerpt-modern')?.textContent.trim() || '').slice(0, 160),
+      categories: m ? m[1].split('/') : [],
+      tag: li.querySelector('.post-card-tag-modern')?.textContent.trim() || '',
+      published_date: li.querySelector('.post-meta-modern')?.textContent.trim() || (m ? `${m[2]}-${m[3]}` : ''),
+    });
   }
+  return slides;
 }

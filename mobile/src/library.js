@@ -1,7 +1,7 @@
 // 本机书架：论文目录缓存、离线文章文件、阅读进度、设置。全部按站内 post_url 索引
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
-import { fetchAllPosts, fetchArticlePage, articleHtml } from './site.js';
+import { fetchAllPosts, fetchAllSlides, fetchArticlePage, articleHtml } from './site.js';
 import { siteStyle } from './sitestyle.js';
 
 const POSTS_FILE = 'catalog/posts.json';
@@ -25,6 +25,7 @@ class Library extends EventTarget {
   constructor() {
     super();
     this.posts = new Map();
+    this.slides = new Map();
     this.postsFetchedAt = 0;
     this.downloads = {};   // post_url → { savedAt, bytes }
     this.progress = {};    // post_url → { heading, within, percent, label, updatedAt }
@@ -45,6 +46,7 @@ class Library extends EventTarget {
       const { data } = await Filesystem.readFile({ path: POSTS_FILE, directory: Directory.Data, encoding: Encoding.UTF8 });
       const cached = JSON.parse(data);
       this.setPosts(cached.posts, cached.fetchedAt);
+      this.setSlides(cached.slides);
     } catch (e) {
       // 首次启动还没有目录缓存
     }
@@ -55,19 +57,28 @@ class Library extends EventTarget {
     this.postsFetchedAt = fetchedAt;
   }
 
+  setSlides(rows) {
+    this.slides = new Map((rows || []).map((s) => [s.post_url, s]));
+  }
+
   async refreshPosts() {
-    const rows = await fetchAllPosts();
+    const [rows, slides] = await Promise.all([
+      fetchAllPosts(),
+      fetchAllSlides().catch(() => null), // slides 页面取不到时保留原有缓存
+    ]);
     const fetchedAt = Date.now();
     this.setPosts(rows, fetchedAt);
+    if (slides) this.setSlides(slides);
     await Filesystem.writeFile({
       path: POSTS_FILE, directory: Directory.Data, encoding: Encoding.UTF8, recursive: true,
-      data: JSON.stringify({ fetchedAt, posts: rows }),
+      data: JSON.stringify({ fetchedAt, posts: rows, slides: [...this.slides.values()] }),
     });
     this.changed('posts');
   }
 
   post(postUrl) {
-    return this.posts.get(postUrl) || { post_url: postUrl, title: decodeURIComponent(postUrl.split('/').pop().replace(/\.html$/, '')).replace(/-/g, ' '), categories: [] };
+    return this.posts.get(postUrl) || this.slides.get(postUrl)
+      || { post_url: postUrl, title: decodeURIComponent(postUrl.split('/').pop().replace(/\.html$/, '')).replace(/-/g, ' '), categories: [] };
   }
 
   /* ---------- 离线文章 ---------- */

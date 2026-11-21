@@ -71,59 +71,115 @@ export class DiscoverView extends View {
   constructor(root) {
     super(root);
     this.query = '';
-    this.category = '';
+    this.path = [];       // 分类路径，如 ['llm', 'algorithm']，逐级下钻
+    this.src = 'papers';  // papers | slides
     this.limit = 40;
   }
 
   mount() {
     this.root.innerHTML = `
-      ${pageHead('搜索论文', `从 ${library.posts.size || '全部'} 篇论文中找到你需要的内容`,
-        '<form class="search-box"><input type="search" placeholder="输入关键词搜索论文…" enterkeyhint="search"><button class="search-go">搜索</button></form>')}
+      ${pageHead('发现', '论文与演示文稿',
+        '<form class="search-box"><input type="search" placeholder="搜索标题、摘要、分类…" enterkeyhint="search"><button class="search-go">搜索</button></form>')}
+      <div class="seg"></div>
+      <div class="latest"></div>
+      <div class="crumbs"></div>
       <div class="chips"></div>
       <div class="list"></div>`;
     const input = this.root.querySelector('input');
     input.value = this.query;
     input.addEventListener('input', () => { this.query = input.value.trim().toLowerCase(); this.limit = 40; this.renderList(); });
     this.root.querySelector('.search-box').addEventListener('submit', (e) => { e.preventDefault(); input.blur(); });
+    this.root.querySelector('.seg').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-src]');
+      if (!b || b.dataset.src === this.src) return;
+      this.src = b.dataset.src;
+      this.path = [];
+      this.limit = 40;
+      this.render();
+    });
+    this.root.querySelector('.crumbs').addEventListener('click', (e) => {
+      const b = e.target.closest('[data-depth]');
+      if (!b) return;
+      this.path = this.path.slice(0, +b.dataset.depth);
+      this.limit = 40;
+      this.render();
+    });
     this.root.querySelector('.chips').addEventListener('click', (e) => {
       const chip = e.target.closest('[data-cat]');
       if (!chip) return;
-      this.category = this.category === chip.dataset.cat ? '' : chip.dataset.cat;
+      this.path = [...this.path, chip.dataset.cat]; // 下钻一级
       this.limit = 40;
       this.render();
     });
     super.mount();
   }
 
+  dataset() {
+    return this.src === 'slides' ? [...library.slides.values()] : [...library.posts.values()];
+  }
+
   render() {
-    if (library.posts.size) this.root.querySelector('.page-sub').textContent = `从 ${library.posts.size} 篇论文中找到你需要的内容`;
+    const papers = library.posts.size, slides = library.slides.size;
+    this.root.querySelector('.seg').innerHTML =
+      `<button class="${this.src === 'papers' ? 'on' : ''}" data-src="papers">论文 ${papers || ''}</button>` +
+      `<button class="${this.src === 'slides' ? 'on' : ''}" data-src="slides">演示文稿 ${slides || ''}</button>`;
+
+    // 首页状态（无搜索、无分类）显示最新动态；列表本身就是「最新添加」的顺序
+    const latest = this.root.querySelector('.latest');
+    if (this.src !== 'papers' || this.query || this.path.length || !papers) {
+      latest.innerHTML = '';
+    } else {
+      const byAdded = [...library.posts.values()].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+      const byPublished = [...library.posts.values()].sort((a, b) => (b.published_date || '').localeCompare(a.published_date || ''));
+      latest.innerHTML = `
+        <section class="card"><div class="card-title">📥 最新添加</div>${byAdded.slice(0, 5).map((p) => latestRow(p, (p.created_at || '').slice(0, 7))).join('')}</section>
+        <section class="card"><div class="card-title">📰 最新发表</div>${byPublished.slice(0, 5).map((p) => latestRow(p, (p.published_date || '').slice(0, 7))).join('')}</section>`;
+    }
+
+    const crumbs = this.root.querySelector('.crumbs');
+    crumbs.innerHTML = this.path.length
+      ? `<button data-depth="0">全部</button>` + this.path.map((c, i) =>
+        `<span class="sep">›</span><button data-depth="${i + 1}">${escapeHtml(c)}</button>`).join('')
+      : '';
+
     const counts = {};
-    for (const p of library.posts.values()) {
-      const c = (p.categories || [])[0];
-      if (c) counts[c] = (counts[c] || 0) + 1;
+    for (const p of this.dataset()) {
+      const cats = p.categories || [];
+      if (cats.length > this.path.length && cats.slice(0, this.path.length).join('/') === this.path.join('/')) {
+        const c = cats[this.path.length];
+        counts[c] = (counts[c] || 0) + 1;
+      }
     }
     this.root.querySelector('.chips').innerHTML = Object.entries(counts).sort((a, b) => b[1] - a[1])
-      .map(([c, n]) => `<button class="chip ${c === this.category ? 'on' : ''}" data-cat="${escapeHtml(c)}">${escapeHtml(c)} ${n}</button>`)
+      .map(([c, n]) => `<button class="chip" data-cat="${escapeHtml(c)}">${escapeHtml(c)} ${n} ›</button>`)
       .join('');
     this.renderList();
   }
 
   renderList() {
     const list = this.root.querySelector('.list');
-    if (!library.posts.size) {
-      list.innerHTML = `<p class="empty-line">${navigator.onLine ? '正在加载论文目录…' : '离线状态，还没有缓存论文目录。'}</p>`;
+    const data = this.dataset();
+    if (!data.length) {
+      list.innerHTML = `<p class="empty-line">${navigator.onLine ? '正在加载目录…' : '离线状态，还没有缓存目录。'}</p>`;
       return;
     }
     const q = this.query;
-    const matches = [...library.posts.values()].filter((p) =>
-      (!this.category || (p.categories || [])[0] === this.category) &&
+    const matches = data.filter((p) =>
+      (!this.path.length || (p.categories || []).slice(0, this.path.length).join('/') === this.path.join('/')) &&
       (!q || (p.title + ' ' + (p.excerpt || '') + ' ' + (p.categories || []).join(' ')).toLowerCase().includes(q)));
-    list.innerHTML = `<p class="muted list-count">${matches.length} 篇</p>` +
+    list.innerHTML = `<p class="muted list-count">${matches.length} 篇${this.path.length ? ' · ' + escapeHtml(this.path.join(' / ')) : ''}</p>` +
       matches.slice(0, this.limit).map((p) => paperRow(p.post_url, { showExcerpt: true })).join('') +
       (matches.length > this.limit ? '<button class="btn more">加载更多</button>' : '');
     const more = list.querySelector('.more');
     if (more) more.onclick = () => { this.limit += 40; this.renderList(); };
   }
+}
+
+function latestRow(p, date) {
+  const cat = (p.categories || []).slice(-1)[0];
+  return `<a class="latest-row" href="#/read?u=${encodeURIComponent(p.post_url)}">
+    <span class="latest-date">${date}</span>${cat ? `<span class="cat-pill">${escapeHtml(cat)}</span>` : ''}
+    <span class="latest-title">${escapeHtml(p.title)}</span></a>`;
 }
 
 export class MeView extends View {
