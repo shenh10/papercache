@@ -38,3 +38,4 @@ CREATE POLICY "Admins can read slide content" ON storage.objects
 -- SELECT count(*) FROM pg_policies WHERE tablename IN ('slides_search', 'objects')
 --   AND policyname LIKE '%slides%';
 
+
