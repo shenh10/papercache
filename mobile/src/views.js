@@ -153,9 +153,11 @@ export class DiscoverView extends View {
 
   render() {
     const papers = library.posts.size, slides = library.slides.size;
+    // slides 合集在网站上仅限管理员（客户端门控），App 同样只给管理员入口
+    if (this.src === 'slides' && !account.isAdmin) { this.src = 'papers'; this.path = []; }
     this.root.querySelector('.seg').innerHTML =
       `<button class="${this.src === 'papers' ? 'on' : ''}" data-src="papers">论文 ${papers || ''}</button>` +
-      `<button class="${this.src === 'slides' ? 'on' : ''}" data-src="slides">演示文稿 ${slides || ''}</button>`;
+      (account.isAdmin ? `<button class="${this.src === 'slides' ? 'on' : ''}" data-src="slides">演示文稿 ${slides || ''}</button>` : '');
 
     // 首页状态（无搜索、无分类）显示最新动态；列表本身就是「最新添加」的顺序
     const latest = this.root.querySelector('.latest');
