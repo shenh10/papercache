@@ -8,6 +8,7 @@ import { Reader } from './reader.js';
 import { ShelfView, DiscoverView, MeView } from './views.js';
 import { navigate, toast, applyTheme } from './ui.js';
 import { updates } from './updates.js';
+import { appOpen } from './analytics.js';
 
 const CATALOG_MAX_AGE = 30 * 60 * 1000;
 const root = document.getElementById('app');
@@ -66,6 +67,7 @@ App.addListener('resume', () => {
   refreshCatalog();
   account.syncFavorites().catch(() => {});
   updates.check().catch(() => {});
+  appOpen();
 });
 
 // 管理员身份确认后（登录完成的异步时刻）拉取 slides 目录
@@ -99,6 +101,7 @@ window.addEventListener('hashchange', render);
   applyTheme();
   await account.init();
   render();
+  appOpen();
   refreshCatalog();
   updates.check()
     .then(() => {

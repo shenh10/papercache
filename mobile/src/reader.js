@@ -4,6 +4,7 @@ import { library } from './library.js';
 import { account } from './account.js';
 import { normalizePostUrl, SITE } from './site.js';
 import { siteStyle } from './sitestyle.js';
+import { pageView } from './analytics.js';
 import { toast, escapeHtml, navigate } from './ui.js';
 
 const FONT_SCALES = [0.9, 1, 1.12, 1.25];
@@ -80,6 +81,7 @@ export class Reader {
     // css-loaded：网站的防闪烁规则在样式加载完之前隐藏整页，由页面脚本加上这个 class 后才显示
     this.content.innerHTML = `<div class="pc-site css-loaded"><main class="page-content"><div class="wrapper">
       <article class="post h-entry">${html}</article></div></main></div>`;
+    pageView(this.postUrl, this.post.title);
     if (!library.isDownloaded(this.postUrl) && account.isFavorite(this.postUrl) && await account.mayAutoDownload()) {
       library.saveArticle(this.postUrl, html).catch(() => {});
     }
