@@ -149,6 +149,25 @@ jobs:
               env:
                   JEKYLL_ENV: production
 
+            # slides 只进 Supabase 私有存储，不进公开站点：
+            # 上传后立刻从 _site 和源数据里删掉，后续构建/缩略图/部署都不再包含
+            - name: 🔒 Sync slides to Supabase and strip from public build
+              run: |
+                  if [ -d _site/slides ]; then
+                    if [ -n "${{ secrets.SUPABASE_URL }}" ] && [ -n "${{ secrets.SUPABASE_SERVICE_KEY }}" ]; then
+                      python3 scripts/sync_slides_to_supabase.py || echo "⚠️ slides 同步失败（表未建？见 scripts/supabase-slides-schema.sql），本次继续"
+                    else
+                      echo "⚠️ 缺少 SUPABASE_SERVICE_KEY，slides 未同步；仍将从公开站点移除（fail-closed），配好密钥后下次部署恢复同步"
+                    fi
+                    rm -rf _site/slides _slides
+                    rm -f _data/slides_collection_structure.yml
+                    echo "✅ 已从公开构建中移除 slides"
+                  fi
+              continue-on-error: true
+              env:
+                  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+                  SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
             - name: 🖼️ Generate thumbnails
               run: |
                   echo "开始生成缩略图..."
@@ -289,4 +308,3 @@ jobs:
                 apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
                 accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
                 command: pages deploy _site --project-name=papercache --branch=main
-

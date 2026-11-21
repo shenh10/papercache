@@ -27,6 +27,13 @@ export async function fetchText(path) {
 }
 
 export async function fetchArticlePage(postUrl) {
+  // slides 已私有化：HTML 在 Supabase 私有桶里，登录管理员的会话由 RLS 校验
+  if (postUrl.startsWith('/slides/')) {
+    const path = postUrl.replace(/^\/slides\//, '');
+    const { data, error } = await supabase.storage.from('slides').download(path);
+    if (error) throw new Error(error.message || '下载失败');
+    return new DOMParser().parseFromString(await data.text(), 'text/html');
+  }
   const html = await fetchText(canonicalPath(postUrl));
   return new DOMParser().parseFromString(html, 'text/html');
 }
@@ -88,24 +95,12 @@ export async function fetchAllPosts() {
     }
 }
 
-// 演示文稿合集：posts_search 里没有，从 /slides/ 页面解析条目（与论文同构，阅读器直接可读）
+// 演示文稿合集：Supabase 私有表 slides_search（RLS 仅管理员）。
+// 非管理员/未登录会拿到空列表——入口本来就不显示，这里双重保险。
 export async function fetchAllSlides() {
-  const html = await fetchText('/slides/');
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  const slides = [];
-  for (const li of doc.querySelectorAll('li[data-post-url]')) {
-    const post_url = li.getAttribute('data-post-url');
-    if (!post_url || !post_url.startsWith('/slides/')) continue;
-    const m = post_url.match(/^\/slides\/(.+)\/(\d{4})\/(\d{2})\/\d{2}\/[^/]+\.html$/);
-    slides.push({
-      post_url,
-      title: li.querySelector('.post-card-title-modern')?.textContent.trim()
-        || li.querySelector('a[data-post-title]')?.getAttribute('data-post-title') || '',
-      excerpt: (li.querySelector('.post-card-excerpt-modern')?.textContent.trim() || '').slice(0, 160),
-      categories: m ? m[1].split('/') : [],
-      tag: li.querySelector('.post-card-tag-modern')?.textContent.trim() || '',
-      published_date: li.querySelector('.post-meta-modern')?.textContent.trim() || (m ? `${m[2]}-${m[3]}` : ''),
-    });
-  }
-  return slides;
+  const { data, error } = await supabase.from('slides_search')
+    .select('post_url,title,excerpt,categories,tag,published_date')
+    .order('published_date', { ascending: false });
+  if (error) return []; // 权限不足（RLS）或表未建，静默返回空
+  return data || [];
 }

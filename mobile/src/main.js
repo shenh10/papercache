@@ -68,6 +68,11 @@ App.addListener('resume', () => {
   updates.check().catch(() => {});
 });
 
+// 管理员身份确认后（登录完成的异步时刻）拉取 slides 目录
+account.addEventListener('change', (e) => {
+  if (e.detail === 'profile' && account.isAdmin && !library.slides.size) refreshCatalog(true);
+});
+
 Network.addListener('networkStatusChange', (status) => {
   if (status.connected) account.downloadMissingFavorites().catch(() => {});
 });
