@@ -61,3 +61,4 @@ App 启动和回到前台时检查 `download/app.json`；发现有新 build：
 | `ANDROID_KEY_PASSWORD` | key 密码 |
 
 keystore 一旦丢失，已安装的用户就无法覆盖升级，只能卸载重装。务必另外备份。
+
