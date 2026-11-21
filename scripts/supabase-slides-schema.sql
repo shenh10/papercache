@@ -37,3 +37,4 @@ CREATE POLICY "Admins can read slide content" ON storage.objects
 -- SELECT * FROM storage.buckets WHERE id = 'slides';           -- public 应为 false
 -- SELECT count(*) FROM pg_policies WHERE tablename IN ('slides_search', 'objects')
 --   AND policyname LIKE '%slides%';
+
