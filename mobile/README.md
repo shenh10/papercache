@@ -71,3 +71,4 @@ openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -in papercache-release.jks \
 ```
 
 keystore 明文一旦丢失，已安装的用户就无法覆盖升级，只能卸载重装。务必另外备份（明文 jks + 密码）。
+
