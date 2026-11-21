@@ -43,7 +43,32 @@ export function articleHtml(doc) {
     header.querySelectorAll('.post-actions-inline, .post-share-inline, .post-meta-separator, .offline-save-btn, script')
       .forEach((n) => n.remove());
   }
+  tidyArticle(content, header);
   return (header ? header.outerHTML : '') + `<div class="post-content e-content">${content.innerHTML}</div>`;
+}
+
+// 网站模板的正文开头会重复一遍标题，论文信息（发表时间/原文/作者）是裸文本段落。
+// 这里去掉重复标题，把信息段落包成 .paper-info，由 App 样式渲染成卡片
+function tidyArticle(content, header) {
+  const container = content.querySelector('.paper-content > .container') || content.querySelector('.paper-content');
+  if (!container) return;
+  const title = header?.querySelector('.post-title')?.textContent.trim();
+  const h1 = container.querySelector('h1');
+  if (title && h1 && h1.textContent.trim() === title) h1.remove();
+
+  const infoLabel = /^(发表时间|原文|来源|链接|编号|作者|机构|arXiv)/;
+  const info = [];
+  for (const p of [...container.children]) {
+    const label = p.matches('p') && p.querySelector('strong')?.textContent.trim();
+    if (label && infoLabel.test(label)) info.push(p);
+    else break;
+  }
+  if (info.length) {
+    const card = content.ownerDocument.createElement('div');
+    card.className = 'paper-info';
+    container.insertBefore(card, info[0]);
+    info.forEach((p) => card.appendChild(p));
+  }
 }
 
 const POST_FIELDS = 'post_url,title,excerpt,categories,tag,published_date,created_at';
