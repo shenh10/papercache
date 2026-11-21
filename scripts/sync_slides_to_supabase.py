@@ -48,7 +48,7 @@ def main():
     uploaded = skipped = 0
     for root, _, files in os.walk(SLIDES_DIR):
         for name in files:
-            if not name.endswith(".html"):
+            if not name.endswith(".html") or name == "index.html":
                 continue
             path = os.path.join(root, name)
             rel = os.path.relpath(path, SITE_DIR).replace(os.sep, "/")
@@ -83,6 +83,9 @@ def main():
                 headers={**headers, "Content-Type": "text/html", "x-upsert": "true"},
                 data=html.encode("utf-8"), timeout=120)
             if up.status_code not in (200, 201):
+                if up.status_code in (400, 403) and "row-level security" in up.text:
+                    die("上传被 RLS 拒绝：SUPABASE_SERVICE_KEY 里装的很可能不是 service_role key"
+                        "（Dashboard → Settings → API Keys → service_role），换好后重新部署")
                 die(f"上传 {obj_path} 失败: {up.status_code} {up.text[:200]}")
             uploaded += 1
 
