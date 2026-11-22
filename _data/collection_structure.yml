@@ -6737,6 +6737,15 @@ mlsys:
         - compiler
         - graph
         tag: cgo21
+      - title: 'Last Year We Built Megakernels. This Year We Deleted Them: The Road
+          to Together Compiler'
+        date: '2026-11-01'
+        url: /papers/mlsys/compiler/graph/2026/11/01/last-year-we-built-megakernels-this-year-we-deleted-them-the-road-to-together-compiler.html
+        categories:
+        - mlsys
+        - compiler
+        - graph
+        tag: blog
       - title: Effectively Scheduling Computational Graphs of Deep Neural Networks
           toward Their Domain-Specific Accelerators
         date: '2023-07-01'
