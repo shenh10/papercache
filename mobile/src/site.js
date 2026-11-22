@@ -15,11 +15,24 @@ export function normalizePostUrl(href) {
   return u.pathname.endsWith('.html') ? u.pathname : u.pathname + '.html';
 }
 
+// 文章页带内联图，常有几 MB；手机切换 Wi-Fi/蜂窝或短暂锁屏时，原生层会把连接掐断
+// （Software caused connection abort / Connection reset），这类连接层失败自动重试
+const RETRY_DELAYS = [800, 2500];
+
 export async function fetchText(path) {
   if (Capacitor.isNativePlatform()) {
-    const res = await CapacitorHttp.get({ url: SITE + path, responseType: 'text' });
-    if (res.status !== 200) throw new Error('HTTP ' + res.status);
-    return res.data;
+    for (let attempt = 0; ; attempt++) {
+      let res;
+      try {
+        res = await CapacitorHttp.get({ url: SITE + path, responseType: 'text', connectTimeout: 15000, readTimeout: 60000 });
+      } catch (err) {
+        if (attempt >= RETRY_DELAYS.length) throw Object.assign(new Error(err.message || '网络连接中断'), { network: true });
+        await new Promise((r) => setTimeout(r, RETRY_DELAYS[attempt]));
+        continue;
+      }
+      if (res.status !== 200) throw new Error('HTTP ' + res.status);
+      return res.data;
+    }
   }
   const res = await fetch('/__site' + path);
   if (!res.ok) throw new Error('HTTP ' + res.status);
