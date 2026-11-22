@@ -1,7 +1,7 @@
 // 版本检查与应用内自动更新：站点 /download/app.json 由部署流程写入，build 号比本机大就提示更新。
 // 更新包（APK 直链带 CORS 头）在 WebView 里直接 fetch 下载（有进度），存缓存目录后交给原生安装器
 import { App } from '@capacitor/app';
-import { Capacitor, CapacitorHttp, registerPlugin } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { SITE } from './site.js';
 import { library } from './library.js';
@@ -47,8 +47,8 @@ class Updates extends EventTarget {
     const info = await App.getInfo();
     this.current = { version: info.version, build: Number(info.build) };
     // 带时间戳绕开任何 CDN 缓存层（曾有 app.json 被 Cloudflare 缓存 4 小时导致检测不到新版本）
-    const res = await CapacitorHttp.get({ url: SITE + '/download/app.json?t=' + Date.now(), responseType: 'json', headers: { 'Cache-Control': 'no-cache' } });
-    if (res.status === 200) this.latest = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+    const res = await fetch(SITE + '/download/app.json?t=' + Date.now(), { cache: 'no-store' });
+    if (res.ok) this.latest = await res.json();
     this.changed('check');
     // 检查到新版本时自动在后台下载，下完由 main.js 提示安装
     if (this.available && library.settings.autoUpdate && !this.apkReady) {

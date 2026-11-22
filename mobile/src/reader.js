@@ -71,8 +71,7 @@ export class Reader {
         : await library.fetchArticle(this.postUrl);
     } catch (err) {
       this.content.innerHTML = `<div class="empty">
-        <p>${err instanceof TypeError || !navigator.onLine ? '网络不可用，这篇还没有下载到本机。'
-          : err.network ? '网络连接中断，请检查网络后重试。' : '加载失败：' + escapeHtml(err.message)}</p>
+        <p>${err instanceof TypeError || !navigator.onLine ? '网络不可用，这篇还没有下载到本机。' : '加载失败：' + escapeHtml(err.message)}</p>
         <button class="btn" data-retry>重试</button></div>`;
       this.content.querySelector('[data-retry]').onclick = () => this.load();
       return;
