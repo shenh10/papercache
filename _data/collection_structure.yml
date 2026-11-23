@@ -4971,6 +4971,14 @@ llm:
         - llm
         - algorithm
         - models
+      - title: 'GLM-5.4: Toward Generalized Coding with Our First Loop Transformer'
+        date: '2026-11-01'
+        url: /papers/llm/algorithm/models/2026/11/01/glm-54-toward-generalized-coding-with-our-first-loop-transformer.html
+        categories:
+        - llm
+        - algorithm
+        - models
+        tag: blog
       - title: Scaling Laws for Neural Language Models
         date: '2020-01-01'
         url: /papers/llm/algorithm/models/2020/01/01/scaling-laws-for-neural-language-models.html
