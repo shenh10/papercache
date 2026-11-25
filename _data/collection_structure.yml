@@ -4862,6 +4862,14 @@ llm:
         - llm
         - algorithm
         - models
+      - title: Introducing Inkling 2 Mini
+        date: '2026-11-01'
+        url: /papers/llm/algorithm/models/2026/11/01/introducing-inkling-2-mini.html
+        categories:
+        - llm
+        - algorithm
+        - models
+        tag: blog
       - title: HunyuanOCR Technical Report
         date: '2025-11-01'
         url: /papers/llm/algorithm/models/2025/11/01/hunyuanocr-technical-report.html
