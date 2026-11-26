@@ -6490,6 +6490,13 @@ mlsys:
       categories:
       - mlsys
       - gpu
+    - title: 'Joule Is FLOP: Optimizing Tensor-Core Kernels Beyond Latency Hiding
+        at the GPU Power Wall'
+      date: '2026-11-01'
+      url: /papers/mlsys/gpu/2026/11/01/joule-is-flop-optimizing-tensor-core-kernels-beyond-latency-hiding-at-the-gpu-power-wall.html
+      categories:
+      - mlsys
+      - gpu
     - title: Locality-Aware CTA Clustering for Modern GPUs
       date: '2017-04-01'
       url: /papers/mlsys/gpu/2017/04/01/locality-aware-cta-clustering-for-modern-gpus.html
